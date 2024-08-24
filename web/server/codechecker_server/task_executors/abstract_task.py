@@ -174,6 +174,11 @@ class AbstractTask:
                 task_manager._mutate_task_record(self, _log_cancel_and_abandon)
             else:
                 task_manager._mutate_task_record(self, _log_drop_and_abandon)
+
+            import traceback
+            LOG.debug("Task '%s' honoured the administrator's cancel request "
+                      "at:\n%s",
+                      self.token, traceback.format_exc())
         except Exception as ex:
             LOG.error("Failed to execute task '%s' on machine '%s' "
                       "executor #%d: %s",

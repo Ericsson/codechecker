@@ -21,7 +21,8 @@ from pathlib import Path
 import sqlalchemy
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, \
+    cast
 import zipfile
 import zlib
 
@@ -56,7 +57,7 @@ from ..metadata import checker_is_unavailable, MetadataInfoParser
 from .report_annotations import report_annotation_types
 from ..product import Product as ServerProduct
 from ..session_manager import SessionManager
-from ..task_executors.abstract_task import AbstractTask
+from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
 from .thrift_enum_helper import report_extended_data_type_str
 
@@ -593,7 +594,13 @@ class MassStoreRunTask(AbstractTask):
                                    f"'{self._product.endpoint}' is in "
                                    "a bad shape!")
 
-        m = MassStoreRun(self.data_path / "store_zip",
+        def __cancel_if_needed():
+            tm.heartbeat(self)
+            if tm.should_cancel(self):
+                raise TaskCancelHonoured(self)
+
+        m = MassStoreRun(__cancel_if_needed,
+                         self.data_path / "store_zip",
                          self._package_context,
                          tm.configuration_database_session_factory,
                          self._product,
@@ -617,9 +624,8 @@ class MassStoreRun:
     # This is the place where complex implementation logic must go, but be
     # careful, there is no way to communicate with the user's client anymore!
 
-    # TODO: Poll the task manager at regular points for a cancel signal!
-
     def __init__(self,
+                 graceful_cancel: Callable[[], None],
                  zip_dir: Path,
                  package_context,
                  config_db,
@@ -643,6 +649,7 @@ class MassStoreRun:
         self.__config_db = config_db
         self.__package_context = package_context
         self.__product = product
+        self.__graceful_cancel_if_requested = graceful_cancel
 
         self.__mips: Dict[str, MetadataInfoParser] = {}
         self.__analysis_info: Dict[str, AnalysisInfo] = {}
@@ -670,10 +677,10 @@ class MassStoreRun:
         filename_to_hash: Dict[str, str]
     ) -> Dict[str, int]:
         """ Storing file contents from plist. """
-
         file_path_to_id = {}
 
         for file_name, file_hash in filename_to_hash.items():
+            self.__graceful_cancel_if_requested()
             source_file_path = path_for_fake_root(file_name, str(source_root))
             LOG.debug("Storing source file: %s", source_file_path)
             trimmed_file_path = trim_path_prefixes(
@@ -723,6 +730,7 @@ class MassStoreRun:
         with DBSession(self.__product.session_factory) as session:
             for subdir, _, files in os.walk(blame_root):
                 for f in files:
+                    self.__graceful_cancel_if_requested()
                     blame_file = Path(subdir) / f
                     file_path = f"/{str(blame_file.relative_to(blame_root))}"
                     blame_info, remote_url, tracking_branch = \
@@ -1498,6 +1506,7 @@ class MassStoreRun:
                 LOG.debug("Parsing input file '%s'", f)
 
                 report_file_path = os.path.join(root_dir_path, f)
+                self.__graceful_cancel_if_requested()
                 self.__process_report_file(
                     report_file_path, session, run_id,
                     file_path_to_id, run_history_time,
@@ -1601,6 +1610,7 @@ class MassStoreRun:
               original_zip_size: int,
               time_spent_on_task_preparation: float):
         """Store run results to the server."""
+        self.__graceful_cancel_if_requested()
         start_time = time.time()
 
         try:
@@ -1624,12 +1634,14 @@ class MassStoreRun:
 
             with StepLog(self._name, "Parse 'metadata.json's"):
                 for root_dir_path, _, _ in os.walk(report_dir):
+                    self.__graceful_cancel_if_requested()
                     metadata_file_path = os.path.join(
                         root_dir_path, 'metadata.json')
 
                     self.__mips[root_dir_path] = \
                         MetadataInfoParser(metadata_file_path)
 
+            self.__graceful_cancel_if_requested()
             with StepLog(self._name,
                          "Store look-up ID for checkers in 'metadata.json'"):
                 checkers_in_metadata = {
@@ -1653,9 +1665,15 @@ class MassStoreRun:
                             session, report_dir, source_root, run_id,
                             file_path_to_id, run_history_time)
 
+                    self.__graceful_cancel_if_requested()
                     session.commit()
                     self.__load_report_ids_for_reports_with_fake_checkers(
                         session)
+
+                # The task should not be cancelled after this point, as the
+                # "main" bulk of the modifications to the database had already
+                # been committed, and the user would be left with potentially
+                # a bunch of "fake checkers" visible in the database.
 
                 if self.__reports_with_fake_checkers:
                     with StepLog(
@@ -1717,6 +1735,8 @@ class MassStoreRun:
                 LOG.error("Database error! Storing reports to the "
                           "database failed: %s", ex)
                 raise
+        except TaskCancelHonoured:
+            raise
         except Exception as ex:
             LOG.error("Failed to store results: %s", ex)
             import traceback
