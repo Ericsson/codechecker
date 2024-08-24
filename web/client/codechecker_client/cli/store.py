@@ -32,7 +32,6 @@ from threading import Timer
 from typing import Dict, Iterable, List, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
-from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
@@ -58,7 +57,7 @@ from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_common.util import load_json
+from codechecker_common.util import format_size, load_json
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -66,7 +65,7 @@ from codechecker_web.shared.env import get_default_workspace
 
 LOG = logger.get_logger('system')
 
-MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+MAX_UPLOAD_SIZE = 1024 ** 3  # 1024^3 = 1 GiB.
 
 
 AnalyzerResultFileReports = Dict[str, List[Report]]
@@ -87,7 +86,7 @@ ReportLineInfo = namedtuple('ReportLineInfo',
 
 """Contains information about the report file after parsing.
 
-store_it: True if every information is availabe and the
+store_it: True if every information is available and the
             report can be stored
 main_report_positions: list of ReportLineInfo containing
                         the main report positions
@@ -133,19 +132,6 @@ class StorageZipStatistics(report_statistics.Statistics):
              str(self.num_of_blame_information)]]
         out.write(twodim.to_table(statistics_rows, False))
         out.write("\n----=================----\n")
-
-
-def sizeof_fmt(num, suffix='B'):
-    """
-    Pretty print storage units.
-    Source: https://stackoverflow.com/questions/1094841/
-        reusable-library-to-get-human-readable-version-of-file-size
-    """
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return f"{num:3.1f}{unit}{suffix}"
-        num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
 
 
 def get_file_content_hash(file_path):
@@ -649,7 +635,7 @@ Configured report limit for this product: {p.reportLimit}
     compressed_zip_size = os.stat(zip_file).st_size
 
     LOG.info("Compressing report zip file done (%s / %s).",
-             sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
+             format_size(zip_size), format_size(compressed_zip_size))
 
     # We are responsible for deleting these.
     shutil.rmtree(temp_dir)
@@ -698,7 +684,7 @@ def get_analysis_statistics(inputs, limits):
 
                 if os.stat(compilation_db).st_size > compilation_db_size:
                     LOG.debug("Compilation database is too big (max: %s).",
-                              sizeof_fmt(compilation_db_size))
+                              format_size(compilation_db_size))
                 else:
                     LOG.debug("Copying file '%s' to analyzer statistics "
                               "ZIP...", compilation_db)
@@ -721,7 +707,7 @@ def get_analysis_statistics(inputs, limits):
                     if failed_files_size > failure_zip_limit:
                         LOG.debug("We reached the limit of maximum uploadable "
                                   "failure zip size (max: %s).",
-                                  sizeof_fmt(failure_zip_limit))
+                                  format_size(failure_zip_limit))
                         break
                     else:
                         LOG.debug("Copying failure zip file '%s' to analyzer "
@@ -932,7 +918,7 @@ def main(args):
         zip_size = os.stat(zip_file).st_size
         if zip_size > MAX_UPLOAD_SIZE:
             LOG.error("The result list to upload is too big (max: %s): %s.",
-                      sizeof_fmt(MAX_UPLOAD_SIZE), sizeof_fmt(zip_size))
+                      format_size(MAX_UPLOAD_SIZE), format_size(zip_size))
             sys.exit(1)
 
         b64zip = ""
@@ -1005,15 +991,6 @@ def main(args):
             storing_analysis_statistics(client, args.input, args.name)
 
         LOG.info("Storage finished successfully.")
-    except RequestFailed as reqfail:
-        if reqfail.errorCode == ErrorCode.SOURCE_FILE:
-            header = ['File', 'Line', 'Checker name']
-            table = twodim.to_str(
-                'table', header, [c.split('|') for c in reqfail.extraInfo])
-            LOG.warning("Setting the review statuses for some reports failed "
-                        "because of non valid source code comments: "
-                        "%s\n %s", reqfail.message, table)
-        sys.exit(1)
     except Exception as ex:
         import traceback
         traceback.print_exc()

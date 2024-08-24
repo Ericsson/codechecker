@@ -31,6 +31,7 @@ LOG = get_logger("server")
 
 def executor(queue: Queue,
              config_db_sql_server,
+             server_environment,
              server_shutdown_flag: "Value",
              machine_id: str):
     """
@@ -66,8 +67,8 @@ def executor(queue: Queue,
     signal.signal(signal.SIGHUP, executor_hangup_handler)
 
     config_db_engine = config_db_sql_server.create_engine()
-    tm = TaskManager(queue, sessionmaker(bind=config_db_engine), kill_flag,
-                     machine_id)
+    tm = TaskManager(queue, sessionmaker(bind=config_db_engine),
+                     server_environment, kill_flag, machine_id)
 
     while not kill_flag.value:
         try:
