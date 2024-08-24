@@ -9,6 +9,7 @@
 Contains the base class to be inherited and implemented by all background task
 types.
 """
+import logging
 import os
 import pathlib
 import shutil
@@ -82,6 +83,8 @@ class AbstractTask:
 
         try:
             shutil.rmtree(self._data_path)
+            LOG.debug("Wiping temporary data of task '%s' at '%s' ...",
+                      self._token, self._data_path)
         except Exception as ex:
             LOG.warning("Failed to remove background task's data_dir at "
                         "'%s':\n%s", self.data_path, str(ex))
@@ -94,7 +97,7 @@ class AbstractTask:
         context of the executed subprocess, to query and mutate service-level
         information about the current task.
         """
-        raise NotImplementedError()
+        raise NotImplementedError(f"No implementation for task class {self}!")
 
     def execute(self, task_manager: "TaskManager") -> None:
         """
@@ -183,6 +186,10 @@ class AbstractTask:
                 db_task.add_comment(
                     f"FAILED!\nException during execution:\n{str(ex)}",
                     "SYSTEM[AbstractTask::execute()]")
+                if LOG.isEnabledFor(logging.DEBUG):
+                    db_task.add_comment("Debug exception information:\n"
+                                        f"{traceback.format_exc()}",
+                                        "SYSTEM[AbstractTask::execute()]")
                 db_task.set_finished(successfully=False)
 
             task_manager._mutate_task_record(self, _log_exception_and_fail)
