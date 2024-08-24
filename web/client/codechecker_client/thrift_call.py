@@ -81,7 +81,11 @@ def thrift_client_call(function):
                 LOG.error(
                     'Client/server API mismatch\n %s', str(reqfailure.message))
             else:
-                LOG.error('API call error: %s\n%s', func_name, str(reqfailure))
+                LOG.error("Error during API call: %s", func_name)
+                LOG.debug("%s", str(reqfailure))
+                LOG.error("%s", str(reqfailure.message))
+                if reqfailure.extraInfo:
+                    LOG.error("%s", '\n'.join(reqfailure.extraInfo))
             sys.exit(1)
         except TApplicationException as ex:
             LOG.error("Internal server error: %s", str(ex.message))
