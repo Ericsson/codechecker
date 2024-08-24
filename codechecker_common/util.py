@@ -13,8 +13,9 @@ import hashlib
 import itertools
 import json
 import os
+import pathlib
 import random
-from typing import TextIO
+from typing import TextIO, Union
 
 import portalocker
 
@@ -55,7 +56,10 @@ def chunks(iterator, n):
         yield itertools.chain([first], rest_of_chunk)
 
 
-def load_json(path: str, default=None, lock=False, display_warning=True):
+def load_json(path: Union[str, pathlib.Path],
+              default=None,
+              lock=False,
+              display_warning=True):
     """
     Load the contents of the given file as a JSON and return it's value,
     or default if the file can't be loaded.
@@ -133,3 +137,16 @@ def generate_random_token(num_bytes: int = 32) -> str:
          for _ in range(0, -(num_bytes // -64))])
     idx = random.randrange(0, len(hash_value) - num_bytes + 1)
     return hash_value[idx:(idx + num_bytes)]
+
+
+def format_size(num: float, suffix: str = 'B') -> str:
+    """
+    Pretty print storage units.
+    Source: http://stackoverflow.com/questions/1094841/
+        reusable-library-to-get-human-readable-version-of-file-size
+    """
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi', 'Ri']:
+        if abs(num) < 1024.0:
+            return f"{num:3.1f} {unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f} Qi{suffix}"

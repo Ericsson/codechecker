@@ -11,6 +11,8 @@ dispatched background tasks.
 """
 import os
 from pathlib import Path
+import re
+import shutil
 import tempfile
 from typing import Callable, Optional
 
@@ -24,6 +26,7 @@ from ..database.config_db_model import BackgroundTask as DBTask, Product
 from ..database.database import DBSession
 
 MAX_TOKEN_RANDOM_RETRIES = 10
+CHARS_INVALID_IN_PATH = re.compile(r"[\'\"<>:\\/\|\*\?\. ]")
 
 LOG = get_logger("server")
 
@@ -47,11 +50,33 @@ class TaskManager:
     """
 
     def __init__(self, q: Queue, config_db_session_factory,
-                 executor_kill_flag: Value, machine_id: str):
+                 server_environment,
+                 executor_kill_flag: Value,
+                 machine_id: str,
+                 temp_dir: Optional[Path] = None):
         self._queue = q
         self._database_factory = config_db_session_factory
+        self._server_environment = server_environment
         self._is_shutting_down = executor_kill_flag
         self._machine_id = machine_id
+        self._temp_dir_root = (temp_dir or Path(tempfile.gettempdir())) \
+            / "codechecker_tasks" \
+            / CHARS_INVALID_IN_PATH.sub('_', machine_id)
+
+        os.makedirs(self._temp_dir_root, exist_ok=True)
+
+    @property
+    def configuration_database_session_factory(self):
+        """
+        Returns a `sqlalchemy.orm.sessionmaker` instance for the server
+        configuration database.
+        """
+        return self._database_factory
+
+    @property
+    def environment(self):
+        """Returns the ``check_env`` injected into the task manager."""
+        return self._server_environment
 
     @property
     def machine_id(self) -> str:
@@ -95,16 +120,70 @@ class TaskManager:
     def create_task_data(self, token: str) -> Path:
         """
         Creates a temporary directory which is **NOT** cleaned up
-        automatically, and suitable for putting arbitrary files underneath
-        to communicate large inputs (that should not be put in the `Queue`)
-        to the `execute` method of an `AbstractTask`.
-        """
-        task_tmp_root = Path(tempfile.gettempdir()) / "codechecker_tasks" \
-            / self.machine_id
-        os.makedirs(task_tmp_root, exist_ok=True)
+        automatically by the current context, and which is suitable for
+        putting arbitrary files underneath to communicate large inputs
+        (that should not be put in the `Queue`) to the `execute` method of
+        an `AbstractTask`.
 
-        task_tmp_dir = tempfile.mkdtemp(prefix=f"{token}-")
-        return Path(task_tmp_dir)
+        The larger business logic of the Server implementation may still clean
+        up the temporary directories, e.g., if the pending tasks are being
+        dropped during a shutdown, making retention of this "temporary data"
+        useless.
+        See `destroy_temporary_data`.
+        """
+        task_temp_dir = tempfile.mkdtemp(prefix=f"{token}-",
+                                         dir=self._temp_dir_root)
+        return Path(task_temp_dir)
+
+    def destroy_all_temporary_data(self):
+        """
+        Removes the contents of task-temporary directories under the
+        `TaskManager`'s initial `temp_dir` and current "machine ID".
+        """
+        try:
+            shutil.rmtree(self._temp_dir_root)
+        except Exception as ex:
+            LOG.warning("Failed to remove background tasks' data_dirs at "
+                        "'%s':\n%s", self._temp_dir_root, str(ex))
+
+    def drop_all_incomplete_tasks(self, action: str) -> int:
+        """
+        Sets all tasks in the database that were associated with the given
+        `machine_id` to ``"dropped"`` status, indicating that the status was
+        changed during the `action`.
+
+        Returns the number of `DBTask`s actually changed.
+        """
+        count: int = 0
+        with DBSession(self._database_factory) as session:
+            for t in session.query(DBTask) \
+                    .filter(DBTask.machine_id == self.machine_id,
+                            DBTask.status.in_(["allocated",
+                                               "enqueued",
+                                               "running"])) \
+                    .all():
+                count += 1
+                t.add_comment(f"DROPPED!\n{action}",
+                              "SYSTEM")
+                t.set_abandoned(force_dropped_status=True)
+
+            session.commit()
+        return count
+
+    def get_task_record(self, token: str) -> DBTask:
+        """
+        Retrieves the `DBTask` for the task identified by `task_obj`.
+
+        This class should not be mutated, only the fields queried.
+        """
+        with DBSession(self._database_factory) as session:
+            db_task: Optional[DBTask] = \
+                session.query(DBTask).get(token)
+            if not db_task:
+                raise KeyError(f"No task record for token '{token}' "
+                               "in the database")
+            session.expunge(db_task)
+            return db_task
 
     def _get_task_record(self, task_obj: "AbstractTask") -> DBTask:
         """
@@ -112,14 +191,7 @@ class TaskManager:
 
         This class should not be mutated, only the fields queried.
         """
-        with DBSession(self._database_factory) as session:
-            try:
-                db_task = session.query(DBTask).get(task_obj.token)
-                session.expunge(db_task)
-                return db_task
-            except sqlalchemy.exc.SQLAlchemyError as sql_err:
-                raise KeyError(f"No task record for token '{task_obj.token}' "
-                               "in the database") from sql_err
+        return self.get_task_record(task_obj.token)
 
     def _mutate_task_record(self, task_obj: "AbstractTask",
                             mutator: Callable[[DBTask], None]):
@@ -128,14 +200,14 @@ class TaskManager:
         corresponding to the `task_obj` description available in memory.
         """
         with DBSession(self._database_factory) as session:
-            try:
-                db_record = session.query(DBTask).get(task_obj.token)
-            except sqlalchemy.exc.SQLAlchemyError as sql_err:
+            db_task: Optional[DBTask] = \
+                session.query(DBTask).get(task_obj.token)
+            if not db_task:
                 raise KeyError(f"No task record for token '{task_obj.token}' "
-                               "in the database") from sql_err
+                               "in the database")
 
             try:
-                mutator(db_record)
+                mutator(db_task)
             except Exception:
                 session.rollback()
 
@@ -195,35 +267,18 @@ class TaskManager:
             (db_task.status in ["enqueued", "running"]
              and db_task.cancel_flag)
 
+    def add_comment(self, task_obj: "AbstractTask", comment: str,
+                    actor: Optional[str] = None):
+        """
+        Adds `comment` in the name of `actor` to the task record corresponding
+        to `task_obj`.
+        """
+        self._mutate_task_record(task_obj,
+                                 lambda dbt: dbt.add_comment(comment, actor))
+
     def heartbeat(self, task_obj: "AbstractTask"):
         """
         Triggers ``heartbeat()`` timestamp update in the database for
         `task_obj`.
         """
         self._mutate_task_record(task_obj, lambda dbt: dbt.heartbeat())
-
-
-def drop_all_incomplete_tasks(config_db_session_factory, machine_id: str,
-                              action: str) -> int:
-    """
-    Sets all tasks in the database (reachable via `config_db_session_factory`)
-    that were associated with the given `machine_id` to ``"dropped"`` status,
-    indicating that the status was changed during the `action`.
-
-    Returns the number of `DBTask`s actually changed.
-    """
-    count: int = 0
-    with DBSession(config_db_session_factory) as session:
-        for t in session.query(DBTask) \
-                .filter(DBTask.machine_id == machine_id,
-                        DBTask.status.in_(["allocated",
-                                           "enqueued",
-                                           "running"])) \
-                .all():
-            count += 1
-            t.add_comment(f"DROPPED!\n{action}",
-                          "SYSTEM")
-            t.set_abandoned(force_dropped_status=True)
-
-        session.commit()
-    return count

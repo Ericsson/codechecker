@@ -5,31 +5,36 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+"""
+Implementation of the ``massStoreRunAsynchronous()`` API function that store
+run data to a product's report database.
 
+Called via `report_server`, but factored out here for readability.
+"""
 import base64
-import json
-import os
-import sqlalchemy
-import tempfile
-import time
-import zipfile
-import zlib
-
 from collections import defaultdict
 from datetime import datetime, timedelta
 from hashlib import sha256
-from tempfile import TemporaryDirectory
+import json
+import os
+from pathlib import Path
+import sqlalchemy
+import tempfile
+import time
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
+import zipfile
+import zlib
 
-import codechecker_api_shared
+from codechecker_api_shared.ttypes import DBStatus, ErrorCode, RequestFailed
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger
 from codechecker_common.review_status_handler import ReviewStatusHandler, \
     SourceReviewStatus
-from codechecker_common.util import load_json, path_for_fake_root
+from codechecker_common.util import format_size, load_json, path_for_fake_root
 
+from codechecker_report_converter import twodim
 from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import \
     FakeChecker, Report, UnknownChecker, report_file
@@ -45,10 +50,12 @@ from ..database.run_db_model import \
     ExtendedReportData, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
-    Run, RunLock, RunHistory
+    Run, RunLock as DBRunLock, RunHistory
 from ..metadata import checker_is_unavailable, MetadataInfoParser
-
-from .report_server import ThriftRequestHandler
+from ..product import Product as ServerProduct
+from ..session_manager import SessionManager
+from ..task_executors.abstract_task import AbstractTask
+from ..task_executors.task_manager import TaskManager
 from .thrift_enum_helper import report_extended_data_type_str
 
 
@@ -56,32 +63,37 @@ LOG = get_logger('server')
 STORE_TIME_LOG = get_logger('store_time')
 
 
-class LogTask:
+class StepLog:
+    """
+    Simple context manager that logs an arbitrary step's comment and time
+    taken annotated with a run name.
+    """
+
     def __init__(self, run_name: str, message: str):
-        self.__run_name = run_name
-        self.__msg = message
-        self.__start_time = time.time()
+        self._run_name = run_name
+        self._msg = message
+        self._start_time = time.time()
 
-    def __enter__(self, *args):
-        LOG.info("[%s] %s...", self.__run_name, self.__msg)
+    def __enter__(self, *_args):
+        LOG.info("[%s] %s...", self._run_name, self._msg)
 
-    def __exit__(self, *args):
-        LOG.info("[%s] %s. Done. (Duration: %s sec)", self.__run_name,
-                 self.__msg, round(time.time() - self.__start_time, 2))
+    def __exit__(self, *_args):
+        LOG.info("[%s] %s. Done. (Duration: %.2f sec)",
+                 self._run_name, self._msg, time.time() - self._start_time)
 
 
-class RunLocking:
+class RunLock:
     def __init__(self, session: DBSession, run_name: str):
         self.__session = session
         self.__run_name = run_name
         self.__run_lock = None
 
-    def __enter__(self, *args):
+    def __enter__(self, *_args):
         # Load the lock record for "FOR UPDATE" so that the transaction that
         # handles the run's store operations has a lock on the database row
         # itself.
-        self.__run_lock = self.__session.query(RunLock) \
-            .filter(RunLock.name == self.__run_name) \
+        self.__run_lock = self.__session.query(DBRunLock) \
+            .filter(DBRunLock.name == self.__run_name) \
             .with_for_update(nowait=True) \
             .one()
 
@@ -98,39 +110,161 @@ class RunLocking:
                   self.__run_name, self.__run_lock.locked_at)
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *_args):
         self.__run_lock = None
         self.__session = None
 
+    def store_run_lock_in_db(self, associated_user: str):
+        """
+        Stores a `DBRunLock` record for the given run name into the database.
+        """
+        try:
+            # If the run can be stored, we need to lock it first. If there is
+            # already a lock in the database for the given run name which is
+            # expired and multiple processes are trying to get this entry from
+            # the database for update we may get the following exception:
+            # could not obtain lock on row in relation "run_locks"
+            # This is the reason why we have to wrap this query to a try/except
+            # block.
+            run_lock: Optional[DBRunLock] = self.__session.query(DBRunLock) \
+                .filter(DBRunLock.name == self.__run_name) \
+                .with_for_update(nowait=True) \
+                .one_or_none()
+        except (sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.ProgrammingError) as ex:
+            LOG.error("Failed to get run lock for '%s': %s",
+                      self.__run_name, ex)
+            raise RequestFailed(
+                ErrorCode.DATABASE,
+                "Someone is already storing to the same run. Please wait "
+                "while the other storage is finished and try it again.") \
+                from ex
 
-def unzip(b64zip: str, output_dir: str) -> int:
+        if not run_lock:
+            # If there is no lock record for the given run name, the run
+            # is not locked -> create a new lock.
+            self.__session.add(DBRunLock(self.__run_name, associated_user))
+            LOG.debug("Acquiring 'run_lock' for '%s' on run '%s' ...",
+                      associated_user, self.__run_name)
+        elif run_lock.has_expired(
+                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE):
+            # There can be a lock in the database, which has already
+            # expired. In this case, we assume that the previous operation
+            # has failed, and thus, we can re-use the already present lock.
+            run_lock.touch()
+            run_lock.username = associated_user
+            LOG.debug("Reusing existing, stale 'run_lock' record on "
+                      "run '%s' ...",
+                      self.__run_name)
+        else:
+            # In case the lock exists and it has not expired, we must
+            # consider the run a locked one.
+            when = run_lock.when_expires(
+                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+            username = run_lock.username or "another user"
+            LOG.info("Refusing to store into run '%s' as it is locked by "
+                     "%s. Lock will expire at '%s'.",
+                     self.__run_name, username, when)
+            raise RequestFailed(
+                ErrorCode.DATABASE,
+                f"The run named '{self.__run_name}' is being stored into by "
+                f"{username}. If the other store operation has failed, this "
+                f"lock will expire at '{when}'.")
+
+        # At any rate, if the lock has been created or updated, commit it
+        # into the database.
+        try:
+            self.__session.commit()
+        except (sqlalchemy.exc.IntegrityError,
+                sqlalchemy.orm.exc.StaleDataError) as ex:
+            # The commit of this lock can fail.
+            #
+            # In case two store ops attempt to lock the same run name at the
+            # same time, committing the lock in the transaction that commits
+            # later will result in an IntegrityError due to the primary key
+            # constraint.
+            #
+            # In case two store ops attempt to lock the same run name with
+            # reuse and one of the operation hangs long enough before COMMIT
+            # so that the other operation commits and thus removes the lock
+            # record, StaleDataError is raised. In this case, also consider
+            # the run locked, as the data changed while the transaction was
+            # waiting, as another run wholly completed.
+
+            LOG.info("Run '%s' got locked while current transaction "
+                     "tried to acquire a lock. Considering run as locked.",
+                     self.__run_name)
+            raise RequestFailed(
+                ErrorCode.DATABASE,
+                f"The run named '{self.__run_name}' is being stored into by "
+                "another user.") from ex
+
+        LOG.debug("Successfully acquired 'run_lock' for '%s' on run '%s'.",
+                  associated_user, self.__run_name)
+
+    def drop_run_lock_from_db(self):
+        """Remove the run_lock row from the database for the current run."""
+        # Using with_for_update() here so the database (in case it supports
+        # this operation) locks the lock record's row from any other access.
+        LOG.debug("Releasing 'run_lock' from run '%s' ...")
+        run_lock: Optional[DBRunLock] = self.__session.query(DBRunLock) \
+            .filter(DBRunLock.name == self.__run_name) \
+            .with_for_update(nowait=True).one()
+        if not run_lock:
+            raise KeyError(
+                f"No 'run_lock' in database for run '{self.__run_name}'")
+        locked_at = run_lock.locked_at
+        username = run_lock.username
+
+        self.__session.delete(run_lock)
+        self.__session.commit()
+
+        LOG.debug("Released 'run_lock' (originally acquired by '%s' on '%s') "
+                  "from run '%s'.",
+                  username, str(locked_at), self.__run_name)
+
+
+def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
     """
-    This function unzips the base64 encoded zip file. This zip is extracted
-    to a temporary directory and the ZIP is then deleted. The function returns
-    the size of the extracted decompressed zip file.
+    This function unzips a Base64 encoded and ZLib-compressed ZIP file.
+    This ZIP is extracted to a temporary directory and the ZIP is then deleted.
+    The function returns the size of the extracted decompressed ZIP file.
     """
-    if len(b64zip) == 0:
+    if not b64zip:
         return 0
 
-    with tempfile.NamedTemporaryFile(suffix='.zip') as zip_file:
-        LOG.debug("Unzipping mass storage ZIP '%s' to '%s'...",
-                  zip_file.name, output_dir)
-
+    with tempfile.NamedTemporaryFile(
+            suffix=".zip", dir=output_dir) as zip_file:
+        LOG.debug("Decompressing input massStoreRun() ZIP to '%s' ...",
+                  zip_file.name)
+        start_time = time.time()
         zip_file.write(zlib.decompress(base64.b64decode(b64zip)))
-        with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
+        zip_file.flush()
+        end_time = time.time()
+
+        size = os.stat(zip_file.name).st_size
+        LOG.debug("Decompressed input massStoreRun() ZIP '%s' -> '%s' "
+                  "(compression ratio: %.2f%%) in '%s'.",
+                  format_size(len(b64zip)), format_size(size),
+                  (size / len(b64zip)),
+                  timedelta(seconds=end_time - start_time))
+
+        with StepLog(run_name, "Extract massStoreRun() ZIP contents"), \
+                zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zip_handle:
+            LOG.debug("Extracting massStoreRun() ZIP '%s' to '%s' ...",
+                      zip_file.name, output_dir)
             try:
-                zipf.extractall(output_dir)
-                return os.stat(zip_file.name).st_size
+                zip_handle.extractall(output_dir)
+                return size
             except Exception:
                 LOG.error("Failed to extract received ZIP.")
                 import traceback
                 traceback.print_exc()
                 raise
-    return 0
 
 
 def get_file_content(file_path: str) -> bytes:
-    """Return the file content for the given filepath. """
+    """Return the file content for the given `file_path`."""
     with open(file_path, 'rb') as f:
         return f.read()
 
@@ -202,7 +336,7 @@ def add_file_record(
 
 
 def get_blame_file_data(
-    blame_file: str
+    blame_file: Path
 ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
     Get blame information from the given file.
@@ -214,7 +348,7 @@ def get_blame_file_data(
     remote_url = None
     tracking_branch = None
 
-    if os.path.isfile(blame_file):
+    if blame_file.is_file():
         data = load_json(blame_file)
         if data:
             remote_url = data.get("remote_url")
@@ -234,28 +368,279 @@ def checker_name_for_report(report: Report) -> Tuple[str, str]:
             report.checker_name or UnknownChecker[1])
 
 
-class MassStoreRun:
-    def __init__(
-        self,
-        report_server: ThriftRequestHandler,
-        name: str,
-        tag: Optional[str],
-        version: Optional[str],
-        b64zip: str,
-        force: bool,
-        trim_path_prefix_list: Optional[List[str]],
-        description: Optional[str]
-    ):
-        """ Initialize object. """
-        self.__report_server = report_server
+class MassStoreRunInputHandler:
+    """Prepares a `MassStoreRunTask` from an API input."""
 
-        self.__name = name
-        self.__tag = tag
-        self.__version = version
-        self.__b64zip = b64zip
-        self.__force = force
-        self.__trim_path_prefixes = trim_path_prefix_list
-        self.__description = description
+    # Note: The implementation of this class is executed in the "foreground",
+    # in the context of an API handler process!
+    # **DO NOT** put complex logic here that would take too much time to
+    # validate.
+    # Long-running actions of a storage process should be in
+    # MassStoreRunImplementation instead!
+
+    def __init__(self,
+                 session_manager: SessionManager,
+                 config_db_sessionmaker,
+                 product_db_sessionmaker,
+                 task_manager: TaskManager,
+                 package_context,
+                 product_id: int,
+                 run_name: str,
+                 run_description: Optional[str],
+                 store_tag: Optional[str],
+                 client_version: str,
+                 force_overwrite_of_run: bool,
+                 path_prefixes_to_trim: Optional[List[str]],
+                 zipfile_contents_base64: str,
+                 user_name: str):
+        self._input_handling_start_time = time.time()
+        self._session_manager = session_manager
+        self._config_db = config_db_sessionmaker
+        self._product_db = product_db_sessionmaker
+        self._tm = task_manager
+        self._package_context = package_context
+        self._input_zip_blob = zipfile_contents_base64
+        self.client_version = client_version
+        self.force_overwrite_of_run = force_overwrite_of_run
+        self.path_prefixes_to_trim = path_prefixes_to_trim
+        self.run_name = run_name
+        self.run_description = run_description
+        self.store_tag = store_tag
+        self.user_name = user_name
+
+        with DBSession(self._config_db) as session:
+            product: Optional[Product] = session.query(Product) \
+                .get(product_id)
+            if not product:
+                raise KeyError(f"No product with ID '{product_id}'")
+
+            self._product = product
+
+    def check_store_input_validity_at_face_value(self):
+        """
+        Performs semantic checks of a ``massStoreRunAsynchronous()`` Thrift
+        call that can be done with trivial amounts of work (i.e., without
+        actually parsing the full input ZIP).
+        """
+        self._check_run_limit()
+        self._store_run_lock()  # Fails if the run can not be stored into.
+
+    def create_mass_store_task(self,
+                               is_actually_asynchronous=False) \
+            -> "MassStoreRunTask":
+        """
+        Constructs the `MassStoreRunTask` for the handled and verified input.
+
+        Calling this function results in observable changes outside the
+        process's memory, as it records the task into the database and
+        extracts things to the server's storage area.
+        """
+        token = self._tm.allocate_task_record(
+            "report_server::massStoreRunAsynchronous()"
+            if is_actually_asynchronous
+            else "report_server::massStoreRun()",
+            ("Legacy s" if not is_actually_asynchronous else "S") +
+            f"tore of results to '{self._product.endpoint}' - "
+            f"'{self.run_name}'",
+            self.user_name,
+            self._product)
+        temp_dir = self._tm.create_task_data(token)
+        extract_dir = temp_dir / "store_zip"
+        os.makedirs(extract_dir, exist_ok=True)
+
+        try:
+            with StepLog(self.run_name,
+                         "Save massStoreRun() ZIP data to server storage"):
+                zip_size = unzip(self.run_name,
+                                 self._input_zip_blob,
+                                 extract_dir)
+
+                if not zip_size:
+                    raise RequestFailed(ErrorCode.GENERAL,
+                                        "The uploaded ZIP file is empty!")
+        except Exception:
+            LOG.error("Failed to extract massStoreRunAsynchronous() ZIP!")
+            import traceback
+            traceback.print_exc()
+            raise
+
+        self._input_handling_end_time = time.time()
+
+        try:
+            with open(temp_dir / "store_configuration.json", 'w',
+                      encoding="utf-8") as cfg_f:
+                json.dump({
+                    "client_version": self.client_version,
+                    "force_overwrite": self.force_overwrite_of_run,
+                    "path_prefixes_to_trim": self.path_prefixes_to_trim,
+                    "run_name": self.run_name,
+                    "run_description": self.run_description,
+                    "store_tag": self.store_tag,
+                    "user_name": self.user_name,
+                    }, cfg_f)
+        except Exception:
+            LOG.error("Failed to write massStoreRunAsynchronous() "
+                      "configuration!")
+            import traceback
+            traceback.print_exc()
+            raise
+
+        task = MassStoreRunTask(token, temp_dir,
+                                self._package_context,
+                                self._product.id,
+                                zip_size,
+                                self._input_handling_end_time -
+                                self._input_handling_start_time)
+
+        if not is_actually_asynchronous:
+            self._tm.add_comment(
+                task,
+                "WARNING!\nExecuting a legacy 'massStoreRun()' API call!",
+                "SYSTEM")
+
+        return task
+
+    def _check_run_limit(self):
+        """
+        Checks the maximum allowed number of uploadable runs for the current
+        product.
+        """
+        run_limit: Optional[int] = self._session_manager.get_max_run_count()
+        if self._product.run_limit:
+            run_limit = self._product.run_limit
+
+        if not run_limit:
+            # Allowing the user to upload an unlimited number of runs.
+            return
+        LOG.debug("Checking the maximum number of allowed runs in '%s', "
+                  "which is %d.",
+                  self._product.endpoint, run_limit)
+
+        with DBSession(self._product_db) as session:
+            existing_run: Optional[Run] = session.query(Run) \
+                .filter(Run.name == self.run_name) \
+                .one_or_none()
+            run_count = session.query(Run.id).count()
+
+        if not existing_run and run_count >= run_limit:
+            raise RequestFailed(
+                ErrorCode.GENERAL,
+                "You reached the maximum number of allowed runs "
+                f"({run_count}/{run_limit})! "
+                f"Please remove at least {run_count - run_limit + 1} "
+                "run(s) before you try again!")
+
+    def _store_run_lock(self):
+        """Commits a `DBRunLock` for the to-be-stored `Run`, if available."""
+        with DBSession(self._product_db) as session:
+            RunLock(session, self.run_name) \
+                .store_run_lock_in_db(self.user_name)
+
+
+class MassStoreRunTask(AbstractTask):
+    """Executes `MassStoreRun` as a background job."""
+
+    def __init__(self, token: str, data_path: Path,
+                 package_context,
+                 product_id: int,
+                 input_zip_size: int,
+                 preparation_time_elapsed: float):
+        """
+        Creates the `AbstractTask` implementation for
+        ``massStoreRunAsynchronous()``.
+
+        `preparation_time_elapsed` records how much time was spent by the
+        input handling that prepared the task.
+        This time will be added to the total time spent processing the results
+        in the background.
+        (The time spent in waiting between task enschedulement and task
+        execution is not part of the total time.)
+        """
+        super().__init__(token, data_path)
+        self._package_context = package_context
+        self._product_id = product_id
+        self.input_zip_size = input_zip_size
+        self.time_spent_on_task_preparation = preparation_time_elapsed
+
+    def _implementation(self, tm: TaskManager):
+        try:
+            with open(self.data_path / "store_configuration.json", 'r',
+                      encoding="utf-8") as cfg_f:
+                self.store_configuration = json.load(cfg_f)
+        except Exception:
+            LOG.error("Invalid or unusable massStoreRunAsynchronous() "
+                      "configuration!")
+            raise
+
+        with DBSession(tm.configuration_database_session_factory) as session:
+            db_product: Optional[Product] = session.query(Product) \
+                .get(self._product_id)
+            if not db_product:
+                raise KeyError(f"No product with ID '{self._product_id}'")
+
+            self._product = ServerProduct(db_product.id,
+                                          db_product.endpoint,
+                                          db_product.display_name,
+                                          db_product.connection,
+                                          self._package_context,
+                                          tm.environment)
+
+        self._product.connect()
+        if self._product.db_status != DBStatus.OK:
+            raise EnvironmentError("Database for product "
+                                   f"'{self._product.endpoint}' is in "
+                                   "a bad shape!")
+
+        m = MassStoreRun(self.data_path / "store_zip",
+                         self._package_context,
+                         tm.configuration_database_session_factory,
+                         self._product,
+                         self.store_configuration["run_name"],
+                         self.store_configuration["store_tag"],
+                         self.store_configuration["client_version"],
+                         self.store_configuration["force_overwrite"],
+                         self.store_configuration["path_prefixes_to_trim"],
+                         self.store_configuration["run_description"],
+                         self.store_configuration["user_name"],
+                         )
+        m.store(self.input_zip_size, self.time_spent_on_task_preparation)
+
+
+class MassStoreRun:
+    """Implementation for ``massStoreRunAsynchronous()``."""
+
+    # Note: The implementation of this class is called from MassStoreRunTask
+    # and it is executed in the background, in the context of a Task worker
+    # process.
+    # This is the place where complex implementation logic must go, but be
+    # careful, there is no way to communicate with the user's client anymore!
+
+    # TODO: Poll the task manager at regular points for a cancel signal!
+
+    def __init__(self,
+                 zip_dir: Path,
+                 package_context,
+                 config_db,
+                 product: ServerProduct,
+                 name: str,
+                 tag: Optional[str],
+                 version: Optional[str],
+                 force: bool,
+                 trim_path_prefix_list: Optional[List[str]],
+                 description: Optional[str],
+                 user_name: str,
+                 ):
+        self._zip_dir = zip_dir
+        self._name = name
+        self._tag = tag
+        self._version = version
+        self._force = force
+        self._trim_path_prefixes = trim_path_prefix_list
+        self._description = description
+        self._user_name = user_name
+        self.__config_db = config_db
+        self.__package_context = package_context
+        self.__product = product
 
         self.__mips: Dict[str, MetadataInfoParser] = {}
         self.__analysis_info: Dict[str, AnalysisInfo] = {}
@@ -273,160 +658,13 @@ class MassStoreRun:
             # DBReport.
             str, Tuple[Report, Union[DBReport, int]]] = {}
 
-        self.__get_report_limit_for_product()
-
-    @property
-    def __manager(self):
-        return self.__report_server._manager
-
-    @property
-    def __config_database(self):
-        return self.__report_server._config_database
-
-    @property
-    def __product(self):
-        return self.__report_server._product
-
-    @property
-    def __context(self):
-        return self.__report_server._context
-
-    @property
-    def user_name(self):
-        return self.__report_server._get_username()
-
-    def __check_run_limit(self):
-        """
-        Checks the maximum allowed of uploadable runs for the current product.
-        """
-        max_run_count = self.__manager.get_max_run_count()
-
-        with DBSession(self.__config_database) as session:
+        with DBSession(config_db) as session:
             product = session.query(Product).get(self.__product.id)
-            if product.run_limit:
-                max_run_count = product.run_limit
-
-        # Session that handles constraints on the run.
-        with DBSession(self.__report_server._Session) as session:
-            if not max_run_count:
-                return
-
-            LOG.debug("Check the maximum number of allowed runs which is %d",
-                      max_run_count)
-
-            run = session.query(Run) \
-                .filter(Run.name == self.__name) \
-                .one_or_none()
-
-            # If max_run_count is not set in the config file, it will allow
-            # the user to upload unlimited runs.
-
-            run_count = session.query(Run.id).count()
-
-            # If we are not updating a run or the run count is reached the
-            # limit it will throw an exception.
-            if not run and run_count >= max_run_count:
-                remove_run_count = run_count - max_run_count + 1
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                    f"You reached the maximum number of allowed runs "
-                    f"({run_count}/{max_run_count})! Please remove at least "
-                    f"{remove_run_count} run(s) before you try it again.")
-
-    def __store_run_lock(self, session: DBSession):
-        """
-        Store a RunLock record for the given run name into the database.
-        """
-        try:
-            # If the run can be stored, we need to lock it first. If there is
-            # already a lock in the database for the given run name which is
-            # expired and multiple processes are trying to get this entry from
-            # the database for update we may get the following exception:
-            # could not obtain lock on row in relation "run_locks"
-            # This is the reason why we have to wrap this query to a try/except
-            # block.
-            run_lock = session.query(RunLock) \
-                .filter(RunLock.name == self.__name) \
-                .with_for_update(nowait=True).one_or_none()
-        except (sqlalchemy.exc.OperationalError,
-                sqlalchemy.exc.ProgrammingError) as ex:
-            LOG.error("Failed to get run lock for '%s': %s", self.__name, ex)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                "Someone is already storing to the same run. Please wait "
-                "while the other storage is finished and try it again.")
-
-        if not run_lock:
-            # If there is no lock record for the given run name, the run
-            # is not locked -- create a new lock.
-            run_lock = RunLock(self.__name, self.user_name)
-            session.add(run_lock)
-        elif run_lock.has_expired(
-                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE):
-            # There can be a lock in the database, which has already
-            # expired. In this case, we assume that the previous operation
-            # has failed, and thus, we can re-use the already present lock.
-            run_lock.touch()
-            run_lock.username = self.user_name
-        else:
-            # In case the lock exists and it has not expired, we must
-            # consider the run a locked one.
-            when = run_lock.when_expires(
-                db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
-
-            username = run_lock.username if run_lock.username is not None \
-                else "another user"
-
-            LOG.info("Refusing to store into run '%s' as it is locked by "
-                     "%s. Lock will expire at '%s'.", self.__name, username,
-                     when)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                f"The run named '{self.__name}' is being stored into by "
-                f"{username}. If the other store operation has failed, this "
-                f"lock will expire at '{when}'.")
-
-        # At any rate, if the lock has been created or updated, commit it
-        # into the database.
-        try:
-            session.commit()
-        except (sqlalchemy.exc.IntegrityError,
-                sqlalchemy.orm.exc.StaleDataError) as ex:
-            # The commit of this lock can fail.
-            #
-            # In case two store ops attempt to lock the same run name at the
-            # same time, committing the lock in the transaction that commits
-            # later will result in an IntegrityError due to the primary key
-            # constraint.
-            #
-            # In case two store ops attempt to lock the same run name with
-            # reuse and one of the operation hangs long enough before COMMIT
-            # so that the other operation commits and thus removes the lock
-            # record, StaleDataError is raised. In this case, also consider
-            # the run locked, as the data changed while the transaction was
-            # waiting, as another run wholly completed.
-
-            LOG.info("Run '%s' got locked while current transaction "
-                     "tried to acquire a lock. Considering run as locked.",
-                     self.__name)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                f"The run named '{self.__name}' is being stored into by "
-                "another user.") from ex
-
-    def __free_run_lock(self, session: DBSession):
-        """ Remove the lock from the database for the given run name. """
-        # Using with_for_update() here so the database (in case it supports
-        # this operation) locks the lock record's row from any other access.
-        run_lock = session.query(RunLock) \
-            .filter(RunLock.name == self.__name) \
-            .with_for_update(nowait=True).one()
-        session.delete(run_lock)
-        session.commit()
+            self.__report_limit = product.report_limit
 
     def __store_source_files(
         self,
-        source_root: str,
+        source_root: Path,
         filename_to_hash: Dict[str, str]
     ) -> Dict[str, int]:
         """ Storing file contents from plist. """
@@ -434,10 +672,10 @@ class MassStoreRun:
         file_path_to_id = {}
 
         for file_name, file_hash in filename_to_hash.items():
-            source_file_path = path_for_fake_root(file_name, source_root)
+            source_file_path = path_for_fake_root(file_name, str(source_root))
             LOG.debug("Storing source file: %s", source_file_path)
             trimmed_file_path = trim_path_prefixes(
-                file_name, self.__trim_path_prefixes)
+                file_name, self._trim_path_prefixes)
 
             if not os.path.isfile(source_file_path):
                 # The file was not in the ZIP file, because we already
@@ -445,7 +683,7 @@ class MassStoreRun:
                 # record in the database or we need to add one.
 
                 LOG.debug('%s not found or already stored.', trimmed_file_path)
-                with DBSession(self.__report_server._Session) as session:
+                with DBSession(self.__product.session_factory) as session:
                     fid = add_file_record(
                         session, trimmed_file_path, file_hash)
 
@@ -458,7 +696,7 @@ class MassStoreRun:
                               source_file_path, file_hash)
                 continue
 
-            with DBSession(self.__report_server._Session) as session:
+            with DBSession(self.__product.session_factory) as session:
                 self.__add_file_content(session, source_file_path, file_hash)
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
@@ -468,7 +706,7 @@ class MassStoreRun:
 
     def __add_blame_info(
         self,
-        blame_root: str,
+        blame_root: Path,
         filename_to_hash: Dict[str, str]
     ):
         """
@@ -480,11 +718,11 @@ class MassStoreRun:
         .zip file. This function stores blame info even if the corresponding
         source file is not in the .zip file.
         """
-        with DBSession(self.__report_server._Session) as session:
+        with DBSession(self.__product.session_factory) as session:
             for subdir, _, files in os.walk(blame_root):
                 for f in files:
-                    blame_file = os.path.join(subdir, f)
-                    file_path = blame_file[len(blame_root.rstrip("/")):]
+                    blame_file = Path(subdir) / f
+                    file_path = f"/{str(blame_file.relative_to(blame_root))}"
                     blame_info, remote_url, tracking_branch = \
                         get_blame_file_data(blame_file)
 
@@ -599,8 +837,8 @@ class MassStoreRun:
         while tries < max_tries:
             tries += 1
             try:
-                LOG.debug("[%s] Begin attempt %d...", self.__name, tries)
-                with DBSession(self.__report_server._Session) as session:
+                LOG.debug("[%s] Begin attempt %d...", self._name, tries)
+                with DBSession(self.__product.session_factory) as session:
                     known_checkers = {(r.analyzer_name, r.checker_name)
                                       for r in session
                                       .query(Checker.analyzer_name,
@@ -608,7 +846,8 @@ class MassStoreRun:
                                       .all()}
                     for analyzer, checker in \
                             sorted(all_checkers - known_checkers):
-                        s = self.__context.checker_labels.severity(checker)
+                        s = self.__package_context.checker_labels \
+                            .severity(checker)
                         s = ttypes.Severity._NAMES_TO_VALUES[s]
                         session.add(Checker(analyzer, checker, s))
                         LOG.debug("Acquiring ID for checker '%s/%s' "
@@ -620,7 +859,7 @@ class MassStoreRun:
                     sqlalchemy.exc.ProgrammingError) as ex:
                 LOG.error("Storing checkers of run '%s' failed: %s.\n"
                           "Waiting %d before trying again...",
-                          self.__name, ex, wait_time)
+                          self._name, ex, wait_time)
                 time.sleep(wait_time.total_seconds())
                 wait_time *= 2
             except Exception as ex:
@@ -630,10 +869,9 @@ class MassStoreRun:
                 traceback.print_exc()
                 raise
 
-        raise codechecker_api_shared.ttypes.RequestFailed(
-            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-            "Storing the names of the checkers in the run failed due to "
-            "excessive contention!")
+        raise ConnectionRefusedError("Storing the names of the checkers in "
+                                     "the run failed due to excessive "
+                                     "contention!")
 
     def __store_analysis_statistics(
         self,
@@ -661,7 +899,7 @@ class MassStoreRun:
                     stats[analyzer_type]["versions"].add(res["version"])
 
                 if "failed_sources" in res:
-                    if self.__version == '6.9.0':
+                    if self._version == '6.9.0':
                         stats[analyzer_type]["failed_sources"].add(
                             'Unavailable in CodeChecker 6.9.0!')
                     else:
@@ -757,89 +995,82 @@ class MassStoreRun:
         By default updates the results if name already exists.
         Using the force flag removes existing analysis results for a run.
         """
-        try:
-            LOG.debug("Adding run '%s'...", self.__name)
+        LOG.debug("Adding run '%s'...", self._name)
 
-            run = session.query(Run) \
-                .filter(Run.name == self.__name) \
+        run = session.query(Run) \
+            .filter(Run.name == self._name) \
+            .one_or_none()
+
+        update_run = True
+        if run and self._force:
+            # Clean already collected results.
+            if not run.can_delete:
+                # Deletion is already in progress.
+                msg = f"Can't delete {run.id}"
+                LOG.debug(msg)
+                raise EnvironmentError(msg)
+
+            LOG.info('Removing previous analysis results...')
+            session.delete(run)
+            # Not flushing after delete leads to a constraint violation
+            # error later, when adding run entity with the same name as
+            # the old one.
+            session.flush()
+
+            checker_run = Run(self._name, self._version)
+            session.add(checker_run)
+            session.flush()
+            run_id = checker_run.id
+
+        elif run:
+            # There is already a run, update the results.
+            run.date = datetime.now()
+            run.duration = -1
+            session.flush()
+            run_id = run.id
+        else:
+            # There is no run create new.
+            checker_run = Run(self._name, self._version)
+            session.add(checker_run)
+            session.flush()
+            run_id = checker_run.id
+            update_run = False
+
+        # Add run to the history.
+        LOG.debug("Adding run history.")
+
+        if self._tag is not None:
+            run_history = session.query(RunHistory) \
+                .filter(RunHistory.run_id == run_id,
+                        RunHistory.version_tag == self._tag) \
                 .one_or_none()
 
-            update_run = True
-            if run and self.__force:
-                # Clean already collected results.
-                if not run.can_delete:
-                    # Deletion is already in progress.
-                    msg = f"Can't delete {run.id}"
-                    LOG.debug(msg)
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        msg)
+            if run_history:
+                run_history.version_tag = None
+                session.add(run_history)
 
-                LOG.info('Removing previous analysis results...')
-                session.delete(run)
-                # Not flushing after delete leads to a constraint violation
-                # error later, when adding run entity with the same name as
-                # the old one.
-                session.flush()
+        cc_versions = set()
+        for mip in self.__mips.values():
+            if mip.cc_version:
+                cc_versions.add(mip.cc_version)
 
-                checker_run = Run(self.__name, self.__version)
-                session.add(checker_run)
-                session.flush()
-                run_id = checker_run.id
+        cc_version = '; '.join(cc_versions) if cc_versions else None
+        run_history = RunHistory(
+            run_id, self._tag, self._user_name, run_history_time,
+            cc_version, self._description)
 
-            elif run:
-                # There is already a run, update the results.
-                run.date = datetime.now()
-                run.duration = -1
-                session.flush()
-                run_id = run.id
-            else:
-                # There is no run create new.
-                checker_run = Run(self.__name, self.__version)
-                session.add(checker_run)
-                session.flush()
-                run_id = checker_run.id
-                update_run = False
+        session.add(run_history)
+        session.flush()
 
-            # Add run to the history.
-            LOG.debug("Adding run history.")
+        LOG.debug("Adding run done.")
 
-            if self.__tag is not None:
-                run_history = session.query(RunHistory) \
-                    .filter(RunHistory.run_id == run_id,
-                            RunHistory.version_tag == self.__tag) \
-                    .one_or_none()
+        self.__store_analysis_statistics(session, run_history.id)
+        self.__store_analysis_info(session, run_history)
 
-                if run_history:
-                    run_history.version_tag = None
-                    session.add(run_history)
+        session.flush()
+        LOG.debug("Storing analysis statistics done.")
 
-            cc_versions = set()
-            for mip in self.__mips.values():
-                if mip.cc_version:
-                    cc_versions.add(mip.cc_version)
-
-            cc_version = '; '.join(cc_versions) if cc_versions else None
-            run_history = RunHistory(
-                run_id, self.__tag, self.user_name, run_history_time,
-                cc_version, self.__description)
-
-            session.add(run_history)
-            session.flush()
-
-            LOG.debug("Adding run done.")
-
-            self.__store_analysis_statistics(session, run_history.id)
-            self.__store_analysis_info(session, run_history)
-
-            session.flush()
-            LOG.debug("Storing analysis statistics done.")
-
-            return run_id, update_run
-        except Exception as ex:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
+        return run_id, update_run
 
     def __get_checker(self,
                       session: DBSession,
@@ -879,49 +1110,43 @@ class MassStoreRun:
         fixed_at: Optional[datetime] = None
     ) -> int:
         """ Add report to the database. """
-        try:
-            checker = self.__checker_for_report(session, report)
+        checker = self.__checker_for_report(session, report)
+        if not checker:
+            # It would be too easy to create a 'Checker' instance with the
+            # observed data right here, but __add_report() is called in
+            # the context of the *BIG* TRANSACTION which has all the
+            # reports of the entire store pending. Losing all that
+            # information on a potential UNIQUE CONSTRAINT violation due
+            # to multiple concurrent massStoreRun()s trying to store the
+            # same checker ID which was never seen in a 'metadata.json' is
+            # not worth it.
+            checker = self.__get_checker(session,
+                                         FakeChecker[0], FakeChecker[1])
             if not checker:
-                # It would be too easy to create a 'Checker' instance with the
-                # observed data right here, but __add_report() is called in
-                # the context of the *BIG* TRANSACTION which has all the
-                # reports of the entire store pending. Losing all that
-                # information on a potential UNIQUE CONSTRAINT violation due
-                # to multiple concurrent massStoreRun()s trying to store the
-                # same checker ID which was never seen in a 'metadata.json' is
-                # not worth it.
-                checker = self.__get_checker(session,
-                                             FakeChecker[0], FakeChecker[1])
-                if not checker:
-                    LOG.fatal("Psuedo-checker '%s/%s' has no "
-                              "identity in the database, even though "
-                              "__store_checker_identifiers() should have "
-                              "always preemptively created it!",
-                              FakeChecker[0], FakeChecker[1])
-                    raise KeyError(FakeChecker[1])
+                LOG.fatal("Psuedo-checker '%s/%s' has no "
+                          "identity in the database, even though "
+                          "__store_checker_identifiers() should have "
+                          "always preemptively created it!",
+                          FakeChecker[0], FakeChecker[1])
+                raise KeyError(FakeChecker[1])
 
-            db_report = DBReport(
-                file_path_to_id[report.file.path], run_id, report.report_hash,
-                checker, report.line, report.column,
-                len(report.bug_path_events), report.message, detection_status,
-                review_status.status, review_status.author,
-                review_status.message, run_history_time,
-                review_status.in_source, detection_time, fixed_at)
-            if analysis_info:
-                db_report.analysis_info.append(analysis_info)
+        db_report = DBReport(
+            file_path_to_id[report.file.path], run_id, report.report_hash,
+            checker, report.line, report.column,
+            len(report.bug_path_events), report.message, detection_status,
+            review_status.status, review_status.author,
+            review_status.message, run_history_time,
+            review_status.in_source, detection_time, fixed_at)
+        if analysis_info:
+            db_report.analysis_info.append(analysis_info)
 
-            session.add(db_report)
-            self.__added_reports.append((db_report, report))
-            if db_report.checker.checker_name == FakeChecker[1]:
-                self.__reports_with_fake_checkers[report_path_hash] = \
-                    (report, db_report)
+        session.add(db_report)
+        self.__added_reports.append((db_report, report))
+        if db_report.checker.checker_name == FakeChecker[1]:
+            self.__reports_with_fake_checkers[report_path_hash] = \
+                (report, db_report)
 
-            return db_report.id
-
-        except Exception as ex:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
+        return db_report.id
 
     def __get_faked_checkers(self) \
             -> Set[Tuple[str, str]]:
@@ -966,78 +1191,67 @@ class MassStoreRun:
         so all it does is upgrade the 'checker_id' FOREIGN KEY field to point
         at the real checker.
         """
-        try:
-            grouped_by_checker: Dict[Tuple[str, str], List[int]] = \
-                defaultdict(list)
-            for _, (report, db_id) in \
-                    self.__reports_with_fake_checkers.items():
-                checker: Tuple[str, str] = checker_name_for_report(report)
-                grouped_by_checker[checker].append(cast(int, db_id))
+        grouped_by_checker: Dict[Tuple[str, str], List[int]] = \
+            defaultdict(list)
+        for _, (report, db_id) in \
+                self.__reports_with_fake_checkers.items():
+            checker: Tuple[str, str] = checker_name_for_report(report)
+            grouped_by_checker[checker].append(cast(int, db_id))
 
-            for chk, report_ids in grouped_by_checker.items():
-                analyzer_name, checker_name = chk
-                chk_obj = cast(Checker, self.__get_checker(session,
-                                                           analyzer_name,
-                                                           checker_name))
-                session.query(DBReport) \
-                    .filter(DBReport.id.in_(report_ids)) \
-                    .update({"checker_id": chk_obj.id},
-                            synchronize_session=False)
-        except Exception as ex:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                str(ex))
+        for chk, report_ids in grouped_by_checker.items():
+            analyzer_name, checker_name = chk
+            chk_obj = cast(Checker, self.__get_checker(session,
+                                                       analyzer_name,
+                                                       checker_name))
+            session.query(DBReport) \
+                .filter(DBReport.id.in_(report_ids)) \
+                .update({"checker_id": chk_obj.id},
+                        synchronize_session=False)
 
     def __add_report_context(self, session, file_path_to_id):
-        try:
-            for db_report, report in self.__added_reports:
-                LOG.debug("Storing bug path positions.")
-                for i, p in enumerate(report.bug_path_positions):
-                    session.add(BugReportPoint(
-                        p.range.start_line, p.range.start_col,
-                        p.range.end_line, p.range.end_col,
-                        i, file_path_to_id[p.file.path], db_report.id))
+        for db_report, report in self.__added_reports:
+            LOG.debug("Storing bug path positions.")
+            for i, p in enumerate(report.bug_path_positions):
+                session.add(BugReportPoint(
+                    p.range.start_line, p.range.start_col,
+                    p.range.end_line, p.range.end_col,
+                    i, file_path_to_id[p.file.path], db_report.id))
 
-                LOG.debug("Storing bug path events.")
-                for i, event in enumerate(report.bug_path_events):
-                    session.add(BugPathEvent(
-                        event.range.start_line, event.range.start_col,
-                        event.range.end_line, event.range.end_col,
-                        i, event.message, file_path_to_id[event.file.path],
-                        db_report.id))
+            LOG.debug("Storing bug path events.")
+            for i, event in enumerate(report.bug_path_events):
+                session.add(BugPathEvent(
+                    event.range.start_line, event.range.start_col,
+                    event.range.end_line, event.range.end_col,
+                    i, event.message, file_path_to_id[event.file.path],
+                    db_report.id))
 
-                LOG.debug("Storing notes.")
-                for note in report.notes:
-                    data_type = report_extended_data_type_str(
-                        ttypes.ExtendedReportDataType.NOTE)
+            LOG.debug("Storing notes.")
+            for note in report.notes:
+                data_type = report_extended_data_type_str(
+                    ttypes.ExtendedReportDataType.NOTE)
 
-                    session.add(ExtendedReportData(
-                        note.range.start_line, note.range.start_col,
-                        note.range.end_line, note.range.end_col,
-                        note.message, file_path_to_id[note.file.path],
-                        db_report.id, data_type))
+                session.add(ExtendedReportData(
+                    note.range.start_line, note.range.start_col,
+                    note.range.end_line, note.range.end_col,
+                    note.message, file_path_to_id[note.file.path],
+                    db_report.id, data_type))
 
-                LOG.debug("Storing macro expansions.")
-                for macro in report.macro_expansions:
-                    data_type = report_extended_data_type_str(
-                        ttypes.ExtendedReportDataType.MACRO)
+            LOG.debug("Storing macro expansions.")
+            for macro in report.macro_expansions:
+                data_type = report_extended_data_type_str(
+                    ttypes.ExtendedReportDataType.MACRO)
 
-                    session.add(ExtendedReportData(
-                        macro.range.start_line, macro.range.start_col,
-                        macro.range.end_line, macro.range.end_col,
-                        macro.message, file_path_to_id[macro.file.path],
-                        db_report.id, data_type))
+                session.add(ExtendedReportData(
+                    macro.range.start_line, macro.range.start_col,
+                    macro.range.end_line, macro.range.end_col,
+                    macro.message, file_path_to_id[macro.file.path],
+                    db_report.id, data_type))
 
-                if report.annotations:
-                    self.__validate_and_add_report_annotations(
-                        session, db_report.id, report.annotations)
+            if report.annotations:
+                self.__validate_and_add_report_annotations(
+                    session, db_report.id, report.annotations)
 
-            session.flush()
-
-        except Exception as ex:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                str(ex))
+        session.flush()
 
     def __process_report_file(
         self,
@@ -1074,7 +1288,7 @@ class MassStoreRun:
 
         for report in reports:
             self.__report_count += 1
-            report.trim_path_prefixes(self.__trim_path_prefixes)
+            report.trim_path_prefixes(self._trim_path_prefixes)
 
             missing_ids_for_files = get_missing_file_ids(report)
             if missing_ids_for_files:
@@ -1117,7 +1331,7 @@ class MassStoreRun:
             except ValueError as err:
                 self.__wrong_src_code_comments.append(str(err))
 
-            review_status.author = self.user_name
+            review_status.author = self._user_name
             review_status.date = run_history_time
 
             # False positive and intentional reports are considered as closed
@@ -1181,24 +1395,17 @@ class MassStoreRun:
             try:
                 allowed_annotations[key]["func"](value)
                 session.add(ReportAnnotations(report_id, key, value))
-            except KeyError:
-                # pylint: disable=raise-missing-from
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
-                    f"'{key}' is not an allowed report annotation.",
-                    allowed_annotations.keys())
-            except ValueError:
-                # pylint: disable=raise-missing-from
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
-                    f"'{value}' has wrong format. '{key}' annotations must be "
-                    f"'{allowed_annotations[key]['display']}'.")
-
-    def __get_report_limit_for_product(self):
-        with DBSession(self.__config_database) as session:
-            product = session.query(Product).get(self.__product.id)
-            if product.report_limit:
-                self.__report_limit = product.report_limit
+            except KeyError as ke:
+                raise TypeError(f"'{key}' is not an allowed report "
+                                "annotation. "
+                                "The allowed annotations are: "
+                                f"{allowed_annotations.keys()}") \
+                    from ke
+            except ValueError as ve:
+                raise ValueError(f"'{value}' is in a wrong format! "
+                                 f"'{key}' annotations must be "
+                                 f"'{allowed_annotations[key]['display']}'.") \
+                    from ve
 
     def __check_report_count(self):
         """
@@ -1210,13 +1417,7 @@ class MassStoreRun:
             LOG.error("The number of reports in the given report folder is " +
                       "larger than the allowed." +
                       f"The limit: {self.__report_limit}!")
-            extra_info = [
-                "report_limit",
-                f"limit:{self.__report_limit}"
-            ]
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.
-                ErrorCode.GENERAL,
+            raise OverflowError(
                 "**Report Limit Exceeded** " +
                 "This report folder cannot be stored because the number of " +
                 "reports in the result folder is too high. Usually noisy " +
@@ -1226,14 +1427,13 @@ class MassStoreRun:
                 "counts. Disable checkers that have generated an excessive " +
                 "number of reports and then rerun the analysis to be able " +
                 "to store the results on the server. " +
-                f"Limit: {self.__report_limit}",
-                extra_info)
+                f"Limit: {self.__report_limit}")
 
     def __store_reports(
         self,
         session: DBSession,
-        report_dir: str,
-        source_root: str,
+        report_dir: Path,
+        source_root: Path,
         run_id: int,
         file_path_to_id: Dict[str, int],
         run_history_time: datetime
@@ -1241,11 +1441,11 @@ class MassStoreRun:
         """ Parse up and store the plist report files. """
 
         def get_skip_handler(
-            report_dir: str
+            report_dir: Path
         ) -> skiplist_handler.SkipListHandler:
             """ Get a skip list handler based on the given report directory."""
-            skip_file_path = os.path.join(report_dir, 'skip_file')
-            if not os.path.exists(skip_file_path):
+            skip_file_path = report_dir / "skip_file"
+            if not skip_file_path.exists():
                 return skiplist_handler.SkipListHandler()
 
             LOG.debug("Pocessing skip file %s", skip_file_path)
@@ -1282,9 +1482,8 @@ class MassStoreRun:
         for root_dir_path, _, report_file_paths in os.walk(report_dir):
             LOG.debug("Get reports from '%s' directory", root_dir_path)
 
-            skip_handler = get_skip_handler(root_dir_path)
-
-            review_status_handler = ReviewStatusHandler(source_root)
+            skip_handler = get_skip_handler(Path(root_dir_path))
+            review_status_handler = ReviewStatusHandler(str(source_root))
 
             review_status_cfg = \
                 os.path.join(root_dir_path, 'review_status.yaml')
@@ -1346,7 +1545,7 @@ class MassStoreRun:
 
         session.flush()
 
-        LOG.info("[%s] Processed %d analyzer result file(s).", self.__name,
+        LOG.info("[%s] Processed %d analyzer result file(s).", self._name,
                  processed_result_file_count)
 
         # If a checker was found in a plist file it can not be disabled so we
@@ -1377,8 +1576,8 @@ class MassStoreRun:
                         report.fixed_at = run_history_time
 
         if reports_to_delete:
-            self.__report_server._removeReports(
-                session, list(reports_to_delete))
+            from .report_server import remove_reports
+            remove_reports(session, reports_to_delete)
 
     def finish_checker_run(
         self,
@@ -1401,153 +1600,126 @@ class MassStoreRun:
 
         return False
 
-    def store(self) -> int:
-        """ Store run results to the server. """
+    def store(self,
+              original_zip_size: int,
+              time_spent_on_task_preparation: float):
+        """Store run results to the server."""
         start_time = time.time()
 
-        # Check constraints of the run.
-        self.__check_run_limit()
-
-        with DBSession(self.__report_server._Session) as session:
-            self.__store_run_lock(session)
-
         try:
-            with TemporaryDirectory(
-                dir=self.__context.codechecker_workspace
-            ) as zip_dir:
-                with LogTask(run_name=self.__name,
-                             message="Unzip storage file"):
-                    zip_size = unzip(self.__b64zip, zip_dir)
+            LOG.debug("Using unzipped folder '%s'", self._zip_dir)
 
-                if zip_size == 0:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.
-                        ErrorCode.GENERAL,
-                        "The received zip file content is empty!")
+            source_root = self._zip_dir / "root"
+            blame_root = self._zip_dir / "blame"
+            report_dir = self._zip_dir / "reports"
+            filename_to_hash = load_json(
+                self._zip_dir / "content_hashes.json", {})
 
-                LOG.debug("Using unzipped folder '%s'", zip_dir)
+            # Store information that is "global" on the product database level.
+            with StepLog(self._name, "Store source files"):
+                LOG.info("[%s] Storing %d source file(s).", self._name,
+                         len(filename_to_hash.keys()))
+                file_path_to_id = self.__store_source_files(
+                    source_root, filename_to_hash)
+                self.__add_blame_info(blame_root, filename_to_hash)
 
-                source_root = os.path.join(zip_dir, 'root')
-                blame_root = os.path.join(zip_dir, 'blame')
-                report_dir = os.path.join(zip_dir, 'reports')
-                content_hash_file = os.path.join(
-                    zip_dir, 'content_hashes.json')
+            run_history_time = datetime.now()
 
-                filename_to_hash = load_json(content_hash_file, {})
+            with StepLog(self._name, "Parse 'metadata.json's"):
+                for root_dir_path, _, _ in os.walk(report_dir):
+                    metadata_file_path = os.path.join(
+                        root_dir_path, 'metadata.json')
 
-                with LogTask(run_name=self.__name,
-                             message="Store source files"):
-                    LOG.info("[%s] Storing %d source file(s).", self.__name,
-                             len(filename_to_hash.keys()))
-                    file_path_to_id = self.__store_source_files(
-                        source_root, filename_to_hash)
-                    self.__add_blame_info(blame_root, filename_to_hash)
+                    self.__mips[root_dir_path] = \
+                        MetadataInfoParser(metadata_file_path)
 
-                run_history_time = datetime.now()
+            with StepLog(self._name,
+                         "Store look-up ID for checkers in 'metadata.json'"):
+                checkers_in_metadata = {
+                    (analyzer, checker)
+                    for metadata in self.__mips.values()
+                    for analyzer in metadata.analyzers
+                    for checker
+                    in metadata.checkers.get(analyzer, {}).keys()}
+                self.__store_checker_identifiers(checkers_in_metadata)
 
-                # Parse all metadata information from the report directory.
-                with LogTask(run_name=self.__name,
-                             message="Parse 'metadata.json's"):
-                    for root_dir_path, _, _ in os.walk(report_dir):
-                        metadata_file_path = os.path.join(
-                            root_dir_path, 'metadata.json')
+            try:
+                # This session's transaction buffer stores the actual run data
+                # into the database.
+                with DBSession(self.__product.session_factory) as session, \
+                        RunLock(session, self._name):
+                    run_id, update_run = self.__add_or_update_run(
+                        session, run_history_time)
 
-                        self.__mips[root_dir_path] = \
-                            MetadataInfoParser(metadata_file_path)
+                    with StepLog(self._name, "Store 'reports'"):
+                        self.__store_reports(
+                            session, report_dir, source_root, run_id,
+                            file_path_to_id, run_history_time)
 
-                with LogTask(run_name=self.__name,
-                             message="Store look-up ID for checkers in "
-                                     "'metadata.json'"):
-                    checkers_in_metadata = {
-                        (analyzer, checker)
-                        for metadata in self.__mips.values()
-                        for analyzer in metadata.analyzers
-                        for checker
-                        in metadata.checkers.get(analyzer, {}).keys()}
-                    self.__store_checker_identifiers(checkers_in_metadata)
+                    session.commit()
+                    self.__load_report_ids_for_reports_with_fake_checkers(
+                        session)
 
-                try:
-                    # This session's transaction buffer stores the actual
-                    # run data into the database.
-                    with DBSession(self.__report_server._Session) as session, \
-                            RunLocking(session, self.__name):
-                        # Actual store operation begins here.
-                        run_id, update_run = self.__add_or_update_run(
-                            session, run_history_time)
+                if self.__reports_with_fake_checkers:
+                    with StepLog(
+                            self._name,
+                            "Get look-up IDs for checkers not present in "
+                            "'metadata.json'"):
+                        additional_checkers = self.__get_faked_checkers()
+                        # __store_checker_identifiers() has its own
+                        # TRANSACTION!
+                        self.__store_checker_identifiers(
+                            additional_checkers)
 
-                        with LogTask(run_name=self.__name,
-                                     message="Store reports"):
-                            self.__store_reports(
-                                session, report_dir, source_root, run_id,
-                                file_path_to_id, run_history_time)
-
-                        session.commit()
-                        self.__load_report_ids_for_reports_with_fake_checkers(
-                            session)
-
+                with DBSession(self.__product.session_factory) as session, \
+                        RunLock(session, self._name):
+                    # The data of the run has been successfully committed
+                    # into the database. Deal with post-processing issues
+                    # that could only be done after-the-fact.
                     if self.__reports_with_fake_checkers:
-                        with LogTask(run_name=self.__name,
-                                     message="Get look-up ID for checkers "
-                                     "not present in 'metadata.json'"):
-                            additional_checkers = self.__get_faked_checkers()
-                            # __store_checker_identifiers() has its own
-                            # TRANSACTION!
-                            self.__store_checker_identifiers(
-                                additional_checkers)
+                        with StepLog(self._name,
+                                     "Fix-up report-to-checker associations"):
+                            self.__realise_fake_checkers(session)
 
-                    with DBSession(self.__report_server._Session) as session, \
-                            RunLocking(session, self.__name):
-                        # The data of the run has been successfully committed
-                        # into the database. Deal with post-processing issues
-                        # that could only be done after-the-fact.
-                        if self.__reports_with_fake_checkers:
-                            with LogTask(run_name=self.__name,
-                                         message="Fix-up report-to-checker "
-                                         "associations"):
-                                self.__realise_fake_checkers(session)
+                    self.finish_checker_run(session, run_id)
+                    session.commit()
 
-                        self.finish_checker_run(session, run_id)
-                        session.commit()
+                end_time = time.time()
 
-                    # If it's a run update, do not increment the number
-                    # of runs of the current product.
-                    inc_num_of_runs = 1 if not update_run else None
+                # If the current store() updated an existing run, do not
+                # increment the number of runs saved for the product.
+                self.__product.set_cached_run_data(
+                    self.__config_db,
+                    number_of_runs_change=(0 if update_run else 1),
+                    last_store_date=run_history_time)
 
-                    self.__report_server._set_run_data_for_curr_product(
-                        inc_num_of_runs, run_history_time)
+                run_time: float = (end_time - start_time) + \
+                    time_spent_on_task_preparation
+                zip_size_kib: float = original_zip_size / 1024
 
-                    runtime = round(time.time() - start_time, 2)
-                    zip_size_kb = round(zip_size / 1024)
+                LOG.info("'%s' stored results (decompressed size: %.2f KiB) "
+                         "to run '%s' (ID: %d%s) in %.2f seconds.",
+                         self._user_name, zip_size_kib, self._name, run_id,
+                         f", under tag '{self._tag}'" if self._tag else "",
+                         run_time)
 
-                    tag_desc = ""
-                    if self.__tag:
-                        tag_desc = f", under tag '{self.__tag}'"
+                iso_start_time = datetime.fromtimestamp(start_time) \
+                    .isoformat()
 
-                    LOG.info("'%s' stored results (%s KB "
-                             "/decompressed/) to run '%s' (id: %d) %s in "
-                             "%s seconds.", self.user_name,
-                             zip_size_kb, self.__name, run_id, tag_desc,
-                             runtime)
+                log_msg = f"{iso_start_time}, " \
+                          f"{round(run_time, 2)}s, " \
+                          f'"{self.__product.name}", ' \
+                          f'"{self._name}", ' \
+                          f"{round(zip_size_kib)}KiB, " \
+                          f"{self.__report_count}, " \
+                          f"{run_id}"
 
-                    iso_start_time = datetime.fromtimestamp(
-                        start_time).isoformat()
-
-                    log_msg = f"{iso_start_time}, " +\
-                              f"{runtime}s, " +\
-                              f'"{self.__product.name}", ' +\
-                              f'"{self.__name}", ' +\
-                              f"{zip_size_kb}KB, " +\
-                              f"{self.__report_count}, " +\
-                              f"{run_id}"
-
-                    STORE_TIME_LOG.info(log_msg)
-
-                    return run_id
-                except (sqlalchemy.exc.OperationalError,
-                        sqlalchemy.exc.ProgrammingError) as ex:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        f"Storing reports to the database failed: {ex}")
+                STORE_TIME_LOG.info(log_msg)
+            except (sqlalchemy.exc.OperationalError,
+                    sqlalchemy.exc.ProgrammingError) as ex:
+                LOG.error("Database error! Storing reports to the "
+                          "database failed: %s", ex)
+                raise
         except Exception as ex:
             LOG.error("Failed to store results: %s", ex)
             import traceback
@@ -1560,10 +1732,17 @@ class MassStoreRun:
             # (If the failure is undetectable, the coded grace period expiry
             # of the lock will allow further store operations to the given
             # run name.)
-            with DBSession(self.__report_server._Session) as session:
-                self.__free_run_lock(session)
+            with DBSession(self.__product.session_factory) as session:
+                RunLock(session, self._name).drop_run_lock_from_db()
 
             if self.__wrong_src_code_comments:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.SOURCE_FILE,
-                    self.__wrong_src_code_comments)
+                wrong_files_as_table = twodim.to_str(
+                    "table",
+                    ["File", "Line", "Checker name"],
+                    [wrong_comment.split('|', 3)
+                     for wrong_comment in self.__wrong_src_code_comments])
+
+                raise ValueError("One or more source files contained invalid "
+                                 "source code comments! "
+                                 "Failed to set review statuses.\n\n"
+                                 f"{wrong_files_as_table}")
