@@ -31,7 +31,8 @@ from datetime import timedelta
 from threading import Timer
 from typing import Dict, Iterable, List, Set, Tuple
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+    StoreLimitKind, SubmittedRunOptions
 
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
@@ -50,8 +51,8 @@ except ImportError:
         """
         raise NotImplementedError()
 
-from codechecker_client import client as libclient
-from codechecker_client import product
+from codechecker_client import client as libclient, product
+from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.compatibility.multiprocessing import Pool
@@ -255,6 +256,24 @@ def add_arguments_to_parser(parser):
                              "If multiple prefixes are given, the longest "
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
+
+    parser.add_argument("--detach",
+                        dest="detach",
+                        default=argparse.SUPPRESS,
+                        action="store_true",
+                        required=False,
+                        help="""
+Runs `store` in fire-and-forget mode: exit immediately once the server accepted
+the analysis reports for storing, without waiting for the server-side data
+processing to conclude.
+Doing this is generally not recommended, as the client will never be notified
+of potential processing failures, and there is no easy way to wait for the
+successfully stored results to become available server-side for potential
+further processing (e.g., `CodeChecker cmd diff`).
+However, using '--detach' can significantly speed up large-scale monitoring
+analyses where access to the results by a tool is not a goal, such as in the
+case of non-gating CI systems.
+""")
 
     cmd_config.add_option(parser)
 
@@ -727,7 +746,7 @@ def get_analysis_statistics(inputs, limits):
         return statistics_files if has_failed_zip else []
 
 
-def storing_analysis_statistics(client, inputs, run_name):
+def store_analysis_statistics(client, inputs, run_name):
     """
     Collects and stores analysis statistics information on the server.
     """
@@ -944,68 +963,56 @@ def main(args):
 
         description = args.description if 'description' in args else None
 
-        LOG.info("Storing results to the server...")
+        LOG.info("Storing results to the server ...")
+        task_token: str = client.massStoreRunAsynchronous(
+            b64zip,
+            SubmittedRunOptions(
+                runName=args.name,
+                tag=args.tag if "tag" in args else None,
+                version=str(context.version),
+                force="force" in args,
+                trimPathPrefixes=trim_path_prefixes,
+                description=description)
+            )
+        LOG.info("Reports submitted to the server for processing.")
 
-        try:
-            with _timeout_watchdog(timedelta(hours=1),
-                                   signal.SIGUSR1):
-                client.massStoreRun(args.name,
-                                    args.tag if 'tag' in args else None,
-                                    str(context.version),
-                                    b64zip,
-                                    'force' in args,
-                                    trim_path_prefixes,
-                                    description)
-        except WatchdogError as we:
-            LOG.warning("%s", str(we))
-
-            # Showing parts of the exception stack is important here.
-            # We **WANT** to see that the timeout happened during a wait on
-            # Thrift reading from the TCP connection (something deep in the
-            # Python library code at "sock.recv_into").
-            import traceback
-            _, _, tb = sys.exc_info()
-            frames = traceback.extract_tb(tb)
-            first, last = frames[0], frames[-2]
-            formatted_frames = traceback.format_list([first, last])
-            fmt_first, fmt_last = formatted_frames[0], formatted_frames[1]
-            LOG.info("Timeout was triggered during:\n%s", fmt_first)
-            LOG.info("Timeout interrupted this low-level operation:\n%s",
-                     fmt_last)
-
-            LOG.error("Timeout!"
-                      "\n\tThe server's reply did not arrive after "
-                      "%d seconds (%s) elapsed since the server-side "
-                      "processing began."
-                      "\n\n\tThis does *NOT* mean that there was an issue "
-                      "with the run you were storing!"
-                      "\n\tThe server might still be processing the results..."
-                      "\n\tHowever, it is more likely that the "
-                      "server had already finished, but the client did not "
-                      "receive a response."
-                      "\n\tUsually, this is caused by the underlying TCP "
-                      "connection failing to signal a low-level disconnect."
-                      "\n\tClients potentially hanging indefinitely in these "
-                      "scenarios is an unfortunate and known issue."
-                      "\n\t\tSee http://github.com/Ericsson/codechecker/"
-                      "issues/3672 for details!"
-                      "\n\n\tThis error here is a temporary measure to ensure "
-                      "an infinite hang is replaced with a well-explained "
-                      "timeout."
-                      "\n\tA more proper solution will be implemented in a "
-                      "subsequent version of CodeChecker.",
-                      we.timeout.total_seconds(), str(we.timeout))
-            sys.exit(1)
-
-        # Storing analysis statistics if the server allows them.
         if client.allowsStoringAnalysisStatistics():
-            storing_analysis_statistics(client, args.input, args.name)
+            store_analysis_statistics(client, args.input, args.name)
 
-        LOG.info("Storage finished successfully.")
+        if "detach" in args:
+            LOG.warning("Exiting the 'store' subcommand as '--detach' was "
+                        "specified: not waiting for the result of the store "
+                        "operation.\n"
+                        "The server might not have finished processing "
+                        "everything at this point, so do NOT rely on querying "
+                        "the results just yet!\n"
+                        "To await the completion of the processing later, "
+                        "you can execute:\n\n"
+                        "\tCodeChecker cmd serverside-tasks --token %s "
+                        "--await",
+                        task_token)
+            # Print the token to stdout as well, so scripts can use "--detach"
+            # meaningfully.
+            print(task_token)
+            return
+
+        task_client = libclient.setup_task_client(protocol, host, port)
+        task_status: str = await_task_termination(LOG, task_token,
+                                                  task_api_client=task_client)
+
+        if task_status == "COMPLETED":
+            LOG.info("Storing the reports finished successfully.")
+        else:
+            LOG.error("Storing the reports failed! "
+                      "The job terminated in status '%s'. "
+                      "The comments associated with the failure are:\n\n%s",
+                      task_status,
+                      task_client.getTaskInfo(task_token).comments)
+            sys.exit(1)
     except Exception as ex:
         import traceback
         traceback.print_exc()
-        LOG.info("Storage failed: %s", str(ex))
+        LOG.error("Storing the reports failed: %s", str(ex))
         sys.exit(1)
     finally:
         os.close(zip_file_handle)
