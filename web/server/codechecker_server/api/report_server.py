@@ -3922,6 +3922,33 @@ class ThriftRequestHandler:
             return list(set(file_hashes) -
                         set(fc.content_hash for fc in q))
 
+    def __massStoreRun_common(self, is_async: bool, zipfile_blob: str,
+                              store_opts: SubmittedRunOptions) -> str:
+        self.__require_store()
+        if not store_opts.runName:
+            raise ValueError("A run name is needed to know where to store!")
+
+        from .mass_store_run import MassStoreRunInputHandler, MassStoreRunTask
+        ih = MassStoreRunInputHandler(self._manager,
+                                      self._config_database,
+                                      self._Session,
+                                      self._task_manager,
+                                      self._context,
+                                      self._product.id,
+                                      store_opts.runName,
+                                      store_opts.description,
+                                      store_opts.tag,
+                                      store_opts.version,
+                                      store_opts.force,
+                                      store_opts.trimPathPrefixes,
+                                      zipfile_blob,
+                                      self._get_username())
+        ih.check_store_input_validity_at_face_value()
+        m: MassStoreRunTask = ih.create_mass_store_task(is_async)
+        self._task_manager.push_task(m)
+
+        return m.token
+
     @exc_to_thrift_reqfail
     @timeit
     def massStoreRun(self,
@@ -3932,37 +3959,24 @@ class ThriftRequestHandler:
                      force: bool,
                      trim_path_prefixes: Optional[List[str]],
                      description: Optional[str]) -> int:
-        self.__require_store()
-        if not name:
-            raise ValueError("A run name is needed to know where to store!")
+        store_opts = SubmittedRunOptions(runName=name,
+                                         tag=tag,
+                                         version=version,
+                                         force=force,
+                                         trimPathPrefixes=trim_path_prefixes,
+                                         description=description,
+                                         )
+        token = self.__massStoreRun_common(False, b64zip, store_opts)
 
-        from .mass_store_run import MassStoreRunInputHandler, MassStoreRunTask
-        ih = MassStoreRunInputHandler(self._manager,
-                                      self._config_database,
-                                      self._Session,
-                                      self._task_manager,
-                                      self._context,
-                                      self._product.id,
-                                      name,
-                                      description,
-                                      tag,
-                                      version,
-                                      force,
-                                      trim_path_prefixes,
-                                      b64zip,
-                                      self._get_username())
-        ih.check_store_input_validity_at_face_value()
-        m: MassStoreRunTask = ih.create_mass_store_task(False)
-        self._task_manager.push_task(m)
-
-        LOG.info("massStoreRun(): Running as '%s' ...", m.token)
+        LOG.info("massStoreRun(): Blocking until task '%s' terminates ...",
+                 token)
 
         # To be compatible with older (<= 6.24, API <= 6.58) clients which
         # may keep using the old API endpoint, simulate awaiting the
         # background task in the API handler.
         while True:
             time.sleep(5)
-            t = self._task_manager.get_task_record(m.token)
+            t = self._task_manager.get_task_record(token)
             if t.is_in_terminated_state:
                 if t.status == "failed":
                     raise codechecker_api_shared.ttypes.RequestFailed(
@@ -3992,13 +4006,8 @@ class ThriftRequestHandler:
     @timeit
     def massStoreRunAsynchronous(self, zipfile_blob: str,
                                  store_opts: SubmittedRunOptions) -> str:
-        import pprint
-        LOG.info("massStoreRunAsynchronous() called with:\n\t - %d bytes "
-                 "input\n\t - Options:\n\n%s", len(zipfile_blob),
-                 pprint.pformat(store_opts.__dict__, indent=2, depth=8))
-        raise codechecker_api_shared.ttypes.RequestFailed(
-            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-            "massStoreRunAsynchronous() not implemented in this server build!")
+        token = self.__massStoreRun_common(True, zipfile_blob, store_opts)
+        return token
 
     @exc_to_thrift_reqfail
     @timeit

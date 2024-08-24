@@ -182,10 +182,12 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
-    def massStoreRunAsynchronous(self, zipfile_blob: str,
-                                 store_opts: ttypes.SubmittedRunOptions) \
-            -> str:
-        pass
+    def massStoreRunAsynchronous(
+        self,
+        zipfile_blob: str,
+        store_opts: ttypes.SubmittedRunOptions
+    ) -> str:
+        raise NotImplementedError("Should have called Thrift code!")
 
     @thrift_client_call
     def allowsStoringAnalysisStatistics(self):
