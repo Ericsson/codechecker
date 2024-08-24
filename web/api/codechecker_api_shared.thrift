@@ -34,13 +34,13 @@ enum ErrorCode {
   API_MISMATCH = 5,
 
   // REMOVED IN API v6.59 (CodeChecker v6.25.0)!
-  // Previously sent by report_server.thrif/codeCheckerDBAccess::massStoreRun()
+  // Previously sent by report_server.thrift/codeCheckerDBAccess::massStoreRun()
   // when the client uploaded a source file which contained errors, such as
   // review status source-code-comment errors.
   /* SOURCE_FILE = 6, */ // Never reuse the value of the enum constant!
 
   // REMOVED IN API v6.59 (CodeChecker v6.25.0)!
-  // Previously sent by report_server.thrif/codeCheckerDBAccess::massStoreRun()
+  // Previously sent by report_server.thrift/codeCheckerDBAccess::massStoreRun()
   // when the client uploaded a report with annotations that had invalid types.
   /* REPORT_FORMAT = 7, */ // Never reuse the value of the enum constant!
 }

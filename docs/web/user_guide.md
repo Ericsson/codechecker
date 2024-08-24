@@ -480,6 +480,19 @@ optional arguments:
                         is given, the longest match will be removed. You may
                         also use Unix shell-like wildcards (e.g.
                         '/*/jsmith/').
+  --detach              Runs `store` in fire-and-forget mode: exit immediately
+                        once the server accepted the analysis reports for
+                        storing, without waiting for the server-side data
+                        processing to conclude. Doing this is generally not
+                        recommended, as the client will never be notified of
+                        potential processing failures, and there is no easy way
+                        to wait for the successfully stored results to become
+                        available server-side for potential further processing
+                        (e.g., `CodeChecker cmd diff`). However, using
+                        '--detach' can significantly speed up large-scale
+                        monitoring analyses where access to the results by a
+                        tool is not a goal, such as in the case of non-gating
+                        CI systems.
   --config CONFIG_FILE  Allow the configuration from an explicit configuration
                         file. The values configured in the config file will
                         overwrite the values set in the command line.

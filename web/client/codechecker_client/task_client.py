@@ -363,6 +363,7 @@ def _transform_product_ids_to_endpoints(
                 product.id: product.endpoint
                 for product
                 in get_product_api().getProducts(None, None)}
+            ti["productEndpoint"] = product_id_to_endpoint[ti["productId"]]
         del ti["productId"]
 
 
@@ -445,7 +446,7 @@ def handle_tasks(args: Namespace) -> int:
                              ti["taskKind"],
                              ti["summary"],
                              ti["status"],
-                             ti["productEndpoint"] or "",
+                             ti.get("productEndpoint", ""),
                              ti["actorUsername"] or "",
                              ti["enqueuedAt"] or "",
                              ti["startedAt"] or "",
@@ -529,7 +530,7 @@ def handle_tasks(args: Namespace) -> int:
                 ti = task_info_for_print[0]
                 product_line = \
                     f"    - Product:      {ti['productEndpoint']}\n" \
-                    if ti["productEndpoint"] else ""
+                    if "productEndpoint" in ti else ""
                 user_line = f"    - User:         {ti['actorUsername']}\n" \
                     if ti["actorUsername"] else ""
                 cancel_line = "    - Cancelled by administrators!\n" \
