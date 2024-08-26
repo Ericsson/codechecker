@@ -15,8 +15,7 @@ import random
 
 from sqlalchemy.sql.expression import and_
 
-from sqlalchemy import create_engine
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy import create_engine, exc
 from sqlalchemy.engine.url import URL
 
 import codechecker_api_shared
@@ -317,52 +316,48 @@ class ThriftProductHandler:
         to assist add product function that connects to
         an already existing database.
         """
+        self.__require_permission([permissions.SUPERUSER])
+
+        if product_info.engine == 'sqlite':
+            LOG.info("Using SQLite engine, skipping database creation")
+            return True
+
+        db_host = product_info.host
+        db_engine = product_info.engine
+        db_port = int(product_info.port)
+        db_user = convert.from_b64(product_info.username_b64)
+        db_pass = convert.from_b64(product_info.password_b64)
+        db_name = product_info.database
+
+        engine_url = URL(
+            drivername=db_engine,
+            username=db_user,
+            password=db_pass,
+            host=db_host,
+            port=db_port,
+            database='postgres'
+        )
+        engine = create_engine(engine_url)
+
         try:
-            self.__require_permission([permissions.SUPERUSER])
-
-            LOG.info("requested add support for '%s'", product_info.database)
-
-            if product_info.engine == 'sqlite':
-                LOG.info("Using SQLite engine, skipping database creation")
-                return True
-
-            db_host = product_info.host
-            db_engine = product_info.engine
-            db_port = int(product_info.port)
-            db_user = convert.from_b64(product_info.username_b64)
-            db_pass = convert.from_b64(product_info.password_b64)
-            db_name = product_info.database
-
-            engine_url = URL(
-                drivername=db_engine,
-                username=db_user,
-                password=db_pass,
-                host=db_host,
-                port=db_port,
-                database='postgres'
-            )
-            engine = create_engine(engine_url)
-            conn = engine.connect()
-            conn.execute("commit")
-
-            try:
+            with engine.connect() as conn:
+                conn.execute("commit")
                 LOG.info("Creating database '%s'", db_name)
                 conn.execute(f"CREATE DATABASE {db_name}")
-            except ProgrammingError as e:
-                LOG.error("ProgrammingError occurred: %s", str(e))
-                if "already exists" in str(e):
-                    LOG.info("Database '%s' already exists", db_name)
-                    return True
-                else:
-                    raise e
-            finally:
-                conn.close()
-
-            LOG.info("Database '%s' created successfully", db_name)
-            return True
-        except Exception as ex:
-            LOG.error(f"An error occurred in add_product_support: {ex}")
+        except exc.ProgrammingError as e:
+            LOG.error("ProgrammingError occurred: %s", str(e))
+            if "already exists" in str(e):
+                LOG.info("Database '%s' already exists", db_name)
+                return False
+            else:
+                LOG.error("Error occurred while creating database: %s", str(e))
+                LOG.error("Type: %s", type(e))
+                return False
+        except exc.SQLAlchemyError as e:
+            LOG.error("SQLAlchemyError occurred: %s", str(e))
             return False
+
+        return True
 
     @timeit
     def addProduct(self, product):
@@ -398,7 +393,8 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
-        self.add_product_support(product.connection)
+        if self.add_product_support(product.connection):
+            LOG.info("Database support added successfully.")
 
         # Some values come encoded as Base64, decode these.
         displayed_name = convert.from_b64(product.displayedName_b64) \
