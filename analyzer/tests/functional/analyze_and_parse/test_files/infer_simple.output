@@ -7,6 +7,10 @@ CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --
 [] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
+[] - Capturing in make/cc mode...
+infer_simple.cpp starting
+infer_simple.cpp DONE
+
 [] - [1/1] infer analyzed infer_simple.cpp successfully.
 [] - ----==== Summary ====----
 [] - Successfully analyzed

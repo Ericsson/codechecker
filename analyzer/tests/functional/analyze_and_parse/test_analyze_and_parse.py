@@ -225,7 +225,8 @@ class AnalyzeParseTestCase(
                          "clangsa:",
                          "cppcheck:",
                          "gcc:",
-                         "infer:"]
+                         "infer:",
+                         "Found 1 source file to analyze in"]
         for line in output:
             # replace timestamps
             line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
