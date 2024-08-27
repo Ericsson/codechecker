@@ -154,7 +154,13 @@ class Infer(analyzer_base.SourceAnalyzer):
             with open(original_env_file, 'rb') as env_file:
                 env = pickle.load(env_file, encoding='utf-8')
 
-        return super().analyze(analyzer_cmd, res_handler, proc_callback, env)
+        result_handler = super().analyze(
+            analyzer_cmd, res_handler, proc_callback, env)
+
+        if result_handler.analyzer_stderr:
+            LOG.error(result_handler.analyzer_stderr)
+
+        return result_handler
 
     def post_analyze(self, result_handler: InferResultHandler):
         """
