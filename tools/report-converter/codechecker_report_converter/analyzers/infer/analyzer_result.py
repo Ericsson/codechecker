@@ -78,6 +78,10 @@ class AnalyzerResult(AnalyzerResultBase):
         if os.path.exists(full_path):
             return full_path
 
+        abs_path_corrected = os.path.join('/', source_path)
+        if os.path.exists(abs_path_corrected):
+            return abs_path_corrected
+
         LOG.warning("No source file found: %s", source_path)
         return None
 
