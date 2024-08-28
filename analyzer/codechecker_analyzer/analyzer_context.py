@@ -233,7 +233,7 @@ class Context(metaclass=Singleton):
                     self.__analyzers[name] = compiler_binary
 
     def get_analyzer_env(self, analyzer_name):
-        return self.__analyzer_envs[analyzer_name]
+        return self.__analyzer_envs.get(analyzer_name)
 
     def __populate_replacer(self):
         """ Set clang-apply-replacements tool. """
