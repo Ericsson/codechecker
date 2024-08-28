@@ -310,14 +310,15 @@ class ThriftProductHandler:
             return prod
 
     @timeit
-    def add_product_support(self, product_info):
+    def add_product_support(self, product):
         """
         Creates a database for the given product,
-        to assist add product function that connects to
+        to assist addProduct() function that connects to
         an already existing database.
         """
         self.__require_permission([permissions.SUPERUSER])
 
+        product_info = product.connection
         if product_info.engine == 'sqlite':
             LOG.info("Using SQLite engine, skipping database creation")
             return True
@@ -338,7 +339,6 @@ class ThriftProductHandler:
             database='postgres'
         )
         engine = create_engine(engine_url)
-
         try:
             with engine.connect() as conn:
                 conn.execute("commit")
@@ -356,6 +356,8 @@ class ThriftProductHandler:
         except exc.SQLAlchemyError as e:
             LOG.error("SQLAlchemyError occurred: %s", str(e))
             return False
+        finally:
+            engine.dispose()
 
         return True
 
@@ -393,7 +395,15 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
-        if self.add_product_support(product.connection):
+        db_in_use = self.__server.get_if_database_in_use(product.connection)
+        if db_in_use:
+            LOG.error("Database '%s' is already in use by another product!",
+                      product.connection.database)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "Database is already in use by another product!")
+
+        if self.add_product_support(product):
             LOG.info("Database support added successfully.")
 
         # Some values come encoded as Base64, decode these.

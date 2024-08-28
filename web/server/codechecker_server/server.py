@@ -769,6 +769,9 @@ class CCSimpleHttpServer(HTTPServer):
         permissions.initialise_defaults('SYSTEM', {
             'config_db_session': cfg_sess
         })
+
+        self.cfg_sess_private = cfg_sess
+
         products = cfg_sess.query(ORMProduct).all()
         for product in products:
             self.add_product(product)
@@ -911,6 +914,34 @@ class CCSimpleHttpServer(HTTPServer):
             # pylint: disable=not-callable
 
         self.__products[prod.endpoint] = prod
+
+    def get_if_database_in_use(self, product_connection_string):
+        """
+        Returns the product endpoint if the given database is in use
+        """
+        # get the database name from the product connection string
+        to_add = product_connection_string.database
+
+        if str(product_connection_string.engine) == "sqlite":
+            to_add = str(to_add).rsplit('/', maxsplit=1)[-1]
+            if to_add.endswith('.sqlite'):
+                to_add = to_add[:-7]
+        LOG.info("to add: %s", to_add)
+
+        # get the current state of connected databases from products
+        dynamic_list = [
+            a.connection.split("/")[-1].split('?')[0]
+            for a in self.cfg_sess_private.query(ORMProduct).all()
+        ]
+        # log dynamic list
+        LOG.info("dynamic list: %s", dynamic_list)
+        dynamic_list = [
+            d[:-7] if d.endswith('.sqlite') else d
+            for d in dynamic_list
+        ]
+        LOG.info("dynamic list: %s", dynamic_list)
+
+        return to_add in dynamic_list  # True if found, False otherwise
 
     @property
     def num_products(self):
