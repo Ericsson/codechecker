@@ -8,8 +8,8 @@ CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - Capturing in make/cc mode...
-infer_simple.cpp starting
-infer_simple.cpp DONE
+home/runner/work/codechecker/codechecker/analyzer/tests/functional/analyze_and_parse/test_files/infer_simple.cpp starting
+home/runner/work/codechecker/codechecker/analyzer/tests/functional/analyze_and_parse/test_files/infer_simple.cpp DONE
 
 [] - [1/1] infer analyzed infer_simple.cpp successfully.
 [] - ----==== Summary ====----
