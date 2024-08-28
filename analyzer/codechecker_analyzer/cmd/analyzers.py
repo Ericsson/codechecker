@@ -189,7 +189,7 @@ def main(args):
         check_env = context.get_analyzer_env(analyzer_name)
         version = analyzer_class.get_binary_version(check_env)
         if not version:
-            version = 'ERROR'
+            version = 'NOT FOUND'
 
         binary = context.analyzer_binaries.get(analyzer_name)
         rows.append([analyzer_name, binary, version])

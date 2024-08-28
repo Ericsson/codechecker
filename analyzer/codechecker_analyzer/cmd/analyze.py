@@ -372,7 +372,7 @@ def add_arguments_to_parser(parser):
                                metavar='ANALYZER',
                                required=False,
                                choices=analyzer_types.supported_analyzers,
-                               default=argparse.SUPPRESS,
+                               default=None,
                                help="Run analysis only with the analyzers "
                                     "specified. Currently supported analyzers "
                                     "are: " +
