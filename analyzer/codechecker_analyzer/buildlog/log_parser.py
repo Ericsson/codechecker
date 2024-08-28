@@ -99,6 +99,7 @@ IGNORED_OPTIONS_GCC = [
     '-fno-keep-inline-dllexport'
     '-fno-keep-static-consts',
     '-fno-lifetime-dse',
+    '-f(no-)?printf-return-value',
     '-f(no-)?reorder-functions',
     '-fno-strength-reduce',
     '-fno-toplevel-reorder',
