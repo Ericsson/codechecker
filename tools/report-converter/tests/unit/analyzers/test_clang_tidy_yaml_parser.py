@@ -18,7 +18,8 @@ import shutil
 import tempfile
 import unittest
 
-from codechecker_report_converter.analyzers.clang_tidy import analyzer_result
+from codechecker_report_converter.analyzers.clang_tidy_yaml import (
+    analyzer_result)
 from codechecker_report_converter.report.parser import plist
 
 
@@ -29,7 +30,8 @@ def setup_module():
     """Setup the test tidy reprs for the test classes in the module."""
     global OLD_PWD
     OLD_PWD = os.getcwd()
-    os.chdir(os.path.join(os.path.dirname(__file__), 'tidy_output_test_files'))
+    os.chdir(os.path.join(os.path.dirname(__file__),
+                          'tidy_yaml_output_test_files'))
 
 
 def teardown_module():
@@ -38,8 +40,8 @@ def teardown_module():
     os.chdir(OLD_PWD)
 
 
-class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
-    """ Test the output of the ClangTidyAnalyzerResult. """
+class ClangTidyYamlAnalyzerResultTestCase(unittest.TestCase):
+    """ Test the output of the ClangTidyYamlAnalyzerResult. """
 
     def setUp(self):
         """ Setup the test. """
@@ -86,30 +88,30 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
 
     def test_tidy1(self):
         """ Test for the tidy1.plist file. """
-        self.__check_analyzer_result('tidy1.out', 'test.cpp_clang-tidy.plist',
+        self.__check_analyzer_result('tidy1.out',
+                                     'test.cpp_clang-tidy-yaml.plist',
                                      ['files/test.cpp'], 'tidy1.plist')
 
     def test_tidy2(self):
         """ Test for the tidy2.plist file. """
-        self.__check_analyzer_result('tidy2.out', 'test2.cpp_clang-tidy.plist',
+        self.__check_analyzer_result('tidy2.out',
+                                     'test2.cpp_clang-tidy-yaml.plist',
                                      ['files/test2.cpp'], 'tidy2.plist')
 
     def test_tidy3(self):
         """ Test for the tidy3.plist file. """
-        self.__check_analyzer_result('tidy3.out', 'test3.cpp_clang-tidy.plist',
+        self.__check_analyzer_result('tidy3.out',
+                                     'test3.cpp_clang-tidy-yaml.plist',
                                      ['files/test3.cpp'],
                                      'tidy3_cpp.plist')
 
-        self.__check_analyzer_result('tidy3.out', 'test3.hh_clang-tidy.plist',
-                                     ['files/test3.cpp', 'files/test3.hh'],
-                                     'tidy3_hh.plist')
-
-        self.__check_analyzer_result('tidy3-clang17.out',
-                                     'test3.hh_clang-tidy.plist',
+        self.__check_analyzer_result('tidy3.out',
+                                     'test3.hh_clang-tidy-yaml.plist',
                                      ['files/test3.cpp', 'files/test3.hh'],
                                      'tidy3_hh.plist')
 
     def test_tidy7(self):
         """ Test for the tidy7.plist file. """
-        self.__check_analyzer_result('tidy7.out', 'test7.cpp_clang-tidy.plist',
+        self.__check_analyzer_result('tidy7.out',
+                                     'test7.cpp_clang-tidy-yaml.plist',
                                      ['files/test7.cpp'], 'tidy7.plist')
