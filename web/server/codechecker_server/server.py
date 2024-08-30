@@ -262,10 +262,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         product = self.server.get_product(product_endpoint)
+        LOG.info("####Request's product: %s", product_endpoint)
         if not product:
             raise ValueError(
                 f"The product with the given endpoint '{product_endpoint}' "
-                "does not exist!")
+                "does not exist! BITCH")
 
         if product.db_status == DBStatus.OK:
             # No reconnect needed.
@@ -950,7 +951,7 @@ class CCSimpleHttpServer(HTTPServer):
         """
         return len(self.__products)
 
-    def get_product(self, endpoint):
+    def get_product(self, endpoint): # marker
         """
         Get the product connection object for the given endpoint, or None.
         """
@@ -965,10 +966,17 @@ class CCSimpleHttpServer(HTTPServer):
         # database.
         try:
             cfg_sess = self.config_session()
-            product = cfg_sess.query(ORMProduct) \
+            holder = cfg_sess.query(ORMProduct) \
                 .filter(ORMProduct.endpoint == endpoint) \
-                .limit(1).one_or_none()
-
+                .limit(1)
+            LOG.info('#########################')
+            LOG.info('holder: %s', holder)
+            LOG.info('######LOW###################')
+            product = holder.one_or_none()
+            LOG.info(product)
+            LOG.info('######MIDDLE###################')
+            LOG.info(product)
+            LOG.info('#########################')
             if not product:
                 return None
 

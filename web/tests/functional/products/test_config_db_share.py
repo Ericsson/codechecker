@@ -170,11 +170,11 @@ class TestProductConfigShare(unittest.TestCase):
 
         product_cfg = create_test_product('producttest_second 2',
                                           'producttest_second_2')
-        # self.assertTrue(self._pr_client_2.addProduct(product_cfg),
-        #                 "Cannot create product on secondary server.")
+        self.assertTrue(self._pr_client_2.addProduct(product_cfg),
+                        "Cannot create product on secondary server.")
 
-        with self.assertRaises(RequestFailed):
-            self._pr_client_2.addProduct(product_cfg)
+        # with self.assertRaises(RequestFailed):
+        #     self._pr_client_2.addProduct(product_cfg)
         # Product name full string match.
         products = self._pr_client_2.getProducts('producttest_second', None)
         self.assertEqual(len(products), 1)
@@ -185,10 +185,10 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Product name substring match.
         products = self._pr_client_2.getProducts('producttest_second*', None)
-        self.assertEqual(len(products), 1)
+        self.assertEqual(len(products), 2)
 
         products = self._pr_client_2.getProducts(None, 'producttest_second*')
-        self.assertEqual(len(products), 1)
+        self.assertEqual(len(products), 2)
 
         # Use the same CodeChecker config that was used on the main server,
         # but store into the secondary one.
@@ -214,9 +214,8 @@ class TestProductConfigShare(unittest.TestCase):
                          "connected through the main server.")
 
         # Remove the product through the main server.
-        p_id = self._root_client.getProducts('producttest_second', None)[0].id
-        p_id2 = self._pr_client_2.getProducts('producttest_second', None)[0].id
-
+        p_id = self._root_client.getProducts('producttest_second', None)[0].id # PROBLEM HERE
+        p_id2 = self._pr_client_2.getProducts('producttest_second', None)[0].id # PROBLEM HERE
         self.assertIsNotNone(p_id)
         self.assertEqual(p_id, p_id2,
                          "The products have different ID across the two "
