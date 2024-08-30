@@ -305,7 +305,7 @@ used to generate a log file on the fly.""")
                                metavar='ANALYZER',
                                required=False,
                                choices=analyzer_types.supported_analyzers,
-                               default=argparse.SUPPRESS,
+                               default=None,
                                help="Run analysis only with the analyzers "
                                     "specified. Currently supported analyzers "
                                     "are: " +
