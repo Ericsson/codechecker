@@ -1,0 +1,81 @@
+---
+MainSourceFile:  'files/test3.cpp'
+Diagnostics:
+  - DiagnosticName:  clang-analyzer-deadcode.DeadStores
+    DiagnosticMessage:
+      Message:         'Value stored to ''z'' during its initialization is never read'
+      FilePath:        'files/test3.cpp'
+      FileOffset:      236
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test3.cpp'
+          FileOffset:      236
+          Length:          1
+        - FilePath:        'files/test3.cpp'
+          FileOffset:      240
+          Length:          6
+    Notes:
+      - Message:         'Value stored to ''z'' during its initialization is never read'
+        FilePath:        'files/test3.cpp'
+        FileOffset:      236
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      236
+            Length:          1
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      240
+            Length:          6
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-analyzer-core.UndefinedBinaryOperatorResult
+    DiagnosticMessage:
+      Message:         'The left operand of ''+'' is a garbage value'
+      FilePath:        'files/test3.cpp'
+      FileOffset:      242
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test3.cpp'
+          FileOffset:      240
+          Length:          1
+    Notes:
+      - Message:         '''y'' declared without an initial value'
+        FilePath:        'files/test3.cpp'
+        FileOffset:      223
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      223
+            Length:          5
+      - Message:         'The left operand of ''+'' is a garbage value'
+        FilePath:        'files/test3.cpp'
+        FileOffset:      242
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      240
+            Length:          1
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-analyzer-deadcode.DeadStores
+    DiagnosticMessage:
+      Message:         'Value stored to ''value'' is never read'
+      FilePath:        'files/test3.hh'
+      FileOffset:      593
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test3.hh'
+          FileOffset:      601
+          Length:          9
+    Notes:
+      - Message:         'Value stored to ''value'' is never read'
+        FilePath:        'files/test3.hh'
+        FileOffset:      593
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.hh'
+            FileOffset:      601
+            Length:          9
+    Level:           Warning
+    BuildDirectory:  'files'
+...
