@@ -72,10 +72,12 @@ class TestStore(unittest.TestCase):
 
         server_access['viewer_product'] = 'store_limited_product'
         codechecker.add_test_package_product(server_access, TEST_WORKSPACE,
-                                             report_limit=2)
+                                             report_limit=2,
+                                             database_name='store_product_db')
 
         server_access['viewer_product'] = 'store_test'
-        codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+        codechecker.add_test_package_product(server_access, TEST_WORKSPACE,
+                                             database_name='store_test')
 
         # Extend the checker configuration with the server access.
         codechecker_cfg.update(server_access)
