@@ -921,24 +921,26 @@ class CCSimpleHttpServer(HTTPServer):
         """
         # get the database name from the product connection string
         to_add = product_connection_string.database
+        LOG.info("The database string that will be added: %s", to_add)
 
-        if str(product_connection_string.engine) == "sqlite":
-            to_add = str(to_add).rsplit('/', maxsplit=1)[-1]
-            if to_add.endswith('.sqlite'):
-                to_add = to_add[:-7]
+        # if str(product_connection_string.engine) == "sqlite":
+        #     to_add = str(to_add).rsplit('/', maxsplit=1)[-1]
+        #     if to_add.endswith('.sqlite'):
+        #         to_add = to_add[:-7]
         LOG.info("to add: %s", to_add)
 
         # get the current state of connected databases from products
         dynamic_list = [
-            a.connection.split("/")[-1].split('?')[0]
+            a.connection
             for a in self.cfg_sess_private.query(ORMProduct).all()
         ]
+
         # log dynamic list
-        LOG.info("dynamic list: %s", dynamic_list)
-        dynamic_list = [
-            d[:-7] if d.endswith('.sqlite') else d
-            for d in dynamic_list
-        ]
+        # LOG.info("dynamic list: %s", dynamic_list)
+        # dynamic_list = [
+        #     d[:-7] if d.endswith('.sqlite') else d
+        #     for d in dynamic_list
+        # ]
         LOG.info("dynamic list: %s", dynamic_list)
 
         return to_add in dynamic_list  # True if found, False otherwise
