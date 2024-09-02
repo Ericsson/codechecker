@@ -11,8 +11,10 @@ import json
 import sys
 
 def __sorted_results(result_file):
-    return json.load(result_file).sort(
+    results = json.load(result_file)
+    results.sort(
         key=lambda report: report['bugHash'] + str(report['reportId']))
+    return results
 
 def __print_missing(needles, haystack, haystack_name):
     for needle in needles:
