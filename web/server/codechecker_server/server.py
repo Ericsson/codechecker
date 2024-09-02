@@ -936,6 +936,8 @@ class CCSimpleHttpServer(HTTPServer):
             a.connection.replace('////', '/')
             for a in self.cfg_sess_private.query(ORMProduct).all()
         ]
+        self.cfg_sess_private.commit()
+        self.cfg_sess_private.close()
 
         dynamic_list = [
             d[16:] if d.endswith('.sqlite') else d
