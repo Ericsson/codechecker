@@ -733,8 +733,7 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
 
 def add_test_package_product(server_data, test_folder, check_env=None,
                              protocol='http', report_limit=None,
-                             user_permissions=None,
-                             database_name="data.sqlite"):
+                             user_permissions=None):
     """
     Add a product for a test suite to the server provided by server_data.
     Server must be running before called.
@@ -782,7 +781,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     else:
         # SQLite databases are put under the workspace of the appropriate test.
         add_command += ['--sqlite',
-                        os.path.join(test_folder, database_name)]
+                        os.path.join(test_folder, 'data.sqlite')]
 
     print(' '.join(add_command))
 
