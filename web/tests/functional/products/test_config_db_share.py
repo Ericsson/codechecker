@@ -171,9 +171,6 @@ class TestProductConfigShare(unittest.TestCase):
         product_cfg = create_test_product('producttest_second 2',
                                           'producttest_second_2')
 
-        # self.assertTrue(self._pr_client_2.addProduct(product_cfg),
-        #                 "Cannot create product on secondary server.")
-
         # expect request to fail
         with self.assertRaises(RequestFailed):
             self._pr_client_2.addProduct(product_cfg)
