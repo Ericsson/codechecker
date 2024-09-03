@@ -160,7 +160,7 @@ class TestProductConfigShare(unittest.TestCase):
                     username_b64='',
                     password_b64='',
                     database=os.path.join(self.test_workspace_secondary,
-                                          'data_test.sqlite')))
+                                          'data.sqlite')))
 
         product_cfg = create_test_product('producttest_second',
                                           'producttest_second')
@@ -177,9 +177,6 @@ class TestProductConfigShare(unittest.TestCase):
         # expect request to fail
         with self.assertRaises(RequestFailed):
             self._pr_client_2.addProduct(product_cfg)
-
-        # self.assertTrue(self._pr_client_2.addProduct(product_cfg),
-        #                 "Cannot create product on secondary server.")
 
         # Product name full string match.
         products = self._pr_client_2.getProducts('producttest_second', None)

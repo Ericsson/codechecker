@@ -939,6 +939,8 @@ class CCSimpleHttpServer(HTTPServer):
         self.cfg_sess_private.commit()
         self.cfg_sess_private.close()
 
+        # remove the first 16 charecters because in query it is
+        # included in the path string
         dynamic_list = [
             d[16:] if d.endswith('.sqlite') else d
             for d in dynamic_list

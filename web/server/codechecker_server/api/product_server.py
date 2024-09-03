@@ -395,6 +395,7 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
+        # Check if the database is already in use by another product.
         db_in_use = self.__server.get_if_database_in_use(product.connection)
         if db_in_use:
             LOG.error("Database '%s' is already in use by another product!",
@@ -403,6 +404,7 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "Database is already in use by another product!")
 
+        # Add database before letting product connect to it
         if self.add_product_support(product):
             LOG.info("Database support added successfully.")
 
