@@ -49,6 +49,10 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def getOauthProviders(self):
+        pass
+
+    @thrift_client_call
     def destroySession(self):
         pass
 

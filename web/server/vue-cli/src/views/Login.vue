@@ -70,21 +70,52 @@
             >
               Login
             </v-btn>
-            <v-btn 
-              v-for="provider in providers"
-              :id="login-btn-{provider}"
-              :key="provider"
+            <v-btn
               block
               x-large
               color="primary"
-              @click="oauth(provider)"
+              @click="openModal"
             >
-              Login with {{ provider }}
+              OAuth login
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog
+      v-model="dialog"
+      width="500"
+      :scrollable="true"
+    >
+      <v-card>
+        <v-card-title
+          class="headline primary white--text"
+          primary-title
+        >
+          OAuth Login Methods
+
+          <v-spacer />
+
+          <v-btn icon dark @click="dialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <v-btn
+            v-for="provider in providers"
+            :id="login-btn-{provider}"
+            :key="provider"
+            block
+            x-large
+            color="primary"
+            style="margin-top: 10px"
+            @click="oauth(provider)"
+          >
+            Login with {{ provider }}
+          </v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -109,7 +140,10 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
-      providers: []
+      providers: [],
+      dialog: false,
+      on: false,
+      test : "GFGDFG"
     };
   },
 
@@ -141,6 +175,10 @@ export default {
   },
 
   methods: {
+    openModal() {
+      this.dialog = true;
+      this.on = true;
+    },
     login() {
       if (!this.valid) return;
 
@@ -158,16 +196,10 @@ export default {
         });
     },
     detectCallback() {
-      const url = new URL(window.location.href);
-      let code = null, state = null;
+      const url = this.$route.query;
+      const provider = localStorage.getItem("oauth_provider");
 
-      code = url.searchParams.get("code");
-      state = url.searchParams.get("state");
-
-      const provider = document.cookie.split(";").find(
-        c => c.includes("oauth_provider")).split("=")[1];
-
-      if (code != null && state != null) {
+      if (url.code != null && url.state != null) {
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
@@ -204,7 +236,7 @@ export default {
     },
     oauth(provider) {
       new Promise(resolve => {
-        document.cookie = `oauth_provider=${provider}; path=*`;
+        localStorage.setItem("oauth_provider", provider);
         // console output the provider for debugging
         authService.getClient().createLink(provider,
           handleThriftError(url => {
