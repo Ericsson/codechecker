@@ -649,14 +649,13 @@ class SessionManager:
             self.__cleanup_sessions()
 
         # Try authenticate user with personal access token.
-        if ":" in auth_string:
-            auth_token = self.__try_auth_token(auth_string)
-            if auth_token:
-                local_session = self.__get_local_session_from_db(
-                    auth_token.token)
-                local_session.revalidate()
-                self.__sessions.append(local_session)
-                return local_session
+        auth_token = self.__try_auth_token(auth_string)
+        if auth_token:
+            local_session = self.__get_local_session_from_db(
+                auth_token.token)
+            local_session.revalidate()
+            self.__sessions.append(local_session)
+            return local_session
 
         # Try to authenticate user with different authentication methods.
         validation = self.__handle_validation(auth_string)

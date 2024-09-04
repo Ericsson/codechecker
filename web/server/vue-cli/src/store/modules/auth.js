@@ -64,7 +64,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       if (credentials.type === "oauth") {
         authService.getClient().performLogin(
-          "oauth_" + credentials.provider, credentials.url,
+          "oauth", credentials.provider + "@" + credentials.url,
           handleThriftError(token => {
             context.commit(SET_AUTH, {
               userName: "OAuth @" + credentials.provider,
@@ -90,7 +90,7 @@ const actions = {
     });
   },
 
-  [LOGOUT](context) { 
+  [LOGOUT](context) {
     return new Promise((resolve, reject) => {
       authService.getClient().destroySession(
         handleThriftError(success => {

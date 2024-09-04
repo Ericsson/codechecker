@@ -201,8 +201,7 @@ class DictAuth(unittest.TestCase):
         auth_string = f"{link}?code={code}&state={state}"
 
         self.session_token = auth_client.performLogin(
-            f"oauth_{provider}",
-            auth_string)
+            "oauth", provider + "@" + auth_string)
 
         return self.session_token
 
