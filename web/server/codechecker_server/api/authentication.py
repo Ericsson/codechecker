@@ -204,8 +204,9 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
 
-        elif auth_method.startswith("oauth_", 0, 6):
-            provider = auth_method[6:]
+        elif auth_method == "oauth":
+            provider, url = auth_string.split("@")
+
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -227,7 +228,7 @@ class ThriftAuthHandler:
                 redirect_uri=redirect_uri)
             token = session.fetch_token(
                 url=token_url,
-                authorization_response=auth_string)
+                authorization_response=url)
 
             user_info = session.get(user_info_url).json()
             username = user_info[
@@ -243,8 +244,7 @@ class ThriftAuthHandler:
 
             if allowed_users == ["*"] or username in allowed_users:
                 session = self.__manager.create_session(
-                    provider + "@" + username +
-                    ":" + token['access_token'])
+                    f"{provider}@{username}:{token['access_token']}")
                 return session.token
 
             if len(allowed_users) == 0:
