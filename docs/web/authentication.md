@@ -325,7 +325,7 @@ groups. For more information [see](permissions.md#managing-permissions).
 
 ### <i>OAUTH</i> authentication <a name="oauth-authentication"></a>
 
-CodeChecker also supports OAUTH-based authentication. The `authentication.method_oauth` section contains the configuration for OAUTH authentication for different OAUTH providers. The server can be configured for different Oauth `providers` .Users can be added into the `allowed_users`
+CodeChecker also supports OAUTH-based authentication. The `authentication.method_oauth` section contains the configuration for OAUTH authentication for different OAUTH providers. The server can be configured for different Oauth `providers`. Users can be added into the `allowed_users`.
 
 #### OAUTH Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
