@@ -42,23 +42,23 @@ is handled.
  * `enabled`
 
     Setting this to `false` disables privileged access
-    
+
  * `realm_name`
 
     The name to show for web-browser viewers' pop-up login window via
     *HTTP Authenticate*
-    
+
  * `realm_error`
 
     The error message shown in the browser when the user fails to authenticate
-    
+
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
@@ -66,7 +66,7 @@ is handled.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
@@ -246,12 +246,12 @@ servers as it can elongate the authentication process.
  * `groupPattern`
 
    Group query pattern used LDAP query expression to find the group objects
-   a user is a member of. It must contain a `$USERDN$` pattern. 
+   a user is a member of. It must contain a `$USERDN$` pattern.
    `$USERDN$` will be automatically replaced by the queried user account DN.
 
  * `groupNameAttr`
 
-   The attribute of the group object which contains the name of the group. 
+   The attribute of the group object which contains the name of the group.
 
  * `groupScope`
 
@@ -329,63 +329,63 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
 #### OAUTH Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
-  
+
     Indicated if OAUTH authentication is enabled (required for any methods below)
 
  * `providers`
 
     The provider field contains configuration details for OAuth providers. Each provider's configuration includes but may vary depending on provider:
- 
- * `enabled`
 
-    Indicates if current provider is enabled (github, google, etc)
+  * `provider_name` as an object containing following properties:
 
- * `oauth_client_id`
-    
-    Contains client ID provided by the OAuth provider.
+      * `enabled`
 
+          Indicates if current provider is enabled (github, google, etc)
 
- * `oauth_client_secret`
-  
-    The client secret must be provided by the OAuth provider.
+      * `oauth_client_id`
 
- * `oauth_authorization_uri`
-  
-    This link in used for redirecting user for provider's authentication page
+           Contains client ID provided by the OAuth provider.
 
- * `oauth_redirect_uri`
-  
-    User will be redirected back to the provided link after login with returned data.
+      * `oauth_client_secret`
 
- * `oauth_token_uri`
+          The client secret must be provided by the OAuth provider.
 
-    The URI to exchange the authorization code for an access token.
+      * `oauth_authorization_uri`
 
- * `oauth_user_info_uri`
+          This link in used for redirecting user for provider's authentication page
 
-    The URI to fetch the authenticated user's information.
+      * `oauth_redirect_uri`
 
- * `oauth_scope`
+          User will be redirected back to the provided link after login with returned data.
 
-    The scope of access requested from the OAuth provider.
+      * `oauth_token_uri`
 
- * `oauth_user_info_mapping`
+          The URI to exchange the authorization code for an access token.
 
-    A mapping of user info fields from the provider to local fields.
+      * `oauth_user_info_uri`
 
-    * `username`
-        
-        Field for the username.
-    * `email`
-        
-        Field for the email.
-    * `fullname`
-        
-        Field for the fullname.
- * `allowed_users`
-  
-    A list of allowed users differently configured for each provider
+          The URI to fetch the authenticated user's information.
 
+      * `oauth_scope`
+
+          The scope of access requested from the OAuth provider.
+
+      * `oauth_user_info_mapping`
+
+          A mapping of user info fields from the provider to local fields.
+
+          * `username`
+
+              Field for the username.
+          * `email`
+
+              Field for the email.
+          * `fullname`
+
+              Field for the fullname.
+      * `allowed_users`
+
+          list of approved usernames independently specified per each provider
 ~~~{.json}
 "method_oauth": {
       "enabled": false,
@@ -416,7 +416,8 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
 #### Oauth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
-* For OAuth providers to function correctly, the `oauth_redirect_uri` in application's configuration must exactly match the `Authorized redirect URIs` specified in the Google API Console. 
+* Important: 'oauth_redirect_uri' must always match with link specified in the
+Providers settings when issuing an access token.
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

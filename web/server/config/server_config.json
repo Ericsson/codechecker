@@ -70,9 +70,7 @@
           "oauth_user_info_uri": "https://api.github.com/user",
           "oauth_scope": "openid email profile",
           "oauth_user_info_mapping": {
-            "username": "login",
-            "email": "email",
-            "fullname": "name"
+            "username": "login"
           },
           "allowed_users": [
             "user1",
@@ -90,9 +88,7 @@
           "oauth_user_info_uri" : "https://www.googleapis.com/oauth2/v1/userinfo",
           "oauth_scope" : "openid email profile",
           "oauth_user_info_mapping" : {
-            "username" : "email",
-            "email" : "email",
-            "fullname" : "name"
+            "username" : "email"
           },
           "allowed_users": [
             "user1@gmail.com",

@@ -372,9 +372,7 @@ def enable_auth(workspace):
                 "oauth_user_info_uri": "http://localhost:3000/get_user",
                 "oauth_scope": "openid email profile",
                 "oauth_user_info_mapping": {
-                    "username": "login",
-                    "email": "email",
-                    "fullname": "name"
+                    "username": "login"
                 },
                 "allowed_users": [
                     "admin_github"
@@ -390,9 +388,7 @@ def enable_auth(workspace):
                 "oauth_user_info_uri": "http://localhost:3000/get_user",
                 "oauth_scope": "openid email profile",
                 "oauth_user_info_mapping": {
-                    "username": "email",
-                    "email": "email",
-                    "fullname": "name"
+                    "username": "email"
                 },
                 "allowed_users": [
                     "*"
@@ -408,9 +404,7 @@ def enable_auth(workspace):
                 "oauth_user_info_uri": "http://localhost:3000/get_user",
                 "oauth_scope": "openid email profile",
                 "oauth_user_info_mapping": {
-                    "username": "email",
-                    "email": "email",
-                    "fullname": "name"
+                    "username": "email"
                 },
                 "allowed_users": []
             }
