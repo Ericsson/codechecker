@@ -149,10 +149,12 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """
         Return the analyzer version.
         """
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
@@ -174,11 +176,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
+        analyzer_version = cls.get_binary_version()
 
         if analyzer_version is None:
             return "GCC binary is too old to support -dumpfullversion."

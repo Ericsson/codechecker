@@ -21,6 +21,7 @@ from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json
+from pathlib import Path
 
 from . import env
 
@@ -62,8 +63,13 @@ class Context(metaclass=Singleton):
         self.__package_build_date = None
         self.__package_git_hash = None
         self.__analyzers = {}
-        self.__analyzer_envs = {}
+
+        # CodeChecker's current runtime environment
         self.__cc_env = None
+        # cc_env extended with packaged LD_LIBRARY_PATH for packaged binaries
+        self.__package_env = None
+        # Original caller environment of CodeChecker for external binaries
+        self.__original_env = None
 
         self.logger_lib_dir_path = os.path.join(
             self._data_files_dir_path, 'ld_logger', 'lib')
@@ -155,6 +161,9 @@ class Context(metaclass=Singleton):
             self.env_vars['cc_logger_compiles'])
         self.ld_preload = os.environ.get(self.env_vars['ld_preload'])
         self.ld_lib_path = self.env_vars['env_ld_lib_path']
+        self.__original_env = env.get_original_env()
+        self.__package_env = env.extend(self.path_env_extra,
+                                        self.ld_lib_path_extra)
 
     def __set_version(self):
         """
@@ -186,6 +195,29 @@ class Context(metaclass=Singleton):
                 logger.DEBUG_ANALYZER):
             self.__package_git_tag = package_git_dirtytag
 
+    def get_env_for_bin(self, binary):
+        """
+        binary must be a binary with full path
+
+        Returns the correct environment for binaries called by CodeChecker.
+        For binaries packaged with CodeChecker the LD_LIBRARY path is extended.
+        For non-packaged binaries, the original calling environment
+        is returned.
+        """
+        bin_path = Path(binary).resolve()
+        if not bin_path.exists():
+            LOG.error("Binary %s not found", binary)
+            return None
+
+        codechecker_dir = Path(self._data_files_dir_path)
+
+        if str(bin_path).startswith(str(codechecker_dir)):
+            LOG.debug("Package env is returned for %s", bin_path)
+            return self.__package_env
+        else:
+            LOG.debug("Original env is returned for %s", bin_path)
+            return self.__original_env
+
     def __populate_analyzers(self):
         """ Set analyzer binaries for each registered analyzers. """
         cc_env = None
@@ -198,9 +230,8 @@ class Context(metaclass=Singleton):
         compiler_binaries = self.pckg_layout.get('analyzers')
         for name, value in compiler_binaries.items():
             if name in env_var_bin:
-                # For non-packaged analyzers the original env is set.
+                # env_var_bin has priority over package config and PATH
                 self.__analyzers[name] = env_var_bin[name]
-                self.__analyzer_envs[name] = env.get_original_env()
                 continue
 
             if analyzer_from_path:
@@ -210,10 +241,6 @@ class Context(metaclass=Singleton):
                 # Check if it is a package relative path.
                 self.__analyzers[name] = os.path.join(
                     self._data_files_dir_path, value)
-                # For packaged analyzers the ld_library path
-                # must be extended with the packed libs.
-                self.__analyzer_envs[name] =\
-                    env.extend(self.path_env_extra, self.ld_lib_path_extra)
             else:
                 env_path = cc_env['PATH'] if cc_env else None
                 compiler_binary = which(cmd=value, path=env_path)
@@ -224,16 +251,11 @@ class Context(metaclass=Singleton):
                     continue
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
-                # For non-packaged analyzers the original env is set.
-                self.__analyzer_envs[name] = env.get_original_env()
 
                 # If the compiler binary is a simlink to ccache, use the
                 # original compiler binary.
                 if self.__analyzers[name].endswith("/ccache"):
                     self.__analyzers[name] = compiler_binary
-
-    def get_analyzer_env(self, analyzer_name):
-        return self.__analyzer_envs.get(analyzer_name)
 
     def __populate_replacer(self):
         """ Set clang-apply-replacements tool. """
@@ -243,12 +265,8 @@ class Context(metaclass=Singleton):
             # Check if it is a package relative path.
             self.__replacer = os.path.join(self._data_files_dir_path,
                                            replacer_binary)
-            self.__analyzer_envs['clang-apply-replacements'] =\
-                env.extend(self.path_env_extra, self.ld_lib_path_extra)
         else:
             self.__replacer = which(replacer_binary)
-            self.__analyzer_envs['clang-apply-replacements'] =\
-                env.get_original_env()
 
     @property
     def version(self):

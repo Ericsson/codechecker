@@ -139,17 +139,20 @@ class EnvVarTest(unittest.TestCase):
         lcfg_dict = context._Context__get_package_layout()
         context._data_files_dir_path = data_files_dir
         context.pckg_layout = lcfg_dict['runtime']
+        context._Context__init_env()
         context._Context__populate_analyzers()
 
         # clang-19 is part of the codechecker package
         # so the internal package lib should be in the ld_library_path
-        clang_env = context.get_analyzer_env("clangsa")
+        clang_env = context.get_env_for_bin(
+            context.analyzer_binaries["clangsa"])
         env_txt = str(clang_env)
         self.assertTrue(env_txt.find("internal_package_lib") != -1)
 
         # clang-tidy is not part of the codechecker package
         # so internal package lib should not be in the ld_library_path
-        clang_env = context.get_analyzer_env("clang-tidy")
+        clang_env = context.get_env_for_bin(
+            context.analyzer_binaries["clang-tidy"])
         env_txt = str(clang_env)
         self.assertTrue(env_txt.find("internal_package_lib") == -1)
 
