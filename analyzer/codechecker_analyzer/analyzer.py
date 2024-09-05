@@ -247,7 +247,7 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
                 enabled_checkers[analyzer].append(check)
 
         version = analyzer_types.supported_analyzers[analyzer] \
-            .get_binary_version(context.get_analyzer_env(analyzer))
+            .get_binary_version()
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info

@@ -105,8 +105,8 @@ def is_ignore_conflict_supported():
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             env=context
-                            .get_analyzer_env(
-                                os.path.basename(context.replacer_binary)),
+                            .get_env_for_bin(
+                                context.replacer_binary),
                             encoding="utf-8", errors="ignore")
     out, _ = proc.communicate()
     return '--ignore-insert-conflict' in out
@@ -159,7 +159,6 @@ def check_supported_analyzers(analyzers):
     """
 
     context = analyzer_context.get_context()
-    check_env = context.cc_env
 
     analyzer_binaries = context.analyzer_binaries
 
@@ -182,7 +181,8 @@ def check_supported_analyzers(analyzers):
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
             found_bin = supported_analyzers[analyzer_name].\
-                resolve_missing_binary(analyzer_bin, check_env)
+                resolve_missing_binary(analyzer_bin,
+                                       context.get_env_for_bin(analyzer_bin))
 
             # found_bin is an absolute path, an executable in one of the
             # PATH folders.
@@ -201,7 +201,7 @@ def check_supported_analyzers(analyzers):
         # Check version compatibility of the analyzer binary.
         if analyzer_bin:
             analyzer = supported_analyzers[analyzer_name]
-            error = analyzer.is_binary_version_incompatible(check_env)
+            error = analyzer.is_binary_version_incompatible()
             if error:
                 failed_analyzers.add((analyzer_name,
                                       f"Incompatible version: {error} "
@@ -211,7 +211,7 @@ def check_supported_analyzers(analyzers):
                 available_analyzer = False
 
         if not analyzer_bin or \
-           not host_check.check_analyzer(analyzer_bin, check_env):
+           not host_check.check_analyzer(analyzer_bin):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
             failed_analyzers.add((analyzer_name,

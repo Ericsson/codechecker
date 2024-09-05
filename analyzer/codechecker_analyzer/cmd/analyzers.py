@@ -186,8 +186,7 @@ def main(args):
     rows = []
     for analyzer_name, analyzer_class in \
             analyzer_types.supported_analyzers.items():
-        check_env = context.get_analyzer_env(analyzer_name)
-        version = analyzer_class.get_binary_version(check_env)
+        version = analyzer_class.get_binary_version()
         if not version:
             version = 'NOT FOUND'
 

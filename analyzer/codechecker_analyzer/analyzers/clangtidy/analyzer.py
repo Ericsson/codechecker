@@ -237,8 +237,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         if not cls.analyzer_binary():
             return None
 
@@ -272,7 +274,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 return cls.__analyzer_checkers
 
             environ = analyzer_context\
-                .get_context().get_analyzer_env(cls.ANALYZER_NAME)
+                .get_context().get_env_for_bin(cls.analyzer_binary())
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-list-checks", "-checks=*"],
                 env=environ,
@@ -300,7 +302,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
-                .get_analyzer_env(cls.ANALYZER_NAME),
+                .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -317,7 +319,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
-                .get_analyzer_env(cls.ANALYZER_NAME),
+                .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -568,7 +570,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return clangtidy
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         We support pretty much every Clang-Tidy version.
         """

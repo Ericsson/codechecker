@@ -82,9 +82,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         if not cls.analyzer_binary():
             return None
         version = [cls.analyzer_binary(), '--version']
@@ -324,11 +326,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
+        analyzer_version = cls.get_binary_version()
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
