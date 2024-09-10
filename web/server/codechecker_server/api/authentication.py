@@ -226,6 +226,9 @@ class ThriftAuthHandler:
                 client_secret,
                 scope=scope,
                 redirect_uri=redirect_uri)
+
+            code = url.split("code=")[1].split("&")[0]
+            url = url.split("?")[0] + "?code=" + code
             token = session.fetch_token(
                 url=token_url,
                 authorization_response=url)

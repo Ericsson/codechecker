@@ -95,6 +95,27 @@
             "user2@gmail.com",
             "user3@gmail.com"
           ]
+        },
+        "microsoft": {
+          "enabled": true,
+          "oauth_client_id": "ExampleClientID",
+          "oauth_client_secret": "exampleClientSecret",
+          "oauth_authorization_uri": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/authorize",
+          "oauth_redirect_uri": "http://path_To_CodeChecker_Login_Page",
+          "oauth_token_uri": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/token",
+          "oauth_user_info_uri": "https://graph.microsoft.com/v1.0/me",
+          "oauth_scope": "User.Read email profile openid",
+          "oauth_user_info_mapping": {
+            "username": "mail"
+          },
+          "allowed_users": [
+            "user1@gmail.com",
+            "user2@gmail.com",
+            "user3@gmail.com"
+          ],
+          "default_groups": [
+            "users_microsoft"
+          ]
         }
       }
     },
