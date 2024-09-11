@@ -226,7 +226,8 @@ class ThriftAuthHandler:
                 client_secret,
                 scope=scope,
                 redirect_uri=redirect_uri)
-
+            #FIXME: This is a workaround for the Microsoft OAuth2 provider
+            # which doesn't correctly fetch the code from url.
             code = url.split("code=")[1].split("&")[0]
             url = url.split("?")[0] + "?code=" + code
             token = session.fetch_token(
