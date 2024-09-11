@@ -238,11 +238,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_binary_version(cls, details=False) -> str:
+        if not cls.analyzer_binary():
+            return None
         # No need to LOG here, we will emit a warning later anyway.
         environ = analyzer_context.get_context().get_env_for_bin(
             cls.analyzer_binary())
-        if not cls.analyzer_binary():
-            return None
 
         version = [cls.analyzer_binary(), '--version']
         try:
