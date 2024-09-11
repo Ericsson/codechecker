@@ -355,7 +355,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     end_time = time.time()
     LOG.info("Analysis length: %s sec.", end_time - start_time)
 
-    analyzer_types.print_unsupported_analyzers(errored)
+    if args.analyzers:
+        analyzer_types.print_unsupported_analyzers(errored)
 
     metadata_tool['timestamps'] = {'begin': start_time,
                                    'end': end_time}

@@ -115,7 +115,7 @@ def is_ignore_conflict_supported():
 def print_unsupported_analyzers(errored):
     """ Print error messages which occured during analyzer detection. """
     for analyzer_binary, reason in errored:
-        LOG.warning("Analyzer '%s' is enabled but CodeChecker is failed to "
+        LOG.warning("Analyzer '%s' is enabled but CodeChecker failed to "
                     "execute analysis with it: '%s'. Please check your "
                     "'PATH' environment variable and the "
                     "'config/package_layout.json' file!",
