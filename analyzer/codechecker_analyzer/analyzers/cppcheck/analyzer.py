@@ -244,10 +244,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
+        if not cls.analyzer_binary():
+            return []
         command = [cls.analyzer_binary(), "--errorlist"]
-
+        environ = analyzer_context.get_context().get_env_for_bin(
+            command[0])
         try:
-            result = subprocess.check_output(command)
+            result = subprocess.check_output(command, env=environ)
             return parse_checkers(result)
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)

@@ -55,6 +55,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # unforeseen exceptions where a general catch is justified?
         config = self.config_handler
 
+        if not Gcc.analyzer_binary():
+            return None
         # We don't want GCC do start linking, but -fsyntax-only stops the
         # compilation process too early for proper diagnostics generation.
         analyzer_cmd = [Gcc.analyzer_binary(), '-fanalyzer', '-c',
@@ -91,10 +93,14 @@ class Gcc(analyzer_base.SourceAnalyzer):
         Return the list of the supported checkers.
         """
         command = [cls.analyzer_binary(), "--help=warning"]
+        if not cls.analyzer_binary():
+            return []
+        environ = analyzer_context.get_context().get_env_for_bin(
+            command[0])
         checker_list = []
 
         try:
-            output = subprocess.check_output(command)
+            output = subprocess.check_output(command, env=environ)
 
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
