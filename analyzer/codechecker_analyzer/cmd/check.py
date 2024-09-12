@@ -892,6 +892,7 @@ def main(args):
                           'capture_analysis_output',
                           'generate_reproducer',
                           'config_file',
+                          'ctu_ast_mode',
                           'ctu_phases',
                           'ctu_reanalyze_on_failure',
                           'stats_output',
