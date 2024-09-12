@@ -143,11 +143,12 @@ def get_diagtool_bin():
     return None
 
 
-def get_warnings(environment=None):
+def get_warnings():
     """
     Returns list of warning flags by using diagtool.
     """
     diagtool_bin = get_diagtool_bin()
+    environment = analyzer_context.get_context().get_env_for_bin(diagtool_bin)
 
     if not diagtool_bin:
         return []
@@ -285,7 +286,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             checker_description.extend(
                 ("clang-diagnostic-" + warning, "")
-                for warning in get_warnings(environ))
+                for warning in get_warnings())
 
             cls.__analyzer_checkers = checker_description
 
@@ -315,6 +316,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         Return the analyzer configuration with all checkers enabled.
         """
+        if not cls.analyzer_binary():
+            return []
+
         try:
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
