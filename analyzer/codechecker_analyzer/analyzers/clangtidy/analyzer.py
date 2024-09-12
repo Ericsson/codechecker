@@ -136,8 +136,9 @@ def get_diagtool_bin():
     if os.path.exists(diagtool_bin):
         return diagtool_bin
 
-    LOG.debug("'diagtool' can not be found next to the clang binary (%s)!",
-              clang_bin)
+    LOG.warning(
+        "'diagtool' can not be found next to the clang binary (%s)!",
+        clang_bin)
 
     return None
 
