@@ -155,6 +155,9 @@ class Infer(analyzer_base.SourceAnalyzer):
             with open(original_env_file, 'rb') as env_file:
                 env = pickle.load(env_file, encoding='utf-8')
 
+        if "TZ" not in env:
+            env["TZ"] = "UTC"
+
         result_handler = super().analyze(
             analyzer_cmd, res_handler, proc_callback, env)
 
@@ -183,10 +186,9 @@ class Infer(analyzer_base.SourceAnalyzer):
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
-        if details:
-            version = [cls.analyzer_binary(), '--version']
-        else:
-            version = [cls.analyzer_binary(), '--version']
+        if "TZ" not in environ:
+            environ["TZ"] = "UTC"
+        version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
                                              env=environ,
