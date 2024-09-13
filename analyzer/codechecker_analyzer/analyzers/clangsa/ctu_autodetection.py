@@ -13,6 +13,7 @@ import os
 import subprocess
 
 from codechecker_common.logger import get_logger
+from codechecker_analyzer import analyzer_context
 from codechecker_analyzer import host_check
 from codechecker_analyzer.analyzers.clangsa import version
 
@@ -75,7 +76,7 @@ def ctu_mapping(clang_version_info):
     return None, None
 
 
-def invoke_binary_checked(binary_path, args=None, environ=None):
+def invoke_binary_checked(binary_path, args=None):
     """
     Invoke the binary with the specified args, and return the output if the
     command finished running with zero exit code. Return False otherwise.
@@ -91,6 +92,7 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     args = args or []
     invocation = [binary_path]
     invocation.extend(args)
+    environ = analyzer_context.get_context().get_env_for_bin(binary_path)
     try:
         output = subprocess.check_output(
             invocation,
@@ -123,7 +125,7 @@ class CTUAutodetection:
             return
 
         analyzer_version = invoke_binary_checked(
-            self.__analyzer_binary, ['--version'], self.environ)
+            self.__analyzer_binary, ['--version'])
 
         if analyzer_version is False:
             LOG.debug('Failed to invoke command to get Clang version!')
@@ -222,7 +224,7 @@ class CTUAutodetection:
         if not tool_path:
             return False
 
-        return invoke_binary_checked(tool_path, ['-version'], self.environ) \
+        return invoke_binary_checked(tool_path, ['-version']) \
             is not False
 
     @property
@@ -233,8 +235,7 @@ class CTUAutodetection:
         """
 
         analyzer_options = invoke_binary_checked(
-            self.__analyzer_binary, ['-cc1', '-analyzer-config-help'],
-            self.environ)
+            self.__analyzer_binary, ['-cc1', '-analyzer-config-help'])
 
         if analyzer_options is False:
             return False

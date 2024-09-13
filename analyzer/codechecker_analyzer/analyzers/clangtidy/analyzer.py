@@ -143,11 +143,12 @@ def get_diagtool_bin():
     return None
 
 
-def get_warnings(environment=None):
+def get_warnings():
     """
     Returns list of warning flags by using diagtool.
     """
     diagtool_bin = get_diagtool_bin()
+    environment = analyzer_context.get_context().get_env_for_bin(diagtool_bin)
 
     if not diagtool_bin:
         return []
@@ -237,10 +238,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
-        # No need to LOG here, we will emit a warning later anyway.
+    def get_binary_version(cls, details=False) -> str:
         if not cls.analyzer_binary():
             return None
+        # No need to LOG here, we will emit a warning later anyway.
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
 
         version = [cls.analyzer_binary(), '--version']
         try:
@@ -272,7 +275,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 return cls.__analyzer_checkers
 
             environ = analyzer_context\
-                .get_context().get_analyzer_env(cls.ANALYZER_NAME)
+                .get_context().get_env_for_bin(cls.analyzer_binary())
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-list-checks", "-checks=*"],
                 env=environ,
@@ -283,7 +286,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             checker_description.extend(
                 ("clang-diagnostic-" + warning, "")
-                for warning in get_warnings(environ))
+                for warning in get_warnings())
 
             cls.__analyzer_checkers = checker_description
 
@@ -300,7 +303,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
-                .get_analyzer_env(cls.ANALYZER_NAME),
+                .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -313,11 +316,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         Return the analyzer configuration with all checkers enabled.
         """
+        if not cls.analyzer_binary():
+            return []
+
         try:
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
-                .get_analyzer_env(cls.ANALYZER_NAME),
+                .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -568,7 +574,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return clangtidy
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         We support pretty much every Clang-Tidy version.
         """
