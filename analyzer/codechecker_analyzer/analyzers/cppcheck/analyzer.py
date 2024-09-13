@@ -13,7 +13,6 @@ from collections import defaultdict
 from packaging.version import Version
 from pathlib import Path
 import os
-import pickle
 import re
 import shlex
 import shutil
@@ -83,11 +82,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
@@ -243,10 +244,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
+        if not cls.analyzer_binary():
+            return []
         command = [cls.analyzer_binary(), "--errorlist"]
-
+        environ = analyzer_context.get_context().get_env_for_bin(
+            command[0])
         try:
-            result = subprocess.check_output(command)
+            result = subprocess.check_output(command, env=environ)
             return parse_checkers(result)
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
@@ -271,18 +275,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         TODO add config options for cppcheck checkers.
         """
         return []
-
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
-        environment = None
-
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                environment = pickle.load(env_file, encoding='utf-8')
-
-        return super().analyze(
-            analyzer_cmd, res_handler, proc_callback, environment)
 
     def post_analyze(self, result_handler):
         """
@@ -337,11 +329,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
+        analyzer_version = cls.get_binary_version()
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
@@ -392,12 +384,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         except AttributeError as aerr:
             # No cppcheck arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
-
-        check_env = context.analyzer_env
-
-        # Overwrite PATH to contain only the parent of the cppcheck binary.
-        if os.path.isabs(Cppcheck.analyzer_binary()):
-            check_env['PATH'] = os.path.dirname(Cppcheck.analyzer_binary())
 
         checkers = cls.get_analyzer_checkers()
 

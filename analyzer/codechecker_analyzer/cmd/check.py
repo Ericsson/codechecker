@@ -152,6 +152,17 @@ def add_arguments_to_parser(parser):
                              "fails with error message related to __builtin "
                              "symbols.")
 
+    parser.add_argument('--add-gcc-include-dirs-with-isystem',
+                        dest="add_gcc_include_dirs_with_isystem",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="Implicit include directories are appended to "
+                             "the analyzer command with -idirafter. If "
+                             "-isystem is needed instead, as it was used "
+                             "before CodeChecker 6.24.1, this flag can be "
+                             "used.")
+
     log_args = parser.add_argument_group(
         "log arguments",
         """
@@ -294,7 +305,7 @@ used to generate a log file on the fly.""")
                                metavar='ANALYZER',
                                required=False,
                                choices=analyzer_types.supported_analyzers,
-                               default=argparse.SUPPRESS,
+                               default=None,
                                help="Run analysis only with the analyzers "
                                     "specified. Currently supported analyzers "
                                     "are: " +
@@ -881,6 +892,7 @@ def main(args):
                           'capture_analysis_output',
                           'generate_reproducer',
                           'config_file',
+                          'ctu_ast_mode',
                           'ctu_phases',
                           'ctu_reanalyze_on_failure',
                           'stats_output',
@@ -896,6 +908,7 @@ def main(args):
                           'review_status_config',
                           'compile_uniqueing',
                           'report_hash',
+                          'add_gcc_include_dirs_with_isystem',
                           'enable_z3',
                           'enable_z3_refutation']
         for key in args_to_update:

@@ -10,8 +10,6 @@ Module for Facebook Infer analyzer related methods
 """
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
-import os
-import pickle
 import shlex
 import subprocess
 import json
@@ -108,8 +106,12 @@ class Infer(analyzer_base.SourceAnalyzer):
                  "r", encoding="utf-8"))
         checker_list = []
         try:
+            env = analyzer_context.get_context().get_env_for_bin(
+                cls.analyzer_binary())
+            env.update(TZ='UTC')
             output = subprocess.check_output(command,
-                                             stderr=subprocess.DEVNULL)
+                                             stderr=subprocess.DEVNULL,
+                                             env=env)
             for entry in output.decode().split('\n'):
                 data = entry.strip().split(":")
                 if len(data) < 7:
@@ -147,16 +149,10 @@ class Infer(analyzer_base.SourceAnalyzer):
         return []
 
     def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
-        env = None
 
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                env = pickle.load(env_file, encoding='utf-8')
-
-        if "TZ" not in env:
-            env["TZ"] = "UTC"
+        env = analyzer_context.get_context().get_env_for_bin(
+            analyzer_cmd[0])
+        env.update(TZ='UTC')
 
         result_handler = super().analyze(
             analyzer_cmd, res_handler, proc_callback, env)
@@ -179,16 +175,17 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """
         Return the analyzer version.
         """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
-        if "TZ" not in environ:
-            environ["TZ"] = "UTC"
         version = [cls.analyzer_binary(), '--version']
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
+        environ.update(TZ='UTC')
         try:
             output = subprocess.check_output(version,
                                              env=environ,
@@ -203,7 +200,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """

@@ -7,8 +7,6 @@
 # -------------------------------------------------------------------------
 from collections import defaultdict
 from packaging.version import Version
-import os
-import pickle
 import shlex
 import subprocess
 
@@ -57,6 +55,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # unforeseen exceptions where a general catch is justified?
         config = self.config_handler
 
+        if not Gcc.analyzer_binary():
+            return None
         # We don't want GCC do start linking, but -fsyntax-only stops the
         # compilation process too early for proper diagnostics generation.
         analyzer_cmd = [Gcc.analyzer_binary(), '-fanalyzer', '-c',
@@ -93,10 +93,14 @@ class Gcc(analyzer_base.SourceAnalyzer):
         Return the list of the supported checkers.
         """
         command = [cls.analyzer_binary(), "--help=warning"]
+        if not cls.analyzer_binary():
+            return []
+        environ = analyzer_context.get_context().get_env_for_bin(
+            command[0])
         checker_list = []
 
         try:
-            output = subprocess.check_output(command)
+            output = subprocess.check_output(command, env=environ)
 
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
@@ -132,17 +136,6 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
         return []
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
-        env = None
-
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                env = pickle.load(env_file, encoding='utf-8')
-
-        return super().analyze(analyzer_cmd, res_handler, proc_callback, env)
-
     def post_analyze(self, result_handler: GccResultHandler):
         """
         Post process the reuslts after the analysis.
@@ -162,13 +155,15 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """
         Return the analyzer version.
         """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         if details:
             version = [cls.analyzer_binary(), '--version']
         else:
@@ -187,11 +182,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
+        analyzer_version = cls.get_binary_version()
 
         if analyzer_version is None:
             return "GCC binary is too old to support -dumpfullversion."

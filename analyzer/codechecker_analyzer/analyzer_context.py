@@ -14,16 +14,14 @@ from shutil import which
 from argparse import ArgumentTypeError
 
 import os
-import platform
 import sys
-
-from pathlib import Path
 
 from codechecker_analyzer.arg import analyzer_binary
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json
+from pathlib import Path
 
 from . import env
 
@@ -65,20 +63,20 @@ class Context(metaclass=Singleton):
         self.__package_build_date = None
         self.__package_git_hash = None
         self.__analyzers = {}
-        self.__analyzer_env = None
 
-        machine = platform.uname().machine
+        # CodeChecker's current runtime environment
+        self.__cc_env = None
+        # cc_env extended with packaged LD_LIBRARY_PATH for packaged binaries
+        self.__package_env = None
+        # Original caller environment of CodeChecker for external binaries
+        self.__original_env = None
 
         self.logger_lib_dir_path = os.path.join(
-            self._data_files_dir_path, 'ld_logger', 'lib', machine)
+            self._data_files_dir_path, 'ld_logger', 'lib')
 
         if not os.path.exists(self.logger_lib_dir_path):
             self.logger_lib_dir_path = os.path.join(
-                self._lib_dir_path,
-                'codechecker_analyzer',
-                'ld_logger',
-                'lib',
-                machine)
+                self._lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib')
 
         self.logger_bin = None
         self.logger_file = None
@@ -93,9 +91,9 @@ class Context(metaclass=Singleton):
 
     def __parse_cc_analyzer_bin(self):
         env_var_bins = {}
-        if 'CC_ANALYZER_BIN' in self.analyzer_env:
+        if 'CC_ANALYZER_BIN' in self.cc_env:
             had_error = False
-            for value in self.__analyzer_env['CC_ANALYZER_BIN'].split(';'):
+            for value in self.__cc_env['CC_ANALYZER_BIN'].split(';'):
                 try:
                     analyzer_name, path = analyzer_binary(value)
                 except ArgumentTypeError as e:
@@ -163,6 +161,9 @@ class Context(metaclass=Singleton):
             self.env_vars['cc_logger_compiles'])
         self.ld_preload = os.environ.get(self.env_vars['ld_preload'])
         self.ld_lib_path = self.env_vars['env_ld_lib_path']
+        self.__original_env = env.get_original_env()
+        self.__package_env = env.extend(self.path_env_extra,
+                                        self.ld_lib_path_extra)
 
     def __set_version(self):
         """
@@ -194,18 +195,42 @@ class Context(metaclass=Singleton):
                 logger.DEBUG_ANALYZER):
             self.__package_git_tag = package_git_dirtytag
 
+    def get_env_for_bin(self, binary):
+        """
+        binary must be a binary with full path
+
+        Returns the correct environment for binaries called by CodeChecker.
+        For binaries packaged with CodeChecker the LD_LIBRARY path is extended.
+        For non-packaged binaries, the original calling environment
+        is returned.
+        """
+        bin_path = Path(binary).resolve()
+        if not bin_path.exists():
+            LOG.error("Binary %s not found", binary)
+            return None
+
+        codechecker_dir = Path(self._data_files_dir_path)
+
+        if str(bin_path).startswith(str(codechecker_dir)):
+            LOG.debug("Package env is returned for %s", bin_path)
+            return self.__package_env
+        else:
+            LOG.debug("Original env is returned for %s", bin_path)
+            return self.__original_env
+
     def __populate_analyzers(self):
         """ Set analyzer binaries for each registered analyzers. """
-        analyzer_env = None
+        cc_env = None
         analyzer_from_path = env.is_analyzer_from_path()
         if not analyzer_from_path:
-            analyzer_env = self.analyzer_env
+            cc_env = self.cc_env
 
         env_var_bin = self.__parse_cc_analyzer_bin()
 
         compiler_binaries = self.pckg_layout.get('analyzers')
         for name, value in compiler_binaries.items():
             if name in env_var_bin:
+                # env_var_bin has priority over package config and PATH
                 self.__analyzers[name] = env_var_bin[name]
                 continue
 
@@ -217,7 +242,7 @@ class Context(metaclass=Singleton):
                 self.__analyzers[name] = os.path.join(
                     self._data_files_dir_path, value)
             else:
-                env_path = analyzer_env['PATH'] if analyzer_env else None
+                env_path = cc_env['PATH'] if cc_env else None
                 compiler_binary = which(cmd=value, path=env_path)
                 if not compiler_binary:
                     LOG.debug("'%s' binary can not be found in your PATH!",
@@ -281,12 +306,8 @@ class Context(metaclass=Singleton):
         return os.path.join(self._bin_dir_path, 'ld_logger')
 
     @property
-    def logger_lib_path(self):
-        """
-        Returns the absolute path to the logger library.
-        """
-        return str(Path(self.logger_lib_dir_path,
-                        self.logger_lib_name).absolute())
+    def path_logger_lib(self):
+        return self.logger_lib_dir_path
 
     @property
     def logger_lib_name(self):
@@ -320,11 +341,10 @@ class Context(metaclass=Singleton):
         return ld_paths
 
     @property
-    def analyzer_env(self):
-        if not self.__analyzer_env:
-            self.__analyzer_env = \
-                env.extend(self.path_env_extra, self.ld_lib_path_extra)
-        return self.__analyzer_env
+    def cc_env(self):
+        if not self.__cc_env:
+            self.__cc_env = os.environ.copy()
+        return self.__cc_env
 
     @property
     def analyzer_binaries(self):

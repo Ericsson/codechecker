@@ -58,7 +58,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """
         Return the version number of the binary that CodeChecker found, even
         if its incompatible. If details is true, additional version information
@@ -68,7 +68,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ) -> Optional[str]:
+    def is_binary_version_incompatible(cls) -> Optional[str]:
         """
         CodeChecker can only execute certain versions of analyzers.
         Returns a error object (an optional string). If the return value is
@@ -110,6 +110,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
         LOG.debug_analyzer('\n%s',
                            ' '.join([shlex.quote(x) for x in analyzer_cmd]))
+
+        if not env:
+            env = analyzer_context.get_context().get_env_for_bin(
+                analyzer_cmd[0])
 
         res_handler.analyzer_cmd = analyzer_cmd
         try:
@@ -157,8 +161,9 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
         signal.signal(signal.SIGINT, signal_handler)
 
-        if env is None:
-            env = analyzer_context.get_context().analyzer_env
+        LOG.debug('\nexecuting:%s\n', command)
+        LOG.debug('\nENV:\n')
+        LOG.debug(env)
 
         proc = subprocess.Popen(
             command,

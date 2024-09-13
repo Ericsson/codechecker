@@ -285,10 +285,14 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
         """
         Execute clang-apply-replacements binary.
         """
+        context = analyzer_context.get_context()
+        replacer_env = context.get_env_for_bin(
+            analyzer_context.get_context().replacer_binary)
         subprocess.Popen([
             analyzer_context.get_context().replacer_binary,
             *ignore_flag,
-            out_dir]).communicate()
+            out_dir],
+            env=replacer_env).communicate()
 
     not_existing_files = set()
     existing_files = set()

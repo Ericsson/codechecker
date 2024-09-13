@@ -21,24 +21,28 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def check_analyzer(compiler_bin, env):
+def check_analyzer(compiler_bin):
     """
     Simple check if clang is available.
     """
     clang_version_cmd = [compiler_bin, '--version']
     LOG.debug_analyzer(' '.join(clang_version_cmd))
+    environ = analyzer_context.get_context().get_env_for_bin(
+        compiler_bin)
     try:
-        res = subprocess.call(
+        proc = subprocess.Popen(
             clang_version_cmd,
-            env=env,
+            env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        if not res:
+        out, err = proc.communicate()
+        if not proc.returncode:
             return True
-
-        LOG.debug_analyzer('Failed to run: "%s"', ' '.join(clang_version_cmd))
+        LOG.error('Failed to run: "%s"', ' '.join(clang_version_cmd))
+        LOG.error('stdout: %s', out)
+        LOG.error('stderr: %s', err)
         return False
 
     except OSError as oerr:
@@ -53,13 +57,14 @@ def has_analyzer_config_option(clang_bin, config_option_name):
     cmd = [clang_bin, "-cc1", "-analyzer-config-help"]
 
     LOG.debug('run: "%s"', ' '.join(cmd))
+    context = analyzer_context.get_context()
 
     try:
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=analyzer_context.get_context().analyzer_env,
+            env=context.get_env_for_bin(clang_bin),
             encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         LOG.debug("stdout:\n%s", out)
@@ -92,7 +97,7 @@ def has_analyzer_option(clang_bin, feature):
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                env=analyzer_context.get_context().analyzer_env,
+                env=analyzer_context.get_context().get_env_for_bin(clang_bin),
                 encoding="utf-8", errors="ignore")
             out, err = proc.communicate()
             LOG.debug("stdout:\n%s", out)

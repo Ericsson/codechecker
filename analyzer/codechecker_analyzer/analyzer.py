@@ -142,10 +142,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
         args.ctu_reanalyze_on_failure
 
-    analyzers = args.analyzers if 'analyzers' in args \
-        else analyzer_types.supported_analyzers
-    analyzers, errored = analyzer_types.check_supported_analyzers(analyzers)
-    analyzer_types.check_available_analyzers(analyzers, errored)
+    analyzers, errored = \
+        analyzer_types.check_available_analyzers(args.analyzers)
 
     ctu_collect = False
     ctu_analyze = False
@@ -248,9 +246,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
             if state == CheckerState.ENABLED:
                 enabled_checkers[analyzer].append(check)
 
-        # TODO: cppcheck may require a different environment than clang.
         version = analyzer_types.supported_analyzers[analyzer] \
-            .get_binary_version(context.analyzer_env)
+            .get_binary_version()
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
@@ -358,7 +355,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     end_time = time.time()
     LOG.info("Analysis length: %s sec.", end_time - start_time)
 
-    analyzer_types.print_unsupported_analyzers(errored)
+    if args.analyzers:
+        analyzer_types.print_unsupported_analyzers(errored)
 
     metadata_tool['timestamps'] = {'begin': start_time,
                                    'end': end_time}
