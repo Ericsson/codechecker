@@ -198,8 +198,15 @@ export default {
     detectCallback() {
       const url = this.$route.query;
       const provider = localStorage.getItem("oauth_provider");
+      const state = localStorage.getItem("oauth_state");
 
       if (url.code != null && url.state != null) {
+        if (url.state != state) {
+          this.errorMsg = "Invalid state!";
+          this.error = true;
+          return;
+        }
+
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
@@ -246,6 +253,9 @@ export default {
         if (url) {
           this.success = false;
           this.error = false;
+          localStorage.setItem("oauth_state",
+            url.split("state=")[1].split("&")[0]);
+
           window.location.href = url;
           this.link = url;
         } else {
