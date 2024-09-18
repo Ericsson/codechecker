@@ -106,6 +106,7 @@ class ThriftAuthHandler:
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "OAuth authentication is not enabled.")
 
+        stored_state = generate_token()
         client_id = oauth_config["oauth_client_id"]
         client_secret = oauth_config["oauth_client_secret"]
         scope = oauth_config["oauth_scope"]
@@ -122,7 +123,7 @@ class ThriftAuthHandler:
         # Create authorization URL
         nonce = generate_token()
         url = session.create_authorization_url(
-            authorization_uri, nonce=nonce)[0]
+            authorization_uri, nonce=nonce, state=stored_state)[0]
         return url
 
     @timeit
@@ -231,7 +232,9 @@ class ThriftAuthHandler:
             # which doesn't correctly fetch the code from url.
 
             code = url.split("code=")[1].split("&")[0]
-            url = url.split("?")[0] + "?code=" + code
+            url = url.split("?")[0] + "?code=" + code + "&state=" + \
+                url.split("state=")[1].split("&")[0]
+
             token = session.fetch_token(
                 url=token_url,
                 authorization_response=url)
