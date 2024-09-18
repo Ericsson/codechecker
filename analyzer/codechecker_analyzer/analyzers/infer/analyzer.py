@@ -161,7 +161,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         result_handler = super().analyze(
             analyzer_cmd, res_handler, proc_callback, env)
 
-        if result_handler.analyzer_stderr:
+        if result_handler.analyzer_returncode != 0:
             LOG.error(result_handler.analyzer_stderr)
 
         return result_handler
