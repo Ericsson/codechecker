@@ -517,13 +517,12 @@ class SessionManager:
         providers = self.__auth_config.get(
             'method_oauth', {}).get("providers", {})
 
-        provider = auth_string.split('@')[0]
+        provider, data = auth_string.split('@',1)
 
         if provider in providers:
             if not providers[provider].get('enabled', False):
                 return False
 
-            data = auth_string.split(provider + '@')[1]
             username, token = data.split(':')
             return {'username': username, 'token': token, 'groups': []}
 
