@@ -415,6 +415,7 @@ you should be greeted with a web application showing you the analysis results.
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
 * [Package and integration tests](tests.md)
+* [Server-side background tasks](web/background_tasks.md)
 
 ## Conference papers, presentations
 * An overview about the CodeChecker infrastructure was given at [PLDI 2020](http://pldi20.sigplan.org).<br />
