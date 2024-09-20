@@ -76,7 +76,7 @@
               color="primary"
               @click="openModal"
             >
-              OAuth login
+              SSO login
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -92,7 +92,7 @@
           class="headline primary white--text"
           primary-title
         >
-          OAuth Login Methods
+          Login Methods
 
           <v-spacer />
 
@@ -142,8 +142,7 @@ export default {
       valid: false,
       providers: [],
       dialog: false,
-      on: false,
-      test : "GFGDFG"
+      on: false
     };
   },
 
@@ -218,7 +217,7 @@ export default {
             this.error = false;
 
             const w = window.location;
-            window.location.href = w.protocol + "//" + w.host + w.pathname;
+            window.location.href = w.origin + w.pathname;
           }).catch(err => {
             this.errorMsg = `Failed to log in! ${err.message}`;
             this.error = true;
@@ -253,8 +252,9 @@ export default {
         if (url) {
           this.success = false;
           this.error = false;
+          const params = new URLSearchParams(url);
           localStorage.setItem("oauth_state",
-            url.split("state=")[1].split("&")[0]);
+            params.get("state"));
 
           window.location.href = url;
           this.link = url;

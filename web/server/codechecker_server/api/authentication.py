@@ -11,6 +11,7 @@ Handle Thrift requests for authentication.
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
+from urllib.parse import urlparse, parse_qs
 
 import json
 import codechecker_api_shared
@@ -47,6 +48,9 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
+        # print("manager", manager)
+        # print("auth_session", auth_session)
+        # print("config_database", config_database)
 
     def __require_privilaged_access(self):
         """
@@ -100,6 +104,9 @@ class ThriftAuthHandler:
         """
         For creating a autehntication link for OAuth for specified provider
         """
+        # print("auth_session", self.__auth_session)
+        # print("manager", self.__manager)
+        # print("config_database", self.__config_db)
         oauth_config = self.__manager.get_oauth_config(provider)
         if not oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -210,6 +217,7 @@ class ThriftAuthHandler:
 
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get("enabled"):
+                LOG.error("OAuth authentication is not enabled for provider: %s", provider)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth authentication is not enabled.")
@@ -222,6 +230,8 @@ class ThriftAuthHandler:
             redirect_uri = oauth_config["oauth_redirect_uri"]
             allowed_users = oauth_config.get("allowed_users", [])
 
+            LOG.info("OAuth configuration loaded for provider: %s", provider)
+
             session = OAuth2Session(
                 client_id,
                 client_secret,
@@ -231,17 +241,27 @@ class ThriftAuthHandler:
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
 
-            code = url.split("code=")[1].split("&")[0]
-            url = url.split("?")[0] + "?code=" + code + "&state=" + \
-                url.split("state=")[1].split("&")[0]
+            url_new = urlparse(url)
+            parsed_query = parse_qs(url_new.query)
+
+            code = parsed_query.get("code")[0]
+            state = parsed_query.get("state")[0]
+
+            url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
+                "?code=" + code + "&state=" + state
+
+            LOG.info("Constructed URL")
 
             token = session.fetch_token(
                 url=token_url,
                 authorization_response=url)
 
+            LOG.info("Token fetched successfully for provider: %s", provider)
+
             user_info = session.get(user_info_url).json()
             username = user_info[
                 oauth_config["oauth_user_info_mapping"]["username"]]
+            LOG.info("User info fetched, username: %s", username)
 
             if provider == "github" and \
                     "localhost" not in user_info_url:
@@ -249,21 +269,26 @@ class ThriftAuthHandler:
                 for email in session.get(link).json():
                     if email['primary']:
                         username = email['email']
+                        LOG.info("Primary email found: %s", username)
                         break
 
             if allowed_users == ["*"] or username in allowed_users:
+                LOG.info("User %s is authorized.", username)
                 session = self.__manager.create_session(
                     f"{provider}@{username}:{token['access_token']}")
                 return session.token
 
             if len(allowed_users) == 0:
+                LOG.error("The allowed users list is empty.")
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "The allowed users list is empty")
-
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User is not authorized to access this service")
+
+            LOG.error("User %s is not authorized to access this service.", username)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "User is not authorized to access this service")
+        LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
