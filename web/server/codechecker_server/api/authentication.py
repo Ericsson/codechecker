@@ -108,7 +108,7 @@ class ThriftAuthHandler:
         # print("manager", self.__manager)
         # print("config_database", self.__config_db)
         oauth_config = self.__manager.get_oauth_config(provider)
-        if not oauth_config.get("enabled"):
+        if not oauth_config.get('enabled'):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "OAuth authentication is not enabled.")
@@ -216,8 +216,9 @@ class ThriftAuthHandler:
             provider, url = auth_string.split("@")
 
             oauth_config = self.__manager.get_oauth_config(provider)
-            if not oauth_config.get("enabled"):
-                LOG.error("OAuth authentication is not enabled for provider: %s", provider)
+            if not oauth_config.get('enabled'):
+                LOG.error("OAuth authentication is " +
+                          "not enabled for provider: %s", provider)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth authentication is not enabled.")
@@ -284,7 +285,8 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User is not authorized to access this service")
 
-            LOG.error("User %s is not authorized to access this service.", username)
+            LOG.error("User %s is not authorized " +
+                      "to access this service.", username)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "User is not authorized to access this service")
