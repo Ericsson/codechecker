@@ -270,6 +270,19 @@ class SessionManager:
         return result
 
     def get_oauth_config(self, provider):
+        provider_cfg = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
+
+        if provider_cfg.get("oauth_client_secret",
+                            "ExampleClientSecret") == "ExampleClientSecret" \
+                or provider_cfg.get("oauth_client_id",
+                                    "ExampleClientID") == "ExampleClientID":
+            self.__auth_config["method_oauth"]["providers"][provider][
+                "enabled"] = False
+
+            LOG.warning("OAuth configuration was set to default values. " +
+                        "Disabling oauth provider: %s", provider)
+
         return self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})
 
@@ -517,7 +530,7 @@ class SessionManager:
         providers = self.__auth_config.get(
             'method_oauth', {}).get("providers", {})
 
-        provider, data = auth_string.split('@',1)
+        provider, data = auth_string.split('@', 1)
 
         if provider in providers:
             if not providers[provider].get('enabled', False):

@@ -63,7 +63,7 @@
         "github" : {
           "enabled" : false,
           "oauth_client_id" : "ExampleClientID",
-          "oauth_client_secret": "exampleClientSecret",
+          "oauth_client_secret": "ExampleClientSecret",
           "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
           "oauth_redirect_uri": "http://path_To_CodeChecker_Login_Page",
           "oauth_token_uri": "https://github.com/login/oauth/access_token",
@@ -81,7 +81,7 @@
         "google": {
           "enabled" : false,
           "oauth_client_id" : "ExampleClientID",
-          "oauth_client_secret" : "exampleClientSecret",
+          "oauth_client_secret" : "ExampleClientSecret",
           "oauth_authorization_uri" : "https://accounts.google.com/o/oauth2/auth",
           "oauth_redirect_uri" : "http://path_To_CodeChecker_Login_Page",
           "oauth_token_uri" : "https://accounts.google.com/o/oauth2/token",
@@ -99,7 +99,7 @@
         "microsoft": {
           "enabled": true,
           "oauth_client_id": "ExampleClientID",
-          "oauth_client_secret": "exampleClientSecret",
+          "oauth_client_secret": "ExampleClientSecret",
           "oauth_authorization_uri": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/authorize",
           "oauth_redirect_uri": "http://path_To_CodeChecker_Login_Page",
           "oauth_token_uri": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/token",
