@@ -288,8 +288,8 @@ class ThriftAuthHandler:
             LOG.error("User %s is not authorized " +
                       "to access this service.", username)
             raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "User is not authorized to access this service")
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
         LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
