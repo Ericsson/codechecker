@@ -31,6 +31,8 @@ from codechecker_analyzer.cmd.analyze import \
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
 
+from libtest.cmd_line import create_analyze_argparse
+
 
 class MockClangsaCheckerLabels:
     def checkers_by_labels(self, labels):
@@ -68,8 +70,7 @@ class MockClangsaCheckerLabels:
 
 
 def create_analyzer_sa():
-    args = []
-    cfg_handler = ClangSA.construct_config_handler(args)
+    cfg_handler = ClangSA.construct_config_handler(create_analyze_argparse())
 
     action = {
         'file': 'main.cpp',
@@ -146,7 +147,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 return set(checkers) <= result
             return f
 
-        args = []
+        args = create_analyze_argparse()
 
         # "security" profile, but alpha -> not in default.
         security_profile_alpha = [
@@ -250,12 +251,40 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.DISABLED)
                         (cfg_handler.checks(), cert_guideline))
 
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('DeadStores', True)])
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(), default_profile))
+
         # Enable "LOW" severity checkers.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
                                         [('severity:LOW', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), low_severity))
+
+        # Enable checkers with a checker group prefix.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('cplusplus.NewDelete', True)])
+        self.assertTrue(
+            all_with_status(CheckerState.ENABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDelete']))
+        self.assertTrue(
+            all_with_status(CheckerState.DISABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDeleteLeaks']))
+
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('cplusplus', True)])
+        self.assertTrue(
+            all_with_status(CheckerState.ENABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDelete',
+                                    'cplusplus.NewDeleteLeaks']))
 
         # Test if statisticsbased checkers are enabled by --stats flag
         # by default.
@@ -305,10 +334,8 @@ class MockClangTidyCheckerLabels:
 
 
 def create_analyzer_tidy(args=None):
-    if args is None:
-        args = []
-
-    cfg_handler = ClangTidy.construct_config_handler(args)
+    cfg_handler = ClangTidy.construct_config_handler(
+        create_analyze_argparse(args))
 
     action = {
         'file': 'main.cpp',
@@ -402,9 +429,7 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
         self.assertFalse(is_compiler_warning('hicpp'))
 
-        args = Namespace()
-        args.ordered_checkers = [('Wreserved-id-macro', True)]
-        analyzer = create_analyzer_tidy(args)
+        analyzer = create_analyzer_tidy(['--enable', 'Wreserved-id-macro'])
         result_handler = create_result_handler(analyzer)
 
         analyzer.config_handler.checker_config = '{}'
@@ -465,11 +490,9 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         Side note: we use -Weverything instead of listing all enabled warnings
         to represent --enable-all.
         """
-        args = Namespace()
-        args.ordered_checkers = [('clang-diagnostic-unused-variable', False)]
-        args.enable_all = True
-
-        analyzer = create_analyzer_tidy(args)
+        analyzer = create_analyzer_tidy([
+            '--enable-all',
+            '--disable', 'clang-diagnostic-unused-variable'])
         result_handler = create_result_handler(analyzer)
 
         analyzer_cmd = analyzer.construct_analyzer_cmd(result_handler)
@@ -507,13 +530,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         Test that clang-diagnostic-* checkers are enabled as compiler warnings.
         """
 
-        args = Namespace()
-        args.ordered_checkers = [
+        analyzer = create_analyzer_tidy([
             # This should enable -Wvla and -Wvla-extension.
-            ('clang-diagnostic-vla', True),
-            ('clang-diagnostic-unused-value', False)
-        ]
-        analyzer = create_analyzer_tidy(args)
+            '--enable', 'clang-diagnostic-vla',
+            '--disable', 'clang-diagnostic-unused-value'])
         result_handler = create_result_handler(analyzer)
 
         analyzer.config_handler.checker_config = '{}'

@@ -20,7 +20,7 @@ import time
 import zlib
 
 from copy import deepcopy
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -406,7 +406,8 @@ def process_report_filter(
             if keep_all_annotations:
                 OR.append(or_(
                     ReportAnnotations.key != key,
-                    ReportAnnotations.value.in_(values)))
+                    *[ReportAnnotations.value.ilike(conv(v))
+                      for v in values]))
             else:
                 OR.append(and_(
                     ReportAnnotations.key == key,
@@ -1962,117 +1963,114 @@ class ThriftRequestHandler:
                     ReportAnnotations.value)])).label(f"annotation_{col}")
 
             if report_filter.isUnique:
+                # A report annotation filter cannot be set in WHERE clause if
+                # we use annotation parameters in aggregate functions to
+                # create a pivot table. Instead of filtering report
+                # annotations in WHERE clause, we should use HAVING clause
+                # only for filtering aggregate functions.
+                # TODO: Fixing report annotation filter in every report server
+                # endpoint function.
+                annotations_backup = report_filter.annotations
+                report_filter.annotations = None
                 filter_expression, join_tables = process_report_filter(
-                    session, run_ids, report_filter, cmp_data,
-                    keep_all_annotations=False)
+                    session, run_ids, report_filter, cmp_data)
 
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types, True)
 
-                selects = [func.max(Report.id).label('id')]
-                for sort in sort_types:
-                    sorttypes = sort_type_map.get(sort.type)
-                    for sorttype in sorttypes:
-                        if sorttype[0] != 'bug_path_length':
-                            selects.append(func.max(sorttype[0])
-                                           .label(sorttype[1]))
+                # TODO: Create a helper function for common section of unique
+                # and non unique modes.
+                sub_query = session.query(Report,
+                                          File.filename,
+                                          Checker.analyzer_name,
+                                          Checker.checker_name,
+                                          Checker.severity,
+                                          func.row_number().over(
+                                            partition_by=Report.bug_id,
+                                            order_by=desc(Report.id)
+                                          ).label("row_num"),
+                                          *annotation_cols.values()) \
+                                   .join(Checker,
+                                         Report.checker_id == Checker.id) \
+                                   .options(contains_eager(Report.checker)) \
+                                   .outerjoin(File,
+                                              Report.file_id == File.id) \
+                                   .outerjoin(ReportAnnotations,
+                                              Report.id ==
+                                              ReportAnnotations.report_id)
 
-                unique_reports = session.query(*selects)
-                unique_reports = apply_report_filter(unique_reports,
-                                                     filter_expression,
-                                                     join_tables)
-                if report_filter.annotations is not None:
-                    unique_reports = unique_reports.outerjoin(
-                        ReportAnnotations,
-                        Report.id == ReportAnnotations.report_id)
-                unique_reports = unique_reports \
-                    .group_by(Report.bug_id) \
-                    .subquery()
+                sub_query = apply_report_filter(sub_query,
+                                                filter_expression,
+                                                join_tables,
+                                                [File, Checker])
 
-                # Sort the results.
-                sorted_reports = session.query(unique_reports.c.id)
-                sorted_reports = sort_results_query(sorted_reports,
-                                                    sort_types,
-                                                    sort_type_map,
-                                                    order_type_map,
-                                                    True)
-                sorted_reports = sorted_reports \
-                    .limit(limit).offset(offset).subquery()
+                sub_query = sub_query.group_by(Report.id, File.id, Checker.id)
 
-                q = session.query(Report,
-                                  File.filename,
-                                  *annotation_cols.values()) \
-                    .join(Checker,
-                          Report.checker_id == Checker.id) \
-                    .options(contains_eager(Report.checker)) \
-                    .outerjoin(
-                        File,
-                        Report.file_id == File.id) \
-                    .outerjoin(
-                        ReportAnnotations,
-                        Report.id == ReportAnnotations.report_id) \
-                    .outerjoin(sorted_reports,
-                               sorted_reports.c.id == Report.id) \
-                    .filter(sorted_reports.c.id.isnot(None))
-
-                if report_filter.annotations is not None:
+                if annotations_backup:
                     annotations = defaultdict(list)
-                    for annotation in report_filter.annotations:
+                    for annotation in annotations_backup:
                         annotations[annotation.first].append(annotation.second)
 
                     OR = []
                     for key, values in annotations.items():
-                        OR.append(annotation_cols[key].in_(values))
-                    q = q.having(or_(*OR))
+                        OR.extend([annotation_cols[key].ilike(conv(v))
+                                   for v in values])
+                    sub_query = sub_query.having(or_(*OR))
 
-                # We have to sort the results again because an ORDER BY in a
-                # subtable is broken by the JOIN.
-                q = sort_results_query(q,
-                                       sort_types,
-                                       sort_type_map,
-                                       order_type_map)
-                q = q.group_by(Report.id, File.id, Checker.id)
+                sub_query = sort_results_query(sub_query,
+                                               sort_types,
+                                               sort_type_map,
+                                               order_type_map)
 
-                query_result = q.all()
+                sub_query = sub_query.subquery().alias()
+
+                q = session.query(sub_query) \
+                           .filter(sub_query.c.row_num == 1) \
+                           .limit(limit).offset(offset)
+
+                QueryResult = namedtuple('QueryResult', sub_query.c.keys())
+                query_result = [QueryResult(*row) for row in q.all()]
 
                 # Get report details if it is required.
                 report_details = {}
                 if get_details:
-                    report_ids = [r[0].id for r in query_result]
+                    report_ids = [r.id for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
-                    report, filename = row[0], row[1]
                     annotations = {
-                        k: v for k, v in zip(annotation_keys, row[2:])
-                        if v is not None}
+                        k: v for k, v in zip(
+                            annotation_keys,
+                            [getattr(row, 'annotation_testcase', None),
+                             getattr(row, 'annotation_timestamp', None)]
+                            ) if v is not None}
 
                     review_data = create_review_data(
-                        report.review_status,
-                        report.review_status_message,
-                        report.review_status_author,
-                        report.review_status_date,
-                        report.review_status_is_in_source)
+                        row.review_status,
+                        row.review_status_message,
+                        row.review_status_author,
+                        row.review_status_date,
+                        row.review_status_is_in_source)
 
                     results.append(
-                        ReportData(runId=report.run_id,
-                                   bugHash=report.bug_id,
-                                   checkedFile=filename,
-                                   checkerMsg=report.checker_message,
-                                   reportId=report.id,
-                                   fileId=report.file_id,
-                                   line=report.line,
-                                   column=report.column,
-                                   analyzerName=report.checker.analyzer_name,
-                                   checkerId=report.checker.checker_name,
-                                   severity=report.checker.severity,
+                        ReportData(runId=row.run_id,
+                                   bugHash=row.bug_id,
+                                   checkedFile=row.filename,
+                                   checkerMsg=row.checker_message,
+                                   reportId=row.id,
+                                   fileId=row.file_id,
+                                   line=row.line,
+                                   column=row.column,
+                                   analyzerName=row.analyzer_name,
+                                   checkerId=row.checker_name,
+                                   severity=row.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
-                                       report.detection_status),
-                                   detectedAt=str(report.detected_at),
-                                   fixedAt=str(report.fixed_at),
-                                   bugPathLength=report.path_length,
-                                   details=report_details.get(report.id),
+                                    row.detection_status),
+                                   detectedAt=str(row.detected_at),
+                                   fixedAt=str(row.fixed_at),
+                                   bugPathLength=row.path_length,
+                                   details=report_details.get(row.id),
                                    annotations=annotations))
             else:  # not is_unique
                 filter_expression, join_tables = process_report_filter(
@@ -2129,7 +2127,8 @@ class ThriftRequestHandler:
 
                     OR = []
                     for key, values in annotations.items():
-                        OR.append(annotation_cols[key].in_(values))
+                        OR.extend([annotation_cols[key].ilike(conv(v))
+                                   for v in values])
                     q = q.having(or_(*OR))
 
                 q = q.limit(limit).offset(offset)
@@ -3072,7 +3071,7 @@ class ThriftRequestHandler:
                         checkerName=checker_name,
                         analyzerName=analyzer_name,
                         enabled=[],
-                        disabled=all_run_id,
+                        disabled=all_run_id.copy(),
                         severity=severity,
                         closed=0,
                         outstanding=0

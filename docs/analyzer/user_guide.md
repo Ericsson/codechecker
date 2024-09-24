@@ -132,6 +132,7 @@ subcommand.
 ```
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--keep-gcc-include-fixed] [--keep-gcc-intrin]
+                         [--add-gcc-include-dirs-with-isystem]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free,context-free-v2,diagnostic-message}]
@@ -179,6 +180,11 @@ optional arguments:
                         be kept among the implicit include paths. Use this
                         flag if Clang analysis fails with error message
                         related to __builtin symbols. (default: False)
+  --add-gcc-include-dirs-with-isystem
+                        Implicit include directories are appended to the
+                        analyzer command with -idirafter. If -isystem is needed
+                        instead, as it was used before CodeChecker 6.24.1, this
+                        flag can be used. (default: False)
   --compile-uniqueing COMPILE_UNIQUEING
                         Specify the method the compilation actions in the
                         compilation database are uniqued before analysis. CTU
@@ -756,6 +762,16 @@ object files as input) should be captured. For further details see
 [this documentation](/analyzer/tools/build-logger/README.md).
 
 
+If your build tool overrides `LD_LIBRARY_PATH` during the build process, then
+`ldlogger.so` will not be found. The best solution is to making sure
+that the LD_LIBRARY_PATH is not overridden, only extended.
+If this is not possible, you can work around the situation by
+specifying the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
+
+```sh
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/x86_64/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+```
+
 #### Change user inside the build command
 If we change user inside the build command of the CodeChecker log command
 before the actual compiler invocation, the compilation database will be empty:
@@ -921,6 +937,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            OUTPUT_PATH
                            [--compiler-info-file COMPILER_INFO_FILE]
                            [--keep-gcc-include-fixed] [--keep-gcc-intrin]
+                           [--add-gcc-include-dirs-with-isystem]
                            [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free,context-free-v2,diagnostic-message}]
@@ -980,6 +997,11 @@ optional arguments:
                         be kept among the implicit include paths. Use this
                         flag if Clang analysis fails with error message
                         related to __builtin symbols. (default: False)
+  --add-gcc-include-dirs-with-isystem
+                        Implicit include directories are appended to the
+                        analyzer command with -idirafter. If -isystem is needed
+                        instead, as it was used before CodeChecker 6.24.1, this
+                        flag can be used. (default: False)
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
@@ -1373,6 +1395,14 @@ cause failure in analysis. CodeChecker omits these GCC-specific paths from the
 analysis unless `--keep-gcc-include-fixed` or `--keep-gcc-intrin` flag is
 given. For further information see
 [GCC incompatibilities](gcc_incompatibilities.md).
+
+The GCC compiler's implicit include directories are appended to the analyzer
+command with `-idirafter`. There are other flags which can be used instead of
+`-idirafter`, such as , `-I`, `-isystem`, etc. They have a
+[priority order](https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html) in
+which compilers search header files. Prior to CodeChecker 6.24.1, the
+`-isystem` flag was used instead of `-idirafter`. If you need to the `-isystem`
+flag, you can use the `--add-gcc-include-dirs-with-isystem` flag.
 
 #### Toggling checkers
 

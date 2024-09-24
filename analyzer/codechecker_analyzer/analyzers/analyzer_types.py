@@ -104,7 +104,9 @@ def is_ignore_conflict_supported():
     proc = subprocess.Popen([context.replacer_binary, '--help'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
-                            env=context.analyzer_env,
+                            env=context
+                            .get_env_for_bin(
+                                context.replacer_binary),
                             encoding="utf-8", errors="ignore")
     out, _ = proc.communicate()
     return '--ignore-insert-conflict' in out
@@ -113,22 +115,35 @@ def is_ignore_conflict_supported():
 def print_unsupported_analyzers(errored):
     """ Print error messages which occured during analyzer detection. """
     for analyzer_binary, reason in errored:
-        LOG.warning("Analyzer '%s' is enabled but CodeChecker is failed to "
+        LOG.warning("Analyzer '%s' is enabled but CodeChecker failed to "
                     "execute analysis with it: '%s'. Please check your "
                     "'PATH' environment variable and the "
                     "'config/package_layout.json' file!",
                     analyzer_binary, reason)
 
 
-def check_available_analyzers(analyzers, errored):
-    """ Handle use case when no analyzer can be found on the user machine. """
-    if analyzers:
-        return
+def check_available_analyzers(args_analyzers=None):
+    """
+    Handle use case when no analyzer can be found or a supported, explicitly
+    given analyzer cannot be found on the user machine.
+    """
 
-    print_unsupported_analyzers(errored)
-    LOG.error("Failed to run command because no analyzers can be found on "
-              "your machine!")
-    sys.exit(1)
+    if args_analyzers:
+        analyzers, errored = check_supported_analyzers(args_analyzers)
+        if errored:
+            print_unsupported_analyzers(errored)
+            LOG.error("Failed to run command because the given analyzer(s) "
+                      "cannot be found on your machine!")
+            sys.exit(1)
+
+    else:
+        analyzers, errored = check_supported_analyzers(supported_analyzers)
+        if not analyzers:
+            print_unsupported_analyzers(errored)
+            LOG.error("Failed to run command because no analyzers can be "
+                      "found on your machine!")
+            sys.exit(1)
+    return analyzers, errored
 
 
 def check_supported_analyzers(analyzers):
@@ -144,7 +159,6 @@ def check_supported_analyzers(analyzers):
     """
 
     context = analyzer_context.get_context()
-    check_env = context.analyzer_env
 
     analyzer_binaries = context.analyzer_binaries
 
@@ -167,7 +181,8 @@ def check_supported_analyzers(analyzers):
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
             found_bin = supported_analyzers[analyzer_name].\
-                resolve_missing_binary(analyzer_bin, check_env)
+                resolve_missing_binary(analyzer_bin,
+                                       context.get_env_for_bin(analyzer_bin))
 
             # found_bin is an absolute path, an executable in one of the
             # PATH folders.
@@ -186,7 +201,7 @@ def check_supported_analyzers(analyzers):
         # Check version compatibility of the analyzer binary.
         if analyzer_bin:
             analyzer = supported_analyzers[analyzer_name]
-            error = analyzer.is_binary_version_incompatible(check_env)
+            error = analyzer.is_binary_version_incompatible()
             if error:
                 failed_analyzers.add((analyzer_name,
                                       f"Incompatible version: {error} "
@@ -196,7 +211,7 @@ def check_supported_analyzers(analyzers):
                 available_analyzer = False
 
         if not analyzer_bin or \
-           not host_check.check_analyzer(analyzer_bin, check_env):
+           not host_check.check_analyzer(analyzer_bin):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
             failed_analyzers.add((analyzer_name,

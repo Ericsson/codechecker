@@ -58,7 +58,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """
         Return the version number of the binary that CodeChecker found, even
         if its incompatible. If details is true, additional version information
@@ -68,7 +68,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ) -> Optional[str]:
+    def is_binary_version_incompatible(cls) -> Optional[str]:
         """
         CodeChecker can only execute certain versions of analyzers.
         Returns a error object (an optional string). If the return value is
@@ -102,7 +102,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses should implement this!")
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
         """
         Run the analyzer.
         """
@@ -116,8 +116,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
             ret_code, stdout, stderr \
                 = SourceAnalyzer.run_proc(analyzer_cmd,
                                           res_handler.buildaction.directory,
-                                          proc_callback,
-                                          env)
+                                          proc_callback)
             res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr
@@ -141,7 +140,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
 
     @staticmethod
-    def run_proc(command, cwd=None, proc_callback=None, env=None):
+    def run_proc(command, cwd=None, proc_callback=None):
         """
         Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
@@ -157,8 +156,11 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
         signal.signal(signal.SIGINT, signal_handler)
 
-        if env is None:
-            env = analyzer_context.get_context().analyzer_env
+        env = analyzer_context.get_context().get_env_for_bin(command[0])
+
+        LOG.debug('\nexecuting:%s\n', command)
+        LOG.debug('\nENV:\n')
+        LOG.debug(env)
 
         proc = subprocess.Popen(
             command,

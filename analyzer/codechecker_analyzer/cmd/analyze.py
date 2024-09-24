@@ -243,6 +243,17 @@ def add_arguments_to_parser(parser):
                              "fails with error message related to __builtin "
                              "symbols.")
 
+    parser.add_argument('--add-gcc-include-dirs-with-isystem',
+                        dest="add_gcc_include_dirs_with_isystem",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="Implicit include directories are appended to "
+                             "the analyzer command with -idirafter. If "
+                             "-isystem is needed instead, as it was used "
+                             "before CodeChecker 6.24.1, this flag can be "
+                             "used.")
+
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
                         required=False,
@@ -361,7 +372,7 @@ def add_arguments_to_parser(parser):
                                metavar='ANALYZER',
                                required=False,
                                choices=analyzer_types.supported_analyzers,
-                               default=argparse.SUPPRESS,
+                               default=None,
                                help="Run analysis only with the analyzers "
                                     "specified. Currently supported analyzers "
                                     "are: " +

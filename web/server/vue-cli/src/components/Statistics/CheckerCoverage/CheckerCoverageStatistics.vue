@@ -190,12 +190,6 @@ export default {
 
     async runIds() {
       this.noProperRun = false;
-    },
-
-    "$route"() {
-      if (this.runs && this.$route.query.run !== this.actualRunNames) {
-        this.$router.go();
-      }
     }
   },
 

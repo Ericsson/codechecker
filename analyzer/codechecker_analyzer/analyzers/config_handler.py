@@ -14,6 +14,7 @@ from abc import ABCMeta
 from enum import Enum
 import collections
 import platform
+import re
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
@@ -88,10 +89,10 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         Explicitly handle checker state, keep description if already set.
         """
         changed_states = []
+        regex = "^" + re.escape(str(checker_name)) + "\\b.*$"
 
         for ch_name, values in self.__available_checkers.items():
-            if ch_name.startswith(checker_name) or \
-               ch_name.endswith(checker_name):
+            if re.match(regex, ch_name):
                 _, description = values
                 state = CheckerState.ENABLED if enabled \
                     else CheckerState.DISABLED

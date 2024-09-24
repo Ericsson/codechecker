@@ -51,7 +51,8 @@ def parse_clang_help_page(
         help_page = subprocess.check_output(
             command,
             stderr=subprocess.STDOUT,
-            env=analyzer_context.get_context().analyzer_env,
+            env=analyzer_context.get_context()
+            .get_env_for_bin(command[0]),
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
@@ -171,8 +172,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
+
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         if not cls.analyzer_binary():
             return None
 
@@ -207,7 +211,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         if not cls.__ctu_autodetection:
             cls.__ctu_autodetection = CTUAutodetection(
                 cls.analyzer_binary(),
-                analyzer_context.get_context().analyzer_env)
+                analyzer_context.get_context()
+                .get_env_for_bin(cls.analyzer_binary()))
 
         return cls.__ctu_autodetection
 
@@ -473,7 +478,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(
-                '-isystem',
+                '-isystem' if config.add_gcc_include_dirs_with_isystem else
+                '-idirafter',
                 self.buildaction.compiler_includes))
 
             analyzer_cmd.append(self.source_file)
@@ -584,7 +590,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         We support pretty much every ClangSA version.
         """
@@ -606,7 +612,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
 
         context = analyzer_context.get_context()
-        environ = context.analyzer_env
+        environ = context.get_env_for_bin(
+            cls.analyzer_binary())
 
         handler = config_handler.ClangSAConfigHandler(environ)
 
@@ -617,6 +624,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'
+
+        handler.add_gcc_include_dirs_with_isystem = \
+            'add_gcc_include_dirs_with_isystem' in args and \
+            args.add_gcc_include_dirs_with_isystem
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
