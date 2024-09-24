@@ -118,10 +118,13 @@ def main(args):
 
     if args.dump_config:
         binary = context.analyzer_binaries.get(args.dump_config)
+        environ = analyzer_context.get_context().get_env_for_bin(
+            binary)
 
         if args.dump_config == 'clang-tidy':
             subprocess.call([binary, '-dump-config', '-checks=*'],
-                            encoding="utf-8", errors="ignore")
+                            encoding="utf-8", errors="ignore",
+                            env=environ)
         elif args.dump_config == 'clangsa':
             ret = subprocess.call([binary,
                                    '-cc1',
@@ -129,7 +132,8 @@ def main(args):
                                    '-analyzer-checker-option-help-alpha'],
                                   stderr=subprocess.PIPE,
                                   encoding="utf-8",
-                                  errors="ignore")
+                                  errors="ignore",
+                                  env=environ)
 
             if ret:
                 # This flag is supported from Clang 9.
@@ -186,8 +190,7 @@ def main(args):
     rows = []
     for analyzer_name, analyzer_class in \
             analyzer_types.supported_analyzers.items():
-        check_env = context.get_analyzer_env(analyzer_name)
-        version = analyzer_class.get_binary_version(check_env)
+        version = analyzer_class.get_binary_version()
         if not version:
             version = 'NOT FOUND'
 

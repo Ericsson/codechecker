@@ -555,7 +555,10 @@ def __print_checker_config(args: argparse.Namespace):
     if rows:
         print(twodim.to_str(args.output_format, header, rows))
 
-    analyzer_types.print_unsupported_analyzers(errored)
+    # Don't print this warning unless the analyzer list is
+    # given by the user.
+    if args.analyzers:
+        analyzer_types.print_unsupported_analyzers(errored)
 
     if analyzer_failures:
         LOG.error("Failed to get checker configuration options for '%s' "

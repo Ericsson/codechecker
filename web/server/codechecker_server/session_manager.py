@@ -526,14 +526,13 @@ class SessionManager:
         """
         if not self.__is_method_enabled('oauth'):
             return False
-
         providers = self.__auth_config.get(
             'method_oauth', {}).get("providers", {})
 
         provider, data = auth_string.split('@', 1)
 
         if provider in providers:
-            if not providers[provider].get('enabled', False):
+            if not providers[provider].get('enabled'):
                 return False
 
             username, token = data.split(':')

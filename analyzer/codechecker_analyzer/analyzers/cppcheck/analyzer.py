@@ -82,11 +82,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
@@ -242,10 +244,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
+        if not cls.analyzer_binary():
+            return []
         command = [cls.analyzer_binary(), "--errorlist"]
-
+        environ = analyzer_context.get_context().get_env_for_bin(
+            command[0])
         try:
-            result = subprocess.check_output(command)
+            result = subprocess.check_output(command, env=environ)
             return parse_checkers(result)
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
@@ -324,11 +329,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
+        analyzer_version = cls.get_binary_version()
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
