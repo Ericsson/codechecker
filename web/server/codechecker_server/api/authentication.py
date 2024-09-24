@@ -48,9 +48,6 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
-        # print("manager", manager)
-        # print("auth_session", auth_session)
-        # print("config_database", config_database)
 
     def __require_privilaged_access(self):
         """
@@ -104,9 +101,6 @@ class ThriftAuthHandler:
         """
         For creating a autehntication link for OAuth for specified provider
         """
-        # print("auth_session", self.__auth_session)
-        # print("manager", self.__manager)
-        # print("config_database", self.__config_db)
         oauth_config = self.__manager.get_oauth_config(provider)
         if not oauth_config.get('enabled'):
             raise codechecker_api_shared.ttypes.RequestFailed(
