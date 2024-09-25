@@ -97,37 +97,6 @@ class ThriftAuthHandler:
         return self.__auth_session.user if self.__auth_session else ""
 
     @timeit
-    def createLink(self, provider):
-        """
-        For creating a autehntication link for OAuth for specified provider
-        """
-        oauth_config = self.__manager.get_oauth_config(provider)
-        if not oauth_config.get('enabled'):
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled.")
-
-        stored_state = generate_token()
-        client_id = oauth_config["oauth_client_id"]
-        client_secret = oauth_config["oauth_client_secret"]
-        scope = oauth_config["oauth_scope"]
-        authorization_uri = oauth_config["oauth_authorization_uri"]
-        redirect_uri = oauth_config["oauth_redirect_uri"]
-
-        # Create an OAuth2Session instance
-        session = OAuth2Session(
-            client_id,
-            client_secret,
-            scope=scope,
-            redirect_uri=redirect_uri)
-
-        # Create authorization URL
-        nonce = generate_token()
-        url = session.create_authorization_url(
-            authorization_uri, nonce=nonce, state=stored_state)[0]
-        return url
-
-    @timeit
     def getAcceptedAuthMethods(self):
         return ["Username:Password", "oauth"]
 
@@ -180,6 +149,37 @@ class ThriftAuthHandler:
     @timeit
     def getOauthProviders(self):
         return self.__manager.get_oauth_providers()
+
+    @timeit
+    def createLink(self, provider):
+        """
+        For creating a autehntication link for OAuth for specified provider
+        """
+        oauth_config = self.__manager.get_oauth_config(provider)
+        if not oauth_config.get('enabled'):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth authentication is not enabled.")
+
+        stored_state = generate_token()
+        client_id = oauth_config["oauth_client_id"]
+        client_secret = oauth_config["oauth_client_secret"]
+        scope = oauth_config["oauth_scope"]
+        authorization_uri = oauth_config["oauth_authorization_uri"]
+        redirect_uri = oauth_config["oauth_redirect_uri"]
+
+        # Create an OAuth2Session instance
+        session = OAuth2Session(
+            client_id,
+            client_secret,
+            scope=scope,
+            redirect_uri=redirect_uri)
+
+        # Create authorization URL
+        nonce = generate_token()
+        url = session.create_authorization_url(
+            authorization_uri, nonce=nonce, state=stored_state)[0]
+        return url
 
     @timeit
     def performLogin(self, auth_method, auth_string):
@@ -269,8 +269,8 @@ class ThriftAuthHandler:
 
             if allowed_users == ["*"] or username in allowed_users:
                 LOG.info("User %s is authorized.", username)
-                session = self.__manager.create_session(
-                    f"{provider}@{username}:{token['access_token']}")
+                session = self.__manager.create_session_oauth(
+                    provider, username, token['access_token'])
                 return session.token
 
             if len(allowed_users) == 0:

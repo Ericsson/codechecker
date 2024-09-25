@@ -398,8 +398,7 @@ class SessionManager:
         validation = self.__try_auth_root(auth_string) \
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string) \
-            or self.__try_auth_oauth(auth_string)
+            or self.__try_auth_ldap(auth_string)
         if not validation:
             return False
 
@@ -517,28 +516,6 @@ class SessionManager:
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
                     self.__update_groups(username, groups)
                     return {'username': username, 'groups': groups}
-
-        return False
-
-    def __try_auth_oauth(self, auth_string):
-        """
-        Try to authenticate user based on the OAuth configuration.
-        """
-        if not self.__is_method_enabled('oauth') \
-                or "@" not in auth_string:
-            return False
-
-        providers = self.__auth_config.get(
-            'method_oauth', {}).get("providers", {})
-
-        provider, data = auth_string.split('@', 1)
-
-        if provider in providers:
-            if not providers.get(provider).get('enabled'):
-                return False
-
-            username, token = data.split(':')
-            return {'username': username, 'token': token, 'groups': []}
 
         return False
 
@@ -692,6 +669,54 @@ class SessionManager:
                 transaction = self.__database_connection()
                 record = SessionRecord(token, user_name,
                                        ';'.join(groups))
+                transaction.add(record)
+                transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't store or update login record in "
+                          "database:")
+                LOG.error(str(e))
+            finally:
+                if transaction:
+                    transaction.close()
+
+        return local_session
+
+    def create_session_oauth(self, provider, username, token):
+        """ Creates a new session for the given auth-string. """
+
+        if not self.__is_method_enabled('oauth'):
+            return False
+
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+
+        if provider not in providers or \
+                not providers.get(provider).get('enabled'):
+            return False
+
+        # To be parsed later
+        user_data = {'username': username,
+                     'token': token,
+                     'groups': [],
+                     'is_root': False}
+
+        # Generate a new token and create a local session.
+        token = generate_session_token()
+        local_session = self.__create_local_session(token,
+                                                    user_data.get('username'),
+                                                    user_data.get('groups'),
+                                                    user_data.get('is_root'))
+        self.__sessions.append(local_session)
+
+        # Store the session in the database.
+        transaction = None
+        if self.__database_connection:
+            try:
+                transaction = self.__database_connection()
+
+                record = SessionRecord(token,
+                                       user_data.get('username'),
+                                       ';'.join(user_data.get('groups')))
                 transaction.add(record)
                 transaction.commit()
             except Exception as e:
