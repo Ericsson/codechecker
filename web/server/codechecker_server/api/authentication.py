@@ -226,12 +226,18 @@ class ThriftAuthHandler:
             allowed_users = oauth_config.get("allowed_users", [])
 
             LOG.info("OAuth configuration loaded for provider: %s", provider)
-
-            session = OAuth2Session(
-                client_id,
-                client_secret,
-                scope=scope,
-                redirect_uri=redirect_uri)
+            session = None
+            try:
+                session = OAuth2Session(
+                    client_id,
+                    client_secret,
+                    scope=scope,
+                    redirect_uri=redirect_uri)
+            except Exception as ex:
+                LOG.error("OAuth2Session creation failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth2Session creation failed.")
 
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
@@ -245,27 +251,49 @@ class ThriftAuthHandler:
             url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
                 "?code=" + code + "&state=" + state
 
-            LOG.info("Constructed URL")
+            LOG.info("URL has been constructed successfully")
 
-            token = session.fetch_token(
-                url=token_url,
-                authorization_response=url)
+            token = None
+            try:
+                token = session.fetch_token(
+                    url=token_url,
+                    authorization_response=url)
+            except Exception as ex:
+                LOG.error("Token fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Token fetch failed.")
 
             LOG.info("Token fetched successfully for provider: %s", provider)
 
-            user_info = session.get(user_info_url).json()
-            username = user_info[
-                oauth_config["oauth_user_info_mapping"]["username"]]
-            LOG.info("User info fetched, username: %s", username)
+            user_info = None
+            username = None
+
+            try:
+                user_info = session.get(user_info_url).json()
+                username = user_info[
+                    oauth_config["oauth_user_info_mapping"]["username"]]
+                LOG.info("User info fetched, username: %s", username)
+            except Exception as ex:
+                LOG.error("User info fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User info fetch failed.")
 
             if provider == "github" and \
                     "localhost" not in user_info_url:
-                link = "https://api.github.com/user/emails"
-                for email in session.get(link).json():
-                    if email['primary']:
-                        username = email['email']
-                        LOG.info("Primary email found: %s", username)
-                        break
+                try:
+                    link = "https://api.github.com/user/emails"
+                    for email in session.get(link).json():
+                        if email['primary']:
+                            username = email['email']
+                            LOG.info("Primary email found: %s", username)
+                            break
+                except Exception as ex:
+                    LOG.error("Email fetch failed: %s", str(ex))
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "Email fetch failed.")
 
             if allowed_users == ["*"] or username in allowed_users:
                 LOG.info("User %s is authorized.", username)

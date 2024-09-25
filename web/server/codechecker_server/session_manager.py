@@ -714,6 +714,12 @@ class SessionManager:
             try:
                 transaction = self.__database_connection()
 
+                # Remove previous session that may exist for the user.
+                transaction.query(SessionRecord) \
+                    .filter(SessionRecord.user_name == user_data.get('username')) \
+                    .delete()
+
+                # Store the new session.
                 record = SessionRecord(token,
                                        user_data.get('username'),
                                        ';'.join(user_data.get('groups')))
