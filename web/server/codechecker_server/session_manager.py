@@ -687,6 +687,11 @@ class SessionManager:
         if not self.__is_method_enabled('oauth'):
             return False
 
+        # Try to get the user's previous session.
+        for sess in self.__sessions:
+            if sess.user == username:
+                return sess
+
         providers = self.__auth_config.get(
             'method_oauth', {}).get("providers", {})
 
@@ -713,11 +718,6 @@ class SessionManager:
         if self.__database_connection:
             try:
                 transaction = self.__database_connection()
-
-                # Remove previous session that may exist for the user.
-                transaction.query(SessionRecord) \
-                    .filter(SessionRecord.user_name == user_data.get('username')) \
-                    .delete()
 
                 # Store the new session.
                 record = SessionRecord(token,
