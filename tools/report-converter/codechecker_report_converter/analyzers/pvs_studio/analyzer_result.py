@@ -26,8 +26,6 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'PVS-Studio'
     URL = 'https://pvs-studio.com/en/'
 
-    LEVELS_XML_URL = "https://files.pvs-studio.com/rules/RulesMap.xml"
-
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the PVS-Studio analyzer result. """
 
