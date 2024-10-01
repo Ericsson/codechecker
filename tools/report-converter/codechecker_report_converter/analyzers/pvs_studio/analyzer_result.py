@@ -9,7 +9,9 @@
 import logging
 from typing import List
 
-from codechecker_report_converter.report import Report, get_or_create_file, File
+from codechecker_report_converter.report import (Report,
+                                                 get_or_create_file,
+                                                 File)
 
 from typing import Dict
 import os
@@ -36,7 +38,10 @@ class AnalyzerResult(AnalyzerResultBase):
             return reports
 
         try:
-            with open(file_path, "r", encoding="UTF-8", errors="ignore") as report_file:
+            with open(file_path,
+                      "r",
+                      encoding="UTF-8",
+                      errors="ignore") as report_file:
                 bugs = json.load(report_file)['warnings']
         except (IOError, json.decoder.JSONDecodeError):
             LOG.error("Failed to parse the given analyzer result '%s'. Please "
@@ -50,11 +55,17 @@ class AnalyzerResult(AnalyzerResultBase):
 
             for position in bug_positions:
                 if not os.path.exists(position['file']):
-                    LOG.error("Source file does not exist: %s", position['file'])
+                    LOG.error(
+                        "Source file does not exist: %s",
+                        position['file']
+                    )
                     continue
 
                 reports.append(Report(
-                    get_or_create_file(os.path.abspath(position['file']), file_cache),
+                    get_or_create_file(
+                        os.path.abspath(position['file']),
+                        file_cache
+                    ),
                     position['line'],
                     position['column'] if position.get('column') else 0,
                     bug['message'],
