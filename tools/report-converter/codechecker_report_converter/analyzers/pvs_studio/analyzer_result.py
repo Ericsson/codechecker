@@ -28,6 +28,8 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'PVS-Studio'
     URL = 'https://pvs-studio.com/en/'
 
+    __severities = ["UNSPECIFIED", "HIGH", "MEDIUM", "LOW"]
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the PVS-Studio analyzer result. """
 
@@ -70,6 +72,10 @@ class AnalyzerResult(AnalyzerResultBase):
                     position['column'] if position.get('column') else 0,
                     bug['message'],
                     bug['code'],
+                    severity=self.get_diagnostic_severity(bug.get('level'))
                 ))
 
         return reports
+
+    def get_diagnostic_severity(self, level: int) -> str:
+        return self.__severities[level]
