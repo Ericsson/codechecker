@@ -682,15 +682,13 @@ class SessionManager:
         return local_session
 
     def create_session_oauth(self, provider, username, token):
-        """ Creates a new session for the given auth-string. """
+        """
+        Creates a new session for the given auth-string
+        if the provider is enabled for OAuth authentication.
+        """
 
         if not self.__is_method_enabled('oauth'):
             return False
-
-        # Try to get the user's previous session.
-        for sess in self.__sessions:
-            if sess.user == username:
-                return sess
 
         providers = self.__auth_config.get(
             'method_oauth', {}).get("providers", {})

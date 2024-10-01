@@ -206,11 +206,12 @@ export default {
           return;
         }
 
+        const state_id = localStorage.getItem("state_id");
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
             provider: provider,
-            url: window.location.href
+            url: window.location.href + "&state_id=" + state_id
           })
           .then(() => {
             this.success = true;
@@ -255,9 +256,10 @@ export default {
           const params = new URLSearchParams(url);
           localStorage.setItem("oauth_state",
             params.get("state"));
+          localStorage.setItem("state_id",
+            params.get("state_id"));
 
           window.location.href = url;
-          this.link = url;
         } else {
           this.errorMsg = `Server returned an invalid URL: ${url}`;
           this.error = true;
