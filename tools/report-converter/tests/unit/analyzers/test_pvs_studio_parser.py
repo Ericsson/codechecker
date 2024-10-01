@@ -7,6 +7,7 @@ import os
 
 from codechecker_report_converter.analyzers.pvs_studio import analyzer_result
 
+
 class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
     """ Test the output of PVS-Studio's AnalyzerResult. """
 
@@ -25,7 +26,10 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
         """ Test transforming single cpp file. """
         result = os.path.join(self.test_files, "files", "sample.cpp")
 
-        is_success = self.analyzer_result.transform([result], self.result_dir, file_name="{source_file}_{analyzer}")
+        is_success = self.analyzer_result.transform(
+            [result], self.result_dir,
+            file_name="{source_file}_{analyzer}"
+        )
 
         self.assertFalse(is_success)
 
@@ -34,8 +38,11 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
         result = os.path.join(self.test_files)
 
         is_success = self.analyzer_result.transform(
-            [analyzer_result], self.result_dir, file_name="{source_file}_{analyzer}")
-        
+            [result],
+            self.result_dir,
+            file_name="{source_file}_{analyzer}"
+        )
+
         self.assertFalse(is_success)
 
     def test_transform_single_file(self):
