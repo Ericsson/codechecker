@@ -6,50 +6,56 @@ import os
 
 
 from codechecker_report_converter.analyzers.pvs_studio import analyzer_result
+from codechecker_report_converter.report.parser import plist
 
 
 class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
     """ Test the output of PVS-Studio's AnalyzerResult. """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """ Set up the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
         self.result_dir = tempfile.mkdtemp()
         self.test_files = os.path.join(os.path.dirname(__file__),
                                        'pvs_studio_output_test_files')
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean temporary directory. """
         shutil.rmtree(self.result_dir)
 
-    def test_no_report_output_file(self):
+    def test_no_report_output_file(self) -> None:
         """ Test transforming single cpp file. """
         result = os.path.join(self.test_files, "files", "sample.cpp")
 
         is_success = self.analyzer_result.transform(
-            [result], self.result_dir,
+            [result],
+            self.result_dir,
+            plist.EXTENSION,
             file_name="{source_file}_{analyzer}"
         )
 
         self.assertFalse(is_success)
 
-    def test_transform_dir(self):
+    def test_transform_dir(self) -> None:
         """ Test transforming a directory. """
         result = os.path.join(self.test_files)
 
         is_success = self.analyzer_result.transform(
             [result],
             self.result_dir,
+            plist.EXTENSION,
             file_name="{source_file}_{analyzer}"
         )
 
         self.assertFalse(is_success)
 
-    def test_transform_single_file(self):
+    def test_transform_single_file(self) -> None:
         """ Test transforming single output file. """
         analyzer_result = os.path.join(self.test_files, 'sample.out')
         self.analyzer_result.transform(
-            [analyzer_result], self.result_dir,
+            [analyzer_result],
+            self.result_dir,
+            plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.result_dir,
