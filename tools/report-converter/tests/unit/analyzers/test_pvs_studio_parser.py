@@ -3,7 +3,7 @@ import tempfile
 import shutil
 import plistlib
 import os
-
+import json
 
 from codechecker_report_converter.analyzers.pvs_studio import analyzer_result
 from codechecker_report_converter.report.parser import plist
@@ -15,9 +15,9 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
     def setUp(self) -> None:
         """ Set up the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
-        self.result_dir = tempfile.mkdtemp()
         self.test_files = os.path.join(os.path.dirname(__file__),
                                        'pvs_studio_output_test_files')
+        self.result_dir = tempfile.mkdtemp()
 
     def tearDown(self) -> None:
         """Clean temporary directory. """
@@ -28,9 +28,9 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
         result = os.path.join(self.test_files, "files", "sample.cpp")
 
         is_success = self.analyzer_result.transform(
-            [result],
-            self.result_dir,
-            plist.EXTENSION,
+            analyzer_result_file_paths=[result],
+            output_dir_path=self.result_dir,
+            export_type=plist.EXTENSION,
             file_name="{source_file}_{analyzer}"
         )
 
@@ -41,9 +41,9 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
         result = os.path.join(self.test_files)
 
         is_success = self.analyzer_result.transform(
-            [result],
-            self.result_dir,
-            plist.EXTENSION,
+            analyzer_result_file_paths=[result],
+            output_dir_path=self.result_dir,
+            export_type=plist.EXTENSION,
             file_name="{source_file}_{analyzer}"
         )
 
@@ -51,15 +51,20 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
 
     def test_transform_single_file(self) -> None:
         """ Test transforming single output file. """
-        analyzer_result = os.path.join(self.test_files, 'sample.out')
-        self.analyzer_result.transform(
-            [analyzer_result],
-            self.result_dir,
-            plist.EXTENSION,
-            file_name="{source_file}_{analyzer}")
+        result = os.path.join(self.test_files, 'sample.json')
+
+        self.make_report_valid()
+        is_success = self.analyzer_result.transform(
+            analyzer_result_file_paths=[result],
+            output_dir_path=self.result_dir,
+            export_type=plist.EXTENSION,
+            file_name="{source_file}_{analyzer}"
+        )
+
+        self.assertTrue(is_success)
 
         plist_file = os.path.join(self.result_dir,
-                                  'sample.plist')
+                                  'sample.cpp_pvs-studio.plist')
 
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
@@ -74,3 +79,25 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
             exp = plistlib.load(pfile)
 
         self.assertEqual(res, exp)
+
+    @staticmethod
+    def make_report_valid() -> None:
+        samples_path = os.path.join(
+            os.path.dirname(__file__),
+            "pvs_studio_output_test_files"
+        )
+        report_path = os.path.join(samples_path, "sample.json")
+        with open(report_path, 'r') as file:
+            data = json.loads(file.read())
+            data["warnings"][0]["positions"][0]["file"] = os.path.join(
+                samples_path,
+                "files",
+                "sample.cpp"
+            )
+
+        with open(report_path, "w") as file:
+            file.write(json.dumps(data))
+
+
+if __name__ == "__main__":
+    unittest.main()
