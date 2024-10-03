@@ -22,6 +22,7 @@ a CodeChecker server.
   * [TSLint](#tslint)
   * [Golint](#golint)
   * [Pyflakes](#pyflakes)
+  * [PVS-Studio](#PVS-Studio)
   * [Markdownlint](#markdownlint)
   * [Coccinelle](#coccinelle)
   * [Smatch](#smatch)
@@ -396,6 +397,21 @@ pyflakes /path/to/your/project > ./pyflakes_reports.out
 report-converter -t pyflakes -o ./codechecker_pyflakes_reports ./pyflakes_reports.out
 
 # Store the Pyflakes reports with CodeChecker.
+CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
+```
+
+### [PVS-Studio](https://pvs-studio.com/en)
+[PVS-Studio](https://pvs-studio.com/en) is a static analyzer on guard of code quality, 
+security (SAST), and code safety for C, C++, C# and Java.
+
+Detailed documentation on how to run the analysis can be found [on our website](https://pvs-studio.com/en/docs/).
+
+```sh
+# Use 'report-converter' to create a CodeChecker report directory from the
+# JSON report of PVS-Studio.
+report-converter -t pvs_studio -o ./codechecker_pvs_studio_reports ./PVS-Studio.json
+
+# Store the PVS-Studio reports with CodeChecker.
 CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
 ```
 
