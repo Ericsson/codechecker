@@ -198,9 +198,9 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state = data['code'], data['state']
-        auth_string = f"{link}?code={code}&state={state}"
-
+        code, state, state_id = data['code'], data['state'], data['state_id'] # added here re1move
+        auth_string = f"{link}?code={code}&state={state}&state_id={state_id}" # added here re1move
+        #login?code=b297074a409d34818198&state=msuPS01qPAQrTsxYKMeVpDlG0hd3uc&state_id=4
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
 

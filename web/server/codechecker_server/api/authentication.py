@@ -266,6 +266,7 @@ class ThriftAuthHandler:
                 "State code insertion failed.")
 
         LOG.debug(f"State {state} inserted successfully with ID {state_id}")
+        print(url + "&state_id=" + str(state_id)) # added here re1move
         return url + "&state_id=" + str(state_id)
 
     @timeit
