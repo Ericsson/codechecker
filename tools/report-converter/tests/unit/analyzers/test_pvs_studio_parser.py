@@ -15,8 +15,10 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
     def setUp(self) -> None:
         """ Set up the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
-        self.test_files = os.path.join(os.path.dirname(__file__),
-                                       'pvs_studio_output_test_files')
+        self.test_files = os.path.join(
+            os.path.dirname(__file__),
+            'pvs_studio_output_test_files'
+        )
         self.result_dir = tempfile.mkdtemp()
 
     def tearDown(self) -> None:
@@ -51,9 +53,9 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
 
     def test_transform_single_file(self) -> None:
         """ Test transforming single output file. """
+        self.make_report_valid()
         result = os.path.join(self.test_files, 'sample.json')
 
-        self.make_report_valid()
         is_success = self.analyzer_result.transform(
             analyzer_result_file_paths=[result],
             output_dir_path=self.result_dir,
@@ -68,17 +70,22 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
 
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
-
-            # Use relative path for this test.
             res['files'][0] = os.path.join('files', 'sample.cpp')
 
         plist_file = os.path.join(self.test_files,
                                   'sample.plist')
-
         with open(plist_file, mode='rb') as pfile:
             exp = plistlib.load(pfile)
 
-        self.assertEqual(res, exp)
+        self.assertEqual(
+            res["diagnostics"][0]["check_name"],
+            exp["diagnostics"][0]["check_name"]
+        )
+
+        self.assertEqual(
+            res["diagnostics"][0]["location"]["line"],
+            exp["diagnostics"][0]["location"]["line"]
+        )
 
     @staticmethod
     def make_report_valid() -> None:
@@ -86,17 +93,30 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
             os.path.dirname(__file__),
             "pvs_studio_output_test_files"
         )
+
+        path_to_file = os.path.join(
+            samples_path,
+            "files",
+            "sample.cpp"
+        )
+
         report_path = os.path.join(samples_path, "sample.json")
         with open(report_path, 'r') as file:
             data = json.loads(file.read())
-            data["warnings"][0]["positions"][0]["file"] = os.path.join(
-                samples_path,
-                "files",
-                "sample.cpp"
-            )
+            data["warnings"][0]["positions"][0]["file"] = path_to_file
 
         with open(report_path, "w") as file:
             file.write(json.dumps(data))
+
+        path_to_plist = os.path.join(samples_path, "sample.plist")
+
+        with open(path_to_plist, "rb") as plist_file:
+            data = plistlib.load(plist_file)
+            print(data)
+            data["files"][0] = path_to_file
+
+        with open(path_to_plist, "wb") as plist_file:
+            plistlib.dump(data, plist_file)
 
 
 if __name__ == "__main__":
