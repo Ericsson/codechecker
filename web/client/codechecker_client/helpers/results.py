@@ -9,7 +9,7 @@
 Helper functions for Thrift api calls.
 """
 
-from codechecker_api.codeCheckerDBAccess_v6 import codeCheckerDBAccess
+from codechecker_api.codeCheckerDBAccess_v6 import codeCheckerDBAccess, ttypes
 
 from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper
@@ -179,6 +179,12 @@ class ThriftResultsHelper(BaseClientHelper):
     @thrift_client_call
     def massStoreRun(self, name, tag, version, zipdir, force,
                      trim_path_prefixes, description):
+        pass
+
+    @thrift_client_call
+    def massStoreRunAsynchronous(self, zipfile_blob: str,
+                                 store_opts: ttypes.SubmittedRunOptions) \
+            -> str:
         pass
 
     @thrift_client_call

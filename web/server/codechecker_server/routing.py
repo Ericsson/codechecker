@@ -15,25 +15,28 @@ from urllib.parse import urlparse
 
 from codechecker_web.shared.version import SUPPORTED_VERSIONS
 
-# A list of top-level path elements under the webserver root
-# which should not be considered as a product route.
-NON_PRODUCT_ENDPOINTS = ['index.html',
-                         'images',
-                         'docs',
-                         'live',
-                         'ready']
+# A list of top-level path elements under the webserver root which should not
+# be considered as a product route.
+NON_PRODUCT_ENDPOINTS = ["index.html",
+                         "images",
+                         "docs",
+                         "live",
+                         "ready",
+                         ]
 
 # A list of top-level path elements in requests (such as Thrift endpoints)
 # which should not be considered as a product route.
-NON_PRODUCT_ENDPOINTS += ['Authentication',
-                          'Products',
-                          'CodeCheckerService']
+NON_PRODUCT_ENDPOINTS += ["Authentication",
+                          "Products",
+                          "CodeCheckerService",
+                          "Tasks",
+                          ]
 
 
 # A list of top-level path elements under the webserver root which should
-# be protected by authentication requirement when accessing the server.
+# be protected by authentication requirements when accessing the server.
 PROTECTED_ENTRY_POINTS = ['',  # Empty string in a request is 'index.html'.
-                          'index.html']
+                          "index.html"]
 
 
 def is_valid_product_endpoint(uripart):
@@ -68,9 +71,8 @@ def is_supported_version(version):
 
     If supported, returns the major and minor version as a tuple.
     """
-
     version = version.lstrip('v')
-    version_parts = version.split('.')
+    version_parts = version.split('.', 2)
 
     # We don't care if accidentally the version tag contains a revision number.
     major, minor = int(version_parts[0]), int(version_parts[1])
@@ -113,9 +115,8 @@ def split_client_POST_request(path):
     Returns the product endpoint, the API version and the API service endpoint
     as a tuple of 3.
     """
-
     # A standard POST request from an API client looks like:
-    # http://localhost:8001/[product-name]/<API version>/<API service>
+    #     http://localhost:8001/[product-name]/v<API version>/<API service>
     # where specifying the product name is optional.
 
     split_path = urlparse(path).path.split('/', 3)

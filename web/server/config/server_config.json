@@ -1,4 +1,6 @@
 {
+  "background_worker_processes": null,
+  "worker_processes": null,
   "max_run_count": null,
   "store": {
     "analysis_statistics_dir": null,
