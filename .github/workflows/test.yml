@@ -6,10 +6,9 @@ on: [push, pull_request]
 permissions: read-all
 
 jobs:
-  # Note: UI related linter tests will run in the gui job.
   lint:
-    name: Linters (pylint, pycodestyle)
-
+    # Note: UI-related linters will run in the UI job(s).
+    name: Linters and Static Analysis
     runs-on: ubuntu-20.04
 
     steps:
@@ -19,9 +18,18 @@ jobs:
           python-version: '3.8'
       - name: Install dependencies
         run: |
-          pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
-      - name: Run tests
-        run: make pylint pycodestyle
+          pip install $(grep -iE \
+            "mypy|pycodestyle|pylint|types" \
+            analyzer/requirements_py/dev/requirements.txt) \
+            $(grep -iE \
+            "mypy|pycodestyle|pylint|types" \
+            codechecker_common/requirements_py/dev/requirements.txt)
+      - name: Run pylint & pycodestyle
+        run: make -k pycodestyle pylint
+
+      - name: Run codechecker_common mypy tests
+        working-directory: codechecker_common
+        run: make mypy
 
   tools:
     name: Tools (report-converter, etc.)
@@ -120,9 +128,8 @@ jobs:
         run: |
           pip install -r requirements_py/dev/requirements.txt
 
-      - name: Run mypy tests
-        working-directory: codechecker_common/tests
-        run: make mypy
+      - name: Run unit tests
+        run: make test_common
 
   web:
     name: Web

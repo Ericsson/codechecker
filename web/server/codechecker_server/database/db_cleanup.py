@@ -28,7 +28,7 @@ from .run_db_model import \
     Report, ReportAnalysisInfo, RunHistoryAnalysisInfo, RunLock
 
 LOG = get_logger('server')
-RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
+RUN_LOCK_TIMEOUT_IN_DATABASE = timedelta(minutes=30)
 SQLITE_LIMIT_COMPOUND_SELECT = 500
 
 
@@ -57,8 +57,7 @@ def remove_expired_run_locks(product):
         LOG.debug("[%s] Garbage collection of expired run locks started...",
                   product.endpoint)
         try:
-            locks_expired_at = datetime.now() - timedelta(
-                seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
+            locks_expired_at = datetime.now() - RUN_LOCK_TIMEOUT_IN_DATABASE
 
             count = session.query(RunLock) \
                 .filter(RunLock.locked_at < locks_expired_at) \

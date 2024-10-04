@@ -9,7 +9,6 @@
 SQLAlchemy ORM model for the analysis run storage database.
 """
 from datetime import datetime, timedelta
-from math import ceil
 import os
 from typing import Optional
 
@@ -109,10 +108,6 @@ class Run(Base):
         self.date, self.name, self.version = datetime.now(), name, version
         self.duration = -1
 
-    def mark_finished(self):
-        if self.duration == -1:
-            self.duration = ceil((datetime.now() - self.date).total_seconds())
-
 
 class RunLock(Base):
     """
@@ -137,16 +132,19 @@ class RunLock(Base):
         """Update the lock's timestamp to be the current one."""
         self.locked_at = datetime.now()
 
-    def when_expires(self, grace_seconds):
-        """Calculates when the current lock will expire assuming the
-        expiration time is grace_seconds, and the lock will never be touched
-        until this moment."""
-        return self.locked_at + timedelta(seconds=grace_seconds)
+    def when_expires(self, delta: timedelta):
+        """
+        Calculates when the current lock will expire assuming the expiration
+        time is `delta`, and the lock will never be touched until this moment.
+        """
+        return self.locked_at + delta
 
-    def has_expired(self, grace_seconds):
-        """Returns if the lock has expired, i.e. since the last touch()
-        or creation, grace_seconds number of seconds has passed."""
-        return datetime.now() > self.when_expires(grace_seconds)
+    def has_expired(self, delta: timedelta):
+        """
+        Returns if the lock has expired, i.e. since the last `touch` or
+        creation, `delta` time has passed.
+        """
+        return datetime.now() > self.when_expires(delta)
 
 
 class AnalyzerStatistic(Base):
