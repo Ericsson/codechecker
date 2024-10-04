@@ -8,14 +8,19 @@
 """
 Util module.
 """
+import datetime
+import hashlib
 import itertools
 import json
 import os
+import random
 from typing import TextIO
 
 import portalocker
 
 from codechecker_common.logger import get_logger
+
+from .typehints import Orderable
 
 LOG = get_logger('system')
 
@@ -32,7 +37,7 @@ def arg_match(options, args):
     return matched_args
 
 
-def clamp(min_: int, value: int, max_: int) -> int:
+def clamp(min_: Orderable, value: Orderable, max_: Orderable) -> Orderable:
     """Clamps ``value`` such that ``min_ <= value <= max_``."""
     if min_ > max_:
         raise ValueError("min <= max required")
@@ -112,3 +117,19 @@ def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
 def strtobool(value: str) -> bool:
     """Parse a string value to a boolean."""
     return value.lower() in ('y', 'yes', 't', 'true', 'on', '1')
+
+
+def generate_random_token(num_bytes: int = 32) -> str:
+    """
+    Returns a random-generated string usable as a token with `num_bytes`
+    hexadecimal characters in the output.
+    """
+    prefix = str(os.getpid()).encode()
+    suffix = str(datetime.datetime.now()).encode()
+
+    hash_value = ''.join(
+        [hashlib.sha256(prefix + os.urandom(num_bytes * 2) + suffix)
+         .hexdigest()
+         for _ in range(0, -(num_bytes // -64))])
+    idx = random.randrange(0, len(hash_value) - num_bytes + 1)
+    return hash_value[idx:(idx + num_bytes)]

@@ -14,13 +14,17 @@ analysis reports found on a running viewer 'server' from a command-line.
 import argparse
 import getpass
 import datetime
+import os
 import sys
 
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
-from codechecker_client import cmd_line_client
-from codechecker_client import product_client
-from codechecker_client import permission_client, source_component_client, \
+from codechecker_client import \
+    cmd_line_client, \
+    permission_client, \
+    product_client, \
+    source_component_client, \
+    task_client, \
     token_client
 
 from codechecker_common import arg, logger, util
@@ -1227,6 +1231,231 @@ def __register_permissions(parser):
                         help="The output format to use in showing the data.")
 
 
+def __register_tasks(parser):
+    """
+    Add `argparse` subcommand `parser` options for the "handle server-side
+    tasks" action.
+    """
+    if "TEST_WORKSPACE" in os.environ:
+        testing_args = parser.add_argument_group("testing arguments")
+        testing_args.add_argument("--create-dummy-task",
+                                  dest="dummy_task_args",
+                                  metavar="ARG",
+                                  default=argparse.SUPPRESS,
+                                  type=str,
+                                  nargs=2,
+                                  help="""
+Exercises the 'createDummyTask(int timeout, bool shouldFail)' API endpoint.
+Used for testing purposes.
+Note, that the server **MUST** be started in a testing environment as well,
+otherwise, the request will be rejected by the server!
+""")
+
+    parser.add_argument("-t", "--token",
+                        dest="token",
+                        metavar="TOKEN",
+                        type=str,
+                        nargs='*',
+                        help="The identifying token(s) of the task(s) to "
+                             "query. Each task is associated with a unique "
+                             "token.")
+
+    parser.add_argument("--await",
+                        dest="wait_and_block",
+                        action="store_true",
+                        help="""
+Instead of querying the status and reporting that, followed by an exit, block
+execution of the 'CodeChecker cmd serverside-tasks' program until the queried
+task(s) terminate(s).
+Makes the CLI's return code '0' if the task(s) completed successfully, and
+non-zero otherwise.
+If '--kill' is also specified, the CLI will await the shutdown of the task(s),
+but will return '0' if the task(s) were successfully killed as well.
+""")
+
+    parser.add_argument("--kill",
+                        dest="cancel_task",
+                        action="store_true",
+                        help="""
+Request the co-operative and graceful termination of the tasks matching the
+filter(s) specified.
+'--kill' is only available to SUPERUSERs!
+Note, that this action only submits a *REQUEST* of termination to the server,
+and tasks are free to not support in-progress kills.
+Even for tasks that support getting killed, due to its graceful nature, it
+might take a considerable time for the killing to conclude.
+Killing a task that has not started RUNNING yet results in it automatically
+terminating before it would start.
+""")
+
+    output = parser.add_argument_group("output arguments")
+    output.add_argument("--output",
+                        dest="output_format",
+                        required=False,
+                        default="plaintext",
+                        choices=["plaintext", "table", "json"],
+                        help="The format of the output to use when showing "
+                             "the result of the request.")
+
+    task_list = parser.add_argument_group(
+        "task list filter arguments",
+        """These options can be used to obtain and filter the list of tasks
+associated with the 'CodeChecker server' specified by '--url', based on the
+various information columns stored for tasks.
+
+'--token' is usable with the following filters as well.
+
+Filters with a variable number of options (e.g., '--machine-id A B') will be
+in a Boolean OR relation with each other (meaning: machine ID is either "A"
+or "B").
+Specifying multiple filters (e.g., '--machine-id A B --username John') will
+be considered in a Boolean AND relation (meaning: [machine ID is either "A" or
+"B"] and [the task was created by "John"]).
+
+Listing is only available for the following, privileged users:
+  - For tasks that are associated with a specific product, the PRODUCT_ADMINs
+   of that product.
+  - Server administrators (SUPERUSERs).
+
+Unprivileged users MUST use only the task's token to query information about
+the task.
+        """)
+
+    task_list.add_argument("--machine-id",
+                           type=str,
+                           nargs='*',
+                           help="The IDs of the server instance executing "
+                                "the tasks. This is an internal identifier "
+                                "set by server administrators via the "
+                                "'CodeChecker server' command.")
+
+    task_list.add_argument("--type",
+                           type=str,
+                           nargs='*',
+                           help="The descriptive, but still "
+                                "machine-readable \"type\" of the tasks to "
+                                "filter for.")
+
+    task_list.add_argument("--status",
+                           type=str,
+                           nargs='*',
+                           choices=["allocated", "enqueued", "running",
+                                    "completed", "failed", "cancelled",
+                                    "dropped"],
+                           help="The task's execution status(es) in the "
+                                "pipeline.")
+
+    username = task_list.add_mutually_exclusive_group(required=False)
+    username.add_argument("--username",
+                          type=str,
+                          nargs='*',
+                          help="The user(s) who executed the action that "
+                               "caused the tasks' creation.")
+    username.add_argument("--no-username",
+                          action="store_true",
+                          help="Filter for tasks without a responsible user "
+                               "that created them.")
+
+    product = task_list.add_mutually_exclusive_group(required=False)
+    product.add_argument("--product",
+                         type=str,
+                         nargs='*',
+                         help="Filter for tasks that execute in the context "
+                              "of products specified by the given ENDPOINTs. "
+                              "This query is only available if you are a "
+                              "PRODUCT_ADMIN of the specified product(s).")
+    product.add_argument("--no-product",
+                         action="store_true",
+                         help="Filter for server-wide tasks (not associated "
+                              "with any products). This query is only "
+                              "available to SUPERUSERs.")
+
+    timestamp_documentation: str = """
+TIMESTAMP, which is given in the format of 'year:month:day' or
+'year:month:day:hour:minute:second'.
+If the "time" part (':hour:minute:second') is not given, 00:00:00 (midnight)
+is assumed instead.
+Timestamps for tasks are always understood as Coordinated Universal Time (UTC).
+"""
+
+    task_list.add_argument("--enqueued-before",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that were created BEFORE "
+                                "(or on) the specified " +
+                                timestamp_documentation)
+    task_list.add_argument("--enqueued-after",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that were created AFTER "
+                                "(or on) the specified " +
+                                timestamp_documentation)
+
+    task_list.add_argument("--started-before",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that were started "
+                                "execution BEFORE (or on) the specified " +
+                                timestamp_documentation)
+    task_list.add_argument("--started-after",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that were started "
+                                "execution AFTER (or on) the specified " +
+                                timestamp_documentation)
+
+    task_list.add_argument("--finished-before",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that concluded execution "
+                                "BEFORE (or on) the specified " +
+                                timestamp_documentation)
+    task_list.add_argument("--finished-after",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that concluded execution "
+                                "execution AFTER (or on) the specified " +
+                                timestamp_documentation)
+
+    task_list.add_argument("--last-seen-before",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that reported actual "
+                                "forward progress in its execution "
+                                "(\"heartbeat\") BEFORE (or on) the "
+                                "specified " + timestamp_documentation)
+    task_list.add_argument("--last-seen-after",
+                           type=valid_time,
+                           metavar="TIMESTAMP",
+                           help="Filter for tasks that reported actual "
+                                "forward progress in its execution "
+                                "(\"heartbeat\") AFTER (or on) the "
+                                "specified " + timestamp_documentation)
+
+    cancel = task_list.add_mutually_exclusive_group(required=False)
+    cancel.add_argument("--only-cancelled",
+                        action="store_true",
+                        help="Show only tasks that received a cancel request "
+                             "from a SUPERUSER (see '--kill').")
+    cancel.add_argument("--no-cancelled",
+                        action="store_true",
+                        help="Show only tasks that had not received a "
+                             "cancel request from a SUPERUSER "
+                             "(see '--kill').")
+
+    consumed = task_list.add_mutually_exclusive_group(required=False)
+    consumed.add_argument("--only-consumed",
+                          action="store_true",
+                          help="Show only tasks that concluded their "
+                               "execution and the responsible user (see "
+                               "'--username') \"downloaded\" this fact.")
+    consumed.add_argument("--no-consumed",
+                          action="store_true",
+                          help="Show only tasks that concluded their "
+                               "execution but the responsible user (see "
+                               "'--username') did not \"check\" on the task.")
+
+
 def __register_token(parser):
     """
     Add argparse subcommand parser for the "handle token" action.
@@ -1537,6 +1766,42 @@ full runs.""",
     __register_permissions(permissions)
     permissions.set_defaults(func=permission_client.handle_permissions)
     __add_common_arguments(permissions, needs_product_url=False)
+
+    tasks = subcommands.add_parser(
+        "serverside-tasks",
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
+        description="""
+Query the status of and otherwise filter information for server-side
+background tasks executing on a CodeChecker server. In addition, for server
+administartors, allows requesting tasks to cancel execution.
+
+Normally, the querying of a task's status is available only to the following
+users:
+  - The user who caused the creation of the task.
+  - For tasks that are associated with a specific product, the PRODUCT_ADMIN
+    users of that product.
+  - Accounts with SUPERUSER rights (server administrators).
+""",
+        help="Await, query, and cancel background tasks executing on the "
+             "server.",
+        epilog="""
+The return code of 'CodeChecker cmd serverside-tasks' is almost always '0',
+unless there is an error.
+If **EXACTLY** one '--token' is specified in the arguments without the use of
+'--await' or '--kill', the return code is based on the current status of the
+task, as identified by the token:
+  -  0: The task completed successfully.
+  -  1: (Reserved for operational errors.)
+  -  2: (Reserved for command-line errors.)
+  -  4: The task failed to complete due to an error during execution.
+  -  8: The task is still running...
+  - 16: The task was cancelled by the administrators, or the server was shut
+        down.
+"""
+    )
+    __register_tasks(tasks)
+    tasks.set_defaults(func=task_client.handle_tasks)
+    __add_common_arguments(tasks, needs_product_url=False)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.
