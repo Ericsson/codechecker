@@ -1316,6 +1316,22 @@ class TestAnalyze(unittest.TestCase):
 
         self.assertEqual(process.returncode, 1)
 
+    def test_disable_error_checker_tidy(self):
+        """Make sure clang-diagnostic-error checker is disabled (PR #4325)"""
+        cmd = [self._codechecker_cmd, "check", "-l", self.__get_build_json(),
+               '--enable', 'clang-diagnostic-error']
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertNotIn("error", out)
+
     def test_compilation_db_relative_file_path(self):
         """
         Test relative path in compilation database.
