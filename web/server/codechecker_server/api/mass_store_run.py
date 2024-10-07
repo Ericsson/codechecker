@@ -1319,11 +1319,12 @@ class MassStoreRun:
             .join(DBReport, DBReport.bug_id == ReviewStatusRule.bug_hash) \
             .filter(sqlalchemy.and_(
                 DBReport.run_id == run_id,
-                DBReport.review_status_is_in_source.is_(False),
-                ReviewStatusRule.bug_hash.in_(self.__new_report_hashes)))
+                DBReport.review_status_is_in_source.is_(False)))
 
         # Set the newly stored reports
         for review_status, db_report in reports_to_rs_rules:
+            if db_report.bug_id not in self.__new_report_hashes:
+                continue
             old_report = None
             if db_report.bug_id in report_to_report_id:
                 old_report = report_to_report_id[db_report.bug_id][0]
