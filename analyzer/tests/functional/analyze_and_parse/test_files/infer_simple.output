@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make infer_simple" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers infer --enable=infer-dead-store
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --analyzers infer --enable=infer-dead-store
+-----------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] infer analyzed infer_simple.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   infer: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] infer_simple.cpp:3:5: The value written to &b (type int) is never used. [infer-dead-store]
+    int b = a + 456;
+    ^
+
+Found 1 defect(s) in infer_simple.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+-----------------------------------------------
+Checker name     | Severity | Number of reports
+-----------------------------------------------
+infer-dead-store | HIGH     |                 1
+-----------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+------------------------------------
+File name        | Number of reports
+------------------------------------
+infer_simple.cpp |                 1
+------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

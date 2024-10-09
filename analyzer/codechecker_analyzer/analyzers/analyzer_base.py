@@ -102,7 +102,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses should implement this!")
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
         """
         Run the analyzer.
         """
@@ -111,12 +111,17 @@ class SourceAnalyzer(metaclass=ABCMeta):
         LOG.debug_analyzer('\n%s',
                            ' '.join([shlex.quote(x) for x in analyzer_cmd]))
 
+        if not env:
+            env = analyzer_context.get_context().get_env_for_bin(
+                analyzer_cmd[0])
+
         res_handler.analyzer_cmd = analyzer_cmd
         try:
             ret_code, stdout, stderr \
                 = SourceAnalyzer.run_proc(analyzer_cmd,
                                           res_handler.buildaction.directory,
-                                          proc_callback)
+                                          proc_callback,
+                                          env)
             res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr
@@ -140,7 +145,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
 
     @staticmethod
-    def run_proc(command, cwd=None, proc_callback=None):
+    def run_proc(command, cwd=None, proc_callback=None, env=None):
         """
         Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
@@ -155,8 +160,6 @@ class SourceAnalyzer(metaclass=ABCMeta):
                 sys.exit(128 + signum)
 
         signal.signal(signal.SIGINT, signal_handler)
-
-        env = analyzer_context.get_context().get_env_for_bin(command[0])
 
         LOG.debug('\nexecuting:%s\n', command)
         LOG.debug('\nENV:\n')
