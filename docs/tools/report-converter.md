@@ -409,7 +409,7 @@ Detailed documentation on how to run the analysis can be found [on our website](
 ```sh
 # Use 'report-converter' to create a CodeChecker report directory from the
 # JSON report of PVS-Studio.
-report-converter -t pvs_studio -o ./codechecker_pvs_studio_reports ./PVS-Studio.json
+report-converter -t pvs-studio -o ./codechecker_pvs_studio_reports ./PVS-Studio.json
 
 # Store the PVS-Studio reports with CodeChecker.
 CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
