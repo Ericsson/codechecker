@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "warnings": [
+    {
+      "code": "V547",
+      "cwe": 571,
+      "level": 1,
+      "positions": [
+        {
+          "file": "files/sample.cpp",
+          "line": 8,
+          "endLine": 8,
+          "navigation": {
+            "previousLine": 4979,
+            "currentLine": 11857,
+            "nextLine": 11235,
+            "columns": 0
+          }
+        }
+      ],
+      "projects": [],
+      "message": "Expression 'a < b' is always true.",
+      "favorite": false,
+      "falseAlarm": false
+    }
+  ]
+}
