@@ -20,6 +20,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 from codechecker_common.logger import get_logger
+from codechecker_common import util
 
 from codechecker_analyzer import analyzer_context, env
 from codechecker_analyzer.env import get_binary_in_path
@@ -223,7 +224,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             # Pass whitelisted parameters
-            analyzer_cmd.extend(self.parse_analyzer_config())
+            params = self.parse_analyzer_config()
+
+            def is_std(arg):
+                return arg.startswith("--std=")
+
+            if util.index_of(config.analyzer_extra_arguments, is_std) >= 0:
+                std_idx = util.index_of(params, is_std)
+                if std_idx >= 0:
+                    del params[std_idx]
+
+            analyzer_cmd.extend(params)
 
             # TODO fix this in a follow up patch, because it is failing
             # the macos pypy test.

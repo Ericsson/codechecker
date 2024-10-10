@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import shlex
+import tempfile
 import unittest
 import zipfile
 
@@ -1123,6 +1124,31 @@ class TestAnalyze(unittest.TestCase):
 
         self.assertNotIn("iso9899:2017", out)
         self.assertIn("--std=c17", out)
+
+        # Test if standard version in --cppcheckargs is stronger.
+        with tempfile.NamedTemporaryFile(mode='w',
+                                         encoding='utf-8') as cppcheck_args:
+            with open(build_json, 'w',
+                      encoding="utf-8", errors="ignore") as outfile:
+                build_log = [{
+                    "directory": self.test_workspace,
+                    "command": "gcc -c -std=c++0x " + source_file,
+                    "file": source_file}]
+                json.dump(build_log, outfile)
+
+            cppcheck_args.write("--std=c++11")
+            cppcheck_args.close()
+
+            analyze_cmd.extend(['--cppcheckargs', cppcheck_args.name])
+
+            out = subprocess.run(analyze_cmd,
+                                 cwd=self.test_dir,
+                                 # env=self.env,
+                                 check=False,
+                                 stdout=subprocess.PIPE).stdout.decode()
+
+            self.assertIn("--std=c++11", out)
+            self.assertNotIn("--std=c++0x", out)
 
     def test_makefile_generation(self):
         """ Test makefile generation. """
