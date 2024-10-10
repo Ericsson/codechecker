@@ -216,7 +216,7 @@ def prepare_check(action, analyzer_config, output_dir,
 
 
 def handle_success(
-    rh, result_file, result_base, skip_handlers,
+    rh, result_file, result_base, filter_handlers,
     rs_handler: ReviewStatusHandler,
     capture_analysis_output, success_dir
 ):
@@ -230,7 +230,7 @@ def handle_success(
         save_output(os.path.join(success_dir, result_base),
                     rh.analyzer_stdout, rh.analyzer_stderr)
 
-    rh.postprocess_result(skip_handlers, rs_handler)
+    rh.postprocess_result(filter_handlers, rs_handler)
 
     # Generated reports will be handled separately at store.
 
@@ -487,7 +487,8 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
     actions_map, action, analyzer_config, \
-        output_dir, skip_handlers, rs_handler, quiet_output_on_stdout, \
+        output_dir, skip_handlers, filter_handlers, \
+        rs_handler, quiet_output_on_stdout, \
         capture_analysis_output, generate_reproducer, analysis_timeout, \
         ctu_reanalyze_on_failure, \
         output_dirs, statistics_data = check_data
@@ -605,7 +606,7 @@ def check(check_data):
 
             if success:
                 handle_success(rh, result_file, result_base,
-                               skip_handlers, rs_handler,
+                               filter_handlers, rs_handler,
                                capture_analysis_output, success_dir)
             elif not generate_reproducer:
                 handle_failure(source_analyzer, rh,
@@ -719,7 +720,7 @@ def skip_cpp(compile_actions, skip_handlers):
 
 
 def start_workers(actions_map, actions, analyzer_config_map,
-                  jobs, output_path, skip_handlers,
+                  jobs, output_path, skip_handlers, filter_handlers,
                   rs_handler: ReviewStatusHandler, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
@@ -785,6 +786,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
                          analyzer_config_map.get(build_action.analyzer_type),
                          output_path,
                          skip_handlers,
+                         filter_handlers,
                          rs_handler,
                          quiet_analyze,
                          capture_analysis_output,
