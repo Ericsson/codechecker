@@ -1083,7 +1083,7 @@ class TestAnalyze(unittest.TestCase):
                              stdout=subprocess.PIPE).stdout.decode()
 
         # Test correct handover.
-        self.assertTrue("--std=c99" in out)
+        self.assertIn("--std=c99", out)
 
         # Cppcheck does not support gnu variants of the standards,
         # These are transformed into their respective c and c++
@@ -1104,7 +1104,25 @@ class TestAnalyze(unittest.TestCase):
                              stdout=subprocess.PIPE).stdout.decode()
 
         # Test if the standard is correctly transformed
-        self.assertTrue("--std=c99" in out)
+        self.assertIn("--std=c99", out)
+
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c -std=iso9899:2017 " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        out = subprocess.run(analyze_cmd,
+                             cwd=self.test_dir,
+                             # env=self.env,
+                             check=False,
+                             stdout=subprocess.PIPE).stdout.decode()
+
+        self.assertNotIn("iso9899:2017", out)
+        self.assertIn("--std=c17", out)
 
     def test_makefile_generation(self):
         """ Test makefile generation. """

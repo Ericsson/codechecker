@@ -138,6 +138,34 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         # * -std c99
         # * -stdlib=libc++
         std_regex = re.compile("-(-std$|-?std=.*)")
+
+        # Mapping is needed, because, if a standard version not known by
+        # cppcheck is used, then it will assume the latest available version
+        # before cppcheck-2.15 or fail the analysis from cppcheck-2.15.
+        # https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#index-std-1
+        standard_mapping = {
+            "c90": "c89",
+            "c18": "c17",
+            "iso9899:2017": "c17",
+            "iso9899:2018": "c17",
+            "iso9899:1990": "c89",
+            "iso9899:199409": "c89",  # Good enough
+            "c9x": "c99",
+            "iso9899:1999": "c99",
+            "iso9899:199x": "c99",
+            "c1x": "c11",
+            "iso9899:2011": "c11",
+            "c2x": "c23",
+            "iso9899:2024": "c23",
+            "c++98": "c++03",
+            "c++0x": "c++11",
+            "c++1y": "c++14",
+            "c++1z": "c++17",
+            "c++2a": "c++20",
+            "c++2b": "c++23",
+            "c++2c": "c++26"
+        }
+
         for i, analyzer_option in enumerate(self.buildaction.analyzer_options):
             if interesting_option.match(analyzer_option):
                 params.extend([analyzer_option])
@@ -161,6 +189,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 else:
                     standard = self.buildaction.analyzer_options[i+1]
                 standard = standard.lower().replace("gnu", "c")
+                standard = standard_mapping.get(standard, standard)
                 params.extend(["--std=" + standard])
         return params
 
