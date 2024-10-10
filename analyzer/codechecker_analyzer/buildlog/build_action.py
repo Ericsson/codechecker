@@ -76,3 +76,6 @@ class BuildAction:
         details = {key: getattr(self, key) for key in BuildAction.__slots__}
         details[attr] = value
         return BuildAction(**details)
+    
+    def __repr__(self):
+        return str(self)
