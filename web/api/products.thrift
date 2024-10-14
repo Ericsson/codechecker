@@ -74,6 +74,7 @@ service codeCheckerProductService {
 
   // Get the list of product that matches the display name and endpoint
   // filters specified.
+  // PERMISSION: PRODUCT_VIEW
   Products getProducts(1: string productEndpointFilter,
                        2: string productNameFilter)
                        throws (1: codechecker_api_shared.RequestFailed requestError),

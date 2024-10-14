@@ -688,7 +688,7 @@ service codeCheckerDBAccess {
                                                           throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Return true if review status change is disabled.
-  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
+  // PERMISSION: PRODUCT_VIEW
   bool isReviewStatusChangeDisabled()
                                     throws (1: codechecker_api_shared.RequestFailed requestError),
 
@@ -769,6 +769,7 @@ service codeCheckerDBAccess {
   // get the md documentation for a checker
   // DEPRECATED. Use getCheckerLabels() instead which contains checker
   // documentation URL.
+  // PERMISSION: PRODUCT_VIEW
   string getCheckerDoc(1: string checkerId)
                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
