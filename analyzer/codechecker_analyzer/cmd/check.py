@@ -116,6 +116,7 @@ def add_arguments_to_parser(parser):
                         type=str,
                         dest="plist_file_name",
                         required=False,
+                        default='',
                         help="If given, all the `.plist` files containing "
                              "the analyzer result files will be merged "
                              "into a single `.plist` file in the report "
