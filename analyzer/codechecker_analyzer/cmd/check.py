@@ -925,6 +925,7 @@ def main(args):
                           'skipfile',
                           'drop_skipped_reports',
                           'files',
+                          'plist_file_name',
                           'analyzers',
                           'add_compiler_defaults',
                           'cppcheck_args_cfg_file',
