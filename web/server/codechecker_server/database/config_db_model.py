@@ -158,6 +158,18 @@ class Configuration(Base):
         self.config_value = config_value
 
 
+class StateCodes(Base):
+    __tablename__ = 'state_codes'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    state = Column(String, nullable=False)
+    expires_at = Column(DateTime)
+
+    def __init__(self, state, expires_at):
+        self.state = state
+        self.expires_at = expires_at
+
+
 IDENTIFIER = {
     'identifier': "ConfigDatabase",
     'orm_meta': CC_META
