@@ -206,20 +206,25 @@ class Parser(BaseParser):
             if not plist:
                 return reports
 
-            metadata = plist.get('metadata')
+            if not isinstance(plist, list):
+                plist=[plist]
 
-            files = get_file_index_map(
-                plist, source_dir_path, self._file_cache)
+            for sub_plist in plist:
 
-            for diag in plist.get('diagnostics', []):
-                report = self.__create_report(
-                    analyzer_result_file_path, diag, files, metadata)
+                metadata = sub_plist.get('metadata')
 
-                if report.report_hash is None:
-                    report.report_hash = get_report_hash(
-                        report, HashType.PATH_SENSITIVE)
+                files = get_file_index_map(
+                    sub_plist, source_dir_path, self._file_cache)
 
-                reports.append(report)
+                for diag in sub_plist.get('diagnostics', []):
+                    report = self.__create_report(
+                        analyzer_result_file_path, diag, files, metadata)
+
+                    if report.report_hash is None:
+                        report.report_hash = get_report_hash(
+                            report, HashType.PATH_SENSITIVE)
+
+                    reports.append(report)
         except KeyError as ex:
             LOG.warning("Failed to get file path id! Found files: %s. "
                         "KeyError: %s", files, ex)

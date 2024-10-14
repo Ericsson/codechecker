@@ -17,10 +17,13 @@ import time
 import traceback
 import zipfile
 
+from pathlib import Path
 from threading import Timer
 
 import multiprocess
 import psutil
+
+import plistlib
 
 from codechecker_common.logger import get_logger
 from codechecker_common.review_status_handler import ReviewStatusHandler
@@ -57,8 +60,29 @@ def print_analyzer_statistic_summary(metadata_analyzers, status, msg=None):
             LOG.info("  %s: %s", analyzer_type, res)
 
 
-def worker_result_handler(results, metadata_tool, output_path):
-    """ Print the analysis summary. """
+def worker_result_handler(results, metadata_tool, output_path, plist_file_name):
+    """
+    Handle analysis results after all the analyzer threads returned. It may 
+    merge all the plist output files into one, and print the analysis summary. 
+    """
+    LOG.info("Merging plist files into %s", plist_file_name)
+    if plist_file_name:
+        plist_data = []
+        single_plist = Path(output_path, plist_file_name)
+        for _, _, _, _, original_plist, _ in results:
+            original_plist = Path(original_plist)
+            if os.path.exists(original_plist):
+                with open(original_plist, 'rb') as plist: 
+                    LOG.debug(f"Merging original plist {original_plist}")
+                    plist_data.append(plistlib.load(plist))
+
+            with open(single_plist, 'wb') as plist:
+                LOG.debug(f"Dumping merged plist file into {single_plist}")
+                plistlib.dump(plist_data, plist)
+
+            LOG.debug(f"Removing original plist file {original_plist}")
+            original_plist.unlink()
+
     skipped_num = 0
     reanalyzed_num = 0
     metadata_analyzers = metadata_tool['analyzers']
@@ -719,8 +743,8 @@ def skip_cpp(compile_actions, skip_handlers):
     return analyze, skip
 
 
-def start_workers(actions_map, actions, analyzer_config_map,
-                  jobs, output_path, skip_handlers, filter_handlers,
+def start_workers(actions_map, actions, analyzer_config_map, jobs, 
+                  output_path, plist_file_name, skip_handlers, filter_handlers,
                   rs_handler: ReviewStatusHandler, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
@@ -815,7 +839,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
                            analyzed_actions,
                            1,
                            callback=lambda results: worker_result_handler(
-                               results, metadata_tool, output_path)
+                               results, metadata_tool, output_path, plist_file_name)
                            ).get(timeout)
 
             pool.close()

@@ -111,6 +111,15 @@ def add_arguments_to_parser(parser):
                              "If it is not given then the results go into a "
                              "temporary directory which will be removed after "
                              "the analysis.")
+                        
+    parser.add_argument('--plist-file-name',
+                        type=str,
+                        dest="plist_file_name",
+                        required=False,
+                        help="If given, all the `.plist` files containing "
+                             "the analyzer result files will be merged "
+                             "into a single `.plist` file in the report "
+                             "output folder given by `-o/--output`.")
 
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
