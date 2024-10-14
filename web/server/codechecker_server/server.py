@@ -328,10 +328,21 @@ class RequestHandler(SimpleHTTPRequestHandler):
         otrans = TTransport.TMemoryBuffer()
         oprot = output_protocol_factory.getProtocol(otrans)
 
+        product_endpoint, api_ver, request_endpoint = \
+            routing.split_client_POST_request(self.path)
+
+        if product_endpoint is None and api_ver is None and \
+                request_endpoint is None:
+            self.send_thrift_exception("Invalid request endpoint path.", iprot,
+                                       oprot, otrans)
+            return
+
+        # Only Authentication, Configuration, ServerInof
+        # endpoints are allowed for Anonymous users
+        # if authentication is required.
         if self.server.manager.is_enabled and \
-                not self.path.endswith(('/Authentication',
-                                        '/Configuration',
-                                        '/ServerInfo')) and \
+                request_endpoint not in \
+                ['Authentication', 'Configuration', 'ServerInfo'] and \
                 not self.auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
@@ -347,12 +358,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication is handled, we may now respond to the user.
         try:
-            product_endpoint, api_ver, request_endpoint = \
-                routing.split_client_POST_request(self.path)
-            if product_endpoint is None and api_ver is None and \
-                    request_endpoint is None:
-                raise ValueError("Invalid request endpoint path.")
-
             product = None
             if product_endpoint:
                 # The current request came through a product route, and not
@@ -373,7 +378,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == 'Configuration':
                         conf_handler = ConfigHandler_v6(
                             self.auth_session,
-                            self.server.config_session)
+                            self.server.config_session,
+                            self.server.manager)
                         processor = ConfigAPI_v6.Processor(conf_handler)
                     elif request_endpoint == 'ServerInfo':
                         server_info_handler = ServerInfoHandler_v6(version)

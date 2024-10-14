@@ -71,6 +71,8 @@ def is_supported_version(version):
 
     version = version.lstrip('v')
     version_parts = version.split('.')
+    if len(version_parts) < 2:
+        return False
 
     # We don't care if accidentally the version tag contains a revision number.
     major, minor = int(version_parts[0]), int(version_parts[1])
@@ -115,24 +117,27 @@ def split_client_POST_request(path):
     """
 
     # A standard POST request from an API client looks like:
-    # http://localhost:8001/[product-name]/<API version>/<API service>
+    # http://localhost:8001/[product-name/]<API version>/<API service>
     # where specifying the product name is optional.
 
     split_path = urlparse(path).path.split('/', 3)
 
     endpoint_part = split_path[1]
-    if is_valid_product_endpoint(split_path[1]):
+    if is_valid_product_endpoint(split_path[1]) and len(split_path) == 4:
         version_tag = split_path[2].lstrip('v')
-        remainder = split_path[3]
+        if not is_supported_version(version_tag):
+            return None, None, None
+        endpoint = split_path[3]
+        return endpoint_part, version_tag, endpoint
 
-        return endpoint_part, version_tag, remainder
-    elif split_path[1].startswith('v'):
+    elif split_path[1].startswith('v') and len(split_path) == 3:
         # Request came through without a valid product URL endpoint to
         # possibly the main server.
         version_tag = split_path[1].lstrip('v')
-        remainder = split_path[2]
-
-        return None, version_tag, remainder
+        if not is_supported_version(version_tag):
+            return None, None, None
+        endpoint = split_path[2]
+        return None, version_tag, endpoint
 
     return None, None, None
 

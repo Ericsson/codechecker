@@ -150,7 +150,7 @@ class TestProducts(unittest.TestCase):
 
         # Now get the SERVERSPACE (configuration) for the product.
         # TODO: These things usually should only work for superusers!
-        pr_conf = self._pr_client.getProductConfiguration(pr_data.id)
+        pr_conf = self._root_client.getProductConfiguration(pr_data.id)
 
         self.assertIsNotNone(pr_conf, "Product configuration must come.")
         self.assertEqual(pr_conf.endpoint, self.product_name,
@@ -189,7 +189,7 @@ class TestProducts(unittest.TestCase):
         pr_client = env.setup_product_client(
             self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
 
         old_name = config.displayedName_b64
 
@@ -202,7 +202,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.endpoint, self.product_name,
                          "The product edit changed the endpoint, when it "
                          "shouldn't have!")
@@ -214,7 +214,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product config restore didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.displayedName_b64, old_name,
                          "The product edit didn't change the name back.")
 
@@ -225,7 +225,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.confidentiality,
                          new_confidentiality,
                          "Couldn't change the confidentiality to OPEN")
@@ -235,7 +235,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.confidentiality,
                          new_confidentiality,
                          "Couldn't change the confidentiality to INTERNAL")
@@ -245,7 +245,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product edit didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.confidentiality,
                          new_confidentiality,
                          "Couldn't change the confidentiality to CONFIDENTIAL")
@@ -255,7 +255,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product config restore didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.confidentiality,
                          old_confidentiality,
                          "The edit didn't change back the confidentiality.")
@@ -271,7 +271,7 @@ class TestProducts(unittest.TestCase):
         pr_client = env.setup_product_client(
             self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
 
         old_db_name = config.connection.database
 
@@ -292,7 +292,7 @@ class TestProducts(unittest.TestCase):
                         "Product edit didn't conclude.")
 
         # Check if the configuration now uses the new values.
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
 
         self.assertEqual(config.connection.database, new_db_name,
                          "Server didn't save new database name.")
@@ -311,7 +311,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product configuration restore didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.connection.database, old_db_name,
                          "Server didn't save back to old database name.")
 
@@ -336,7 +336,7 @@ class TestProducts(unittest.TestCase):
         pr_client = env.setup_product_client(
             self.test_workspace, product=self.product_name)
         product_id = pr_client.getCurrentProduct().id
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
 
         old_endpoint = config.endpoint
         new_endpoint = "edited_endpoint"
@@ -347,7 +347,7 @@ class TestProducts(unittest.TestCase):
                         "Product edit didn't conclude.")
 
         # Check if the configuration now uses the new values.
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.endpoint, new_endpoint,
                          "Server didn't save new endpoint.")
 
@@ -372,7 +372,7 @@ class TestProducts(unittest.TestCase):
         self.assertTrue(self._root_client.editProduct(product_id, config),
                         "Product configuration restore didn't conclude.")
 
-        config = self._pr_client.getProductConfiguration(product_id)
+        config = self._root_client.getProductConfiguration(product_id)
         self.assertEqual(config.endpoint, old_endpoint,
                          "Server didn't save back to old endpoint.")
 
