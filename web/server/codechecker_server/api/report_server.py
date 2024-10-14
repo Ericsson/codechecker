@@ -534,39 +534,31 @@ def get_source_component_file_query(
 
 def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
     """
-    This function returns a set of report IDs that are related to any file
+    This function returns a query for report IDs that are related to any file
     described by the query in the second parameter, either because their bug
     path goes through these files, or there is any bug note, etc. in these
     files.
     """
-    def first_col_values(query):
-        """
-        This function executes a query and returns the set of first columns'
-        values.
-        """
-        return set(map(lambda x: x[0], query.all()))
-
-    report_ids = set()
-
-    q = session.query(Report.id) \
+    q_report = session.query(Report.id) \
         .join(File, File.id == Report.file_id) \
         .filter(file_filter_q)
 
-    report_ids.update(first_col_values(q))
-
-    q = session.query(BugPathEvent.report_id) \
+    q_bugpathevent = session.query(BugPathEvent.report_id) \
         .join(File, File.id == BugPathEvent.file_id) \
         .filter(file_filter_q)
 
-    report_ids.update(first_col_values(q))
+    q_bugreportpoint = session.query(BugReportPoint.report_id) \
+        .join(File, File.id == BugReportPoint.file_id) \
+        .filter(file_filter_q)
 
-    q = session.query(ExtendedReportData.report_id) \
+    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
         .join(File, File.id == ExtendedReportData.file_id) \
         .filter(file_filter_q)
 
-    report_ids.update(first_col_values(q))
-
-    return report_ids
+    return q_report.union(
+        q_bugpathevent,
+        q_extendedreportdata,
+        q_bugreportpoint)
 
 
 def get_reports_by_components(session, component_names: List[str]) -> Set[int]:
