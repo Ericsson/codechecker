@@ -104,23 +104,20 @@ class ConfigTests(unittest.TestCase):
 
     def test_noauth_notification_edit(self):
         """
-        Test for editing the notification text on a non authenting server.
+        Test for editing the notification text on a non-authenticating user
+        on an authenticating server
         """
 
         # A non-authenticated session should return an empty user.
         user = self.auth_client.getLoggedInUser()
         self.assertEqual(user, "")
 
-        # Server without authentication should allow notification setting.
-        self.config_client.setNotificationBannerText(
-            convert.to_b64('noAuth notif'))
-        self.assertEqual(convert.from_b64(
-            self.config_client.getNotificationBannerText()), 'noAuth notif')
+        # Anonymous user should not be allowed to change the banner
+        with self.assertRaises(RequestFailed):
+            self.config_client.setNotificationBannerText(
+                    convert.to_b64('non su notification'))
 
-    def test_auth_su_notification_edit(self):
-        """
-        Test that SUPERADMINS can edit the notification text.
-        """
+    def get_su_config_client(self):
         # Create a SUPERUSER login.
         self.session_token = self.auth_client.performLogin(
             "Username:Password", "root:root")
@@ -142,8 +139,14 @@ class ConfigTests(unittest.TestCase):
 
         user = su_auth_client.getLoggedInUser()
         self.assertEqual(user, "root")
-        # we are root
+        return su_config_client
 
+    def test_auth_su_notification_edit(self):
+        """
+        Test that SUPERADMINS can edit the notification text.
+        """
+
+        su_config_client = self.get_su_config_client()
         su_config_client.setNotificationBannerText(
                 convert.to_b64('su notification'))
         self.assertEqual(convert.from_b64(
@@ -172,21 +175,18 @@ class ConfigTests(unittest.TestCase):
             authd_config_client.setNotificationBannerText(
                     convert.to_b64('non su notification'))
 
-            print("You are not authorized to modify notifications!")
+        print("You are not authorized to modify notifications!")
 
     def test_unicode_string(self):
         """
         Test for non ascii strings. Needed because the used Thrift
         version won't eat them.
         """
-
-        # A non-authenticated session should return an empty user.
-        user = self.auth_client.getLoggedInUser()
-        self.assertEqual(user, "")
+        su_config_client = self.get_su_config_client()
 
         # Check if utf-8 encoded strings are okay.
-        self.config_client.setNotificationBannerText(
+        su_config_client.setNotificationBannerText(
                 convert.to_b64('árvíztűrő tükörfúrógép'))
         self.assertEqual(convert.from_b64(
-            self.config_client.getNotificationBannerText()),
+             su_config_client.getNotificationBannerText()),
             'árvíztűrő tükörfúrógép')

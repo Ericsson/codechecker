@@ -1447,6 +1447,13 @@ class ThriftRequestHandler:
             args = dict(self.__permission_args)
             args['config_db_session'] = session
 
+            # Anonymous access is only allowed if authentication is
+            # turned off
+            if self._manager.is_enabled and not self._auth_session:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You are not authorized to execute this action.")
+
             if not any(permissions.require_permission(
                     perm, args, self._auth_session)
                     for perm in required):
@@ -2320,6 +2327,7 @@ class ThriftRequestHandler:
         database transaction. This is needed because during storage a specific
         session object has to be used.
         """
+
         review_status = session.query(ReviewStatus).get(report_hash)
         if review_status is None:
             review_status = ReviewStatus()
@@ -2421,6 +2429,8 @@ class ThriftRequestHandler:
         """
         Return True if review status change is disabled.
         """
+        self.__require_view()
+
         with DBSession(self._config_database) as session:
             product = session.query(Product).get(self._product.id)
             return product.is_review_status_change_disabled
@@ -2746,7 +2756,7 @@ class ThriftRequestHandler:
         Parameters:
          - checkerId
         """
-
+        self.__require_view()
         return ""
 
     @exc_to_thrift_reqfail
@@ -2756,6 +2766,8 @@ class ThriftRequestHandler:
         checkers: List[ttypes.Checker]
     ) -> List[List[str]]:
         """ Return the list of labels to each checker. """
+        self.__require_view()
+
         labels = []
         for checker in checkers:
             analyzer_name = None if not checker.analyzerName \
@@ -3569,6 +3581,8 @@ class ThriftRequestHandler:
         given run. If the run id list is empty the number of failed files will
         be counted for all of the runs.
         """
+        self.__require_view()
+
         # Unfortunately we can't distinct the failed file paths by using SQL
         # queries because the list of failed files for a run / analyzer are
         # stored in one column in a compressed way. For this reason we need to
@@ -3611,6 +3625,8 @@ class ThriftRequestHandler:
     # -----------------------------------------------------------------------
     @timeit
     def getPackageVersion(self):
+        self.__require_view()
+
         return self.__package_version
 
     # -----------------------------------------------------------------------
