@@ -41,7 +41,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     Order, \
     ReportData, ReportDetails, ReportStatus, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
-    ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
+    ReviewStatusRuleSortType, Rule, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
     ReviewStatus as API_ReviewStatus, \
     SourceComponentData, SourceFileData, SortMode, SortType
@@ -2770,6 +2770,40 @@ class ThriftRequestHandler:
                     checker.checkerId, analyzer_name))))
 
         return labels
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getGuidelineRules(
+        self,
+        guidelines: List[ttypes.Guideline]
+    ):
+        """ Return the list of rules to each guideline that given. """
+        guideline_rules = defaultdict(list)
+        for guideline in guidelines:
+            rules = self._context.guideline.rules_of_guideline(
+                guideline.guidelineName)
+            if not rules:
+                guideline_rules[guideline.guidelineName] = []
+                continue
+            for rule in rules:
+                checkers = [{
+                    "checkerName": checker_name,
+                    "severity": self._context.checker_labels.severity(
+                        checker_name).lower()
+                    } for checker_name in
+                            self._context.checker_labels.checkers_by_labels(
+                                [f"{guideline.guidelineName}:{rule}"])]
+
+                guideline_rules[guideline.guidelineName].append(
+                    Rule(
+                        ruleId=rule.lower(),
+                        title=rules[rule].get("title", ""),
+                        url=rules[rule].get("rule_url", ""),
+                        checkers=checkers
+                    )
+                )
+
+        return guideline_rules
 
     @exc_to_thrift_reqfail
     @timeit

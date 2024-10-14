@@ -548,6 +548,18 @@ struct Checker {
   2: string checkerId,
 }
 
+struct Guideline {
+  1: string guidelineName
+}
+
+struct Rule {
+  1: string ruleId,                     // The identifier of the rule.
+  2: string title,                      // The rule summary.
+  3: string url,                        // The link of the rule page.
+  4: list<map<string, string>> checkers // List of checker names
+}
+typedef map<string, list<Rule>> GuidelineRules
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -778,6 +790,10 @@ service codeCheckerDBAccess {
   // The inner lists have the following form: ['label1:value1',
   // 'label1:value2', 'label2:value3'].
   list<list<string>> getCheckerLabels(1: list<Checker> checkers)
+
+  // Return the list of rules to each guideline that given.
+  // If the guidelines param is empty, returning with all guideline rules.
+  GuidelineRules getGuidelineRules(1: list<Guideline> guidelines)
 
   // returns the CodeChecker version that is running on the server
   // !DEPRECATED Use ServerInfo API to get the package version.
