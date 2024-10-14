@@ -207,7 +207,7 @@ class Parser(BaseParser):
                 return reports
 
             if not isinstance(plist, list):
-                plist=[plist]
+                plist = [plist]
 
             for sub_plist in plist:
 

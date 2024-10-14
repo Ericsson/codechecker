@@ -111,7 +111,7 @@ def add_arguments_to_parser(parser):
                              "If it is not given then the results go into a "
                              "temporary directory which will be removed after "
                              "the analysis.")
-                        
+
     parser.add_argument('--plist-file-name',
                         type=str,
                         dest="plist_file_name",

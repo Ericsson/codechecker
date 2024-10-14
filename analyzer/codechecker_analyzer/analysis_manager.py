@@ -60,10 +60,13 @@ def print_analyzer_statistic_summary(metadata_analyzers, status, msg=None):
             LOG.info("  %s: %s", analyzer_type, res)
 
 
-def worker_result_handler(results, metadata_tool, output_path, plist_file_name):
+def worker_result_handler(results,
+                          metadata_tool,
+                          output_path,
+                          plist_file_name):
     """
-    Handle analysis results after all the analyzer threads returned. It may 
-    merge all the plist output files into one, and print the analysis summary. 
+    Handle analysis results after all the analyzer threads returned. It may
+    merge all the plist output files into one, and print the analysis summary.
     """
     LOG.info("Merging plist files into %s", plist_file_name)
     if plist_file_name:
@@ -72,7 +75,7 @@ def worker_result_handler(results, metadata_tool, output_path, plist_file_name):
         for _, _, _, _, original_plist, _ in results:
             original_plist = Path(original_plist)
             if os.path.exists(original_plist):
-                with open(original_plist, 'rb') as plist: 
+                with open(original_plist, 'rb') as plist:
                     LOG.debug(f"Merging original plist {original_plist}")
                     plist_data.append(plistlib.load(plist))
 
@@ -839,7 +842,10 @@ def start_workers(actions_map, actions, analyzer_config_map, jobs,
                            analyzed_actions,
                            1,
                            callback=lambda results: worker_result_handler(
-                               results, metadata_tool, output_path, plist_file_name)
+                               results,
+                               metadata_tool,
+                               output_path,
+                               plist_file_name)
                            ).get(timeout)
 
             pool.close()
