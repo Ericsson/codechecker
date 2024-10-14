@@ -68,8 +68,8 @@ def worker_result_handler(results,
     Handle analysis results after all the analyzer threads returned. It may
     merge all the plist output files into one, and print the analysis summary.
     """
-    LOG.info("Merging plist files into %s", plist_file_name)
     if plist_file_name:
+        LOG.info("Merging plist files into %s", plist_file_name)
         plist_data = []
         single_plist = Path(output_path, plist_file_name)
         for _, _, _, _, original_plist, _ in results:
