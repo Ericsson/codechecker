@@ -10,13 +10,11 @@ Test environment setup and configuration helpers.
 """
 
 
-from hashlib import sha256
 import os
 import json
 import tempfile
 import shutil
 import socket
-import stat
 import subprocess
 
 from codechecker_common.util import load_json
@@ -350,11 +348,12 @@ def enable_auth(workspace):
 
     scfg_dict = load_json(server_cfg_file, {})
     scfg_dict["authentication"]["enabled"] = True
+    scfg_dict["authentication"]["super_user"] = "root"
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \
         ["cc:test", "john:doe", "admin:admin123", "colon:my:password",
          "admin_group_user:admin123", "regex_admin:blah",
-         "permission_view_user:pvu"]
+         "permission_view_user:pvu", "root:root"]
     scfg_dict["authentication"]["method_dictionary"]["groups"] = \
         {"admin_group_user": ["admin_GROUP"]}
     scfg_dict["authentication"]["regex_groups"]["enabled"] = True
@@ -362,13 +361,6 @@ def enable_auth(workspace):
     with open(server_cfg_file, 'w',
               encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
-
-    # Create a root user.
-    root_file = os.path.join(workspace, 'root.user')
-    with open(root_file, 'w',
-              encoding='utf-8', errors='ignore') as rootf:
-        rootf.write(f"root:{sha256(b'root:root').hexdigest()}")
-    os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
 
 
 def enable_storage_of_analysis_statistics(workspace):

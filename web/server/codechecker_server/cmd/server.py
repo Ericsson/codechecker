@@ -212,17 +212,6 @@ via the clients. This user is created at first start and saved in the
 CONFIG_DIRECTORY, and the credentials are printed to the server's standard
 output. The plaintext credentials are NEVER accessible again.""")
 
-    root_account.add_argument('--reset-root',
-                              dest="reset_root",
-                              action='store_true',
-                              default=argparse.SUPPRESS,
-                              required=False,
-                              help="Force the server to recreate the master "
-                                   "superuser (root) account name and "
-                                   "password. The previous credentials will "
-                                   "be invalidated, and the new ones will be "
-                                   "printed to the standard output.")
-
     root_account.add_argument('--force-authentication',
                               dest="force_auth",
                               action='store_true',
@@ -931,15 +920,6 @@ def server_init_start(args):
     if 'sqlite' in args and \
             not os.path.isdir(os.path.dirname(args.sqlite)):
         os.makedirs(os.path.dirname(args.sqlite))
-
-    if 'reset_root' in args:
-        try:
-            os.remove(os.path.join(args.config_directory, 'root.user'))
-            LOG.info("Master superuser (root) credentials invalidated and "
-                     "deleted. New ones will be generated...")
-        except OSError:
-            # File doesn't exist.
-            pass
 
     if 'force_auth' in args:
         LOG.info("'--force-authentication' was passed as a command-line "
