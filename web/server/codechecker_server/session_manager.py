@@ -77,7 +77,7 @@ class _Session:
 
     def __init__(self, token, username, groups,
                  session_lifetime, refresh_time, is_root=False, database=None,
-                 last_access=None, can_expire=True):
+                 last_access=None, can_expire=True, oauth_access_token=None):
 
         self.token = token
         self.user = username
@@ -88,7 +88,11 @@ class _Session:
         self.__root = is_root
         self.__database = database
         self.__can_expire = can_expire
+        self.oauth_access_token = oauth_access_token
         self.last_access = last_access if last_access else datetime.now()
+
+    def get_access_token(self):
+        return self.oauth_access_token
 
     @property
     def is_root(self):
@@ -273,6 +277,7 @@ class SessionManager:
         provider_cfg = self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})
 
+        # turn off configuration if it is set to default values
         if provider_cfg.get("oauth_client_secret",
                             "ExampleClientSecret") == "ExampleClientSecret" \
                 or provider_cfg.get("oauth_client_id",
@@ -614,18 +619,18 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None, can_expire=True):
+                               last_access=None, can_expire=True,
+                               oauth_access_token=None):
         """
         Returns a new local session object initalized by the given parameters.
         """
         if not is_root:
             is_root = self.__is_root_user(user_name)
-
         return _Session(
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
             self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire)
+            last_access, can_expire, oauth_access_token=oauth_access_token)
 
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
@@ -701,14 +706,19 @@ class SessionManager:
         user_data = {'username': username,
                      'token': token,
                      'groups': [],
-                     'is_root': False}
+                     'is_root': False,
+                     'oauth_access_token': token
+                     }
 
         # Generate a new token and create a local session.
         token = generate_session_token()
+        # token_d is the access token of the oauth provider.
+        token_d = user_data.get('oauth_access_token')
         local_session = self.__create_local_session(token,
                                                     user_data.get('username'),
                                                     user_data.get('groups'),
-                                                    user_data.get('is_root'))
+                                                    user_data.get('is_root'),
+                                                    oauth_access_token=token_d)
         self.__sessions.append(local_session)
 
         # Store the session in the database.
@@ -720,7 +730,9 @@ class SessionManager:
                 # Store the new session.
                 record = SessionRecord(token,
                                        user_data.get('username'),
-                                       ';'.join(user_data.get('groups')))
+                                       ';'.join(user_data.get('groups')),
+                                       access_token=user_data.get(
+                                           'oauth_access_token'))
                 transaction.add(record)
                 transaction.commit()
             except Exception as e:
