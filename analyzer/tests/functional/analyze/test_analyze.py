@@ -21,6 +21,8 @@ import shlex
 import unittest
 import zipfile
 
+from pathlib import Path
+
 from libtest import env
 
 from codechecker_report_converter.report import report_file
@@ -1199,6 +1201,50 @@ class TestAnalyze(unittest.TestCase):
 
         # Checkers of all 3 analyzers are disabled.
         self.assertEqual(out.count("No checkers enabled for"), 5)
+
+    def test_single_plist(self):
+        """
+        Test if specified with the `--plist-file-name` flag.
+        Analyze output should contain the indication of merging.
+        Merged plist should be created at the end of the analysis.
+        Only one `.plist` should remain at the end of the analysis.
+        """
+        build_json = os.path.join(
+            self.test_workspace, "build_success.json")
+        source_file = os.path.join(
+            self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        merged_plist_name = "merged.plist"
+
+        analyze_cmd = [self._codechecker_cmd, "analyze",
+                       "--plist-file-name", merged_plist_name,
+                       "-o", self.report_dir, build_json]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        # Output show merging
+        self.assertIn("Merging plist files into " + merged_plist_name, out)
+
+        # Only the merged plist should remain
+        for file in Path(self.report_dir).glob("*.plist"):
+            self.assertEqual(file.name, merged_plist_name)
+
+        print(out)
 
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
