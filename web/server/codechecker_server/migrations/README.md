@@ -1,0 +1,1 @@
+Please see the [DB Schema Guide](/docs/web/db_schema_guide.md) for the developer documentation for adding database migrations.

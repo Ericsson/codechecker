@@ -1,6 +1,9 @@
 .DS_Store
 
-*.py[cod]
+### Python ###
+# Byte-compiled / optimized / DLL files.
+__pycache__/
+*.py[cdo]
 
 build
 build_dist

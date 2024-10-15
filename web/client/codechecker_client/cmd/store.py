@@ -9,8 +9,6 @@
 'CodeChecker store' parses a list of analysis results and stores them in the
 database.
 """
-
-
 import argparse
 import base64
 import functools
@@ -66,7 +64,7 @@ from codechecker_web.shared.env import get_default_workspace
 
 LOG = logger.get_logger('system')
 
-MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1 GiB.
 
 
 AnalyzerResultFileReports = Dict[str, List[Report]]
@@ -141,11 +139,11 @@ def sizeof_fmt(num, suffix='B'):
     Source: https://stackoverflow.com/questions/1094841/
         reusable-library-to-get-human-readable-version-of-file-size
     """
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi', 'Ri']:
         if abs(num) < 1024.0:
             return f"{num:3.1f}{unit}{suffix}"
         num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
+    return f"{num:.1f}Qi{suffix}"
 
 
 def get_file_content_hash(file_path):
@@ -170,7 +168,7 @@ def get_argparser_ctor_args():
 
         # Description is shown when the command's help is queried directly
         'description': """
-Store the results from one or more 'codechecker-analyze' result files in a
+Store the results from one or more 'CodeChecker analyze' result files in a
 database.""",
 
         # Epilogue is shown after the arguments when the help is queried

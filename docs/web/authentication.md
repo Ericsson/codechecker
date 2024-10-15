@@ -15,7 +15,7 @@ Table of Contents
         * [<i>PAM</i> authentication](#pam-authentication)
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
-    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+    * [Membership in custom groups with <i>RegEx groups</i>](#regex_groups-authentication)
 * [Client-side configuration](#client-side-configuration)
     * [Web-browser client](#web-browser-client)
     * [Command-line client](#command-line-client)
@@ -38,32 +38,25 @@ is handled.
 
  * `enabled`
 
-    Setting this to `false` disables privileged access
-    
- * `realm_name`
+    Setting this to `false` disables privileged access.
 
-    The name to show for web-browser viewers' pop-up login window via
-    *HTTP Authenticate*
-    
- * `realm_error`
-
-    The error message shown in the browser when the user fails to authenticate
-    
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
+
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
-    since last session access the session is permanently invalidated.
+    since last session access the session is permanently invalidated, and the
+    user is logged out.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
@@ -76,9 +69,6 @@ is handled.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-If the server is shut down, every session is **immediately** invalidated. The
-running sessions are only stored in the server's memory, they are not written
-to storage.
 
 Every authentication method is its own JSON object in this section. Every
 authentication method has its own `enabled` key which dictates whether it is
@@ -185,8 +175,8 @@ servers as it can elongate the authentication process.
 
  * `tls_require_cert`
 
-   If set to `never`, skip verification of certificate in LDAPS connections
-   (!!! INSECURE !!!).
+   If set to `never`, skip verification of certificate in LDAPS connections.
+   **Setting this makes the authentication process INSECURE!**
 
  * `username`
 
@@ -199,35 +189,39 @@ servers as it can elongate the authentication process.
 
  * `referrals`
 
-   Microsoft Active Directory by returns referrals (search continuations).
+   Microsoft Active Directory by default returns referrals
+   (search continuations).
    LDAPv3 does not specify which credentials should be used by the clients
    when chasing these referrals and will be tried as an anonymous access by
-   the libldap library which might fail. Will be disabled by default.
+   the `libldap` library, which might fail.
+   Will be disabled by default.
 
  * `deref`
 
-   Configure how the alias dereferencing is done in libldap (valid values:
-   `always`, `never`).
+   Configure how the alias dereferencing is done in `libldap` (valid values:
+   `"always"`, `"never"`).
 
  * `accountBase`
 
-   Root tree containing all the user accounts.
+   Root tree containing all user accounts.
 
  * `accountScope`
 
-   Scope of the search performed. Accepted values are: base, one, subtree.
+   Scope of the search performed.
+   Accepted values are: `"base"`, `"one"`, `"subtree"`.
 
  * `accountPattern`
 
-   The special `$USN$` token in the query is replaced to the *username* at
-   login. Query pattern used to search for a user account. Must be a valid
-   LDAP query expression.
+   Query pattern used to search for a user account.
+   Must be a valid LDAP query expression.
+   The special `$USN$` token in the query is replaced with the *username* at
+   login.
 
    Example configuration: `(&(objectClass=person)(sAMAccountName=$USN$))`
 
  * `user_dn_postfix_preference`
 
-    User DN postfix preference value can be used to select out one prefered
+    User DN postfix preference value can be used to select out one preferred
     user DN if multiple DN entries are found by the LDAP search.
     The configured value will be matched and the first matching will be used.
     If only one DN was found this postfix matching will not be used.
@@ -238,7 +232,7 @@ servers as it can elongate the authentication process.
 
  * `groupBase`
 
-   Root tree containing all the groups.
+   Root tree containing all groups.
 
  * `groupPattern`
 
@@ -292,13 +286,13 @@ servers as it can elongate the authentication process.
 }
 ~~~
 
-## Membership in custom groups with <a name="regex_groups-authentication">regex_groups</a>
+## Membership in custom groups with RegEx groups <a name="regex_groups-authentication"></a>
 
 Many regular expressions can be listed to define a group. Please note that the
 regular expressions are searched in the whole username string, so they should
 be properly anchored if you want to match only in the beginning or in the
 end. Regular expression matching follows the rules of Python's
-[re.search()](https://docs.python.org/3/library/re.html).
+[`re.search()`](https://docs.python.org/3/library/re.html).
 
 The following example will create a group named `everybody` that contains
 every user regardless of the authentication method, and a group named `admins`

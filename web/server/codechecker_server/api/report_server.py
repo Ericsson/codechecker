@@ -21,7 +21,7 @@ import zlib
 
 from copy import deepcopy
 from collections import OrderedDict, defaultdict, namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
@@ -1082,8 +1082,7 @@ def check_remove_runs_lock(session, run_ids):
     expired yet. If so, the run cannot be deleted, as someone is assumed to
     be storing into it.
     """
-    locks_expired_at = datetime.now() - timedelta(
-        seconds=db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE)
+    locks_expired_at = datetime.now() - db_cleanup.RUN_LOCK_TIMEOUT_IN_DATABASE
 
     run_locks = session.query(RunLock.name) \
         .filter(RunLock.locked_at >= locks_expired_at)
@@ -1378,7 +1377,8 @@ class ThriftRequestHandler:
     """
 
     def __init__(self,
-                 manager,
+                 configuration_manager,
+                 session_manager,
                  Session,
                  product,
                  auth_session,
@@ -1391,7 +1391,8 @@ class ThriftRequestHandler:
             raise ValueError("Cannot initialize request handler without "
                              "a product to serve.")
 
-        self._manager = manager
+        self._configuration_manager = configuration_manager
+        self._session_manager = session_manager
         self._product = product
         self._auth_session = auth_session
         self._config_database = config_database
@@ -3941,7 +3942,8 @@ class ThriftRequestHandler:
     def allowsStoringAnalysisStatistics(self):
         self.__require_store()
 
-        return bool(self._manager.get_analysis_statistics_dir())
+        return self._configuration_manager.store.analysis_statistics_dir \
+            is not None
 
     @exc_to_thrift_reqfail
     @timeit
@@ -3951,13 +3953,14 @@ class ThriftRequestHandler:
         cfg = {}
 
         # Get the limit of failure zip size.
-        failure_zip_size = self._manager.get_failure_zip_size()
+        failure_zip_size = self._configuration_manager.store.limit \
+            .failure_zip_size
         if failure_zip_size:
             cfg[ttypes.StoreLimitKind.FAILURE_ZIP_SIZE] = failure_zip_size
 
         # Get the limit of compilation database size.
         compilation_database_size = \
-            self._manager.get_compilation_database_size()
+            self._configuration_manager.store.limit.compilation_database_size
         if compilation_database_size:
             cfg[ttypes.StoreLimitKind.COMPILATION_DATABASE_SIZE] = \
                 compilation_database_size
@@ -3969,7 +3972,8 @@ class ThriftRequestHandler:
     def storeAnalysisStatistics(self, run_name, b64zip):
         self.__require_store()
 
-        report_dir_store = self._manager.get_analysis_statistics_dir()
+        report_dir_store = self._configuration_manager.store \
+            .analysis_statistics_dir
         if report_dir_store:
             try:
                 product_dir = os.path.join(report_dir_store,

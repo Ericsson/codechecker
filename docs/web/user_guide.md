@@ -429,7 +429,7 @@ usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
-Store the results from one or more 'codechecker-analyze' result files in a
+Store the results from one or more 'CodeChecker analyze' result files in a
 database.
 
 positional arguments:
