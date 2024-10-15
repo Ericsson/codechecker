@@ -242,9 +242,6 @@ class ThriftAuthHandler:
 
     @timeit
     def performLogin(self, auth_method, auth_string):
-        print(f" ********** auth_method: {auth_method}")
-        print(f" ********** auth_string: {auth_string}")
-
         if not auth_string:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,

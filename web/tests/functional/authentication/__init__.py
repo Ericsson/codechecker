@@ -16,6 +16,7 @@ import subprocess
 
 from libtest import codechecker
 from libtest import env
+from time import sleep
 import multiprocess
 
 # Stopping event for CodeChecker server.
@@ -67,6 +68,7 @@ def setup_class_common():
 
     subprocess.Popen(["python3", "oauth_server.py"],
                      cwd="tests/functional/authentication")
+    sleep(5)
 
 
 def teardown_class_common():
