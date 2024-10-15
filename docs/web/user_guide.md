@@ -12,8 +12,8 @@
       - [Configuring database and server settings location](#configuring-database-and-server-settings-location)
         - [Server Configuration (Authentication and Server Limits)](#server-configuration-authentication-and-server-limits)
         - [Database Configuration](#database-configuration)
-      - [Master superuser and authentication forcing](#master-superuser-and-authentication-forcing)
-      - [Enfore secure socket (TLS/SSL)](#enfore-secure-socket-ssl)
+      - [Initial super-user](#initial-super-user)
+      - [Enfore secure socket (TLS/SSL)](#enfore-secure-socket-tlsssl)
       - [Managing running servers](#managing-running-servers)
       - [Manage server database upgrades](#manage-server-database-upgrades)
     - [`store`](#store)
@@ -150,7 +150,7 @@ usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
                           [--sqlite SQLITE_FILE | --postgresql]
                           [--dbaddress DBADDRESS] [--dbport DBPORT]
                           [--dbusername DBUSERNAME] [--dbname DBNAME]
-                          [--reset-root] [--force-authentication]
+                          [--force-authentication]
                           [-l | -r | -s | --stop-all]
                           [--db-status STATUS | --db-upgrade-schema PRODUCT_TO_UPGRADE | --db-force-upgrade]
                           [--verbose {info,debug,debug_analyzer}]
@@ -309,26 +309,21 @@ project.
 **It is recommended to use only the Postgresql databse for production
 deployments!**
 
-#### Master superuser and authentication forcing
+#### Initial super-user
+
+You can give a single user SUPER_USER permission
+by setting the `super_user` field in the `authentication`
+section of the `server_config.json`.
+The user which is set here, must be an existing user.
+For example it should be a user
+with dictionary authentication method.
 
 ```
-root account arguments:
-  Servers automatically create a root user to access the server's
-  configuration via the clients. This user is created at first start and
-  saved in the CONFIG_DIRECTORY, and the credentials are printed to the
-  server's standard output. The plaintext credentials are NEVER accessible
-  again.
+ "authentication": {
+    "enabled" : true,
+    "super_user" : "admin",
+...
 
-  --reset-root          Force the server to recreate the master superuser
-                        (root) account name and password. The previous
-                        credentials will be invalidated, and the new ones will
-                        be printed to the standard output.
-  --force-authentication
-                        Force the server to run in authentication requiring
-                        mode, despite the configuration value in
-                        'session_config.json'. This is needed if you need to
-                        edit the product configuration of a server that would
-                        not require authentication otherwise.
 ```
 
 #### Enfore secure socket (TLS/SSL)

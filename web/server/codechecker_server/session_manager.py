@@ -9,7 +9,6 @@
 Handles the management of authentication sessions on the server's side.
 """
 
-import hashlib
 import json
 import os
 import re
@@ -161,13 +160,12 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, root_sha, force_auth=False):
+    def __init__(self, configuration_file, force_auth=False):
         """
         Initialise a new Session Manager on the server.
 
         :param configuration_file: The configuration file to read
             authentication backends from.
-        :param root_sha: The SHA-256 hash of the root user's authentication.
         :param force_auth: If True, the manager will be enabled even if the
             configuration file disables authentication.
         """
@@ -198,9 +196,6 @@ class SessionManager:
 
         self.__refresh_time = self.__auth_config['refresh_time'] \
             if 'refresh_time' in self.__auth_config else None
-
-        # Save the root SHA into the configuration (but only in memory!)
-        self.__auth_config['method_root'] = root_sha
 
         self.__regex_groups_enabled = False
 
@@ -335,16 +330,15 @@ class SessionManager:
         }
 
     @property
+    def get_super_user(self):
+        return {
+            "super_user": self.__auth_config.get('super_user'),
+        }
+
+    @property
     def default_superuser_name(self) -> Optional[str]:
         """ Get default superuser name. """
-        root = self.__auth_config['method_root'].split(":")
-
-        # Previously the root file doesn't contain the user name. In this case
-        # we will return with no user name.
-        if len(root) <= 1:
-            return None
-
-        return root[0]
+        return self.__auth_config['super_user']
 
     def set_database_connection(self, connection):
         """
@@ -365,8 +359,7 @@ class SessionManager:
 
         This validation object contains two keys: username and groups.
         """
-        validation = self.__try_auth_root(auth_string) \
-            or self.__try_auth_dictionary(auth_string) \
+        validation = self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string)
         if not validation:
@@ -386,22 +379,6 @@ class SessionManager:
         return method not in UNSUPPORTED_METHODS and \
             'method_' + method in self.__auth_config and \
             self.__auth_config['method_' + method].get('enabled')
-
-    def __try_auth_root(self, auth_string):
-        """
-        Try to authenticate the user against the root username:password's hash.
-        """
-        user_name = SessionManager.get_user_name(auth_string)
-        sha = hashlib.sha256(auth_string.encode('utf8')).hexdigest()
-
-        if f"{user_name}:{sha}" == self.__auth_config['method_root']:
-            return {
-                'username': SessionManager.get_user_name(auth_string),
-                'groups': [],
-                'root': True
-            }
-
-        return False
 
     def __try_auth_token(self, auth_string):
         if not self.__database_connection:
@@ -562,7 +539,7 @@ class SessionManager:
 
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """
-        if self.__auth_config['method_root'].split(":")[0] == user_name:
+        if self.__auth_config['super_user'] == user_name:
             return True
 
         transaction = None
