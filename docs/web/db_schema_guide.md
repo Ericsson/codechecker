@@ -38,8 +38,9 @@ Edit the `sqlalchemy.url` option in
 according to your database configuration.
 
 ### **Step 3**: Use alembic to autogenerate migration scripts
+Change username and path to your CodeChecker installation.
 
-`alembic --name config_db revision --autogenerate -m "Change description"`
+`PYTHONPATH=/home/username/codechecker/build/CodeChecker/lib/python3 alembic --name config_db revision --autogenerate -m "Change description"`
 
 ### **Step 4**: Check the generated scripts
 
