@@ -183,6 +183,14 @@ def add_arguments_to_parser(parser):
                                 "Please consult the User guide on how a "
                                 "Skipfile should be laid out.")
 
+    skip_mode.add_argument('--drop-reports-from-skipped-files',
+                           dest="drop_skipped_reports",
+                           required=False,
+                           action='store_true',
+                           default=False,
+                           help="Filter our reports from files that were  "
+                                "skipped from the analysis.")
+
     skip_mode.add_argument('--file',
                            nargs='+',
                            dest="files",
@@ -1097,8 +1105,13 @@ def main(args):
         LOG.error(f"Found no compilation commands in '{args.input}'")
         sys.exit(1)
 
-    # Process the skip list if present.
+    # Process the skip list if present. This will filter out analysis actions.
     skip_handlers = __get_skip_handlers(args, compile_commands)
+    # Post processin filters
+    filter_handlers = None
+    if ('drop_skipped_reports' in args and args.drop_skipped_reports):
+        filter_handlers = skip_handlers
+
     rs_handler = review_status_handler.ReviewStatusHandler(args.output_path)
 
     try:
@@ -1244,8 +1257,9 @@ def main(args):
     LOG.debug_analyzer("Compile commands forwarded for analysis: %d",
                        compile_cmd_count.analyze)
 
-    analyzer.perform_analysis(args, skip_handlers, rs_handler, actions,
-                              metadata_tool, compile_cmd_count)
+    analyzer.perform_analysis(args, skip_handlers, filter_handlers,
+                              rs_handler, actions, metadata_tool,
+                              compile_cmd_count)
 
     __update_skip_file(args)
     __update_review_status_config(args)

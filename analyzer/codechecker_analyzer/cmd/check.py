@@ -275,7 +275,7 @@ used to generate a log file on the fly.""")
                                     "more information.\n"
                                     "USE WISELY AND AT YOUR OWN RISK!")
 
-    skip_mode = analyzer_opts.add_mutually_exclusive_group()
+    skip_mode = parser.add_argument_group("file filter arguments")
     skip_mode.add_argument('-i', '--ignore', '--skip',
                            dest="skipfile",
                            required=False,
@@ -284,6 +284,14 @@ used to generate a log file on the fly.""")
                                 "files should be omitted from analysis. "
                                 "Please consult the User guide on how a "
                                 "Skipfile should be laid out.")
+
+    skip_mode.add_argument('--drop-reports-from-skipped-files',
+                           dest="drop_skipped_reports",
+                           required=False,
+                           action='store_true',
+                           default=False,
+                           help="Filter our reports from files that were  "
+                                "skipped from the analysis.")
 
     skip_mode.add_argument('--file',
                            nargs='+',
@@ -881,6 +889,7 @@ def main(args):
         # after the call.
         args_to_update = ['quiet',
                           'skipfile',
+                          'drop_skipped_reports',
                           'files',
                           'analyzers',
                           'add_compiler_defaults',
