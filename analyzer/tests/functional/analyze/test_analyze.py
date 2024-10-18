@@ -1198,7 +1198,7 @@ class TestAnalyze(unittest.TestCase):
         out, _ = process.communicate()
 
         # Checkers of all 3 analyzers are disabled.
-        self.assertEqual(out.count("No checkers enabled for"), 4)
+        self.assertEqual(out.count("No checkers enabled for"), 5)
 
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""

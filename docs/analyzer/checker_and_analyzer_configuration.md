@@ -300,3 +300,29 @@ CodeChecker check -l ./compile_commands.json \
   -d gcc-double-free \ # disable gcc-double-free
   -o ./reports
 ```
+
+# Configuring the FB-Infer Analyzer
+
+As of CodeChecker 6.23, Codechecker can now execute the Facebook Infer Analyzer.
+The minimum version of Infer we support is 1.1.0.
+
+## Analyzer Configuration
+
+Currently, we don't support configuring the Facebook Infer analyzer through
+CodeChecker. The _overwhelming_ majority of these configurations are only
+recommended for developers -- but we will keep an eye out if this ever changes.
+
+## Limitations
+
+Currently only static analysis can be executed. Meaning that it analyzes each
+file separately and not the whole project as one.
+
+## Example invocation
+
+``` shell
+CodeChecker check -l ./compile_commands.json \
+  --analyzers infer \ # Run Infer analyzer only
+  -e infer \ # enable all checkers starting with "infer"
+  -d infer-expensive-loop-invariant-call \ # disable infer-expensive-loop-invariant-call
+  -o ./reports
+```
