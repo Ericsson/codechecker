@@ -39,8 +39,9 @@ def __get_tracking_branch(repo: Repo) -> Optional[str]:
 def __get_blame_info(file_path: str):
     """ Get blame info for the given file. """
     try:
-        repo = Repo(file_path, search_parent_directories=True)
-        if repo.ignored(file_path):
+        real_path = os.path.realpath(file_path)
+        repo = Repo(real_path, search_parent_directories=True)
+        if repo.ignored(real_path):
             LOG.debug("File %s is an ignored file", file_path)
             return None
     except InvalidGitRepositoryError:
@@ -59,7 +60,7 @@ def __get_blame_info(file_path: str):
         pass
 
     try:
-        blame = repo.blame_incremental(repo.head.commit.hexsha, file_path)
+        blame = repo.blame_incremental(repo.head.commit.hexsha, real_path)
 
         res = {
             'version': 'v1',
