@@ -539,6 +539,9 @@ class SessionManager:
 
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """
+        if 'super_user' not in self.__auth_config:
+            return False
+
         if self.__auth_config['super_user'] == user_name:
             return True
 
