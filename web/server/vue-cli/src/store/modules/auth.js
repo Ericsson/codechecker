@@ -1,4 +1,3 @@
-
 import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
@@ -63,6 +62,20 @@ const actions = {
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
+      if (credentials.type === "oauth") {
+        authService.getClient().performLogin(
+          "oauth", credentials.provider + "@" + credentials.url,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: "OAuth @" + credentials.provider,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+        return;
+      }
       authService.getClient().performLogin("Username:Password",
         `${credentials.username}:${credentials.password}`,
         handleThriftError(token => {
