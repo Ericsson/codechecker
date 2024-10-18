@@ -18,44 +18,39 @@ on the product level.
 
 Table of Contents
 =================
-* [The master superuser (root)](#the-master-superuser)
-* [Managing permissions](#managing-permissions)
-* [Permission concepts](#permission-concepts)
-    * [Default value](#default-value)
-    * [Permission inheritance](#permission-inheritance)
-    * [Permission manager](#permission-manager)
-* [Available permissions](#available-permissions)
-    * [Server-wide (global) permissions](#global-permissions)
-        * [`SUPERUSER`](#superuser)
-        * [`PERMISSION_VIEW`](#permission-view)
-    * [Product-level permissions](#product-level-permissions)
-        * [`PRODUCT_ADMIN`](#product-admin)
-        * [`PRODUCT_ACCESS`](#product-access)
-        * [`PRODUCT_STORE`](#product-store)
-        * [`PRODUCT_VIEW`](#product-view)
+- [Permission subsystem](#permission-subsystem)
+- [Table of Contents](#table-of-contents)
+- [The master superuser (root) ](#the-master-superuser-root-)
+- [Managing permissions ](#managing-permissions-)
+- [Permission concepts ](#permission-concepts-)
+  - [Default value ](#default-value-)
+  - [Permission inheritance ](#permission-inheritance-)
+  - [Permission manager ](#permission-manager-)
+- [Available permissions ](#available-permissions-)
+  - [Server-wide (global) permissions ](#server-wide-global-permissions-)
+    - [`SUPERUSER` ](#superuser-)
+    - [`PERMISSION_VIEW`](#permission_view)
+  - [Product-level permissions ](#product-level-permissions-)
+    - [`PRODUCT_ADMIN` ](#product_admin-)
+    - [`PRODUCT_ACCESS` ](#product_access-)
+    - [`PRODUCT_STORE` ](#product_store-)
+    - [`PRODUCT_VIEW` ](#product_view-)
 
 # The master superuser (root) <a name="the-master-superuser"></a>
 
-Each CodeChecker server at its first start generates a master superuser
-(*root*) access credential which it prints into its standard output:
 
+At the first CodeChecker startup it is recommended that
+you set up a single user with  `SUPERUSER` permission.
+Then with this user you will be able to configure additional permissions
+for other users in the WEB GUI.
+Let's say you want to give `SUPERUSER` permission to user `admin`.
+Then set `super_user` field in the `server_config.json` configuration file:
 ```sh
-[WARNING] Server started without 'root.user' present in CONFIG_DIRECTORY!
-A NEW superuser credential was generated for the server. This information IS
-SAVED, thus subsequent server starts WILL use these credentials. You WILL NOT
-get to see the credentials again, so MAKE SURE YOU REMEMBER THIS LOGIN!
------------------------------------------------------------------
-The superuser's username is 'AAAAAA' with the password 'aaaa0000'
------------------------------------------------------------------
+"authentication": {
+    "enabled" : true,
+    "super_user" : "admin",
+...
 ```
-
-These credentials can be deleted and new ones can be requested by starting
-CodeChecker server with the `--reset-root` flag. The credentials are always
-**randomly generated**.
-
-If the server has authentication enabled, the *root* user will **always have
-access** despite of the configured authentication backends' decision, and
-will automatically **have the `SUPERUSER` permission**.
 
 # Managing permissions <a name="managing-permissions"></a>
 
@@ -184,4 +179,4 @@ delete existing analysis runs from the server.
 |---------|-----------------|-----------------|
 | Granted | `PRODUCT_ADMIN` | `PRODUCT_ADMIN`, `PRODUCT_STORE`, `PRODUCT_ACCESS` |
 
-Users need the `PRODUCT_VIEW` permission to `view` analysis runs without modifying any properties of the runs. 
+Users need the `PRODUCT_VIEW` permission to `view` analysis runs without modifying any properties of the runs.
