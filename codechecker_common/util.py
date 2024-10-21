@@ -112,3 +112,14 @@ def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
 def strtobool(value: str) -> bool:
     """Parse a string value to a boolean."""
     return value.lower() in ('y', 'yes', 't', 'true', 'on', '1')
+
+
+def index_of(iterable, lambda_func) -> int:
+    """Return the index of the first element in iterable for which
+    lambda_func returns True.
+    """
+    for i, item in enumerate(iterable):
+        if lambda_func(item):
+            return i
+
+    return -1
