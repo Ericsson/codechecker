@@ -145,6 +145,8 @@ def main(args):
             LOG.warning("'--dump-config cppcheck' is not supported.")
         elif args.dump_config == 'gcc':
             raise NotImplementedError('--dump-config')
+        elif args.dump_config == 'infer':
+            raise NotImplementedError('--dump-config')
 
         return
 

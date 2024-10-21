@@ -74,11 +74,20 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run:
           sudo apt-get update && sudo apt-get install g++-13 clang clang-tidy cppcheck
+        # https://github.com/facebook/infer/blob/main/docker/1.1.0/Dockerfile
+        run:
+          INFER_VERSION=v1.2.0; \
+          cd /opt && \
+          curl -sL \
+            https://github.com/facebook/infer/releases/download/${INFER_VERSION}/infer-linux-x86_64-${INFER_VERSION}.tar.xz | \
+          tar xJ && \
+          rm -f /infer && \
+          ln -s ${PWD}/infer-linux-x86_64-$INFER_VERSION /infer
 
       - name: "Install run-time dependencies (OSX)"
         if: ${{ matrix.os == 'macos-10.15' }}
         run:
-          brew install llvm cppcheck g++-13
+          brew install llvm cppcheck g++-13 infer
 
       - name: "Install run-time dependencies (Windows)"
         if: ${{ matrix.os == 'windows-2019' }}
