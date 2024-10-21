@@ -136,7 +136,47 @@ class TestSkip(unittest.TestCase):
 
     def test_skip(self):
         """Analyze a project with a skip file."""
-        self.__log_and_analyze_simple(["--ignore", "skipfile"])
+        # we should see a report from skip.h
+        # we should not see a report from file_to_be_skipped.cpp
+        self.__log_and_analyze_simple(["--ignore", "skipfile_drop"])
+
+        # Check if file is skipped.
+        report_dir_files = os.listdir(self.report_dir)
+        for f in report_dir_files:
+            self.assertFalse("file_to_be_skipped.cpp" in f)
+
+        # Check if report from the report file is removed.
+        report_dir_files = os.listdir(self.report_dir)
+        report_file_to_check = None
+        for f in report_dir_files:
+            if "skip_header.cpp" in f:
+                report_file_to_check = os.path.join(self.report_dir, f)
+                break
+
+        self.assertIsNotNone(report_file_to_check,
+                             "Report file should be generated.")
+        report_data = {}
+        with open(report_file_to_check, 'rb') as plist_file:
+            report_data = plistlib.load(plist_file)
+        files = report_data['files']
+
+        skipped_file_index = None
+        for i, f in enumerate(files):
+            if "skip.h" in f:
+                skipped_file_index = i
+                break
+
+        self.assertNotEqual(skipped_file_index, None,
+                            "Reports from headers should be kept"
+                            " if the header is not on the skiplist")
+
+    def test_drop_reports(self):
+        """Analyze a project with a skip file."""
+        # we should not see a report from skip.h
+        # we should not see a report from file_to_be_skipped.cpp
+
+        self.__log_and_analyze_simple(["--ignore", "skipfile",
+                                       "--drop-reports-from-skipped-files"])
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
