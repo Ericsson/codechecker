@@ -162,16 +162,20 @@ class Configuration(Base):
         self.config_value = config_value
 
 
-class StateCodes(Base):
-    __tablename__ = 'state_codes'
+class OAuthSession(Base):
+    __tablename__ = 'oauth_sessions'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
+    provider = Column(String, nullable=False)
     state = Column(String, nullable=False)
+    code_verifier = Column(String, nullable=False)
     expires_at = Column(DateTime)
 
-    def __init__(self, state, expires_at):
+    def __init__(self, provider, state, code_verifier, expires_at):
+        self.provider = provider
         self.state = state
         self.expires_at = expires_at
+        self.code_verifier = code_verifier
 
 
 IDENTIFIER = {

@@ -198,10 +198,10 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state, state_id = data['code'], data['state'], \
-            data['state_id']
+        code, state, oauth_data_id = data['code'], data['state'], \
+            data['oauth_data_id']
         auth_string = f"{link}?code={code}&state={state}" \
-            f"&state_id={state_id}"
+            f"&oauth_data_id={oauth_data_id}"
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
