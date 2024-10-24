@@ -96,6 +96,7 @@ def setup_class_common(workspace_name):
 
     # Export the test configuration to the workspace.
     env.export_test_cfg(TEST_WORKSPACE, test_config)
+    env.enable_auth(TEST_WORKSPACE)
 
 
 def teardown_class_common():
