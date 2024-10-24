@@ -29,7 +29,7 @@ from codechecker_common.logger import get_logger
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Product, ProductPermission, Session, \
-    StateCodes, SystemPermission
+    OAuthSession, SystemPermission
 from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
     require_manager, require_permission
@@ -149,10 +149,11 @@ class ThriftAuthHandler:
             globalPermissions=global_permissions,
             productPermissions=product_permissions)
 
+    # Used for state and PKCE verification
     @timeit
-    def insertState(self, state):
+    def insertDataOauth(self, state, code_verifier, provider):
         """
-        Insert the state code into the database
+        Insert the state code and verification code into the database
         """
 
         # remove all the expired state codes from the database
@@ -160,11 +161,11 @@ class ThriftAuthHandler:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
 
-                session.execute("DELETE FROM state_codes "
+                session.execute("DELETE FROM oauth_sessions "
                                 "WHERE expires_at "
                                 "< DATETIME(\"" + date + "\")")
                 session.commit()
-            LOG.info("Expired state codes removed successfully.")
+            LOG.info("Expired state, validation codes removed successfully.")
         except sqlite3.Error as e:
             LOG.error(f"An error occurred insertion: {e}")
 
@@ -175,26 +176,34 @@ class ThriftAuthHandler:
                 date = (datetime.datetime.now() +
                         datetime.timedelta(minutes=15))
 
-                new_state = StateCodes(state=state, expires_at=date)
+                new_state = OAuthSession(state=state,
+                                         code_verifier=code_verifier,
+                                         expires_at=date,
+                                         provider=provider)
                 session.add(new_state)
                 session.commit()
                 LOG.debug("State inserted into the database")
 
-                state_id = session.query(StateCodes) \
-                    .filter(StateCodes.state == new_state.state
-                            and
-                            StateCodes.expires_at == new_state.expires_at) \
-                    .first().id
+                oauth_data_id = session.query(OAuthSession) \
+                    .filter(
+                        OAuthSession.state == new_state.state
+                        and
+                        OAuthSession.expires_at == new_state.expires_at
+                        and
+                        OAuthSession.code_verifier == new_state.code_verifier
+                        and
+                        OAuthSession.provider == new_state.provider
+                    ).first().id
 
                 LOG.debug("FETCHED STATE ID")
-                LOG.debug(f"State {state} inserted successfully")
-                LOG.debug(f"State {state[0]} inserted successfully.")
-            return state_id
+                LOG.debug("State %s inserted successfully", state)
+                LOG.debug("verifier %s inserted sucessfully ", code_verifier)
+            return oauth_data_id
         except sqlite3.Error as e:
             LOG.error(f"An error occurred: {e}")  # added here re1move
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "STATE insertion failed. Please try again.")
+                "OAuth data insertion failed. Please try again.")
 
     @timeit
     def getOauthProviders(self):
@@ -217,28 +226,38 @@ class ThriftAuthHandler:
         scope = oauth_config["oauth_scope"]
         authorization_uri = oauth_config["oauth_authorization_uri"]
         redirect_uri = oauth_config["oauth_redirect_uri"]
+        # code verifier for PKCE
+        pkce_verifier = generate_token(48)
 
         # Create an OAuth2Session instance
         session = OAuth2Session(
             client_id,
             client_secret,
             scope=scope,
-            redirect_uri=redirect_uri)
+            redirect_uri=redirect_uri,
+            code_challenge_method='S256'
+            )
 
         # Create authorization URL
         nonce = generate_token()
         url, state = session.create_authorization_url(
-            authorization_uri, nonce=nonce, state=stored_state)
+            authorization_uri,
+            nonce=nonce,
+            state=stored_state,
+            code_verifier=pkce_verifier
+            )
 
         # Save the state and nonce to the database
-        state_id = self.insertState(state)
-        if not state_id:
+        oauth_data_id = self.insertDataOauth(state=state,
+                                             code_verifier=pkce_verifier,
+                                             provider=provider)
+        if not oauth_data_id:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "State code insertion failed.")
+                "OAuth data insertion failed.")
 
-        LOG.debug(f"State {state} inserted successfully with ID {state_id}")
-        return url + "&state_id=" + str(state_id)
+        LOG.debug("State inserted successfully with ID %s", oauth_data_id)
+        return url + "&oauth_data_id=" + str(oauth_data_id)
 
     @timeit
     def performLogin(self, auth_method, auth_string):
@@ -266,22 +285,28 @@ class ThriftAuthHandler:
                     msg)
 
         elif auth_method == "oauth":
-
             provider, url = auth_string.split("@")
-
             url_new = urlparse(url)
             parsed_query = parse_qs(url_new.query)
-
             code = parsed_query.get("code")[0]
             state = parsed_query.get("state")[0]
-            state_id = parsed_query.get("state_id")[0]
+            cc = parsed_query.get("code_challenge")[0]
+            cc_method = parsed_query.get("code_challenge_method")[0]
+            # code_verifier = parsed_query.get("code_verifier")[0]
+            oauth_data_id = parsed_query.get("oauth_data_id")[0]
+            # for code verifier from created link and original
+            code_verifier_db = None
             state_db = None
+            provider_db = None
             with DBSession(self.__config_db) as session:
-                state_db = session.query(StateCodes) \
-                    .filter(StateCodes.id == state_id) \
-                    .first().state
+                state_db, code_verifier_db, provider_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider) \
+                           .filter(OAuthSession.id == oauth_data_id) \
+                           .first()
 
-            if state_db != state:
+            if str(state_db) != state or str(provider_db) != provider:
                 LOG.error("State code mismatch.")
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -303,7 +328,6 @@ class ThriftAuthHandler:
             user_info_url = oauth_config["oauth_user_info_uri"]
             redirect_uri = oauth_config["oauth_redirect_uri"]
             allowed_users = oauth_config.get("allowed_users", [])
-
             LOG.info("OAuth configuration loaded for provider: %s", provider)
             session = None
             try:
@@ -311,7 +335,9 @@ class ThriftAuthHandler:
                     client_id,
                     client_secret,
                     scope=scope,
-                    redirect_uri=redirect_uri)
+                    redirect_uri=redirect_uri,
+                    code_challenge_method='S256'
+                    )
 
             except Exception as ex:
                 LOG.error("OAuth2Session creation failed: %s", str(ex))
@@ -321,23 +347,27 @@ class ThriftAuthHandler:
 
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
+            # the workaround is to construct the url manually
 
             url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
-                "?code=" + code + "&state=" + state
+                "?code=" + code + "&state=" + state + \
+                "&code_challenge=" + cc + \
+                "&code_challenge_method=" + cc_method
 
             LOG.info("URL has been constructed successfully")
-
             token = None
             try:
+                # code_verifier_db is not supported for github provider
+                # if it will be fixed the code should adjust automatically
                 token = session.fetch_token(
                     url=token_url,
-                    authorization_response=url)
+                    authorization_response=url,
+                    code_verifier=code_verifier_db)
             except Exception as ex:
                 LOG.error("Token fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "Token fetch failed.")
-
             LOG.info("Token fetched successfully for provider: %s", provider)
 
             user_info = None

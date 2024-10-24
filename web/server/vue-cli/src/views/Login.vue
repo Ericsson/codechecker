@@ -114,6 +114,7 @@
             Login with {{ provider }}
           </v-btn>
         </v-card-text>
+        {{ url }}
       </v-card>
     </v-dialog>
   </v-container>
@@ -198,6 +199,8 @@ export default {
       const url = this.$route.query;
       const provider = localStorage.getItem("oauth_provider");
       const state = localStorage.getItem("oauth_state");
+      const code_challenge = localStorage.getItem("code_challenge");
+      const method = localStorage.getItem("method");
 
       if (url.code != null && url.state != null) {
         if (url.state != state) {
@@ -206,12 +209,17 @@ export default {
           return;
         }
 
-        const state_id = localStorage.getItem("state_id");
+        const oauth_data_id = localStorage.getItem("oauth_data_id");
+        const baseUrl = window.location.href.replace("#", "");
+        const baseUrlOAuthId = `${baseUrl}&oauth_data_id=${oauth_data_id}`;
+        const baseMethod = `${baseUrlOAuthId}&code_challenge_method=${method}`;
+        const fullUrl = `${baseMethod}&code_challenge=${code_challenge}`;
+
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
             provider: provider,
-            url: window.location.href + "&state_id=" + state_id
+            url: fullUrl
           })
           .then(() => {
             this.success = true;
@@ -256,8 +264,12 @@ export default {
           const params = new URLSearchParams(url);
           localStorage.setItem("oauth_state",
             params.get("state"));
-          localStorage.setItem("state_id",
-            params.get("state_id"));
+          localStorage.setItem("oauth_data_id",
+            params.get("oauth_data_id"));
+          localStorage.setItem("code_challenge",
+            params.get("code_challenge"));
+          localStorage.setItem("method",
+            params.get("code_challenge_method"));
 
           window.location.href = url;
         } else {

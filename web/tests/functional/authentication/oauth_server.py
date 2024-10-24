@@ -87,10 +87,15 @@ class OauthServer(BaseHTTPRequestHandler):
                 if query_result:
                     state = params['state']
                     code = query_result['code']
-                    state_id = params['state_id']
+                    oauth_data_id = params['oauth_data_id']
+                    code_challenge = params['code_challenge']
+                    ccm = params['code_challenge_method']
                     return self.show_json({"code": code,
                                            "state": state,
-                                           "state_id": state_id})
+                                           "oauth_data_id": oauth_data_id,
+                                           "code_challenge": code_challenge,
+                                           "code_challenge_method": ccm})
+
             return self.show_rejection("Invalid credentials")
         except IndexError:
             return self.show_rejection("Invalid query parameters")
