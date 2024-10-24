@@ -67,6 +67,8 @@ class ThriftProductHandler:
         with DBSession(self.__session) as session:
             if args is None:
                 args = dict(self.__permission_args)
+
+            if 'config_db_session' not in args:
                 args['config_db_session'] = session
 
             # Anonymous access is only allowed if authentication is
@@ -254,7 +256,9 @@ class ThriftProductHandler:
         Get the product configuration --- WITHOUT THE DB PASSWORD --- of the
         given product.
         """
-        self.__require_permission([permissions.PRODUCT_VIEW])
+        self.__require_permission([permissions.PRODUCT_VIEW], {
+            'productID': product_id
+        })
 
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
