@@ -181,6 +181,19 @@ class TestProducts(unittest.TestCase):
                          Confidentiality.CONFIDENTIAL,
                          "Default Confidentiality was not Confidential")
 
+    def test_get_product_config_auth_server(self):
+        """
+        Test if product configuration can be retrieved from an authenticated
+        server.
+        """
+        pr_client = env.setup_product_client(
+            self.test_workspace, product=self.product_name)
+        product_id = pr_client.getCurrentProduct().id
+
+        pr_client = env.setup_product_client(self.test_workspace)
+        pr_config = pr_client.getProductConfiguration(product_id)
+        self.assertIsNotNone(pr_config)
+
     def test_editing(self):
         """
         Test editing the product details (without reconnecting it).
