@@ -185,20 +185,19 @@ class ThriftAuthHandler:
                 LOG.debug("State inserted into the database")
 
                 oauth_data_id = session.query(OAuthSession) \
-                    .filter(OAuthSession.state == new_state.state
-                            and
-                            OAuthSession.expires_at == new_state.expires_at
-                            and
-                            OAuth2Session.code_verifier == new_state.code_verifier
-                            and
-                            OAuthSession.provider == new_state.provider
-                            ) \
-                    .first().id
+                    .filter(
+                        OAuthSession.state == new_state.state
+                        and
+                        OAuthSession.expires_at == new_state.expires_at
+                        and
+                        OAuthSession.code_verifier == new_state.code_verifier
+                        and
+                        OAuthSession.provider == new_state.provider
+                    ).first().id
 
                 LOG.debug("FETCHED STATE ID")
-                LOG.debug(f"State {state} inserted successfully")
-                LOG.debug(f"State {state[0]} inserted successfully.")
-                LOG.info(f"code verifier has been inserted sucessfully {code_verifier}")
+                LOG.debug("State %s inserted successfully", state)
+                LOG.debug("verifier %s inserted sucessfully ", code_verifier)
             return oauth_data_id
         except sqlite3.Error as e:
             LOG.error(f"An error occurred: {e}")  # added here re1move
@@ -228,11 +227,8 @@ class ThriftAuthHandler:
         authorization_uri = oauth_config["oauth_authorization_uri"]
         redirect_uri = oauth_config["oauth_redirect_uri"]
         # code verifier for PKCE
-        stored_code_verifier = generate_token(48)
-        token_url = oauth_config["oauth_token_uri"]
+        pkce_verifier = generate_token(48)
 
-        # generated state and verifyer
-        LOG.info(f"State: {stored_state} and code verifier: {stored_code_verifier}")
         # Create an OAuth2Session instance
         session = OAuth2Session(
             client_id,
@@ -248,24 +244,19 @@ class ThriftAuthHandler:
             authorization_uri,
             nonce=nonce,
             state=stored_state,
-            code_verifier=stored_code_verifier
+            code_verifier=pkce_verifier
             )
-        # print("stored code_verifyer", stored_code_verifier)
-        # print(url)
-        # toekn = session.fetch_token(
-        #     url=token_url,
-        #     authorization_response=url,
-        #     code_verifier=stored_code_verifier
-        #     )
-        # print("REASFISIGFJRG", toekn)
+
         # Save the state and nonce to the database
-        oauth_data_id = self.insertDataOauth(state, stored_code_verifier, provider)
+        oauth_data_id = self.insertDataOauth(state=state,
+                                             code_verifier=pkce_verifier,
+                                             provider=provider)
         if not oauth_data_id:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "OAuth data insertion failed.")
 
-        LOG.debug(f"State {state} inserted successfully with ID {oauth_data_id}")
+        LOG.debug("State inserted successfully with ID %s", oauth_data_id)
         return url + "&oauth_data_id=" + str(oauth_data_id)
 
     @timeit
@@ -294,14 +285,13 @@ class ThriftAuthHandler:
                     msg)
 
         elif auth_method == "oauth":
-            print(auth_string)
             provider, url = auth_string.split("@")
             url_new = urlparse(url)
             parsed_query = parse_qs(url_new.query)
             code = parsed_query.get("code")[0]
             state = parsed_query.get("state")[0]
-            code_challenge = parsed_query.get("code_challenge")[0]
-            code_challenge_method = parsed_query.get("code_challenge_method")[0]
+            cc = parsed_query.get("code_challenge")[0]
+            cc_method = parsed_query.get("code_challenge_method")[0]
             # code_verifier = parsed_query.get("code_verifier")[0]
             oauth_data_id = parsed_query.get("oauth_data_id")[0]
             # for code verifier from created link and original
@@ -309,19 +299,14 @@ class ThriftAuthHandler:
             state_db = None
             provider_db = None
             with DBSession(self.__config_db) as session:
-                state_db, code_verifier_db, provider_db = session.query(OAuthSession.state,
-                                                        OAuthSession.code_verifier,
-                                                        OAuthSession.provider
-                                                        ) \
-                    .filter(OAuthSession.id == oauth_data_id) \
-                    .first()
-            print("**************************")
-            print(state_db)
-            print(code_verifier_db)
-            print(provider_db)
-            print("**************************")
-            # if state_db != state or code_verifier_db != code_verifier or provider_db != provider:
-            if state_db != state or provider_db != provider or not code_verifier_db:
+                state_db, code_verifier_db, provider_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider) \
+                           .filter(OAuthSession.id == oauth_data_id) \
+                           .first()
+
+            if str(state_db) != state or str(provider_db) != provider:
                 LOG.error("State code mismatch.")
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -359,42 +344,30 @@ class ThriftAuthHandler:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth2Session creation failed.")
-            # fetch url that is not used anywhere for the purpose
-            # of adding code_verifier to the instance of OAuth2Session
-            # url_notused, state_notused = session.create_authorization_url(
-            #    url=token_url,
-            #     state=state_db,
-            #     code_verifier=code_verifier_db
-            # )
-            # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-            # print(url_notused)
-            # print("&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
 
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
-            # print("#############################")
-            # print(url_new)
-            # print("#############################")
+            # the workaround is to construct the url manually
+
             url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
                 "?code=" + code + "&state=" + state + \
-                    "&code_challenge=" + code_challenge + \
-                    "&code_challenge_method=" +code_challenge_method
+                "&code_challenge=" + cc + \
+                "&code_challenge_method=" + cc_method
 
             LOG.info("URL has been constructed successfully")
-            print(url)
             token = None
             try:
+                # code_verifier_db is not supported for github provider
+                # if it will be fixed the code should adjust automatically
                 token = session.fetch_token(
                     url=token_url,
-                    #replaced url with url_notused , subject to change!!!!!!🚧🚧🚧
                     authorization_response=url,
-                    code_verifier="GGGGGHGFHT")
+                    code_verifier=code_verifier_db)
             except Exception as ex:
                 LOG.error("Token fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "Token fetch failed.")
-            print(token)
             LOG.info("Token fetched successfully for provider: %s", provider)
 
             user_info = None

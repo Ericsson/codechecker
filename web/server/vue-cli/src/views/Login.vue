@@ -143,8 +143,7 @@ export default {
       valid: false,
       providers: [],
       dialog: false,
-      on: false,
-      url: null
+      on: false
     };
   },
 
@@ -216,10 +215,6 @@ export default {
         const baseMethod = `${baseUrlOAuthId}&code_challenge_method=${method}`;
         const fullUrl = `${baseMethod}&code_challenge=${code_challenge}`;
 
-        // const url = `https://example.com` +
-        // `/oauth2/token?grant_type=authorization_code&code=${url.code}` +
-        // `&redirect_uri=${baseUrlOAuthId}`;
-
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
@@ -264,7 +259,6 @@ export default {
           }));
       }).then(url => {
         if (url) {
-          this.url = url;
           this.success = false;
           this.error = false;
           const params = new URLSearchParams(url);
