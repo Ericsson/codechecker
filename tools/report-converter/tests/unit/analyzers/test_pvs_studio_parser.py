@@ -35,7 +35,7 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
             export_type=plist.EXTENSION,
             file_name="{source_file}_{analyzer}"
         )
-
+        self.assertFalse(is_success)
         self.assertFalse(is_success)
 
     def test_transform_dir(self) -> None:
@@ -70,7 +70,6 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
 
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
-            res['files'][0] = os.path.join('files', 'sample.cpp')
 
         plist_file = os.path.join(self.test_files,
                                   'sample.plist')
@@ -87,8 +86,16 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
             exp["diagnostics"][0]["location"]["line"]
         )
 
+        self.assertEqual(
+            res["diagnostics"][0]["issue_hash_content_of_line_in_context"],
+            exp["diagnostics"][0]["issue_hash_content_of_line_in_context"]
+        )
+
     @staticmethod
     def make_report_valid() -> None:
+        """ The method sets absolute paths in PVS-Studio report
+        and .plist sample. """
+
         samples_path = os.path.join(
             os.path.dirname(__file__),
             "pvs_studio_output_test_files"
@@ -101,18 +108,17 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
         )
 
         report_path = os.path.join(samples_path, "sample.json")
-        with open(report_path, 'r') as file:
+        with open(report_path, 'r', encoding="utf-8") as file:
             data = json.loads(file.read())
             data["warnings"][0]["positions"][0]["file"] = path_to_file
 
-        with open(report_path, "w") as file:
+        with open(report_path, "w", encoding="utf-8") as file:
             file.write(json.dumps(data))
 
         path_to_plist = os.path.join(samples_path, "sample.plist")
 
         with open(path_to_plist, "rb") as plist_file:
             data = plistlib.load(plist_file)
-            print(data)
             data["files"][0] = path_to_file
 
         with open(path_to_plist, "wb") as plist_file:
