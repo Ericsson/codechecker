@@ -1,0 +1,1230 @@
+{
+    "analyzer": "infer",
+    "labels": {
+        "infer-arbitrary-code-execution-under-lock": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#arbitrary_code_execution_under_lock",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-array-out-of-bounds-l1": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-array-out-of-bounds-l2": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-array-out-of-bounds-l3": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-abduction-case-not-implemented": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-array-of-pointsto": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-assert-failure": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-arg": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_arg",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-arg-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_arg_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-generator": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_generator",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-generator-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_generator_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-key": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_key",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-key-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_key_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-map": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_map",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-map-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_map_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-record": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_record",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-record-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_record_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-return": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_return",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-return-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_return_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-biabduction-analysis-stops": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-biabduction-memory-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#biabduction_memory_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-biabduction-retain-cycle": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#biabduction_retain_cycle",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-block-parameter-not-null-checked": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#block_parameter_not_null_checked",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-buffer-overrun-l1": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_l1",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-l2": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_l2",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-l3": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_l3",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-l4": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_l4",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-l5": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_l5",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-s2": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_s2",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-buffer-overrun-u5": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#buffer_overrun_u5",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-footprint": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-captured-strong-self": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#captured_strong_self",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-allocates-memory": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_allocates_memory",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-annotation-reachability-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_annotation_reachability_error",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-calls-expensive-method": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_calls_expensive_method",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-expensive-overrides-unannotated": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_expensive_overrides_unannotated",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-fragment-retains-view": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_fragment_retains_view",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-checkers-printf-args": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_printf_args",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-class-cast-exception": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-condition-always-false": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-condition-always-true": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-config-impact": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#config_impact",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-config-impact-strict": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#config_impact_strict",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-config-usage": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#config_usage",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-constant-address-dereference": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#constant_address_dereference",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-constant-address-dereference-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#constant_address_dereference_latent",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-create-intent-from-uri": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#create_intent_from_uri",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-cross-site-scripting": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#cross_site_scripting",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-cxx-ref-captured-in-block": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#cxx_ref_captured_in_block",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-cannot-star": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-dangling-pointer-dereference": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#dangling_pointer_dereference",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-dangling-pointer-dereference-maybe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-datalog-fact": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#datalog_fact",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-data-flow-to-sink": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#data_flow_to_sink",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-deadlock": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#deadlock",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-dead-store": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#dead_store",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-divide-by-zero": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#divide_by_zero",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-do-not-report": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-empty-vector-access": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#empty_vector_access",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-execution-time-complexity-increase": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#execution_time_complexity_increase",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-execution-time-complexity-increase-ui-thread": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#execution_time_complexity_increase_ui_thread",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-execution-time-unreachable-at-exit": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#execution_time_unreachable_at_exit",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-expensive-execution-time": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#expensive_execution_time",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-expensive-loop-invariant-call": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#expensive_loop_invariant_call",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-exposed-insecure-intent-handling": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#exposed_insecure_intent_handling",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-failure-exe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-guardedby-violation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#guardedby_violation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-impure-function": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#impure_function",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inefficient-keyset-iterator": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inefficient_keyset_iterator",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-inferbo-alloc-is-big": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inferbo_alloc_is_big",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inferbo-alloc-is-negative": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inferbo_alloc_is_negative",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inferbo-alloc-is-zero": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inferbo_alloc_is_zero",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inferbo-alloc-may-be-big": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inferbo_alloc_may_be_big",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inferbo-alloc-may-be-negative": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#inferbo_alloc_may_be_negative",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-infinite-execution-time": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#infinite_execution_time",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-inherently-dangerous-function": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-insecure-intent-handling": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#insecure_intent_handling",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-integer-overflow-l1": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#integer_overflow_l1",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-integer-overflow-l2": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#integer_overflow_l2",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-integer-overflow-l5": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#integer_overflow_l5",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-integer-overflow-u5": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#integer_overflow_u5",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-interface-not-thread-safe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#interface_not_thread_safe",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-invalid-sil": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#invalid_sil",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-invariant-call": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#invariant_call",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-ipc-on-ui-thread": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#ipc_on_ui_thread",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-internal-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-javascript-injection": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#javascript_injection",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-lab-resource-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#lab_resource_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-lockless-violation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#lockless_violation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-lock-consistency-violation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#lock_consistency_violation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-logging-private-data": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#logging_private_data",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-leak-after-array-abstraction": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-leak-in-footprint": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-leak-unknown-origin": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-memory-leak-c": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#memory_leak_c",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-memory-leak-cpp": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#memory_leak_cpp",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-missing-required-prop": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#missing_required_prop",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-mixed-self-weakself": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#mixed_self_weakself",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-modifies-immutable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#modifies_immutable",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-multiple-weakself": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#multiple_weakself",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-mutual-recursion-cycle": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#mutual_recursion_cycle",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-missing-fld": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-block-call": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_block_call",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-block-call-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_block_call_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-insertion-into-collection": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_insertion_into_collection",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-insertion-into-collection-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_insertion_into_collection_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-messaging-to-non-pod": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_messaging_to_non_pod",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nil-messaging-to-non-pod-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nil_messaging_to_non_pod_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-branch-in-try": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_branch_in_try",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-branch-in-try-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_branch_in_try_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-case-clause": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_case_clause",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-case-clause-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_case_clause_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-else-clause": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_else_clause",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-else-clause-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_else_clause_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-function-clause": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_function_clause",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-matching-function-clause-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_matching_function_clause_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-match-of-rhs": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_match_of_rhs",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-match-of-rhs-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_match_of_rhs_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-true-branch-in-if": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_true_branch_in_if",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-no-true-branch-in-if-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#no_true_branch_in_if_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nullptr-dereference": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nullptr_dereference",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nullptr-dereference-in-nullsafe-class": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nullptr_dereference_in_nullsafe_class",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nullptr-dereference-in-nullsafe-class-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nullptr_dereference_in_nullsafe_class_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-nullptr-dereference-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#nullptr_dereference_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-null-argument": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#null_argument",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-null-argument-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#null_argument_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-null-dereference": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#null_dereference",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-optional-empty-access": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#optional_empty_access",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-optional-empty-access-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#optional_empty_access_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-precondition-not-found": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-precondition-not-met": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-premature-nil-termination-argument": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#premature_nil_termination_argument",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-pulse-cannot-instantiate-abstract-class": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_cannot_instantiate_abstract_class",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-const-refable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_const_refable",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-dict-missing-key": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_dict_missing_key",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-dynamic-type-mismatch": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_dynamic_type_mismatch",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-readonly-shared-ptr-param": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_readonly_shared_ptr_param",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-reference-stability": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_reference_stability",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-resource-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_resource_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-transitive-access": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_transitive_access",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unawaited-awaitable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unawaited_awaitable",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-uninitialized-const": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_uninitialized_const",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-uninitialized-value": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_uninitialized_value",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-assignment": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_assignment",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-assignment-const": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_assignment_const",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-assignment-movable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_assignment_movable",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-intermediate": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_intermediate",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-intermediate-const": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_intermediate_const",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-movable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_movable",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-optional": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_optional",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-optional-const": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_optional_const",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pulse-unnecessary-copy-return": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pulse_unnecessary_copy_return",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-pure-function": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pure_function",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-quandary-taint-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#quandary_taint_error",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-regex-op-on-ui-thread": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#regex_op_on_ui_thread",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-resource-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#resource_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-retain-cycle": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#retain_cycle",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-retain-cycle-no-weak-info": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#retain_cycle_no_weak_info",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-scope-leakage": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#scope_leakage",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-sensitive-data-flow": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#sensitive_data_flow",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-shell-injection": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#shell_injection",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-shell-injection-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#shell_injection_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-skip-function": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-sql-injection": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#sql_injection",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-sql-injection-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#sql_injection_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-stack-variable-address-escape": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#stack_variable_address_escape",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-starvation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#starvation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-static-initialization-order-fiasco": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#static_initialization_order_fiasco",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-strict-mode-violation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#strict_mode_violation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-strong-self-not-checked": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#strong_self_not_checked",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-symexec-memory-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-taint-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#taint_error",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-thread-safety-violation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#thread_safety_violation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-topl-error": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#topl_error",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-topl-error-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#topl_error_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-unreachable-code": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-buffer-access": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_buffer_access",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-deserialization": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_deserialization",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-deserialization-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_deserialization_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-environment-change-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_environment_change_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-file": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_file",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-file-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_file_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-heap-allocation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_heap_allocation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-intent-creation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_intent_creation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-url-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_url_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-untrusted-variable-length-array": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#untrusted_variable_length_array",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-user-controlled-sql-risk": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#user_controlled_sql_risk",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-delete": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_delete",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-delete-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_delete_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-free": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_free",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-free-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_free_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-lifetime": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_lifetime",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-use-after-lifetime-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#use_after_lifetime_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-vector-invalidation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#vector_invalidation",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-vector-invalidation-latent": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#vector_invalidation_latent",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-weak-self-in-no-escape-block": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#weak_self_in_no_escape_block",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-wrong-argument-number": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-assign-pointer-MEDIUM": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#assign_pointer_MEDIUM",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-autoreleasepool-size-complexity-increase": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#autoreleasepool_size_complexity_increase",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-autoreleasepool-size-complexity-increase-ui-thread": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#autoreleasepool_size_complexity_increase_ui_thread",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-autoreleasepool-size-unreachable-at-exit": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#autoreleasepool_size_unreachable_at_exit",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-bad-pointer-comparison": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#bad_pointer_comparison",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-checkers-annotation-reachability-HIGH": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_annotation_reachability_HIGH",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-checkers-immutable-cast": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#checkers_immutable_cast",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-component-with-multiple-factory-methods": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#component_with_multiple_factory_methods",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-config-checks-between-markers": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#config_checks_between_markers",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-cxx-reference-captured-in-objc-block": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#cxx_reference_captured_in_objc_block",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-direct-atomic-property-access": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#direct_atomic_property_access",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-discouraged-weak-property-custom-setter": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#discouraged_weak_property_custom_setter",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-dotnet-resource-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#dotnet_resource_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-eradicate-annotation-graph": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_annotation_graph",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-eradicate-bad-nested-class-annotation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_bad_nested_class_annotation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-condition-redundant": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_condition_redundant",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-eradicate-field-not-initialized": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_field_not_initialized",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-field-not-nullable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_field_not_nullable",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-field-over-annotated": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_field_over_annotated",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-eradicate-inconsistent-subclass-parameter-annotation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_inconsistent_subclass_parameter_annotation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-inconsistent-subclass-return-annotation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_inconsistent_subclass_return_annotation",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-meta-class-can-be-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_meta_class_can_be_nullsafe",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-eradicate-meta-class-is-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_meta_class_is_nullsafe",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-eradicate-meta-class-needs-improvement": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_meta_class_needs_improvement",
+            "profile:unknown",
+            "severity:STYLE"
+        ],
+        "infer-eradicate-nullable-dereference": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_nullable_dereference",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-parameter-not-nullable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_parameter_not_nullable",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-redundant-nested-class-annotation": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_redundant_nested_class_annotation",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-eradicate-return-not-nullable": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_return_not_nullable",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-eradicate-return-over-annotated": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_return_over_annotated",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-eradicate-unchecked-usage-in-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_unchecked_usage_in_nullsafe",
+            "profile:unknown",
+            "severity:UNSPECIFIED"
+        ],
+        "infer-eradicate-unvetted-third-party-in-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#eradicate_unvetted_third_party_in_nullsafe",
+            "profile:unknown",
+            "severity:UNSPECIFIED"
+        ],
+        "infer-expensive-autoreleasepool-size": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#expensive_autoreleasepool_size",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-global-variable-initialized-with-function-or-method-call": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#global_variable_initialized_with_function_or_method_call",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-guardedby-violation-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#guardedby_violation_nullsafe",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-infinite-autoreleasepool-size": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#infinite_autoreleasepool_size",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-ivar-not-null-checked": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#ivar_not_null_checked",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-memory-leak": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#memory_leak",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-mutable-local-variable-in-component-file": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#mutable_local_variable_in_component_file",
+            "profile:unknown",
+            "severity:LOW"
+        ],
+        "infer-parameter-not-null-checked": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#parameter_not_null_checked",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-pointer-to-const-objc-class": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#pointer_to_const_objc_class",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-quandary-taint-HIGH": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#quandary_taint_HIGH",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-strong-delegate-MEDIUM": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#strong_delegate_MEDIUM",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-thread-safety-violation-nullsafe": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#thread_safety_violation_nullsafe",
+            "profile:unknown",
+            "severity:MEDIUM"
+        ],
+        "infer-topl-HIGH": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#topl_HIGH",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-uninitialized-value": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types#uninitialized_value",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-internal-HIGH": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types##",
+            "profile:unknown",
+            "severity:HIGH"
+        ],
+        "infer-symexec-memory-HIGH": [
+            "doc_url:https://fbinfer.com/docs/all-issue-types##",
+            "profile:unknown",
+            "severity:HIGH"
+        ]
+    }
+}

@@ -67,7 +67,16 @@ class ThriftProductHandler:
         with DBSession(self.__session) as session:
             if args is None:
                 args = dict(self.__permission_args)
+
+            if 'config_db_session' not in args:
                 args['config_db_session'] = session
+
+            # Anonymous access is only allowed if authentication is
+            # turned off
+            if self.__server.manager.is_enabled and not self.__auth_session:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    "You are not authorized to execute this action.")
 
             if not any(permissions.require_permission(
                            perm, args, self.__auth_session)
@@ -247,6 +256,9 @@ class ThriftProductHandler:
         Get the product configuration --- WITHOUT THE DB PASSWORD --- of the
         given product.
         """
+        self.__require_permission([permissions.PRODUCT_VIEW], {
+            'productID': product_id
+        })
 
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
