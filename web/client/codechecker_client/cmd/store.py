@@ -24,6 +24,7 @@ import uuid
 import zipfile
 import zlib
 import shutil
+import yaml
 
 from collections import defaultdict, namedtuple
 from contextlib import contextmanager
@@ -38,7 +39,7 @@ from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
     reports as reports_helper, statistics as report_statistics
 from codechecker_report_converter.report.hash import HashType, \
-    get_report_path_hash
+    get_report_path_hash, get_report_super_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
 try:
@@ -386,12 +387,13 @@ def filter_source_files_with_comments(
 
 def get_reports(
     analyzer_result_file_path: str,
-    checker_labels: CheckerLabels
-) -> List[Report]:
+    checker_labels: CheckerLabels,
+    superHashFilter:set=None
+)-> List[Report]:
     """ Get reports from the given analyzer result file. """
     reports = report_file.get_reports(
         analyzer_result_file_path, checker_labels)
-
+    filtered_reports = []
     # CppCheck generates a '0' value for the report hash. In case all of the
     # reports in a result file contain only a hash with '0' value, overwrite
     # the hash values in the report files with a context free hash value.
@@ -400,22 +402,34 @@ def get_reports(
             analyzer_result_file_path, HashType.CONTEXT_FREE)
 
         reports = report_file.get_reports(
-            analyzer_result_file_path, checker_labels)
+            analyzer_result_file_path, checker_labels, superHashFilter)
 
-    return reports
+        if superHashFilter:
+            for report in reports:
+                if get_report_super_hash(report) in superHashFilter:
+                    filtered_reports.add(report)
+        else:
+            filtered_reports = reports
+
+    return filtered_reports
 
 
 def parse_analyzer_result_files(
     analyzer_result_files: Iterable[str],
     checker_labels: CheckerLabels,
+    superHashFilter : set,
     zip_iter=map
 ) -> AnalyzerResultFileReports:
-    """ Get reports from the given analyzer result files. """
+    """ Get reports from the given analyzer result files.
+        only return reports with superhash in the superHashFilter
+    """
+
     analyzer_result_file_reports: AnalyzerResultFileReports = defaultdict(list)
 
     for idx, (file_path, reports) in enumerate(zip(
             analyzer_result_files, zip_iter(
-                functools.partial(get_reports, checker_labels=checker_labels),
+                functools.partial(get_reports, checker_labels=checker_labels,
+                                  superHashFilter=superHashFilter),
                 analyzer_result_files))):
         LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
                   f"Parsed '{file_path}' ...")
@@ -465,9 +479,42 @@ def assemble_zip(inputs,
 
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
+    ###Send up only those reports which are missing from the server
+
+    superhash_to_file = {}
+
+    for result_file in analyzer_result_file_paths:
+        if os.path.isfile(result_file + ".map"):
+            LOG.debug("Processing",result_file,".map")
+            with open(result_file) as file:
+                hashes = [line.rstrip() for line in file]
+                for h in hashes:
+                    superhash_to_file[h]=result_file
+
+    all_super_hashes = superhash_to_file.keys()
+
+    all_super_hashes_file = os.path.join(dir_path, 'all_shashes.yaml')
+    with open(all_super_hashes_file, 'w') as outfile:
+        yaml.dump(all_super_hashes, outfile, default_flow_style=False)
+
+    LOG.debug("All super hashes size:", len(all_super_hashes))
+    missing_report_super_hashes = client.getMissingReportSuperHashes(
+        list(all_super_hashes))
+    LOG.debug("Missing super hashes", len(missing_report_super_hashes))
+
+    # Only keep the needed superhashes
+    for nsh in missing_report_super_hashes:
+        if nsh not in superhash_to_file:
+            del superhash_to_file[nsh]
+    missing_result_file_paths = list(superhash_to_file.values())
+
     with Pool() as executor:
         analyzer_result_file_reports = parse_analyzer_result_files(
-             analyzer_result_file_paths, checker_labels, executor.map)
+             missing_result_file_paths, checker_labels,
+             missing_report_super_hashes, executor.map)
+
+    LOG.debug("We will send up report from ", len(analyzer_result_file_reports.keys()),
+              " plist files")
 
     LOG.info("Processing report files done.")
 
