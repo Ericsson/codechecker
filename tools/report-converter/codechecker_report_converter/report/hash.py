@@ -187,6 +187,28 @@ def get_report_hash(report: Report, hash_type: HashType) -> str:
     return __str_to_hash('|||'.join(hash_content))
 
 
+def get_report_super_hash(report: Report) -> str:
+    """ Returns super hash for the given report.
+    This can be used to filter deduplications of multiple reports.
+    This has will definetly willl uniquely identify a report.
+    """
+    report_path_hash = ''
+    for event in report.bug_path_events:
+        line = str(event.line)
+        col = str(event.column)
+        report_path_hash += f"{line}|{col}|{event.message}|{event.file.path}"
+
+    report_path_hash += report.checker_name
+    if report.report_hash:
+        report_path_hash += report.report_hash
+
+    if not report_path_hash:
+        LOG.error('Failed to generate report path hash: %s', report)
+
+    #TODO Report annotation to this hash
+
+    return __str_to_hash(report_path_hash)
+
 def get_report_path_hash(report: Report) -> str:
     """ Returns path hash for the given report.
 
