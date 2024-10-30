@@ -412,7 +412,7 @@ Detailed documentation on how to run the analysis can be found [on our website](
 report-converter -t pvs-studio -o ./codechecker_pvs_studio_reports ./PVS-Studio.json
 
 # Store the PVS-Studio reports with CodeChecker.
-CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
+CodeChecker store ./codechecker_pvs_studio_reports -n pvs_studio
 ```
 
 ### [TSLint](https://palantir.github.io/tslint)
