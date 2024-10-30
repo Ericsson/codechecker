@@ -305,6 +305,7 @@ class Report:
         checker_name: str,
         severity: Optional[str] = None,
         report_hash: Optional[str] = None,
+        report_super_hash: Optional[str] = None,
         analyzer_name: Optional[str] = None,
         category: Optional[str] = None,
         type: Optional[str] = None,  # pylint: disable=redefined-builtin
@@ -337,6 +338,7 @@ class Report:
         self.message = message
         self.checker_name = checker_name
         self.severity = severity
+        self.report_hash = report_super_hash
         self.report_hash = report_hash
         self.analyzer_name = analyzer_name
         self.category = category  # TODO: Remove this. DEPRECATED.

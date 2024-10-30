@@ -14,6 +14,7 @@ from typing import Dict, Iterator, List, Optional, Tuple
 from codechecker_report_converter.report import File, Report
 from codechecker_report_converter.report.checker_labels import CheckerLabels
 from codechecker_report_converter.report.hash import HashType
+import codechecker_report_converter.report.hash as report_hash
 from codechecker_report_converter.report.parser import plist, sarif
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
@@ -82,7 +83,26 @@ def create(
     if parser:
         data = parser.convert(reports, analyzer_info)
         parser.write(data, output_file_path)
+        create_super_hash_map(reports, output_file_path + ".map")
 
+def create_super_hash_map(
+        reports: List[Report],
+        map_file_name: str
+    ):
+        """ Creates plist.map file from the parse result to the given output.
+        The map file contains the super hashes of the reports
+        """
+
+        ### Creating a super hash map.
+        ### These superhashes are unique identifiers for
+        ### a report containing the full bug path
+        with open(map_file_name, "w") as shf:
+            superhashes = set()
+            for report in reports:
+                report.report_super_hash = report_hash.get_report_super_hash(report)
+                superhashes.add(report.report_super_hash)
+            for h in superhashes:
+                shf.write( h + "\n")
 
 def replace_report_hash(
     analyzer_result_file_path: str,
