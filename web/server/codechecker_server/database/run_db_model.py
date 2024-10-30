@@ -391,7 +391,13 @@ ReviewStatusType = Enum(
 class Report(Base):
     __tablename__ = 'reports'
 
+    __table_args__ = (UniqueConstraint('super_hash'),)
+
     id = Column(Integer, autoincrement=True, primary_key=True)
+
+    # used for getting the missing reports from the server
+    super_hash = Column(String, nullable=False, index=True)
+
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'),
@@ -455,6 +461,7 @@ class Report(Base):
     annotations = relationship("ReportAnnotations")
 
     def __init__(self,
+                 super_hash: str,
                  file_id: int,
                  run_id: int,
                  bug_id: Optional[str],
@@ -470,6 +477,7 @@ class Report(Base):
                  review_status_date: Optional[datetime],
                  review_status_is_in_source: bool, detection_date: datetime,
                  fixed_date: Optional[datetime]):
+        self.super_hash = super_hash
         self.file_id = file_id
         self.run_id = run_id
         self.bug_id = bug_id

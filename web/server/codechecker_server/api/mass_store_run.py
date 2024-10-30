@@ -33,7 +33,7 @@ from codechecker_common.util import load_json, path_for_fake_root
 from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import \
     FakeChecker, Report, UnknownChecker, report_file
-from codechecker_report_converter.report.hash import get_report_path_hash
+from codechecker_report_converter.report.hash import get_report_path_hash, get_report_super_hash
 
 from ..database import db_cleanup
 from ..database.config_db_model import Product
@@ -900,13 +900,16 @@ class MassStoreRun:
                               FakeChecker[0], FakeChecker[1])
                     raise KeyError(FakeChecker[1])
 
+            super_hash = get_report_super_hash(report)
             db_report = DBReport(
+                super_hash,
                 file_path_to_id[report.file.path], run_id, report.report_hash,
                 checker, report.line, report.column,
                 len(report.bug_path_events), report.message, detection_status,
                 review_status.status, review_status.author,
                 review_status.message, run_history_time,
-                review_status.in_source, detection_time, fixed_at)
+                review_status.in_source, detection_time, fixed_at,
+            )
             if analysis_info:
                 db_report.analysis_info.append(analysis_info)
 
