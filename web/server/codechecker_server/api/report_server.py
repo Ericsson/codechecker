@@ -3900,6 +3900,17 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    def getMissingReportSuperHashes(self, report_super_hashes):
+        """
+        Gets the list of reports the client want to store.
+        Returns the list of reports that the server does not have.
+        """
+        self.__require_store()
+        # TODO implemet proper filtering based on the input hashes
+        return [report_super_hashes[0]]
+
+    @exc_to_thrift_reqfail
+    @timeit
     def getMissingContentHashes(self, file_hashes):
         self.__require_store()
 

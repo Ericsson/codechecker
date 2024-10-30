@@ -167,6 +167,9 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     # STORAGE RELATED API CALLS
+    @thrift_client_call
+    def getMissingReportSuperHashes(self, report_super_hashes):
+        pass
 
     @thrift_client_call
     def getMissingContentHashes(self, file_hashes):

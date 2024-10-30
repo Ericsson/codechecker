@@ -943,6 +943,14 @@ service codeCheckerDBAccess {
   // Analysis result storage related API calls.
   //============================================
 
+  // The client can ask the server whether a report is already stored in the
+  // database. If it is, then it is not necessary to send it in the ZIP file
+  // with massStoreRun() function. This function requires a list of report super hashes
+  // and returns the ones which are not present in the database.
+  // PERMISSION: PRODUCT_STORE
+  list<string> getMissingReportSuperHashes(1: list<string> reportSuperHashes)
+                                       throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // The client can ask the server whether a file is already stored in the
   // database. If it is, then it is not necessary to send it in the ZIP file
   // with massStoreRun() function. This function requires a list of file hashes
