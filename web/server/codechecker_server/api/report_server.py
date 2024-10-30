@@ -3906,8 +3906,14 @@ class ThriftRequestHandler:
         Returns the list of reports that the server does not have.
         """
         self.__require_store()
-        # TODO implemet proper filtering based on the input hashes
-        return [report_super_hashes[0]]
+        if not report_super_hashes:
+            return []
+
+        with DBSession(self._Session) as session:
+            q = session.query(Report) \
+                    .options(sqlalchemy.orm.load_only('super_hash')) \
+
+        return list(set(report_super_hashes) - set(list(set(report.super_hash for report in q))))
 
     @exc_to_thrift_reqfail
     @timeit
