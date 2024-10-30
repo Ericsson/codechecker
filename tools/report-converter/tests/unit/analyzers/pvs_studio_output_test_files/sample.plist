@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>unknown</string>
+			<key>check_name</key>
+			<string>V547</string>
+			<key>description</key>
+			<string>Expression 'a &lt; b' is always true.</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>ba476be198a6e52c12427e1d8606baa8</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>0</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>8</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>0</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>8</integer>
+					</dict>
+					<key>message</key>
+					<string>Expression 'a &lt; b' is always true.</string>
+				</dict>
+			</array>
+			<key>type</key>
+			<string>pvs-studio</string>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>files\sample.cpp</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>pvs-studio</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>0.1.0</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
