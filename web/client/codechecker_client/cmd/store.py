@@ -484,27 +484,36 @@ def assemble_zip(inputs,
     superhash_to_file = {}
 
     for result_file in analyzer_result_file_paths:
-        if os.path.isfile(result_file + ".map"):
-            LOG.debug("Processing",result_file,".map")
-            with open(result_file) as file:
+        result_map_file = result_file + ".map"
+        if os.path.isfile(result_map_file):
+            LOG.debug("Processing "+ result_map_file)
+            with open(result_map_file) as file:
                 hashes = [line.rstrip() for line in file]
                 for h in hashes:
                     superhash_to_file[h]=result_file
 
-    all_super_hashes = superhash_to_file.keys()
+    all_super_hashes = list(superhash_to_file.keys())
 
-    all_super_hashes_file = os.path.join(dir_path, 'all_shashes.yaml')
+    #all_super_hashes_file = os.path.join(dir_path, 'all_report_hashes.yaml')
+    all_super_hashes_file = os.path.join(dir_path, 'all_report_hashes.yaml')
+    LOG.debug("all superhash path:" + all_super_hashes_file)
     with open(all_super_hashes_file, 'w') as outfile:
         yaml.dump(all_super_hashes, outfile, default_flow_style=False)
 
-    LOG.debug("All super hashes size:", len(all_super_hashes))
+    #files_to_compress[""]\
+    #            .add(all_super_hashes_file)
+
+
+    LOG.debug(f"All super hashes size: {len(all_super_hashes)}")
     missing_report_super_hashes = client.getMissingReportSuperHashes(
-        list(all_super_hashes))
-    LOG.debug("Missing super hashes", len(missing_report_super_hashes))
+        all_super_hashes)
+    missing_report_super_hashes=[]
+    missing_report_super_hashes.append(all_super_hashes[1])
+    LOG.debug(f"Missing super hashes {len(missing_report_super_hashes)}")
 
     # Only keep the needed superhashes
-    for nsh in missing_report_super_hashes:
-        if nsh not in superhash_to_file:
+    for nsh in all_super_hashes:
+        if nsh not in missing_report_super_hashes:
             del superhash_to_file[nsh]
     missing_result_file_paths = list(superhash_to_file.values())
 
@@ -513,7 +522,7 @@ def assemble_zip(inputs,
              missing_result_file_paths, checker_labels,
              missing_report_super_hashes, executor.map)
 
-    LOG.debug("We will send up report from ", len(analyzer_result_file_reports.keys()),
+    LOG.debug("We will send up report from " + str(len(analyzer_result_file_reports.keys())) +
               " plist files")
 
     LOG.info("Processing report files done.")
@@ -656,7 +665,7 @@ def assemble_zip(inputs,
                 LOG.warning(
                     "Failed to collect blame information. Make sure Git is "
                     "installed on your system.")
-
+        zipf.write(all_super_hashes_file,"all_report_hashes.yaml")
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
     LOG.info("Building report zip file (%s) done.", zip_file)
@@ -1068,6 +1077,6 @@ def main(args):
         sys.exit(1)
     finally:
         os.close(zip_file_handle)
-        os.remove(zip_file)
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
+        #os.remove(zip_file)
+        #if os.path.exists(temp_dir):
+        #    shutil.rmtree(temp_dir)
