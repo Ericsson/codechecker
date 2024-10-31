@@ -3912,6 +3912,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
             q = session.query(Report) \
                     .options(sqlalchemy.orm.load_only('super_hash')) \
+                    .filter(Report.super_hash.in_(report_super_hashes))
 
         return list(set(report_super_hashes) - set(list(set(report.super_hash for report in q))))
 
