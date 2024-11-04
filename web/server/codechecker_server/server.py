@@ -79,6 +79,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         self.path = None
         super().__init__(request, client_address, server)
+        # GET requests are served from www_root.
+        self.directory = server.www_root
 
     def log_message(self, *args):
         """ Silencing http server. """
@@ -237,11 +239,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Check that path contains a product endpoint.
         if product_endpoint is not None and product_endpoint != '':
             self.path = self.path.replace(f"{product_endpoint}/", "", 1)
+            # Remove extra leading slashes, see cpython#93789.
+            self.path = '/' + self.path.lstrip('/')
 
         if self.path == '/':
             self.path = "index.html"
 
         # Check that the given path is a file.
+        # The base directory is set to www_root.
         if not os.path.exists(self.translate_path(self.path)):
             self.path = 'index.html'
 
@@ -463,27 +468,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         """ Disable directory listing. """
         self.send_error(405, "No permission to list directory")
-
-    def translate_path(self, path):
-        """
-        Modified version from SimpleHTTPRequestHandler.
-        Path is set to www_root.
-        """
-        # Abandon query parameters.
-        path = path.split('?', 1)[0]
-        path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.parse.unquote(path))
-        words = path.split('/')
-        words = [_f for _f in words if _f]
-        path = self.server.www_root
-        for word in words:
-            _, word = os.path.splitdrive(word)
-            _, word = os.path.split(word)
-            if word in (os.curdir, os.pardir):
-                continue
-            path = os.path.join(path, word)
-        return path
-
 
 class Product:
     """
