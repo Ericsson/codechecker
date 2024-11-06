@@ -149,7 +149,6 @@ class ThriftAuthHandler:
             globalPermissions=global_permissions,
             productPermissions=product_permissions)
 
-    # Used for state and PKCE verification
     @timeit
     def insertDataOauth(self, state, code_verifier, provider):
         """
@@ -160,14 +159,13 @@ class ThriftAuthHandler:
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
-
                 session.execute("DELETE FROM oauth_sessions "
                                 "WHERE expires_at "
                                 "< DATETIME(\"" + date + "\")")
                 session.commit()
             LOG.info("Expired state, validation codes removed successfully.")
         except sqlite3.Error as e:
-            LOG.error(f"An error occurred insertion: {e}")
+            LOG.error(f"An error occurred: {e}")
 
         # Insert the state code into the database
         try:
@@ -285,6 +283,7 @@ class ThriftAuthHandler:
                     msg)
 
         elif auth_method == "oauth":
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             provider, url = auth_string.split("@")
             url_new = urlparse(url)
             parsed_query = parse_qs(url_new.query)
@@ -292,26 +291,28 @@ class ThriftAuthHandler:
             state = parsed_query.get("state")[0]
             cc = parsed_query.get("code_challenge")[0]
             cc_method = parsed_query.get("code_challenge_method")[0]
-            # code_verifier = parsed_query.get("code_verifier")[0]
             oauth_data_id = parsed_query.get("oauth_data_id")[0]
             # for code verifier from created link and original
             code_verifier_db = None
             state_db = None
             provider_db = None
+            expires_at = None
+
             with DBSession(self.__config_db) as session:
-                state_db, code_verifier_db, provider_db = \
+                state_db, code_verifier_db, provider_db, expires_at = \
                     session.query(OAuthSession.state,
                                   OAuthSession.code_verifier,
-                                  OAuthSession.provider) \
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
                            .filter(OAuthSession.id == oauth_data_id) \
                            .first()
 
-            if str(state_db) != state or str(provider_db) != provider:
+            if str(state_db) != state or str(provider_db) != provider \
+                    or str(date_time) > str(expires_at):
                 LOG.error("State code mismatch.")
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "State code mismatch")
-            LOG.info("State code matched.")
+                    "Something went wrong. Please try again.")
 
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get('enabled'):
