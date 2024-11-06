@@ -16,14 +16,12 @@ import datetime
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
-import posixpath
 import shutil
 import signal
 import socket
 import ssl
 import sys
 from typing import List, Optional, Tuple
-import urllib
 
 import multiprocess
 from sqlalchemy.orm import sessionmaker
@@ -521,6 +519,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         """ Disable directory listing. """
         self.send_error(405, "No permission to list directory")
+
 
 class Product:
     """
