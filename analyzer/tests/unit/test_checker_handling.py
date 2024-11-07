@@ -272,7 +272,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
         # Enable "sensitive" profile checkers with the "profile:" label.
         # Using the "profile" label is optional in this case, because the
-        # profile name "security" does not conflict with any checker
+        # profile name "sensitive" does not conflict with any checker
         # prefix group names.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
