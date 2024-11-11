@@ -503,7 +503,8 @@ class Report:
             "bug_path_positions": [
                 p.to_json() for p in self.bug_path_positions],
             "notes": [n.to_json() for n in self.notes],
-            "macro_expansions": [m.to_json() for m in self.macro_expansions]
+            "macro_expansions": [m.to_json() for m in self.macro_expansions],
+            "annotations": self.annotations if self.annotations else {}
         }
 
     def __eq__(self, other):
