@@ -39,8 +39,16 @@ class MockClangsaCheckerLabels:
         if labels[0] == 'profile:default':
             return ['core', 'deadcode', 'security.FloatLoopCounter']
 
+        if labels[0] == 'prefix:security':
+            return ['security.insecureAPI.bzero',
+                    'security.insecureAPI.getpw']
+
         if labels[0] == 'profile:security':
             return ['alpha.security']
+
+        if labels[0] == 'profile:sensitive':
+            return ['alpha.core.BoolAssignment',
+                    'alpha.core.TestAfterDivZero']
 
         if labels[0] == 'guideline:sei-cert':
             return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
@@ -154,6 +162,17 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 'alpha.security.ArrayBound',
                 'alpha.security.MallocOverflow']
 
+        # "security" checker prefix group
+        security_prefix = [
+            'security.insecureAPI.bzero',
+            'security.insecureAPI.getpw'
+        ]
+
+        # "sensitive" profile, but alpha -> not in default.
+        sensitive_profile_alpha = [
+                    'alpha.core.BoolAssignment',
+                    'alpha.core.TestAfterDivZero']
+
         # "default" profile.
         default_profile = [
                 'security.FloatLoopCounter',
@@ -175,6 +194,8 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
         checkers = []
         checkers.extend(map(add_description, security_profile_alpha))
+        checkers.extend(map(add_description, security_prefix))
+        checkers.extend(map(add_description, sensitive_profile_alpha))
         checkers.extend(map(add_description, default_profile))
         checkers.extend(map(add_description, cert_guideline))
         checkers.extend(map(add_description, statisticsbased))
@@ -197,15 +218,41 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), default_profile))
 
-        # Enable alpha checkers explicitly.
+        # Enable alpha checkers explicitly with prefix label.
+        # Using the "prefix" label is optional in this case, because the
+        # checker group name "alpha" does not conflict with any checker
+        # profiles or guidelines.
         cfg_handler = ClangSA.construct_config_handler(args)
-        cfg_handler.initialize_checkers(checkers, [('alpha', True)])
+        cfg_handler.initialize_checkers(checkers,
+                                        [('prefix:alpha', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), security_profile_alpha))
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), default_profile))
 
+        # Enable alpha checkers explicitly.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('alpha', True)])
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), security_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable checkers of the "security" checker prefix group.
+        # Using the "prefix" label is mandatory in this case, because the
+        # checker group name "security" conflicts with a profile name.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('prefix:security', True)])
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), security_prefix))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), default_profile))
+
         # Enable "security" profile checkers.
+        # Using the "profile" label is mandatory in this case, because the
+        # profile name "security" conflicts with a checker group name.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
                                         [('profile:security', True)])
@@ -215,22 +262,46 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                         (cfg_handler.checks(), default_profile))
 
         # Enable "security" profile checkers without "profile:" prefix.
+        # This should throw an error, because the profile name "security"
+        # conflicts with a checker group name.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        with self.assertRaises(SystemExit) as e:
+            cfg_handler.initialize_checkers(checkers,
+                                            [('security', True)])
+        self.assertEqual(e.exception.code, 1)
+
+        # Enable "sensitive" profile checkers with the "profile:" label.
+        # Using the "profile" label is optional in this case, because the
+        # profile name "sensitive" does not conflict with any checker
+        # prefix group names.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
-                                        [('security', True)])
+                                        [('profile:sensitive', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
-                        (cfg_handler.checks(), security_profile_alpha))
+                        (cfg_handler.checks(), sensitive_profile_alpha))
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), default_profile))
 
-        # Enable "sei-cert" guideline checkers.
+        # Enable "sensitive" profile checkers without the "profile:" label.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('sensitive', True)])
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), sensitive_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable "sei-cert" guideline checkers with the "guideline:" label.
+        # Using the "guideline" label is optional in this case, because the
+        # guideline name "sei-cert" does not conflict with any checker
+        # prefix group names.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
                                         [('guideline:sei-cert', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), cert_guideline))
 
-        # Enable "sei-cert" guideline checkers.
+        # Enable "sei-cert" guideline checkers without the "guideline:" label.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
                                         [('sei-cert', True)])

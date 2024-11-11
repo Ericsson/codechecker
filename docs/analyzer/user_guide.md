@@ -389,6 +389,22 @@ checker configuration:
   Note that compiler errors and warnings are captured by CodeChecker only if it
   was emitted by clang-tidy.
 
+  Checker prefix groups
+  ------------------------------------------------
+  Checker prefix groups allow you to enable checkers that share a common 
+  prefix in their names. Checkers within a prefix group will have names that 
+  start with the same identifier, making it easier to manage and reference 
+  related checkers.
+  
+  You can enable/disable checkers belonging to a checker prefix group: 
+  '-e <label>:<value>', e.g. '-e prefix:security'.
+  
+  Note: The 'prefix' label is mandatory when there is ambiguity between the
+  name of a checker prefix group and a checker profile or a guideline. This 
+  prevents conflicts and ensures the correct checkers are applied.
+  
+  See "CodeChecker checkers --help" to learn more.
+
   Checker labels
   ------------------------------------------------
   Each checker is assigned several '<label>:<value>' pairs. For instance,
@@ -397,6 +413,10 @@ checker configuration:
 
   You can enable/disable checkers belonging to a label: '-e <label>:<value>',
   e.g. '-e profile:default'.
+  
+  Note: The 'profile' label is mandatory when there is ambiguity between the
+  name of a checker profile and a checker prefix group or a guideline. This 
+  prevents conflicts and ensures the correct checkers are applied.
 
   See "CodeChecker checkers --help" to learn more.
 
@@ -412,6 +432,10 @@ checker configuration:
 
   Guidelines are labels themselves, and can be used as a label:
   '-e guideline:<value>', e.g. '-e guideline:sei-cert'.
+  
+  Note: The 'guideline' label is mandatory when there is ambiguity between the
+  name of a guideline and a checker prefix group or a checker profile. This 
+  prevents conflicts and ensures the correct checkers are applied.
 
   Batch enabling/disabling checkers
   ------------------------------------------------
