@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>warning</string>
+			<key>check_name</key>
+			<string>cppcheck-sizeofwithnumericparameter</string>
+			<key>description</key>
+			<string>Suspicious usage of 'sizeof' with a numeric constant as parameter.</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>25776c4906250250b0eaa947ef04cfd2</string>
+			<key>report-annotation</key>
+			<dict>
+				<key>timestamp</key>
+				<string>2000-01-01 09:02</string>
+				<key>testcase</key>
+				<string>TS-1</string>
+				<key>testcase</key>
+				<string>TC-2</string>
+			</dict>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>3</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>3</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>7</integer>
+					</dict>
+					<key>message</key>
+					<string>Suspicious usage of 'sizeof' with a numeric constant as parameter.</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>3</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>7</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>3</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>7</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+			</array>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>$FILE_PATH$/main.c</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>cppcheck</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>CodeChecker</string>
+			<key>version</key>
+			<string>6.21.0</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

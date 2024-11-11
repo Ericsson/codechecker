@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>unknown</string>
+			<key>check_name</key>
+			<string>UndefinedBehaviorSanitizer.signed-integer-overflow</string>
+			<key>description</key>
+			<string>signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>943e05d7d5958846dab945db2162c514</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>5</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>4</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>5</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>4</integer>
+					</dict>
+					<key>message</key>
+					<string>signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'</string>
+				</dict>
+			</array>
+			<key>type</key>
+			<string>ubsan</string>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>files/ubsan1.cpp</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>ubsan</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

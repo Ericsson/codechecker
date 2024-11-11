@@ -1,0 +1,27 @@
+[
+	{
+		"directory": "/tmp",
+		"command": "g++ -specs=NON_EXISTENT_FILE -o /dev/null main.cpp",
+		"file": "main.cpp"
+	},
+  {
+    "directory": "/tmp",
+    "command": "gcc -o /dev/null -std=c11 main.c",
+    "file": "main.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "ccache gcc -o /dev/null -std=c11 hello.c",
+    "file": "hello.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "g++ -o /dev/null ctu.cpp",
+    "file": "ctu.cpp"
+  },
+  {
+    "directory": "/tmp",
+    "command": "g++ -o /dev/null zero.cpp",
+    "file": "zero.cpp"
+  }
+]

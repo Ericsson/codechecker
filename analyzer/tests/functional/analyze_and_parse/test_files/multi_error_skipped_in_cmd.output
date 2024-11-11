@@ -1,0 +1,72 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check multi_error_skipped_in_cmd" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --file "*/multi_error_skipped_in_cmd.cpp" -d default -e bugprone-sizeof-expression
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make tidy_check multi_error_skipped_in_cmd" --output $OUTPUT$ --analyzers clang-tidy --quiet --file "*/multi_error_skipped_in_cmd.cpp" -d default -e bugprone-sizeof-expression
+-----------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed multi_error_skipped_in_cmd.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - Skipped compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] multi_error_skipped_in_cmd.cpp:8:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
+  sizeof(42);
+  ^
+
+Found 1 defect(s) in multi_error_skipped_in_cmd.cpp
+
+[HIGH] multi_error_skipped_in_cmd.h:5:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
+  sizeof(42);
+  ^
+
+Found 1 defect(s) in multi_error_skipped_in_cmd.h
+
+[HIGH] multi_error_skipped_in_cmd.HPP:5:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
+  sizeof(42);
+  ^
+
+Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 3
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------
+Checker name               | Severity | Number of reports
+---------------------------------------------------------
+bugprone-sizeof-expression | HIGH     |                 3
+---------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+--------------------------------------------------
+File name                      | Number of reports
+--------------------------------------------------
+multi_error_skipped_in_cmd.HPP |                 1
+multi_error_skipped_in_cmd.cpp |                 1
+multi_error_skipped_in_cmd.h   |                 1
+--------------------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 3
+---------------------------------------------
+----=================----

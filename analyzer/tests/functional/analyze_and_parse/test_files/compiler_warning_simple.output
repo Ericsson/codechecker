@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_warning_simple" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -e clang-diagnostic-unused-variable
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make compiler_warning_simple" --output $OUTPUT$ --quiet --analyzers clang-tidy -e clang-diagnostic-unused-variable
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed compiler_warning.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[MEDIUM] compiler_warning.cpp:3:7: unused variable 'i' [clang-diagnostic-unused-variable]
+  int i;
+      ^
+
+Found 1 defect(s) in compiler_warning.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+MEDIUM   |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------------
+Checker name                     | Severity | Number of reports
+---------------------------------------------------------------
+clang-diagnostic-unused-variable | MEDIUM   |                 1
+---------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------------
+File name            | Number of reports
+----------------------------------------
+compiler_warning.cpp |                 1
+----------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

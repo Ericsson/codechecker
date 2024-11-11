@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<BugCollection version="4.2.2-SNAPSHOT" sequence="0" timestamp="1616512489543" analysisTimestamp="1616512491288" release="">
+  <Project projectName="">
+    <Jar>files</Jar>
+  </Project>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="2" rank="17" abbrev="DLS" category="STYLE" instanceHash="31d25c93ca824a832958c47cb869f2dd" instanceOccurrenceNum="0" instanceOccurrenceMax="1" cweid="563">
+    <ShortMessage>Dead store to local variable</ShortMessage>
+    <LongMessage>Dead store to $L1 in Assign.main(String[])</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="6" end="7" startBytecode="0" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <LocalVariable name="?" register="1" pc="4" role="LOCAL_VARIABLE_UNKNOWN">
+      <Message>Local variable stored in JVM register 1</Message>
+    </LocalVariable>
+    <SourceLine classname="Assign" primary="true" start="6" end="6" startBytecode="4" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 6]</Message>
+    </SourceLine>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.BASE_VALUE" value="true"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.KILLED_BY_SUBSEQUENT_STORE" value="true"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.LOCAL_NAME" value="?"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.NO_LOADS" value="true"/>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="3" rank="20" abbrev="DLS" category="STYLE" instanceHash="31d25c93ca824a832958c47cb869f2dd" instanceOccurrenceNum="1" instanceOccurrenceMax="1" cweid="563">
+    <ShortMessage>Dead store to local variable</ShortMessage>
+    <LongMessage>Dead store to $L1 in Assign.main(String[])</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="6" end="7" startBytecode="0" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <LocalVariable name="?" register="1" pc="5" role="LOCAL_VARIABLE_UNKNOWN">
+      <Message>Local variable stored in JVM register 1</Message>
+    </LocalVariable>
+    <SourceLine classname="Assign" primary="true" start="6" end="6" startBytecode="3" endBytecode="3" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 6]</Message>
+    </SourceLine>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.BASE_VALUE" value="true"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.LOCAL_NAME" value="?"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.NO_LOADS" value="true"/>
+  </BugInstance>
+  <BugInstance type="NM_FIELD_NAMING_CONVENTION" priority="3" rank="19" abbrev="Nm" category="BAD_PRACTICE" instanceHash="b83078cc9ee341727b6080508d3ea647" instanceOccurrenceNum="0" instanceOccurrenceMax="0">
+    <ShortMessage>Field names should start with a lower case letter</ShortMessage>
+    <LongMessage>The field name Assign.CapitalAttribute doesn&apos;t start with a lower case letter</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Field classname="Assign" name="CapitalAttribute" signature="I" isStatic="true" primary="true">
+      <SourceLine classname="Assign" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>In Assign.java</Message>
+      </SourceLine>
+      <Message>Field Assign.CapitalAttribute</Message>
+    </Field>
+    <SourceLine classname="Assign" sourcefile="Assign.java" sourcepath="Assign.java" synthetic="true">
+      <Message>In Assign.java</Message>
+    </SourceLine>
+  </BugInstance>
+  <BugInstance type="SA_LOCAL_DOUBLE_ASSIGNMENT" priority="2" rank="17" abbrev="SA" category="STYLE" instanceHash="e1cf1dc4a9b1c3d79dd9c35d9c7ce70f" instanceOccurrenceNum="0" instanceOccurrenceMax="0">
+    <ShortMessage>Double assignment of local variable</ShortMessage>
+    <LongMessage>Double assignment of $L1 in Assign.main(String[])</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="6" end="7" startBytecode="0" endBytecode="33" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <LocalVariable name="?" register="1" pc="4" role="LOCAL_VARIABLE_UNKNOWN">
+      <Message>Local variable stored in JVM register 1</Message>
+    </LocalVariable>
+    <SourceLine classname="Assign" primary="true" start="6" end="6" startBytecode="4" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 6]</Message>
+    </SourceLine>
+  </BugInstance>
+  <BugInstance type="UC_USELESS_VOID_METHOD" priority="3" rank="20" abbrev="UC" category="STYLE" instanceHash="70d8a57a28b1c7b40c2e2f8d20e2524" instanceOccurrenceNum="0" instanceOccurrenceMax="0">
+    <ShortMessage>Useless non-empty void method</ShortMessage>
+    <LongMessage>Method Assign.main(String[]) seems to be useless</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="6" end="7" startBytecode="0" endBytecode="33" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <SourceLine classname="Assign" primary="true" start="7" end="7" startBytecode="5" endBytecode="5" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 7]</Message>
+    </SourceLine>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" rank="18" abbrev="UuF" category="PERFORMANCE" instanceHash="ee93958ba842675fc1c80739679e2031" instanceOccurrenceNum="0" instanceOccurrenceMax="0">
+    <ShortMessage>Unused field</ShortMessage>
+    <LongMessage>Unused field: Assign.CapitalAttribute</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="7" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-7]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Field classname="Assign" name="CapitalAttribute" signature="I" isStatic="true" primary="true">
+      <SourceLine classname="Assign" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>In Assign.java</Message>
+      </SourceLine>
+      <Message>Field Assign.CapitalAttribute</Message>
+    </Field>
+    <SourceLine classname="Assign" sourcefile="Assign.java" sourcepath="Assign.java" synthetic="true">
+      <Message>In Assign.java</Message>
+    </SourceLine>
+  </BugInstance>
+  <BugCategory category="BAD_PRACTICE">
+    <Description>Bad practice</Description>
+  </BugCategory>
+  <BugCategory category="PERFORMANCE">
+    <Description>Performance</Description>
+  </BugCategory>
+  <BugCategory category="STYLE">
+    <Description>Dodgy code</Description>
+  </BugCategory>
+  <BugPattern type="DLS_DEAD_LOCAL_STORE" abbrev="DLS" category="STYLE">
+    <ShortDescription>Dead store to local variable</ShortDescription>
+    <Details><![CDATA[
+
+<p>
+This instruction assigns a value to a local variable,
+but the value is not read or used in any subsequent instruction.
+Often, this indicates an error, because the value computed is never
+used.
+</p>
+<p>
+Note that Sun's javac compiler often generates dead stores for
+final local variables.  Because SpotBugs is a bytecode-based tool,
+there is no easy way to eliminate these false positives.
+</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugPattern type="NM_FIELD_NAMING_CONVENTION" abbrev="Nm" category="BAD_PRACTICE">
+    <ShortDescription>Field names should start with a lower case letter</ShortDescription>
+    <Details><![CDATA[
+
+  <p>
+Names of fields that are not final should be in mixed case with a lowercase first letter and the first letters of subsequent words capitalized.
+</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugPattern type="UUF_UNUSED_FIELD" abbrev="UuF" category="PERFORMANCE">
+    <ShortDescription>Unused field</ShortDescription>
+    <Details><![CDATA[
+
+  <p> This field is never used.&nbsp; Consider removing it from the class.</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugPattern type="UC_USELESS_VOID_METHOD" abbrev="UC" category="STYLE">
+    <ShortDescription>Useless non-empty void method</ShortDescription>
+    <Details><![CDATA[
+
+<p>Our analysis shows that this non-empty void method does not actually perform any useful work.
+Please check it: probably there's a mistake in its code or its body can be fully removed.
+</p>
+<p>We are trying to reduce the false positives as much as possible, but in some cases this warning might be wrong.
+Common false-positive cases include:</p>
+<ul>
+<li>The method is intended to trigger loading of some class which may have a side effect.</li>
+<li>The method is intended to implicitly throw some obscure exception.</li>
+</ul>
+
+    ]]></Details>
+  </BugPattern>
+  <BugPattern type="SA_LOCAL_DOUBLE_ASSIGNMENT" abbrev="SA" category="STYLE">
+    <ShortDescription>Double assignment of local variable</ShortDescription>
+    <Details><![CDATA[
+
+<p> This method contains a double assignment of a local variable; e.g.
+</p>
+<pre><code>public void foo() {
+    int x,y;
+    x = x = 17;
+}
+</code></pre>
+<p>Assigning the same value to a variable twice is useless, and may indicate a logic error or typo.</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugCode abbrev="UuF">
+    <Description>Unused field</Description>
+  </BugCode>
+  <BugCode abbrev="DLS" cweid="563">
+    <Description>Dead local store</Description>
+  </BugCode>
+  <BugCode abbrev="SA">
+    <Description>Useless self-operation</Description>
+  </BugCode>
+  <BugCode abbrev="UC">
+    <Description>Useless code</Description>
+  </BugCode>
+  <BugCode abbrev="Nm">
+    <Description>Confusing method name</Description>
+  </BugCode>
+  <Errors errors="0" missingClasses="0"></Errors>
+  <FindBugsSummary timestamp="Tue, 23 Mar 2021 16:14:49 +0100" total_classes="1" referenced_classes="11" total_bugs="6" total_size="7" num_packages="1" java_version="11.0.10" vm_version="11.0.10+9-Ubuntu-0ubuntu1.18.04" cpu_seconds="10.94" clock_seconds="1.34" peak_mbytes="261.89" alloc_mbytes="768.00" gc_seconds="0.04" priority_3="3" priority_2="3">
+    <FileStats path="Assign.java" bugCount="6" size="7" bugHash="f4cd1389238386a996e59a9d629eece1"/>
+    <PackageStats package="" total_bugs="6" total_types="1" total_size="7" priority_3="3" priority_2="3">
+      <ClassStats class="Assign" sourceFile="Assign.java" interface="false" size="7" bugs="6" priority_3="3" priority_2="3"/>
+    </PackageStats>
+    <FindBugsProfile>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.ClassInfoAnalysisEngine" totalMilliseconds="376" invocations="304" avgMicrosecondsPerInvocation="1238" maxMicrosecondsPerInvocation="19158" standardDeviationMicrosecondsPerInvocation="2457"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.FieldItemSummary" totalMilliseconds="48" invocations="11" avgMicrosecondsPerInvocation="4418" maxMicrosecondsPerInvocation="17804" standardDeviationMicrosecondsPerInvocation="6365"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.bcel.UnconditionalValueDerefDataflowFactory" totalMilliseconds="45" invocations="2" avgMicrosecondsPerInvocation="22969" maxMicrosecondsPerInvocation="45592" standardDeviationMicrosecondsPerInvocation="22623"/>
+      <ClassProfile name="edu.umd.cs.findbugs.OpcodeStack$JumpInfoFactory" totalMilliseconds="39" invocations="39" avgMicrosecondsPerInvocation="1012" maxMicrosecondsPerInvocation="4156" standardDeviationMicrosecondsPerInvocation="920"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.ClassDataAnalysisEngine" totalMilliseconds="37" invocations="306" avgMicrosecondsPerInvocation="122" maxMicrosecondsPerInvocation="4507" standardDeviationMicrosecondsPerInvocation="305"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.FindNoSideEffectMethods" totalMilliseconds="36" invocations="11" avgMicrosecondsPerInvocation="3303" maxMicrosecondsPerInvocation="21381" standardDeviationMicrosecondsPerInvocation="6062"/>
+      <ClassProfile name="edu.umd.cs.findbugs.util.TopologicalSort" totalMilliseconds="35" invocations="270" avgMicrosecondsPerInvocation="132" maxMicrosecondsPerInvocation="1605" standardDeviationMicrosecondsPerInvocation="240"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.bcel.MethodGenFactory" totalMilliseconds="33" invocations="2" avgMicrosecondsPerInvocation="16680" maxMicrosecondsPerInvocation="33081" standardDeviationMicrosecondsPerInvocation="16401"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.bcel.JavaClassAnalysisEngine" totalMilliseconds="27" invocations="25" avgMicrosecondsPerInvocation="1084" maxMicrosecondsPerInvocation="16174" standardDeviationMicrosecondsPerInvocation="3212"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.NoteDirectlyRelevantTypeQualifiers" totalMilliseconds="21" invocations="11" avgMicrosecondsPerInvocation="1983" maxMicrosecondsPerInvocation="11696" standardDeviationMicrosecondsPerInvocation="3390"/>
+    </FindBugsProfile>
+  </FindBugsSummary>
+  <ClassFeatures></ClassFeatures>
+  <History></History>
+</BugCollection>

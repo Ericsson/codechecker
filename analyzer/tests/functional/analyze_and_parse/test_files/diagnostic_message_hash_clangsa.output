@@ -1,0 +1,74 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make context_hash" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --report-hash=diagnostic-message --analyzers clangsa
+NORMAL#CodeChecker parse $OUTPUT$ --print-steps
+CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --report-hash=diagnostic-message --analyzers clangsa
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed context_hash.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[LOW] context_hash.cpp:8:3: Value stored to 'x' is never read [deadcode.DeadStores]
+  x = 1;
+  ^
+  Report hash: d101ee6221bb0ee2294619731f8a37de
+  Steps:
+    1, context_hash.cpp:8:3: Value stored to 'x' is never read
+
+[LOW] context_hash.cpp:13:3: Value stored to 'x' is never read [deadcode.DeadStores]
+  x = 1;
+  ^
+  Report hash: d101ee6221bb0ee2294619731f8a37de
+  Steps:
+    1, context_hash.cpp:13:3: Value stored to 'x' is never read
+
+[LOW] context_hash.cpp:19:3: Value stored to 'z' is never read [deadcode.DeadStores]
+  z = 1;
+  ^
+  Report hash: 9bf6918cf70cc58a37ea556c4afed103
+  Steps:
+    1, context_hash.cpp:19:3: Value stored to 'z' is never read
+
+Found 3 defect(s) in context_hash.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+LOW      |                 3
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+--------------------------------------------------
+Checker name        | Severity | Number of reports
+--------------------------------------------------
+deadcode.DeadStores | LOW      |                 3
+--------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+------------------------------------
+File name        | Number of reports
+------------------------------------
+context_hash.cpp |                 3
+------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 3
+---------------------------------------------
+----=================----

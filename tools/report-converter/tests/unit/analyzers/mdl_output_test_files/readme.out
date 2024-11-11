@@ -1,0 +1,5 @@
+./files/readme.md:1: MD022 Headers should be surrounded by blank lines
+./files/readme.md:4: MD022 Headers should be surrounded by blank lines
+./files/readme.md:4: MD025 Multiple top level headers in the same document
+
+A detailed description of the rules is available at https://github.com/markdownlint/markdownlint/blob/master/docs/RULES.md

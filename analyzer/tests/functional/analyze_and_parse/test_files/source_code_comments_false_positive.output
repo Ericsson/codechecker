@@ -1,0 +1,63 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make source_code_comments" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-value
+NORMAL#CodeChecker parse $OUTPUT$ --review-status false_positive
+CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-value --review-status false_positive
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed source_code_comments.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] source_code_comments.cpp:4:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression] [False positive]
+  // codechecker_suppress [all] Source code comment message
+  sizeof(40);
+  ^
+
+[HIGH] source_code_comments.cpp:7:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression] [False positive]
+  // codechecker_false_positive [all] Source code comment message
+  sizeof(41);
+  ^
+
+Found 2 defect(s) in source_code_comments.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 2
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------
+Checker name               | Severity | Number of reports
+---------------------------------------------------------
+bugprone-sizeof-expression | HIGH     |                 2
+---------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+--------------------------------------------
+File name                | Number of reports
+--------------------------------------------
+source_code_comments.cpp |                 2
+--------------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 2
+---------------------------------------------
+----=================----

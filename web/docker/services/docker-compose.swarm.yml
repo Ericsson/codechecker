@@ -1,0 +1,79 @@
+version: '3.5'
+
+services:
+  db:
+    image: postgres:12.2-alpine
+    deploy:
+        mode: global
+        restart_policy:
+          condition: any
+        placement:
+          constraints:
+            - node.labels.codechecker-db == true
+    ports:
+      - 5454:5432
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd
+      - POSTGRES_USER=$USER
+      - POSTGRES_DB=config
+    secrets:
+      - postgres-passwd
+    networks:
+      - codechecker
+
+  codechecker:
+    image: codechecker/codechecker-web:latest
+    deploy:
+        mode: replicated
+        replicas: 3
+        restart_policy:
+          condition: any
+        placement:
+          constraints:
+            - node.labels.codechecker-server == true
+    volumes:
+      - workspace:/workspace
+    command: >
+      CodeChecker server
+        --workspace /workspace
+        --postgresql --dbaddress db --dbport 5432 --dbusername $USER
+        --not-host-only
+    secrets:
+      - pgpass
+    networks:
+      - codechecker
+
+  nginx:
+    image: nginx:1.17.10-alpine
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.codechecker-nginx == true
+    ports:
+      - mode: host
+        protocol: tcp
+        published: 8080
+        target: 80
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - codechecker
+
+secrets:
+  postgres-passwd:
+    file: ./secrets/postgres-passwd
+  pgpass:
+    file: ./secrets/pgpass
+
+networks:
+  codechecker:
+    driver: overlay
+
+volumes:
+  workspace:
+  database:

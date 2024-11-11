@@ -1,0 +1,4 @@
+Processing sample.cocci
+with option(s) " --no-includes --include-headers"
+
+./files/sample.c:5:13-14: WARNING comparing pointer to 0

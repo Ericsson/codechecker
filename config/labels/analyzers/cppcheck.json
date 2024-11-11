@@ -1,0 +1,1578 @@
+{
+  "analyzer": "cppcheck",
+  "analyzer_version": "2.9",
+  "labels": {
+    "cppcheck-AssignmentAddressToInteger": [
+      "severity:LOW"
+    ],
+    "cppcheck-AssignmentIntegerToAddress": [
+      "severity:LOW"
+    ],
+    "cppcheck-CastAddressToIntegerAtReturn": [
+      "severity:LOW"
+    ],
+    "cppcheck-CastIntegerToAddressAtReturn": [
+      "severity:LOW"
+    ],
+    "cppcheck-ConfigurationNotChecked": [
+      "severity:LOW"
+    ],
+    "cppcheck-IOWithoutPositioning": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-StlMissingComparison": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-accessForwarded": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-accessMoved": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-argumentSize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-arithOperationsOnVoidPointer": [
+      "severity:LOW"
+    ],
+    "cppcheck-arrayIndexOutOfBounds": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-arrayIndexOutOfBoundsCond": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-arrayIndexThenCheck": [
+      "severity:STYLE"
+    ],
+    "cppcheck-assertWithSideEffect": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-assignBoolToFloat": [
+      "severity:STYLE"
+    ],
+    "cppcheck-assignBoolToPointer": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-assignIfError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-assignmentInAssert": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-assignmentInCondition": [
+      "severity:STYLE"
+    ],
+    "cppcheck-autoVariables": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-autovarInvalidDeallocation": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-badBitmaskCheck": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-bitwiseOnBoolean": [
+      "severity:STYLE"
+    ],
+    "cppcheck-boostForeachError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-bufferAccessOutOfBounds": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-catchExceptionByValue": [
+      "severity:STYLE"
+    ],
+    "cppcheck-charBitOp": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-charLiteralWithCharPtrCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-checkCastIntToCharAndBack": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-clarifyCalculation": [
+      "severity:STYLE"
+    ],
+    "cppcheck-clarifyCondition": [
+      "severity:STYLE"
+    ],
+    "cppcheck-clarifyStatement": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-commaSeparatedReturn": [
+      "severity:STYLE"
+    ],
+    "cppcheck-compareBoolExpressionWithInt": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-comparePointers": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-compareValueOutOfTypeRangeError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-comparisonError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-comparisonFunctionIsAlwaysTrueOrFalse": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-comparisonOfBoolWithBoolError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-comparisonOfBoolWithInvalidComparator": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-comparisonOfFuncReturningBoolError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-comparisonOfTwoFuncsReturningBoolError": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameter": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameterCallback": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameterPointer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameterReference": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constStatement": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-constVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constVariablePointer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constVariableReference": [
+      "severity:STYLE"
+    ],
+    "cppcheck-containerOutOfBounds": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-copyCtorAndEqOperator": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-copyCtorPointerCopying": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-coutCerrMisusage": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-cppcheckLimit": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-cstyleCast": [
+      "severity:STYLE"
+    ],
+    "cppcheck-danglingLifetime": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-danglingReference": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-danglingTempReference": [
+      "severity:HIGH"
+    ],
+    "cppcheck-danglingTemporaryLifetime": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-deallocDealloc": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-deallocret": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-deallocuse": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-derefInvalidIterator": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-divideSizeof": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-doubleFree": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-duplInheritedMember": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-duplicateAssignExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateBranch": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateBreak": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateCondition": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateConditionalAssign": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateExpressionTernary": [
+      "severity:STYLE"
+    ],
+    "cppcheck-duplicateValueTernary": [
+      "severity:STYLE"
+    ],
+    "cppcheck-eraseDereference": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-exceptDeallocThrow": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-exceptRethrowCopy": [
+      "severity:STYLE"
+    ],
+    "cppcheck-exceptThrowInDestructor": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-fflushOnInputStream": [
+      "severity:LOW"
+    ],
+    "cppcheck-floatConversionOverflow": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-funcArgNamesDifferent": [
+      "severity:STYLE"
+    ],
+    "cppcheck-funcArgOrderDifferent": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-functionConst": [
+      "severity:STYLE"
+    ],
+    "cppcheck-functionStatic": [
+      "severity:LOW"
+    ],
+    "cppcheck-globalLockGuard": [
+      "severity:MEDIUM"
+    ],
+    "cppcheck-identicalConditionAfterEarlyExit": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-identicalInnerCondition": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-ignoredReturnValue": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incompatibleFileOpen": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incompleteArrayFill": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incorrectCharBooleanError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incorrectLogicOperator": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incorrectStringBooleanError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incorrectStringCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incrementboolean": [
+      "severity:STYLE"
+    ],
+    "cppcheck-initializerList": [
+      "severity:STYLE"
+    ],
+    "cppcheck-instantiationError": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-integerOverflow": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-internalAstError": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-internalError": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-invalidContainer": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidContainerLoop": [
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidFree": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidFunctionArg": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidFunctionArgBool": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidFunctionArgStr": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidIterator1": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidLengthModifierError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidLifetime": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidPointerCast": [
+      "severity:LOW"
+    ],
+    "cppcheck-invalidPrintfArgType_float": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidPrintfArgType_n": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidPrintfArgType_p": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidPrintfArgType_s": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidPrintfArgType_sint": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidPrintfArgType_uint": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidScanfArgType_float": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidScanfArgType_int": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidScanfArgType_s": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidScanfFormatWidth": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-invalidScanfFormatWidth_smaller": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidTestForOverflow": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-invalidscanf": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-iterators1": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-iterators2": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-iterators3": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-iteratorsCmp1": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-iteratorsCmp2": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-knownArgument": [
+      "severity:STYLE"
+    ],
+    "cppcheck-knownArgumentHiddenVariableExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-knownConditionTrueFalse": [
+      "severity:STYLE"
+    ],
+    "cppcheck-knownEmptyContainer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-knownPointerToBool": [
+      "severity:STYLE"
+    ],
+    "cppcheck-leakNoVarFunctionCall": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-leakReturnValNotUsed": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-leakUnsafeArgAlloc": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-literalWithCharPtrCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-localMutex": [
+      "severity:MEDIUM"
+    ],
+    "cppcheck-mallocOnClassError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-mallocOnClassWarning": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-memleak": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-memleakOnRealloc": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-memsetClass": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-memsetClassFloat": [
+      "severity:LOW"
+    ],
+    "cppcheck-memsetClassReference": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-memsetFloat": [
+      "severity:LOW"
+    ],
+    "cppcheck-memsetValueOutOfRange": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-memsetZeroBytes": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-mismatchAllocDealloc": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-mismatchSize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-mismatchingBitAnd": [
+      "severity:STYLE"
+    ],
+    "cppcheck-mismatchingContainerExpression": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-mismatchingContainerIterator": [
+      "severity:HIGH"
+    ],
+    "cppcheck-mismatchingContainers": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-missingInclude": [
+      "severity:LOW"
+    ],
+    "cppcheck-missingIncludeSystem": [
+      "severity:LOW"
+    ],
+    "cppcheck-missingMemberCopy": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-missingOverride": [
+      "severity:STYLE"
+    ],
+    "cppcheck-missingReturn": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-moduloAlwaysTrueFalse": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-moduloofone": [
+      "severity:STYLE"
+    ],
+    "cppcheck-multiCondition": [
+      "severity:STYLE"
+    ],
+    "cppcheck-multiplySizeof": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nanInArithmeticExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-negativeArraySize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-negativeContainerIndex": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-negativeIndex": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-negativeMemoryAllocationSize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-noConstructor": [
+      "severity:STYLE"
+    ],
+    "cppcheck-noCopyConstructor": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-noDestructor": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-noExplicitConstructor": [
+      "severity:STYLE"
+    ],
+    "cppcheck-noOperatorEq": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nullPointer": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-nullPointerArithmetic": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-nullPointerArithmeticRedundantCheck": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nullPointerDefaultArg": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nullPointerRedundantCheck": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-objectIndex": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-operatorEqMissingReturnStatement": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-operatorEqRetRefThis": [
+      "severity:STYLE"
+    ],
+    "cppcheck-operatorEqShouldBeLeftUnimplemented": [
+      "severity:STYLE"
+    ],
+    "cppcheck-operatorEqToSelf": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-operatorEqVarError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-oppositeExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-oppositeInnerCondition": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-overlappingStrcmp": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-overlappingWriteFunction": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-overlappingWriteUnion": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-passedByValue": [
+      "severity:LOW"
+    ],
+    "cppcheck-pointerAdditionResultNotNull": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-pointerArithBool": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-pointerLessThanZero": [
+      "severity:STYLE"
+    ],
+    "cppcheck-pointerOutOfBounds": [
+      "severity:LOW"
+    ],
+    "cppcheck-pointerOutOfBoundsCond": [
+      "severity:LOW"
+    ],
+    "cppcheck-pointerPositive": [
+      "severity:STYLE"
+    ],
+    "cppcheck-pointerSize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-postfixOperator": [
+      "severity:LOW"
+    ],
+    "cppcheck-preprocessorErrorDirective": [
+      "severity:HIGH"
+    ],
+    "cppcheck-publicAllocationError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-pureVirtualCall": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-purgedConfiguration": [
+      "severity:LOW"
+    ],
+    "cppcheck-raceAfterInterlockedDecrement": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-readWriteOnlyFile": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-reademptycontainer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantAssignInSwitch": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantAssignment": [
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantBitwiseOperationInSwitch": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantCondition": [
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantCopy": [
+      "severity:LOW"
+    ],
+    "cppcheck-redundantCopyInSwitch": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantCopyLocalConst": [
+      "severity:LOW"
+    ],
+    "cppcheck-redundantIfRemove": [
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantInitialization": [
+      "severity:STYLE"
+    ],
+    "cppcheck-redundantPointerOp": [
+      "severity:STYLE"
+    ],
+    "cppcheck-resourceLeak": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-rethrowNoCurrentException": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnAddressOfAutoVariable": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnAddressOfFunctionParameter": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnDanglingLifetime": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnLocalVariable": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnNonBoolInBooleanFunction": [
+      "severity:STYLE"
+    ],
+    "cppcheck-returnReference": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-returnStdMoveLocal": [
+      "severity:LOW"
+    ],
+    "cppcheck-returnTempReference": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-sameIteratorExpression": [
+      "severity:STYLE"
+    ],
+    "cppcheck-seekOnAppendedFile": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-selfAssignment": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-selfInitialization": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-shadowArgument": [
+      "severity:STYLE"
+    ],
+    "cppcheck-shadowFunction": [
+      "severity:STYLE"
+    ],
+    "cppcheck-shadowVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-shiftNegative": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-shiftNegativeLHS": [
+      "severity:LOW"
+    ],
+    "cppcheck-shiftTooManyBits": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-shiftTooManyBitsSigned": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-signConversion": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-signedCharArrayIndex": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofCalculation": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofDereferencedVoidPointer": [
+      "severity:LOW"
+    ],
+    "cppcheck-sizeofDivisionMemfunc": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofFunctionCall": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofVoid": [
+      "severity:LOW"
+    ],
+    "cppcheck-sizeofsizeof": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofwithnumericparameter": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sizeofwithsilentarraypointer": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-sprintfOverlappingData": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-staticStringCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-stlBoundaries": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-stlFindInsert": [
+      "severity:LOW"
+    ],
+    "cppcheck-stlIfFind": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-stlIfStrFind": [
+      "severity:LOW"
+    ],
+    "cppcheck-stlOutOfBounds": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-stlSize": [
+      "severity:LOW"
+    ],
+    "cppcheck-stlcstr": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-stlcstrParam": [
+      "severity:LOW"
+    ],
+    "cppcheck-stlcstrReturn": [
+      "severity:LOW"
+    ],
+    "cppcheck-stlcstrthrow": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-strPlusChar": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-stringCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-stringLiteralWrite": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-suspiciousCase": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-suspiciousSemicolon": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-syntaxError": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-thisSubtraction": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-thisUseAfterFree": [
+      "severity:MEDIUM"
+    ],
+    "cppcheck-throwInNoexceptFunction": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-toomanyconfigs": [
+      "severity:LOW"
+    ],
+    "cppcheck-truncLongCastAssignment": [
+      "severity:STYLE"
+    ],
+    "cppcheck-truncLongCastReturn": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unassignedVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unhandledExceptionSpecification": [
+      "severity:STYLE"
+    ],
+    "cppcheck-uninitDerivedMemberVar": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uninitDerivedMemberVarPrivate": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uninitMemberVar": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uninitMemberVarPrivate": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uninitStructMember": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-uninitdata": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-uninitstring": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-uninitvar": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-unknownEvaluationOrder": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-unknownMacro": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-unknownSignCharArrayIndex": [
+      "severity:LOW"
+    ],
+    "cppcheck-unpreciseMathCall": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unreachableCode": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unreadVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unsafeClassCanLeak": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unsafeClassRefMember": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-unsignedLessThanZero": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unsignedPositive": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedAllocatedMemory": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedFunction": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedLabel": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedLabelConfiguration": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedLabelSwitch": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-unusedLabelSwitchConfiguration": [
+      "severity:MEDIUM"
+    ],
+    "cppcheck-unusedPrivateFunction": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedScopedObject": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedStructMember": [
+      "severity:STYLE"
+    ],
+    "cppcheck-unusedVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-useClosedFile": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-useInitializationList": [
+      "severity:LOW"
+    ],
+    "cppcheck-useStandardLibrary": [
+      "severity:STYLE"
+    ],
+    "cppcheck-useStlAlgorithm": [
+      "severity:STYLE"
+    ],
+    "cppcheck-uselessAssignmentArg": [
+      "severity:STYLE"
+    ],
+    "cppcheck-uselessAssignmentPtrArg": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uselessCallsCompare": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uselessCallsEmpty": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uselessCallsRemove": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uselessCallsSubstr": [
+      "severity:LOW"
+    ],
+    "cppcheck-uselessCallsSwap": [
+      "severity:LOW"
+    ],
+    "cppcheck-va_end_missing": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-va_list_usedBeforeStarted": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-va_start_referencePassed": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-va_start_subsequentCalls": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-va_start_wrongParameter": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-varFuncNullUB": [
+      "severity:LOW"
+    ],
+    "cppcheck-variableScope": [
+      "severity:STYLE"
+    ],
+    "cppcheck-virtualCallInConstructor": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "cppcheck-virtualDestructor": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-writeReadOnlyFile": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-wrongPipeParameterSize": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-wrongPrintfScanfArgNum": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-wrongPrintfScanfParameterPositionError": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-wrongmathcall": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-zerodiv": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "cppcheck-zerodivcond": [
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ]
+  }
+}

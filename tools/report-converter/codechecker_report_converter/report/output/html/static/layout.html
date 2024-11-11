@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plist HTML Viewer</title>
+
+    <meta charset="UTF-8">
+
+    <style type="text/css">
+      ${codemirror_css}
+
+      ${icon_css}
+      ${style_css}
+      ${bugview_css}
+    </style>
+
+    <script type="text/javascript">
+      ${browser_support}
+
+      /* ${codemirror_license} */
+      ${codemirror_js}
+      ${clike_js}
+      ${bug_viewer}
+
+      var data = ${report_data};
+      window.onload = function() {
+        if (!browserCompatible) {
+          setNonCompatibleBrowserMessage();
+        } else {
+          BugViewer.init(data.files, data.reports);
+          BugViewer.create();
+          BugViewer.initByUrl();
+        }
+      };
+    </script>
+  </head>
+  <body>
+  <div class="container">
+    <div id="content">
+      <div id="side-bar">
+        <div class="header">
+          <a href="index.html" class="button">&#8249; Return to List</a>
+        </div>
+        <div id="report-nav">
+          <div class="header">Reports</div>
+        </div>
+      </div>
+      <div id="editor-wrapper">
+        <div class="header">
+          <div id="file">
+            <span class="label">File:</span>
+            <span id="file-path"></span>
+          </div>
+          <div id="checker">
+            <span class="label">Checker name:</span>
+            <span id="checker-name"></span>
+          </div>
+          <div id="review-status-wrapper">
+            <span class="label">Review status:</span>
+            <span id="review-status"></span>
+          </div>
+        </div>
+        <div id="editor"></div>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>

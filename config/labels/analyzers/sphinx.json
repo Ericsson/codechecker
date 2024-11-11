@@ -1,0 +1,9 @@
+{
+  "analyzer": "sphinx",
+  "labels": {
+    "sphinx": [
+      "doc_url:https://github.com/sphinx-doc/sphinx",
+      "severity:MEDIUM"
+    ]
+  }
+}

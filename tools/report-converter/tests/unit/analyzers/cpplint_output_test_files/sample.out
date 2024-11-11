@@ -1,0 +1,5 @@
+files/sample.cpp:0:  No copyright message found.  You should have a line: "Copyright [year] <Copyright Owner>"  [legal/copyright] [5]
+files/sample.cpp:5:  Redundant blank line at the start of a code block should be deleted.  [whitespace/blank_line] [2]
+files/sample.cpp:5:  Redundant blank line at the end of a code block should be deleted.  [whitespace/blank_line] [3]
+Done processing files/sample.cpp
+Total errors found: 3

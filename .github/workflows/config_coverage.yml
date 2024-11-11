@@ -1,0 +1,208 @@
+name: checker-config-coverage
+
+on:
+  push:
+    paths:
+      - '.github/workflows/config_coverage.yml'
+      - '.github/workflows/config_label_check.py'
+      - 'config/labels/analyzers/clang-tidy.json'
+      - 'config/labels/analyzers/clangsa.json'
+      - 'config/labels/analyzers/cppcheck.json'
+  pull_request:
+    paths:
+      - '.github/workflows/config_coverage.yml'
+      - '.github/workflows/config_label_check.py'
+      - 'config/labels/analyzers/clang-tidy.json'
+      - 'config/labels/analyzers/clangsa.json'
+      - 'config/labels/analyzers/cppcheck.json'
+  schedule:
+    # Run every Sunday at 21:30 (to latest master at that time).
+    - cron: '30 21 * * SUN'
+  # Allow running this job manually from either API or GitHub UI.
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  checker-config-coverage:
+    name: "Config coverage of checkers"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: "Install dependencies"
+        run: |
+          # Some packages, e.g. build-essential and curl are available
+          # implicitly in GitHub Actions-specific images.
+          sudo apt-get -qy update
+          sudo apt-get -y --no-install-recommends install \
+            gcc-multilib    \
+            python3-dev     \
+            python3-venv
+      # Unfortunately, there is no "daily" Cppcheck PPA or Linux binary source,
+      # so we have to build this manually. Luckily, it seems to be a trivial
+      # enough process.
+      #
+      # We do this BEFORE grabbing Clang, so a potentially broken Clang binary
+      # won't miscompile Cppcheck itself.
+      - name: "Download Cppcheck source code"
+        uses: actions/checkout@v3
+        with:
+          repository: "danmar/cppcheck"
+          path: "cppcheck"
+      - name: "Build Cppcheck"
+        run: |
+          set +e # Do not hard exit on an erroring call!
+          pushd cppcheck
+
+          # Note: Cppcheck's compilation would require CMake, but a new enough
+          # version is automatically present in the GitHub Actions-specific
+          # image.
+
+          echo "::group::Building Cppcheck"
+          mkdir Build
+          pushd Build
+
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . -- -j $(nproc)
+
+          if [[ $? -eq 0 ]]
+          then
+            export CPPCHECK_BUILD_SUCCESSFUL=YES
+          fi
+
+          popd # Build
+
+          if [[ x"$CPPCHECK_BUILD_SUCCESSFUL"y == "xYESy" ]]
+          then
+            sudo update-alternatives --install \
+              /usr/bin/cppcheck cppcheck "$(pwd)/Build/bin/cppcheck" 10000
+            echo "::endgroup::"
+
+            echo "Installed Cppcheck:"
+            update-alternatives --query cppcheck
+          else
+            echo "::endgroup::"
+            echo "::notice title=Cppcheck failed to build locally::Coverage will check using Ubuntu official Cppcheck release instead."
+
+            sudo apt-get install -y --no-install-recommends \
+              cppcheck
+          fi
+
+          popd # cppcheck
+      - name: "Get latest LLVM binary package from the community PPA"
+        run: |
+          export DISTRO_FANCYNAME="$(lsb_release -c | awk '{ print $2 }')"
+
+          echo "::group::Setup LLVM PPA"
+          curl -sL http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository -y "deb http://apt.llvm.org/$DISTRO_FANCYNAME/ llvm-toolchain-$DISTRO_FANCYNAME main"
+          echo "::endgroup::"
+
+          # Get the largest Clang package number available.
+          export LLVM_VER="$(apt-cache search --full 'clang-[[:digit:]]*$' | grep '^Package: clang' | cut -d ' ' -f 2 | sort -V | tail -n 1 | sed 's/clang-//')"
+          echo "::group::Install Clang and Clang-Tidy version ${LLVM_VER}"
+          sudo apt-get -y --no-install-recommends install \
+            clang-$LLVM_VER \
+            clang-tidy-$LLVM_VER
+          sudo update-alternatives --install \
+            /usr/bin/clang clang /usr/bin/clang-$LLVM_VER 10000
+          sudo update-alternatives --install \
+            /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$LLVM_VER 10000
+          echo "::endgroup::"
+
+          echo "Installed Clang:"
+          update-alternatives --query clang
+          update-alternatives --query clang-tidy
+      - name: "Package CodeChecker"
+        id: codechecker
+        run: |
+          pushd analyzer
+
+          echo "::group::venv"
+          make venv
+          source venv/bin/activate
+          echo "::endgroup::"
+
+          echo "::group::CodeChecker package"
+          make standalone_package
+          deactivate
+          echo "::endgroup::"
+
+          echo "CODECHECKER_PATH=$(readlink -f ./build/CodeChecker/bin)" >> "$GITHUB_OUTPUT"
+          popd # analyzer
+      - name: "Dump checker list"
+        run: |
+          export PATH="${{ steps.codechecker.outputs.CODECHECKER_PATH }}:$PATH"
+          CodeChecker analyzers --details
+          CodeChecker checkers \
+            --analyzer clangsa clang-tidy cppcheck \
+            --output rows \
+              > checker_list_normal.txt
+          CodeChecker checkers \
+            --analyzer clangsa clang-tidy cppcheck \
+            --warnings \
+            --output rows \
+              > checker_list_diagnostics.txt
+      - name: "Perform checker config coverage check (--warnings)"
+        continue-on-error: true
+        run: |
+          set +e # Do not hard exit on an erroring call!
+          .github/workflows/config_label_check.py \
+            "checker_list_diagnostics.txt" \
+            "config/labels/analyzers/clangsa.json" \
+            "config/labels/analyzers/clang-tidy.json" \
+            "config/labels/analyzers/cppcheck.json" \
+            --existing-filter "clang-diagnostic-" \
+            --new-filter "clang-diagnostic-"
+          EXIT_STATUS=$?
+          echo "Coverage check returned: $EXIT_STATUS."
+          # Explicitly check if the bit for "8" is set in the result,
+          # indicating new checkers without severity set.
+          if [[ $(($EXIT_STATUS & 8)) -eq 8 ]]
+          then
+            echo "::warning title=New unconfigured diagnostics::The checker label config files lack some new diagnostic report (\"warning\") kinds."
+            exit 0
+          elif [[ $EXIT_STATUS -eq 1 || $EXIT_STATUS -eq 2 ]]
+          then
+            # Script execution error.
+            exit $EXIT_STATUS
+          else
+            # We do not wish to fail if only removed checkers are reported.
+            exit 0
+          fi
+      - name: "Perform checker config coverage check"
+        run: |
+          set +e # Do not hard exit on an erroring call!
+          .github/workflows/config_label_check.py \
+            "checker_list_normal.txt" \
+            "config/labels/analyzers/clangsa.json" \
+            "config/labels/analyzers/clang-tidy.json" \
+            "config/labels/analyzers/cppcheck.json" \
+            --existing-ignore "clang-diagnostic-" \
+            --new-ignore \
+              "clang-diagnostic-" \
+              "alpha." \
+              "apiModeling." \
+              "debug." \
+              "optin.osx." \
+              "osx." \
+              "darwin-" \
+              "objc-"
+          EXIT_STATUS=$?
+          echo "Coverage check returned: $EXIT_STATUS."
+          # Explicitly check if the bit for "8" is set in the result,
+          # indicating new checkers without severity set.
+          if [[ $(($EXIT_STATUS & 8)) -eq 8 ]]
+          then
+            exit 8
+          elif [[ $EXIT_STATUS -eq 1 || $EXIT_STATUS -eq 2 ]]
+          then
+            # Script execution error.
+            exit $EXIT_STATUS
+          else
+            # We do not wish to fail if only removed checkers are reported.
+            exit 0
+          fi

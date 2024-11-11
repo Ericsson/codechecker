@@ -1,0 +1,83 @@
+$class-name: '' !default;
+$unreviewed_col: 3 !default;
+$colspan: 1 !default;
+
+$outstanding_reports_col: $unreviewed_col + 2;
+$false_positive_col: $outstanding_reports_col + 1;
+$suppressed_reports_col: $false_positive_col + 2;
+$border_before: (
+  $unreviewed_col,
+  $outstanding_reports_col,
+  $false_positive_col,
+  $suppressed_reports_col,
+  $suppressed_reports_col + 1
+) !default;
+
+$outstanding-bg-color: #fef5f6;
+$suppressed-bg-color: #f2f6eb;
+$darken: 2;
+
+$tr: 'tr:not(.v-data-table__expanded__content)';
+
+@mixin set-cells-color($cols...) {
+  @each $col in $cols {
+    #{$class-name} > table {
+      & > thead > #{$tr} th:nth-child(#{$col}),
+      & > tbody > #{$tr}:not(:last-child) td:nth-child(#{$col}),
+      & > tbody > #{$tr}:last-child td:nth-child(#{$col - $colspan}) {
+        @content;
+      }
+    }
+  }
+}
+
+@mixin set-rows-color() {
+  #{$class-name} > table {
+    & > tbody > #{$tr} {
+      @content;
+    }
+  }
+}
+
+@mixin set-bg-color($col, $bg-color) {
+  @include set-cells-color($col) {
+    background-color: $bg-color;
+  }
+  @include set-rows-color() {
+    &:hover td:nth-child(#{$col}) {
+      background-color: darken($bg-color, $darken);
+    }
+  }
+}
+
+// Set background color of outstanding report columns.
+@for $i from $unreviewed_col through $outstanding_reports_col {
+  @include set-bg-color($i, $outstanding-bg-color);
+}
+@include set-bg-color(
+  $outstanding_reports_col,
+  darken($outstanding-bg-color, $darken)
+);
+
+// Set background color of suppressed report columns.
+@for $i from $false_positive_col through $suppressed_reports_col {
+  @include set-bg-color($i, $suppressed-bg-color);
+}
+@include set-bg-color(
+  $suppressed_reports_col,
+  darken($suppressed-bg-color, $darken)
+);
+
+// Set border before some columns.
+@each $i in $border_before {
+  @include set-cells-color($i) {
+    border-left: thin solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+#{$class-name} > table {
+  & > thead > #{$tr}:not(:last-child) > th:not(.v-data-table__mobile-row),
+  & > tbody > #{$tr}:not(:last-child) > td:not(.v-data-table__mobile-row) {
+    border-bottom: thin solid rgba(0, 0, 0, 0.12);
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample contains a result in an artifact whose binary contents are embedded in the log file."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "The result."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "data.bin",
+                  "index": 0
+                },
+                "region": {
+                  "byteOffset": 2,
+                  "byteLength": 2
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "location": {
+            "uri": "data.bin"
+          },
+          "contents": {
+            "binary": "AQIDBAU="
+          },
+          "properties": {
+            "comment": "The MIME Base64 encoding of the byte array { 0x01, 0x02, 0x03, 0x04, 0x05 }."
+          }
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

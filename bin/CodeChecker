@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
+
+"""
+Used to kickstart CodeChecker.
+Save original environment without modifications.
+Used to run the logging in the same env.
+"""
+# This is for enabling CodeChecker as a filename (i.e. module name).
+# pylint: disable=invalid-name
+# pylint: enable=invalid-name
+
+import os
+import pickle
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+
+PROC_PID = None
+
+
+def run_codechecker(checker_env, subcommand=None):
+    """
+    Run the CodeChecker.
+        * checker_env - CodeChecker will be run in the checker env.
+        * subcommand - CodeChecker will run the given subcommand by default,
+                       if specified. If not, the main script will run and parse
+                       all the commands.
+    """
+    package_bin = os.path.dirname(os.path.realpath(__file__))
+    package_root = os.path.dirname(package_bin)
+    lib_dir_path = os.path.join(package_root, 'lib', 'python3')
+
+    checker_env['PYTHONPATH'] = lib_dir_path
+    checker_env['CC_BIN_DIR'] = package_bin
+
+    python3 = os.path.join('python3')
+    codechecker_main = \
+        os.path.join(lib_dir_path, 'codechecker_common', 'cli.py')
+
+    checker_cmd = [python3, codechecker_main]
+
+    if subcommand:
+        # If a subcommand is specified (script is executed from a
+        # wrapper entry point, add it to the command list).
+        # E.g. 'codechecker-log ...' is the same as 'CodeChecker log ...'.
+        checker_cmd.append(subcommand)
+
+    checker_cmd.extend(sys.argv[1:])
+
+    proc = subprocess.Popen(checker_cmd,
+                            encoding="utf=8",
+                            errors="ignore",
+                            env=checker_env)
+    global PROC_PID
+    PROC_PID = proc.pid
+
+    proc.wait()
+    sys.exit(proc.returncode)
+
+
+def main(subcommand=None):
+    original_env = os.environ.copy()
+    checker_env = original_env
+
+    tmp_dir = tempfile.mkdtemp()
+
+    original_env_file = os.path.join(tmp_dir, 'original_env.pickle')
+
+    def _remove_tmp():
+        # Remove temporary directory.
+        try:
+            shutil.rmtree(tmp_dir)
+        except Exception as ex:
+            if not isinstance(ex, OSError):
+                print('Failed to remove temporary directory: ' + tmp_dir)
+                print('Manual cleanup is required.')
+                print(ex)
+
+    try:
+        with open(original_env_file, 'wb') as env_save:
+            pickle.dump(original_env, env_save)
+
+        checker_env['CODECHECKER_ORIGINAL_BUILD_ENV'] = original_env_file
+    except Exception as ex:
+        print('Saving original build environment failed.')
+        print(ex)
+
+    def signal_term_handler(signum, _frame):
+        global PROC_PID
+        if PROC_PID and sys.platform != "win32":
+            os.kill(PROC_PID, signal.SIGINT)
+
+        _remove_tmp()
+        sys.exit(128 + signum)
+
+    signal.signal(signal.SIGTERM, signal_term_handler)
+    signal.signal(signal.SIGINT, signal_term_handler)
+
+    def signal_reload_handler(_sig, _frame):
+        global PROC_PID
+        if PROC_PID:
+            os.kill(PROC_PID, signal.SIGHUP)
+
+    if sys.platform != "win32":
+        signal.signal(signal.SIGHUP, signal_reload_handler)
+
+    try:
+        run_codechecker(checker_env, subcommand)
+    finally:
+        _remove_tmp()
+
+
+if __name__ == "__main__":
+    main(None)

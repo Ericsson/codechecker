@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "num_of_report_dir": 2,
+  "tools": [
+    {
+      "name": "cppcheck",
+      "checkers": {},
+      "analyzer_statistics": {
+        "failed": 0,
+        "failed_sources": [],
+        "successful": 1,
+        "version": "Cppcheck 1.87"
+      },
+      "command": ["cppcheck", "/path/to/main.cpp"],
+      "timestamps": {
+        "begin": 1571297867,
+        "end": 1571297868
+      }
+    },
+    {
+      "name": "cppcheck",
+      "checkers": {},
+      "analyzer_statistics": {
+        "failed": 0,
+        "failed_sources": [],
+        "successful": 1,
+        "version": "Cppcheck 1.86"
+      },
+      "command": ["cppcheck", "-I", "/path/to/include", "/path/to/main.cpp"],
+      "timestamps": {
+        "begin": 1571297867,
+        "end": 1571297868
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+files/test4.cpp:3:26: error: invalid suffix on literal; C++11 requires a space between literal and identifier [clang-diagnostic-reserved-user-defined-literal]
+#define TAR_FILE PATH "/"TAR_FILENAME
+                         ^~~~~~~~~~~~
+
+files/test4.cpp:10:12: warning: remainder by zero is undefined [clang-diagnostic-division-by-zero]
+  return x % 0;
+           ^

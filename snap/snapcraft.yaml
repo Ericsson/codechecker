@@ -1,0 +1,72 @@
+name: codechecker
+base: core18
+version: '6.25.0'
+summary: CodeChecker is an analyzer tooling, defect database and viewer extension
+description: |
+  CodeChecker is an analyzer tooling, defect database and viewer extension.
+  You can store and visualize thousands of analysis reports of many analyzers
+  like Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer
+  (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python),
+  Eslint (Javascript).
+
+grade: stable
+confinement: classic
+
+apps:
+  codechecker:
+    command: CodeChecker/bin/CodeChecker
+    environment:
+      PATH: ${SNAP}/usr/bin:${PATH}
+      PYTHONPATH: ${SNAP}/usr/lib/python3.8
+  report-converter:
+    command: CodeChecker/bin/report-converter
+  post-process-stats:
+    command: CodeChecker/bin/post-process-stats
+  merge-clang-extdef-mappings:
+    command: CodeChecker/bin/merge-clang-extdef-mappings
+  tu-collector:
+    command: CodeChecker/bin/tu_collector
+  gerrit-changed-files-to-skipfile:
+    command: python3 ${SNAP}/CodeChecker/bin/gerrit_changed_files_to_skipfile.py
+
+parts:
+  codechecker:
+    plugin: python
+    python-version: python3
+    source: https://github.com/Ericsson/codechecker/archive/v6.25.0.tar.gz
+    build-packages:
+      - curl
+      - gcc-multilib
+      - python3-dev
+      - python3-setuptools
+      - python  # Needed to compile fibers npm package.
+    build-snaps:
+      - node/16/stable
+    override-pull: |
+      snapcraftctl pull
+
+      # We need to remove the setup.py file from the root folder of the
+      # repository, otherwise the build process will fail.
+      rm -rf $SNAPCRAFT_PART_SRC/setup.py
+    override-build: |
+      snapcraftctl build
+
+      # We install the CodeChecker API dependency from a local package tar file
+      # in the web requirement file relatively to the web directory but
+      # unfortunatelly the python plugin doesn't support to specify a base
+      # directory.
+      cd analyzer && python3 -m pip install -r requirements.txt
+      cd ../web && python3 -m pip install -r requirements.txt
+      cd ..
+
+      npm config set scripts-prepend-node-path true
+      npm config set unsafe-perm true
+
+      # This is needed to fix the following error during npm install:
+      #   npm ERR! path /node_modules/geckodriver
+      #   npm ERR! command failed
+      #   npm ERR! command sh -c node index.js
+      export GECKODRIVER_SKIP_DOWNLOAD=true
+
+      make package
+      cp -r $SNAPCRAFT_PART_BUILD/build/CodeChecker $SNAPCRAFT_PART_INSTALL

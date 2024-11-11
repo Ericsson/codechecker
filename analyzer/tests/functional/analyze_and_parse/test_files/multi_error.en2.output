@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make multi_error" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --disable core.DivideZero -d core.UndefinedBinaryOperatorResult -d core.uninitialized.UndefReturn -d core.uninitialized.Assign --enable deadcode.DeadStores
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --analyzers clangsa --disable core.DivideZero -d core.UndefinedBinaryOperatorResult -d core.uninitialized.UndefReturn -d core.uninitialized.Assign --enable deadcode.DeadStores
+-----------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed multi_error.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[LOW] multi_error.cpp:9:3: Value stored to 'y' is never read [deadcode.DeadStores]
+  y = 7;
+  ^
+
+Found 1 defect(s) in multi_error.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+LOW      |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+--------------------------------------------------
+Checker name        | Severity | Number of reports
+--------------------------------------------------
+deadcode.DeadStores | LOW      |                 1
+--------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-----------------------------------
+File name       | Number of reports
+-----------------------------------
+multi_error.cpp |                 1
+-----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

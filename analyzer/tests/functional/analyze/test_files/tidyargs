@@ -1,0 +1,1 @@
+--extra-arg=-DTIDYARGS '-config={"Checks": "modernize-avoid-bind"}'

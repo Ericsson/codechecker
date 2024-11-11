@@ -1,0 +1,21 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "CodeScanner"
+        }
+      },
+      "automationDetails": {
+        "description": {
+          "text": "This is the October 10, 2018 nightly run of the CodeScanner tool on all product binaries in the 'master' branch of the 'sarif-sdk' repo"
+        },
+        "id": "Nightly CredScan run for sarif-sdk/master/2018-10-05",
+        "guid": "d541006e-582d-4600-a603-64925b7f7f35",
+        "correlationGuid": "53819b2e-a790-4f8b-b68f-a145c13b4f39"
+      },
+      "results": []
+    }
+  ]
+}

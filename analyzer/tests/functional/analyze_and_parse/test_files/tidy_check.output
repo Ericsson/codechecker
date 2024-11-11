@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --disable misc --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-variable
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --analyzers clang-tidy --disable misc --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-variable
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed tidy_check.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[HIGH] tidy_check.cpp:3:11: suspicious usage of 'sizeof(char*)'; do you mean 'strlen'? [bugprone-sizeof-expression]
+  int i = sizeof(c);
+          ^
+
+Found 1 defect(s) in tidy_check.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------
+Checker name               | Severity | Number of reports
+---------------------------------------------------------
+bugprone-sizeof-expression | HIGH     |                 1
+---------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------
+File name      | Number of reports
+----------------------------------
+tidy_check.cpp |                 1
+----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

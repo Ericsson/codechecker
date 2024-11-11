@@ -1,0 +1,8 @@
+0c07579523063acece2d7aebd4357cac||suppress_export.cpp||foo1 simple||false_positive
+58b0efedaf67e081290e27c6caabce3f||suppress_export.cpp||foo2 simple||false_positive
+0b4a424e23295c1f133bf643006a8c1e||suppress_export.cpp||foo2 simple||false_positive
+4c3ca4953cad12c05eebfe6a71833880||suppress_export.cpp||foo3 simple||intentional
+d1551d7a120c30fadec6ac2e416705f5||suppress_export.cpp||foo3 simple||intentional
+26806cbc2fd851b977e4915eba75289e||suppress_export.cpp||foo4 simple||confirmed
+b14c948e6ae8e27e3a33b0ca898e98f1||suppress_export.cpp||foo4 simple||confirmed
+e5f1b57c0f5d41e95b1eb5bf2032aada||suppress_export.cpp||substring of the checker name||confirmed

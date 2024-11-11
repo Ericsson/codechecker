@@ -1,0 +1,110 @@
+// THIS FILE IS ENCODED IN UTF-8! BE CAREFUL WITH MODIFYING IT
+
+int test_func(int num){ // line 3
+    cout << "test func" << endl;
+    return 0;
+}
+
+// this is an ordinary comment
+int test_func(int num){ // line 9
+    cout << "test func" << endl;
+    return 1;
+}
+
+// this is another non checker related comment
+// codechecker_suppress [all] some comment
+void test_func(int num){ // line 16
+    // suppress all checker results
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [all] some long
+// comment
+void test_func(int num){ // line 23
+    // suppress all checker results
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [my_checker_1, my_checker_2] some comment
+void test_func(int num){ // line 29
+    // suppress some checker results my_checker_2 and my_checker_2
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [my.checker_1 my.checker_2] some really
+// long comment
+void test_func(int num){ // line 36
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [my.Checker_1, my.Checker_2] some really
+// really
+// long comment
+void test_func(int num){ // line 43
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [my_checker_1, my_checker_2] some really
+// really
+
+void test_func(int num){ // line 50
+    // wrong formatted suppress comment
+    cout << "test func" << endl;
+}
+
+// codechecker_suppress [my.checker_1, my.checker_2]
+// i/';0 (*&^%$#@!)
+void test_func(int num){ // line 57
+    // wrong formatted suppress comment
+    cout << "test func"  << endl;
+}
+
+// codechecker_suppress [ my_checker_1 ]
+// áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]
+void test_func(int num){ // line 64
+    // wrong formatted suppress comment
+    cout << "test func"  << endl;
+}
+
+// codechecker_suppress [ my_checker_1 ]
+void test_func(int num){ // line 70
+    // wrong formatted suppress comment
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ] suppress comment */
+void test_func(int num){ // line 76
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+some longer
+comment */
+void test_func(int num){ // line 83
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+*/
+void test_func(int num){ // line 89
+    cout << "test func"  << endl;
+}
+
+/* codechecker_suppress [ my_checker_1 ]
+ * multi line
+ * comment
+ * again
+ */
+void test_func(int num){ // line 98
+    cout << "test func"  << endl;
+}
+
+/*
+  codechecker_suppress [ my_checker_1 ]
+  multi line
+  comment
+  again
+ */
+void test_func(int num){ // line 108
+    cout << "test func"  << endl;
+}

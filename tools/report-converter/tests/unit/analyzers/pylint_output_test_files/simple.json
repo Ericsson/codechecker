@@ -1,0 +1,68 @@
+[
+    {
+        "type": "convention",
+        "module": "simple",
+        "obj": "",
+        "line": 1,
+        "column": 0,
+        "path": "files/simple.py",
+        "symbol": "missing-module-docstring",
+        "message": "Missing module docstring",
+        "message-id": "C0114"
+    },
+    {
+        "type": "convention",
+        "module": "simple",
+        "obj": "foo",
+        "line": 6,
+        "column": 0,
+        "path": "files/simple.py",
+        "symbol": "blacklisted-name",
+        "message": "Black listed name \"foo\"",
+        "message-id": "C0102"
+    },
+    {
+        "type": "convention",
+        "module": "simple",
+        "obj": "foo",
+        "line": 6,
+        "column": 0,
+        "path": "files/simple.py",
+        "symbol": "invalid-name",
+        "message": "Argument name \"x\" doesn't conform to snake_case naming style",
+        "message-id": "C0103"
+    },
+    {
+        "type": "convention",
+        "module": "simple",
+        "obj": "foo",
+        "line": 6,
+        "column": 0,
+        "path": "files/simple.py",
+        "symbol": "missing-function-docstring",
+        "message": "Missing function or method docstring",
+        "message-id": "C0116"
+    },
+    {
+        "type": "warning",
+        "module": "simple",
+        "obj": "foo",
+        "line": 6,
+        "column": 8,
+        "path": "files/simple.py",
+        "symbol": "unused-argument",
+        "message": "Unused argument 'x'",
+        "message-id": "W0613"
+    },
+    {
+        "type": "warning",
+        "module": "simple",
+        "obj": "",
+        "line": 3,
+        "column": 0,
+        "path": "files/simple.py",
+        "symbol": "unused-import",
+        "message": "Unused import json",
+        "message-id": "W0611"
+    }
+]

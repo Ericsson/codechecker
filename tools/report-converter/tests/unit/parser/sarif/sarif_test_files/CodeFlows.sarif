@@ -1,0 +1,207 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the use of code flows to provide information about a result."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Use of uninitialized variable."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "collections/list.h"
+                },
+                "region": {
+                  "startLine": 25,
+                  "startColumn": 8,
+                  "snippet": {
+                    "text": "add_core(ptr, offset, val)"
+                  }
+                }
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "message": {
+                "text": "Path from declaration to usage."
+              },
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Variable 'ptr' declared."
+                        },
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 15,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "int* ptr;"
+                            }                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "importance": "unimportant",
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 18,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "offset = 0;"
+                            }
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Uninitialized variable 'ptr' passed to method 'add_core'."
+                        },
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 25,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "add_core(ptr, offset, val)"
+                            }
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "message": {
+                "text": "Alternate path from declaration to usage."
+              },
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Variable 'ptr' declared."
+                        },
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 15,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "int* ptr;"
+                            }                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "importance": "unimportant",
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 22,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "val = 0;"
+                            }
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "importance": "essential",
+                      "location": {
+                        "message": {
+                          "text": "Uninitialized variable 'ptr' passed to method 'add_core'."
+                        },
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "collections/list.h"
+                          },
+                          "region": {
+                            "startLine": 25,
+                            "startColumn": 8,
+                            "snippet": {
+                              "text": "add_core(ptr, offset, val)"
+                            }
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "collections::list::add"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

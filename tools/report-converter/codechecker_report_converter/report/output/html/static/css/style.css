@@ -1,0 +1,62 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+div.container {
+  padding: 10px;
+}
+
+#content {
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+#content > div {
+  margin: 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  height: 97%;
+}
+
+#side-bar {
+  overflow: auto;
+}
+
+#editor-wrapper {
+  overflow: hidden;
+}
+
+.button {
+  background-color: #f1f1f1;
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 16px;
+  color: black;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.review-status {
+  color: white;
+  text-align: center;
+}
+
+.review-status-confirmed {
+  background-color: #e92625;
+}
+
+.review-status-false-positive {
+  background-color: grey;
+}
+
+.review-status-intentional {
+  background-color: #669603;
+}

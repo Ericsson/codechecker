@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>bugprone</string>
+			<key>check_name</key>
+			<string>bugprone-sizeof-expression</string>
+			<key>description</key>
+			<string>suspicious usage of 'sizeof(K)'; did you mean 'K'?</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>34f8bd4635566816af99c68456d2efc0</string>
+			<key>report-annotation</key>
+			<dict>
+				<key>timestamp</key>
+				<string>2000-01-01 09:01</string>
+				<key>testcase</key>
+				<string>TS-1</string>
+				<key>testcase</key>
+				<string>TC-1</string>
+			</dict>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>3</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>3</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>7</integer>
+					</dict>
+					<key>message</key>
+					<string>suspicious usage of 'sizeof(K)'; did you mean 'K'?</string>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>clang</string>
+			<key>check_name</key>
+			<string>clang-diagnostic-unused-value</string>
+			<key>description</key>
+			<string>expression result unused</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>6adc9f369b933c9f6eb1b4ed2f3eea6b</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>3</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>3</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>7</integer>
+					</dict>
+					<key>message</key>
+					<string>expression result unused</string>
+				</dict>
+			</array>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>$FILE_PATH$/main.c</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>clang-tidy</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>CodeChecker</string>
+			<key>version</key>
+			<string>6.21.0</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

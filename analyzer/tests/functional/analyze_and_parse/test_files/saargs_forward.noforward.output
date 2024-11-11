@@ -1,0 +1,28 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make saargs_forward" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet --analyzers clangsa
+-----------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed saargs_forward.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+Found no defects in saargs_forward.cpp
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 0
+---------------------------------------------
+----=================----

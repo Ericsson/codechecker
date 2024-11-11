@@ -1,0 +1,24 @@
+name: codechecker-snap-package
+
+# Triggers the workflow when a new release is published.
+on:
+  release:
+    types: [published]
+
+permissions: read-all
+
+jobs:
+  build:
+    name: Build snap package
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: snapcore/action-build@v1
+        id: build
+      - uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_TOKEN }}
+        with:
+          snap: ${{ steps.build.outputs.snap }}
+          release: stable

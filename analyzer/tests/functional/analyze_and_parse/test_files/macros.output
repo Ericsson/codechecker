@@ -1,0 +1,45 @@
+NORMAL#CodeChecker parse $WORKSPACE$/test_files/macros/macros.plist --print-steps
+--------------------------------------------------------------------------------
+[HIGH] macros.cpp:7:8: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
+  *ptr = 5; // expected-warning{{Dereference of null pointer}}
+       ^
+  Report hash: f8fbc46cc5afbb056d92bd3d3d702781
+  Macro expansions:
+    1, macros.cpp:6:3: Macro 'SET_PTR_VAR_TO_NULL' expanded to 'ptr = 0'
+  Steps:
+    1, macros.cpp:6:3: Null pointer value stored to 'ptr'
+    2, macros.cpp:7:8: Dereference of null pointer (loaded from variable 'ptr')
+
+Found 1 defect(s) in macros.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------
+Checker name         | Severity | Number of reports
+---------------------------------------------------
+core.NullDereference | HIGH     |                 1
+---------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+------------------------------
+File name  | Number of reports
+------------------------------
+macros.cpp |                 1
+------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

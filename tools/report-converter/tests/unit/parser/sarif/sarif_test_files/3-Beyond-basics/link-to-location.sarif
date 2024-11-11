@@ -1,0 +1,49 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "PythonScanner"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "PY2335",
+          "message": {
+            "text": "Use of tainted variable 'expr' (which entered the system [here](1)) in the insecure function 'eval'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "3-Beyond-basics/bad-eval.py"
+                },
+                "region": {
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "relatedLocations": [
+            {
+              "id": 1,
+              "message": {
+                "text": "The tainted data entered the system here."
+              },
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "3-Beyond-basics/bad-eval.py"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

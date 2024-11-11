@@ -1,0 +1,64 @@
+{
+  "max_run_count": null,
+  "store": {
+    "analysis_statistics_dir": null,
+    "limit": {
+      "failure_zip_size": 52428800,
+      "compilation_database_size": 104857600
+    }
+  },
+  "keepalive": {
+    "enabled": false,
+    "idle": 600,
+    "interval": 30,
+    "max_probe": 10
+  },
+  "authentication": {
+    "enabled" : false,
+    "realm_name" : "CodeChecker Privileged server",
+    "realm_error" : "Access requires valid credentials.",
+    "session_lifetime" : 300,
+    "refresh_time" : 60,
+    "logins_until_cleanup" : 30,
+    "method_dictionary": {
+      "enabled" : false,
+      "auths" : [],
+      "groups" : {}
+    },
+    "method_ldap": {
+      "enabled" : false,
+      "authorities": [
+        {
+          "connection_url" : "ldap://ldap.example.org",
+          "username" : null,
+          "password" : null,
+          "referrals" : false,
+          "deref" : "always",
+          "accountBase" : null,
+          "accountScope" : "subtree",
+          "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+          "user_dn_postfix_preference": null,
+          "groupBase" : null,
+          "groupScope" : "subtree",
+          "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
+          "groupNameAttr" : "sAMAccountName"
+        }
+      ]
+    },
+    "method_pam": {
+      "enabled" : false,
+      "users": [
+        "root", "myname"
+      ],
+      "groups": [
+        "adm", "cc-users"
+      ]
+    },
+    "regex_groups": {
+      "enabled" : false,
+      "groups" : {
+        "admins_custom_group" : [ "^admin$", "^admin_", "_admin$" ]
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+# These owners will be the default owners for everything in the repo.
+*      @bruntib @Vodorok
+
+# Analyzer.
+/analyzer/codechecker_analyzer/analyzers/clangsa/ctu_*.py @martong
+
+# Documentations.
+/docs @dkrupp

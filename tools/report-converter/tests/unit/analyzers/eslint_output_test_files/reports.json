@@ -1,0 +1,79 @@
+[
+    {
+        "filePath": "files/index.js",
+        "messages": [
+            {
+                "ruleId": "no-unused-vars",
+                "severity": 2,
+                "message": "'foo' is defined but never used.",
+                "line": 1,
+                "column": 10,
+                "nodeType": "Identifier",
+                "endLine": 1,
+                "endColumn": 13
+            },
+            {
+                "ruleId": "indent",
+                "severity": 1,
+                "message": "Expected indentation of 4 spaces but found 2.",
+                "line": 2,
+                "column": 1,
+                "nodeType": "Keyword",
+                "messageId": "wrongIndentation",
+                "endLine": 2,
+                "endColumn": 3,
+                "fix": {
+                    "range": [
+                        17,
+                        19
+                    ],
+                    "text": "    "
+                }
+            },
+            {
+                "ruleId": "indent",
+                "severity": 1,
+                "message": "Expected indentation of 4 spaces but found 2.",
+                "line": 3,
+                "column": 1,
+                "nodeType": "Identifier",
+                "messageId": "wrongIndentation",
+                "endLine": 3,
+                "endColumn": 3,
+                "fix": {
+                    "range": [
+                        29,
+                        31
+                    ],
+                    "text": "    "
+                }
+            },
+            {
+                "ruleId": "no-undef",
+                "severity": 2,
+                "message": "'x' is not defined.",
+                "line": 3,
+                "column": 3,
+                "nodeType": "Identifier",
+                "messageId": "undef",
+                "endLine": 3,
+                "endColumn": 4
+            },
+            {
+                "ruleId": "no-unreachable",
+                "severity": 2,
+                "message": "Unreachable code.",
+                "line": 3,
+                "column": 3,
+                "nodeType": "ExpressionStatement",
+                "endLine": 3,
+                "endColumn": 10
+            }
+        ],
+        "errorCount": 3,
+        "warningCount": 2,
+        "fixableErrorCount": 0,
+        "fixableWarningCount": 2,
+        "source": "function foo() {\n  return 1;\n  x = 10;\n}\n"
+    }
+]

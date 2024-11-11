@@ -1,0 +1,18 @@
+files/test2.cpp:13:12: warning: Division by zero [clang-analyzer-core.DivideZero]
+  return x % 0;
+           ^
+files/test2.cpp:9:7: note: Left side of '||' is false
+  if (false || x) {
+      ^
+files/test2.cpp:9:16: note: Assuming 'x' is 0
+  if (false || x) {
+               ^
+files/test2.cpp:9:3: note: Taking false branch
+  if (false || x) {
+  ^
+files/test2.cpp:13:12: note: Division by zero
+  return x % 0;
+           ^
+files/test2.cpp:13:12: warning: remainder by zero is undefined [clang-diagnostic-division-by-zero]
+  return x % 0;
+           ^

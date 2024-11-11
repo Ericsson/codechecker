@@ -1,0 +1,7 @@
+==12680==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x4940da in main files/msan.cpp:7:7
+    #1 0x7fed9df58b96 in __libc_start_main (??)
+    #2 0x41b2d9 in _start (??)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value files/msan.cpp:7:7 in main
+Exiting

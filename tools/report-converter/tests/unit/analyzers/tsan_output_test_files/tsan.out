@@ -1,0 +1,12 @@
+ThreadSanitizer:DEADLYSIGNAL
+==23755==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000000 (pc 0x0000004b525c bp 0x7fff93b54920 sp 0x7fff93b548b0 T23755)
+==23755==The signal is caused by a WRITE memory access.
+==23755==Hint: address points to the zero page.
+    #0 insert_in_table(unsigned long, int) files/tsan.cpp:18:14 (a.out+0x4b525b)
+    #1 main files/tsan.cpp:24:2 (a.out+0x4b529e)
+    #2 __libc_start_main /build/glibc-OTsEL5/glibc-2.27/csu/../csu/libc-start.c:310 (libc.so.6+0x21b96)
+    #3 _start <null> (a.out+0x41c8d9)
+
+ThreadSanitizer can not provide additional info.
+SUMMARY: ThreadSanitizer: SEGV files/tsan.cpp:18:14 in insert_in_table(unsigned long, int)
+==23755==ABORTING

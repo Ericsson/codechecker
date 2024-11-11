@@ -1,0 +1,15 @@
+clang version 8.0.1 (https://github.com/llvm-mirror/clang ccfe04576c13497b9c422ceef0b6efe99077a392) (https://github.com/llvm-mirror/llvm dac728b2abd0434fc0f7f61b71e679723f69eda2)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /path/to/clang/bin
+Found candidate GCC installation: /usr/lib/gcc/i686-linux-gnu/8
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/5
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/5.5.0
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/7
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/7.4.0
+Found candidate GCC installation: /usr/lib/gcc/x86_64-linux-gnu/8
+Selected GCC installation: /usr/lib/gcc/x86_64-linux-gnu/7.4.0
+Candidate multilib: .;@m64
+Candidate multilib: 32;@m32
+Candidate multilib: x32;@mx32
+Selected multilib: .;@m64

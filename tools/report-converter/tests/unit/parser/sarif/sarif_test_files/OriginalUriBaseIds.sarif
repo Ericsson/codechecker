@@ -1,0 +1,103 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the use of originalUriBaseIds."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "originalUriBaseIds": {
+        "REPOROOT": {
+          "description": {
+            "text": "The directory into which the repo was cloned."
+          },
+          "properties": {
+            "comment": "The SARIF producer has chosen not to specify a URI for REPOROOT. See §3.14.14, NOTE 1, for an explanation."
+          }
+        },
+        "SRCROOT": {
+          "uri": "src/",
+          "uriBaseId": "REPOROOT",
+          "description": {
+            "text": "The r."
+          },
+          "properties": {
+            "comment": "SRCROOT is expressed relative to REPOROOT."
+          }
+        },
+        "LOGSROOT": {
+          "uri": "file:///C:/logs/",
+          "description": {
+            "text": "Destination for tool logs."
+          },
+          "properties": {
+            "comment": "An originalUriBaseId that resolves directly to an absolute URI."
+          }
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "A result outside the source tree."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "README.md",
+                  "uriBaseId": "REPOROOT",
+                  "properties": {
+                    "comment": "If REPOROOT is C:\\project, this file location resolves to C:\\project\\README.md"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1002",
+          "message": {
+            "text": "A result in a source file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "io/kb.c",
+                  "uriBaseId": "SRCROOT",
+                  "properties": {
+                    "comment": "If REPOROOT is C:\\project, this file location resolves to C:\\project\\src\\io\\kb.c"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1003",
+          "message": {
+            "text": "A result in a directory, for instance, 'This repo does not contain a LICENSE file.'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".",
+                  "uriBaseId": "REPOROOT"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

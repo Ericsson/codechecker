@@ -1,0 +1,9 @@
+{
+  "analyzer": "coccinelle",
+  "labels": {
+    "coccinelle": [
+      "doc_url:https://github.com/coccinelle/coccinelle",
+      "severity:MEDIUM"
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+.DS_Store
+
+*.py[cod]
+
+build
+build_dist
+venv
+venv_dev
+Makefile.local
+
+/web/server/vue-cli/dist
+
+# tools
+tools/tu_collector/build
+
+# build-logger
+analyzer/tools/build-logger/build/
+
+# doxygen generated files
+gen-docs/
+web/server/www/userguide/gen-docs/
+
+# object and binary files for tests
+**/*.o
+**/a.out
+**/tests/projects/objc/DeallocUseAfterFreeErrors
+
+# idea files
+.idea/
+
+# vscode
+.vscode
+
+# vim temporary swap for open files
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# vim session files
+Session.vim
+*.vim
+
+# Auto-generated tag files
+tags
+.tags
+TAGS
+.TAGS
+
+# direnv
+.envrc
+
+# mkdocs
+site

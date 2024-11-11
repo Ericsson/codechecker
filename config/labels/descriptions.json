@@ -1,0 +1,21 @@
+{
+  "profile": {
+    "default": "High-quality standard checks with a low false positive rate.",
+    "sensitive": "Default checks + more comprehensive checks with a low false positive rate.",
+    "security": "Checkers that warn for potentially vulnerable code. Contains all SEI Cert C/C++ rules.",
+    "portability": "Checks that aim to detect code issues emerging from platform differences (eg. between 32-bit and 64-bit architectures).",
+    "extreme": "Sensitive checks + more comprehensive checks with a manageable false positive rate."
+  },
+  "severity": {
+    "CRITICAL": "Currently used for indicating compilation errors.",
+    "HIGH": "A true positive indicates that the source code will cause a run-time error.",
+    "MEDIUM": "A true positive indicates that the source code that may not cause a run-time error (yet), but against intuition and hence prone to error.",
+    "LOW": "A true positive indicates that the source code is hard to read/understand or could be easily optimized.",
+    "STYLE": "A true positive indicates that the source code is against a specific coding guideline or could improve readability.",
+    "UNSPECIFIED": "Checker severity is not specified for a checker."
+  },
+  "guideline": {
+    "sei-cert": "https://wiki.sei.cmu.edu/confluence/display/seccode",
+    "misra-c": "https://www.misra.org.uk/"
+  }
+}

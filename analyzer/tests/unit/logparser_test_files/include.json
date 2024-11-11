@@ -1,0 +1,7 @@
+[
+	{
+		"directory": "/tmp",
+		"command": "g++ -I ../include -I../include -I/tmp /tmp/a.cpp -o /tmp/a.out",
+		"file": "/tmp/a.cpp"
+	}
+]

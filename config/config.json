@@ -1,0 +1,11 @@
+{
+  "environment_variables": {
+    "env_path": "PATH",
+    "env_ld_lib_path": "LD_LIBRARY_PATH",
+    "cc_logger_bin": "CC_LOGGER_BIN",
+    "cc_logger_file": "CC_LOGGER_FILE",
+    "cc_logger_compiles": "CC_LOGGER_GCC_LIKE",
+    "ld_preload": "LD_PRELOAD",
+    "codechecker_workspace": "CODECHECKER_WORKSPACE"
+  }
+}

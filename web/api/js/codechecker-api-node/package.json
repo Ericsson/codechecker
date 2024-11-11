@@ -1,0 +1,28 @@
+{
+  "name": "codechecker-api",
+  "version": "6.58.0",
+  "description": "Generated node.js compatible API stubs for CodeChecker server.",
+  "main": "lib",
+  "homepage": "https://github.com/Ericsson/codechecker",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Ericsson/codechecker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ericsson/codechecker.git",
+    "directory": "web/api"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "codechecker",
+    "thrift",
+    "api"
+  ],
+  "dependencies": {
+    "thrift": "0.13.0-hotfix.1"
+  }
+}

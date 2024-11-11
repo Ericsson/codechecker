@@ -1,0 +1,5 @@
+0c07579523063acece2d7aebd4357cac||suppress.cpp||foo1 simple
+1a7ddce6d69b031310dd7ad2ff330b53||suppress.cpp||foo2 simple||false_positive
+45a2fef6845f54eaf070ad03d19c7981||suppress.cpp||foo3 simple||intentional
+9fb26da7f3224ec0c63cfe3617c8a14e||suppress.cpp||foo4 simple||confirmed
+f81ed46c9a231ece5949d53366acb83e||suppress.cpp||substring of the checker name||confirmed

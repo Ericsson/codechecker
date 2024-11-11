@@ -1,0 +1,4 @@
+clang version 7.0.0 (tags/RELEASE_700/final)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /path/to/clang/bin

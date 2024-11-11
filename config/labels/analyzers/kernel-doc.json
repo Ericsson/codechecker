@@ -1,0 +1,9 @@
+{
+  "analyzer": "kernel-doc",
+  "labels": {
+    "kernel-doc": [
+      "doc_url:https://github.com/torvalds/linux/blob/master/scripts/kernel-doc",
+      "severity:MEDIUM"
+    ]
+  }
+}

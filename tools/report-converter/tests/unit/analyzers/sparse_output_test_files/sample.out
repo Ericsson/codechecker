@@ -1,0 +1,5 @@
+files/sample.c:4:1: warning: symbol 'machine_id' was not declared. Should it be static?
+files/sample.c: note: in included file:
+./files/sample.h:3:40: warning: incorrect type in argument 1 (different address spaces)
+./files/sample.h:3:40:    expected struct task_struct *p1
+./files/sample.h:3:40:    got struct spinlock [noderef] __rcu *

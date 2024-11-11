@@ -1,0 +1,8 @@
+table {
+  margin-bottom: 20px;
+}
+
+#checker-statistics .severity,
+#severity-statistics .severity {
+  text-align: center;
+}

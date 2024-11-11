@@ -1,0 +1,62 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_alias" --quiet 
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -e cppcoreguidelines-avoid-magic-numbers -e readability-magic-numbers
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make tidy_alias" --output $OUTPUT$ --quiet --analyzers clang-tidy -e cppcoreguidelines-avoid-magic-numbers -e readability-magic-numbers
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed tidy_alias.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[STYLE] tidy_alias.cpp:3:10: 3.1415926535 is a magic number; consider replacing it with a named constant [cppcoreguidelines-avoid-magic-numbers]
+  return 3.1415926535 * radius * radius;
+         ^
+
+[STYLE] tidy_alias.cpp:3:10: 3.1415926535 is a magic number; consider replacing it with a named constant [readability-magic-numbers]
+  return 3.1415926535 * radius * radius;
+         ^
+
+Found 2 defect(s) in tidy_alias.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+STYLE    |                 2
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+--------------------------------------------------------------------
+Checker name                          | Severity | Number of reports
+--------------------------------------------------------------------
+cppcoreguidelines-avoid-magic-numbers | STYLE    |                 1
+readability-magic-numbers             | STYLE    |                 1
+--------------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------
+File name      | Number of reports
+----------------------------------
+tidy_alias.cpp |                 2
+----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 2
+---------------------------------------------
+----=================----

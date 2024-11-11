@@ -1,0 +1,1 @@
+#define EXAMPLE 1

@@ -1,0 +1,26 @@
+{
+  "analyze": [
+    "--enable=core.DivideZero",
+    "--enable=core.CallAndMessage",
+    "--analyzer-config",
+    "clangsa:unroll-loops=true",
+    "--checker-config",
+    "clang-tidy:google-readability-function-size.StatementThreshold=100",
+    "--report-hash", "context-free-v2",
+    "--verbose=debug",
+    "--clean"
+  ],
+  "parse": [
+    "--trim-path-prefix",
+    "$HOME/workspace"
+  ],
+  "server": [
+    "--workspace=$HOME/workspace",
+    "--port=9090"
+  ],
+  "store": [
+    "--name=run_name",
+    "--tag=my_tag",
+    "--url=http://codechecker.my:9090/MyProduct"
+  ]
+}

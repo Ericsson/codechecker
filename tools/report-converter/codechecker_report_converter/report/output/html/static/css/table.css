@@ -1,0 +1,20 @@
+table th {
+  font-size: 1.2em;
+  color: #fff;
+  line-height: 1.4;
+  background-color: #007ea7;
+}
+
+table th.active,
+table th.sortable:hover {
+  cursor: pointer;
+  background-color: #2da6ce;
+}
+
+table tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+
+table tr > td {
+  padding: 5px;
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates rule metadata and the connection between results and the metadata for the corresponding rules."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "TUT1001",
+              "name": "InvalidUri",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "shortDescription": {
+                "text": "Properties defined with the 'uri' or 'uri-reference' format must contain valid URIs.",
+                "markdown": "Properties defined with the `uri` or `uri-reference` format must contain valid URIs."
+               },
+              "fullDescription": {
+                "text": "Every JSON property whose value is defined by the schema to be a URI (with \"format\": \"uri\" or \"format\": \"uri-reference\") must contain a valid URI.",
+                "markdown": "Every JSON property whose value is defined by the schema to be a URI (with `\"format\": \"uri\"` or `\"format\": \"uri-reference\"`) must contain a valid URI."
+              },
+              "messageStrings": {
+                "default": {
+                  "text": "The URI '{0}' is invalid.",
+                  "markdown": "The URI `{0}` is invalid."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "properties": {
+            "comment": "The ruleIndex property points into the array tool.driver.rules."
+          },
+          "ruleId": "TUT1001",
+          "level": "error",
+          "ruleIndex": 0,
+          "message": {
+            "id": "default",
+            "arguments": [
+              "//C:/code/dev"
+            ]
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "test.json"
+                 },
+                 "region": {
+                   "startLine": 15,
+                   "startColumn": 8,
+                   "endColumn": 22
+                 }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

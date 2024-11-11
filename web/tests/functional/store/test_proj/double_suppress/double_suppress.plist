@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>clang_version</key>
+<string>Ubuntu clang version 11.0.0-2~ubuntu20.04.1</string>
+ <key>diagnostics</key>
+ <array>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>5</integer>
+      <key>col</key><integer>10</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>14</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>20</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Value stored to &apos;p&apos; during its initialization is never read</string>
+     <key>message</key>
+     <string>Value stored to &apos;p&apos; during its initialization is never read</string>
+    </dict>
+   </array>
+   <key>description</key><string>Value stored to &apos;p&apos; during its initialization is never read</string>
+   <key>category</key><string>Dead store</string>
+   <key>type</key><string>Dead initialization</string>
+   <key>check_name</key><string>deadcode.DeadStores</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>5ccff44aa49130936add404dab9e1a6c</string>
+  <key>issue_context_kind</key><string>function</string>
+  <key>issue_context</key><string>foo</string>
+  <key>issue_hash_function_offset</key><string>3</string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>5</integer>
+   <key>col</key><integer>10</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  <key>ExecutedLines</key>
+  <dict>
+   <key>0</key>
+   <array>
+    <integer>5</integer>
+   </array>
+  </dict>
+  </dict>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>5</integer>
+      <key>col</key><integer>14</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>14</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>20</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Memory is allocated</string>
+     <key>message</key>
+     <string>Memory is allocated</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>1</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>1</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>6</integer>
+      <key>col</key><integer>1</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Potential leak of memory pointed to by &apos;p&apos;</string>
+     <key>message</key>
+     <string>Potential leak of memory pointed to by &apos;p&apos;</string>
+    </dict>
+   </array>
+   <key>description</key><string>Potential leak of memory pointed to by &apos;p&apos;</string>
+   <key>category</key><string>Memory error</string>
+   <key>type</key><string>Memory leak</string>
+   <key>check_name</key><string>cplusplus.NewDeleteLeaks</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>1a6ea464fbd26b31573aab0d8a784d6a</string>
+  <key>issue_context_kind</key><string>function</string>
+  <key>issue_context</key><string>foo</string>
+  <key>issue_hash_function_offset</key><string>3</string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>6</integer>
+   <key>col</key><integer>1</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  <key>ExecutedLines</key>
+  <dict>
+   <key>0</key>
+   <array>
+    <integer>1</integer>
+    <integer>2</integer>
+    <integer>5</integer>
+    <integer>6</integer>
+   </array>
+  </dict>
+  </dict>
+ </array>
+ <key>files</key>
+ <array>
+  <string>double_suppress.cpp</string>
+ </array>
+</dict>
+</plist>

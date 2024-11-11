@@ -1,0 +1,45 @@
+version: '3.5'
+
+services:
+  db:
+    image: postgres:12.2-alpine
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-passwd
+      - POSTGRES_USER=$USER
+      - POSTGRES_DB=config
+    secrets:
+      - postgres-passwd
+    networks:
+      - codechecker
+
+  codechecker:
+    image: codechecker/codechecker-web:latest
+    ports:
+      - 8001:8001
+    volumes:
+      - workspace:/workspace
+    command: >
+      CodeChecker server
+        --workspace /workspace
+        --postgresql --dbaddress db --dbport 5432 --dbusername $USER
+        --not-host-only
+    secrets:
+      - pgpass
+    networks:
+      - codechecker
+
+secrets:
+  postgres-passwd:
+    file: ./secrets/postgres-passwd
+  pgpass:
+    file: ./secrets/pgpass
+
+networks:
+  codechecker:
+    driver: bridge
+
+volumes:
+  database:
+  workspace:

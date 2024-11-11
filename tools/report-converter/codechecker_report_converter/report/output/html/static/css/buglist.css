@@ -1,0 +1,12 @@
+#report-list-table {
+  width: 100%;
+}
+
+#report-list .bug-path-length {
+  width: 5%;
+  text-align: center;
+}
+
+#report-list .severity {
+  text-align: center;
+}

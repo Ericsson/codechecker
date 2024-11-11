@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>clang_version</key>
+<string>cppcheck version 1.90 dev</string>
+ <key>files</key>
+ <array>
+  <string>divide_zero.cpp</string>
+  <string>lib.h</string>
+ </array>
+ <key>diagnostics</key>
+ <array>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>11</integer>
+      <key>col</key><integer>13</integer>
+      <key>file</key><integer>1</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>1</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>1</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Division by zero</string>
+     <key>message</key>
+     <string>Division by zero</string>
+    </dict>
+   </array>
+   <key>description</key><string>Division by zero.</string>
+   <key>category</key><string>error</string>
+   <key>type</key><string>Division by zero.</string>
+   <key>check_name</key><string>zerodiv</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>0</string>
+  <key>issue_context_kind</key><string></string>
+  <key>issue_context</key><string></string>
+  <key>issue_hash_function_offset</key><string></string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>11</integer>
+   <key>col</key><integer>13</integer>
+   <key>file</key><integer>1</integer>
+  </dict>
+  </dict>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>12</integer>
+      <key>col</key><integer>9</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>12</integer>
+         <key>col</key><integer>9</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>12</integer>
+         <key>col</key><integer>9</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Assuming that condition 'z==0' is not redundant</string>
+     <key>message</key>
+     <string>Assuming that condition 'z==0' is not redundant</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>12</integer>
+           <key>col</key><integer>9</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>12</integer>
+           <key>col</key><integer>9</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>15</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>15</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>13</integer>
+      <key>col</key><integer>15</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>15</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>15</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Division by zero</string>
+     <key>message</key>
+     <string>Division by zero</string>
+    </dict>
+   </array>
+   <key>description</key><string>Either the condition 'z==0' is redundant or there is division by zero at line 13.</string>
+   <key>category</key><string>warning</string>
+   <key>type</key><string>Either the condition 'z==0' is redundant or there is division by zero at line 13.</string>
+   <key>check_name</key><string>zerodivcond</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>0</string>
+  <key>issue_context_kind</key><string></string>
+  <key>issue_context</key><string></string>
+  <key>issue_hash_function_offset</key><string></string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>13</integer>
+   <key>col</key><integer>15</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  </dict>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>11</integer>
+      <key>col</key><integer>9</integer>
+      <key>file</key><integer>1</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>9</integer>
+         <key>file</key><integer>1</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>9</integer>
+         <key>file</key><integer>1</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Variable 'y' is assigned a value that is never used.</string>
+     <key>message</key>
+     <string>Variable 'y' is assigned a value that is never used.</string>
+    </dict>
+   </array>
+   <key>description</key><string>Variable 'y' is assigned a value that is never used.</string>
+   <key>category</key><string>style</string>
+   <key>type</key><string>Variable 'y' is assigned a value that is never used.</string>
+   <key>check_name</key><string>unreadVariable</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>0</string>
+  <key>issue_context_kind</key><string></string>
+  <key>issue_context</key><string></string>
+  <key>issue_hash_function_offset</key><string></string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>11</integer>
+   <key>col</key><integer>9</integer>
+   <key>file</key><integer>1</integer>
+  </dict>
+  </dict>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>13</integer>
+      <key>col</key><integer>11</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>11</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>11</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Variable 'x' is assigned a value that is never used.</string>
+     <key>message</key>
+     <string>Variable 'x' is assigned a value that is never used.</string>
+    </dict>
+   </array>
+   <key>description</key><string>Variable 'x' is assigned a value that is never used.</string>
+   <key>category</key><string>style</string>
+   <key>type</key><string>Variable 'x' is assigned a value that is never used.</string>
+   <key>check_name</key><string>unreadVariable</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>0</string>
+  <key>issue_context_kind</key><string></string>
+  <key>issue_context</key><string></string>
+  <key>issue_hash_function_offset</key><string></string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>13</integer>
+   <key>col</key><integer>11</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  </dict>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>11</integer>
+      <key>col</key><integer>0</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>0</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>0</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>The function 'test1' is never used.</string>
+     <key>message</key>
+     <string>The function 'test1' is never used.</string>
+    </dict>
+   </array>
+   <key>description</key><string>The function 'test1' is never used.</string>
+   <key>category</key><string>style</string>
+   <key>type</key><string>The function 'test1' is never used.</string>
+   <key>check_name</key><string>unusedFunction</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>0</string>
+  <key>issue_context_kind</key><string></string>
+  <key>issue_context</key><string></string>
+  <key>issue_hash_function_offset</key><string></string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>11</integer>
+   <key>col</key><integer>0</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  </dict>
+ </array>
+</dict>
+</plist>

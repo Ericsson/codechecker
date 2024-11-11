@@ -1,0 +1,39 @@
+[
+    {
+        "endPosition": {
+            "character": 7,
+            "line": 4,
+            "position": 54
+        },
+        "failure": "Assignments in conditional expressions are forbidden",
+        "name": "files/index.ts",
+        "ruleName": "no-conditional-assignment",
+        "ruleSeverity": "error",
+        "startPosition": {
+            "character": 6,
+            "line": 3,
+            "position": 38
+        }
+    },
+    {
+        "endPosition": {
+            "character": 5,
+            "line": 1,
+            "position": 22
+        },
+        "failure": "Forbidden 'var' keyword, use 'let' or 'const' instead",
+        "fix": {
+            "innerStart": 19,
+            "innerLength": 3,
+            "innerText": "let"
+        },
+        "name": "files/index.ts",
+        "ruleName": "no-var-keyword",
+        "ruleSeverity": "error",
+        "startPosition": {
+            "character": 2,
+            "line": 1,
+            "position": 19
+        }
+    }
+]

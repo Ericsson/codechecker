@@ -1,0 +1,181 @@
+div.container {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+}
+
+#editor-wrapper {
+  margin: 10px;
+}
+
+#side-bar {
+  float: left;
+  width: 260px;
+  margin: 0px;
+}
+
+#report-nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  height: 100%;
+}
+
+#report-nav ul > li {
+  padding: .4em;
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0,0,0,.125);
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#report-nav ul > li.active {
+  background-color: #427ea9;
+  color: white;
+}
+
+#report-nav ul > li:hover {
+  background-color: #427ea9;
+  color: white;
+  cursor: pointer;
+}
+
+#report-nav ul a {
+  text-decoration: none;
+}
+
+#report-nav i[class*="severity-"] {
+  margin-right: 5px;
+}
+
+.header {
+  border-bottom: 1px solid lightgrey;
+  font-family: monospace;
+  padding: 10px;
+  background-color: #fafbfc;
+  border-bottom: 1px solid #e1e4e8;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+}
+
+#report-nav .header {
+  font-weight: bold;
+}
+
+#editor-wrapper .header > div {
+  padding-top: 2px;
+}
+
+#file-path,
+#checker-name {
+  color: #195ea2;
+}
+
+#review-status {
+  padding: 0px 5px;
+}
+
+#file-path {
+  font-family: monospace;
+}
+
+.check-msg {
+  display: inline-block;
+  padding: 3px 6px;
+  margin: 1px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.check-msg.info {
+  color: #00546f;
+  background-color: #bfdfe9;
+  border: 1px solid #87a8b3;
+}
+
+.check-msg.error {
+  background-color: #f2dede;
+  color: #a94442;
+  border: 1px solid #ebcccc;
+}
+
+.check-msg.macro {
+  background-color: #d7dac2;
+  color: #4f5c6d;
+  border: 1px solid #d7dac2;
+}
+
+.check-msg.note {
+  background-color: #d7d7d7;
+  color: #4f5c6d;
+  border: 1px solid #bfbfbf;
+}
+
+.check-msg.current {
+  border: 2px dashed #3692ff;
+}
+
+.check-msg .tag {
+  padding: 1px 5px;
+  text-align: center;
+  border-radius: 2px;
+  margin-right: 5px;
+  text-decoration: inherit;
+}
+
+.check-msg .tag.macro {
+  background-color: #83876a;
+  color: white;
+  text-transform: capitalize;
+}
+
+.check-msg .tag.note {
+  background-color: #9299a1;
+  color: white;
+  text-transform: capitalize;
+}
+
+.checker-enum {
+  color: white;
+  padding: 1px 5px;
+  text-align: center;
+  border-radius: 25px;
+  margin-right: 5px;
+  text-decoration: inherit;
+}
+
+.checker-enum.info {
+  background-color: #427ea9;
+}
+
+.checker-enum.error {
+  background-color: #a94442;
+}
+
+.arrow {
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+  cursor: pointer;
+  margin: 0px 5px;
+}
+
+.arrow:hover {
+  border: solid #437ea8;
+  border-width: 0 3px 3px 0;
+}
+
+.left-arrow {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+}
+
+.right-arrow {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}

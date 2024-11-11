@@ -1,0 +1,5 @@
+// first line non checker comment
+int test_func(int num){ // line 2
+    cout << 'test func' << endl;
+    return 0;
+}

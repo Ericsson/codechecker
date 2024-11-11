@@ -1,0 +1,14 @@
+site_name: CodeChecker
+site_description: CodeChecker is a static analysis infrastructure built on the LLVM/Clang Static Analyzer toolchain.
+site_dir: 'site'
+
+repo_url: https://github.com/Ericsson/codechecker
+
+docs_dir: 'docs'
+
+nav:
+  - Home: README.md
+  - 'Quick Howto': usage.md
+  - 'Analyzer User Guide': analyzer/user_guide.md
+  - 'Web User Guide': web/user_guide.md
+

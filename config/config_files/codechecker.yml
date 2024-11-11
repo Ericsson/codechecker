@@ -1,0 +1,23 @@
+analyzer:
+  # Enable/disable checkers.
+  - --enable=core.DivideZero
+  - --enable=core.CallAndMessage
+  # Analyzer configurations.
+  - --analyzer-config=clangsa:unroll-loops=true
+  - --checker-config=clang-tidy:google-readability-function-size.StatementThreshold=100
+  # Optional options.
+  - --report-hash=context-free-v2
+  - --verbose=debug
+  - --clean
+
+parse:
+  - --trim-path-prefix=$HOME/workspace
+
+server:
+  - --workspace=$HOME/workspace"
+  - --port=9090"
+
+store:
+  - --name=run_name
+  - --tag=my_tag
+  - --url=http://codechecker.my:9090/MyProduct

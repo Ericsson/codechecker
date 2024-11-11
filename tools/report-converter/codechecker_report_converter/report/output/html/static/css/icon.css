@@ -1,0 +1,61 @@
+.severity-low {
+  background-color: #669603;
+}
+
+.severity-low:after {
+  content : 'L';
+}
+
+.severity-unspecified {
+  background-color: #666666;
+}
+
+.severity-unspecified:after {
+  content : 'U';
+}
+
+.severity-style {
+  background-color: #9932cc;
+}
+
+.severity-style:after {
+  content : 'S';
+}
+
+.severity-medium {
+  background-color: #a9d323;
+  color: black;
+}
+
+.severity-medium:after {
+  content : 'M';
+}
+
+.severity-high {
+  background-color: #ffa800;
+}
+
+.severity-high:after {
+  content : 'H';
+}
+
+.severity-critical {
+  background-color: #e92625;
+}
+
+.severity-critical:after {
+  content : 'C';
+}
+
+i[class*="severity-"] {
+  line-height: normal;
+  text-transform: capitalize;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: white;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  font-family: sans-serif;
+}

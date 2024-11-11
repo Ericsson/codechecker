@@ -1,0 +1,3 @@
+files/simple.py:1: 'collections.namedtuple' imported but unused
+files/simple.py:5: undefined name 'self'
+files/simple.py:9: local variable 'name' is assigned to but never used
