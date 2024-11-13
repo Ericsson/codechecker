@@ -623,21 +623,23 @@ class LocalRemote(unittest.TestCase):
             self.assertTrue(issue["location"]["path"])
             self.assertTrue(issue["location"]["lines"]["begin"])
 
-        malloc_issues = [i for i in issues if i["check_name"] == "unix.Malloc"]
-        self.assertEqual(malloc_issues, [{
+        div_zero_in_skip_h = [
+            i for i in issues if
+            i["fingerprint"] == "269d82a20d38f23bbf730a2cf1d1668b"]
+
+        self.assertEqual(div_zero_in_skip_h, [{
             "type": "issue",
-            "check_name": "unix.Malloc",
-            "description": "Memory allocated by alloca() should not be "
-                           "deallocated",
+            "check_name": "core.DivideZero",
+            "description": "Division by zero",
             "categories": [
                 "Bug Risk"
             ],
-            "fingerprint": "c2132f78ef0e01bdb5eacf616048625f",
-            "severity": "minor",
+            "fingerprint": "269d82a20d38f23bbf730a2cf1d1668b",
+            "severity": "major",
             "location": {
-                "path": "new_delete.cpp",
+                "path": "skip.h",
                 "lines": {
-                    "begin": 31
+                    "begin": 8
                 }
             }}])
 
