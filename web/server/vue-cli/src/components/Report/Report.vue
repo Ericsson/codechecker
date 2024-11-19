@@ -644,7 +644,6 @@ export default {
       this.clearLines();
 
       const reportId = this.report.reportId;
-
       const reportDetail = await new Promise(resolve => {
         ccService.getClient().getReportDetails(reportId,
           handleThriftError(reportDetail => {
@@ -663,7 +662,7 @@ export default {
             const docUrlLabels = labels[0].filter(
               param => param.startsWith("doc_url")
             );
-            this.docUrl = docUrlLabels.length ? 
+            this.docUrl = docUrlLabels.length ?
               docUrlLabels[0].split("doc_url:")[1] : null;
             resolve(this.docUrl);
           })
@@ -779,6 +778,23 @@ export default {
           this.addLineWidget(event, props);
         });
       });
+
+
+      //If the warning message or location is different than the
+      //the last bug path element, then we render the warning.
+
+      if (events.length == 0 ||
+          this.report.checkerMsg !==  events[events.length-1].msg ||
+          this.report.line.toNumber() !=
+            events[events.length-1].startLine.toNumber()
+      ){
+        const chkrmsg_data = { $id: 999,
+          $message:this.report.checkerMsg,
+          startLine:this.report.line, startCol:this.report.column };
+        const chrkmsg_props = { type: "error", index:"E", hideDocUrl:true };
+        this.addLineWidget(chkrmsg_data, chrkmsg_props);
+      }
+
     },
 
     addExtendedData(extendedData) {
