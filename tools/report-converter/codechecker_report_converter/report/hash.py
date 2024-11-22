@@ -198,6 +198,10 @@ def get_report_path_hash(report: Report) -> str:
         col = str(event.column)
         report_path_hash += f"{line}|{col}|{event.message}|{event.file.path}"
 
+    if report.annotations:
+        for k, v in report.annotations.items():
+            report_path_hash += f"|{k}|{v}"
+
     report_path_hash += report.checker_name
     if report.report_hash:
         report_path_hash += report.report_hash
