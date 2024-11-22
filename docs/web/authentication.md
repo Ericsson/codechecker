@@ -354,9 +354,15 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
           This link in used for redirecting user for provider's authentication page
 
-      * `oauth_redirect_uri`
+      * `oauth_callback_url`
 
           User will be redirected back to the provided link after login with returned data.
+          It should be constructed in that format `http://codechecker_path/login/OAuthLogin/provider` wher `provider` is the the name of the provider of OAuth and should match existing `provider_name`. The `oauth_callback_url` should also match the callback url specified in the config of your provider on their webpage.
+
+          Example of correct link using github, google and microsoft
+          * http://localhost:8080/login/OAuthLogin/github
+          * http://localhost:8080/login/OAuthLogin/google
+          * http://localhost:8080/login/OAuthLogin/microsoft
 
       * `oauth_token_uri`
 
@@ -395,7 +401,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
           "oauth_client_id": "client id",
           "oauth_client_secret": "client secret",
           "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
-          "oauth_redirect_uri": "http://localhost:8080/login",
+          "oauth_callback_url": "http://localhost:8080/login/provider",
           "oauth_token_uri": "https://accounts.google.com/o/oauth2/token",
           "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
           "oauth_scope": "openid email profile",
@@ -416,7 +422,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
 #### Oauth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
-* Important: 'oauth_redirect_uri' must always match with link specified in the
+* Important: 'oauth_callback_url' must always match with link specified in the
 Providers settings when issuing an access token.
 
 # Client-side configuration <a name="client-side-configuration"></a>

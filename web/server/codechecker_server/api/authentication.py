@@ -223,7 +223,7 @@ class ThriftAuthHandler:
         client_secret = oauth_config["oauth_client_secret"]
         scope = oauth_config["oauth_scope"]
         authorization_uri = oauth_config["oauth_authorization_uri"]
-        redirect_uri = oauth_config["oauth_redirect_uri"]
+        callback_url = oauth_config["oauth_callback_url"]
         # code verifier for PKCE
         pkce_verifier = generate_token(48)
 
@@ -232,7 +232,7 @@ class ThriftAuthHandler:
             client_id,
             client_secret,
             scope=scope,
-            redirect_uri=redirect_uri,
+            redirect_uri=callback_url,
             code_challenge_method='S256'
             )
 
@@ -327,7 +327,7 @@ class ThriftAuthHandler:
             scope = oauth_config["oauth_scope"]
             token_url = oauth_config["oauth_token_uri"]
             user_info_url = oauth_config["oauth_user_info_uri"]
-            redirect_uri = oauth_config["oauth_redirect_uri"]
+            callback_url = oauth_config["oauth_callback_url"]
             allowed_users = oauth_config.get("allowed_users", [])
             LOG.info("OAuth configuration loaded for provider: %s", provider)
             session = None
@@ -336,7 +336,7 @@ class ThriftAuthHandler:
                     client_id,
                     client_secret,
                     scope=scope,
-                    redirect_uri=redirect_uri,
+                    redirect_uri=callback_url,
                     code_challenge_method='S256'
                     )
 

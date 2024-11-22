@@ -22,6 +22,11 @@ export default new Router({
       component: () => import("@/views/Login")
     },
     {
+      path: "/login/oAuthlogin/:provider",
+      name: "oauthlogin",
+      component: () => import("@/views/OAuthLogin")
+    },
+    {
       path: "/userguide",
       name: "userguide",
       component: () => import("@/views/Userguide")
