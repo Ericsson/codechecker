@@ -350,6 +350,12 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "cppcheck-eraseIteratorOutOfBounds": [
+      "severity:HIGH"
+    ],
+    "cppcheck-eraseIteratorOutOfBoundsCond": [
+      "severity:HIGH"
+    ],
     "cppcheck-exceptDeallocThrow": [
       "profile:default",
       "profile:extreme",
@@ -1483,6 +1489,15 @@
     ],
     "cppcheck-uselessCallsSwap": [
       "severity:LOW"
+    ],
+    "cppcheck-uselessOverride": [
+      "severity:STYLE"
+    ],
+    "cppcheck-returnByReference": [
+      "severity:LOW"
+    ],
+    "cppcheck-suspiciousFloatingPointCast": [
+      "severity:STYLE"
     ],
     "cppcheck-va_end_missing": [
       "profile:default",
