@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import ServiceClient from "@cc/auth";
 import { BaseService } from "./_base.service";
 
@@ -10,15 +9,15 @@ class AuthService extends BaseService {
   }
 
   getToken() {
-    return Cookies.get(ID_TOKEN_KEY);
+    return localStorage.getItem(ID_TOKEN_KEY);
   }
 
   saveToken(token) {
-    Cookies.set(ID_TOKEN_KEY, token);
+    localStorage.setItem(ID_TOKEN_KEY, token);
   }
 
   destroyToken() {
-    Cookies.remove(ID_TOKEN_KEY);
+    localStorage.removeItem(ID_TOKEN_KEY);
   }
 }
 

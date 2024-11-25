@@ -9,6 +9,7 @@ import {
 import router from "@/router";
 import store from "@/store";
 import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
+import authService from "./auth.service";
 
 // Host should be set explicitly to `hostname` because thrift will use
 // the value of `window.location.host` which will contain port number by
@@ -51,7 +52,10 @@ class BaseService {
       const xreq = getXmlHttpRequestObject();
 
       xreq.addEventListener("readystatechange", function () {
-        if (this.readyState === 4) {
+        if (this.readyState === 1) { // connection opened, headers not sent yet
+          xreq.setRequestHeader("Authorization",
+            "Bearer " + authService.getToken());
+        } else if (this.readyState === 4) { // request finished
           if (this.status === 504) {
             store.commit(ADD_ERROR,
               `Error ${this.status}: ${this.statusText}`);
@@ -94,14 +98,14 @@ const handleThriftError = function (cb, onError) {
         router.push({
           name: "login",
           query: { "return_to": router.currentRoute.fullPath }
-        }).catch(() => {});
+        }).catch(() => { });
 
         if (onError) onError(err);
         return;
       } else if (msg.search(/The product .* does not exist!/) > -1) {
         return router.replace({
           name: "404"
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
 

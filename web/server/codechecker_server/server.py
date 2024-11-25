@@ -102,7 +102,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(result)
 
-    def __check_session_cookie(self):
+    def __check_session_header(self):
         """
         Check the CodeChecker privileged access cookie in the request headers.
 
@@ -114,9 +114,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return None
 
         session = None
+        # Check if the user has presented a bearer token for authentication.
+        token = self.headers.get("Authorization")
+        if token and token.startswith("Bearer "):
+            token = token.split("Bearer ", 1)[1]
+            session = self.server.manager.get_session(token)
+
         # Check if the user has presented a privileged access cookie.
+        # This method is used by older command-line clients, and since cookies
+        # with an expiration date were purged when updating, the web interface
+        # should no longer have a valid access token as a cookie.
+        # DEPRECATED: Will be removed in a future version.
         cookies = self.headers.get("Cookie")
-        if cookies:
+        if not session and cookies:
             split = cookies.split("; ")
             for cookie in split:
                 values = cookie.split("=")
@@ -125,13 +135,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     session = self.server.manager.get_session(values[1])
 
         if session and session.is_alive:
-            # If a valid session token was found and it can still be used,
+            # If a valid bearer token was found and it can still be used,
             # mark that the user's last access to the server was the
             # request that resulted in the execution of this function.
             session.revalidate()
             return session
         else:
-            # If the user's access cookie is no longer usable (invalid),
+            # If the user's token is no longer usable (invalid),
             # present an error.
             client_host, client_port, is_ipv6 = \
                 RequestHandler._get_client_host_port(self.client_address)
@@ -167,21 +177,45 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
 
     def end_headers(self):
-        # Sending the authentication cookie
-        # in every response if any.
-        # This will update the the session cookie
-        # on the clients to the newest.
-        if self.auth_session:
-            token = self.auth_session.token
-            if token:
-                self.send_header(
-                    "Set-Cookie",
-                    f"{session_manager.SESSION_COOKIE_NAME}={token}; Path=/")
+        """
+        Headers in this section are based on the OWASP Secure Headers Project.
+        https://owasp.org/www-project-secure-headers/
+        They are adapted to not allow any cross-site requests.
+        """
+        if self.command in ['GET', 'HEAD', 'POST']:
+            self.send_header('X-Frame-Options', 'DENY')
+            self.send_header('X-XSS-Protection', '1; mode=block')
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.send_header('Content-Security-Policy',
+                             'default-src \'self\'; ' +
+                             'style-src \'unsafe-inline\' \'self\'; ' +
+                             'script-src \'unsafe-inline\' \'self\'; ' +
+                             'form-action \'self\'; ' +
+                             'frame-ancestors \'none\'; ' +
+                             'upgrade-insecure-requests; ' +
+                             'block-all-mixed-content')
+            self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+            self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+            self.send_header('Cross-Origin-Resource-Policy', 'same-origin')
+            self.send_header('Referrer-Policy', 'no-referrer')
 
+        if self.auth_session:
             # Set the current user name in the header.
             user_name = self.auth_session.user
             if user_name:
                 self.send_header("X-User", user_name)
+
+        # If the user has a leftover session cookie, try removing it.
+        # Command-line clients ignore overwriting the cookie, but web clients
+        # will remove the cookie from the browser.
+        # DEPRECATED: Will be removed in a future version.
+        elif self.headers.get('Cookie'):
+            self.send_header('Set-Cookie',
+                             session_manager.SESSION_COOKIE_NAME + '=; ' +
+                             'Path=/; ' +
+                             'Max-Age=0; ' +
+                             'HttpOnly; ' +
+                             'SameSite=Strict')
 
         SimpleHTTPRequestHandler.end_headers(self)
 
@@ -198,6 +232,23 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         raise IndexError("Invalid address tuple given.")
 
+    def do_OPTIONS(self):  # pylint: disable=C0103
+        """
+        Handle OPTIONS requests.
+
+        Always returns 403 to indicate that no cross-site requests are allowed.
+        No CORS heeaders are allowed next to the 403 response.
+        """
+        client_host, client_port, is_ipv6 = \
+            RequestHandler._get_client_host_port(self.client_address)
+
+        LOG.debug("%s:%s -- [Anonymous] OPTIONS %s",
+                  client_host if not is_ipv6 else '[' + client_host + ']',
+                  client_port, self.path)
+
+        self.send_response(403)
+        self.end_headers()
+
     def do_GET(self):
         """ Handles the SPA browser access (GET requests).
 
@@ -211,15 +262,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
         client_host, client_port, is_ipv6 = \
             RequestHandler._get_client_host_port(self.client_address)
-        self.auth_session = self.__check_session_cookie()
 
         # GET requests are served from www_root.
         self.directory = self.server.www_root
 
-        username = self.auth_session.user if self.auth_session else 'Anonymous'
-        LOG.debug("%s:%s -- [%s] GET %s",
+        # Bearer tokens are not sent alongside GET requests.
+        LOG.debug("%s:%s -- [Anonymous] GET %s",
                   client_host if not is_ipv6 else '[' + client_host + ']',
-                  client_port, username, self.path)
+                  client_port, self.path)
 
         if self.path == '/':
             self.path = 'index.html'
@@ -314,7 +364,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         client_host, client_port, is_ipv6 = \
             RequestHandler._get_client_host_port(self.client_address)
-        self.auth_session = self.__check_session_cookie()
+        self.auth_session = self.__check_session_header()
         auth_user = \
             self.auth_session.user if self.auth_session else "Anonymous"
         host_info = client_host if not is_ipv6 else '[' + client_host + ']'
