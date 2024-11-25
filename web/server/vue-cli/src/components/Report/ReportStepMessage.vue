@@ -30,22 +30,23 @@
 
     <div>
       {{ value }}
-
-      <p v-if="type === 'error' && docUrl" class="mb-0 mt-2">
-        For more information see the
-        <a
-          class="show-documentation-btn"
-          @click="showDocumentation"
+      <div v-if="!hideDocUrl">
+        <p v-if="type === 'error' && docUrl" class="mb-0 mt-2">
+          For more information see the
+          <a
+            class="show-documentation-btn"
+            @click="showDocumentation"
+          >
+            checker documentation
+          </a>.
+        </p>
+        <p
+          v-else-if="type === 'error'"
+          class="no-documentation-msg-text mb-0 mt-2"
         >
-          checker documentation
-        </a>.
-      </p>
-      <p 
-        v-else-if="type === 'error'" 
-        class="no-documentation-msg-text mb-0 mt-2"
-      >
-        No documentation for checker.
-      </p>
+          No documentation for checker.
+        </p>
+      </div>
     </div>
 
     <v-btn
@@ -80,7 +81,8 @@ export default {
     bus: { type: Object, default: null },
     prevStep: { type: Object, default: null },
     nextStep: { type: Object, default: null },
-    docUrl: { type: String, default: null }
+    docUrl: { type: String, default: null },
+    hideDocUrl: { type: Boolean, default: false }
   },
   computed: {
     color() {
