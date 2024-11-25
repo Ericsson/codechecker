@@ -273,7 +273,7 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
-    "unix.SimpleStream": [
+    "alpha.unix.SimpleStream": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-simplestream-c",
       "profile:extreme",
       "severity:MEDIUM"
@@ -285,6 +285,7 @@
     ],
     "alpha.unix.Stream": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-stream-c",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
