@@ -159,6 +159,7 @@
     ],
     "boost-use-ranges": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/boost/use-ranges.html",
+      "profile:extreme",
       "severity:LOW"
     ],
     "boost-use-to-string": [
@@ -200,6 +201,10 @@
     ],
     "bugprone-bitwise-pointer-cast": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/bitwise-pointer-cast.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-bool-pointer-implicit-conversion": [
@@ -463,6 +468,9 @@
     ],
     "bugprone-nondeterministic-pointer-iteration-order": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/nondeterministic-pointer-iteration-order.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-optional-value-conversion": [
@@ -480,6 +488,10 @@
     ],
     "bugprone-pointer-arithmetic-on-polymorphic-object": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/pointer-arithmetic-on-polymorphic-object.html",
+      "guideline:sei-cert",
+      "profile:extreme",
+      "profile:security",
+      "sei-cert:ctr56-cpp",
       "severity:HIGH"
     ],
     "bugprone-posix-return": [
@@ -505,6 +517,8 @@
     ],
     "bugprone-return-const-ref-from-parameter": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/return-const-ref-from-parameter.html",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-shared-ptr-array-mismatch": [
@@ -665,6 +679,8 @@
     ],
     "bugprone-tagged-union-member-count": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/tagged-union-member-count.html",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-suspicious-stringview-data-usage": [
@@ -812,26 +828,12 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
-    "cert-arr39-c": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/arr39-c.html",
-      "guideline:sei-cert",
-      "profile:security",
-      "sei-cert:arr39-c",
-      "severity:HIGH"
-    ],
     "cert-con36-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con36-c.html",
       "severity:MEDIUM"
     ],
     "cert-con54-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con54-cpp.html",
-      "severity:MEDIUM"
-    ],
-    "cert-ctr56-cpp": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/ctr56-cpp.html",
-      "guideline:sei-cert",
-      "profile:security",
-      "sei-cert:ctr56-cpp",
       "severity:MEDIUM"
     ],
     "cert-dcl03-c": [
@@ -6629,9 +6631,12 @@
     ],
     "misc-sizeof-expression": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-sizeof-expression.html",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:arr39-c",
       "severity:HIGH"
     ],
     "misc-static-assert": [
@@ -6772,6 +6777,7 @@
     ],
     "misc-use-internal-linkage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/use-internal-linkage.html",
+      "profile:extreme",
       "severity:LOW"
     ],
     "misc-virtual-near-miss": [
@@ -6829,6 +6835,9 @@
     ],
     "modernize-min-max-use-initializer-list": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/min-max-use-initializer-list.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "modernize-pass-by-value": [
@@ -6945,6 +6954,7 @@
     ],
     "modernize-use-ranges": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-ranges.html",
+      "profile:extreme",
       "severity:LOW"
     ],
     "modernize-use-starts-ends-with": [
@@ -6954,6 +6964,7 @@
     ],
     "modernize-use-std-format": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-std-format.html",
+      "profile:extreme",
       "severity:LOW"
     ],
     "modernize-use-std-numbers": [
@@ -7173,10 +7184,13 @@
     ],
     "portability-template-virtual-member-function": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/portability/template-virtual-member-function.html",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "readability-math-missing-parentheses": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/math-missing-parentheses.html",
+      "profile:extreme",
       "severity:LOW"
     ],
     "readability-avoid-const-params-in-decls": [
