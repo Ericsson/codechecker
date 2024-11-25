@@ -77,8 +77,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         self.path = None
         super().__init__(request, client_address, server)
-        # GET requests are served from www_root.
-        self.directory = server.www_root
 
     def log_message(self, *args):
         """ Silencing http server. """
@@ -214,6 +212,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
 
+        # GET requests are served from www_root.
+        self.directory = self.server.www_root
+
         username = self.auth_session.user if self.auth_session else 'Anonymous'
         LOG.debug("%s:%s -- [%s] GET %s",
                   client_host if not is_ipv6 else '[' + client_host + ']',
@@ -244,7 +245,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.path = "index.html"
 
         # Check that the given path is a file.
-        # The base directory is set to www_root.
         if not os.path.exists(self.translate_path(self.path)):
             self.path = 'index.html'
 
