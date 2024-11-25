@@ -52,7 +52,7 @@ def parse_clang_help_page(
             command,
             stderr=subprocess.STDOUT,
             env=analyzer_context.get_context()
-            .get_analyzer_env(ClangSA.ANALYZER_NAME),
+            .get_env_for_bin(command[0]),
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
@@ -172,8 +172,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_binary_version(cls, environ, details=False) -> str:
+    def get_binary_version(cls, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
+
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
         if not cls.analyzer_binary():
             return None
 
@@ -209,7 +212,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             cls.__ctu_autodetection = CTUAutodetection(
                 cls.analyzer_binary(),
                 analyzer_context.get_context()
-                .get_analyzer_env(ClangSA.ANALYZER_NAME))
+                .get_env_for_bin(cls.analyzer_binary()))
 
         return cls.__ctu_autodetection
 
@@ -587,7 +590,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     @classmethod
-    def is_binary_version_incompatible(cls, environ):
+    def is_binary_version_incompatible(cls):
         """
         We support pretty much every ClangSA version.
         """
@@ -609,7 +612,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
 
         context = analyzer_context.get_context()
-        environ = context.get_analyzer_env(ClangSA.ANALYZER_NAME)
+        environ = context.get_env_for_bin(
+            cls.analyzer_binary())
 
         handler = config_handler.ClangSAConfigHandler(environ)
 

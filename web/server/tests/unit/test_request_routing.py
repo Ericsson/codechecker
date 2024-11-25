@@ -52,16 +52,12 @@ class RequestRoutingTest(unittest.TestCase):
         # It is the server code's responsibility to give a 404 Not Found.
         self.assertEqual(post(''), (None, None, None))
         self.assertEqual(post('CodeCheckerService'), (None, None, None))
-
-        # Raise an exception if URL is malformed, such as contains a
-        # product-endpoint-like component which is badly encoded version
-        # string.
-        with self.assertRaises(Exception):
-            post('v6.0')
-            post('/v6/CodeCheckerService')
+        self.assertEqual(post('v6.0'), (None, None, None))
+        self.assertEqual(post('/v6.0/product/Authentication/Service'),
+                         (None, None, None))
 
         self.assertEqual(post('/v6.0/Authentication'),
                          (None, '6.0', 'Authentication'))
 
-        self.assertEqual(post('/DummyProduct/v0.0/FoobarService'),
-                         ('DummyProduct', '0.0', 'FoobarService'))
+        self.assertEqual(post('/DummyProduct/v6.0/FoobarService'),
+                         ('DummyProduct', '6.0', 'FoobarService'))

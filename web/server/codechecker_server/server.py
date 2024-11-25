@@ -14,19 +14,14 @@ and browser requests.
 import atexit
 import datetime
 from functools import partial
-from hashlib import sha256
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
-import posixpath
-from random import sample
 import shutil
 import signal
 import socket
 import ssl
 import sys
-import stat
 from typing import List, Optional, Tuple
-import urllib
 
 import multiprocess
 from sqlalchemy.orm import sessionmaker
@@ -68,8 +63,6 @@ from .database.config_db_model import Product as ORMProduct, \
     Configuration as ORMConfiguration
 from .database.database import DBSession
 from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
-from .tmp import get_tmp_dir_hash
-
 
 LOG = get_logger('server')
 
@@ -219,6 +212,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
 
+        # GET requests are served from www_root.
+        self.directory = self.server.www_root
+
         username = self.auth_session.user if self.auth_session else 'Anonymous'
         LOG.debug("%s:%s -- [%s] GET %s",
                   client_host if not is_ipv6 else '[' + client_host + ']',
@@ -242,6 +238,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Check that path contains a product endpoint.
         if product_endpoint is not None and product_endpoint != '':
             self.path = self.path.replace(f"{product_endpoint}/", "", 1)
+            # Remove extra leading slashes, see cpython#93789.
+            self.path = '/' + self.path.lstrip('/')
 
         if self.path == '/':
             self.path = "index.html"
@@ -333,10 +331,21 @@ class RequestHandler(SimpleHTTPRequestHandler):
         otrans = TTransport.TMemoryBuffer()
         oprot = output_protocol_factory.getProtocol(otrans)
 
+        product_endpoint, api_ver, request_endpoint = \
+            routing.split_client_POST_request(self.path)
+
+        if product_endpoint is None and api_ver is None and \
+                request_endpoint is None:
+            self.send_thrift_exception("Invalid request endpoint path.", iprot,
+                                       oprot, otrans)
+            return
+
+        # Only Authentication, Configuration, ServerInof
+        # endpoints are allowed for Anonymous users
+        # if authentication is required.
         if self.server.manager.is_enabled and \
-                not self.path.endswith(('/Authentication',
-                                        '/Configuration',
-                                        '/ServerInfo')) and \
+                request_endpoint not in \
+                ['Authentication', 'Configuration', 'ServerInfo'] and \
                 not self.auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
@@ -352,12 +361,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         # Authentication is handled, we may now respond to the user.
         try:
-            product_endpoint, api_ver, request_endpoint = \
-                routing.split_client_POST_request(self.path)
-            if product_endpoint is None and api_ver is None and \
-                    request_endpoint is None:
-                raise ValueError("Invalid request endpoint path.")
-
             product = None
             if product_endpoint:
                 # The current request came through a product route, and not
@@ -378,7 +381,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == 'Configuration':
                         conf_handler = ConfigHandler_v6(
                             self.auth_session,
-                            self.server.config_session)
+                            self.server.config_session,
+                            self.server.manager)
                         processor = ConfigAPI_v6.Processor(conf_handler)
                     elif request_endpoint == 'ServerInfo':
                         server_info_handler = ServerInfoHandler_v6(version)
@@ -462,26 +466,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         """ Disable directory listing. """
         self.send_error(405, "No permission to list directory")
-
-    def translate_path(self, path):
-        """
-        Modified version from SimpleHTTPRequestHandler.
-        Path is set to www_root.
-        """
-        # Abandon query parameters.
-        path = path.split('?', 1)[0]
-        path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.parse.unquote(path))
-        words = path.split('/')
-        words = [_f for _f in words if _f]
-        path = self.server.www_root
-        for word in words:
-            _, word = os.path.splitdrive(word)
-            _, word = os.path.split(word)
-            if word in (os.curdir, os.pardir):
-                continue
-            path = os.path.join(path, word)
-        return path
 
 
 class Product:
@@ -1034,43 +1018,6 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
     address_family = socket.AF_INET6
 
 
-def __make_root_file(root_file):
-    """
-    Generate a root username and password SHA. This hash is saved to the
-    given file path, and is also returned.
-    """
-
-    LOG.debug("Generating initial superuser (root) credentials...")
-
-    username = ''.join(sample("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6))
-    password = get_tmp_dir_hash()[:8]
-
-    LOG.info("A NEW superuser credential was generated for the server. "
-             "This information IS SAVED, thus subsequent server starts "
-             "WILL use these credentials. You WILL NOT get to see "
-             "the credentials again, so MAKE SURE YOU REMEMBER THIS "
-             "LOGIN!")
-
-    # Highlight the message a bit more, as the server owner configuring the
-    # server must know this root access initially.
-    credential_msg = f"The superuser's username is '{username}' with the " \
-                     f"password '{password}'"
-    LOG.info("-" * len(credential_msg))
-    LOG.info(credential_msg)
-    LOG.info("-" * len(credential_msg))
-
-    sha = sha256((username + ':' + password).encode('utf-8')).hexdigest()
-    secret = f"{username}:{sha}"
-    with open(root_file, 'w', encoding="utf-8", errors="ignore") as f:
-        LOG.debug("Save root SHA256 '%s'", secret)
-        f.write(secret)
-
-    # This file should be only readable by the process owner, and noone else.
-    os.chmod(root_file, stat.S_IRUSR)
-
-    return secret
-
-
 def start_server(config_directory, package_data, port, config_sql_server,
                  listen_address, force_auth, skip_db_cleanup: bool,
                  context, check_env):
@@ -1081,22 +1028,17 @@ def start_server(config_directory, package_data, port, config_sql_server,
 
     server_addr = (listen_address, port)
 
+    # The root user file is DEPRECATED AND IGNORED
     root_file = os.path.join(config_directory, 'root.user')
-    if not os.path.exists(root_file):
-        LOG.warning("Server started without 'root.user' present in "
-                    "CONFIG_DIRECTORY!")
-        root_sha = __make_root_file(root_file)
-    else:
-        LOG.debug("Root file was found. Loading...")
-        try:
-            with open(root_file, 'r', encoding="utf-8", errors="ignore") as f:
-                root_sha = f.read()
-            LOG.debug("Root digest is '%s'", root_sha)
-        except IOError:
-            LOG.info("Cannot open root file '%s' even though it exists",
-                     root_file)
-            root_sha = __make_root_file(root_file)
-
+    if os.path.exists(root_file):
+        LOG.warning("The 'root.user' file:  %s"
+                    " is deprecated and ignored. If you want to"
+                    " setup an initial user with SUPER_USER permission,"
+                    " configure the super_user field in the server_config.json"
+                    " as described in the documentation."
+                    " To get rid off this warning,"
+                    " simply delete the root.user file.",
+                    root_file)
     # Check whether configuration file exists, create an example if not.
     server_cfg_file = os.path.join(config_directory, 'server_config.json')
     if not os.path.exists(server_cfg_file):
@@ -1120,7 +1062,6 @@ def start_server(config_directory, package_data, port, config_sql_server,
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
-            root_sha,
             force_auth)
     except IOError as ioerr:
         LOG.debug(ioerr)
@@ -1141,7 +1082,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
                       "Earlier logs might contain additional detailed "
                       "reasoning.\n\t* %s", len(fails),
                       "\n\t* ".join(
-                        (f"'{ep}' ({reason})" for (ep, reason) in fails)
+                          (f"'{ep}' ({reason})" for (ep, reason) in fails)
                       ))
     else:
         LOG.debug("Skipping db_cleanup, as requested.")

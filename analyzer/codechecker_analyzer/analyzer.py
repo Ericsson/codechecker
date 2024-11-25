@@ -130,7 +130,8 @@ def __has_enabled_checker(ch: AnalyzerConfigHandler):
                for _, (state, _) in ch.checks().items())
 
 
-def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
+def perform_analysis(args, skip_handlers, filter_handlers,
+                     rs_handler: ReviewStatusHandler,
                      actions, metadata_tool, compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
@@ -247,7 +248,7 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
                 enabled_checkers[analyzer].append(check)
 
         version = analyzer_types.supported_analyzers[analyzer] \
-            .get_binary_version(context.get_analyzer_env(analyzer))
+            .get_binary_version()
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
@@ -333,6 +334,7 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
                                        config_map, args.jobs,
                                        args.output_path,
                                        skip_handlers,
+                                       filter_handlers,
                                        rs_handler,
                                        metadata_tool,
                                        'quiet' in args,
@@ -355,7 +357,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     end_time = time.time()
     LOG.info("Analysis length: %s sec.", end_time - start_time)
 
-    analyzer_types.print_unsupported_analyzers(errored)
+    if args.analyzers:
+        analyzer_types.print_unsupported_analyzers(errored)
 
     metadata_tool['timestamps'] = {'begin': start_time,
                                    'end': end_time}

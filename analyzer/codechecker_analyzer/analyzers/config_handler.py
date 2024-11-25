@@ -12,8 +12,10 @@ Static analyzer configuration handler.
 
 from abc import ABCMeta
 from enum import Enum
+from string import Template
 import collections
 import platform
+import sys
 import re
 
 from codechecker_analyzer import analyzer_context
@@ -149,10 +151,12 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
           and "debug" checker groups. "osx" checker group is also not included
           unless the target platform is Darwin.
         - Command line "--enable/--disable" flags.
-          - Their arguments may start with "profile:" or "guideline:" prefix
-            which makes the choice explicit.
-          - Without prefix it means a profile name, a guideline name or a
-            checker group/name in this priority order.
+          - Their arguments may start with "prefix:", "profile:" or
+            "guideline:" label which makes the choice explicit.
+          - Without a label, it means either a profile name, a guideline name
+            or a checker prefix group/name, unless there is a clash
+            between these names, in which case an error is emitted.
+            If there is a name clash, using a label is mandatory.
 
         checkers -- [(checker name, description), ...] Checkers to add with
                     their description.
@@ -210,23 +214,41 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         profiles = checker_labels.get_description('profile')
         guidelines = checker_labels.occurring_values('guideline')
 
+        templ = Template("The ${entity} name '${identifier}' conflicts with a "
+                         "checker name prefix '${identifier}'. Please use -e "
+                         "${entity}:${identifier} to enable checkers of the "
+                         "${identifier} ${entity} or use -e "
+                         "prefix:${identifier} to select checkers which have "
+                         "a name starting with '${identifier}'.")
+
         for identifier, enabled in cmdline_enable:
-            if ':' in identifier:
+            if "prefix:" in identifier:
+                identifier = identifier.replace("prefix:", "")
+                self.set_checker_enabled(identifier, enabled)
+
+            elif ':' in identifier:
                 for checker in checker_labels.checkers_by_labels([identifier]):
                     self.set_checker_enabled(checker, enabled)
+
             elif identifier in profiles:
                 if identifier in reserved_names:
-                    LOG.warning("Profile name '%s' conflicts with a "
-                                "checker(-group) name.", identifier)
-                for checker in checker_labels.checkers_by_labels(
-                        [f'profile:{identifier}']):
-                    self.set_checker_enabled(checker, enabled)
+                    LOG.error(templ.substitute(entity="profile",
+                                               identifier=identifier))
+                    sys.exit(1)
+                else:
+                    for checker in checker_labels.checkers_by_labels(
+                            [f'profile:{identifier}']):
+                        self.set_checker_enabled(checker, enabled)
+
             elif identifier in guidelines:
                 if identifier in reserved_names:
-                    LOG.warning("Guideline name '%s' conflicts with a "
-                                "checker(-group) name.", identifier)
-                for checker in checker_labels.checkers_by_labels(
-                        [f'guideline:{identifier}']):
-                    self.set_checker_enabled(checker, enabled)
+                    LOG.error(templ.substitute(entity="guideline",
+                                               identifier=identifier))
+                    sys.exit(1)
+                else:
+                    for checker in checker_labels.checkers_by_labels(
+                            [f'guideline:{identifier}']):
+                        self.set_checker_enabled(checker, enabled)
+
             else:
                 self.set_checker_enabled(identifier, enabled)

@@ -2,6 +2,60 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.24.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.24.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Listing of Enabled/Disabled Checkers in the WEB UI per run
+            </template>
+            CodeChecker provides a new view in the "Analysis information tab" which lists all checkers that were enabled during analysis.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New Checker Coverage Statistics view with coding guideline references
+            </template>
+            CodeChecker provides a new view to display all enabled checkers for a set of selected runs. Additionally, it also lists all guideline rules related to the given checker. For example, you can verify whether your code has any SEI Cert coding guideline violation.
+            The new table lists all checkers that were enabled in a set of selected analysis runs, shows the number of outstanding reports and the number of closed reports per enabled checker and the related coding guideline rules.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Faster run storage
+            </template>
+            Thanks to a new optimization, the run storage duration can be up to 50% faster.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New Static HTML Report Pages
+            </template>
+             The static HTML generation is rewritten so it can handle much larger result set.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New report filter to list closed and outstanding reports
+            </template>
+             A new filter has been added to list outstanding and closed reports. An outstanding report is a report with detection status new, reopened, unresolved with review status unreviewed or confirmed.
+          </new-feature-item>
+
+        </new-release-item>
+      </v-timeline-item>
+
+
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
           <template v-slot:title>

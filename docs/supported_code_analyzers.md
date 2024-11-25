@@ -5,6 +5,7 @@ CodeChecker can execute the following static analyzer tools:
 - [Clang Static Analyzer](https://clang-analyzer.llvm.org/)
 - [Cppcheck](https://cppcheck.sourceforge.io/)
 - [GCC Static Analyzer](https://gcc.gnu.org/wiki/StaticAnalyzer)
+- [Facebook Infer Analyzer](https://fbinfer.com/)
 
 We have created a separate [converter tool](/tools/report-converter) which
 can be used to convert the output of different source code analyzer tools to a
@@ -23,10 +24,13 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Sparse](/docs/tools/report-converter.md#sparse)   | ✓ |
 |                | [cpplint](/docs/tools/report-converter.md#cpplint)   | ✓ |
 |                | [GNU GCC Static Analyzer](/docs/tools/report-converter.md#gcc)   | ✓ |
+|                | [PVS-Studio](/docs/tools/report-converter.md#PVS-Studio) | ✓ |
 | **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli)  | ✓ |
+|                | [PVS-Studio](/docs/tools/report-converter.md#PVS-Studio) | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    | ✓ |
 |                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)    | ✓ |
+|                | [PVS-Studio](/docs/tools/report-converter.md#PVS-Studio) | ✓ |
 | **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)    | ✓ |
 |                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)    | ✓ |
 |                | [mypy](http://mypy-lang.org/)    | ✗ |

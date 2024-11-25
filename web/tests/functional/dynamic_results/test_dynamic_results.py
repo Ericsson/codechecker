@@ -102,7 +102,7 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, ReportFilter(), None, False)
 
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 5)
 
         sort_timestamp = SortMode(SortType.TIMESTAMP, Order.ASC)
 
@@ -147,7 +147,7 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, testcase_filter, None, False)
 
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 4)
 
         self.assertTrue(all(map(
             lambda report: report.annotations['testcase'].startswith('TC-'),
@@ -160,7 +160,7 @@ class DynamicResults(unittest.TestCase):
         num = self._cc_client.getRunResultCount(
             None, ReportFilter(), None)
 
-        self.assertEqual(num, 4)
+        self.assertEqual(num, 5)
 
         testcase_filter = ReportFilter(annotations=[Pair(
             first='testcase',
@@ -170,3 +170,14 @@ class DynamicResults(unittest.TestCase):
             None, testcase_filter, None)
 
         self.assertEqual(num, 2)
+
+    def test_unique_path_hash(self):
+        """Test that the unique path hash is calculated when two reports differ
+        only in their annotations."""
+        results = self._cc_client.getRunResults(
+            None, 500, 0, None, ReportFilter(), None, False)
+
+        # The main.c_lang-tidy<blabla>.plist test file contains two
+        # bugprone-sizeof-expression reports that differ in their annotations.
+        # They should be considered as different reports.
+        self.assertEqual(len(results), 5)
