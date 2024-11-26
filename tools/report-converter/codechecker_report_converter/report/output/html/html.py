@@ -63,6 +63,7 @@ class Checker(TypedDict):
 
 class HTMLReport(TypedDict):
     fileId: str
+    path: str
     reportHash: Optional[str]
     checker: Checker
     analyzerName: Optional[str]
@@ -239,6 +240,7 @@ class HtmlBuilder:
             html_reports.append({
                 'fileId': report.file.id,
                 'reportHash': report.report_hash,
+                'path': report.file.path,
                 'checker': {
                     'name': report.checker_name,
                     'url': self._get_doc_url(report) or ''
@@ -309,7 +311,7 @@ class HtmlBuilder:
 
         table_reports = map(lambda data: {
             'link': os.path.basename(data['link']),
-            'file-path': data['report']['fileId'],
+            'file-path': data['report']['path'],
             'report-hash': data['report']['reportHash'],
             'checker-name': data['report']['checker']['name'],
             'checker-url': data['report']['checker']['url'],
@@ -436,7 +438,6 @@ def convert(
     if not reports:
         LOG.info('No report data in %s file.', file_path)
         return set()
-
     html_filename = f"{os.path.basename(file_path)}.html"
     html_output_path = os.path.join(output_dir_path, html_filename)
     _, changed_files = html_builder.create(
