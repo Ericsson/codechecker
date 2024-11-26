@@ -25,6 +25,7 @@ from typing import List, Optional, Tuple
 
 import multiprocess
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql.expression import func
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
@@ -899,39 +900,27 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__products[prod.endpoint] = prod
 
-    def get_if_database_in_use(self, product):
+    def is_database_used(self, connection):
         """
         Returns the product endpoint if the given database is in use
         """
-        # get the database name from the product connection string
+        # get the database name from the connection connection string
         is_sqlite = False
-        if product.database.endswith('.sqlite'):
-            to_add = product.database.replace('////', '/')
+        if connection.engine == 'sqlite':
+            to_add = make_url(connection).database
             is_sqlite = True
         else:
-            to_add = f"@{product.host}:{product.port}/{product.database}"
-
-        LOG.info("The database string that will be added: %s", to_add)
-
-        LOG.info("to add: %s", to_add)
+            to_add = connection.database
 
         # get the current state of connected databases from products
         dynamic_list = [
-            a.connection.replace('////', '/')
+            make_url(a.connection).database
             for a in self.cfg_sess_private.query(ORMProduct).all()
         ]
         self.cfg_sess_private.commit()
         self.cfg_sess_private.close()
 
-        # remove the first 16 charecters because in query it is
-        # included in the path string
-        dynamic_list = [
-            d[16:] if d.endswith('.sqlite') else d
-            for d in dynamic_list
-        ]
-
         # True if found, False otherwise
-        LOG.info("dynamic list: %s", dynamic_list)
         for d in dynamic_list:
             if d == to_add and is_sqlite:
                 return True

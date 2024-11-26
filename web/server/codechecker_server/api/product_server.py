@@ -322,13 +322,12 @@ class ThriftProductHandler:
             return prod
 
     @timeit
-    def add_product_support(self, product):
+    def __add_product_support(self, product):
         """
         Creates a database for the given product,
         to assist addProduct() function that connects to
         an already existing database.
         """
-        self.__require_permission([permissions.SUPERUSER])
 
         product_info = product.connection
         if product_info.engine == 'sqlite':
@@ -408,7 +407,7 @@ class ThriftProductHandler:
                 msg)
 
         # Check if the database is already in use by another product.
-        db_in_use = self.__server.get_if_database_in_use(product.connection)
+        db_in_use = self.__server.is_database_used(product.connection)
         if db_in_use:
             LOG.error("Database '%s' is already in use by another product!",
                       product.connection.database)
@@ -417,7 +416,7 @@ class ThriftProductHandler:
                 "Database is already in use by another product!")
 
         # Add database before letting product connect to it
-        if self.add_product_support(product):
+        if self.__add_product_support(product):
             LOG.info("Database support added successfully.")
 
         # Some values come encoded as Base64, decode these.
