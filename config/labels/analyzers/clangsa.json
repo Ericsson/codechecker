@@ -248,14 +248,9 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
-    "alpha.security.taint.TaintPropagation": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c",
-      "profile:extreme",
-      "profile:sensitive",
-      "severity:HIGH"
-    ],
-    "alpha.unix.BlockInCriticalSection": [
+    "unix.BlockInCriticalSection": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-blockincriticalsection-c",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -290,6 +285,7 @@
     ],
     "alpha.unix.Stream": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-stream-c",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
@@ -774,6 +770,30 @@
       "sei-cert:mem30-c",
       "severity:MEDIUM"
     ],
+    "optin.taint.GenericTaint": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "optin.taint.TaintedAlloc": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "optin.taint.TaintedDiv": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-tainteddiv-c-c-objc",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
+    "optin.taint.TaintPropagation": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
     "osx.API": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-api-c"
     ],
@@ -867,6 +887,44 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert:flp30-c",
+      "severity:MEDIUM"
+    ],
+    "security.MmapWriteExec": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-mmapwriteexec-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "security.PointerSub": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-pointersub-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:arr36-c",
+      "severity:HIGH"
+    ],
+    "security.PutenvStackArray": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-putenvstackarray-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:pos34-c",
+      "severity:HIGH"
+    ],
+    "security.SetgidSetuidOrder": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-setgidsetuidorder-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:pos36-c",
       "severity:MEDIUM"
     ],
     "security.cert.env.InvalidPtr": [
