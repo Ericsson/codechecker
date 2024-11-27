@@ -119,7 +119,7 @@ var BugViewer = {
       severity.className = 'severity-' + report.severity.toLowerCase();
 
       item.appendChild(severity);
-      item.appendChild(document.createTextNode(lastBugEvent.message));
+      item.appendChild(document.createTextNode(report.message));
 
       item.addEventListener('click', function () {
         that.navigate(report, item);
@@ -317,6 +317,30 @@ var BugViewer = {
       that._lineWidgets.push(that._codeMirror.addLineWidget(
         event.line - 1, element));
     });
+    // If there are no events, or the last event does not match
+    // the main warning message we print the warning message as a separate
+    // error node.
+    var lastEvent = null
+    if (currentEvents.length > 0)
+      lastEvent =currentEvents[currentEvents.length - 1];
+    if (!lastEvent ||
+          lastEvent.message != this._currentReport.message ||
+          lastEvent.line != this._currentReport.line){
+        var element = document.createElement('div');
+        var left = that._codeMirror.defaultCharWidth() * lastEvent.column + 'px';
+        element.setAttribute('style', 'margin-left: ' + left);
+        element.setAttribute('class', 'check-msg ' + "error");
+        var error_tag = document.createElement('span');
+        error_tag.setAttribute('class', 'checker-enum error');
+        error_tag.innerHTML = "E";
+        element.appendChild(error_tag);
+        var msg = document.createElement('span');
+        msg.innerHTML = that.escapeHTML(this._currentReport.message)
+          .replace(/(?:\r\n|\r|\n)/g, '<br>');
+        element.appendChild(msg);
+        that._lineWidgets.push(that._codeMirror.addLineWidget(
+          this._currentReport.line - 1, element));
+      }
   },
 
   jumpTo : function (line, column) {

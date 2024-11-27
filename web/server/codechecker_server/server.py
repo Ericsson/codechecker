@@ -16,14 +16,12 @@ import datetime
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
-import posixpath
 import shutil
 import signal
 import socket
 import ssl
 import sys
 from typing import List, Optional, Tuple
-import urllib
 
 import multiprocess
 from sqlalchemy.orm import sessionmaker
@@ -214,6 +212,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
 
+        # GET requests are served from www_root.
+        self.directory = self.server.www_root
+
         username = self.auth_session.user if self.auth_session else 'Anonymous'
         LOG.debug("%s:%s -- [%s] GET %s",
                   client_host if not is_ipv6 else '[' + client_host + ']',
@@ -237,6 +238,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Check that path contains a product endpoint.
         if product_endpoint is not None and product_endpoint != '':
             self.path = self.path.replace(f"{product_endpoint}/", "", 1)
+            # Remove extra leading slashes, see cpython#93789.
+            self.path = '/' + self.path.lstrip('/')
 
         if self.path == '/':
             self.path = "index.html"
@@ -463,26 +466,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def list_directory(self, path):
         """ Disable directory listing. """
         self.send_error(405, "No permission to list directory")
-
-    def translate_path(self, path):
-        """
-        Modified version from SimpleHTTPRequestHandler.
-        Path is set to www_root.
-        """
-        # Abandon query parameters.
-        path = path.split('?', 1)[0]
-        path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.parse.unquote(path))
-        words = path.split('/')
-        words = [_f for _f in words if _f]
-        path = self.server.www_root
-        for word in words:
-            _, word = os.path.splitdrive(word)
-            _, word = os.path.split(word)
-            if word in (os.curdir, os.pardir):
-                continue
-            path = os.path.join(path, word)
-        return path
 
 
 class Product:
