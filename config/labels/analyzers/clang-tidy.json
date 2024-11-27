@@ -679,6 +679,7 @@
     ],
     "bugprone-tagged-union-member-count": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/tagged-union-member-count.html",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
