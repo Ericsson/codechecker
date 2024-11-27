@@ -828,6 +828,10 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cert-arr39-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/arr39-c.html",
+      "severtiy:HIGH"
+    ],
     "cert-con36-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con36-c.html",
       "severity:MEDIUM"
@@ -835,6 +839,10 @@
     "cert-con54-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con54-cpp.html",
       "severity:MEDIUM"
+    ],
+    "cert-ctr56-cpp": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/ctr56-cpp.html",
+      "severity:HIGH"
     ],
     "cert-dcl03-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl03-c.html",
