@@ -900,33 +900,33 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__products[prod.endpoint] = prod
 
-    def is_database_used(self, connection):
+    def is_database_used(self, conn):
         """
-        Returns the product endpoint if the given database is in use
+        Returns bool whether the given database is already connected to by
+        the server.
         """
-        # get the database name from the connection connection string
-        is_sqlite = False
-        if connection.engine == 'sqlite':
-            to_add = make_url(connection).database
-            is_sqlite = True
-        else:
-            to_add = connection.database
 
-        # get the current state of connected databases from products
-        dynamic_list = [
-            make_url(a.connection).database
-            for a in self.cfg_sess_private.query(ORMProduct).all()
-        ]
+        # get the database name from the database connection args
+        conn = make_url(conn.connection)
+        is_sqlite = conn.engine == 'sqlite'
+
+        # create a tuple of database that is going to be added for comparison
+        to_add = (f"{conn.engine}+pysqlite" if is_sqlite
+                  else f"{conn.engine}+psycopg2",
+                  conn.database, conn.host, conn.port)
+
+        # dynamic_list contains the currently connected databases to servers
+        dynamic_list = [(make_url(a.connection).drivername,
+                         make_url(a.connection).database,
+                         make_url(a.connection).host,
+                         make_url(a.connection).port)
+                        for a in self.cfg_sess_private.query(ORMProduct).all()]
+
         self.cfg_sess_private.commit()
         self.cfg_sess_private.close()
 
         # True if found, False otherwise
-        for d in dynamic_list:
-            if d == to_add and is_sqlite:
-                return True
-            elif to_add in d and not is_sqlite:
-                return True
-        return False
+        return to_add in dynamic_list
 
     @property
     def num_products(self):

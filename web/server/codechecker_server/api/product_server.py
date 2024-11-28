@@ -355,14 +355,14 @@ class ThriftProductHandler:
                 conn.execute("commit")
                 LOG.info("Creating database '%s'", db_name)
                 conn.execute(f"CREATE DATABASE {db_name}")
+                conn.close()
         except exc.ProgrammingError as e:
             LOG.error("ProgrammingError occurred: %s", str(e))
             if "already exists" in str(e):
-                LOG.info("Database '%s' already exists", db_name)
+                LOG.error("Database '%s' already exists", db_name)
                 return False
             else:
                 LOG.error("Error occurred while creating database: %s", str(e))
-                LOG.error("Type: %s", type(e))
                 return False
         except exc.SQLAlchemyError as e:
             LOG.error("SQLAlchemyError occurred: %s", str(e))
@@ -407,7 +407,7 @@ class ThriftProductHandler:
                 msg)
 
         # Check if the database is already in use by another product.
-        db_in_use = self.__server.is_database_used(product.connection)
+        db_in_use = self.__server.is_database_used(product)
         if db_in_use:
             LOG.error("Database '%s' is already in use by another product!",
                       product.connection.database)
