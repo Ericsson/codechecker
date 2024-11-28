@@ -155,8 +155,8 @@ class TestProductConfigShare(unittest.TestCase):
                 description_b64=name,
                 connection=DatabaseConnection(
                     engine='sqlite',
-                    host='',
-                    port=0,
+                    host=None,
+                    port=None,
                     username_b64='',
                     password_b64='',
                     database=os.path.join(self.test_workspace_secondary,
@@ -171,7 +171,7 @@ class TestProductConfigShare(unittest.TestCase):
         product_cfg = create_test_product('producttest_second 2',
                                           'producttest_second_2')
 
-        # expect request to fail
+        # expect request to fail, cannot connect 2 products to 1 database
         with self.assertRaises(RequestFailed):
             self._pr_client_2.addProduct(product_cfg)
 
