@@ -1037,6 +1037,12 @@
       "sei-cert:exp37-c",
       "severity:MEDIUM"
     ],
+    "unix.Chroot": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-chroot-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "unix.DynamicMemoryModeling": [
       "profile:default",
       "profile:extreme",
