@@ -322,7 +322,7 @@ class ThriftProductHandler:
             return prod
 
     @timeit
-    def __add_product_support(self, product):
+    def __create_product_database(self, product):
         """
         Creates a database for the given product,
         to assist addProduct() function that connects to
@@ -416,8 +416,9 @@ class ThriftProductHandler:
                 "Database is already in use by another product!")
 
         # Add database before letting product connect to it
-        if self.__add_product_support(product):
-            LOG.info("Database support added successfully.")
+        if self.__create_product_database(product):
+            LOG.info("Database '%s' created successfully.",
+                     product.connection.database)
 
         # Some values come encoded as Base64, decode these.
         displayed_name = convert.from_b64(product.displayedName_b64) \

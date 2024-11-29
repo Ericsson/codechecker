@@ -915,18 +915,20 @@ class CCSimpleHttpServer(HTTPServer):
                   else f"{conn.engine}+psycopg2",
                   conn.database, conn.host, conn.port)
 
-        # dynamic_list contains the currently connected databases to servers
-        dynamic_list = [(make_url(a.connection).drivername,
-                         make_url(a.connection).database,
-                         make_url(a.connection).host,
-                         make_url(a.connection).port)
-                        for a in self.cfg_sess_private.query(ORMProduct).all()]
+        # create a tuple of database that is already connected for comparison
+        def to_tuple(product):
+            url = make_url(product.connection)
+            return url.drivername, url.database, url.host, url.port
+        # creates a list of currently connected databases
+        current_connected_databases = list(map(
+            to_tuple,
+            self.cfg_sess_private.query(ORMProduct).all()))
 
         self.cfg_sess_private.commit()
         self.cfg_sess_private.close()
 
         # True if found, False otherwise
-        return to_add in dynamic_list
+        return to_add in current_connected_databases
 
     @property
     def num_products(self):
