@@ -9,6 +9,12 @@
 Handle Thrift requests for authentication.
 """
 
+import datetime
+import sqlite3
+
+from authlib.integrations.requests_client import OAuth2Session
+from authlib.common.security import generate_token
+from urllib.parse import urlparse, parse_qs
 
 import json
 import codechecker_api_shared
@@ -23,12 +29,13 @@ from codechecker_common.logger import get_logger
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Product, ProductPermission, Session, \
-    SystemPermission
+    OAuthSession, SystemPermission
 from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
     require_manager, require_permission
 from ..server import permissions
 from ..session_manager import generate_session_token
+
 
 LOG = get_logger('server')
 
@@ -94,7 +101,7 @@ class ThriftAuthHandler:
 
     @timeit
     def getAcceptedAuthMethods(self):
-        return ["Username:Password"]
+        return ["Username:Password", "oauth"]
 
     @timeit
     def getAccessControl(self):
@@ -143,6 +150,114 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
+    def insertDataOauth(self, state, code_verifier, provider):
+        """
+        Insert the state code and verification code into the database
+        """
+
+        # remove all the expired state codes from the database
+        try:
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with DBSession(self.__config_db) as session:
+                session.execute("DELETE FROM oauth_sessions "
+                                "WHERE expires_at "
+                                "< DATETIME(\"" + date + "\")")
+                session.commit()
+            LOG.info("Expired state, validation codes removed successfully.")
+        except sqlite3.Error as e:
+            LOG.error(f"An error occurred: {e}")
+
+        # Insert the state code into the database
+        try:
+            with DBSession(self.__config_db) as session:
+                LOG.debug(f"State {state} insertion started.")
+                date = (datetime.datetime.now() +
+                        datetime.timedelta(minutes=15))
+
+                new_state = OAuthSession(state=state,
+                                         code_verifier=code_verifier,
+                                         expires_at=date,
+                                         provider=provider)
+                session.add(new_state)
+                session.commit()
+                LOG.debug("State inserted into the database")
+
+                oauth_data_id = session.query(OAuthSession) \
+                    .filter(
+                        OAuthSession.state == new_state.state
+                        and
+                        OAuthSession.expires_at == new_state.expires_at
+                        and
+                        OAuthSession.code_verifier == new_state.code_verifier
+                        and
+                        OAuthSession.provider == new_state.provider
+                    ).first().id
+
+                LOG.debug("FETCHED STATE ID")
+                LOG.debug("State %s inserted successfully", state)
+                LOG.debug("verifier %s inserted sucessfully ", code_verifier)
+            return oauth_data_id
+        except sqlite3.Error as e:
+            LOG.error(f"An error occurred: {e}")  # added here re1move
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data insertion failed. Please try again.")
+
+    @timeit
+    def getOauthProviders(self):
+        return self.__manager.get_oauth_providers()
+
+    @timeit
+    def createLink(self, provider):
+        """
+        For creating a autehntication link for OAuth for specified provider
+        """
+        oauth_config = self.__manager.get_oauth_config(provider)
+        if not oauth_config.get('enabled'):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth authentication is not enabled.")
+
+        stored_state = generate_token()
+        client_id = oauth_config["oauth_client_id"]
+        client_secret = oauth_config["oauth_client_secret"]
+        scope = oauth_config["oauth_scope"]
+        authorization_uri = oauth_config["oauth_authorization_uri"]
+        callback_url = oauth_config["oauth_callback_url"]
+        # code verifier for PKCE
+        pkce_verifier = generate_token(48)
+
+        # Create an OAuth2Session instance
+        session = OAuth2Session(
+            client_id,
+            client_secret,
+            scope=scope,
+            redirect_uri=callback_url,
+            code_challenge_method='S256'
+            )
+
+        # Create authorization URL
+        nonce = generate_token()
+        url, state = session.create_authorization_url(
+            authorization_uri,
+            nonce=nonce,
+            state=stored_state,
+            code_verifier=pkce_verifier
+            )
+
+        # Save the state and nonce to the database
+        oauth_data_id = self.insertDataOauth(state=state,
+                                             code_verifier=pkce_verifier,
+                                             provider=provider)
+        if not oauth_data_id:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data insertion failed.")
+
+        LOG.debug("State inserted successfully with ID %s", oauth_data_id)
+        return url + "&oauth_data_id=" + str(oauth_data_id)
+
+    @timeit
     def performLogin(self, auth_method, auth_string):
         if not auth_string:
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -167,6 +282,142 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
 
+        elif auth_method == "oauth":
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            provider, url = auth_string.split("@")
+            url_new = urlparse(url)
+            parsed_query = parse_qs(url_new.query)
+            code = parsed_query.get("code")[0]
+            state = parsed_query.get("state")[0]
+            cc = parsed_query.get("code_challenge")[0]
+            cc_method = parsed_query.get("code_challenge_method")[0]
+            oauth_data_id = parsed_query.get("oauth_data_id")[0]
+            # for code verifier from created link and original
+            code_verifier_db = None
+            state_db = None
+            provider_db = None
+            expires_at = None
+
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                           .filter(OAuthSession.id == oauth_data_id) \
+                           .first()
+
+            if str(state_db) != state or str(provider_db) != provider \
+                    or str(date_time) > str(expires_at):
+                LOG.error("State code mismatch.")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Something went wrong. Please try again.")
+
+            oauth_config = self.__manager.get_oauth_config(provider)
+            if not oauth_config.get('enabled'):
+                LOG.error("OAuth authentication is " +
+                          "not enabled for provider: %s", provider)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth authentication is not enabled.")
+
+            client_id = oauth_config["oauth_client_id"]
+            client_secret = oauth_config["oauth_client_secret"]
+            scope = oauth_config["oauth_scope"]
+            token_url = oauth_config["oauth_token_uri"]
+            user_info_url = oauth_config["oauth_user_info_uri"]
+            callback_url = oauth_config["oauth_callback_url"]
+            allowed_users = oauth_config.get("allowed_users", [])
+            LOG.info("OAuth configuration loaded for provider: %s", provider)
+            session = None
+            try:
+                session = OAuth2Session(
+                    client_id,
+                    client_secret,
+                    scope=scope,
+                    redirect_uri=callback_url,
+                    code_challenge_method='S256'
+                    )
+
+            except Exception as ex:
+                LOG.error("OAuth2Session creation failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth2Session creation failed.")
+
+            # FIXME: This is a workaround for the Microsoft OAuth2 provider
+            # which doesn't correctly fetch the code from url.
+            # the workaround is to construct the url manually
+
+            url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
+                "?code=" + code + "&state=" + state + \
+                "&code_challenge=" + cc + \
+                "&code_challenge_method=" + cc_method
+
+            LOG.info("URL has been constructed successfully")
+            token = None
+            try:
+                # code_verifier_db is not supported for github provider
+                # if it will be fixed the code should adjust automatically
+                token = session.fetch_token(
+                    url=token_url,
+                    authorization_response=url,
+                    code_verifier=code_verifier_db)
+            except Exception as ex:
+                LOG.error("Token fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Token fetch failed.")
+            LOG.info("Token fetched successfully for provider: %s", provider)
+
+            user_info = None
+            username = None
+
+            try:
+                user_info = session.get(user_info_url).json()
+                username = user_info[
+                    oauth_config["oauth_user_info_mapping"]["username"]]
+                LOG.info("User info fetched, username: %s", username)
+            except Exception as ex:
+                LOG.error("User info fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User info fetch failed.")
+
+            if provider == "github" and \
+                    "localhost" not in user_info_url:
+                try:
+                    link = "https://api.github.com/user/emails"
+                    for email in session.get(link).json():
+                        if email['primary']:
+                            username = email['email']
+                            LOG.info("Primary email found: %s", username)
+                            break
+                except Exception as ex:
+                    LOG.error("Email fetch failed: %s", str(ex))
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "Email fetch failed.")
+
+            if allowed_users == ["*"] or username in allowed_users:
+                LOG.info("User %s is authorized.", username)
+                session = self.__manager.create_session_oauth(
+                    provider, username, token['access_token'])
+                return session.token
+
+            if len(allowed_users) == 0:
+                LOG.error("The allowed users list is empty.")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
+
+            LOG.error("User %s is not authorized " +
+                      "to access this service.", username)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
+        LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
