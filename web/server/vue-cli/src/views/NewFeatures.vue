@@ -2,8 +2,6 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
-
-
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
@@ -42,19 +40,17 @@
             <template v-slot:title>
               New Static HTML Report Pages
             </template>
-             The static HTML generation is rewritten so it can handle much larger result set.
+            The static HTML generation is rewritten so it can handle much larger result set.
           </new-feature-item>
 
           <new-feature-item>
             <template v-slot:title>
               New report filter to list closed and outstanding reports
             </template>
-             A new filter has been added to list outstanding and closed reports. An outstanding report is a report with detection status new, reopened, unresolved with review status unreviewed or confirmed.
+            A new filter has been added to list outstanding and closed reports. An outstanding report is a report with detection status new, reopened, unresolved with review status unreviewed or confirmed.
           </new-feature-item>
-
         </new-release-item>
       </v-timeline-item>
-
 
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">

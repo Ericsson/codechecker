@@ -21,6 +21,7 @@ import shutil
 import unittest
 
 from codechecker_api_shared.ttypes import Permission
+from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
@@ -154,8 +155,8 @@ class TestProductConfigShare(unittest.TestCase):
                 description_b64=name,
                 connection=DatabaseConnection(
                     engine='sqlite',
-                    host='',
-                    port=0,
+                    host=None,
+                    port=None,
                     username_b64='',
                     password_b64='',
                     database=os.path.join(self.test_workspace_secondary,
@@ -169,8 +170,10 @@ class TestProductConfigShare(unittest.TestCase):
 
         product_cfg = create_test_product('producttest_second 2',
                                           'producttest_second_2')
-        self.assertTrue(self._pr_client_2.addProduct(product_cfg),
-                        "Cannot create product on secondary server.")
+
+        # expect request to fail, cannot connect 2 products to 1 database
+        with self.assertRaises(RequestFailed):
+            self._pr_client_2.addProduct(product_cfg)
 
         # Product name full string match.
         products = self._pr_client_2.getProducts('producttest_second', None)
@@ -182,10 +185,10 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Product name substring match.
         products = self._pr_client_2.getProducts('producttest_second*', None)
-        self.assertEqual(len(products), 2)
+        self.assertEqual(len(products), 1)
 
         products = self._pr_client_2.getProducts(None, 'producttest_second*')
-        self.assertEqual(len(products), 2)
+        self.assertEqual(len(products), 1)
 
         # Use the same CodeChecker config that was used on the main server,
         # but store into the secondary one.
