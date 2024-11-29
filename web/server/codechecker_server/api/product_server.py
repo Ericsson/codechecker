@@ -417,7 +417,7 @@ class ThriftProductHandler:
 
         # Add database before letting product connect to it
         if self.__add_product_support(product):
-            LOG.info("Database support added successfully.")
+            LOG.info("Database created successfully.")
 
         # Some values come encoded as Base64, decode these.
         displayed_name = convert.from_b64(product.displayedName_b64) \
