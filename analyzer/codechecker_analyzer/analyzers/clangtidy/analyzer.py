@@ -288,6 +288,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 ("clang-diagnostic-" + warning, "")
                 for warning in get_warnings())
 
+            checker_description.append(("clang-diagnostic-error",
+                                        "Indicates compiler errors."))
+
             cls.__analyzer_checkers = checker_description
 
             return checker_description
