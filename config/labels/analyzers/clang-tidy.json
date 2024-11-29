@@ -2345,7 +2345,10 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-error": [
-      "severity:CRITICAL"
+      "severity:CRITICAL",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "clang-diagnostic-exceptions": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wexceptions",
