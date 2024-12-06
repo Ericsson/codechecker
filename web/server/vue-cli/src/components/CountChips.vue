@@ -89,7 +89,7 @@ export default {
   },
   props: {
     tag: { type: String, default: "span" },
-    numGood: { type: Number, required: true },
+    numGood: { type: Number, default: 0 },
     numBad: { type: Number, default: 0 },
     numTotal: { type: Number, default: 0 },
     goodText: { type: String, default: "" },

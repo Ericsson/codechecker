@@ -390,7 +390,8 @@ export default {
     showReviewStatus: { type: Boolean, default: true },
     showRemoveFilteredReports: { type: Boolean, default: true },
     showDiffType: { type: Boolean, default: true },
-    reportCount: { type: Number, required: true }
+    reportCount: { type: Number, required: true },
+    refreshFilter: { type: Boolean, default: false }
   },
 
   data() {
@@ -410,6 +411,15 @@ export default {
         return state[this.namespace].cmpData;
       }
     }),
+  },
+
+  watch: {
+    refreshFilter(state) {
+      if (!state) return;
+
+      this.initByUrl();
+      this.$emit("set-refresh-filter-state", false);
+    }
   },
 
   mounted() {
