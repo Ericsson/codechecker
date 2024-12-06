@@ -71,12 +71,20 @@ class Context(metaclass=Singleton):
         # Original caller environment of CodeChecker for external binaries
         self.__original_env = None
 
-        self.logger_lib_dir_path = os.path.join(
-            self._data_files_dir_path, 'ld_logger', 'lib')
+        # Find the path which has the architectures for the built ld_logger
+        # shared objects.
+        ld_logger_path = Path(self._data_files_dir_path, "ld_logger", "lib")
+        if not ld_logger_path.is_dir():
+            ld_logger_path = Path(
+                self._lib_dir_path, "codechecker_analyzer", "ld_logger", "lib"
+            )
 
-        if not os.path.exists(self.logger_lib_dir_path):
-            self.logger_lib_dir_path = os.path.join(
-                self._lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib')
+        # Add all children (architecture) paths to be later used in the
+        # LD_LIBRARY_PATH environment variable during logging of compiler
+        # invocations.
+        self.logger_lib_dir_path = ":".join(
+            [str(arch) for arch in ld_logger_path.iterdir() if arch.is_dir()]
+        )
 
         self.logger_bin = None
         self.logger_file = None

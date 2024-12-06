@@ -76,24 +76,18 @@ LIB_DIR = $(BUILD_DIR)/lib
 all: ldlogger ldlogger_32.so ldlogger_64.so pack32bit pack64bit
 
 pack32bit: 32bit packbin
-	for x86dir in 'i386' 'i486' 'i586' 'i686'; do \
-		mkdir -p $(LIB_DIR)/$$x86dir ; \
-		cp ldlogger_32.so $(LIB_DIR)/$$x86dir/ldlogger.so ; \
-	done
+	mkdir -p $(LIB_DIR)/32bit ; \
+	cp ldlogger_32.so $(LIB_DIR)/32bit/ldlogger.so ; \
 	rm -f ldlogger_32.so
 
 pack64bit: 64bit packbin
-	for x8664dir in 'x86_64'; do \
-		mkdir -p $(LIB_DIR)/$$x8664dir ; \
-		cp ldlogger_64.so $(LIB_DIR)/$$x8664dir/ldlogger.so ; \
-	done
+	mkdir -p $(LIB_DIR)/64bit ; \
+	cp ldlogger_64.so $(LIB_DIR)/64bit/ldlogger.so ; \
 	rm -f ldlogger_64.so
 
 pack64bit_only: 64bit_only packbin64
-	for x8664dir in 'x86_64'; do \
-		mkdir -p $(LIB_DIR)/$$x8664dir ; \
-		cp ldlogger_64.so $(LIB_DIR)/$$x8664dir/ldlogger.so ; \
-	done
+	mkdir -p $(LIB_DIR)/64bit ; \
+	cp ldlogger_64.so $(LIB_DIR)/64bit/ldlogger.so ; \
 	rm -f ldlogger_64.so
 
 # pack binary

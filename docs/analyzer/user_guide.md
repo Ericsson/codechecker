@@ -793,7 +793,10 @@ If this is not possible, you can work around the situation by
 specifying the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
 
 ```sh
-LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/x86_64/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+# For 64-bit compilers
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/64bit/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+# For 32-bit compilers
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/32bit/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
 ```
 
 #### Change user inside the build command
