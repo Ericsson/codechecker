@@ -773,8 +773,11 @@ LLVM/Clang community, and thus discouraged.
                                     "between the checker prefix "
                                     "group/profile/guideline name, the use of "
                                     "one of the following labels is "
-                                    "mandatory: 'prefix:', 'profile:', "
-                                    "'guideline:'.")
+                                    "mandatory: 'checker:', 'prefix:', "
+                                    "'profile:', 'guideline:'. If a checker "
+                                    "name matches multiple checkers as a "
+                                    "prefix, 'checker:' or 'prefix:' "
+                                    "namespace is required")
 
     checkers_opts.add_argument('-d', '--disable',
                                dest="disable",
@@ -792,8 +795,11 @@ LLVM/Clang community, and thus discouraged.
                                     "between the checker prefix "
                                     "group/profile/guideline name, the use of "
                                     "one of the following labels is "
-                                    "mandatory: 'prefix:', 'profile:', "
-                                    "'guideline:'.")
+                                    "mandatory: 'checker:', 'prefix:', "
+                                    "'profile:', 'guideline:'. If a checker "
+                                    "name matches multiple checkers as a "
+                                    "prefix, 'checker:' or 'prefix:' "
+                                    "namespace is required")
 
     checkers_opts.add_argument('--enable-all',
                                dest="enable_all",

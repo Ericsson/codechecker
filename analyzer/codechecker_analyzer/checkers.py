@@ -19,12 +19,7 @@ def available(ordered_checkers, available_checkers):
     """
     missing_checkers = set()
     for checker_name, _ in ordered_checkers:
-        # TODO: This label list shouldn't be hard-coded here.
-        if checker_name.startswith('profile:') or \
-                checker_name.startswith('guideline:') or \
-                checker_name.startswith('severity:') or \
-                checker_name.startswith('sei-cert:') or \
-                checker_name.startswith('prefix:'):
+        if ":" in checker_name:
             continue
 
         name_match = False
