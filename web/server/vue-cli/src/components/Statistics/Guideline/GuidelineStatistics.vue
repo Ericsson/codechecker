@@ -46,7 +46,7 @@
           icon="mdi-information"
           class="mt-2"
         >
-          In this statistics only the "Run / Tag Filter" 
+          In this statistics only the "Run / Tag Filter"
           and the "Unique reports" are effective.
         </v-alert>
 
@@ -54,7 +54,7 @@
           <v-row align="center">
             <v-col cols="3">
               <v-select
-                v-model="selectedGuidelineNames"
+                v-model="selectedGuidelineIndexes"
                 :items="guidelineOptions"
                 item-text="name"
                 label="Select guidelines"
@@ -90,7 +90,7 @@
             color="deep-orange"
             outlined
           >
-            The guideline statistics is not available 
+            The guideline statistics is not available
             for
             <span
               style="cursor: pointer; text-decoration: underline;"
@@ -160,10 +160,16 @@ export default {
   data() {
     // If there were more guideline types,
     // we could list the existing guidelines here.
-    const guidelineOptions = [ 
+    const guidelineOptions = [
       {
-        id: "sei-cert",
-        name: "SEI CERT Coding Standard"
+        id: "sei-cert-c",
+        name: "SEI CERT Coding Standard (C)",
+        value: 0
+      },
+      {
+        id: "sei-cert-cpp",
+        name: "SEI CERT Coding Standard (C++)",
+        value: 1
       }
     ];
 
@@ -178,7 +184,7 @@ export default {
       runs: null,
       runData: [],
       selectedCheckerName: null,
-      selectedGuidelineNames: [ guidelineOptions[0] ],
+      selectedGuidelineIndexes: [ 0, 1 ],
       showRuns: {
         enabled: false,
         disabled: false,
@@ -196,9 +202,9 @@ export default {
       ).includes(run.runId)).map(run => run.runName);
     },
 
-    selectedGuidelines() { 
-      return this.selectedGuidelineNames.map(guidelineName => new Guideline({
-        guidelineName: guidelineName.id
+    selectedGuidelines() {
+      return this.selectedGuidelineIndexes.map(idx => new Guideline({
+        guidelineName: this.guidelineOptions[idx].id
       }));
     }
   },
@@ -231,7 +237,7 @@ export default {
                       outstanding: stat[checkerId].outstanding.toNumber(),
                     };
                   })
-                  : (rule.checkers.length ? 
+                  : (rule.checkers.length ?
                     rule.checkers.map(checker => {
                       return {
                         name: checker.checkerName,
@@ -307,7 +313,7 @@ export default {
     async getRunData() {
       const limit = MAX_QUERY_SIZE;
       let offset = 0;
-      
+
       const filter = new RunFilter({
         ids: this.runIds
       });
@@ -334,7 +340,7 @@ export default {
         });
         runs.push(...limitedRuns);
       }
-       
+
       return runs;
     },
 
@@ -379,7 +385,7 @@ export default {
             return null;
           }
         }))).filter(element => element !== null);
-      
+
       this.runs = runs;
       this.loading = false;
     },

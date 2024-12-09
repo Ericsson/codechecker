@@ -15,7 +15,8 @@
     "UNSPECIFIED": "Checker severity is not specified for a checker."
   },
   "guideline": {
-    "sei-cert": "https://wiki.sei.cmu.edu/confluence/display/seccode",
+    "sei-cert-c": "https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard",
+    "sei-cert-cpp": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
     "misra-c": "https://www.misra.org.uk/"
   }
 }
