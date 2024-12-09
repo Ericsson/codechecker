@@ -61,13 +61,11 @@ export default {
 
       if (params.code != null && params.state != null) {
 
-        const oauth_data_id = localStorage.getItem("oauth_data_id");
-        const fullUrl = `${url}&oauth_data_id=${oauth_data_id}`;
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
             provider: provider,
-            url: fullUrl
+            url: url
           })
           .then(() => {
             this.success = true;

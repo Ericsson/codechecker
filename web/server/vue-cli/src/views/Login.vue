@@ -219,9 +219,6 @@ export default {
         if (url) {
           this.success = false;
           this.error = false;
-          const params = new URLSearchParams(url);
-          localStorage.setItem("oauth_data_id",
-            params.get("oauth_data_id"));
 
           window.location.href = url;
         } else {

@@ -198,12 +198,11 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state, oauth_data_id, code_challenge, code_challenge_method = \
-            data['code'], data['state'], data['oauth_data_id'], \
+        code, state, code_challenge, code_challenge_method = \
+            data['code'], data['state'], \
             data['code_challenge'], \
             data['code_challenge_method']
         auth_string = f"{link}?code={code}&state={state}" \
-            f"&oauth_data_id={oauth_data_id}" \
             f"&code_challenge_method={code_challenge_method}" \
             f"&code_challenge={code_challenge}"
 

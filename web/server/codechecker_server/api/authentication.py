@@ -180,25 +180,11 @@ class ThriftAuthHandler:
                                          provider=provider)
                 session.add(new_state)
                 session.commit()
-                LOG.debug("State inserted into the database")
 
-                oauth_data_id = session.query(OAuthSession) \
-                    .filter(
-                        OAuthSession.state == new_state.state
-                        and
-                        OAuthSession.expires_at == new_state.expires_at
-                        and
-                        OAuthSession.code_verifier == new_state.code_verifier
-                        and
-                        OAuthSession.provider == new_state.provider
-                    ).first().id
+                LOG.info("State inserted successfully.")
 
-                LOG.debug("FETCHED STATE ID")
-                LOG.debug("State %s inserted successfully", state)
-                LOG.debug("verifier %s inserted sucessfully ", code_verifier)
-            return oauth_data_id
         except sqlite3.Error as e:
-            LOG.error(f"An error occurred: {e}")  # added here re1move
+            LOG.error(f"An error occurred: {e}")
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "OAuth data insertion failed. Please try again.")
@@ -242,17 +228,12 @@ class ThriftAuthHandler:
             state=stored_state,
             code_verifier=pkce_verifier
             )
-        # Save the state and nonce to the database
-        oauth_data_id = self.insertDataOauth(state=state,
-                                             code_verifier=pkce_verifier,
-                                             provider=provider)
-        if not oauth_data_id:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth data insertion failed.")
+        # inserting data in database
+        self.insertDataOauth(state=state,
+                             code_verifier=pkce_verifier,
+                             provider=provider)
 
-        LOG.info("Data inserted successfully with ID %s", oauth_data_id)
-        return url + "&oauth_data_id=" + str(oauth_data_id)
+        return url
 
     @timeit
     def performLogin(self, auth_method, auth_string):
@@ -286,8 +267,6 @@ class ThriftAuthHandler:
             parsed_query = parse_qs(url_new.query)
             code = parsed_query.get("code")[0]
             state = parsed_query.get("state")[0]
-            oauth_data_id = parsed_query.get("oauth_data_id")[0]
-            # for code verifier from created link and original
             code_verifier_db = None
             state_db = None
             provider_db = None
@@ -299,7 +278,7 @@ class ThriftAuthHandler:
                                   OAuthSession.code_verifier,
                                   OAuthSession.provider,
                                   OAuthSession.expires_at) \
-                           .filter(OAuthSession.id == oauth_data_id) \
+                           .filter(OAuthSession.state == state) \
                            .first()
 
             if str(state_db) != state or str(provider_db) != provider \
@@ -344,7 +323,7 @@ class ThriftAuthHandler:
 
             # recreating the url for pkce purpose
             # no way to get the original session so recreate it
-            # no returning url or state
+
             url_recreated = session.create_authorization_url(
                 authorization_uri,
                 state=state_db,
