@@ -154,7 +154,7 @@ class TestCmdline(unittest.TestCase):
         """ Listing checkers by guideline. """
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'sei-cert']
+                        '--guideline', 'sei-cert-cpp']
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertIn('cert-dcl58-cpp', out)
