@@ -211,7 +211,6 @@ export default {
     oauth(provider) {
       new Promise(resolve => {
         localStorage.setItem("oauth_provider", provider);
-        // console output the provider for debugging
         authService.getClient().createLink(provider,
           handleThriftError(url => {
             resolve(url);
@@ -221,14 +220,8 @@ export default {
           this.success = false;
           this.error = false;
           const params = new URLSearchParams(url);
-          localStorage.setItem("oauth_state",
-            params.get("state"));
           localStorage.setItem("oauth_data_id",
             params.get("oauth_data_id"));
-          localStorage.setItem("code_challenge",
-            params.get("code_challenge"));
-          localStorage.setItem("method",
-            params.get("code_challenge_method"));
 
           window.location.href = url;
         } else {

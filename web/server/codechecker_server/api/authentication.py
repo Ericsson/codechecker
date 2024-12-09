@@ -237,14 +237,11 @@ class ThriftAuthHandler:
             )
 
         # Create authorization URL
-        nonce = generate_token()
         url, state = session.create_authorization_url(
             authorization_uri,
-            nonce=nonce,
             state=stored_state,
             code_verifier=pkce_verifier
             )
-
         # Save the state and nonce to the database
         oauth_data_id = self.insertDataOauth(state=state,
                                              code_verifier=pkce_verifier,
@@ -254,7 +251,7 @@ class ThriftAuthHandler:
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "OAuth data insertion failed.")
 
-        LOG.debug("State inserted successfully with ID %s", oauth_data_id)
+        LOG.info("Data inserted successfully with ID %s", oauth_data_id)
         return url + "&oauth_data_id=" + str(oauth_data_id)
 
     @timeit
@@ -289,8 +286,6 @@ class ThriftAuthHandler:
             parsed_query = parse_qs(url_new.query)
             code = parsed_query.get("code")[0]
             state = parsed_query.get("state")[0]
-            cc = parsed_query.get("code_challenge")[0]
-            cc_method = parsed_query.get("code_challenge_method")[0]
             oauth_data_id = parsed_query.get("oauth_data_id")[0]
             # for code verifier from created link and original
             code_verifier_db = None
@@ -325,6 +320,7 @@ class ThriftAuthHandler:
             client_id = oauth_config["oauth_client_id"]
             client_secret = oauth_config["oauth_client_secret"]
             scope = oauth_config["oauth_scope"]
+            authorization_uri = oauth_config["oauth_authorization_uri"]
             token_url = oauth_config["oauth_token_uri"]
             user_info_url = oauth_config["oauth_user_info_uri"]
             callback_url = oauth_config["oauth_callback_url"]
@@ -346,6 +342,19 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth2Session creation failed.")
 
+            # recreating the url for pkce purpose
+            # no way to get the original session so recreate it
+            # no returning url or state
+            url_recreated = session.create_authorization_url(
+                authorization_uri,
+                state=state_db,
+                code_verifier=code_verifier_db
+                )[0]
+
+            hashed_challenge = urlparse(url_recreated)
+            parsed_query_r = parse_qs(hashed_challenge.query)
+            cc = parsed_query_r.get("code_challenge")[0]
+
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
             # the workaround is to construct the url manually
@@ -353,12 +362,12 @@ class ThriftAuthHandler:
             url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
                 "?code=" + code + "&state=" + state + \
                 "&code_challenge=" + cc + \
-                "&code_challenge_method=" + cc_method
+                "&code_challenge_method=S256"
 
             LOG.info("URL has been constructed successfully")
             token = None
             try:
-                # code_verifier_db is not supported for github provider
+                # code_verifier_db or PKCE is't supported by github
                 # if it will be fixed the code should adjust automatically
                 token = session.fetch_token(
                     url=token_url,

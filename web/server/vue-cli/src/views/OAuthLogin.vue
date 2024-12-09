@@ -55,26 +55,14 @@ export default {
 
   methods: {
     detectCallback() {
-      const url = this.$route.query;
+      const params = this.$route.query;
+      const url = window.location.href;
       const provider = this.$route.params.provider;
-      const state = localStorage.getItem("oauth_state");
-      const code_challenge = localStorage.getItem("code_challenge");
-      const method = localStorage.getItem("method");
 
-      if (url.code != null && url.state != null) {
-        if (url.state != state) {
-          this.errorMsg = "Invalid state!";
-          this.error = true;
-          this.callback = true;
-          return;
-        }
+      if (params.code != null && params.state != null) {
 
         const oauth_data_id = localStorage.getItem("oauth_data_id");
-        const baseUrl = window.location.href.replace("#", "");
-        const baseUrlOAuthId = `${baseUrl}&oauth_data_id=${oauth_data_id}`;
-        const baseMethod = `${baseUrlOAuthId}&code_challenge_method=${method}`;
-        const fullUrl = `${baseMethod}&code_challenge=${code_challenge}`;
-
+        const fullUrl = `${url}&oauth_data_id=${oauth_data_id}`;
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
@@ -93,7 +81,7 @@ export default {
             this.$router.replace({ name: "login" });
           });
       }
-    }
+    },
   }
 };
 </script>
