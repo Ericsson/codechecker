@@ -423,7 +423,7 @@ class RunResults(unittest.TestCase):
         div_zero_labels = set([
             "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
             "#core-dividezero-c-c-objc",
-            "guideline:sei-cert",
+            "guideline:sei-cert-c",
             "profile:default",
             "profile:extreme",
             "profile:security",
