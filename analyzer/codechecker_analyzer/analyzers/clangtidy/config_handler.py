@@ -41,13 +41,3 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
                 return
 
         super().add_checker(checker_name, description, state)
-
-    def set_checker_enabled(self, checker_name, enabled=True):
-        """
-        Enable checker, keep description if already set.
-        """
-        if checker_name.startswith('W') or \
-           checker_name.startswith('clang-diagnostic'):
-            self.add_checker(checker_name)
-
-        super().set_checker_enabled(checker_name, enabled)
