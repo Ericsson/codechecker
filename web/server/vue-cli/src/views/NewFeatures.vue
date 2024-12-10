@@ -1326,7 +1326,7 @@ analyzer:
           </new-feature-item>
 
           <new-feature-item>
-            <template v-slot:title>unused
+            <template v-slot:title>
               New report converter for Markdownlint results
             </template>
             The reports from Markdownlint can be converted and stored to the

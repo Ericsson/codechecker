@@ -154,21 +154,21 @@ class TestCmdline(unittest.TestCase):
         """ Listing checkers by guideline. """
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'sei-cert']
+                        '--guideline', 'sei-cert-cpp']
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertIn('cert-dcl58-cpp', out)
         self.assertNotIn('android', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'sei-cert:mem35-c']
+                        '--guideline', 'sei-cert-c:mem35-c']
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertIn('MallocSizeof', out)
         self.assertNotIn('CastToStruct', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'sei-cert:mem35-c', '-o', 'json',
+                        '--guideline', 'sei-cert-c:mem35-c', '-o', 'json',
                         '--details']
         _, out, _ = run_cmd(checkers_cmd)
         out = json.loads(out)

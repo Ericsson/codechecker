@@ -424,12 +424,12 @@ class RunResults(unittest.TestCase):
         div_zero_labels = set([
             "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
             "#core-dividezero-c-c-objc",
-            "guideline:sei-cert",
+            "guideline:sei-cert-c",
             "profile:default",
             "profile:extreme",
             "profile:security",
             "profile:sensitive",
-            "sei-cert:int33-c",
+            "sei-cert-c:int33-c",
             "severity:HIGH"
         ])
 
@@ -455,14 +455,14 @@ class RunResults(unittest.TestCase):
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
         self.assertEqual(set(checker_labels[1]), set())
 
-    def test_get_guidelime_rules(self):
-        sei_cert_gl = Guideline("sei-cert")
+    def test_get_guideline_rules(self):
+        sei_cert_gl = Guideline("sei-cert-cpp")
         guideline_rules = self._cc_client.getGuidelineRules([sei_cert_gl])
         self.assertNotEqual(len(guideline_rules), 0)
 
-        self.assertEqual(list(guideline_rules.keys())[0], "sei-cert")
+        self.assertEqual(list(guideline_rules.keys())[0], "sei-cert-cpp")
 
-        sei_cert_rules = guideline_rules["sei-cert"]
+        sei_cert_rules = guideline_rules["sei-cert-cpp"]
         sei_cert_rulenames = map(lambda r: r.ruleId, sei_cert_rules)
         self.assertIn("con54-cpp", sei_cert_rulenames)
 
