@@ -19,6 +19,7 @@ import sys
 from codechecker_analyzer.arg import analyzer_binary
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json
 from pathlib import Path
@@ -52,6 +53,9 @@ class Context(metaclass=Singleton):
         if 'CC_TEST_LABELS_DIR' in os.environ:
             labels_dir = os.environ['CC_TEST_LABELS_DIR']
 
+        guidelines_dir = os.path.join(self._data_files_dir_path,
+                                      'config', 'guidelines')
+
         cfg_dict = self.__get_package_config()
         self.env_vars = cfg_dict['environment_variables']
 
@@ -59,6 +63,7 @@ class Context(metaclass=Singleton):
         self.pckg_layout = lcfg_dict['runtime']
 
         self._checker_labels = CheckerLabels(labels_dir)
+        self._guidelines = Guidelines(guidelines_dir)
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -377,6 +382,10 @@ class Context(metaclass=Singleton):
     @property
     def checker_labels(self):
         return self._checker_labels
+
+    @property
+    def guideline(self):
+        return self._guidelines
 
 
 def get_context():

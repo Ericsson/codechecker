@@ -2,6 +2,7 @@
   <v-data-table
     :disable-pagination="true"
     :hide-default-footer="true"
+    :custom-sort="customSort"
     :must-sort="true"
     class="elevation-0"
     v-bind="{ ...$props, ...$attrs }"
@@ -350,6 +351,185 @@
         </div>
       </div>
     </template>
+    
+    <template #item.guidelineRule="{ item }">
+      <a
+        :href="item.guidelineUrl"
+        target="_blank"
+      >
+        {{ item.guidelineRule }}
+      </a>
+    </template>
+
+    <template 
+      #item.checkers.name="{ item }"
+    >
+      <div 
+        v-if="item.checkers && item.checkers.length === 0"
+      >
+        none
+      </div>
+      <div v-else class="guideline-statistics">
+        <table>
+          <tr v-for="checker in item.checkers" :key="checker.name">
+            <td>
+              <router-link
+                :to="{ name: 'reports', query: {
+                  ...$router.currentRoute.query,
+                  ...(item.$queryParams || {}),
+                  'checker-name': checker.name
+                }}"
+              >
+                {{ checker.name }}
+              </router-link>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </template>
+
+    <template 
+      #item.checkers.severity="{ item }"
+    >
+      <div 
+        v-if="item.checkers && item.checkers.length === 0"
+        class="text-center"
+      >
+        none
+      </div>
+      <div v-else class="guideline-statistics">
+        <table>
+          <tr v-for="checker in item.checkers" :key="checker.name">
+            <td>
+              <severity-icon :status="checker.severity" />
+            </td>
+          </tr>
+        </table>
+      </div>
+    </template>
+
+    <template 
+      #item.checkers.enabledInAllRuns="{ item }"
+    >
+      <div 
+        v-if="item.checkers && item.checkers.length === 0"
+        class="text-center"
+      >
+        none
+      </div>
+      <div v-else class="guideline-statistics">
+        <table>
+          <tr v-for="checker in item.checkers" :key="checker.name">
+            <td>
+              <div v-if="checker.enabledInAllRuns">
+                <count-chips
+                  :num-good="checker.enabledRunLength"
+                  :good-text="'Number of runs where checker was enabled'"
+                  :show-dividers="false"
+                  :show-zero-chips="false"
+                  @showing-good-click="$emit(
+                    'enabled-click', 'enabled', checker.name)"
+                />
+              </div>
+              <div v-else-if="checker.enabledRunLength">
+                <count-chips
+                  :num-good="checker.enabledRunLength"
+                  :num-bad="checker.disabledRunLength"
+                  :good-text="'Number of runs where checker was enabled'"
+                  :bad-text="'Number of runs where checker was disabled'"
+                  :show-dividers="false"
+                  :show-zero-chips="false"
+                  @showing-good-click="$emit(
+                    'enabled-click', 'enabled', checker.name)"
+                  @showing-bad-click="$emit(
+                    'enabled-click', 'disabled', checker.name)"
+                />
+              </div>
+              <div v-else>
+                <count-chips
+                  :num-bad="checker.disabledRunLength"
+                  :bad-text="'Number of runs where checker was disabled'"
+                  :show-dividers="false"
+                  :show-zero-chips="false"
+                  @showing-bad-click="$emit(
+                    'enabled-click', 'disabled', checker.name)"
+                />
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </template>
+
+    <template 
+      #item.checkers.outstanding="{ item }"
+    >
+      <div 
+        v-if="item.checkers && item.checkers.length === 0"
+        class="text-center"
+      >
+        none
+      </div>
+      <div v-else class="guideline-statistics">
+        <table>
+          <tr v-for="checker in item.checkers" :key="checker.name">
+            <td v-if="checker.outstanding">
+              <router-link
+                :to="{ name: 'reports', query: {
+                  ...uniqueMode,
+                  ...getBaseQueryParams({
+                    checker: checker.name,
+                    severity: checker.severity}),
+                  'report-status': reportStatusFromCodeToString(
+                    ReportStatus.OUTSTANDING
+                  )
+                }}"
+              >
+                {{ checker.outstanding }}
+              </router-link>
+            </td>
+            <td v-else>
+              {{ checker.outstanding }}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </template>
+
+    <template 
+      #item.checkers.closed="{ item }"
+    >
+      <div 
+        v-if="item.checkers && item.checkers.length === 0"
+        class="text-center"
+      >
+        none
+      </div>
+      <div v-else class="guideline-statistics">
+        <table>
+          <tr v-for="checker in item.checkers" :key="checker.name">
+            <!-- <td>{{ checker.closed }}</td> -->
+            <td v-if="checker.closed">
+              <router-link
+                :to="{ name: 'reports', query: {
+                  ...uniqueMode,
+                  ...getBaseQueryParams({
+                    checker: checker.name,
+                    severity: checker.severity}),
+                  'report-status': reportStatusFromCodeToString(
+                    ReportStatus.CLOSED)
+                }}"
+              >
+                {{ checker.closed }}
+              </router-link>
+            </td>
+            <td v-else>
+              {{ checker.closed }}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </template>
 
     <template v-if="necessaryTotal" slot="body.append">
       <tr>
@@ -472,6 +652,62 @@ export default {
         display: guidelineRule.rules.length > 1 ? "block" : "inline-block",
         "margin-left": guidelineRule.rules.length > 1 ? "1em" : "0"
       };
+    },
+
+    customSort(items, sortBy, sortDesc) {
+      return items.sort((a, b) => {
+        let result = 0;
+
+        sortBy.forEach((column, index) => {
+          if (result !== 0) return;
+
+          let aValue, bValue;
+          if (column.startsWith("checkers.")) {
+            const prop = column.split("checkers.")[1];
+
+            aValue = this.getNestedTableContent(
+              a.checkers, prop, sortDesc[index]);
+            bValue = this.getNestedTableContent(
+              b.checkers, prop, sortDesc[index]);
+          }      
+          else {
+            aValue = a[column];
+            bValue = b[column];
+          }
+
+          if (aValue < bValue) {
+            result = sortDesc[index] ? 1 : -1;
+          } else if (aValue > bValue) {
+            result = sortDesc[index] ? -1 : 1;
+          }
+        });
+
+        return result;
+      });
+    },
+
+    getNestedTableContent(checkers, prop, descending) {
+      if (checkers && checkers.length > 0) {
+        if (prop === "enabledInAllRuns" ){
+          const selectedChecker = checkers.reduce((max_or_min, current) => {
+            return descending 
+              ? (current["enabledRunLength"] > max_or_min["enabledRunLength"]
+                ? current : max_or_min)
+              : (current["enabledRunLength"] < max_or_min["enabledRunLength"]
+                ? current : max_or_min);
+          });
+          return selectedChecker["enabledRunLength"];
+        }
+        else {
+          const selectedChecker = checkers.reduce((max_or_min, current) => {
+            return descending 
+              ? (current[prop] > max_or_min[prop] ? current : max_or_min) 
+              : (current[prop] < max_or_min[prop] ? current : max_or_min);
+          });
+          return selectedChecker[prop];
+        }
+      }
+      return prop === "name" ? "" : -1;
     }
   }
 };
@@ -492,5 +728,21 @@ export default {
 
 .type {
   font-weight: bold;
+}
+
+.guideline-statistics table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  border: none;
+}
+
+.guideline-statistics table td {
+  padding: 2px;
+  border-bottom: 1px solid #ddd;
+}
+
+.guideline-statistics table tr:last-child td {
+  border-bottom: none;
 }
 </style>

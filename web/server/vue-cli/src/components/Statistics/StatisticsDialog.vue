@@ -78,7 +78,7 @@ import {
 } from "@/mixins/api/analysis-info-handling.mixin";
 
 export default {
-  name: "CheckerCoverageStatisticsDialog",
+  name: "StatisticsDialog",
 
   props: {
     value: { type: Boolean, required: true },
@@ -118,8 +118,7 @@ export default {
           [CheckerInfoAvailability.RunHistoryStoredWithOldVersionPre_v6_24]: {
             runNames: [],
             message: "analysed by an older version of CodeChecker. \
-            The list of checker statistics are only available \
-            from CodeChecker 6.24:"
+            The list of statistics are only available from CodeChecker 6.24:"
           },
           [CheckerInfoAvailability.UnknownReason]: {
             runNames: [],

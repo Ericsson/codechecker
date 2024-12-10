@@ -17,6 +17,7 @@ import sys
 
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json
 
@@ -70,7 +71,11 @@ class Context(metaclass=Singleton):
         if 'CC_TEST_LABELS_DIR' in os.environ:
             labels_dir = os.environ['CC_TEST_LABELS_DIR']
 
+        guidelines_dir = os.path.join(self._data_files_dir_path,
+                                      'config', 'guidelines')
+
         self._checker_labels = CheckerLabels(labels_dir)
+        self._guidelines = Guidelines(guidelines_dir)
         self.__system_comment_map = load_json(self.system_comment_map_file, {})
         self.__git_commit_urls = self.__get_git_commit_urls()
         self.__package_version = None
@@ -221,6 +226,10 @@ class Context(metaclass=Singleton):
     @property
     def checker_labels(self):
         return self._checker_labels
+
+    @property
+    def guideline(self):
+        return self._guidelines
 
 
 def get_context():

@@ -30,7 +30,8 @@
             color="primary"
             size="x-large"
           >
-            The tab shows all enabled checkers in the selected runs.
+            The tab displays the checker statistics for all the rules of the
+            selected guideline, which are associated with the specified runs.
             <br><br>
             Please, first select runs in the left "Run/Tag Filter" menu.
             If the filter is empty all runs are selected.
@@ -50,7 +51,20 @@
         </v-alert>
 
         <div v-if="!problematicRuns.length">
-          <checker-coverage-statistics-table
+          <v-row align="center">
+            <v-col cols="3">
+              <v-select
+                v-model="selectedGuidelineNames"
+                :items="guidelineOptions"
+                item-text="name"
+                label="Select guidelines"
+                outlined
+                multiple
+                dense
+              />
+            </v-col>
+          </v-row>
+          <guideline-statistics-table
             :items="statistics"
             :loading="loading"
             @enabled-click="showingRuns"
@@ -64,7 +78,7 @@
             color="deep-orange"
             outlined
           >
-            There is no proper run for <strong>checker coverage </strong>
+            There is no proper run for <strong>guideline</strong>
             statistics. Please create a new run first that analysed
             natively with <strong>6.24</strong>
             or above version of CodeChecker!
@@ -76,7 +90,7 @@
             color="deep-orange"
             outlined
           >
-            The Checker coverage statistics is not available 
+            The guideline statistics is not available 
             for
             <span
               style="cursor: pointer; text-decoration: underline;"
@@ -96,7 +110,7 @@
             button to get relevant statistics.
             <br>
           </v-alert>
-          <checker-coverage-statistics-table
+          <guideline-statistics-table
             :items="[]"
             :loading="loading"
           />
@@ -114,10 +128,10 @@ import {
 } from "@/mixins";
 import { AnalysisInfoHandlingAPIMixin } from "@/mixins/api";
 import { BaseStatistics } from "@/components/Statistics";
-import CheckerCoverageStatisticsTable from "./CheckerCoverageStatisticsTable";
+import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 import StatisticsDialog from "../StatisticsDialog";
 import {
-  Checker,
+  Guideline,
   MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
@@ -129,9 +143,9 @@ import {
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
 export default {
-  name: "CheckerCoverageStatistics",
+  name: "GuidelineStatistics",
   components: {
-    CheckerCoverageStatisticsTable,
+    GuidelineStatisticsTable,
     StatisticsDialog,
     TooltipHelpIcon
   },
@@ -144,14 +158,27 @@ export default {
   ],
 
   data() {
+    // If there were more guideline types,
+    // we could list the existing guidelines here.
+    const guidelineOptions = [ 
+      {
+        id: "sei-cert",
+        name: "SEI CERT Coding Standard"
+      }
+    ];
+
     return {
+      all_guideline_rules: {},
+      guidelineOptions: guidelineOptions,
       checker_stat: {},
+      guideline_stat: {},
       loading: false,
       noProperRun: false,
       problematicRuns: [],
       runs: null,
       runData: [],
       selectedCheckerName: null,
+      selectedGuidelineNames: [ guidelineOptions[0] ],
       showRuns: {
         enabled: false,
         disabled: false,
@@ -167,54 +194,114 @@ export default {
       return this.runs.filter(run => !this.problematicRuns.map(
         problematicRun => problematicRun.runId
       ).includes(run.runId)).map(run => run.runName);
+    },
+
+    selectedGuidelines() { 
+      return this.selectedGuidelineNames.map(guidelineName => new Guideline({
+        guidelineName: guidelineName.id
+      }));
     }
   },
 
   watch: {
     checker_stat(stat) {
-      this.statistics = Object.keys(stat).map(checker_id => {
-        return {
-          checker: stat[checker_id].checkerName,
-          severity: stat[checker_id].severity,
-          guidelineRules: stat[checker_id].guidelineRules,
-          enabledInAllRuns: stat[checker_id].disabled.length === 0
-            ? 1
-            : 0,
-          enabledRunLength: stat[checker_id].enabled.length,
-          disabledRunLength: stat[checker_id].disabled.length,
-          closed: stat[checker_id].closed.toNumber(),
-          outstanding: stat[checker_id].outstanding.toNumber(),
-        };
-      });
+      this.statistics = [];
+      Object.keys(this.all_guideline_rules).forEach(
+        guideline => {
+          this.statistics.push(
+            ...this.all_guideline_rules[guideline].map(rule => {
+              const filtered_stat = Object.keys(stat).filter(
+                checkerId => rule.checkers.map(c => c.checkerName).includes(
+                  stat[checkerId].checkerName));
+              return {
+                guidelineName: guideline,
+                guidelineRule: rule.ruleId,
+                guidelineUrl: rule.url,
+                checkers: filtered_stat.length
+                  ? filtered_stat.map(checkerId => {
+                    return {
+                      name: stat[checkerId].checkerName,
+                      severity: stat[checkerId].severity,
+                      enabledInAllRuns: stat[checkerId].disabled.length === 0
+                        ? 1
+                        : 0,
+                      enabledRunLength: stat[checkerId].enabled.length,
+                      disabledRunLength: stat[checkerId].disabled.length,
+                      closed: stat[checkerId].closed.toNumber(),
+                      outstanding: stat[checkerId].outstanding.toNumber(),
+                    };
+                  })
+                  : (rule.checkers.length ? 
+                    rule.checkers.map(checker => {
+                      return {
+                        name: checker.checkerName,
+                        severity: this.severityFromStringToCode(
+                          checker.severity),
+                        enabledInAllRuns: 0,
+                        enabledRunLength: 0,
+                        disabledRunLength: this.runs.length,
+                        closed: 0,
+                        outstanding: 0,
+                      };
+                    })
+                    : [])
+              };
+            })
+          );
+        });
     },
 
     async runIds() {
       this.noProperRun = false;
+    },
+
+    async selectedGuidelines() {
+      await this.fetchStatistics();
     }
   },
 
+
   methods: {
     downloadCSV() {
-      const data = [
-        [
-          "Checker Name", "guideline", "Severity", "Status",
-          "Closed Reports", "Outstanding Reports",
-        ],
-        ...this.statistics.map(stat => {
-          return [
-            stat.checker,
-            this.formattedGuidelines(stat.guidelineRules),
-            this.severityFromCodeToString(stat.severity),
-            stat.enabledInAllRuns
+      const values = [];
+      this.statistics.forEach(stat => {
+        stat.checkers.forEach(checker => {
+          const value = [
+            stat.guidelineName,
+            stat.guidelineRule,
+            checker.name,
+            this.severityFromCodeToString(checker.severity),
+            checker.enabledInAllRuns
               ? "Enabled in all selected runs"
               : "Not enabled in all selected runs",
-            stat.closed,
-            stat.outstanding
+            checker.closed,
+            checker.outstanding
           ];
-        })
+
+          values.push(value);
+        });
+      });
+
+      const data = [
+        [
+          "Guideline Name", "Rule Name", "Related Checker(s)",
+          "Checker Severity", "Checker Status", "Closed Reports",
+          "Outstanding Reports"
+        ],
+        ...values
       ];
 
-      this.toCSV(data, "codechecker_checker_coverage_statistics.csv");
+      this.toCSV(data, "codechecker_guideline_statistics.csv");
+    },
+
+    async getAllGuidelineRules() {
+      this.all_guideline_rules = await new Promise(resolve => {
+        ccService.getClient().getGuidelineRules(
+          this.selectedGuidelines,
+          handleThriftError(guidelines => {
+            resolve(guidelines);
+          }));
+      });
     },
 
     async getRunData() {
@@ -256,6 +343,8 @@ export default {
 
       await this.fetchProblematicRuns();
 
+      await this.getAllGuidelineRules();
+
       const filter = new ReportFilter(this.reportFilter);
 
       const checker_stat = await new Promise(resolve => {
@@ -267,48 +356,6 @@ export default {
           }));
       });
 
-      if ( checker_stat !== undefined ) {
-        const checkers = Object.values(checker_stat).map(stat => {
-          return new Checker({
-            analyzerName: stat.analyzerName,
-            checkerId: stat.checkerName
-          });
-        });
-
-        const guidelineRules = await new Promise(resolve => {
-          ccService.getClient().getCheckerLabels(
-            checkers,
-            handleThriftError(labels => {
-              resolve(labels.map(label => {
-                const guidelines = label.filter(
-                  param => param.startsWith("guideline")
-                );
-                return guidelines.map(g => {
-                  const guideline = g.split("guideline:")[1];
-                  const guidelineLabels = label.filter(
-                    param => param.startsWith(guideline)
-                  );
-                  return {
-                    type: guideline,
-                    rules: guidelineLabels.map(gl => {
-                      return gl.split(`${guideline}:`)[1];
-                    })
-                  };
-                });
-              }));
-            })
-          );
-        });
-
-        Object.keys(checker_stat).forEach(
-          (key, index) => {
-            checker_stat[key]["guidelineRules"] = guidelineRules[index]
-            !== undefined
-              ? guidelineRules[index]
-              : null;
-          });
-      }
-      
       this.checker_stat = checker_stat;
       this.loading = false;
     },
@@ -348,11 +395,16 @@ export default {
           this.checker_stat[checker_id].checkerName === checker_name
         );
 
-        this.runData = this.checker_stat[checker_id][type].map(
-          run_id => this.runs.find(
-            runData => runData.runId.toNumber() === run_id.toNumber()
-          )
-        );
+        if ( checker_id ) {
+          this.runData = this.checker_stat[checker_id][type].map(
+            run_id => this.runs.find(
+              runData => runData.runId.toNumber() === run_id.toNumber()
+            )
+          );
+        }
+        else {
+          this.runData = this.runs;
+        }
       }
 
       this.showRuns[type] = true;
