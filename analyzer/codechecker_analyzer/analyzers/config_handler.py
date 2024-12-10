@@ -12,7 +12,6 @@ Static analyzer configuration handler.
 
 from abc import ABCMeta
 from enum import Enum
-from string import Template
 import collections
 import platform
 import sys
@@ -86,7 +85,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         """
         self.__available_checkers[checker_name] = (state, description)
 
-    def set_checker_enabled(self, checker_name, enabled=True):
+    def set_checker_enabled(self, checker_name, enabled=True, is_strict=False):
         """
         Explicitly handle checker state, keep description if already set.
         """
@@ -94,7 +93,8 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         regex = "^" + re.escape(str(checker_name)) + "\\b.*$"
 
         for ch_name, values in self.__available_checkers.items():
-            if re.match(regex, ch_name):
+            if (is_strict and ch_name == checker_name) \
+               or (not is_strict and re.match(regex, ch_name)):
                 _, description = values
                 state = CheckerState.ENABLED if enabled \
                     else CheckerState.DISABLED
@@ -118,7 +118,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         """
         return self.__available_checkers
 
-    def __gen_name_variations(self):
+    def __gen_name_variations(self, only_prefix=False):
         """
         Generate all applicable name variations from the given checker list.
         """
@@ -134,9 +134,9 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             # ['misc', 'misc-dangling', 'misc-dangling-handle']
             # from 'misc-dangling-handle'.
             v = [delim.join(parts[:(i + 1)]) for i in range(len(parts))]
-            reserved_names += v
+            reserved_names += v[:-1] if only_prefix else v
 
-        return reserved_names
+        return list(set(reserved_names))
 
     def initialize_checkers(self,
                             checkers,
@@ -184,7 +184,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         else:
             # Turn default checkers on.
             for checker in default_profile_checkers:
-                self.set_checker_enabled(checker)
+                self.set_checker_enabled(checker, is_strict=True)
 
         self.enable_all = enable_all
         # If enable_all is given, almost all checkers should be enabled.
@@ -207,48 +207,82 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
                     self.set_checker_enabled(checker_name)
 
         # Set user defined enabled or disabled checkers from the command line.
-
-        # Construct a list of reserved checker names.
-        # (It is used to check if a profile name is valid.)
-        reserved_names = self.__gen_name_variations()
-        profiles = checker_labels.get_description('profile')
-        guidelines = checker_labels.occurring_values('guideline')
-
-        templ = Template("The ${entity} name '${identifier}' conflicts with a "
-                         "checker name prefix '${identifier}'. Please use -e "
-                         "${entity}:${identifier} to enable checkers of the "
-                         "${identifier} ${entity} or use -e "
-                         "prefix:${identifier} to select checkers which have "
-                         "a name starting with '${identifier}'.")
-
         for identifier, enabled in cmdline_enable:
-            if "prefix:" in identifier:
-                identifier = identifier.replace("prefix:", "")
-                self.set_checker_enabled(identifier, enabled)
+            labels = checker_labels.labels() \
+                if callable(getattr(checker_labels, 'labels', None)) \
+                else ["guideline", "profile", "severity", "sei-cert"]
 
-            elif ':' in identifier:
-                for checker in checker_labels.checkers_by_labels([identifier]):
-                    self.set_checker_enabled(checker, enabled)
+            all_namespaces = ["checker", "prefix"] + labels
 
-            elif identifier in profiles:
-                if identifier in reserved_names:
-                    LOG.error(templ.substitute(entity="profile",
-                                               identifier=identifier))
+            all_options = dict(zip(labels, map(
+                checker_labels.occurring_values, labels)))
+
+            all_options["prefix"] = list(set(self.__gen_name_variations(
+                only_prefix=True)))
+
+            all_options["checker"] = self.__available_checkers
+
+            if ":" in identifier:
+                identifier_namespace = identifier.split(":")[0]
+                identifier = identifier.split(":", 1)[1]
+
+                if identifier_namespace not in all_namespaces:
+                    LOG.error("The %s namespace is not known. Please select"
+                              "one of these existing namespace options: %s.",
+                              identifier_namespace, ", ".join(all_namespaces))
                     sys.exit(1)
-                else:
-                    for checker in checker_labels.checkers_by_labels(
-                            [f'profile:{identifier}']):
-                        self.set_checker_enabled(checker, enabled)
 
-            elif identifier in guidelines:
-                if identifier in reserved_names:
-                    LOG.error(templ.substitute(entity="guideline",
-                                               identifier=identifier))
+                # TODO: Each analyzer has its own config handler and is unaware
+                # of other checkers. To avoid not reliable error, we pass
+                # checker:'any_options' and prefix:'any_options'. This ensures
+                # enabling a checker doesn't inadvertently cause an error in a
+                # different analyzer. Ideally, there should be a centralized
+                # main configuration accessible to all analyzers.
+                if identifier not in all_options[identifier_namespace] \
+                   and identifier_namespace not in ("checker", "prefix"):
+                    LOG.error("The %s identifier does not exist in the %s "
+                              "namespace. Please select one of these "
+                              "existing options: %s.", identifier,
+                              identifier_namespace, ", ".join(
+                                  all_options[identifier_namespace]))
                     sys.exit(1)
-                else:
-                    for checker in checker_labels.checkers_by_labels(
-                            [f'guideline:{identifier}']):
-                        self.set_checker_enabled(checker, enabled)
+
+                self.initialize_checkers_by_namespace(
+                    identifier_namespace, identifier, enabled)
 
             else:
-                self.set_checker_enabled(identifier, enabled)
+                possible_options = {}
+                for label, options in all_options.items():
+                    if identifier in options:
+                        possible_options[label] = identifier
+
+                if len(possible_options) == 1:
+                    self.initialize_checkers_by_namespace(
+                        *list(possible_options.items())[0], enabled)
+                elif len(possible_options) > 1:
+                    error_options = ", ".join(f"{label}:{option}"
+                                              for label, option
+                                              in possible_options.items())
+
+                    LOG.error("The %s is ambigous. Please select one of these"
+                              " options to clarify the checker list: %s.",
+                              identifier, error_options)
+                    sys.exit(1)
+                else:
+                    # The identifier is not known but we just pass it
+                    # and handle it in a different section.
+                    continue
+
+    def initialize_checkers_by_namespace(self,
+                                         identifier_namespace,
+                                         identifier,
+                                         enabled):
+        if identifier_namespace == "checker":
+            self.set_checker_enabled(identifier, enabled, is_strict=True)
+        elif identifier_namespace == "prefix":
+            self.set_checker_enabled(identifier, enabled)
+        else:
+            checker_labels = analyzer_context.get_context().checker_labels
+            for checker in checker_labels.checkers_by_labels(
+                           [f"{identifier_namespace}:{identifier}"]):
+                self.set_checker_enabled(checker, enabled, is_strict=True)

@@ -23,7 +23,7 @@ from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
-        import is_compiler_warning
+        import is_compiler_warning, ClangTidyConfigHandler
 from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
 from codechecker_analyzer.cmd.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
@@ -37,14 +37,15 @@ from libtest.cmd_line import create_analyze_argparse
 class MockClangsaCheckerLabels:
     def checkers_by_labels(self, labels):
         if labels[0] == 'profile:default':
-            return ['core', 'deadcode', 'security.FloatLoopCounter']
+            return ['deadcode.DeadStores', 'security.FloatLoopCounter']
 
         if labels[0] == 'prefix:security':
             return ['security.insecureAPI.bzero',
                     'security.insecureAPI.getpw']
 
         if labels[0] == 'profile:security':
-            return ['alpha.security']
+            return ['alpha.security.ArrayBound',
+                    'alpha.security.MallocOverflow']
 
         if labels[0] == 'profile:sensitive':
             return ['alpha.core.BoolAssignment',
@@ -60,16 +61,33 @@ class MockClangsaCheckerLabels:
 
     def get_description(self, label):
         if label == 'profile':
-            return ['default', 'sensitive', 'security', 'portability',
-                    'extreme']
-        return []
+            return {
+                "default": "",
+                "sensitive": "",
+                "security": "",
+                "portability": "",
+                "extreme": ""
+            }
+        return {}
 
     def occurring_values(self, label):
         if label == 'guideline':
             return ['sei-cert']
-
-        if label == 'sei-cert':
+        elif label == 'sei-cert':
             return ['rule1', 'rule2']
+        elif label == 'profile':
+            return ['default',
+                    'sensitive',
+                    'security',
+                    'portability',
+                    'extreme']
+        elif label == 'severity':
+            return ['CRITICAL',
+                    'HIGH',
+                    'MEDIUM',
+                    'LOW',
+                    'STYLE',
+                    'UNSPECIFIED']
 
         return []
 
@@ -141,7 +159,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
             any(arg.startswith('-analyzer-disable-checker')
                 for arg in self.__class__.cmd))
 
-    def test_checker_initializer(self):
+    def test_clangsa_checker_initializer(self):
         """
         Test initialize_checkers() function.
         """
@@ -384,22 +402,35 @@ class MockClangTidyCheckerLabels:
             return [
                 'bugprone-assert-side-effect',
                 'bugprone-dangling-handle',
-                'bugprone-inaccurate-erase']
+                'bugprone-inaccurate-erase',
+                'clang-diagnostic-format',
+                'clang-diagnostic-format-nonliteral',
+                'clang-diagnostic-format-security']
 
         return []
 
     def get_description(self, label):
         if label == 'profile':
-            return ['default', 'sensitive', 'security', 'portability',
-                    'extreme']
-
-        return []
+            return {
+                "default": "",
+                "sensitive": "",
+                "security": "",
+                "portability": "",
+                "extreme": ""
+            }
+        return {}
 
     def occurring_values(self, label):
         if label == 'guideline':
             return ['sei-cert']
         elif label == 'sei-cert':
             return ['rule1', 'rule2']
+        elif label == 'profile':
+            return ['default',
+                    'sensitive',
+                    'security',
+                    'portability',
+                    'extreme']
 
         return []
 
@@ -479,6 +510,121 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
         return enable < disable
 
+    def test_clangtidy_checker_initializer(self):
+        """
+        Test initialize_checkers() function.
+        """
+        def all_with_status(status):
+            def f(checks, checkers):
+                result = set(check for check, data in checks.items()
+                             if data[0] == status)
+                return set(checkers) <= result
+            return f
+
+        checkers = ClangTidy.get_analyzer_checkers()
+
+        format_prefix = "clang-diagnostic-format"
+
+        format_matched_default_checkers = [
+            "clang-diagnostic-format-nonliteral",
+            "clang-diagnostic-format-security"
+        ]
+
+        format_matched_not_default_checkers = [
+            "clang-diagnostic-format-non-iso",
+            "clang-diagnostic-format-pedantic",
+        ]
+
+        cfg_handler = ClangTidyConfigHandler()
+
+        # Check the ambigous option handling.
+        with self.assertLogs(level='ERROR') as log:
+            with self.assertRaises(SystemExit) as e:
+                cfg_handler.initialize_checkers(checkers,
+                                                [("clang-diagnostic-format",
+                                                  True)])
+
+        err_ambigous_checker = re.compile(r"ERROR:.*?is ambigous\. Please "
+                                          r"select one of these options to "
+                                          r"clarify the checker list:.*$")
+
+        match = err_ambigous_checker.search(log.output[0])
+
+        self.assertIsNotNone(match)
+        self.assertEqual(e.exception.code, 1)
+
+        # Check if the specified checker and the default checkers are enabled
+        # when the clang-diagnostic-format is enabled by 'checker:' namespace.
+        cfg_handler.initialize_checkers(checkers,
+                                        [(f"checker:{format_prefix}", True)])
+        self.assertIn(format_prefix, cfg_handler.checks())
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), [format_prefix]))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(),
+                         format_matched_default_checkers))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_not_default_checkers))
+
+        # Check if the specified checker is the only one that enabled when the
+        # clang-diagnostic-format is enabled by 'checker:' namespace and the
+        # default profile is disabled.
+        cfg_handler.initialize_checkers(checkers,
+                                        [("default", False),
+                                         (f"checker:{format_prefix}", True)])
+        self.assertIn(format_prefix, cfg_handler.checks())
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), [format_prefix]))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_default_checkers))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_not_default_checkers))
+
+        # Check if the specified checker is disabled by 'checker:' namespace
+        # but the default profile is enabled.
+        cfg_handler.initialize_checkers(checkers,
+                                        [(f"checker:{format_prefix}", False)])
+        self.assertIn(format_prefix, cfg_handler.checks())
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(), [format_prefix]))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(),
+                         format_matched_default_checkers))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_not_default_checkers))
+
+        # Check the prefix matched chackers when the 'prefix:' namespace
+        # enables them.
+        cfg_handler.initialize_checkers(checkers,
+                                        [(f"prefix:{format_prefix}", True)])
+        self.assertIn(format_prefix, cfg_handler.checks())
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(), [format_prefix]))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(),
+                         format_matched_default_checkers))
+        self.assertTrue(all_with_status(CheckerState.ENABLED)
+                        (cfg_handler.checks(),
+                         format_matched_not_default_checkers))
+
+        # Check the prefix matched chackers when the 'prefix:' namespace
+        # disables them.
+        cfg_handler.initialize_checkers(checkers,
+                                        [(f"prefix:{format_prefix}", False)])
+        self.assertIn(format_prefix, cfg_handler.checks())
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(), [format_prefix]))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_default_checkers))
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(),
+                         format_matched_not_default_checkers))
+
     def test_disable_clangsa_checkers(self):
         """
         Test that checker config still disables clang-analyzer-*.
@@ -510,9 +656,8 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         for arg in analyzer.construct_analyzer_cmd(result_handler):
             self.assertFalse(arg.startswith('-checks'))
 
-        self.assertEqual(
-                analyzer.config_handler.checks()['Wreserved-id-macro'][0],
-                CheckerState.ENABLED)
+        self.assertNotIn("Wreserved-id-macro",
+                         analyzer.config_handler.checks().keys())
 
     def test_analyze_wrong_parameters(self):
         """
@@ -603,7 +748,7 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
         analyzer = create_analyzer_tidy([
             # This should enable -Wvla and -Wvla-extension.
-            '--enable', 'clang-diagnostic-vla',
+            '--enable', 'prefix:clang-diagnostic-vla',
             '--disable', 'clang-diagnostic-unused-value'])
         result_handler = create_result_handler(analyzer)
 
@@ -645,16 +790,26 @@ class MockCppcheckCheckerLabels:
 
     def get_description(self, label):
         if label == 'profile':
-            return ['default', 'sensitive', 'security', 'portability',
-                    'extreme']
-
-        return []
+            return {
+                "default": "",
+                "sensitive": "",
+                "security": "",
+                "portability": "",
+                "extreme": ""
+            }
+        return {}
 
     def occurring_values(self, label):
         if label == 'guideline':
             return ['sei-cert']
         elif label == 'sei-cert':
             return ['rule1', 'rule2']
+        elif label == 'profile':
+            return ['default',
+                    'sensitive',
+                    'security',
+                    'portability',
+                    'extreme']
 
         return []
 
