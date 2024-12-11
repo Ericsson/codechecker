@@ -154,7 +154,7 @@ setuptools.setup(
         "Documentation": "http://codechecker.readthedocs.io",
         "Issue Tracker": "http://github.com/Ericsson/CodeChecker/issues",
     },
-    keywords=['codechecker', 'plist'],
+    keywords=['codechecker', 'plist', 'sarif'],
     license='Apache-2.0 WITH LLVM-exception',
     packages=packages,
     package_dir={
