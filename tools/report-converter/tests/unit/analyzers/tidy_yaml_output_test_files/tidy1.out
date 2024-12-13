@@ -1,0 +1,16 @@
+---
+MainSourceFile:  'files/test.cpp'
+Diagnostics:
+  - DiagnosticName:  clang-diagnostic-division-by-zero
+    DiagnosticMessage:
+      Message:         remainder by zero is undefined
+      FilePath:        'files/test.cpp'
+      FileOffset:      73
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test.cpp'
+          FileOffset:      75
+          Length:          1
+    Level:           Warning
+    BuildDirectory:  'files'
+...
