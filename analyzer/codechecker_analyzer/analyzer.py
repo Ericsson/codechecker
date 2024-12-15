@@ -212,7 +212,10 @@ def perform_analysis(args, skip_handlers, filter_handlers,
             available_checkers.add(checker_name)
 
     if 'ordered_checkers' in args:
-        missing_checkers = checkers.available(args.ordered_checkers,
+        ordered_checkers = [(checker[0].replace("checker:", ""), checker[1])
+                            if checker[0].startswith("checker:") else checker
+                            for checker in args.ordered_checkers]
+        missing_checkers = checkers.available(ordered_checkers,
                                               available_checkers)
         if missing_checkers:
             diag_msg = "No checker(s) with these names was found:\n{}".format(
@@ -221,7 +224,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
                 LOG.warning(diag_msg)
             else:
                 LOG.error(diag_msg)
-                LOG.info("Although it is not reccomended, if you want to "
+                LOG.info("Although it is not recommended, if you want to "
                          "suppress errors relating to unknown "
                          "checker names, consider using the option "
                          "'--no-missing-checker-error'")
