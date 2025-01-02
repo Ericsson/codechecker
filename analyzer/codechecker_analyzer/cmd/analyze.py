@@ -537,7 +537,7 @@ Cross-TU analysis. By default, no CTU analysis is run when
         ctu_modes = ctu_opts.add_mutually_exclusive_group()
         ctu_modes.add_argument('--ctu', '--ctu-all',
                                action='store_const',
-                               const=[True, True],
+                               const=[True, True, True],
                                dest='ctu_phases',
                                default=argparse.SUPPRESS,
                                help="Perform Cross Translation Unit (CTU) "
@@ -545,10 +545,20 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                     "phases. In this mode, the extra files "
                                     "created by 'collect' are cleaned up "
                                     "after the analysis.")
+        ctu_modes.add_argument('--ctu-retain',
+                               action='store_const',
+                               const=[True, True, False],
+                               dest='ctu_phases',
+                               default=argparse.SUPPRESS,
+                               help="Perform Cross Translation Unit (CTU) "
+                                    "analysis, both 'collect' and 'analyze' "
+                                    "phases. In this mode, the extra files "
+                                    "created by 'collect' are NOT cleaned up "
+                                    "after the analysis.")
 
         ctu_modes.add_argument('--ctu-collect',
                                action='store_const',
-                               const=[True, False],
+                               const=[True, False, False],
                                dest='ctu_phases',
                                default=argparse.SUPPRESS,
                                help="Perform the first, 'collect' phase of "
@@ -561,7 +571,7 @@ Cross-TU analysis. By default, no CTU analysis is run when
 
         ctu_modes.add_argument('--ctu-analyze',
                                action='store_const',
-                               const=[False, True],
+                               const=[False, True, True],
                                dest='ctu_phases',
                                default=argparse.SUPPRESS,
                                help="Perform the second, 'analyze' phase of "

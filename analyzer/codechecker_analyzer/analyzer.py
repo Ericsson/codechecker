@@ -148,6 +148,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
 
     ctu_collect = False
     ctu_analyze = False
+    ctu_delete = False
     ctu_dir = ''
     if 'ctu_phases' in args:
         ctu_dir = os.path.join(args.output_path, 'ctu-dir')
@@ -157,6 +158,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
             return
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
+        ctu_delete =  args.ctu_phases[2]
 
     if 'stats_enabled' in args and args.stats_enabled:
         if ClangSA.ANALYZER_NAME not in analyzers:
@@ -271,9 +273,9 @@ def perform_analysis(args, skip_handlers, filter_handlers,
         makefile_creator.create(actions)
         return
 
-    if ctu_collect:
+    if ctu_delete:
         shutil.rmtree(ctu_dir, ignore_errors=True)
-    elif ctu_analyze and not os.path.exists(ctu_dir):
+    elif not ctu_collect and ctu_analyze and not os.path.exists(ctu_dir):
         LOG.error("CTU directory: '%s' does not exist.", ctu_dir)
         return
 
@@ -363,7 +365,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
     metadata_tool['timestamps'] = {'begin': start_time,
                                    'end': end_time}
 
-    if ctu_collect and ctu_analyze:
+    if ctu_delete:
         shutil.rmtree(ctu_dir, ignore_errors=True)
 
     manager.shutdown()
