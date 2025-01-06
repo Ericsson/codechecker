@@ -102,7 +102,7 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, ReportFilter(), None, False)
 
-        self.assertEqual(len(results), 5)
+        self.assertEqual(len(results), 6)
 
         sort_timestamp = SortMode(SortType.TIMESTAMP, Order.ASC)
 
@@ -119,7 +119,7 @@ class DynamicResults(unittest.TestCase):
                'timestamp' not in results[i + 1].annotations:
                 continue
 
-            self.assertLess(
+            self.assertLessEqual(
                 results[i].annotations['timestamp'],
                 results[i + 1].annotations['timestamp'])
 
@@ -134,7 +134,7 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, testcase_filter, None, False)
 
-        self.assertEqual(len(results), 2)
+        self.assertEqual(len(results), 3)
 
         self.assertTrue(all(map(
             lambda report: report.annotations['testcase'] == 'TC-1',
@@ -147,7 +147,7 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, testcase_filter, None, False)
 
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 5)
 
         self.assertTrue(all(map(
             lambda report: report.annotations['testcase'].startswith('TC-'),
@@ -160,7 +160,7 @@ class DynamicResults(unittest.TestCase):
         num = self._cc_client.getRunResultCount(
             None, ReportFilter(), None)
 
-        self.assertEqual(num, 5)
+        self.assertEqual(num, 6)
 
         testcase_filter = ReportFilter(annotations=[Pair(
             first='testcase',
@@ -169,7 +169,7 @@ class DynamicResults(unittest.TestCase):
         num = self._cc_client.getRunResultCount(
             None, testcase_filter, None)
 
-        self.assertEqual(num, 2)
+        self.assertEqual(num, 3)
 
     def test_unique_path_hash(self):
         """Test that the unique path hash is calculated when two reports differ
@@ -177,7 +177,8 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, ReportFilter(), None, False)
 
-        # The main.c_lang-tidy<blabla>.plist test file contains two
-        # bugprone-sizeof-expression reports that differ in their annotations.
+        # The main.c_lang-tidy<blabla>.plist test file contains three
+        # bugprone-sizeof-expression reports. Two of them differ in their
+        # annotations two other differ in their report hash.
         # They should be considered as different reports.
-        self.assertEqual(len(results), 5)
+        self.assertEqual(len(results), 6)
