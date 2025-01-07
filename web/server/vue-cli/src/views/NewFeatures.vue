@@ -1310,10 +1310,12 @@ analyzer:
             There is a new syntax extended with guideline support which can be
             used to enable checker sets. With the new syntax the checkers,
             profiles and guideline can be enabled or disabled even if there is
-            a conflict in their name. The arguments may start with
-            <i>profile:</i> of <i>guideline:</i> prefix which makes the choice
-            explicit. Without prefix it means a profile name, a guideline
-            name or a checker group/name in this priority order.<br>
+            a conflict in their name. Their arguments may start with
+            <i>checker:</i>, <i>prefix:</i>, <i>profile:</i>,
+            <i>guideline:</i> or any existing label type as a namespace which
+            makes the choice explicit. Without namespace it can be a checker
+            name, a checker prefix, a profile name or a guideline name. in
+            case of ambiguity, namespace is expected.<br>
             <code>
               CodeChecker analyze -o reports -e profile:sensitive -e guideline:sei-cert compile_command.json
             </code><br><br>

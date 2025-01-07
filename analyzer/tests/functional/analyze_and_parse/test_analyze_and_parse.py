@@ -39,6 +39,7 @@ class AnalyzeParseTestCaseMeta(type):
             which compare the output of the command with the
             stored expected output.
             """
+
             def test(self):
                 self.check_one_file(path, mode)
             return test
@@ -787,3 +788,100 @@ class AnalyzeParseTestCase(
                       encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             self.assertTrue(re.search('"url": ""', content))
+
+    def test_mixed_architecture_logging(self):
+        """
+        Test if CodeChecker can properly log compilation commands when the
+        build process involves both 32-bit and 64-bit binaries acting as
+        build drivers.
+
+        This verifies that the LD_LIBRARY_PATH setup in analyzer_context.py
+        correctly includes all architecture versions of the ld_logger.so
+        library, and that logging works with this setup.
+        """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            # We use a temporary directory, because we produce multiple files
+            # during this test, and it is easier to clean up.
+            mixed_arch_driver = os.path.join(
+                self.test_dir,
+                "mixed_arch_driver.c"
+            )
+            simple_c = os.path.join(
+                self.test_dir,
+                "simple.c"
+            )
+
+            shutil.copy(mixed_arch_driver, tmp_dir)
+            shutil.copy(simple_c, tmp_dir)
+
+            best_gcc_candidate_in_path = [
+                path
+                for path in os.environ["PATH"].split(":")
+                if os.path.exists(os.path.join(path, "gcc"))
+            ]
+            if not best_gcc_candidate_in_path:
+                self.skipTest(f"No gcc candidate found in PATH:\
+                              {os.environ['PATH']}")
+
+            try:
+                subprocess.check_call(
+                    ["gcc", "-m32", "-c", "simple.c"],
+                    cwd=tmp_dir,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as err:
+                self.skipTest(f"No 32-bit compilation support available:\
+                              {err.stderr}")
+            try:
+                subprocess.check_call(
+                    ["gcc", "-m64", "-c", "simple.c"],
+                    cwd=tmp_dir,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as err:
+                self.skipTest(f"No 64-bit compilation support available:\
+                              {err.stderr}")
+
+            subprocess.check_call(
+                ["gcc", "-m32", "mixed_arch_driver.c", "-o", "driver32"],
+                cwd=tmp_dir
+            )
+            subprocess.check_call(
+                ["gcc", "-m64", "mixed_arch_driver.c", "-o", "driver64"],
+                cwd=tmp_dir
+            )
+
+            log_file = os.path.join(tmp_dir, "compile_commands.json")
+            cmd = [
+                "CodeChecker", "log", "-b", "./driver32;./driver64",
+                "-o", log_file,
+            ]
+
+            _, err, returncode = call_command(cmd, cwd=tmp_dir,
+                                              env=self.env)
+
+            self.assertEqual(returncode, 0, f"CodeChecker log failed:\
+                             {err}")
+
+            # Verify the logged commands
+            with open(log_file, "r", encoding="utf-8") as f:
+                logged_commands = json.load(f)
+
+            # The buildlog should have 4 commands - 2 from each driver
+            # (and for each driver there is one with a '-m32' and one with a
+            # '-m64' flag)
+            self.assertEqual(
+                len(logged_commands), 4, f"Logged commands: {logged_commands}"
+            )
+
+            commands = [entry["command"] for entry in logged_commands]
+            self.assertTrue(
+                2 == len([cmd for cmd in commands if "-m32" in cmd]),
+                f"Expected 2 32-bit compilations. Logged commands:\
+                 {logged_commands}"
+            )
+            self.assertTrue(
+                2 == len([cmd for cmd in commands if "-m64" in cmd]),
+                f"Expected 2 64-bit compilations. Logged commands:\
+                 {logged_commands}"
+            )

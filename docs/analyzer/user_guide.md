@@ -449,22 +449,40 @@ checker configuration:
 
 
   -e checker/group/profile, --enable checker/group/profile
-                        Set a checker (or checker group), profile or guideline
-                        to BE USED in the analysis. In case of ambiguity the
-                        priority order is profile, guideline, checker name
-                        (e.g. security means the profile, not the checker
-                        group). Moreover, labels can also be used for
-                        selecting checkers, for example profile:extreme or
-                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        Enable a checker or checker group to BE USED in the
+                        analysis. Exact checker name, prefix, profile,
+                        guideline or any label can be used for selecting
+                        checkers. These namespace can be specified by
+                        'checker:' 'prefix:', 'profile:', 'guideline:',
+                        'severity:', etc. Normally, It is not necessary to
+                        give a namespace but in case of ambiguity, the
+                        CodeChecker returns with an error and suggests options
+                        for clarification. For example the extreme profile can
+                        be set by 'profile:extreme' or 'extreme' but security
+                        can be also a prefix and in this case the namespace
+                        must be given like 'profile:security' to set security
+                        profile. If an exact checker name matches multiple
+                        checkers as a prefix, 'checker:' or 'prefix:'
+                        namespace is required. Any labels can be used for set
+                        checker group. See 'CodeChecker checkers --label' for
                         further details.
   -d checker/group/profile, --disable checker/group/profile
-                        Set a checker (or checker group), profile or guideline
-                        to BE PROHIBITED from use in the analysis. In case of
-                        ambiguity the priority order is profile, guideline,
-                        checker name (e.g. security means the profile, not the
-                        checker group). Moreover, labels can also be used for
-                        selecting checkers, for example profile:extreme or
-                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        Disable a checker or checker group to BE PROHIBITED in
+                        the analysis. Exact checker name, prefix, profile,
+                        guideline or any label can be used for selecting
+                        checkers. These namespace can be specified by
+                        'checker:' 'prefix:', 'profile:', 'guideline:',
+                        'severity:', etc. Normally, It is not necessary to
+                        give a namespace but in case of ambiguity, the
+                        CodeChecker returns with an error and suggests options
+                        for clarification. For example the extreme profile can
+                        be set by 'profile:extreme' or 'extreme' but security
+                        can be also a prefix and in this case the namespace
+                        must be given like 'profile:security' to set security
+                        profile. If an exact checker name matches multiple
+                        checkers as a prefix, 'checker:' or 'prefix:'
+                        namespace is required. Any labels can be used for set
+                        checker group. See 'CodeChecker checkers --label' for
                         further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
@@ -793,7 +811,10 @@ If this is not possible, you can work around the situation by
 specifying the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
 
 ```sh
-LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/x86_64/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+# For 64-bit compilers
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/64bit/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+# For 32-bit compilers
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/32bit/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
 ```
 
 #### Change user inside the build command
@@ -1438,23 +1459,41 @@ available checkers in the binaries installed on your system.
 ```
 checker configuration:
 
-  -e checker/group/profile, --enable checker/group/profile
-                        Set a checker (or checker group or checker profile)
-                        to BE USED in the analysis. In case of ambiguity the
-                        priority order is profile, guideline, checker name
-                        (e.g. security means the profile, not the checker
-                        group). Moreover, labels can also be used for
-                        selecting checkers, for example profile:extreme or
-                        severity:STYLE. See 'CodeChecker checkers --label' for
+    -e checker/group/profile, --enable checker/group/profile
+                        Enable a checker or checker group to BE USED in the
+                        analysis. Exact checker name, prefix, profile,
+                        guideline or any label can be used for selecting
+                        checkers. These namespace can be specified by
+                        'checker:' 'prefix:', 'profile:', 'guideline:',
+                        'severity:', etc. Normally, It is not necessary to
+                        give a namespace but in case of ambiguity, the
+                        CodeChecker returns with an error and suggests options
+                        for clarification. For example the extreme profile can
+                        be set by 'profile:extreme' or 'extreme' but security
+                        can be also a prefix and in this case the namespace
+                        must be given like 'profile:security' to set security
+                        profile. If an exact checker name matches multiple
+                        checkers as a prefix, 'checker:' or 'prefix:'
+                        namespace is required. Any labels can be used for set
+                        checker group. See 'CodeChecker checkers --label' for
                         further details.
   -d checker/group/profile, --disable checker/group/profile
-                        Set a checker (or checker group or checker profile)
-                        to BE PROHIBITED from use in the analysis. In case of
-                        ambiguity the priority order is profile, guideline,
-                        checker name (e.g. security means the profile, not the
-                        checker group). Moreover, labels can also be used for
-                        selecting checkers, for example profile:extreme or
-                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        Disable a checker or checker group to BE PROHIBITED in
+                        the analysis. Exact checker name, prefix, profile,
+                        guideline or any label can be used for selecting
+                        checkers. These namespace can be specified by
+                        'checker:' 'prefix:', 'profile:', 'guideline:',
+                        'severity:', etc. Normally, It is not necessary to
+                        give a namespace but in case of ambiguity, the
+                        CodeChecker returns with an error and suggests options
+                        for clarification. For example the extreme profile can
+                        be set by 'profile:extreme' or 'extreme' but security
+                        can be also a prefix and in this case the namespace
+                        must be given like 'profile:security' to set security
+                        profile. If an exact checker name matches multiple
+                        checkers as a prefix, 'checker:' or 'prefix:'
+                        namespace is required. Any labels can be used for set
+                        checker group. See 'CodeChecker checkers --label' for
                         further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
@@ -1492,10 +1531,11 @@ Checkers are taken into account based on the following order:
   "debug" checker groups. `osx` checker group is also not included unless the
   target platform is Darwin.
 - Command line `--enable/--disable` flags.
-  - Their arguments may start with `profile:` of `guideline:` prefix which
-    makes the choice explicit.
-  - Without prefix it means a profile name, a guideline name or a checker
-    group/name in this priority order.
+  - Their arguments may start with `checker:`, `prefix:`, `profile:`,
+    `guideline:` or any existing label type as a namespace which makes the
+    choice explicit.
+  - Without namespace it can be a checker name, a checker prefix, a profile
+    name or a guideline name. in case of ambiguity, namespace is expected.
 
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
@@ -1511,23 +1551,23 @@ and disabled flags starting from the bigger groups and going inwards. For
 example
 
 ```sh
---enable Wunused --disable Wno-unused-parameter
+--enable prefix:clang-diagnostic-unused 
+--disable checker:clang-diagnostic-unused-parameter
 ```
 or
 ```sh
---enable Wunused --disable Wunused-parameter
+--enable prefix:clang-diagnostic-unused 
+--disable clang-diagnostic-unused-parameter
 ```
-will enable every `unused` warnings except `unused-parameter`. These flags
-should start with a capital `W` or `Wno-` prefix followed by the warning name
-(E.g.: `-e Wliteral-conversion`, `-d Wno-literal-conversion` or
-`-d Wliteral-conversion`). To turn off a compiler warning you can use the
-negative form beginning with `Wno-` (e.g.: `--disable Wno-literal-conversion`)
-or you can use the positive form beginning with `W` (e.g.:
-`--enable Wliteral-conversion`). For more information see:
+will enable every `unused` warnings except `unused-parameter`. To turn off a
+compiler warning you should use `clang-diagnostic-` instead of `W` or `Wno`
+followed by the warning name. These flags may start with `checker:`,
+`prefix:`, `profile:`, `guideline:` or any existing label type as a namespace
+which makes the choice explicit. Namespace is only required when the given
+flag is ambiguity. (E.g.: `clang-diagnostic-unused` is both a checker name
+that represents unused warning and a prefix that is the group of the unused
+warrnings). For more information see:
 https://clang.llvm.org/docs/DiagnosticsReference.html.
-
-A warning can be referred in both formats: `-d Wunused-parameter` and
-`-d clang-diagnostic-unused-parameter` are the same.
 
 `clang-diagnostic-error` is a special one, since it doesn't refer a warning but
 a compilation error. This is enabled by default and will be stored as a

@@ -125,7 +125,7 @@ def print_unsupported_analyzers(errored):
                     analyzer_binary, reason)
 
 
-def check_available_analyzers(args_analyzers=None):
+def check_available_analyzers(args_analyzers=None, exit_on_error=True):
     """
     Handle use case when no analyzer can be found or a supported, explicitly
     given analyzer cannot be found on the user machine.
@@ -135,17 +135,19 @@ def check_available_analyzers(args_analyzers=None):
         analyzers, errored = check_supported_analyzers(args_analyzers)
         if errored:
             print_unsupported_analyzers(errored)
-            LOG.error("Failed to run command because the given analyzer(s) "
-                      "cannot be found on your machine!")
-            sys.exit(1)
+            if exit_on_error:
+                LOG.error("Failed to run command because the given analyzer(s)"
+                          " cannot be found on your machine!")
+                sys.exit(1)
 
     else:
         analyzers, errored = check_supported_analyzers(supported_analyzers)
         if not analyzers:
             print_unsupported_analyzers(errored)
-            LOG.error("Failed to run command because no analyzers can be "
-                      "found on your machine!")
-            sys.exit(1)
+            if exit_on_error:
+                LOG.error("Failed to run command because no analyzers can be "
+                          "found on your machine!")
+                sys.exit(1)
     return analyzers, errored
 
 

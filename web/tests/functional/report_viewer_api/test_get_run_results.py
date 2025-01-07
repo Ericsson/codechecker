@@ -18,7 +18,8 @@ import unittest
 import codecs
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Checker, \
-    Order, ReportFilter, SortMode, SortType, RunSortMode, RunSortType
+    Guideline, Order, ReportFilter, SortMode, SortType, RunSortMode, \
+    RunSortType
 
 from codechecker_web.shared import convert
 
@@ -423,12 +424,12 @@ class RunResults(unittest.TestCase):
         div_zero_labels = set([
             "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
             "#core-dividezero-c-c-objc",
-            "guideline:sei-cert",
+            "guideline:sei-cert-c",
             "profile:default",
             "profile:extreme",
             "profile:security",
             "profile:sensitive",
-            "sei-cert:int33-c",
+            "sei-cert-c:int33-c",
             "severity:HIGH"
         ])
 
@@ -453,3 +454,24 @@ class RunResults(unittest.TestCase):
         self.assertEqual(len(checker_labels), 2)
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
         self.assertEqual(set(checker_labels[1]), set())
+
+    def test_get_guideline_rules(self):
+        sei_cert_gl = Guideline("sei-cert-cpp")
+        guideline_rules = self._cc_client.getGuidelineRules([sei_cert_gl])
+        self.assertNotEqual(len(guideline_rules), 0)
+
+        self.assertEqual(list(guideline_rules.keys())[0], "sei-cert-cpp")
+
+        sei_cert_rules = guideline_rules["sei-cert-cpp"]
+        sei_cert_rulenames = map(lambda r: r.ruleId, sei_cert_rules)
+        self.assertIn("con54-cpp", sei_cert_rulenames)
+
+        con_54_cpp_rule = list(filter(lambda r: r.ruleId == "con54-cpp",
+                                      sei_cert_rules))[0]
+        self.assertEqual(len(con_54_cpp_rule.checkers), 1)
+
+        releated_checker = {
+            "checkerName": "bugprone-spuriously-wake-up-functions",
+            "severity": "medium"
+        }
+        self.assertEqual(con_54_cpp_rule.checkers, [releated_checker])

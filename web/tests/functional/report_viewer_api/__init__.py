@@ -85,7 +85,7 @@ def setup_class_common(workspace_name):
         'workspace': TEST_WORKSPACE,
         'checkers': ['-d', 'clang-diagnostic',
                      '-e', 'clang-diagnostic-division-by-zero',
-                     '-e', 'clang-diagnostic-return-type'],
+                     '-e', 'checker:clang-diagnostic-return-type'],
         'tag': tag,
         'analyzers': ['clangsa', 'clang-tidy']
     }
@@ -191,7 +191,8 @@ def setup_class_common(workspace_name):
                                    '-d', 'unix.Malloc',
                                    '-d', 'clang-diagnostic',
                                    '-e', 'clang-diagnostic-division-by-zero',
-                                   '-e', 'clang-diagnostic-return-type']
+                                   '-e',
+                                   'checker:clang-diagnostic-return-type']
     ret = codechecker.check_and_store(codechecker_cfg,
                                       test_project_name_third,
                                       project.path(test_project))

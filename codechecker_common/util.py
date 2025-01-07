@@ -10,6 +10,7 @@ Util module.
 """
 import itertools
 import json
+import yaml
 import os
 from typing import TextIO
 
@@ -87,6 +88,32 @@ def load_json(path: str, default=None, lock=False, display_warning=True):
             LOG.warning(ex)
 
     return ret
+
+
+def load_yaml(path: str):
+    """
+    Load the contents of the given file as a YAML and return it's value.
+    """
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f)
+    except OSError as ex:
+        LOG.warning("Failed to open YAML file: %s", path)
+        LOG.warning(ex)
+        return None
+    except yaml.YAMLError as ex:
+        LOG.warning("Failed to parse YAML file: %s", path)
+        LOG.warning(ex)
+        return None
+    except ValueError as ex:
+        LOG.warning("%s is not a valid YAML file.", path)
+        LOG.warning(ex)
+        return None
+    except TypeError as ex:
+        LOG.warning("Failed to process YAML file: %s", path)
+        LOG.warning(ex)
+        return None
 
 
 def get_linef(fp: TextIO, line_no: int) -> str:

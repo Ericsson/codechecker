@@ -98,6 +98,12 @@ export default new Router({
                 import("@/components/Statistics/CheckerCoverage/\
 CheckerCoverageStatistics"),
             },
+            {
+              path: "guideline",
+              name: "guideline-statistics",
+              component: () => import(
+                "@/components/Statistics/Guideline/GuidelineStatistics"),
+            },
           ]
         },
         {

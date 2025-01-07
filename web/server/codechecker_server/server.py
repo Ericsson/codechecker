@@ -27,6 +27,7 @@ import re
 
 import multiprocess
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql.expression import func
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
@@ -755,6 +756,9 @@ class CCSimpleHttpServer(HTTPServer):
         permissions.initialise_defaults('SYSTEM', {
             'config_db_session': cfg_sess
         })
+
+        self.cfg_sess_private = cfg_sess
+
         products = cfg_sess.query(ORMProduct).all()
         for product in products:
             self.add_product(product)
@@ -898,6 +902,36 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__products[prod.endpoint] = prod
 
+    def is_database_used(self, conn):
+        """
+        Returns bool whether the given database is already connected to by
+        the server.
+        """
+
+        # get the database name from the database connection args
+        conn = make_url(conn.connection)
+        is_sqlite = conn.engine == 'sqlite'
+
+        # create a tuple of database that is going to be added for comparison
+        to_add = (f"{conn.engine}+pysqlite" if is_sqlite
+                  else f"{conn.engine}+psycopg2",
+                  conn.database, conn.host, conn.port)
+
+        # create a tuple of database that is already connected for comparison
+        def to_tuple(product):
+            url = make_url(product.connection)
+            return url.drivername, url.database, url.host, url.port
+        # creates a list of currently connected databases
+        current_connected_databases = list(map(
+            to_tuple,
+            self.cfg_sess_private.query(ORMProduct).all()))
+
+        self.cfg_sess_private.commit()
+        self.cfg_sess_private.close()
+
+        # True if found, False otherwise
+        return to_add in current_connected_databases
+
     @property
     def num_products(self):
         """
@@ -1018,7 +1052,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
                      "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
-    def __check_callback_url_format(provider_name, callback_url):
+    def check_callback_url_format(provider_name, callback_url):
         """
         check the format of callback url using regex
         """
@@ -1026,7 +1060,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
         website = "[a-zA-Z0-9.-]+([:][0-9]{2,5}|)"
         paths = "login[/]OAuthLogin"
 
-        pattern_str = "^%s[:][/]{2}%s[/]%s[/]%s$" % (protocol, website, paths, provider_name)
+        pattern_str = f"^{protocol}://{website}/{paths}/{provider_name}$"
         pattern = re.compile(pattern_str)
         match = pattern.match(callback_url)
 
@@ -1037,17 +1071,19 @@ def start_server(config_directory, package_data, port, config_sql_server,
             server_cfg_file,
             force_auth)
         cfg_dict = manager.get_config_dict()
-        oauth_config = cfg_dict['authentication']['method_oauth'].get('providers', {})
+        # the 2 varible are here because in 1 line it was too long
+        auth_config = cfg_dict['authentication']['method_oauth']
+        oauth_config = auth_config.get('providers', {})
         # Iterate through the providers and print the callback_url
         for provider_name, provider_data in oauth_config.items():
             callback_url = provider_data.get('oauth_callback_url')
             try:
-                if not __check_callback_url_format(provider_name, callback_url):
+                if not check_callback_url_format(provider_name, callback_url):
                     raise ValueError("The callback url format is invalid.")
             except ValueError as verr:
                 LOG.error(verr)
                 LOG.error("The callback url format is invalid. "
-                        "Please check the configuration file.")
+                          "Please check the configuration file.")
                 sys.exit(1)
     except IOError as ioerr:
         LOG.debug(ioerr)

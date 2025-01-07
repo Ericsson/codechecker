@@ -523,7 +523,8 @@ def __print_checker_config(args: argparse.Namespace):
         args.output_format = 'rows'
 
     working_analyzers, errored = \
-        analyzer_types.check_available_analyzers(args.analyzers)
+        analyzer_types.check_available_analyzers(args_analyzers=args.analyzers,
+                                                 exit_on_error=False)
 
     if 'details' in args:
         header = ['Option', 'Description']

@@ -886,7 +886,7 @@ class TestAnalyze(unittest.TestCase):
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clang-tidy",
                        "-d", "clang-diagnostic",
-                       "-e", "clang-diagnostic-unused"]
+                       "-e", "prefix:clang-diagnostic-unused"]
 
         source_file = os.path.join(self.test_dir, "compiler_warning.c")
         build_log = [{"directory": self.test_workspace,

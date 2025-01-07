@@ -15,6 +15,9 @@ import random
 
 from sqlalchemy.sql.expression import and_
 
+from sqlalchemy import create_engine, exc
+from sqlalchemy.engine.url import URL
+
 import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
 
@@ -319,6 +322,57 @@ class ThriftProductHandler:
             return prod
 
     @timeit
+    def __create_product_database(self, product):
+        """
+        Creates a database for the given product,
+        to assist addProduct() function that connects to
+        an already existing database.
+        """
+
+        product_info = product.connection
+        if product_info.engine == 'sqlite':
+            LOG.info("Using SQLite engine, skipping database creation")
+            return True
+
+        db_host = product_info.host
+        db_engine = product_info.engine
+        db_port = int(product_info.port)
+        db_user = convert.from_b64(product_info.username_b64)
+        db_pass = convert.from_b64(product_info.password_b64)
+        db_name = product_info.database
+
+        engine_url = URL(
+            drivername=db_engine,
+            username=db_user,
+            password=db_pass,
+            host=db_host,
+            port=db_port,
+            database='postgres'
+        )
+        engine = create_engine(engine_url)
+        try:
+            with engine.connect() as conn:
+                conn.execute("commit")
+                LOG.info("Creating database '%s'", db_name)
+                conn.execute(f"CREATE DATABASE {db_name}")
+                conn.close()
+        except exc.ProgrammingError as e:
+            LOG.error("ProgrammingError occurred: %s", str(e))
+            if "already exists" in str(e):
+                LOG.error("Database '%s' already exists", db_name)
+                return False
+            else:
+                LOG.error("Error occurred while creating database: %s", str(e))
+                return False
+        except exc.SQLAlchemyError as e:
+            LOG.error("SQLAlchemyError occurred: %s", str(e))
+            return False
+        finally:
+            engine.dispose()
+
+        return True
+
+    @timeit
     def addProduct(self, product):
         """
         Add the given product to the products configured by the server.
@@ -351,6 +405,20 @@ class ThriftProductHandler:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
+
+        # Check if the database is already in use by another product.
+        db_in_use = self.__server.is_database_used(product)
+        if db_in_use:
+            LOG.error("Database '%s' is already in use by another product!",
+                      product.connection.database)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "Database is already in use by another product!")
+
+        # Add database before letting product connect to it
+        if self.__create_product_database(product):
+            LOG.info("Database '%s' created successfully.",
+                     product.connection.database)
 
         # Some values come encoded as Base64, decode these.
         displayed_name = convert.from_b64(product.displayedName_b64) \

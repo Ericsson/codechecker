@@ -7,9 +7,10 @@
         :show-remove-filtered-reports="false"
         :report-count="reportCount"
         :show-diff-type="false"
-        :show-compare-to="
-          $router.currentRoute.name != 'checker-coverage-statistics'"
+        :show-compare-to="showCompareTo"
+        :refresh-filter="refreshFilterState"
         @refresh="refresh"
+        @set-refresh-filter-state="setRefreshFilterState"
       />
     </pane>
     <pane>
@@ -36,6 +37,7 @@
           <router-view
             :bus="bus"
             :namespace="namespace"
+            @refresh-filter="setRefreshFilterState(true)"
           />
         </keep-alive>
       </div>
@@ -68,33 +70,46 @@ export default {
       {
         name: "Product Overview",
         icon: "mdi-briefcase-outline",
-        to: { name: "product-overview" }
+        to: { name: "product-overview" },
+        showCompareTo: true
       },
       {
         name: "Checker Statistics",
         icon: "mdi-card-account-details",
-        to: { name: "checker-statistics" }
+        to: { name: "checker-statistics" },
+        showCompareTo: true
       },
       {
         name: "Severity Statistics",
         icon: "mdi-speedometer",
-        to: { name: "severity-statistics" }
+        to: { name: "severity-statistics" },
+        showCompareTo: true
       },
       {
         name: "Component Statistics",
         icon: "mdi-puzzle-outline",
-        to: { name: "component-statistics" }
+        to: { name: "component-statistics" },
+        showCompareTo: true
       },
       {
         name: "Checker Coverage",
         icon: "mdi-clipboard-check-outline",
-        to: { name: "checker-coverage-statistics" }
+        to: { name: "checker-coverage-statistics" },
+        showCompareTo: false
+      },
+      {
+        name: "Guideline Statistics",
+        icon: "mdi-clipboard-text-outline",
+        to: { name: "guideline-statistics" },
+        showCompareTo: false
       },
     ];
 
     return {
       namespace: namespace,
+      refreshFilterState: false,
       reportCount: 0,
+      showCompareTo: true,
       tab: null,
       tabs: tabs,
       bus: new Vue(),
@@ -130,6 +145,14 @@ export default {
     tab() {
       if (!this.tab) return;
 
+      this.showCompareTo = this.tabs.filter(
+        tab => tab.showCompareTo
+      ).map(
+        tab => tab.to.name
+      ).includes(
+        this.$router.currentRoute.name
+      );
+
       const resolve = this.$router.resolve(this.tab);
       if (this.refreshTabs[resolve.route.name]) {
         this.refreshCurrentTab();
@@ -160,6 +183,10 @@ export default {
 
       const resolve = this.$router.resolve(this.tab);
       this.refreshTabs[resolve.route.name] = false;
+    },
+
+    setRefreshFilterState(state) {
+      this.refreshFilterState=state;
     }
   }
 };
