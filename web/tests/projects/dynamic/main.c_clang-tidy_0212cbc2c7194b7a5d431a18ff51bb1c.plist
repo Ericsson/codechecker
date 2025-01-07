@@ -52,6 +52,58 @@
 				</dict>
 			</array>
 		</dict>
+		<!-- This report is the same as the first one, but with a different
+		     issue_hash_content_of_line_in_context. -->
+		<dict>
+			<key>category</key>
+			<string>bugprone</string>
+			<key>check_name</key>
+			<string>bugprone-sizeof-expression</string>
+			<key>description</key>
+			<string>suspicious usage of 'sizeof(K)'; did you mean 'K'?</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>11111111111111111111111111111111</string>
+			<key>report-annotation</key>
+			<dict>
+				<key>timestamp</key>
+				<string>2000-01-01 09:01</string>
+				<key>testcase</key>
+				<string>TS-1</string>
+				<key>testcase</key>
+				<string>TC-1</string>
+			</dict>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>3</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>7</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>3</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>7</integer>
+					</dict>
+					<key>message</key>
+					<string>suspicious usage of 'sizeof(K)'; did you mean 'K'?</string>
+				</dict>
+			</array>
+		</dict>
+		<!-- This report is the same as the first one, but with a different
+		     report-annotation. -->
 		<dict>
 			<key>category</key>
 			<string>bugprone</string>
