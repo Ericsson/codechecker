@@ -178,17 +178,17 @@ class SessionManager:
         self.__sessions = []
         self.__configuration_file = configuration_file
 
-        scfg_dict = self.__get_config_dict()
+        self.scfg_dict = self.__get_config_dict()
 
         # FIXME: Refactor this. This is irrelevant to authentication config,
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(scfg_dict)
-        self.__max_run_count = scfg_dict.get('max_run_count', None)
-        self.__store_config = scfg_dict.get('store', {})
-        self.__keepalive_config = scfg_dict.get('keepalive', {})
-        self.__auth_config = scfg_dict['authentication']
+        self.__worker_processes = get_worker_processes(self.scfg_dict)
+        self.__max_run_count = self.scfg_dict.get('max_run_count', None)
+        self.__store_config = self.scfg_dict.get('store', {})
+        self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
             LOG.debug("Authentication was force-enabled.")
@@ -216,7 +216,7 @@ class SessionManager:
             self.__group_regexes_compiled = d
 
         # If no methods are configured as enabled, disable authentication.
-        if scfg_dict['authentication'].get('enabled'):
+        if self.scfg_dict['authentication'].get('enabled'):
             found_auth_method = False
 
             if 'method_dictionary' in self.__auth_config and \
@@ -267,6 +267,9 @@ class SessionManager:
             if providers[provider].get('enabled', False):
                 result.append(provider)
         return result
+
+    def get_config_dict(self):
+        return self.scfg_dict
 
     def get_oauth_config(self, provider):
         provider_cfg = self.__auth_config.get(

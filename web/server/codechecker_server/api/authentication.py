@@ -263,6 +263,8 @@ class ThriftAuthHandler:
         elif auth_method == "oauth":
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             provider, url = auth_string.split("@")
+            # make the provider not case sensitive
+            provider = provider.lower()
             url_new = urlparse(url)
             parsed_query = parse_qs(url_new.query)
             code = parsed_query.get("code")[0]
@@ -280,6 +282,9 @@ class ThriftAuthHandler:
                                   OAuthSession.expires_at) \
                            .filter(OAuthSession.state == state) \
                            .first()
+
+            # make the provider from the database not case sensitive
+            provider_db = provider_db.lower()
 
             if str(state_db) != state or str(provider_db) != provider \
                     or str(date_time) > str(expires_at):

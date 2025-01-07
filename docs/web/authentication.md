@@ -401,7 +401,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
           "oauth_client_id": "client id",
           "oauth_client_secret": "client secret",
           "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
-          "oauth_callback_url": "http://localhost:8080/login/provider",
+          "oauth_callback_url": "http://localhost:8080/login/OAuthLogin/provider",
           "oauth_token_uri": "https://accounts.google.com/o/oauth2/token",
           "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
           "oauth_scope": "openid email profile",

@@ -23,6 +23,8 @@ import ssl
 import sys
 from typing import List, Optional, Tuple
 
+import re
+
 import multiprocess
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import func
@@ -1016,10 +1018,37 @@ def start_server(config_directory, package_data, port, config_sql_server,
                      "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
+    def __check_callback_url_format(provider_name, callback_url):
+        """
+        check the format of callback url using regex
+        """
+        protocol = "http(s|)"
+        website = "[a-zA-Z0-9.-]+([:][0-9]{2,5}|)"
+        paths = "login[/]OAuthLogin"
+
+        pattern_str = "^%s[:][/]{2}%s[/]%s[/]%s$" % (protocol, website, paths, provider_name)
+        pattern = re.compile(pattern_str)
+        match = pattern.match(callback_url)
+
+        return match is not None
+
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
             force_auth)
+        cfg_dict = manager.get_config_dict()
+        oauth_config = cfg_dict['authentication']['method_oauth'].get('providers', {})
+        # Iterate through the providers and print the callback_url
+        for provider_name, provider_data in oauth_config.items():
+            callback_url = provider_data.get('oauth_callback_url')
+            try:
+                if not __check_callback_url_format(provider_name, callback_url):
+                    raise ValueError("The callback url format is invalid.")
+            except ValueError as verr:
+                LOG.error(verr)
+                LOG.error("The callback url format is invalid. "
+                        "Please check the configuration file.")
+                sys.exit(1)
     except IOError as ioerr:
         LOG.debug(ioerr)
         LOG.error("The server's configuration file "
