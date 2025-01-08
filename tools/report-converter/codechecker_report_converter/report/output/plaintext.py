@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------
 """ Helper and converter functions for plain text format. """
 
+import locale
 import logging
 import math
 import os
@@ -176,7 +177,9 @@ def convert(
                 if source_comment and source_comment.line:
                     output.write(f"{source_comment.line.rstrip()}\n")
 
-                output.write(f"{format_main_report(report)}")
+                output.write(
+                    f"{format_main_report(report)}"
+                    .encode('utf-8').decode(locale.getlocale()[1] or "utf-8"))
             else:
                 output.write(InvalidFileContentMsg)
 
