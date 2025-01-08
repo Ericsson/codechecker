@@ -5,8 +5,11 @@
       [{{ item.report.bugPathLength }}]
     </span>
 
-    <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
-      {{ fileName }}{{ item.step.startLine }} &ndash; {{ item.step.msg }}
+    <span
+      v-else-if="item.kind === ReportTreeKind.REPORT_STEPS"
+      :title="reportStepContent"
+    >
+      {{ reportStepContent }}
     </span>
 
     <span v-else-if="item.kind === ReportTreeKind.BUG">
@@ -21,7 +24,7 @@
       L{{ item.data.startLine }} &ndash; {{ item.name }}
     </span>
     <span v-else-if="item.kind === ReportTreeKind.SEVERITY_LEVEL">
-      {{ item.name }} 
+      {{ item.name }}
       <span v-if="newReportCount" style="color: #ec7672;">
         {{ newReportCountLabel }}
       </span>
@@ -51,8 +54,13 @@ export default {
     };
   },
   computed: {
+    reportStepContent() {
+      return `${this.fileName}${this.item.step.startLine} ` +
+        `- ${this.item.step.msg}`;
+    },
+
     fileName() {
-      return this.item.shortFileName ? `${this.item.shortFileName}:` : "L";
+      return this.item.fileName ? `${this.item.fileName}:` : "L";
     },
 
     isExtendedReportData() {
