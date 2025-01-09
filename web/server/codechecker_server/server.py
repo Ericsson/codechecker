@@ -1074,7 +1074,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
         # the 2 varible are here because in 1 line it was too long
         auth_config = cfg_dict['authentication']['method_oauth']
         oauth_config = auth_config.get('providers', {})
-        # Iterate through the providers and print the callback_url
+        # Iterate through the providers and
+        # checks the format of callback url
         for provider_name, provider_data in oauth_config.items():
             callback_url = provider_data.get('oauth_callback_url')
             try:
@@ -1082,9 +1083,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
                     raise ValueError("The callback url format is invalid.")
             except ValueError as verr:
                 LOG.error(verr)
-                LOG.error("The callback url format is invalid. "
+                LOG.error("The callback url format is invalid."
                           "Please check the configuration file.")
                 # turns off the provider if the callback url is invalid
+                LOG.debug("Turning off the provider: %s", provider_name)
                 provider_data['enabled'] = False
     except IOError as ioerr:
         LOG.debug(ioerr)
