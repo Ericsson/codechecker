@@ -265,6 +265,8 @@ class SQLServer(metaclass=ABCMeta):
 
                 LOG.debug("Checking schema versions in the package.")
                 schema_config_head = scriptt.get_current_head()
+                LOG.debug("Schema revision in the package: %s",
+                          str(schema_config_head))
 
                 if database_schema_revision != schema_config_head:
                     LOG.debug("Database schema mismatch detected "
