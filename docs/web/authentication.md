@@ -425,7 +425,14 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 * Important: 'oauth_callback_url' must always match with link specified in the
 Providers settings when issuing an access token.
 
-* Important: As of the time this code was written, GitHub does not support PKCE (Proof Key for Code Exchange). Therefore, users logging in with GitHub cannot use PKCE. If GitHub starts supporting PKCE in the future, the code should automatically start using it.
+* Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
+Therefore PKCE is not used when users log in using GitHub.
+If GitHub starts supporting PKCE in the future, the code should automatically
+start using it ,and in that case, this note can be removed.
+
+* Important: To maintain consistency between GitHub and other providers, we need to fetch primary email
+from another endpoint because GitHub dosn't provide the primary email in the `user_info`,so
+we make an API request to fetch the primary email of the GitHub and use it instead of the username provided by the `user_info`.
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

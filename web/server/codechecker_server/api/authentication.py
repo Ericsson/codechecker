@@ -378,6 +378,9 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User info fetch failed.")
 
+            # if the provider is github it fetches primary email
+            # from another api endpoint to maintain username as email
+            # consistency between GitHub and other providers
             if provider == "github" and \
                     "localhost" not in user_info_url:
                 try:
