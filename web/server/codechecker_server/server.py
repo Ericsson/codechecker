@@ -1078,15 +1078,12 @@ def start_server(config_directory, package_data, port, config_sql_server,
         # checks the format of callback url
         for provider_name, provider_data in oauth_config.items():
             callback_url = provider_data.get('oauth_callback_url')
-            try:
-                if not check_callback_url_format(provider_name, callback_url):
-                    raise ValueError("The callback url format is invalid.")
-            except ValueError as verr:
-                LOG.error(verr)
-                LOG.error("The callback url format is invalid."
-                          "Please check the configuration file.")
-                # turns off the provider if the callback url is invalid
-                LOG.debug("Turning off the provider: %s", provider_name)
+            if not check_callback_url_format(provider_name, callback_url):
+                LOG.warning("The callback URL format is "
+                            f"invalid for provider {provider_name}."
+                            "Please check the configuration file.")
+                # Turn off the provider if the callback URL is invalid
+                LOG.warning("Turning off the provider: %s", provider_name)
                 provider_data['enabled'] = False
     except IOError as ioerr:
         LOG.debug(ioerr)
