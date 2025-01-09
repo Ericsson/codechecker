@@ -1084,7 +1084,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
                 LOG.error(verr)
                 LOG.error("The callback url format is invalid. "
                           "Please check the configuration file.")
-                sys.exit(1)
+                # turns off the provider if the callback url is invalid
+                provider_data['enabled'] = False
     except IOError as ioerr:
         LOG.debug(ioerr)
         LOG.error("The server's configuration file "
