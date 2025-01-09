@@ -31,7 +31,7 @@ except Exception:
     print("'thrift' package (https://pypi.org/project/thrift/) is not "
           "available in your environment. Please install it before you run "
           "this script again.")
-    print("> pip3 install thrift==0.13.0")
+    print("> pip3 install thrift==0.21.0")
     sys.exit(1)
 
 

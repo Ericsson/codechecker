@@ -1,5 +1,5 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_VERSION = "0.11.0"
+THRIFT_VERSION = "0.12.0"
 TARGET_PY = --gen py
 TARGET_JS = --gen js:node
 PYTHON_BIN ?= python3

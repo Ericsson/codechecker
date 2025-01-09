@@ -11,7 +11,7 @@ python3 -m venv venv
 source $PWD/venv/bin/activate
 
 # Install thrift package.
-pip3 install thrift==0.13.0
+pip3 install thrift==0.21.0
 
 # Get and install CodeChecker API packages.
 #
