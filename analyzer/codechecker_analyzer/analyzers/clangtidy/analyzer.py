@@ -13,8 +13,10 @@ checker handling and configuration.
 import ast
 import json
 import os
+from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 from typing import Iterable, List, Set, Tuple
 
@@ -128,12 +130,28 @@ def get_diagtool_bin():
     if not clang_bin:
         return None
 
+    path_env = os.environ.get('PATH', '').split(os.pathsep)
+    clang_path = Path(clang_bin)
+
+    if clang_path.resolve().name == 'ccache':
+        for i, path in enumerate(path_env):
+            if Path(path) == clang_path.parent:
+                pos = i
+                break
+
+        clang_bin = shutil.which(
+            clang_path.name,
+            path=os.pathsep.join(path_env[pos + 1:]))
+
+        if not clang_bin:
+            return None
+
     # Resolve symlink.
-    clang_bin = os.path.realpath(clang_bin)
+    clang_bin = Path(clang_bin).resolve()
 
     # Find diagtool next to the clang binary.
-    diagtool_bin = os.path.join(os.path.dirname(clang_bin), 'diagtool')
-    if os.path.exists(diagtool_bin):
+    diagtool_bin = clang_bin.parent / 'diagtool'
+    if diagtool_bin.exists():
         return diagtool_bin
 
     LOG.warning(
