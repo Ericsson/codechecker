@@ -145,7 +145,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
-                         [--ctu | --ctu-collect | --ctu-analyze]
+                         [--ctu | --ctu-retain | --ctu-collect | --ctu-analyze]
                          [--ctu-reanalyze-on-failure]
                          [--ctu-ast-mode {load-from-pch,parse-on-demand}]
                          [-e checker/group/profile] [-d checker/group/profile]
@@ -333,6 +333,10 @@ cross translation unit analysis arguments:
                         'collect' and 'analyze' phases. In this mode, the
                         extra files created by 'collect' are cleaned up after
                         the analysis.
+  --ctu-retain          Perform Cross Translation Unit (CTU) analysis, both
+                        'collect' and 'analyze' phases. After doing so, the
+                        extra files created by 'collect' are retained after
+                        the analysis and not removed.
   --ctu-collect         Perform the first, 'collect' phase of Cross-TU
                         analysis. This phase generates extra files needed by
                         CTU analysis, and puts them into '<OUTPUT_DIR>/ctu-
@@ -993,7 +997,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--timeout TIMEOUT]
-                           [--ctu | --ctu-collect | --ctu-analyze]
+                           [--ctu | --ctu-retain | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
                            [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
@@ -1650,6 +1654,10 @@ cross translation unit analysis arguments:
                         'collect' and 'analyze' phases. In this mode, the
                         extra files created by 'collect' are cleaned up after
                         the analysis.
+  --ctu-retain          Perform Cross Translation Unit (CTU) analysis, both
+                        'collect' and 'analyze' phases. After doing so, the
+                        extra files created by 'collect' are retained after
+                        the analysis and not removed.
   --ctu-collect         Perform the first, 'collect' phase of Cross-TU
                         analysis. This phase generates extra files needed by
                         CTU analysis, and puts them into '<OUTPUT_DIR>/ctu-
