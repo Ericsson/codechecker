@@ -11,6 +11,7 @@ Prepare and start different analysis types
 
 
 from collections import defaultdict
+from string import Template
 import os
 import shutil
 import signal
@@ -212,16 +213,46 @@ def perform_analysis(args, skip_handlers, filter_handlers,
             available_checkers.add(checker_name)
 
     if 'ordered_checkers' in args:
-        missing_checkers = checkers.available(args.ordered_checkers,
+        missing_prefixes = []
+        for checker in args.ordered_checkers:
+            if checker[0].startswith("prefix:"):
+                prefix = checker[0][len("prefix:"):]
+                if prefix not in available_checkers and not any(
+                        item.startswith(prefix + '.') or
+                        item.startswith(prefix + '-') for item in
+                        available_checkers):
+                    missing_prefixes.append(prefix)
+
+        ordered_checkers = [(checker[0].replace("checker:", ""), checker[1])
+                            if checker[0].startswith("checker:") else checker
+                            for checker in args.ordered_checkers]
+        missing_checkers = checkers.available(ordered_checkers,
                                               available_checkers)
-        if missing_checkers:
-            diag_msg = "No checker(s) with these names was found:\n{}".format(
-                '\n'.join(missing_checkers))
-            if 'no_missing_checker_error' in args:
-                LOG.warning(diag_msg)
-            else:
-                LOG.error(diag_msg)
-                LOG.info("Although it is not reccomended, if you want to "
+
+        error_lists = {
+            'prefix(es)': missing_prefixes,
+            'checker(s)': missing_checkers
+        }
+
+        errors = [(name, lst) for name, lst in error_lists.items() if lst]
+
+        if errors:
+            msg_template = Template(
+                "No $err_list_name with these names was found: $items.")
+
+            for err_list_name, missing_items in errors:
+                missing_items_str = ', '.join(missing_items)
+
+                diag_msg = msg_template.substitute(err_list_name=err_list_name,
+                                                   items=missing_items_str)
+
+                if 'no_missing_checker_error' in args:
+                    LOG.warning(diag_msg)
+                else:
+                    LOG.error(diag_msg)
+
+            if 'no_missing_checker_error' not in args:
+                LOG.info("Although it is not recommended, if you want to "
                          "suppress errors relating to unknown "
                          "checker names, consider using the option "
                          "'--no-missing-checker-error'")
