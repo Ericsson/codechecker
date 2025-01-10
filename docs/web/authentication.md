@@ -363,6 +363,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
           * http://localhost:8080/login/OAuthLogin/github
           * http://localhost:8080/login/OAuthLogin/google
           * http://localhost:8080/login/OAuthLogin/microsoft
+          * https://codechecker.gic.ericsson.se/login/OAuthLogin/github
 
       * `oauth_token_uri`
 

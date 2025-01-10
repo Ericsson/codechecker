@@ -1057,7 +1057,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
         check the format of callback url using regex
         """
         protocol = "http(s|)"
-        website = "[a-zA-Z0-9.-]+([:][0-9]{2,5}|)"
+        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5}|)"
         paths = "login[/]OAuthLogin"
 
         pattern_str = f"^{protocol}://{website}/{paths}/{provider_name}$"
