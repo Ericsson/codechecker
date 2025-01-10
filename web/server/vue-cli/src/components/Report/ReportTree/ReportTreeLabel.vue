@@ -21,7 +21,7 @@
       L{{ item.data.startLine }} &ndash; {{ item.name }}
     </span>
     <span v-else-if="item.kind === ReportTreeKind.SEVERITY_LEVEL">
-      {{ item.name }} 
+      {{ item.name }}
       <span v-if="newReportCount" style="color: #ec7672;">
         {{ newReportCountLabel }}
       </span>
@@ -52,7 +52,7 @@ export default {
   },
   computed: {
     fileName() {
-      return this.item.shortFileName ? `${this.item.shortFileName}:` : "L";
+      return this.item.fileName ? `${this.item.fileName}:` : "L";
     },
 
     isExtendedReportData() {
