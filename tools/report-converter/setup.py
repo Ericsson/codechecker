@@ -21,8 +21,8 @@ setuptools.setup(
     url="https://github.com/Ericsson/CodeChecker",
     keywords=['report-converter', 'codechecker', 'plist'],
     license='LICENSE.txt',
-    packages=setuptools.find_packages(),
-    include_package_data=True,
+    packages=setuptools.find_namespace_packages(include=['codechecker_report_converter*']),
+    include_package_data=True,  # This will use MANIFEST.in
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Developers",
