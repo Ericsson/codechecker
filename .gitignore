@@ -25,6 +25,9 @@ web/server/www/userguide/gen-docs/
 **/a.out
 **/tests/projects/objc/DeallocUseAfterFreeErrors
 
+# bazel
+**/bazel-*
+
 # idea files
 .idea/
 
