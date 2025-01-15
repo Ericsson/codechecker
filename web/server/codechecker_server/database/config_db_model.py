@@ -124,6 +124,9 @@ class Session(Base):
     user_name = Column(String)
     token = Column(CHAR(32), nullable=False, unique=True)
 
+    # access token of oauth for later use in refresh token
+    access_token = Column(String)
+
     # List of group names separated by semicolons.
     groups = Column(String)
 
@@ -135,13 +138,14 @@ class Session(Base):
     can_expire = Column(Boolean, server_default=true(), default=True)
 
     def __init__(self, token, user_name, groups, description=None,
-                 can_expire=True):
+                 can_expire=True, access_token=None):
         self.token = token
         self.user_name = user_name
         self.groups = groups
         self.description = description
         self.can_expire = can_expire
         self.last_access = datetime.now()
+        self.access_token = access_token
 
 
 class Configuration(Base):
@@ -156,6 +160,22 @@ class Configuration(Base):
     def __init__(self, config_key, config_value):
         self.config_key = config_key
         self.config_value = config_value
+
+
+class OAuthSession(Base):
+    __tablename__ = 'oauth_sessions'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    provider = Column(String, nullable=False)
+    state = Column(String, nullable=False)
+    code_verifier = Column(String, nullable=False)
+    expires_at = Column(DateTime)
+
+    def __init__(self, provider, state, code_verifier, expires_at):
+        self.provider = provider
+        self.state = state
+        self.expires_at = expires_at
+        self.code_verifier = code_verifier
 
 
 IDENTIFIER = {
