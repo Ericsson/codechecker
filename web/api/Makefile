@@ -1,5 +1,13 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_VERSION = "0.12.0"
+
+# The default for THRIFT_DOCKER_IMAGE is the official thrift image
+THRIFT_DOCKER_IMAGE ?= thrift
+# The current default for THRIFT_VERSION is latest version of the currently
+# unmaintained official thrift image on dockerhub
+# This is the version of the Docker image, and currently we are operating on
+# the assumption that the Thift API version and the Docker image versions match
+THRIFT_DOCKER_VERSION ?= 0.12.0
+
 TARGET_PY = --gen py
 TARGET_JS = --gen js:node
 PYTHON_BIN ?= python3
@@ -34,7 +42,7 @@ build: clean target_dirs
 	  --rm \
 	  -u "$(uid):$(guid)" \
 	  -v $(API_DIR):/data \
-	  thrift:$(THRIFT_VERSION) \
+	  $(THRIFT_DOCKER_IMAGE):$(THRIFT_DOCKER_VERSION) \
 	  /bin/bash -c " \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/authentication.thrift && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/products.thrift && \
