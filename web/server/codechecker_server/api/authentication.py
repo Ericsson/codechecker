@@ -222,11 +222,21 @@ class ThriftAuthHandler:
             code_challenge_method='S256'
             )
 
-        # Create authorization URL
-        url, state = session.create_authorization_url(
-            authorization_uri,
-            state=stored_state,
-            code_verifier=pkce_verifier
+        # each provider has different requirements
+        # for requesting refresh token
+        if provider == "google":
+            url, state = session.create_authorization_url(
+                url=authorization_uri,
+                state=stored_state,
+                code_verifier=pkce_verifier,
+                access_type='offline',
+                prompt='consent'
+            )
+        else:
+            url, state = session.create_authorization_url(
+                authorization_uri,
+                state=stored_state,
+                code_verifier=pkce_verifier
             )
         # inserting data in database
         self.insertDataOauth(state=state,
