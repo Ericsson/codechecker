@@ -4,8 +4,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "bazel_codechecker",
-    remote = "https://github.com/Ericsson/codechecker_bazel.git",
-    branch = "main",
+    remote = "https://github.com/Szelethus/codechecker_bazel.git",
+    branch = "bin_bash_first_line",
 )
 
 load(
