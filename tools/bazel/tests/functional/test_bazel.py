@@ -20,11 +20,10 @@ import os
 import re
 import shlex
 import subprocess
-import sys
 import unittest
 
 
-class TestBase(unittest.TestCase):
+class TestBaseTest(unittest.TestCase):
     """Unittest base abstract class"""
 
     BAZEL_BIN_DIR = os.path.join("..", "bazel-bin", "test")
@@ -50,6 +49,9 @@ class TestBase(unittest.TestCase):
         """Before every test"""
         logging.debug("\n%s", "-" * 70)
 
+        """Before every test: clean Bazel cache"""
+        self.check_command("bazel clean")
+
     def check_command(self, cmd, exit_code=0):
         """Run shell command and check status"""
         logging.debug("Running: %s", cmd)
@@ -65,6 +67,8 @@ class TestBase(unittest.TestCase):
                     f"command: {cmd}",
                     f"stdout: {stdout.decode('utf-8')}",
                     f"stderr: {stderr.decode('utf-8')}"]))
+            print(stdout)
+            print(stderr)
 
     def grep_file(self, filename, regex):
         """Grep given filename"""
@@ -76,16 +80,6 @@ class TestBase(unittest.TestCase):
                     logging.debug(line)
                     return line
         self.fail(f"Could not find r'{regex}' in '{filename}'")
-        return ""
-
-
-class TestBasic(TestBase):
-    """Basic tests"""
-
-    def setUp(self):
-        """Before every test: clean Bazel cache"""
-        super().setUp()
-        self.check_command("bazel clean")
 
     def test_bazel_test_all(self):
         """Test: bazel test ..."""
@@ -100,7 +94,9 @@ class TestBasic(TestBase):
         self.check_command("bazel test :codechecker_fail", exit_code=3)
         logfile = os.path.join(
             self.BAZEL_BIN_DIR, "codechecker_fail", "codechecker.log")
-        self.grep_file(logfile, r"clang-diagnostic-unused-variable\s+\|\s+MEDIUM\s+\|\s+1")
+        self.grep_file(
+            logfile,
+            r"clang-diagnostic-unused-variable\s+\|\s+MEDIUM\s+\|\s+1")
         self.grep_file(logfile, r"core.NullDereference\s+\|\s+HIGH\s+\|\s+1")
         self.grep_file(logfile, r"deadcode.DeadStores\s+\|\s+LOW\s+\|\s+1")
         self.grep_file(logfile, r"lib.cc\s+\|\s+3")
@@ -118,25 +114,28 @@ class TestBasic(TestBase):
 
     def test_bazel_compile_commands(self):
         """Test: bazel build --build_tag_filters=compile_commands ..."""
-        self.check_command("bazel build --build_tag_filters=compile_commands ...")
+        self.check_command(
+            "bazel build --build_tag_filters=compile_commands ...")
         compile_commands = os.path.join(
-            self.BAZEL_BIN_DIR, "compile_commands_pass", "compile_commands.json")
+            self.BAZEL_BIN_DIR, "compile_commands_pass",
+            "compile_commands.json")
         self.grep_file(compile_commands, r"pass\.cc")
         self.grep_file(compile_commands, r"bin\/gcc")
 
     def test_bazel_aspect_clang_tidy_pass(self):
         """Test: bazel build :test_pass --aspects"""
-        command = "bazel build :test_pass"
-        command += " --aspects @bazel_codechecker//src:clang.bzl%clang_tidy_aspect"
-        command += " --output_groups=report"
+        command = "bazel build :test_pass " + \
+            "--aspects @bazel_codechecker//src:clang.bzl%clang_tidy_aspect" + \
+            " --output_groups=report"
         self.check_command(command, exit_code=0)
 
     def test_bazel_aspect_clang_tidy_fail(self):
         """Test: bazel build :test_lib --aspects"""
-        # NOTE: we should use :test_fail but transitive dependencies do not work
-        command = "bazel build :test_lib"
-        command += " --aspects @bazel_codechecker//src:clang.bzl%clang_tidy_aspect"
-        command += " --output_groups=report"
+        # NOTE: we should use :test_fail but transitive dependencies do not
+        # work
+        command = "bazel build :test_lib " + \
+            "--aspects @bazel_codechecker//src:clang.bzl%clang_tidy_aspect" + \
+            " --output_groups=report"
         self.check_command(command, exit_code=1)
 
     def test_bazel_build_clang_tidy_pass(self):
@@ -157,7 +156,8 @@ class TestBasic(TestBase):
 
     def test_bazel_build_clang_ctu(self):
         """Test: bazel build :clang_ctu_pass :clang_ctu_fail"""
-        self.check_command("bazel build :clang_ctu_pass :clang_ctu_fail", exit_code=0)
+        self.check_command(
+            "bazel build :clang_ctu_pass :clang_ctu_fail", exit_code=0)
 
     def test_bazel_test_clang_ctu_pass(self):
         """Test: bazel test :clang_ctu_pass"""
@@ -179,7 +179,9 @@ class TestBasic(TestBase):
         self.check_command("bazel test :code_checker_fail", exit_code=3)
         logfile = os.path.join(
             self.BAZEL_TESTLOGS_DIR, "code_checker_fail", "test.log")
-        self.grep_file(logfile, r"clang-diagnostic-unused-variable\s+\|\s+MEDIUM\s+\|\s+1")
+        self.grep_file(
+            logfile,
+            r"clang-diagnostic-unused-variable\s+\|\s+MEDIUM\s+\|\s+1")
         self.grep_file(logfile, r"core.NullDereference\s+\|\s+HIGH\s+\|\s+1")
         self.grep_file(logfile, r"deadcode.DeadStores\s+\|\s+LOW\s+\|\s+1")
         self.grep_file(logfile, r"lib.cc\s+\|\s+3")
@@ -191,23 +193,3 @@ class TestBasic(TestBase):
         logfile = os.path.join(
             self.BAZEL_TESTLOGS_DIR, "code_checker_ctu", "test.log")
         self.grep_file(logfile, "// CTU example")
-
-
-def setup_logging():
-    """Setup logging level for test execution"""
-    # Enable debug logs for tests if "super verbose" flag is provided
-    if "-vvv" in sys.argv:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="[TEST] %(levelname)5s: %(message)s")
-
-
-def main():
-    """Run unittest"""
-    setup_logging()
-    logging.debug("Start testing...")
-    unittest.main(buffer=True)
-
-
-if __name__ == "__main__":
-    main()
