@@ -45,7 +45,7 @@ FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
 CLEAR_WORKSPACE_CMD = cd tests/functional/ && bazel clean --expunge && cd -
 
 test_functional:
-	CCACHE_DISABLE=1 $(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
+	CCACHE_DISABLE=1 $(CLEAR_WORKSPACE_CMD) && env && CCACHE_DISABLE=1 $(FUNCTIONAL_TEST_CMD)
 
 test_functional_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
