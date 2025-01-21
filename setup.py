@@ -142,7 +142,7 @@ with open(os.path.join("docs", "README.md"), "r",
 
 setuptools.setup(
     name="codechecker",
-    version="6.24.4",
+    version="6.24.5",
     author='CodeChecker Team (Ericsson)',
     author_email='codechecker-tool@googlegroups.com',
     description="CodeChecker is an analyzer tooling, defect database and "
