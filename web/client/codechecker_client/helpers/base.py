@@ -13,7 +13,6 @@ import sys
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 
-from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 from codechecker_client.product import create_product_url
 
 from codechecker_common.logger import get_logger
@@ -72,7 +71,7 @@ class BaseClientHelper:
         if not session_token:
             return
 
-        headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
+        headers = {'Authorization': 'Bearer ' + session_token}
         self.transport.setCustomHeaders(headers)
 
     def _reset_token(self):

@@ -118,6 +118,15 @@ class _Session:
         return (datetime.now() - self.last_access).total_seconds() <= \
             self.session_lifetime
 
+    @property
+    def can_expire(self):
+        """
+        Returns if the session can expire.
+        Expiring sessions are created through the web interface, non-expiring
+        sessions are created through the command-line client.
+        """
+        return self.__can_expire
+
     def revalidate(self):
         """
         A session is only revalidated if it has yet to exceed its
