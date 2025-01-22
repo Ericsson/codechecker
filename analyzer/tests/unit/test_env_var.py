@@ -17,6 +17,7 @@ import os
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers.gcc.analyzer import Gcc
+from codechecker_analyzer.analyzers.analyzer_base import SourceAnalyzer
 from codechecker_analyzer.buildlog import log_parser
 
 
@@ -155,6 +156,13 @@ class EnvVarTest(unittest.TestCase):
             context.analyzer_binaries["clang-tidy"])
         env_txt = str(clang_env)
         self.assertTrue(env_txt.find("internal_package_lib") == -1)
+
+        # env is an external binary (/usr/bin/env),
+        # so the internal_package_lib must not be in the
+        # LD_LIBRARY_PATH.
+        (_, out_txt, _) = SourceAnalyzer.run_proc("env")
+        self.assertTrue(out_txt.find("internal_package_lib") == -1)
+        self.assertTrue(out_txt.find("usr/bin") != -1)
 
         os.remove(layout_cfg_file)
         os.remove(packaged_clang_file)
