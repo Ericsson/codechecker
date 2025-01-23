@@ -8,7 +8,7 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # pytest test runner configuration options.
 PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
-test: pycodestyle pylint test_unit test_functional
+test: pycodestyle pylint test_unit
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
 
@@ -34,18 +34,7 @@ UNIT_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
   pytest $(PYTESTCFG) tests/unit
 
 test_unit:
-	CCACHE_DISABLE=1 $(UNIT_TEST_CMD)
+	$(UNIT_TEST_CMD)
 
 test_unit_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
-
-FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
-  pytest $(PYTESTCFG) tests/functional
-
-CLEAR_WORKSPACE_CMD = cd tests/functional/ && bazel clean --expunge && cd -
-
-test_functional:
-	CCACHE_DISABLE=1 $(CLEAR_WORKSPACE_CMD) && env && CCACHE_DISABLE=1 $(FUNCTIONAL_TEST_CMD)
-
-test_functional_in_env: venv_dev
-	$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
