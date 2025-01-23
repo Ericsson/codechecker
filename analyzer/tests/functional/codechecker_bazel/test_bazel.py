@@ -22,6 +22,8 @@ import shlex
 import subprocess
 import unittest
 
+import sys
+
 
 class TestBaseTest(unittest.TestCase):
     """Unittest base abstract class"""
@@ -38,6 +40,8 @@ class TestBaseTest(unittest.TestCase):
         # Move to test dir
         cls.test_dir = os.path.abspath(os.path.dirname(__file__))
         os.chdir(cls.test_dir)
+        print("")
+        print(sys.path)
 
     @classmethod
     def tearDownClass(cls):
