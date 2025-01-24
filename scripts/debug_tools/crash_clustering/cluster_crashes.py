@@ -9,8 +9,7 @@ from zipfile import ZipFile
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import ListedColormap
-from scipy.sparse import load_npz, save_npz
+from scipy.sparse import save_npz
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
@@ -31,7 +30,10 @@ class FailZip:
         with ZipFile(self.file) as outer_zipfile:
             for outer_filename in outer_zipfile.namelist():
                 parts = re.search(
-                    r"archive/(?P<project_name>.*)/(?P<run_name>.*)/failed/(?P<file_name>[^_]*)_(?P<analyzer>[^_]*)_",
+                    (
+                        r"archive/(?P<project_name>.*)/(?P<run_name>.*)/"
+                        r"failed/(?P<file_name>[^_]*)_(?P<analyzer>[^_]*)_"
+                    ),
                     outer_filename,
                 )
                 with ZipFile(outer_zipfile.open(outer_filename)) as inner_zipfile:
@@ -46,7 +48,8 @@ class FailZip:
 
 
 def cleanup_crash_text(context: str):
-    # Stackdump is the only relevant part, if this is found, skip everything before it
+    # Stackdump is the only relevant part,
+    # if this is found, skip everything before it
     stackdump_filter = re.search(r"Stack dump:([\s\S]*)", context)
     if stackdump_filter:
         context = stackdump_filter.group(1)
@@ -55,17 +58,17 @@ def cleanup_crash_text(context: str):
     return de_pointered_context
 
 
-def ensure_json_file(filename, data, force=True, encoder=None):
+def ensure_json_file(filename, data, force=True, encoder="utf-8"):
     file = Path(filename)
     if force or not file.exists():
-        file.write_text(json.dumps(data, indent=2, cls=encoder))
+        file.write_text(json.dumps(data, indent=2), encoding=encoder)
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        return json.JSONEncoder.default(self, o)
 
 
 def calculate_similarity_matrix(contexts):
@@ -107,7 +110,7 @@ def plot_results(tsne_embedding, contexts):
     # maintain a set of seen points, and if the new point is close, then do not annotate it
     # this is to avoid cluttering the plot
     # FIXME: We should do a real clustering instead of this hack
-    seen_points = list()
+    seen_points = []
 
     for i, c in enumerate(contexts):
         project = c["project_name"]
@@ -126,11 +129,9 @@ def plot_results(tsne_embedding, contexts):
         legend_handles[project] = scatter
 
         # find the closest point in seen_points to this point
-        closest_distance = float("inf")
-        for seen_point in seen_points:
-            distance = np.linalg.norm(tsne_embedding[i] - seen_point)
-            if distance < closest_distance:
-                closest_distance = distance
+        closest_distance = min(np.linalg.norm(
+            tsne_embedding[i] - seen_point) for seen_point in seen_points)
+
         # FIXME: arbitrary distance here...
         if closest_distance < 0.5:
             continue
