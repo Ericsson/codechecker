@@ -131,6 +131,7 @@ import { BaseStatistics } from "@/components/Statistics";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 import StatisticsDialog from "../StatisticsDialog";
 import {
+  Checker,
   Guideline,
   MAX_QUERY_SIZE,
   ReportFilter,
@@ -304,9 +305,52 @@ export default {
       this.all_guideline_rules = await new Promise(resolve => {
         ccService.getClient().getGuidelineRules(
           this.selectedGuidelines,
-          handleThriftError(guidelines => {
+          handleThriftError(async guidelines => {
+            for (const [ guideline, rules ] of Object.entries(guidelines)) {
+              guidelines[guideline] = await Promise.all(
+                rules.map(async rule => {
+                  const checkers = await Promise.all(
+                    rule.checkers.map(async checker => {
+                      const severity = await new Promise(resolve => {
+                        ccService.getClient().getCheckerLabels(
+                          [
+                            new Checker({
+                              analyzerName: null,
+                              checkerId: checker
+                            })
+                          ],
+                          handleThriftError(labels => {
+                            const severityLabels = labels[0].filter(param =>
+                              param.startsWith("severity")
+                            );
+                            const severity = severityLabels.length
+                              ? severityLabels[0].split("severity:")[1]
+                              : null;
+                            resolve(severity);
+                          })
+                        );
+                      });
+
+                      return {
+                        checkerName: checker,
+                        severity: severity
+                      };
+                    })
+                  );
+
+                  return {
+                    ruleId: rule.ruleId,
+                    title: rule.title,
+                    url: rule.url,
+                    checkers: checkers
+                  };
+                })
+              );
+            }
+
             resolve(guidelines);
-          }));
+          })
+        );
       });
     },
 
