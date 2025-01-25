@@ -21,7 +21,7 @@ from codechecker_report_converter.util import dump_json_output
 from codechecker_report_converter.report import report_file, \
     reports as reports_helper
 from codechecker_report_converter.report.output import baseline, codeclimate, \
-    gerrit, json as report_to_json, plaintext
+    gerrit, sarif, json as report_to_json, plaintext
 from codechecker_report_converter.report.output.html import \
     html as report_to_html
 from codechecker_report_converter.report.statistics import Statistics
@@ -47,7 +47,7 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
-EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline']
+EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline', 'sarif']
 
 EPILOG_ENV_VAR = """
   CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
@@ -491,6 +491,9 @@ def main(args):
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'gerrit':
         data = gerrit.convert(all_reports)
+        dump_json_output(data, get_output_file_path("reports.json"))
+    elif export == 'sarif':
+        data = sarif.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'baseline':
         data = baseline.convert(all_reports)
