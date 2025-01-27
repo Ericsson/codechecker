@@ -664,9 +664,13 @@ module.exports = {
     reportPage.expect.section(removeCleanupPlanDialog)
       .to.be.visible.before(5000);
 
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
+    // Explicit wait strategy
+    removeCleanupPlanDialog
+      .waitForElementVisible('@confirmBtn') // 1. Wait for button visibility
+      .expect.element('@confirmBtn').to.be.enabled.before(5000); // 2. Ensure enabled state
 
-    removeCleanupPlanDialog.click("@confirmBtn");
+    // Now safely click
+    removeCleanupPlanDialog.click('@confirmBtn');
 
     dialogSection
       .waitForElementVisible("@emptyTable")
