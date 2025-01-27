@@ -59,7 +59,7 @@ class TestBaseTest(unittest.TestCase):
     def check_command(self, cmd, exit_code=0):
         """Run shell command and check status"""
         logging.debug("Running: %s", cmd)
-        commands = shlex.split(cmd)
+        commands = shlex.split(cmd + " --enable_workspace")
         with subprocess.Popen(commands,
                               stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE,
