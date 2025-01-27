@@ -42,25 +42,6 @@ class CheckerType(Enum):
     COMPILER = 1  # A checker which specified as "-W<name>" or "-Wno-<name>".
 
 
-def get_compiler_warning_name_and_type(checker_name):
-    """
-    Removes 'W' or 'Wno' from the compiler warning name, if this is a
-    compiler warning and returns the name and CheckerType.compiler.
-    If it is a clang-diagnostic-<name> warning then it returns the name
-    and CheckerType.analyzer.
-    Otherwise returns None and CheckerType.analyzer.
-    """
-    # Checker name is a compiler warning.
-    if checker_name.startswith('W'):
-        name = checker_name[4:] if \
-            checker_name.startswith('Wno-') else checker_name[1:]
-        return name, CheckerType.COMPILER
-    elif checker_name.startswith('clang-diagnostic-'):
-        return checker_name[17:], CheckerType.ANALYZER
-    else:
-        return None, CheckerType.ANALYZER
-
-
 class AnalyzerConfigHandler(metaclass=ABCMeta):
     """
     Handle the checker configurations and enabled disabled checkers lists.

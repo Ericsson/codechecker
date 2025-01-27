@@ -40,7 +40,8 @@ class CheckerLabels:
     # violated then an error is thrown during label JSON file parse. The
     # default value of the label also needs to be provided here.
     UNIQUE_LABELS = {
-        'severity': 'UNSPECIFIED'}
+        'severity': 'UNSPECIFIED',
+        'blacklist': 'false'}
 
     def __init__(self, checker_labels_dir: str):
         if not os.path.isdir(checker_labels_dir):
