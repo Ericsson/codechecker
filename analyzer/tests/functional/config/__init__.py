@@ -7,5 +7,12 @@
 #
 # -------------------------------------------------------------------------
 
-# This file is empty, and is only present so that this directory will form a
-# package.
+
+import os
+import sys
+
+REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
+PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
+
+
+sys.path.append(os.path.join(PKG_ROOT, 'bin'))
