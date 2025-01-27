@@ -725,6 +725,7 @@ module.exports = {
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     fromDateDialog
+      .waitForElementVisible("@date")
       .click("@date")
       .click("@ok");
 
@@ -735,6 +736,7 @@ module.exports = {
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     toDateDialog
+      .waitForElementVisible("@date")
       .click("@date")
       .click("@ok");
 
@@ -758,6 +760,7 @@ module.exports = {
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     fromDateDialog
+      .waitForElementVisible("@date")
       .click("@date")
       .click("@ok");
 
@@ -768,12 +771,15 @@ module.exports = {
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     toDateDialog
+      .waitForElementVisible("@date")
       .click("@date")
       .click("@ok");
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@clearBtn");
+    section
+      .waitForElementVisible("@clearBtn")
+      .click("@clearBtn");
 
     reportPage
       .pause(500)
