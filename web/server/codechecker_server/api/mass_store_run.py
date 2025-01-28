@@ -1029,8 +1029,9 @@ class MassStoreRun:
                         db_report.id, data_type))
 
                 if report.annotations:
-                    self.__validate_and_add_report_annotations(
-                        session, db_report.id, report.annotations)
+                    for key, value in report.annotations.items():
+                        session.add(
+                            ReportAnnotations(db_report.id, key, value))
 
             session.flush()
 
@@ -1147,52 +1148,6 @@ class MassStoreRun:
                       report_path_hash, report.report_hash, report_file_path)
 
         return True
-
-    def __validate_and_add_report_annotations(
-        self,
-        session: DBSession,
-        report_id: int,
-        report_annotation: Dict
-    ):
-        """
-        This function checks the format of the annotations. For example a
-        "timestamp" annotation must be in datetime format. If the format
-        doesn't match then an exception is thrown. In case of proper format the
-        annotation is added to the database.
-        """
-        allowed_types = {
-            "datetime": {
-                "func": datetime.fromisoformat,
-                "display": "date-time in ISO format"
-            },
-            "string": {
-                "func": str,
-                "display": "string"
-            }
-        }
-
-        allowed_annotations = {
-            "timestamp": allowed_types["datetime"],
-            "testsuite": allowed_types["string"],
-            "testcase": allowed_types["string"]
-        }
-
-        for key, value in report_annotation.items():
-            try:
-                allowed_annotations[key]["func"](value)
-                session.add(ReportAnnotations(report_id, key, value))
-            except KeyError:
-                # pylint: disable=raise-missing-from
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
-                    f"'{key}' is not an allowed report annotation.",
-                    allowed_annotations.keys())
-            except ValueError:
-                # pylint: disable=raise-missing-from
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
-                    f"'{value}' has wrong format. '{key}' annotations must be "
-                    f"'{allowed_annotations[key]['display']}'.")
 
     def __get_report_limit_for_product(self):
         with DBSession(self.__config_database) as session:
