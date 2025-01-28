@@ -2790,13 +2790,8 @@ class ThriftRequestHandler:
                 guideline_rules[guideline.guidelineName] = []
                 continue
             for rule in rules:
-                checkers = [{
-                    "checkerName": checker_name,
-                    "severity": self._context.checker_labels.severity(
-                        checker_name).lower()
-                    } for checker_name in
-                            self._context.checker_labels.checkers_by_labels(
-                                [f"{guideline.guidelineName}:{rule}"])]
+                checkers = self._context.checker_labels.checkers_by_labels(
+                    [f"{guideline.guidelineName}:{rule}"])
 
                 guideline_rules[guideline.guidelineName].append(
                     Rule(

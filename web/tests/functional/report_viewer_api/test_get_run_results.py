@@ -470,8 +470,5 @@ class RunResults(unittest.TestCase):
                                       sei_cert_rules))[0]
         self.assertEqual(len(con_54_cpp_rule.checkers), 1)
 
-        releated_checker = {
-            "checkerName": "bugprone-spuriously-wake-up-functions",
-            "severity": "medium"
-        }
-        self.assertEqual(con_54_cpp_rule.checkers, [releated_checker])
+        self.assertEqual(con_54_cpp_rule.checkers,
+                         ["bugprone-spuriously-wake-up-functions"])
