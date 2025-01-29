@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from codechecker_common.compatibility.multiprocessing import cpu_count
+from multiprocess import cpu_count
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json
 

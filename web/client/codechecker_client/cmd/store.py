@@ -28,6 +28,7 @@ import shutil
 from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 from datetime import timedelta
+from multiprocess import Pool
 from threading import Timer
 from typing import Dict, Iterable, List, Set, Tuple
 
@@ -55,7 +56,6 @@ from codechecker_client import client as libclient
 from codechecker_client import product
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import load_json
