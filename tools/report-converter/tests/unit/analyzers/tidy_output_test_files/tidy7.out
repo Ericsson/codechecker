@@ -1,0 +1,14 @@
+files/test7.cpp:14:20: warning: use nullptr [modernize-use-nullptr]
+   14 |     int* nullPtr = NULL;
+      |                    ^~~~
+      |                    nullptr
+files/test7.cpp:19:5: warning: array index 10 is past the end of the array (that has type 'int[5]') [clang-diagnostic-array-bounds]
+   19 |     arr[10] = 42;
+      |     ^   ~~
+files/test7.cpp:17:5: note: array 'arr' declared here
+   17 |     int arr[5];
+      |     ^
+files/test7.cpp:30:19: error: expected ';' at end of declaration [clang-diagnostic-error]
+   30 |     int errVar = 3
+      |                   ^
+      |                   ;

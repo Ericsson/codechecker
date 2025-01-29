@@ -59,7 +59,7 @@
 				</dict>
 			</array>
 			<key>type</key>
-			<string>clang-tidy</string>
+			<string>clang-tidy-yaml</string>
 		</dict>
 	</array>
 	<key>files</key>
@@ -71,7 +71,7 @@
 		<key>analyzer</key>
 		<dict>
 			<key>name</key>
-			<string>clang-tidy</string>
+			<string>clang-tidy-yaml</string>
 		</dict>
 		<key>generated_by</key>
 		<dict>

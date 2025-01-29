@@ -1,0 +1,28 @@
+---
+MainSourceFile:  'files/test2.cpp'
+Diagnostics:
+  - DiagnosticName:  clang-diagnostic-unused-variable
+    DiagnosticMessage:
+      Message:         'unused variable ''y'''
+      FilePath:        'files/test2.cpp'
+      FileOffset:      49
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test2.cpp'
+          FileOffset:      49
+          Length:          1
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-diagnostic-division-by-zero
+    DiagnosticMessage:
+      Message:         remainder by zero is undefined
+      FilePath:        'files/test2.cpp'
+      FileOffset:      122
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test2.cpp'
+          FileOffset:      124
+          Length:          1
+    Level:           Warning
+    BuildDirectory:  'files'
+...
