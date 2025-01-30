@@ -669,7 +669,16 @@ export default {
               a.checkers, prop, sortDesc[index]);
             bValue = this.getNestedTableContent(
               b.checkers, prop, sortDesc[index]);
-          }      
+          }
+          else if (column.includes(".")) {
+            const sub_columns = column.split(".");
+            aValue = sub_columns.reduce((element, sub_coulmn) => (
+              element && element[sub_coulmn] !== undefined
+                ? element[sub_coulmn] : undefined), a);
+            bValue = sub_columns.reduce((element, sub_coulmn) => (
+              element && element[sub_coulmn] !== undefined
+                ? element[sub_coulmn] : undefined), b);
+          }
           else {
             aValue = a[column];
             bValue = b[column];
