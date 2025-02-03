@@ -1,0 +1,45 @@
+---
+MainSourceFile:  'files/test7.cpp'
+Diagnostics:
+  - DiagnosticName:  modernize-use-nullptr
+    DiagnosticMessage:
+      Message:         use nullptr
+      FilePath:        'files/test7.cpp'
+      FileOffset:      204
+      Replacements:
+        - FilePath:        'files/test7.cpp'
+          Offset:          204
+          Length:          4
+          ReplacementText: nullptr
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-diagnostic-array-bounds
+    DiagnosticMessage:
+      Message:         'array index 10 is past the end of the array (that has type ''int[5]'')'
+      FilePath:        'files/test7.cpp'
+      FileOffset:      293
+      Replacements:    []
+      Ranges:
+        - FilePath:        'files/test7.cpp'
+          FileOffset:      297
+          Length:          2
+    Notes:
+      - Message:         'array ''arr'' declared here'
+        FilePath:        'files/test7.cpp'
+        FileOffset:      249
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-diagnostic-error
+    DiagnosticMessage:
+      Message:         'expected '';'' at end of declaration'
+      FilePath:        'files/test7.cpp'
+      FileOffset:      485
+      Replacements:
+        - FilePath:        'files/test7.cpp'
+          Offset:          485
+          Length:          0
+          ReplacementText: ';'
+    Level:           Error
+    BuildDirectory:  'files'
+...

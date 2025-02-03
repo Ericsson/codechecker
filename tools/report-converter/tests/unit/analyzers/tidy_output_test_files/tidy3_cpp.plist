@@ -25,14 +25,14 @@
 			<key>notes</key>
 			<array>
 				<dict>
-				<key>location</key>
-				<dict>
-					<key>col</key>
-					<integer>12</integer>
-					<key>file</key>
-					<integer>0</integer>
-					<key>line</key>
-					<integer>4</integer>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>12</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>4</integer>
 					</dict>
 					<key>message</key>
 					<string>nullptr (fixit)</string>

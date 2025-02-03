@@ -1,0 +1,69 @@
+---
+MainSourceFile:  'files/test3.cpp'
+Diagnostics:
+  - DiagnosticName:  modernize-use-nullptr
+    DiagnosticMessage:
+      Message:         use nullptr
+      FilePath:        'files/test3.cpp'
+      FileOffset:      76
+      Replacements:
+        - FilePath:        'files/test3.cpp'
+          Offset:          76
+          Length:          1
+          ReplacementText: nullptr
+    Level:           Warning
+    BuildDirectory:  'files'
+  - DiagnosticName:  clang-analyzer-core.NullDereference
+    DiagnosticMessage:
+      Message:         'Dereference of null pointer (loaded from variable ''x'')'
+      FilePath:        'files/test3.hh'
+      FileOffset:      85
+      Replacements:    []
+    Notes:
+      - Message:         '''x'' initialized to a null pointer value'
+        FilePath:        'files/test3.cpp'
+        FileOffset:      67
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      67
+            Length:          6
+      - Message:         'Assuming ''argc'' is > 3'
+        FilePath:        'files/test3.cpp'
+        FileOffset:      90
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      90
+            Length:          8
+      - Message:         Taking true branch
+        FilePath:        'files/test3.cpp'
+        FileOffset:      82
+        Replacements:    []
+      - Message:         'Passing null pointer value via 1st parameter ''x'''
+        FilePath:        'files/test3.cpp'
+        FileOffset:      111
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      111
+            Length:          1
+      - Message:         'Calling ''bar'''
+        FilePath:        'files/test3.cpp'
+        FileOffset:      107
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.cpp'
+            FileOffset:      107
+            Length:          6
+      - Message:         'Dereference of null pointer (loaded from variable ''x'')'
+        FilePath:        'files/test3.hh'
+        FileOffset:      85
+        Replacements:    []
+        Ranges:
+          - FilePath:        'files/test3.hh'
+            FileOffset:      83
+            Length:          1
+    Level:           Warning
+    BuildDirectory:  'files'
+...

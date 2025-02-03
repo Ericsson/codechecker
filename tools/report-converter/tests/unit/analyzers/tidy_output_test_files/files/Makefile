@@ -10,3 +10,6 @@ tidy3:
 
 tidy4:
 	clang-tidy -checks='-*,clang-diagnostic-*,clang-analyzer-*' test4.cpp -- -Wc++11-compat-reserved-user-defined-literal
+
+tidy7:
+	clang-tidy -checks='-*,clang-diagnostic-*,clang-analyzer-*,modernize-use-nullptr' test7.cpp -- -I.

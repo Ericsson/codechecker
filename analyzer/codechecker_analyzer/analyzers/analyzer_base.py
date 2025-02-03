@@ -105,15 +105,14 @@ class SourceAnalyzer(metaclass=ABCMeta):
     def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
         """
         Run the analyzer.
+        Don't specify the env unless really needed!
+        The package internal or original env will be selected
+        based on the location of the called binary.
         """
         LOG.debug('Running analyzer ...')
 
         LOG.debug_analyzer('\n%s',
                            ' '.join([shlex.quote(x) for x in analyzer_cmd]))
-
-        if not env:
-            env = analyzer_context.get_context().get_env_for_bin(
-                analyzer_cmd[0])
 
         res_handler.analyzer_cmd = analyzer_cmd
         try:
@@ -149,6 +148,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
+
+        Don't specify the env unless really needed!
+        The package internal or original env will be selected
+        based on the location of the called binary.
         """
 
         def signal_handler(signum, _):
@@ -160,6 +163,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
                 sys.exit(128 + signum)
 
         signal.signal(signal.SIGINT, signal_handler)
+
+        if not env:
+            env = analyzer_context.get_context().get_env_for_bin(
+                command[0])
 
         LOG.debug('\nexecuting:%s\n', command)
         LOG.debug('\nENV:\n')

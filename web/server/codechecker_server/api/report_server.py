@@ -2790,13 +2790,8 @@ class ThriftRequestHandler:
                 guideline_rules[guideline.guidelineName] = []
                 continue
             for rule in rules:
-                checkers = [{
-                    "checkerName": checker_name,
-                    "severity": self._context.checker_labels.severity(
-                        checker_name).lower()
-                    } for checker_name in
-                            self._context.checker_labels.checkers_by_labels(
-                                [f"{guideline.guidelineName}:{rule}"])]
+                checkers = self._context.checker_labels.checkers_by_labels(
+                    [f"{guideline.guidelineName}:{rule}"])
 
                 guideline_rules[guideline.guidelineName].append(
                     Rule(
@@ -3425,35 +3420,39 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            extended_table = session.query(
-                Report.file_id,
-                Report.bug_id,
-                Report.id)
+            distinct_file_path = session.query(File.filepath.distinct()) \
+                .join(Report, Report.file_id == File.id)
 
             if report_filter.annotations is not None:
-                extended_table = extended_table.outerjoin(
+                distinct_file_path = distinct_file_path.outerjoin(
                     ReportAnnotations,
                     ReportAnnotations.report_id == Report.id)
-                extended_table = extended_table.group_by(Report.id)
+                distinct_file_path = distinct_file_path.group_by(
+                    Report.id)
 
-            extended_table = apply_report_filter(
-                extended_table, filter_expression, join_tables)
+            distinct_file_path = apply_report_filter(
+                distinct_file_path, filter_expression, join_tables, [File])
 
-            extended_table = extended_table.subquery()
+            if limit:
+                distinct_file_path = distinct_file_path.limit(limit) \
+                    .offset(offset)
 
-            count_col = extended_table.c.bug_id.distinct() if \
-                report_filter.isUnique else extended_table.c.bug_id
+            distinct_file_path = distinct_file_path.subquery()
+
+            count_col = Report.bug_id.distinct() if \
+                report_filter.isUnique else Report.bug_id
 
             stmt = session.query(
                     File.filepath,
                     func.count(count_col).label('report_num')) \
                 .join(
-                    extended_table, File.id == extended_table.c.file_id) \
-                .group_by(File.filepath) \
-                .order_by(desc('report_num'))
+                    Report, Report.file_id == File.id) \
+                .filter(File.filepath.in_(distinct_file_path))
 
-            if limit:
-                stmt = stmt.limit(limit).offset(offset)
+            stmt = apply_report_filter(
+                stmt, filter_expression, join_tables, [File])
+
+            stmt = stmt.group_by(File.filepath)
 
             for fp, count in stmt:
                 results[fp] = count
