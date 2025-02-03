@@ -163,10 +163,10 @@ class ThriftAuthHandler:
                                 "< DATETIME(\"" + date + "\")")
                 session.commit()
             LOG.info("Expired state, validation codes removed successfully.")
-        except Exception as ex:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth data insertion failed. Please try again.")
+        except Exception as exc:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data insertion failed. Please try again.') from exc
 
         # Insert the state code into the database
         try:
@@ -183,10 +183,10 @@ class ThriftAuthHandler:
                 session.commit()
 
                 LOG.info("State inserted successfully.")
-        except Exception as ex:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth data insertion failed. Please try again.")
+        except Exception as exc:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data insertion failed. Please try again.') from exc
 
     @timeit
     def getOauthProviders(self):
