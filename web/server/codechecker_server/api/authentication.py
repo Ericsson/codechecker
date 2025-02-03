@@ -10,7 +10,6 @@ Handle Thrift requests for authentication.
 """
 
 import datetime
-import sqlite3
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
@@ -164,8 +163,10 @@ class ThriftAuthHandler:
                                 "< DATETIME(\"" + date + "\")")
                 session.commit()
             LOG.info("Expired state, validation codes removed successfully.")
-        except sqlite3.Error as e:
-            LOG.error(f"An error occurred: {e}")
+        except Exception as ex:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth data insertion failed. Please try again.")
 
         # Insert the state code into the database
         try:
@@ -182,12 +183,10 @@ class ThriftAuthHandler:
                 session.commit()
 
                 LOG.info("State inserted successfully.")
-
-        except sqlite3.Error as e:
-            LOG.error(f"An error occurred: {e}")
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth data insertion failed. Please try again.")
+        except Exception as ex:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth data insertion failed. Please try again.")
 
     @timeit
     def getOauthProviders(self):
