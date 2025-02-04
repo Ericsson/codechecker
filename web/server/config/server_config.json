@@ -97,7 +97,7 @@
           ]
         },
         "microsoft": {
-          "enabled": true,
+          "enabled": false,
           "oauth_client_id": "ExampleClientID",
           "oauth_client_secret": "ExampleClientSecret",
           "oauth_authorization_uri": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/authorize",

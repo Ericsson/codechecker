@@ -678,7 +678,7 @@ class SessionManager:
 
         return local_session
 
-    def create_session_oauth(self, provider, username, token):
+    def create_session_oauth(self, provider, username, oauth_access_token):
         """
         Creates a new session for the given auth-string
         if the provider is enabled for OAuth authentication.
@@ -694,23 +694,23 @@ class SessionManager:
                 not providers.get(provider).get('enabled'):
             return False
 
+        # Generate a new token and create a local session.
+        codechecker_session_token = generate_session_token()
+
         # To be parsed later
         user_data = {'username': username,
-                     'token': token,
+                     'token': codechecker_session_token,
                      'groups': [],
                      'is_root': False,
-                     'oauth_access_token': token
-                     }
+                     'oauth_access_token': oauth_access_token}
 
-        # Generate a new token and create a local session.
-        token = generate_session_token()
-        # token_d is the access token of the oauth provider.
-        token_d = user_data.get('oauth_access_token')
-        local_session = self.__create_local_session(token,
-                                                    user_data.get('username'),
-                                                    user_data.get('groups'),
-                                                    user_data.get('is_root'),
-                                                    oauth_access_token=token_d)
+        local_session = self.__create_local_session(
+            codechecker_session_token,
+            user_data.get('username'),
+            user_data.get('groups'),
+            user_data.get('is_root'),
+            oauth_access_token=user_data.get('oauth_access_token'))
+
         self.__sessions.append(local_session)
 
         # Store the session in the database.
@@ -720,10 +720,10 @@ class SessionManager:
                 transaction = self.__database_connection()
 
                 # Store the new session.
-                record = SessionRecord(token,
+                record = SessionRecord(codechecker_session_token,
                                        user_data.get('username'),
                                        ';'.join(user_data.get('groups')),
-                                       access_token=user_data.get(
+                                       oauth_access_token=user_data.get(
                                            'oauth_access_token'))
                 transaction.add(record)
                 transaction.commit()

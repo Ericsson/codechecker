@@ -149,25 +149,26 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
-    def insertDataOauth(self, state, code_verifier, provider):
+    def insertDataOauth(self, state: str, code_verifier: str, provider: str):
         """
-        Insert the state code and verification code into the database
+        Removes the expired oauth sessions #Subject to change.
+        Inserts a new row of oauth data into database containing:
+        state: a randomly generated string of symbols
+        code_verifyer: a randomly generated string that will be hashed
+        provider: OAuth provider's name
         """
-
-        # remove all the expired state codes from the database
+        # Remove the expired state codes from the database
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
-                session.execute("DELETE FROM oauth_sessions "
-                                "WHERE expires_at "
-                                "< DATETIME(\"" + date + "\")")
+                session.query(OAuthSession) \
+                    .filter(OAuthSession.expires_at < date) \
+                    .delete()
                 session.commit()
-            LOG.info("Expired state, validation codes removed successfully.")
         except Exception as exc:
-            LOG.error('OAuth data insertion failed. Please try again.')
-            # raise codechecker_api_shared.ttypes.RequestFailed(
-            #     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-            #     'OAuth data insertion failed. Please try again.') from exc
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data removal failed. Please try again.') from exc
 
         # Insert the state code into the database
         try:
@@ -176,19 +177,18 @@ class ThriftAuthHandler:
                 date = (datetime.datetime.now() +
                         datetime.timedelta(minutes=15))
 
-                new_state = OAuthSession(state=state,
-                                         code_verifier=code_verifier,
-                                         expires_at=date,
-                                         provider=provider)
-                session.add(new_state)
+                oauth_session_entry = OAuthSession(state=state,
+                                                   code_verifier=code_verifier,
+                                                   expires_at=date,
+                                                   provider=provider)
+                session.add(oauth_session_entry)
                 session.commit()
 
                 LOG.info("State inserted successfully.")
         except Exception as exc:
-            LOG.error('OAuth data insertion failed. Please try again.')
-            # raise codechecker_api_shared.ttypes.RequestFailed(
-            #     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-            #     'OAuth data insertion failed. Please try again.') from exc
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data insertion failed. Please try again.') from exc
 
     @timeit
     def getOauthProviders(self):
@@ -197,7 +197,9 @@ class ThriftAuthHandler:
     @timeit
     def createLink(self, provider):
         """
-        For creating a autehntication link for OAuth for specified provider
+        Create a link what the user will be redirected to
+        login in specified provider.
+        And inserts state, code, pkce_verifier in oauth table.
         """
         oauth_config = self.__manager.get_oauth_config(provider)
         if not oauth_config.get('enabled'):
@@ -271,6 +273,10 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
 
+        # Example of auth_string for OAuth
+        # The following lines represent one continuous string:
+        # github@http://localhost:8080/login/OAuthLogin/github
+        #   ?code=ZzQ2YzE5YjMtNDJlOS0&state=3X1RzK8pT6V9jQ2wFgHfMw
         elif auth_method == "oauth":
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             provider, url = auth_string.split("@")
@@ -409,9 +415,9 @@ class ThriftAuthHandler:
 
             if allowed_users == ["*"] or username in allowed_users:
                 LOG.info("User %s is authorized.", username)
-                session = self.__manager.create_session_oauth(
+                session_codecheker = self.__manager.create_session_oauth(
                     provider, username, token['access_token'])
-                return session.token
+                return session_codecheker.token
 
             if len(allowed_users) == 0:
                 LOG.error("The allowed users list is empty.")
