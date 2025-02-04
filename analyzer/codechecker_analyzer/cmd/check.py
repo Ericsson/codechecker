@@ -368,6 +368,13 @@ used to generate a log file on the fly.""")
                                     "forwarded verbatim for the Clang-Tidy "
                                     "analyzer.")
 
+    analyzer_opts.add_argument('--inferargs',
+                               dest="infer_args_cfg_file",
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="File containing argument which will be "
+                                    "forwarded verbatim for Facebook Infer.")
+
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
                                required=False,
@@ -928,6 +935,7 @@ def main(args):
                           'cppcheck_args_cfg_file',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
+                          'infer_args_cfg_file',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',

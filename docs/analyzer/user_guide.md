@@ -142,6 +142,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
+                         [--inferargs INFER_ARGS_CFG_FILE]
                          [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
@@ -289,6 +290,9 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang-Tidy analyzer.
+  --inferargs INFER_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for the Facebook Infer.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the
@@ -391,18 +395,18 @@ checker configuration:
 
   Checker prefix groups
   ------------------------------------------------
-  Checker prefix groups allow you to enable checkers that share a common 
-  prefix in their names. Checkers within a prefix group will have names that 
-  start with the same identifier, making it easier to manage and reference 
+  Checker prefix groups allow you to enable checkers that share a common
+  prefix in their names. Checkers within a prefix group will have names that
+  start with the same identifier, making it easier to manage and reference
   related checkers.
-  
-  You can enable/disable checkers belonging to a checker prefix group: 
+
+  You can enable/disable checkers belonging to a checker prefix group:
   '-e <label>:<value>', e.g. '-e prefix:security'.
-  
+
   Note: The 'prefix' label is mandatory when there is ambiguity between the
-  name of a checker prefix group and a checker profile or a guideline. This 
+  name of a checker prefix group and a checker profile or a guideline. This
   prevents conflicts and ensures the correct checkers are applied.
-  
+
   See "CodeChecker checkers --help" to learn more.
 
   Checker labels
@@ -413,9 +417,9 @@ checker configuration:
 
   You can enable/disable checkers belonging to a label: '-e <label>:<value>',
   e.g. '-e profile:default'.
-  
+
   Note: The 'profile' label is mandatory when there is ambiguity between the
-  name of a checker profile and a checker prefix group or a guideline. This 
+  name of a checker profile and a checker prefix group or a guideline. This
   prevents conflicts and ensures the correct checkers are applied.
 
   See "CodeChecker checkers --help" to learn more.
@@ -432,9 +436,9 @@ checker configuration:
 
   Guidelines are labels themselves, and can be used as a label:
   '-e guideline:<value>', e.g. '-e guideline:sei-cert'.
-  
+
   Note: The 'guideline' label is mandatory when there is ambiguity between the
-  name of a guideline and a checker prefix group or a checker profile. This 
+  name of a guideline and a checker prefix group or a checker profile. This
   prevents conflicts and ensures the correct checkers are applied.
 
   Batch enabling/disabling checkers
@@ -992,6 +996,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--cppcheckargs CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
+                           [--inferargs INFER_ARGS_CFG_FILE]
                            [--timeout TIMEOUT]
                            [--ctu | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
@@ -1213,6 +1218,9 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for Clang-Tidy.
+  --inferargs TIDY_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for Facebook Infer.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the
@@ -1551,12 +1559,12 @@ and disabled flags starting from the bigger groups and going inwards. For
 example
 
 ```sh
---enable prefix:clang-diagnostic-unused 
+--enable prefix:clang-diagnostic-unused
 --disable checker:clang-diagnostic-unused-parameter
 ```
 or
 ```sh
---enable prefix:clang-diagnostic-unused 
+--enable prefix:clang-diagnostic-unused
 --disable clang-diagnostic-unused-parameter
 ```
 will enable every `unused` warnings except `unused-parameter`. To turn off a

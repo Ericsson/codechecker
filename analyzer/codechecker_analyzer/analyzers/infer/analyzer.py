@@ -10,6 +10,7 @@ Module for Facebook Infer analyzer related methods
 """
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
+import re
 import shlex
 import subprocess
 import json
@@ -17,6 +18,7 @@ from pathlib import Path
 
 from codechecker_common.logger import get_logger
 
+import codechecker_analyzer
 from codechecker_analyzer import analyzer_context
 
 from .. import analyzer_base
@@ -77,6 +79,7 @@ class Infer(analyzer_base.SourceAnalyzer):
                           result_handler.buildaction_hash)
         output_dir.mkdir(exist_ok=True, parents=True)
         analyzer_cmd.extend(['-o', str(output_dir)])
+        analyzer_cmd.extend(config.analyzer_extra_arguments)
         analyzer_cmd.append('--')
 
         cmd_filtered = []
@@ -106,12 +109,12 @@ class Infer(analyzer_base.SourceAnalyzer):
                  "r", encoding="utf-8"))
         checker_list = []
         try:
-            env = analyzer_context.get_context().get_env_for_bin(
+            environ = analyzer_context.get_context().get_env_for_bin(
                 cls.analyzer_binary())
-            env.update(TZ='UTC')
+            environ.update(TZ='UTC')
             output = subprocess.check_output(command,
                                              stderr=subprocess.DEVNULL,
-                                             env=env)
+                                             env=environ)
             for entry in output.decode().split('\n'):
                 data = entry.strip().split(":")
                 if len(data) < 7:
@@ -246,5 +249,21 @@ class Infer(analyzer_base.SourceAnalyzer):
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        try:
+            with open(args.infer_args_cfg_file, 'r', encoding='utf-8',
+                      errors='ignore') as infer_cfg:
+                handler.analyzer_extra_arguments = \
+                    re.sub(r'\$\((.*?)\)',
+                           codechecker_analyzer.env.replace_env_var(
+                               args.infer_args_cfg_file),
+                           infer_cfg.read().strip())
+                handler.analyzer_extra_arguments = \
+                    shlex.split(handler.analyzer_extra_arguments)
+        except IOError as ioerr:
+            LOG.debug_analyzer(ioerr)
+        except AttributeError as aerr:
+            # No infer arguments file was given in the command line.
+            LOG.debug_analyzer(aerr)
 
         return handler
