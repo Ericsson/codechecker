@@ -363,15 +363,16 @@ def enable_auth(workspace):
         "providers": {
             "github": {
                 "enabled": True,
-                "oauth_client_id": "1",
-                "oauth_client_secret": "1",
-                "oauth_authorization_uri": "http://localhost:3000/login",
-                "oauth_callback_url": "http://localhost:8080/login/" +
-                                      "OAuthLogin/github",
-                "oauth_token_uri": "http://localhost:3000/token",
-                "oauth_user_info_uri": "http://localhost:3000/get_user",
-                "oauth_scope": "openid email profile",
-                "oauth_user_info_mapping": {
+                "client_id": "1",
+                "client_secret": "1",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/github",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "user_emails_endpoint": "https://api.github.com/user/emails",
+                "scope": "openid email profile",
+                "user_info_mapping": {
                     "username": "login"
                 },
                 "allowed_users": [
@@ -380,15 +381,15 @@ def enable_auth(workspace):
             },
             "google": {
                 "enabled": True,
-                "oauth_client_id": "2",
-                "oauth_client_secret": "2",
-                "oauth_authorization_uri": "http://localhost:3000/login",
-                "oauth_callback_url": "http://localhost:8080/login/" +
-                                      "OAuthLogin/google",
-                "oauth_token_uri": "http://localhost:3000/token",
-                "oauth_user_info_uri": "http://localhost:3000/get_user",
-                "oauth_scope": "openid email profile",
-                "oauth_user_info_mapping": {
+                "client_id": "2",
+                "client_secret": "2",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/google",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
                     "username": "email"
                 },
                 "allowed_users": [
@@ -397,15 +398,15 @@ def enable_auth(workspace):
             },
             "dummy": {
                 "enabled": True,
-                "oauth_client_id": "3",
-                "oauth_client_secret": "3",
-                "oauth_authorization_uri": "http://localhost:3000/login",
-                "oauth_callback_url": "http://localhost:8080/login/" +
-                                      "OAuthLogin/dummy",
-                "oauth_token_uri": "http://localhost:3000/token",
-                "oauth_user_info_uri": "http://localhost:3000/get_user",
-                "oauth_scope": "openid email profile",
-                "oauth_user_info_mapping": {
+                "client_id": "3",
+                "client_secret": "3",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/dummy",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
                     "username": "email"
                 },
                 "allowed_users": []

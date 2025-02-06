@@ -181,7 +181,9 @@ export default {
       if (!this.valid) return;
 
       this.$store
-        .dispatch(LOGIN, { username: this.username, password: this.password })
+        .dispatch(LOGIN, { username: this.username, password: this.password,
+          type: "password"
+        })
         .then(() => {
           this.success = true;
           this.error = false;

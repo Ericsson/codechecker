@@ -77,19 +77,23 @@ const actions = {
           }, err => {
             reject(err);
           }));
-        return;
       }
-      authService.getClient().performLogin("Username:Password",
-        `${credentials.username}:${credentials.password}`,
-        handleThriftError(token => {
-          context.commit(SET_AUTH, {
-            userName: credentials.username,
-            token: token
-          });
-          resolve(token);
-        }, err => {
-          reject(err);
-        }));
+      else if (credentials.type === "password"){
+        authService.getClient().performLogin("Username:Password",
+          `${credentials.username}:${credentials.password}`,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: credentials.username,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+      }
+      else {
+        reject("Unknown option provided");
+      }
     });
   },
 

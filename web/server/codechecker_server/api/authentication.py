@@ -13,6 +13,8 @@ import datetime
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
+from authlib.oauth2.rfc7636 import create_s256_code_challenge
+
 from urllib.parse import urlparse, parse_qs
 
 import json
@@ -149,7 +151,10 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
-    def insertDataOauth(self, state: str, code_verifier: str, provider: str):
+    def __insertOAuthSession(self,
+                             state: str,
+                             code_verifier: str,
+                             provider: str):
         """
         Removes the expired oauth sessions #Subject to change.
         Inserts a new row of oauth data into database containing:
@@ -157,7 +162,7 @@ class ThriftAuthHandler:
         code_verifyer: a randomly generated string that will be hashed
         provider: OAuth provider's name
         """
-        # Remove the expired state codes from the database
+
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
@@ -170,7 +175,6 @@ class ThriftAuthHandler:
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 'OAuth data removal failed. Please try again.') from exc
 
-        # Insert the state code into the database
         try:
             with DBSession(self.__config_db) as session:
                 LOG.debug(f"State {state} insertion started.")
@@ -184,7 +188,7 @@ class ThriftAuthHandler:
                 session.add(oauth_session_entry)
                 session.commit()
 
-                LOG.info("State inserted successfully.")
+                LOG.debug(f"State {state} inserted successfully.")
         except Exception as exc:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -198,26 +202,24 @@ class ThriftAuthHandler:
     def createLink(self, provider):
         """
         Create a link what the user will be redirected to
-        login in specified provider.
+        login via specified provider.
         And inserts state, code, pkce_verifier in oauth table.
         """
         oauth_config = self.__manager.get_oauth_config(provider)
         if not oauth_config.get('enabled'):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled.")
+                "OAuth authentication is not enabled for provider:", provider)
 
         stored_state = generate_token()
-        client_id = oauth_config["oauth_client_id"]
-        client_secret = oauth_config["oauth_client_secret"]
-        scope = oauth_config["oauth_scope"]
-        authorization_uri = oauth_config["oauth_authorization_uri"]
-        callback_url = oauth_config["oauth_callback_url"]
-        # code verifier for PKCE
+        client_id = oauth_config["client_id"]
+        client_secret = oauth_config["client_secret"]
+        scope = oauth_config["scope"]
+        authorization_url = oauth_config["authorization_url"]
+        callback_url = oauth_config["callback_url"]
         pkce_verifier = generate_token(48)
 
-        # Create an OAuth2Session instance
-        session = OAuth2Session(
+        oauth2_session = OAuth2Session(
             client_id,
             client_secret,
             scope=scope,
@@ -228,24 +230,23 @@ class ThriftAuthHandler:
         # each provider has different requirements
         # for requesting refresh token
         if provider == "google":
-            url, state = session.create_authorization_url(
-                url=authorization_uri,
+            url, state = oauth2_session.create_authorization_url(
+                url=authorization_url,
                 state=stored_state,
                 code_verifier=pkce_verifier,
                 access_type='offline',
                 prompt='consent'
             )
         else:
-            url, state = session.create_authorization_url(
-                authorization_uri,
+            url, state = oauth2_session.create_authorization_url(
+                authorization_url,
                 state=stored_state,
                 code_verifier=pkce_verifier
             )
-        # inserting data in database
-        self.insertDataOauth(state=state,
-                             code_verifier=pkce_verifier,
-                             provider=provider)
 
+        self.__insertOAuthSession(state=state,
+                                  code_verifier=pkce_verifier,
+                                  provider=provider)
         return url
 
     @timeit
@@ -278,37 +279,8 @@ class ThriftAuthHandler:
         # github@http://localhost:8080/login/OAuthLogin/github
         #   ?code=ZzQ2YzE5YjMtNDJlOS0&state=3X1RzK8pT6V9jQ2wFgHfMw
         elif auth_method == "oauth":
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            provider, url = auth_string.split("@")
-            # make the provider not case sensitive
-            provider = provider.lower()
-            url_new = urlparse(url)
-            parsed_query = parse_qs(url_new.query)
-            code = parsed_query.get("code")[0]
-            state = parsed_query.get("state")[0]
-            code_verifier_db = None
-            state_db = None
-            provider_db = None
-            expires_at = None
 
-            with DBSession(self.__config_db) as session:
-                state_db, code_verifier_db, provider_db, expires_at = \
-                    session.query(OAuthSession.state,
-                                  OAuthSession.code_verifier,
-                                  OAuthSession.provider,
-                                  OAuthSession.expires_at) \
-                           .filter(OAuthSession.state == state) \
-                           .first()
-
-            # make the provider from the database not case sensitive
-            provider_db = provider_db.lower()
-
-            if str(state_db) != state or str(provider_db) != provider \
-                    or str(date_time) > str(expires_at):
-                LOG.error("State code mismatch.")
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "Something went wrong. Please try again.")
+            provider, url = auth_string.split("@", 1)
 
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get('enabled'):
@@ -318,18 +290,53 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth authentication is not enabled.")
 
-            client_id = oauth_config["oauth_client_id"]
-            client_secret = oauth_config["oauth_client_secret"]
-            scope = oauth_config["oauth_scope"]
-            authorization_uri = oauth_config["oauth_authorization_uri"]
-            token_url = oauth_config["oauth_token_uri"]
-            user_info_url = oauth_config["oauth_user_info_uri"]
-            callback_url = oauth_config["oauth_callback_url"]
             allowed_users = oauth_config.get("allowed_users", [])
+
+            if len(allowed_users) == 0:
+                LOG.error("The allowed users list is empty.")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
+
+            date_time = datetime.datetime.now()
+            parsed_query = parse_qs(urlparse(url).query)
+            state = parsed_query.get("state")[0]
+            code_verifier_db = None
+            state_db = None
+            provider_db = None
+            expires_at_db = None
+
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                    .filter(OAuthSession.state == state) \
+                    .first()
+                if not state_db or not code_verifier_db \
+                        or not provider_db or not expires_at_db:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "Something went wrong. Please try again.")
+
+                if state_db != state or provider_db != provider \
+                        or date_time > expires_at_db:
+                    LOG.error("State, provider or expiery time mismatch.")
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "Something went wrong. Please try again.")
+
+            client_id = oauth_config["client_id"]
+            client_secret = oauth_config["client_secret"]
+            scope = oauth_config["scope"]
+            token_url = oauth_config["token_url"]
+            user_info_url = oauth_config["user_info_url"]
+            callback_url = oauth_config["callback_url"]
             LOG.info("OAuth configuration loaded for provider: %s", provider)
-            session = None
+            oauth2_session = None
             try:
-                session = OAuth2Session(
+                oauth2_session = OAuth2Session(
                     client_id,
                     client_secret,
                     scope=scope,
@@ -343,51 +350,34 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth2Session creation failed.")
 
-            # recreating the url for pkce purpose
-            # no way to get the original session so recreate it
-
-            url_recreated = session.create_authorization_url(
-                authorization_uri,
-                state=state_db,
-                code_verifier=code_verifier_db
-                )[0]
-
-            hashed_challenge = urlparse(url_recreated)
-            parsed_query_r = parse_qs(hashed_challenge.query)
-            cc = parsed_query_r.get("code_challenge")[0]
+            cc = create_s256_code_challenge(code_verifier_db)
 
             # FIXME: This is a workaround for the Microsoft OAuth2 provider
             # which doesn't correctly fetch the code from url.
             # the workaround is to construct the url manually
-
-            url = url_new.scheme + "://" + url_new.netloc + url_new.path + \
-                "?code=" + code + "&state=" + state + \
+            url_modified = url + \
                 "&code_challenge=" + cc + \
                 "&code_challenge_method=S256"
 
-            LOG.info("URL has been constructed successfully")
-            token = None
             try:
                 # code_verifier_db or PKCE is't supported by github
                 # if it will be fixed the code should adjust automatically
-                token = session.fetch_token(
+                oauth_token = oauth2_session.fetch_token(
                     url=token_url,
-                    authorization_response=url,
+                    authorization_response=url_modified,
                     code_verifier=code_verifier_db)
             except Exception as ex:
-                LOG.error("Token fetch failed: %s", str(ex))
+                LOG.error("Oauth Token fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "Token fetch failed.")
-            LOG.info("Token fetched successfully for provider: %s", provider)
-
-            user_info = None
-            username = None
+                    "OAuth Token fetch failed.")
+            LOG.info("OAuth Token fetched successfully"
+                     f" for provider: {provider}")
 
             try:
-                user_info = session.get(user_info_url).json()
+                user_info = oauth2_session.get(user_info_url).json()
                 username = user_info[
-                    oauth_config["oauth_user_info_mapping"]["username"]]
+                    oauth_config["user_info_mapping"]["username"]]
                 LOG.info("User info fetched, username: %s", username)
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
@@ -399,10 +389,12 @@ class ThriftAuthHandler:
             # from another api endpoint to maintain username as email
             # consistency between GitHub and other providers
             if provider == "github" and \
-                    "localhost" not in user_info_url:
+                    "localhost" not in \
+                    user_info_url:
                 try:
-                    link = "https://api.github.com/user/emails"
-                    for email in session.get(link).json():
+                    user_emails_endpoint = oauth_config["user_emails_endpoint"]
+                    for email in oauth2_session \
+                            .get(user_emails_endpoint).json():
                         if email['primary']:
                             username = email['email']
                             LOG.info("Primary email found: %s", username)
@@ -415,15 +407,9 @@ class ThriftAuthHandler:
 
             if allowed_users == ["*"] or username in allowed_users:
                 LOG.info("User %s is authorized.", username)
-                session_codecheker = self.__manager.create_session_oauth(
-                    provider, username, token['access_token'])
-                return session_codecheker.token
-
-            if len(allowed_users) == 0:
-                LOG.error("The allowed users list is empty.")
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service")
+                codecheker_session = self.__manager.create_session_oauth(
+                    provider, username, oauth_token['access_token'])
+                return codecheker_session.token
 
             LOG.error("User %s is not authorized " +
                       "to access this service.", username)

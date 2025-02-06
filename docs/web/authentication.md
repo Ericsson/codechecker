@@ -323,14 +323,14 @@ groups. For more information [see](permissions.md#managing-permissions).
 
 ----
 
-### <i>OAUTH</i> authentication <a name="oauth-authentication"></a>
+### <i>OAuth</i> authentication <a name="oauth-authentication"></a>
 
-CodeChecker also supports OAUTH-based authentication. The `authentication.method_oauth` section contains the configuration for OAUTH authentication for different OAUTH providers. The server can be configured for different Oauth `providers`. Users can be added into the `allowed_users`.
+CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`. Users can be added into the `allowed_users`.
 
-#### OAUTH Configuration options <a name="oauth-configuration-options"></a>
+#### OAuth Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
 
-    Indicated if OAuth authentication is enabled (required for any methods below)
+    Indicates if OAuth authentication is enabled (required for any methods below)
 
  * `providers`
 
@@ -340,44 +340,48 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
       * `enabled`
 
-          Indicates if current provider is enabled (github, google, etc)
+          Indicates if current provider is enabled (github, google, etc.)
 
-      * `oauth_client_id`
+      * `client_id`
 
            Contains client ID provided by the OAuth provider.
 
-      * `oauth_client_secret`
+      * `client_secret`
 
           The client secret must be provided by the OAuth provider.
 
-      * `oauth_authorization_uri`
+      * `authorization_url`
 
-          This link in used for redirecting user for provider's authentication page
+          This link is used for redirecting user for provider's authentication page
 
-      * `oauth_callback_url`
+      * `callback_url`
 
           User will be redirected back to the provided link after login with returned data.
-          It should be constructed in that format `http://codechecker_path/login/OAuthLogin/provider` where `provider` is the the name of the provider of OAuth and should match existing `provider_name`.The `oauth_callback_url` should also match the callback url specified in the config of your provider on their webpage.
+          It should be constructed in that format `http://codechecker_path/login/OAuthLogin/provider` where `provider` is the name of the provider of OAuth and should match existing `provider_name`. The `callback_url` should also match the callback url specified in the provider's configuration.
 
           Example of correct link using github, google and microsoft
           * http://localhost:8080/login/OAuthLogin/github
           * http://localhost:8080/login/OAuthLogin/google
           * http://localhost:8080/login/OAuthLogin/microsoft
-          * https://codechecker.gic.ericsson.se/login/OAuthLogin/github
 
-      * `oauth_token_uri`
+      * `token_url`
 
-          The URI to exchange the authorization code for an access token.
+          The URL to exchange the authorization code for an access token.
 
-      * `oauth_user_info_uri`
+      * `user_info_url`
 
-          The URI to fetch the authenticated user's information.
+          The URL to fetch the authenticated user's information.
 
-      * `oauth_scope`
+      * `user_emails_endpoint`
+
+          The URL is used for making requests for emails associated with github account.
+          This field only in relevant for github in current implementation.
+
+      * `scope`
 
           The scope of access requested from the OAuth provider.
 
-      * `oauth_user_info_mapping`
+      * `user_info_mapping`
 
           A mapping of user info fields from the provider to local fields.
 
@@ -399,14 +403,15 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
       "providers": {
         "example_provider": {
           "enabled": false,
-          "oauth_client_id": "client id",
-          "oauth_client_secret": "client secret",
-          "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
-          "oauth_callback_url": "http://localhost:8080/login/OAuthLogin/provider",
-          "oauth_token_uri": "https://accounts.google.com/o/oauth2/token",
-          "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
-          "oauth_scope": "openid email profile",
-          "oauth_user_info_mapping": {
+          "client_id": "client id",
+          "client_secret": "client secret",
+          "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+          "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
+          "token_url": "https://accounts.google.com/o/oauth2/token",
+          "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
+          "user_emails_endpoint": "https://api.github.com/user/emails",
+          "scope": "openid email profile",
+          "user_info_mapping": {
             "username": "email",
             "email": "email",
             "fullname": "name"
@@ -423,17 +428,11 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
 #### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
-* Important: 'oauth_callback_url' must always match with link specified in the
-Providers settings when issuing an access token.
+* Important: `callback_url` must always match with the link specified in the
+providers' settings when issuing an access token.
 
 * Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
 Therefore PKCE is not used when users log in using GitHub.
-If GitHub starts supporting PKCE in the future, the code should automatically
-start using it ,and in that case, this note can be removed.
-
-* Important: To maintain consistency between GitHub and other providers, we need to fetch primary email
-from another endpoint because GitHub dosn't provide the primary email in the `user_info`,so
-we make an API request to fetch the primary email of the GitHub and use it instead of the username provided by the `user_info`.
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

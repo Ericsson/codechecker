@@ -277,17 +277,27 @@ class SessionManager:
                 result.append(provider)
         return result
 
-    def get_config_dict(self):
-        return self.scfg_dict
+    def get_oauth_callback_urls(self):
+        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
+            .get('providers', {})
+        dict_to_return = {}
+        for provider_name, provider_data in oauth_config.items():
+            dict_to_return[provider_name] = provider_data.get('callback_url')
+        return dict_to_return
+
+    def turn_off_oauth_provider(self, provider_name: str):
+        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
+            .get('providers', {})
+        oauth_config[provider_name]['enabled'] = False
 
     def get_oauth_config(self, provider):
         provider_cfg = self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})
 
         # turn off configuration if it is set to default values
-        if provider_cfg.get("oauth_client_secret",
+        if provider_cfg.get("client_secret",
                             "ExampleClientSecret") == "ExampleClientSecret" \
-                or provider_cfg.get("oauth_client_id",
+                or provider_cfg.get("client_id",
                                     "ExampleClientID") == "ExampleClientID":
             self.__auth_config["method_oauth"]["providers"][provider][
                 "enabled"] = False

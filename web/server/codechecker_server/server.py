@@ -1102,10 +1102,14 @@ def start_server(config_directory, package_data, port, config_sql_server,
                      "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
-    def check_callback_url_format(provider_name, callback_url):
+    def check_callback_url_format(provider_name: str, callback_url: str):
         """
         check the format of callback url using regex
         """
+        if "@" in provider_name:
+            LOG.warning(f"provider {provider_name} contains '@' "
+                        "which is not allowed, turning off provider.")
+            return None
         protocol = "http(s|)"
         website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5}|)"
         paths = "login[/]OAuthLogin"
@@ -1113,28 +1117,24 @@ def start_server(config_directory, package_data, port, config_sql_server,
         pattern_str = f"^{protocol}://{website}/{paths}/{provider_name}$"
         pattern = re.compile(pattern_str)
         match = pattern.match(callback_url)
-
+        if match is None:
+            LOG.warning("Configuration format of callback_url is "
+                        f"invalid for provider {provider_name}."
+                        "Please check the configuration file.")
         return match is not None
 
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
             force_auth)
-        cfg_dict = manager.get_config_dict()
-        # the 2 varible are here because in 1 line it was too long
-        auth_config = cfg_dict['authentication']['method_oauth']
-        oauth_config = auth_config.get('providers', {})
-        # Iterate through the providers and
-        # checks the format of callback url
-        for provider_name, provider_data in oauth_config.items():
-            callback_url = provider_data.get('oauth_callback_url')
+
+        oauth_config = manager.get_oauth_callback_urls()
+        for provider_name, callback_url in oauth_config.items():
             if not check_callback_url_format(provider_name, callback_url):
-                LOG.warning("The callback URL format is "
-                            f"invalid for provider {provider_name}."
-                            "Please check the configuration file.")
                 # Turn off the provider if the callback URL is invalid
                 LOG.warning("Turning off the provider: %s", provider_name)
-                provider_data['enabled'] = False
+                manager.turn_off_oauth_provider(provider_name)
+
     except IOError as ioerr:
         LOG.debug(ioerr)
         LOG.error("The server's configuration file "
