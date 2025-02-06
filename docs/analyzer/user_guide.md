@@ -391,18 +391,18 @@ checker configuration:
 
   Checker prefix groups
   ------------------------------------------------
-  Checker prefix groups allow you to enable checkers that share a common 
-  prefix in their names. Checkers within a prefix group will have names that 
-  start with the same identifier, making it easier to manage and reference 
+  Checker prefix groups allow you to enable checkers that share a common
+  prefix in their names. Checkers within a prefix group will have names that
+  start with the same identifier, making it easier to manage and reference
   related checkers.
-  
-  You can enable/disable checkers belonging to a checker prefix group: 
+
+  You can enable/disable checkers belonging to a checker prefix group:
   '-e <label>:<value>', e.g. '-e prefix:security'.
-  
+
   Note: The 'prefix' label is mandatory when there is ambiguity between the
-  name of a checker prefix group and a checker profile or a guideline. This 
+  name of a checker prefix group and a checker profile or a guideline. This
   prevents conflicts and ensures the correct checkers are applied.
-  
+
   See "CodeChecker checkers --help" to learn more.
 
   Checker labels
@@ -413,9 +413,9 @@ checker configuration:
 
   You can enable/disable checkers belonging to a label: '-e <label>:<value>',
   e.g. '-e profile:default'.
-  
+
   Note: The 'profile' label is mandatory when there is ambiguity between the
-  name of a checker profile and a checker prefix group or a guideline. This 
+  name of a checker profile and a checker prefix group or a guideline. This
   prevents conflicts and ensures the correct checkers are applied.
 
   See "CodeChecker checkers --help" to learn more.
@@ -432,9 +432,9 @@ checker configuration:
 
   Guidelines are labels themselves, and can be used as a label:
   '-e guideline:<value>', e.g. '-e guideline:sei-cert'.
-  
+
   Note: The 'guideline' label is mandatory when there is ambiguity between the
-  name of a guideline and a checker prefix group or a checker profile. This 
+  name of a guideline and a checker prefix group or a checker profile. This
   prevents conflicts and ensures the correct checkers are applied.
 
   Batch enabling/disabling checkers
@@ -1551,12 +1551,12 @@ and disabled flags starting from the bigger groups and going inwards. For
 example
 
 ```sh
---enable prefix:clang-diagnostic-unused 
+--enable prefix:clang-diagnostic-unused
 --disable checker:clang-diagnostic-unused-parameter
 ```
 or
 ```sh
---enable prefix:clang-diagnostic-unused 
+--enable prefix:clang-diagnostic-unused
 --disable clang-diagnostic-unused-parameter
 ```
 will enable every `unused` warnings except `unused-parameter`. To turn off a
@@ -1771,9 +1771,15 @@ name.
 
 `.plist` files can be extended with a `report-annotation` section shown in the
 following example. Report annotations are custom labels that can be attached to
-a report. CodeChecker supports the usage of `testcase` and `timestamp`
-annotations. `timestamp` can be used for ordering and `testcase` can be used
-for filtering reports in the CodeChecker GUI.
+a report. CodeChecker supports the usage of `testcase`, `timestamp` and
+`chronological_order` annotations. `timestamp` and `chronological_order` can be
+used for ordering and `testcase` can be used for filtering reports in the
+CodeChecker GUI. These are typed annotations and CodeChecker is validating
+these types:
+
+- `timestamp`: Date-time format
+- `chronological_order`: Integer
+- `testcase`: String
 
 <pre>
 &lt;dict&gt;
@@ -1796,6 +1802,8 @@ for filtering reports in the CodeChecker GUI.
         &lt;string&gt;yhegalkoei&lt;/string&gt;
         &lt;key&gt;timestamp&lt;/key&gt;
         &lt;string&gt;1970-04-26T17:27:55&lt;/string&gt;
+        &lt;key&gt;chronological_order&lt;/key&gt;
+        &lt;integer&gt;42&lt;/integer&gt;
       &lt;/dict&gt;</b>
       &lt;key&gt;path&lt;/key&gt;
       &lt;array&gt;
