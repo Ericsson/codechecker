@@ -433,13 +433,6 @@ def add_arguments_to_parser(parser):
                                help="File containing argument which will be "
                                     "forwarded verbatim for Clang-Tidy.")
 
-    analyzer_opts.add_argument('--inferargs',
-                               dest="infer_args_cfg_file",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Facebook Infer.")
-
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
                                required=False,
