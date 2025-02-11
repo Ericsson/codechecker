@@ -134,7 +134,6 @@ codechecker_test(
     name = "codechecker_pass",
     analyze = [
         "--ctu",
-        "--stats",
     ],
     config = "codechecker_config_json",
     targets = [
@@ -260,7 +259,6 @@ code_checker_test(
     name = "code_checker_pass",
     options = [
         "--ctu",
-        "--stats",
     ],
     targets = [
         "test_pass",
@@ -284,7 +282,6 @@ code_checker_test(
     name = "code_checker_ctu",
     options = [
         "--ctu",
-        "--stats",
     ],
     tags = [
         "manual",
