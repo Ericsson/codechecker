@@ -3,7 +3,6 @@
 *.py[cod]
 
 build
-!/scripts/build
 build_dist
 venv
 venv_dev

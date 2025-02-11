@@ -119,12 +119,9 @@ venv:
 	# TODO: Remove this hack once Thrift is updated to a version that
 	# doesn't use deprecated Python code.
 	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
-	# Bare minimum work is to delete the 2 keyword arguments like this:
-	# sed -i "113,114d" $(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py
-	# See the comments in the diff that is applied why we would want to do more
-	# than the bare minimum:
-	$(ACTIVATE_RUNTIME_VENV) && \
-	python $(ROOT)/scripts/build/patch_thrift_in_current_venv.py $(ROOT)
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
@@ -136,12 +133,9 @@ venv_osx:
 	# TODO: Remove this hack once Thrift is updated to a version that
 	# doesn't use deprecated Python code.
 	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
-	# Bare minimum work is to delete the 2 keyword arguments like this:
-	# sed -i "113,114d" $(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py
-	# See the comments in the diff that is applied why we would want to do more
-	# than the bare minimum:
-	$(ACTIVATE_RUNTIME_VENV) && \
-	python $(ROOT)/scripts/build/patch_thrift_in_current_venv.py $(ROOT)
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
 
 clean_venv:
 	rm -rf venv
@@ -162,12 +156,9 @@ venv_dev:
 	# TODO: Remove this hack once Thrift is updated to a version that
 	# doesn't use deprecated Python code.
 	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
-	# Bare minimum work is to delete the 2 keyword arguments like this:
-	# sed -i "113,114d" $(CURRENT_DIR)/venv_dev/lib/python3.*/site-packages/thrift/transport/THttpClient.py
-	# See the comments in the diff that is applied why we would want to do more
-	# than the bare minimum:
-	$(ACTIVATE_DEV_VENV) && \
-	python $(ROOT)/scripts/build/patch_thrift_in_current_venv.py $(ROOT)
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
 
 clean_venv_dev:
 	rm -rf venv_dev
