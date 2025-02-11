@@ -28,8 +28,8 @@ import sys
 class TestBaseTest(unittest.TestCase):
     """Unittest base abstract class"""
 
-    BAZEL_BIN_DIR = os.path.join("..", "bazel-bin", "test")
-    BAZEL_TESTLOGS_DIR = os.path.join("..", "bazel-testlogs", "test")
+    BAZEL_BIN_DIR = os.path.join("bazel-bin")
+    BAZEL_TESTLOGS_DIR = os.path.join("bazel-testlogs")
 
     @classmethod
     def setUpClass(cls):
@@ -41,6 +41,7 @@ class TestBaseTest(unittest.TestCase):
         cls.test_dir = os.path.abspath(os.path.dirname(__file__))
         os.chdir(cls.test_dir)
         print("")
+        print("test dir: " + cls.test_dir)
         print(sys.path)
 
     @classmethod
@@ -59,7 +60,7 @@ class TestBaseTest(unittest.TestCase):
     def check_command(self, cmd, exit_code=0):
         """Run shell command and check status"""
         logging.debug("Running: %s", cmd)
-        commands = shlex.split(cmd + " --enable_workspace")
+        commands = shlex.split(cmd)
         with subprocess.Popen(commands,
                               stdin=subprocess.PIPE,
                               stdout=subprocess.PIPE,
