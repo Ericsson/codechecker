@@ -349,14 +349,16 @@ used to generate a log file on the fly.""")
                                dest="cppcheck_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for Cppcheck.")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for the Clang Static "
                                     "analyzer.")
 
@@ -364,16 +366,10 @@ used to generate a log file on the fly.""")
                                dest="tidy_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for the Clang-Tidy "
                                     "analyzer.")
-
-    analyzer_opts.add_argument('--inferargs',
-                               dest="infer_args_cfg_file",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Facebook Infer.")
 
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
@@ -391,7 +387,7 @@ used to generate a log file on the fly.""")
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=argparse.SUPPRESS,
+                               default=[],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
@@ -935,7 +931,6 @@ def main(args):
                           'cppcheck_args_cfg_file',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
-                          'infer_args_cfg_file',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',
