@@ -277,6 +277,12 @@ export default {
           sortable: true
         },
         {
+          text: "Chronological order",
+          value: "chronological-order",
+          align: "center",
+          sortable: true
+        },
+        {
           text: "Testcase",
           value: "testcase",
           align: "center",
@@ -287,6 +293,7 @@ export default {
       sameReports: {},
       hasTimeStamp: true,
       hasTestCase : true,
+      hasChronologicalOrder: true,
       selected: [],
       namespace: namespace,
       pagination: {
@@ -337,6 +344,10 @@ export default {
           return this.hasTestCase;
         }
 
+        if (header.value === "chronological-order") {
+          return this.hasChronologicalOrder;
+        }
+
         return true;
       });
     },
@@ -365,7 +376,8 @@ export default {
           "$id": id,
           "sameReports": report.sameReports,
           "timestamp": report.annotations["timestamp"],
-          "testcase": report.annotations["testcase"]
+          "testcase": report.annotations["testcase"],
+          "chronological-order": report.annotations["chronological-order"]
         };
       });
     }
@@ -388,6 +400,9 @@ export default {
 
         this.hasTestCase =
           this.formattedReports.some(report => report.testcase);
+
+        this.hasChronologicalOrder =
+          this.formattedReports.some(report => report["chronological-order"]);
       }
     }
   },
@@ -425,6 +440,9 @@ export default {
         break;
       case "testcase":
         type = SortType.TESTCASE;
+        break;
+      case "chronological-order":
+        type = SortType.CHRONOLOGICAL_ORDER;
         break;
       default:
         type = SortType.SEVERITY;

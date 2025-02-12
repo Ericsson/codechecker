@@ -1779,9 +1779,15 @@ name.
 
 `.plist` files can be extended with a `report-annotation` section shown in the
 following example. Report annotations are custom labels that can be attached to
-a report. CodeChecker supports the usage of `testcase` and `timestamp`
-annotations. `timestamp` can be used for ordering and `testcase` can be used
-for filtering reports in the CodeChecker GUI.
+a report. CodeChecker supports the usage of `testcase`, `timestamp` and
+`chronological_order` annotations. `timestamp` and `chronological_order` can be
+used for ordering and `testcase` can be used for filtering reports in the
+CodeChecker GUI. These are typed annotations and CodeChecker is validating
+these types:
+
+- `timestamp`: Date-time format
+- `chronological_order`: Integer
+- `testcase`: String
 
 <pre>
 &lt;dict&gt;
@@ -1804,6 +1810,8 @@ for filtering reports in the CodeChecker GUI.
         &lt;string&gt;yhegalkoei&lt;/string&gt;
         &lt;key&gt;timestamp&lt;/key&gt;
         &lt;string&gt;1970-04-26T17:27:55&lt;/string&gt;
+        &lt;key&gt;chronological_order&lt;/key&gt;
+        &lt;integer&gt;42&lt;/integer&gt;
       &lt;/dict&gt;</b>
       &lt;key&gt;path&lt;/key&gt;
       &lt;array&gt;

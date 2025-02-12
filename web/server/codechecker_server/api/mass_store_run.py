@@ -48,6 +48,7 @@ from ..database.run_db_model import \
     Run, RunLock, RunHistory
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
+from .report_annotations import report_annotation_types
 from .report_server import ThriftRequestHandler
 from .thrift_enum_helper import report_extended_data_type_str
 
@@ -1160,39 +1161,25 @@ class MassStoreRun:
         doesn't match then an exception is thrown. In case of proper format the
         annotation is added to the database.
         """
-        allowed_types = {
-            "datetime": {
-                "func": datetime.fromisoformat,
-                "display": "date-time in ISO format"
-            },
-            "string": {
-                "func": str,
-                "display": "string"
-            }
-        }
-
-        allowed_annotations = {
-            "timestamp": allowed_types["datetime"],
-            "testsuite": allowed_types["string"],
-            "testcase": allowed_types["string"]
-        }
-
         for key, value in report_annotation.items():
             try:
-                allowed_annotations[key]["func"](value)
+                # String conversion is for normalizing the format. For example,
+                # "2000-01-01T10:20" timestamp will be stored as
+                # "2000-01-01 10:20".
+                value = str(report_annotation_types[key]["func"](value))
                 session.add(ReportAnnotations(report_id, key, value))
             except KeyError:
                 # pylint: disable=raise-missing-from
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
                     f"'{key}' is not an allowed report annotation.",
-                    allowed_annotations.keys())
+                    report_annotation_types.keys())
             except ValueError:
                 # pylint: disable=raise-missing-from
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
                     f"'{value}' has wrong format. '{key}' annotations must be "
-                    f"'{allowed_annotations[key]['display']}'.")
+                    f"'{report_annotation_types[key]['display']}'.")
 
     def __get_report_limit_for_product(self):
         with DBSession(self.__config_database) as session:
