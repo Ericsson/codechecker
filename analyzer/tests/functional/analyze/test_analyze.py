@@ -1137,7 +1137,7 @@ class TestAnalyze(unittest.TestCase):
                 json.dump(build_log, outfile)
 
             cppcheck_args.write("--std=c++11")
-            cppcheck_args.close()
+            cppcheck_args.flush()
 
             analyze_cmd.extend(['--cppcheckargs', cppcheck_args.name])
 

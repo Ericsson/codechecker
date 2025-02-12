@@ -24,7 +24,8 @@ from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
         import is_compiler_warning, ClangTidyConfigHandler
-from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
+from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig, \
+    analyzer_config
 from codechecker_analyzer.cmd.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
 
@@ -835,7 +836,8 @@ class CheckerHandlingCppcheckTest(unittest.TestCase):
                 f.write('--max-ctu-depth=42')
 
             args = Namespace()
-            args.cppcheck_args_cfg_file = cppcheckargs
+            args.analyzer_config = [analyzer_config(
+                f"cppcheck:cc-verbatim-args-file={cppcheckargs}")]
 
             analyzer = create_analyzer_cppcheck(args, tmp_ws)
             result_handler = create_result_handler(analyzer)

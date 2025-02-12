@@ -71,7 +71,16 @@ class OrderedConfigAction(argparse.Action):
                f"--analyzer-config or --checker-config value ({value}) is " \
                "not a list, but should be if nargs is not None!"
 
-        if not hasattr(namespace, self.dest):
+        # When the default value is empty list, it's passed by reference and
+        # that default object will be used for further computations.
+        # For example: CodeChecker analyze --analyzer-config blabla --help
+        # This command above presents wrongly [blabla] as default value for
+        # --analyzer-config, because the code below inserts this value to the
+        # default empty list even if --help is printed.
+        # For this list we change falsey default values to another empty list
+        # object.
+        if not hasattr(namespace, self.dest) or \
+                not getattr(namespace, self.dest):
             setattr(namespace, self.dest, [])
 
         dest = getattr(namespace, self.dest)
