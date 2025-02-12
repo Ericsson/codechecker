@@ -6,6 +6,7 @@ CHECK#CodeChecker check --build "make saargs_forward" --output $OUTPUT$ --quiet 
 [] - Starting build...
 [] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
+[] - "--saargs" is deprecated. Use "--analyzer-config clangsa:cc-verbatim-args-file=<filepath>" instead.
 [] - Starting static analysis ...
 [] - [1/1] clangsa analyzed saargs_forward.cpp successfully.
 [] - ----==== Summary ====----

@@ -14,7 +14,9 @@ import shlex
 import subprocess
 import json
 from pathlib import Path
+import sys
 
+from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context
@@ -77,6 +79,7 @@ class Infer(analyzer_base.SourceAnalyzer):
                           result_handler.buildaction_hash)
         output_dir.mkdir(exist_ok=True, parents=True)
         analyzer_cmd.extend(['-o', str(output_dir)])
+        analyzer_cmd.extend(config.analyzer_extra_arguments)
         analyzer_cmd.append('--')
 
         cmd_filtered = []
@@ -139,7 +142,11 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Config options for infer.
         """
-        return []
+        return [
+            ('cc-verbatim-args-file',
+             'A file path containing flags that are forwarded verbatim to the '
+             'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>')
+        ]
 
     @classmethod
     def get_checker_config(cls):
@@ -246,5 +253,21 @@ class Infer(analyzer_base.SourceAnalyzer):
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                # TODO: The analyzer plugin should get only its own analyzer
+                # config options from outside.
+                if cfg.analyzer != cls.ANALYZER_NAME:
+                    continue
+
+                if cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
 
         return handler

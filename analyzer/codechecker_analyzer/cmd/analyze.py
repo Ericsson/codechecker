@@ -415,23 +415,39 @@ def add_arguments_to_parser(parser):
                                dest="cppcheck_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Cppcheck.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Cppcheck. The "
+                                    "option has been migrated under the "
+                                    "cppcheck anayzer options: "
+                                    "--analyzer-config "
+                                    "cppcheck:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for the Clang Static "
-                                    "Analyzer.")
+                                    "Analyzer. The opion has been migrated "
+                                    "under the clangsa analyzer options: "
+                                    "--analyzer-config "
+                                    "clangsa:cc-verbatim-args-file=<filepath>")
 
     analyzer_opts.add_argument('--tidyargs',
                                dest="tidy_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Clang-Tidy.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Clang-Tidy. "
+                                    "The opion has been migrated under the "
+                                    "clang-tidy analyzer options: "
+                                    "--analyzer-config "
+                                    "clang-tidy:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
@@ -449,7 +465,7 @@ def add_arguments_to_parser(parser):
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=argparse.SUPPRESS,
+                               default=[],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
@@ -1063,6 +1079,36 @@ def __get_result_source_files(metadata):
     return result_src_files
 
 
+def __transform_deprecated_flags(args):
+    """
+    There are some deprecated flags among the command line arguments that have
+    another way of usage. In this function we do this transformation so the old
+    flags are still functioning until they are competely removed in some future
+    version.
+    """
+    if hasattr(args, 'clangsa_args_cfg_file'):
+        args.analyzer_config.append(analyzer_config(
+            f'clangsa:cc-verbatim-args-file={args.clangsa_args_cfg_file}'))
+        delattr(args, 'clangsa_args_cfg_file')
+        LOG.warning(
+            '"--saargs" is deprecated. Use "--analyzer-config '
+            'clangsa:cc-verbatim-args-file=<filepath>" instead.')
+    if hasattr(args, 'tidy_args_cfg_file'):
+        args.analyzer_config.append(analyzer_config(
+            f'clang-tidy:cc-verbatim-args-file={args.tidy_args_cfg_file}'))
+        delattr(args, 'tidy_args_cfg_file')
+        LOG.warning(
+            '"--tidyargs" is deprecated. Use "--analyzer-config '
+            'clang-tidy:cc-verbatim-args-file=<filepath>" instead.')
+    if hasattr(args, 'cppcheck_args_cfg_file'):
+        args.analyzer_config.append(analyzer_config(
+            f'clang-tidy:cc-verbatim-args-file={args.cppcheck_args_cfg_file}'))
+        delattr(args, 'cppcheck_args_cfg_file')
+        LOG.warning(
+            '"--cppcheckargs" is deprecated. Use "--analyzer-config '
+            'cppcheck:cc-verbatim-args-file=<filepath>" instead.')
+
+
 def main(args):
     """
     Perform analysis on the given inputs. Possible inputs are a compilation
@@ -1070,6 +1116,8 @@ def main(args):
     stored to a report directory given by -o flag.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    __transform_deprecated_flags(args)
 
     # Validate analyzer and checker config (if any)
     config_validator = {

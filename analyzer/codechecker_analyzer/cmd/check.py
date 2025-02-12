@@ -349,24 +349,39 @@ used to generate a log file on the fly.""")
                                dest="cppcheck_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Cppcheck.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Cppcheck. The "
+                                    "option has been migrated under the "
+                                    "cppcheck anayzer options: "
+                                    "--analyzer-config "
+                                    "cppcheck:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for the Clang Static "
-                                    "analyzer.")
+                                    "Analyzer. The opion has been migrated "
+                                    "under the clangsa analyzer options: "
+                                    "--analyzer-config "
+                                    "clangsa:cc-verbatim-args-file=<filepath>")
 
     analyzer_opts.add_argument('--tidyargs',
                                dest="tidy_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for the Clang-Tidy "
-                                    "analyzer.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Clang-Tidy. "
+                                    "The opion has been migrated under the "
+                                    "clang-tidy analyzer options: "
+                                    "--analyzer-config "
+                                    "clang-tidy:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
@@ -384,7 +399,7 @@ used to generate a log file on the fly.""")
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=argparse.SUPPRESS,
+                               default=[],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
