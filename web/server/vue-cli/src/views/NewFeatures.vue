@@ -2,6 +2,163 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.25.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.25.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Guideline Statistics page to generate SEI Cert Compliance reports
+            </template>
+            <p>
+              A new Guideline Statistics page was added under the Statistics
+              tab to generate SEI Cert Compliance reports.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.25.0/guideline_statistics.png"
+              alt="Guideline Statistics"
+              width="100%"
+            >
+            <p>
+              This page shows the compliance of an analyzed program to a
+              coding guideline (such as SEI Cert C/C++). It shows all checkers
+              corresponding to a guideline rule, their configuration status
+              (on/off) and all outstanding and closed reports per guideline rule.
+            </p>
+            <p>
+              It is possible to generate the table into HTML and CSV format.
+            </p>
+            <p>
+              The first supported guidelines are SEI Cert C and C++.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Facebook Infer as a new C/C++ analyzer plugin
+            </template>
+            <v-row>
+              <v-col cols="8">
+                Besides clang-tidy, clang static analyzer, cppcheck and gcc,
+                <a href="https://github.com/facebook/infer" target="_blank">Facebook Infer</a>
+                is a well known open-source static code analyzer tool.
+                CodeChecker will support executing this analyzer.
+                It will not be enabled by default, but is available for testing.
+              </v-col>
+              <v-col>
+                <img
+                  src="@/assets/userguide/images/new_features/6.25.0/infer.png"
+                  alt="Infer logo"
+                  width="100%"
+                >
+              </v-col>
+            </v-row>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              PVS Studio report conversion
+            </template>
+            <p>
+              From now on, it will be possible to convert the reports of the
+              <a href="https://pvs-studio.com/en/pvs-studio/" target="_blank">PVS Studio</a>
+              analyzer and handle them with CodeChecker.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              <v-alert dense outlined type="error" class="py-0 ma-0">
+                Backward incompatible changes!
+              </v-alert>
+            </template>
+            <p>
+              <b>Checker enable/disable ambiguity resolved</b>
+            </p>
+            <p>
+              CodeChecker analyze emits an error (instead of a warning) when
+              the enabled checkers/profiles/checker prefix groups are given
+              ambiguously. In these cases the ambiguity must be resolved. For
+              example <code>CodeChecker analyze -e security command</code> is
+              ambiguous as <code>security</code> is a checker group (all
+              checkers starting with <code>security</code>), and a profile at
+              the same time. Please define explicitly <code>CodeChecker -e
+              prefix:security</code> if you mean the prefix group, or
+              <code>profile:security</code> if you mean the security profile.
+            </p>
+            <p>
+              <code>CodeChecker -e clang-diagnostic-format</code> will give an
+              error, because it is ambiguous if the user means the
+              <code>clang-diagnostic-format</code> single checker, or all
+              checkers starting with <code>clang-diagnostic-format</code>. To
+              refer the former, the user must user
+              <code>checker:clang-diagnostic-format</code> or to the latter
+              <code>prefix:clang-diagnostic-format</code>.
+            </p>
+            <p>
+              If you have such clashing cases, you must resolve them. The
+              following namespaces can be used:
+              <br>
+              <code>prefix:</code> - to mach checkers starting with a prefix
+              <br>
+              <code>profile:</code> - to match a checker profile
+              <br>
+              <code>checker:</code> - to match a single checker
+              <br>
+              <code>guideline:</code> - to match checkers belonging to a guideline
+              <br>
+              <code>severity:</code> - to match checkers belonging to a given severity
+              </p>
+              <br>
+            <p>
+              <b>The skip file handling was changed</b>
+            </p>
+            <p>
+              The <code>--drop-reports-from-skipped-files</code> parameter
+              was added to analyze.
+              After this change, the skip files will only skip the analysis of
+              the listed files, but will not filter out any reports. This may
+              result in more reports than before.<br>
+              By default CodeChecker used to filter out all reports from files
+              which were on the skip list. This can hide true positive reports
+              starting from unskipped code and ending in skipped files (typical
+               with CTU and header related findings). This patch removes the
+              default report filtering post processing step from
+              <code>CodeChecker analyze --skip SKIPFILE</code> operation.
+              The legacy functionality is still available with the
+              <code>--drop-reports-from-skipped-files</code> parameter.
+            </p>
+            <br>
+            <p>
+              <b><code>guideline:sei-cert</code> cannot be used anymore</b>
+            </p>
+            <p>
+              The sei-cert guideline profile was split to
+              <code>guideline:sei-cert-c</code> for the C guideline and
+              <code>guideline:sei-cert-cpp</code> for the C++ guideline.
+            </p>
+            <br>
+            <p>
+              <b><code>CodeChecker -e W*</code> syntax is not supported anymore</b>
+            </p>
+            <p>
+              Clang warnings only appear as <code>clang-diagnostic-*</code>
+              checkers and they can be enabled using the standard checker
+              checker on/off mechanism e.g. <code>CodeChecker analyze -e
+              clang-diagnostic-unused-function</code>
+            </p>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
