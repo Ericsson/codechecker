@@ -23,7 +23,7 @@ from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
-        import is_compiler_warning, ClangTidyConfigHandler
+        import ClangTidyConfigHandler
 from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
 from codechecker_analyzer.cmd.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
@@ -642,9 +642,6 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertTrue(self._is_disabled(
             'clang-analyzer',
             analyzer.construct_analyzer_cmd(result_handler)))
-
-        self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
-        self.assertFalse(is_compiler_warning('hicpp'))
 
         analyzer = create_analyzer_tidy(['--enable', 'Wreserved-id-macro'])
         result_handler = create_result_handler(analyzer)

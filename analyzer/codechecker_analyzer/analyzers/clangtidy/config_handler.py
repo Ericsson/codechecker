@@ -12,13 +12,7 @@ Config handler for Clang Tidy analyzer.
 
 from codechecker_common.logger import get_logger
 
-from ..config_handler import AnalyzerConfigHandler, CheckerState, \
-                             get_compiler_warning_name_and_type
-
-
-def is_compiler_warning(checker_name):
-    name, _ = get_compiler_warning_name_and_type(checker_name)
-    return name is not None
+from ..config_handler import AnalyzerConfigHandler, CheckerState
 
 
 LOG = get_logger('analyzer.tidy')
@@ -37,7 +31,7 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
         """
         if self.analyzer_config and \
            self.analyzer_config.get('take-config-from-directory') == 'true':
-            if is_compiler_warning(checker_name):
+            if checker_name.startswith('clang-diagnostic-'):
                 return
 
         super().add_checker(checker_name, description, state)
