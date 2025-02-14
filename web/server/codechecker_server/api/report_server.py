@@ -72,6 +72,7 @@ from ..database.run_db_model import \
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
+from .report_annotations import report_annotation_types
 
 # These names are inherited from Thrift stubs.
 # pylint: disable=invalid-name
@@ -1024,7 +1025,9 @@ def get_sort_map(sort_types, is_unique=False):
         SortType.REVIEW_STATUS: [(Report.review_status, 'rw_status')],
         SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')],
         SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')],
-        SortType.TESTCASE: [('annotation_testcase', 'annotation_testcase')]}
+        SortType.TESTCASE: [('annotation_testcase', 'annotation_testcase')],
+        SortType.CHRONOLOGICAL_ORDER: [('annotation_chronological_order',
+                                        'annotation_chronological_order')]}
 
     if is_unique:
         sort_type_map[SortType.FILENAME] = [(File.filename, 'filename')]
@@ -1959,7 +1962,9 @@ class ThriftRequestHandler:
             for col in annotation_keys:
                 annotation_cols[col] = func.max(sqlalchemy.case([(
                     ReportAnnotations.key == col,
-                    ReportAnnotations.value)])).label(f"annotation_{col}")
+                    cast(ReportAnnotations.value,
+                         report_annotation_types[col]["db"]))])) \
+                            .label(f"annotation_{col}")
 
             if report_filter.isUnique:
                 # A report annotation filter cannot be set in WHERE clause if
@@ -2143,7 +2148,7 @@ class ThriftRequestHandler:
                 for row in query_result:
                     report, filepath = row[0], row[1]
                     annotations = {
-                        k: v for k, v in zip(annotation_keys, row[2:])
+                        k: str(v) for k, v in zip(annotation_keys, row[2:])
                         if v is not None}
 
                     review_data = create_review_data(
