@@ -9,7 +9,7 @@
 from enum import IntFlag, auto as Enumerator
 from typing import NamedTuple, Optional, Tuple, Type, cast
 
-from codechecker_common.compatibility.multiprocessing import Pool
+from multiprocess import Pool
 
 from ...checker_labels import SingleLabels
 from ...output import trace
