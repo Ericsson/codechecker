@@ -45,7 +45,7 @@ macOS (OS X) development environment.
 
 ## Web-based report storage
   * **You can store & visualize thousands of analysis reports** of many analyzers like
-    Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python), Eslint (Javascript) ...  
+    Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python), Eslint (Javascript) ...
     For a complete list see [Supported Analyzers](supported_code_analyzers.md)
   * **Web application** for viewing discovered code defects with a streamlined,
     easy experience (with PostgreSQL, or SQLite backend).
@@ -145,7 +145,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 * [Webserver User Guide](web/user_guide.md)
 * [WEB GUI User Guide](/web/server/vue-cli/src/assets/userguide/userguide.md)
 * [Command line and WEB UI Feature overview](feature_comparison.md)
-* Security configuration 
+* Security configuration
   * [Configuring Authentication](web/authentication.md)
   * [Configuring Authorization](web/permissions.md)
 * Deployment
@@ -189,8 +189,8 @@ The following tools are supported:
 |                | [Sphinx](/docs/tools/report-converter.md#sphinx)                             |
 
 
-For details see 
-[supported code analyzers](supported_code_analyzers.md) documentation and the 
+For details see
+[supported code analyzers](supported_code_analyzers.md) documentation and the
 [Report Converter Tool](/docs/tools/report-converter.md).
 
 ## Common Tools
@@ -292,6 +292,10 @@ set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 - Use `make standalone_package` instead of `make package` to avoid
 having to manually activate the environment before running CodeChecker.
 
+### Minimum Recommended package versions
+
+* In production it is recommended to execute CodeChecker with the minimum Python versions: 3.7.14, 3.8.14, 3.9.14, 3.10.6, 3.11.0, otherwise it may be vulnerable to open-redirect attacks. For more info see https://python-security.readthedocs.io/vuln/http-server-redirection.html (CVE-2021-28861).
+
 ### Upgrading environment after system or Python upgrade
 
 If you have upgraded your system's Python to a newer version (e.g., from
@@ -371,7 +375,7 @@ Analyze your project with the `check` command:
     CodeChecker check -b "cd ~/your-project && make clean && make" -o ./results
 
 `check` will print an overview of the issues found in your project by the
-analyzers. The reports will be stored in the `./results` directory in `plist` 
+analyzers. The reports will be stored in the `./results` directory in `plist`
 XML format.
 
 ## Export the reports as static HTML files
@@ -379,8 +383,8 @@ You can visualize the results as static HTML by executing
 
 `CodeChecker parse -e html ./results -o ./reports_html`
 
-An index page will be generated with a list of all repors in 
-`./reports_html/index.html` 
+An index page will be generated with a list of all repors in
+`./reports_html/index.html`
 
 
 ## Optionally store the results in Web server & view the results
