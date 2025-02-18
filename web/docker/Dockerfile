@@ -67,6 +67,7 @@ RUN set -x && apt-get update -qq \
 
 RUN if [ "$INSTALL_AUTH" = "yes" ] ; then \
       apt-get install -qqy --no-install-recommends \
+        libldap-common \
         libldap2-dev \
         libsasl2-dev \
         libssl-dev; \
