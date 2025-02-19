@@ -1142,13 +1142,14 @@ def check_satisfied_capabilities(args):
         LOG.info("hint: Clang 11.0.0 is the earliest version to support it")
         has_error = True
 
-    if args.enable_z3 == 'on' and not analyzer_types.is_z3_capable():
+    if 'enable_z3' in args and args.enable_z3 == 'on' and not \
+            analyzer_types.is_z3_capable():
         LOG.error("Z3 solver cannot be enabled as Clang was not compiled with "
                   "Z3!")
         has_error = True
 
-    if args.enable_z3_refutation == 'on' and not \
-            analyzer_types.is_z3_capable():
+    if 'enable_z3_refutation' in args and args.enable_z3_refutation == 'on' \
+            and not analyzer_types.is_z3_capable():
         LOG.error("Z3 refutation cannot be enabled as Clang was not compiled "
                   "with Z3!")
         has_error = True
