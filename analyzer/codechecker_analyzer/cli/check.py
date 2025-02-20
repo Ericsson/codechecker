@@ -22,14 +22,14 @@ from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
     analyzer_config, checker_config, existing_abspath
 
-from codechecker_analyzer.cmd.analyze import \
+from codechecker_analyzer.cli.analyze import \
     EPILOG_ENV_VAR as analyzer_epilog_env_var, \
     EPILOG_ISSUE_HASHES as analyzer_epilog_issue_hashes
 
-from codechecker_analyzer.cmd.log import \
+from codechecker_analyzer.cli.log import \
     EPILOG_ENV_VAR as log_epilog_env_var
 
-from codechecker_analyzer.cmd.parse import \
+from codechecker_analyzer.cli.parse import \
     EPILOG_ENV_VAR as parse_epilog_env_var
 
 from codechecker_common import arg, cmd_config, logger
@@ -905,7 +905,7 @@ def main(args):
             __update_if_key_exists(args, log_args, 'quiet')
             __update_if_key_exists(args, log_args, 'verbose')
 
-            import codechecker_analyzer.cmd.log as log_module
+            import codechecker_analyzer.cli.log as log_module
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
 
@@ -973,7 +973,7 @@ def main(args):
         __update_if_key_exists(args, analyze_args, 'verbose')
         __update_if_key_exists(args, analyze_args, 'no_missing_checker_error')
 
-        import codechecker_analyzer.cmd.analyze as analyze_module
+        import codechecker_analyzer.cli.analyze as analyze_module
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
 
@@ -991,7 +991,7 @@ def main(args):
         __update_if_key_exists(args, parse_args, 'skipfile')
         __update_if_key_exists(args, parse_args, 'suppress')
 
-        import codechecker_analyzer.cmd.parse as parse_module
+        import codechecker_analyzer.cli.parse as parse_module
         LOG.debug("Calling PARSE with args:")
         LOG.debug(parse_args)
 
