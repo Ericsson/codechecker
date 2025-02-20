@@ -611,11 +611,6 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                "available if CTU mode is enabled. "
                                "(default: parse-on-demand)")
 
-    # def suppress_if_stats_incapable(helpmsg : str):
-    #     if analyzer_types.is_statistics_capable():
-    #         return helpmsg
-    #     return argparse.SUPPRESS
-
     stats_capable = analyzer_types.is_statistics_capable()
 
     stat_opts = parser.add_argument_group(

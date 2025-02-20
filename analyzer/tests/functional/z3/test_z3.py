@@ -108,7 +108,6 @@ class TestSkeleton(unittest.TestCase):
 
         self.env = env.codechecker_env()
 
-
         test_project_path = self._testproject_data['project_path']
         test_project_build = shlex.split(self._testproject_data['build_cmd'])
         test_project_clean = shlex.split(self._testproject_data['clean_cmd'])
