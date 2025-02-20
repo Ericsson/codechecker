@@ -25,7 +25,7 @@ from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
         import is_compiler_warning, ClangTidyConfigHandler
 from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
-from codechecker_analyzer.cmd.analyze import \
+from codechecker_analyzer.cli.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
 
 from codechecker_analyzer import analyzer_context

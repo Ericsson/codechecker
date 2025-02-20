@@ -116,8 +116,8 @@ package: package_analyzer
 
 	# Copy CodeChecker entry point sub-commands.
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir $(ROOT)/codechecker_common/cmd \
-	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
+	  --cmd-dir $(ROOT)/codechecker_common/cli_commands \
+	    $(CC_ANALYZER)/codechecker_analyzer/cli \
 	  --bin-file $(ROOT)/bin/CodeChecker
 
 	# Copy license file.
