@@ -108,20 +108,6 @@ class TestSkeleton(unittest.TestCase):
 
         self.env = env.codechecker_env()
 
-        # Get if the package is z3 compatible.
-        cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _, _ = call_command(cmd, cwd=test_workspace, env=self.env)
-        self.z3_capable = '--z3' in output
-        print(f"'analyze' reported z3 compatibility? {self.z3_capable}")
-
-        if not self.z3_capable:
-            try:
-                self.z3_capable = strtobool(
-                    os.environ['CC_TEST_FORCE_Z3_CAPABLE']
-                )
-            except (ValueError, KeyError):
-                pass
-
         test_project_path = self._testproject_data['project_path']
         test_project_build = shlex.split(self._testproject_data['build_cmd'])
         test_project_clean = shlex.split(self._testproject_data['clean_cmd'])
@@ -140,6 +126,24 @@ class TestSkeleton(unittest.TestCase):
             log_cmd, cwd=test_project_path, env=self.env)
         print(output)
         print(err)
+
+        # Get if the package is z3 compatible.
+        cmd = [self._codechecker_cmd,
+               'analyze', 'compile_command.json',
+               '-o', 'reports',
+               '--z3', 'on']
+        test_project_path = self._testproject_data['project_path']
+        output, _, _ = call_command(cmd, cwd=test_project_path, env=self.env)
+        self.z3_capable = 'Z3 solver cannot be enabled' not in output
+        print(f"'analyze' reported z3 compatibility? {self.z3_capable}")
+
+        if not self.z3_capable:
+            try:
+                self.z3_capable = strtobool(
+                    os.environ['CC_TEST_FORCE_Z3_CAPABLE']
+                )
+            except (ValueError, KeyError):
+                pass
 
     def test_z3(self):
         """ Enable z3 during analysis. """
