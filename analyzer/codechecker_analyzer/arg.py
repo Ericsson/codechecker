@@ -12,8 +12,6 @@ import argparse
 import collections
 import os
 import re
-#
-# from codechecker_analyzer.analyzers import analyzer_types
 
 
 AnalyzerConfig = collections.namedtuple(
@@ -22,25 +20,6 @@ CheckerConfig = collections.namedtuple(
     "CheckerConfig", ["analyzer", "checker", "option", "value"])
 AnalyzerBinary = collections.namedtuple(
     "AnalyzerBinary", ["analyzer", "path"])
-
-#
-# class CheckAvailabilityAction(argparse.Action):
-#     """
-#     TODO
-#     """
-#
-#     def is_availble():
-#         raise NotImplementedError
-#
-#     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-#         if nargs:
-#             raise ValueError("nargs not allowed")
-#         super().__init__(option_strings, dest, **kwargs)
-#
-#     def __call__(self, parser, namespace, value, option_string=None):
-#         print(value)
-#         assert analyzer_types.is_statistics_capable()
-#
 
 
 class OrderedCheckersAction(argparse.Action):
