@@ -116,10 +116,10 @@ package: package_dir_structure package_web
 
 	# Copy CodeChecker entry point sub-commands.
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir $(ROOT)/codechecker_common/cmd \
-	    $(CC_WEB)/codechecker_web/cmd \
-	    $(CC_SERVER)/codechecker_server/cmd \
-	    $(CC_CLIENT)/codechecker_client/cmd \
+	  --cmd-dir $(ROOT)/codechecker_common/cli_commands \
+	    $(CC_WEB)/codechecker_web/cli \
+	    $(CC_SERVER)/codechecker_server/cli \
+	    $(CC_CLIENT)/codechecker_client/cli \
 	  --bin-file $(ROOT)/bin/CodeChecker
 
 	# Copy license file.

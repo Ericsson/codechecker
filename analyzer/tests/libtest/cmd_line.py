@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 
 import argparse
-from codechecker_analyzer.cmd import analyze
+from codechecker_analyzer.cli import analyze
 
 
 class NoExitArgumentParser(argparse.ArgumentParser):
