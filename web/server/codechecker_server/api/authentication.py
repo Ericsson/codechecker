@@ -210,7 +210,7 @@ class ThriftAuthHandler:
         if not oauth_config.get('enabled'):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled for provider:", provider)
+                f"OAuth authentication is not enabled for provider:{provider}")
 
         stored_state = generate_token()
         client_id = oauth_config["client_id"]
@@ -319,14 +319,19 @@ class ThriftAuthHandler:
                         or not provider_db or not expires_at_db:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "Something went wrong. Please try again.")
+                        "OAuth querying received empty values.")
 
+                if state_db != state:
+                    LOG.error("State mismatch.")
+                if provider_db != provider:
+                    LOG.error("Provider mismatch.")
+                if date_time > expires_at_db:
+                    LOG.error("Expiery time mismatch.")
                 if state_db != state or provider_db != provider \
                         or date_time > expires_at_db:
-                    LOG.error("State, provider or expiery time mismatch.")
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "Something went wrong. Please try again.")
+                        "OAuth data mismatch.")
 
             client_id = oauth_config["client_id"]
             client_secret = oauth_config["client_secret"]

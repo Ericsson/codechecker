@@ -15,7 +15,7 @@ Table of Contents
         * [<i>PAM</i> authentication](#pam-authentication)
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
-    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+      * [Membership in custom groups with <i>regex_groups</i>](#regex_groups-authentication)
       * [<i>OAuth</i> authentication](#oauth-authentication)
         * [<i>OAuth</i> Configuration options](#oauth-configuration-options)
         * [<i>OAuth</i> details per each provider](#oauth-details-per-each-provider)
@@ -429,7 +429,7 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 #### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
 * Important: `callback_url` must always match with the link specified in the
-providers' settings when issuing an access token.
+providers' settings when issuing an OAuth application.
 
 * Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
 Therefore PKCE is not used when users log in using GitHub.
