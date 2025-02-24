@@ -654,40 +654,37 @@ def handle_list_runs(args):
             if result.analyzerName not in enabled_checkers:
                 enabled_checkers[result.analyzerName] = set()
             enabled_checkers[result.analyzerName].add(result.checkerId)
-        
+
         if args.output_format == 'plaintext':
             print("Enabled checkers:")
-            for analyzer in enabled_checkers:
+            for analyzer, checkers in enabled_checkers.items():
                 print(analyzer + ":")
-                for checker in enabled_checkers[analyzer]:
+                for checker in checkers:
                     print("  " + checker)
 
         elif args.output_format == 'csv':
             separator = ','
             print("Analyzer" + separator + "Checker")
-            for analyzer in enabled_checkers:
-                for checker in enabled_checkers[analyzer]:
+            for analyzer, checkers in enabled_checkers.items():
+                for checker in checkers:
                     print(analyzer + separator + checker)
 
         elif args.output_format == 'json':
-            enabled_checkers = {
-                analyzer: list(checkers)
-                          for analyzer, checkers in enabled_checkers.items()}
-            print(json.dumps(enabled_checkers, indent=2))
+            converted = {}
+            for analyzer, checkers in enabled_checkers.items():
+                converted[analyzer] = list(checkers)
+            print(json.dumps(converted, indent=2))
 
         elif args.output_format == 'table':
             header = ['Analyzer', 'Checker']
             rows = [
                 (analyzer, checker)
-                for analyzer in enabled_checkers
-                for checker in enabled_checkers[analyzer]]
+                for analyzer, checkers in enabled_checkers.items()
+                for checker in checkers]
             print(twodim.to_str(args.output_format, header, rows))
 
         else:
             LOG.error("Unsupported output format: %s", args.output_format)
-            return 1
-
-        return 0
 
     if args.output_format == 'json':
         # This json is different from the json format printed by the
