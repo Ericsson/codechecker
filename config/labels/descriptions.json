@@ -15,6 +15,7 @@
     "UNSPECIFIED": "Checker severity is not specified for a checker."
   },
   "guideline": {
+    "cwe-top-25-2024": "https://cwe.mitre.org/top25/",
     "sei-cert-c": "https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard",
     "sei-cert-cpp": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
     "misra-c": "https://www.misra.org.uk/"
