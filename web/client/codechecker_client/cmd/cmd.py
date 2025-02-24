@@ -1298,6 +1298,11 @@ def add_arguments_to_parser(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="List the analysis runs available on the server.",
         help="List the available analysis runs.")
+    
+    runs.add_argument(
+        '--enabled-checkers',
+        action='store_true',
+        help='List all enabled checkers for the specified runs.')
     __register_runs(runs)
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
     __add_common_arguments(runs, output_formats=DEFAULT_OUTPUT_FORMATS)

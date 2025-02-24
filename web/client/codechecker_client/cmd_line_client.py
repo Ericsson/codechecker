@@ -19,6 +19,7 @@ import re
 import sys
 import shutil
 import time
+import json
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -638,6 +639,55 @@ def handle_list_runs(args):
     sort_mode = ttypes.RunSortMode(sort_type, sort_order)
 
     runs = get_run_data(client, run_filter, sort_mode)
+
+    if hasattr(args, 'enabled_checkers') and args.enabled_checkers:
+        results = get_run_results(client,
+                                  [run.runId for run in runs],
+                                  constants.MAX_QUERY_SIZE,
+                                  0,
+                                  None,
+                                  ttypes.ReportFilter(),
+                                  None,
+                                  None)
+        enabled_checkers = {}
+        for result in results:
+            if result.analyzerName not in enabled_checkers:
+                enabled_checkers[result.analyzerName] = set()
+            enabled_checkers[result.analyzerName].add(result.checkerId)
+        
+        if args.output_format == 'plaintext':
+            print("Enabled checkers:")
+            for analyzer in enabled_checkers:
+                print(analyzer + ":")
+                for checker in enabled_checkers[analyzer]:
+                    print("  " + checker)
+
+        elif args.output_format == 'csv':
+            separator = ','
+            print("Analyzer" + separator + "Checker")
+            for analyzer in enabled_checkers:
+                for checker in enabled_checkers[analyzer]:
+                    print(analyzer + separator + checker)
+
+        elif args.output_format == 'json':
+            enabled_checkers = {
+                analyzer: list(checkers)
+                          for analyzer, checkers in enabled_checkers.items()}
+            print(json.dumps(enabled_checkers, indent=2))
+
+        elif args.output_format == 'table':
+            header = ['Analyzer', 'Checker']
+            rows = [
+                (analyzer, checker)
+                for analyzer in enabled_checkers
+                for checker in enabled_checkers[analyzer]]
+            print(twodim.to_str(args.output_format, header, rows))
+
+        else:
+            LOG.error("Unsupported output format: %s", args.output_format)
+            return 1
+
+        return 0
 
     if args.output_format == 'json':
         # This json is different from the json format printed by the
