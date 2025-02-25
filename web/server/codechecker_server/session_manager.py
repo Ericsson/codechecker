@@ -76,7 +76,7 @@ class _Session:
 
     def __init__(self, token, username, groups,
                  session_lifetime, refresh_time, is_root=False, database=None,
-                 last_access=None, can_expire=True):
+                 last_access=None, can_expire=True, oauth_access_token=None):
 
         self.token = token
         self.user = username
@@ -87,7 +87,11 @@ class _Session:
         self.__root = is_root
         self.__database = database
         self.__can_expire = can_expire
+        self.oauth_access_token = oauth_access_token
         self.last_access = last_access if last_access else datetime.now()
+
+    def get_access_token(self):
+        return self.oauth_access_token
 
     @property
     def is_root(self):
@@ -183,17 +187,17 @@ class SessionManager:
         self.__sessions = []
         self.__configuration_file = configuration_file
 
-        scfg_dict = self.__get_config_dict()
+        self.scfg_dict = self.__get_config_dict()
 
         # FIXME: Refactor this. This is irrelevant to authentication config,
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(scfg_dict)
-        self.__max_run_count = scfg_dict.get('max_run_count', None)
-        self.__store_config = scfg_dict.get('store', {})
-        self.__keepalive_config = scfg_dict.get('keepalive', {})
-        self.__auth_config = scfg_dict['authentication']
+        self.__worker_processes = get_worker_processes(self.scfg_dict)
+        self.__max_run_count = self.scfg_dict.get('max_run_count', None)
+        self.__store_config = self.scfg_dict.get('store', {})
+        self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
             LOG.debug("Authentication was force-enabled.")
@@ -221,7 +225,7 @@ class SessionManager:
             self.__group_regexes_compiled = d
 
         # If no methods are configured as enabled, disable authentication.
-        if scfg_dict['authentication'].get('enabled'):
+        if self.scfg_dict['authentication'].get('enabled'):
             found_auth_method = False
 
             if 'method_dictionary' in self.__auth_config and \
@@ -248,6 +252,10 @@ class SessionManager:
                                 "... Disabling PAM authentication.")
                     self.__auth_config['method_pam']['enabled'] = False
 
+            if 'method_oauth' in self.__auth_config and \
+                    self.__auth_config['method_oauth'].get('enabled'):
+                found_auth_method = True
+
             if not found_auth_method:
                 if force_auth:
                     LOG.warning("Authentication was manually enabled, but no "
@@ -259,6 +267,46 @@ class SessionManager:
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
+
+    def get_oauth_providers(self):
+        result = []
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+        for provider in providers:
+            if providers[provider].get('enabled', False):
+                result.append(provider)
+        return result
+
+    def get_oauth_callback_urls(self):
+        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
+            .get('providers', {})
+        dict_to_return = {}
+        for provider_name, provider_data in oauth_config.items():
+            dict_to_return[provider_name] = provider_data.get('callback_url')
+        return dict_to_return
+
+    def turn_off_oauth_provider(self, provider_name: str):
+        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
+            .get('providers', {})
+        oauth_config[provider_name]['enabled'] = False
+
+    def get_oauth_config(self, provider):
+        provider_cfg = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
+
+        # turn off configuration if it is set to default values
+        if provider_cfg.get("client_secret",
+                            "ExampleClientSecret") == "ExampleClientSecret" \
+                or provider_cfg.get("client_id",
+                                    "ExampleClientID") == "ExampleClientID":
+            self.__auth_config["method_oauth"]["providers"][provider][
+                "enabled"] = False
+
+            LOG.warning("OAuth configuration was set to default values. " +
+                        "Disabling oauth provider: %s", provider)
+
+        return self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
 
     def __get_config_dict(self):
         """
@@ -573,18 +621,18 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None, can_expire=True):
+                               last_access=None, can_expire=True,
+                               oauth_access_token=None):
         """
         Returns a new local session object initalized by the given parameters.
         """
         if not is_root:
             is_root = self.__is_root_user(user_name)
-
         return _Session(
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
             self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire)
+            last_access, can_expire, oauth_access_token=oauth_access_token)
 
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
@@ -600,7 +648,8 @@ class SessionManager:
         # Try authenticate user with personal access token.
         auth_token = self.__try_auth_token(auth_string)
         if auth_token:
-            local_session = self.__get_local_session_from_db(auth_token.token)
+            local_session = self.__get_local_session_from_db(
+                auth_token.token)
             local_session.revalidate()
             self.__sessions.append(local_session)
             return local_session
@@ -627,6 +676,65 @@ class SessionManager:
                 transaction = self.__database_connection()
                 record = SessionRecord(token, user_name,
                                        ';'.join(groups))
+                transaction.add(record)
+                transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't store or update login record in "
+                          "database:")
+                LOG.error(str(e))
+            finally:
+                if transaction:
+                    transaction.close()
+
+        return local_session
+
+    def create_session_oauth(self, provider, username, oauth_access_token):
+        """
+        Creates a new session for the given auth-string
+        if the provider is enabled for OAuth authentication.
+        """
+
+        if not self.__is_method_enabled('oauth'):
+            return False
+
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+
+        if provider not in providers or \
+                not providers.get(provider).get('enabled'):
+            return False
+
+        # Generate a new token and create a local session.
+        codechecker_session_token = generate_session_token()
+
+        # To be parsed later
+        user_data = {'username': username,
+                     'token': codechecker_session_token,
+                     'groups': [],
+                     'is_root': False,
+                     'oauth_access_token': oauth_access_token}
+
+        local_session = self.__create_local_session(
+            codechecker_session_token,
+            user_data.get('username'),
+            user_data.get('groups'),
+            user_data.get('is_root'),
+            oauth_access_token=user_data.get('oauth_access_token'))
+
+        self.__sessions.append(local_session)
+
+        # Store the session in the database.
+        transaction = None
+        if self.__database_connection:
+            try:
+                transaction = self.__database_connection()
+
+                # Store the new session.
+                record = SessionRecord(codechecker_session_token,
+                                       user_data.get('username'),
+                                       ';'.join(user_data.get('groups')),
+                                       oauth_access_token=user_data.get(
+                                           'oauth_access_token'))
                 transaction.add(record)
                 transaction.commit()
             except Exception as e:
