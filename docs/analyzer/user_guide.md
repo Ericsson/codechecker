@@ -140,9 +140,9 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--capture-analysis-output] [--generate-reproducer]
                          [--config CONFIG_FILE]
+                         [--cppcheckargs CPPCHECK_ARGS_CFG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [--inferargs INFER_ARGS_CFG_FILE]
                          [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
@@ -284,15 +284,24 @@ analyzer arguments:
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
+  --cppcheckargs CPPCHECK_ARGS_CFG_FILE
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for Cppcheck. The option has been
+                        migrated under the cppcheck anayzer options:
+                        --analyzer-config
+                        cppcheck:cc-verbatim-args-file=<filepath>
   --saargs CLANGSA_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for the Clang Static analyzer.
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for the Clang Static Analyzer.
+                        The opion has been migrated under the clangsa analyzer
+                        options: --analyzer-config
+                        clangsa:cc-verbatim-args-file=<filepath>
   --tidyargs TIDY_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for the Clang-Tidy analyzer.
-  --inferargs INFER_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for the Facebook Infer.
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for the Clang-Tidy. The opion has
+                        been migrated under the clang-tidy analyzer options:
+                        --analyzer-config
+                        clang-tidy:cc-verbatim-args-file=<filepath>
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the
@@ -996,7 +1005,6 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--cppcheckargs CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [--inferargs INFER_ARGS_CFG_FILE]
                            [--timeout TIMEOUT]
                            [--ctu | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
@@ -1210,17 +1218,23 @@ analyzer arguments:
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
   --cppcheckargs CPPCHECK_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for Cppcheck.
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for Cppcheck. The option has been
+                        migrated under the cppcheck anayzer options:
+                        --analyzer-config
+                        cppcheck:cc-verbatim-args-file=<filepath>
   --saargs CLANGSA_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for the Clang Static Analyzer.
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for the Clang Static Analyzer.
+                        The opion has been migrated under the clangsa analyzer
+                        options: --analyzer-config
+                        clangsa:cc-verbatim-args-file=<filepath>
   --tidyargs TIDY_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for Clang-Tidy.
-  --inferargs TIDY_ARGS_CFG_FILE
-                        File containing argument which will be forwarded
-                        verbatim for Facebook Infer.
+                        DEPRECATED. File containing argument which will be
+                        forwarded verbatim for the Clang-Tidy. The opion has
+                        been migrated under the clang-tidy analyzer options:
+                        --analyzer-config
+                        clang-tidy:cc-verbatim-args-file=<filepath>
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the

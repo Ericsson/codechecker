@@ -10,11 +10,11 @@ Cppcheck related functions.
 """
 
 from collections import defaultdict
+import sys
 from packaging.version import Version
 from pathlib import Path
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 from codechecker_common.logger import get_logger
 from codechecker_common import util
 
-from codechecker_analyzer import analyzer_context, env
+from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.env import get_binary_in_path
 
 from .. import analyzer_base
@@ -303,11 +303,15 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         Config options for cppcheck.
         """
-        return [("addons", "A list of cppcheck addon files."),
-                ("libraries", "A list of cppcheck library definiton files."),
-                ("platform", "The platform configuration .xml file."),
-                ("inconclusive", "Enable inconclusive reports.")
-                ]
+        return [
+            ("addons", "A list of cppcheck addon files."),
+            ("libraries", "A list of cppcheck library definiton files."),
+            ("platform", "The platform configuration .xml file."),
+            ("inconclusive", "Enable inconclusive reports."),
+            ("cc-verbatim-args-file",
+             "A file path containing flags that are forwarded verbatim to the "
+             "analyzer tool. E.g.: cc-verbatim-args-file=<filepath>")
+        ]
 
     @classmethod
     def get_checker_config(cls):
@@ -410,20 +414,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         handler.analyzer_config = analyzer_config
 
-        try:
-            with open(args.cppcheck_args_cfg_file, 'r', encoding='utf8',
-                      errors='ignore') as sa_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)',
-                           env.replace_env_var(args.cppcheck_args_cfg_file),
-                           sa_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No cppcheck arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                if cfg.analyzer == cls.ANALYZER_NAME and \
+                        cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
 
         checkers = cls.get_analyzer_checkers()
 
