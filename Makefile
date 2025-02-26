@@ -116,12 +116,26 @@ venv:
 		cd $(CC_ANALYZER) && pip3 install -r requirements.txt && \
 		cd $(CC_WEB) && pip3 install -r $(CC_WEB)/requirements.txt
 
+	# TODO: Remove this hack once Thrift is updated to a version that
+	# doesn't use deprecated Python code.
+	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
+
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker venv" && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		cd $(CC_ANALYZER) && pip3 install -r requirements_py/osx/requirements.txt && \
 		cd $(CC_WEB) && pip3 install -r requirements_py/osx/requirements.txt
+
+	# TODO: Remove this hack once Thrift is updated to a version that
+	# doesn't use deprecated Python code.
+	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
 
 clean_venv:
 	rm -rf venv
@@ -138,6 +152,13 @@ venv_dev:
 	# Create a virtual environment for development.
 	python3 -m venv venv_dev --prompt="CodeChecker venv-dev" && \
 		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
+
+	# TODO: Remove this hack once Thrift is updated to a version that
+	# doesn't use deprecated Python code.
+	# https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5847
+	# This removes line 113 and 114, the two lines containing the deprecated keyword arguments.
+	# This python oneliner is used to not depend on other external tools like `sed`.
+	${PYTHON_BIN} -c "import glob; f=glob.glob('$(CURRENT_DIR)/venv/lib/python3.*/site-packages/thrift/transport/THttpClient.py')[0]; c=open(f).readlines(); open(f,'w').writelines(c[:112]+c[114:])"
 
 clean_venv_dev:
 	rm -rf venv_dev
