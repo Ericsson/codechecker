@@ -128,6 +128,31 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, out[0])
         self.assertEqual(True, "default" in out[1])
 
+    def test_checkers_label(self):
+        """ Listing checkers with given label. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--label']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('profile', out)
+        self.assertIn('severity', out)
+        self.assertIn('guideline', out)
+
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('HIGH', out)
+        self.assertIn('MEDIUM', out)
+        self.assertIn('LOW', out)
+
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity:HIGH']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('core.DivideZero', out)
+        self.assertIn('core.CallAndMessage', out)
+
     def test_analyzers(self):
         """ Listing available analyzers. """
 
