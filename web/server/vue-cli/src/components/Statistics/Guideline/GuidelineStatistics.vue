@@ -171,6 +171,11 @@ export default {
         id: "sei-cert-cpp",
         name: "SEI CERT Coding Standard (C++)",
         value: 1
+      },
+      {
+        id: "cwe-top-25-2024",
+        name: "CWE Top 25 Most Dangerous Software Weaknesses 2024",
+        value: 2
       }
     ];
 
@@ -185,7 +190,7 @@ export default {
       runs: null,
       runData: [],
       selectedCheckerName: null,
-      selectedGuidelineIndexes: [ 0, 1 ],
+      selectedGuidelineIndexes: [ 0, 1, 2 ],
       showRuns: {
         enabled: false,
         disabled: false,

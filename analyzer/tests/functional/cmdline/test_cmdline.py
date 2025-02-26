@@ -154,6 +154,13 @@ class TestCmdline(unittest.TestCase):
         """ Listing checkers by guideline. """
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'cwe-top-25-2024']
+        _, out, _ = run_cmd(checkers_cmd)
+
+        self.assertIn('NonNullParamChecker', out)
+        self.assertNotIn('CastToStruct', out)
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
                         '--guideline', 'sei-cert-cpp']
         _, out, _ = run_cmd(checkers_cmd)
 
@@ -184,7 +191,8 @@ class TestCmdline(unittest.TestCase):
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
         _, out, _ = run_cmd(checkers_cmd)
 
-        self.assertTrue(out.strip().startswith('Guideline: sei-cert'))
+        self.assertTrue(out.strip().startswith('Guideline: cwe-top-25-2024'))
+        self.assertIn('Guideline: sei-cert-cpp', out)
 
     def test_checkers_warnings(self):
         """ Listing checkers for compiler warnings. """
