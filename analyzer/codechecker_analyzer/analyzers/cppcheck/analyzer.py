@@ -442,9 +442,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
-            LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for %s',
-                               cls.ANALYZER_NAME)
+            LOG.debug('No checkers were defined in the command line for %s',
+                      cls.ANALYZER_NAME)
             cmdline_checkers = []
 
         handler.initialize_checkers(
