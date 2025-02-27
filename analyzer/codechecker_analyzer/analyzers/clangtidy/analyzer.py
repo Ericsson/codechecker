@@ -698,10 +698,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                           encoding='utf-8', errors='ignore') as tidy_config:
                     handler.checker_config = tidy_config.read()
             except IOError as ioerr:
-                LOG.debug_analyzer(ioerr)
+                LOG.debug(ioerr)
             except AttributeError as aerr:
                 # No clang tidy config file was given in the command line.
-                LOG.debug_analyzer(aerr)
+                LOG.debug(aerr)
 
         handler.analyzer_config = analyzer_config
 
@@ -717,9 +717,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
-            LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for %s',
-                               cls.ANALYZER_NAME)
+            LOG.debug('No checkers were defined in the command line for %s',
+                      cls.ANALYZER_NAME)
             cmdline_checkers = []
 
         handler.initialize_checkers(

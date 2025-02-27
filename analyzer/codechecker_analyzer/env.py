@@ -52,8 +52,7 @@ def get_original_env():
     try:
         original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
         if original_env_file:
-            LOG.debug_analyzer('Loading original build env from: %s',
-                               original_env_file)
+            LOG.debug('Loading original build env from: %s', original_env_file)
 
             with open(original_env_file, 'rb') as env_file:
                 original_env = pickle.load(env_file, encoding='utf-8')
@@ -76,7 +75,7 @@ def extend(path_env_extra, ld_lib_path_extra):
 
     if path_env_extra:
         extra_path = ':'.join(path_env_extra)
-        LOG.debug_analyzer(
+        LOG.debug(
             'Extending PATH environment variable with: ' + extra_path)
 
         try:
@@ -86,7 +85,7 @@ def extend(path_env_extra, ld_lib_path_extra):
 
     if ld_lib_path_extra:
         extra_lib = ':'.join(ld_lib_path_extra)
-        LOG.debug_analyzer(
+        LOG.debug(
             'Extending LD_LIBRARY_PATH environment variable with: ' +
             extra_lib)
         try:

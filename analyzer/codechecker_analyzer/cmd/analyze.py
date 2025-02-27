@@ -1328,14 +1328,14 @@ def main(args):
         skipped=skipped_cmp_cmd_count,
         removed_by_uniqueing=removed_during_uniqueing)
 
-    LOG.debug_analyzer("Total number of compile commands without "
-                       "skipping or uniqueing: %d", compile_cmd_count.total)
-    LOG.debug_analyzer("Compile commands removed by uniqueing: %d",
-                       compile_cmd_count.removed_by_uniqueing)
-    LOG.debug_analyzer("Compile commands skipped during log processing: %d",
-                       compile_cmd_count.skipped)
-    LOG.debug_analyzer("Compile commands forwarded for analysis: %d",
-                       compile_cmd_count.analyze)
+    LOG.debug("Total number of compile commands without "
+              "skipping or uniqueing: %d", compile_cmd_count.total)
+    LOG.debug("Compile commands removed by uniqueing: %d",
+              compile_cmd_count.removed_by_uniqueing)
+    LOG.debug("Compile commands skipped during log processing: %d",
+              compile_cmd_count.skipped)
+    LOG.debug("Compile commands forwarded for analysis: %d",
+              compile_cmd_count.analyze)
 
     analyzer.perform_analysis(args, skip_handlers, filter_handlers,
                               rs_handler, actions, metadata_tool,
