@@ -17,7 +17,7 @@ from typing import List, Optional, Set
 
 from tabulate import tabulate
 
-from codechecker_common.compatibility.multiprocessing import cpu_count
+from multiprocess import cpu_count
 from codechecker_common.util import clamp
 
 from ...checker_labels import SingleLabels, get_checker_labels, \
