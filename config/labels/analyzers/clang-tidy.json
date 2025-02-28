@@ -348,7 +348,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "cwe-top-25-2024:cwe-476",
+      "cwe-top-25-2024:cwe-400",
       "severity:MEDIUM"
     ],
     "bugprone-integer-division": [
