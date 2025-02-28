@@ -167,7 +167,7 @@ def run_pre_analysis(actions, clangsa_config,
 
     processed_var = multiprocess.Value('i', 0)
     actions_num = multiprocess.Value('i', len(actions))
-
+    # pylint: disable=not-callable
     pool = multiprocess.Pool(jobs,
                              initializer=init_worker,
                              initargs=(processed_var, actions_num))
