@@ -16,6 +16,7 @@ from . import codechecker
 from . import \
     checker_labels, \
     exception, \
+    fixit, \
     http_, \
     output, \
     projects, \
@@ -27,6 +28,7 @@ __all__ = [
     "checker_labels",
     "codechecker",
     "exception",
+    "fixit",
     "http_",
     "output",
     "projects",
