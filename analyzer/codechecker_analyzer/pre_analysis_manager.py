@@ -49,8 +49,8 @@ def collect_statistics(action, source, clangsa_config, statistics_data):
     ret_code, analyzer_out, analyzer_err = \
         analyzer_base.SourceAnalyzer.run_proc(cmd)
 
-    LOG.debug(analyzer_out)
-    LOG.debug(analyzer_err)
+    LOG.debug_analyzer(analyzer_out)
+    LOG.debug_analyzer(analyzer_err)
     if ret_code:
         LOG.error("Failed to collect statistics for %s", source)
         return ret_code
@@ -140,7 +140,7 @@ def pre_analyze(params):
                                statistics_data)
 
     except Exception as ex:
-        LOG.debug_analyzer(str(ex))
+        LOG.debug(str(ex))
         traceback.print_exc(file=sys.stdout)
         raise
 

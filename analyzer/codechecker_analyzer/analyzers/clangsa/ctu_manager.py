@@ -107,7 +107,7 @@ def generate_invocation_list(triple_arch, action, source, config):
         {str(source_path): cmd},
         width=maxsize, Dumper=LLVMComatibleYamlDumper)
 
-    LOG.debug_analyzer("Appending invocation list item '%s'", invocation_line)
+    LOG.debug("Appending invocation list item '%s'", invocation_line)
 
     # Append the next entry into the invocation list yaml.
     with invocation_list.open('a', encoding='utf-8', errors='ignore') as \
