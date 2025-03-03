@@ -1,6 +1,6 @@
 <template>
   <base-statistics-table
-    :headers="headers"
+    :headers="tableHeaders"
     :items="items"
     :loading="loading"
     :mobile-breakpoint="1000"
@@ -37,6 +37,10 @@ export default {
           value: "guidelineRule"
         },
         {
+          text: "Title",
+          value: "guidelineRuleTitle"
+        },
+        {
           text: "Related Checker(s)",
           value: "checkers.name"
         },
@@ -63,6 +67,25 @@ export default {
       ]
     };
   },
+
+  computed: {
+    hasTitle() {
+      return this.items.some(item => item.guidelineRuleTitle);
+    },
+
+    tableHeaders() {
+      if (!this.headers) return;
+
+      return this.headers.filter(header => {
+        if (header.value === "guidelineRuleTitle") {
+          return this.hasTitle;
+        }
+
+        return true;
+      });
+    }
+  },
+
   methods: {
     enabledClick(type, checker_name) {
       this.$emit("enabled-click", type, checker_name);

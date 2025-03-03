@@ -229,6 +229,7 @@ export default {
                 guidelineName: guideline,
                 guidelineRule: rule.ruleId,
                 guidelineUrl: rule.url,
+                guidelineRuleTitle: rule.title,
                 checkers: filtered_stat.length
                   ? filtered_stat.map(checkerId => {
                     return {
