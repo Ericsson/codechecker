@@ -52,7 +52,7 @@
 
         <div v-if="!problematicRuns.length">
           <v-row align="center">
-            <v-col cols="3">
+            <v-col cols="6">
               <v-select
                 v-model="selectedGuidelineIndexes"
                 :items="guidelineOptions"
@@ -60,8 +60,14 @@
                 label="Select guidelines"
                 outlined
                 multiple
-                dense
-              />
+                density="comfortable"
+              >
+                <template v-slot:selection="{ item }">
+                  <div class="selection-item">
+                    {{ item.name }}
+                  </div>
+                </template>
+              </v-select>
             </v-col>
           </v-row>
           <guideline-statistics-table
@@ -282,6 +288,7 @@ export default {
           const value = [
             stat.guidelineName,
             stat.guidelineRule,
+            stat.guidelineRuleTitle,
             checker.name,
             this.severityFromCodeToString(checker.severity),
             checker.enabledInAllRuns
@@ -297,7 +304,7 @@ export default {
 
       const data = [
         [
-          "Guideline Name", "Rule Name", "Related Checker(s)",
+          "Guideline Name", "Rule Name", "Rule Title", "Related Checker(s)",
           "Checker Severity", "Checker Status", "Closed Reports",
           "Outstanding Reports"
         ],
@@ -313,45 +320,53 @@ export default {
           this.selectedGuidelines,
           handleThriftError(async guidelines => {
             for (const [ guideline, rules ] of Object.entries(guidelines)) {
-              guidelines[guideline] = await Promise.all(
-                rules.map(async rule => {
-                  const checkers = await Promise.all(
-                    rule.checkers.map(async checker => {
-                      const severity = await new Promise(resolve => {
-                        ccService.getClient().getCheckerLabels(
-                          [
-                            new Checker({
-                              analyzerName: null,
-                              checkerId: checker
-                            })
-                          ],
-                          handleThriftError(labels => {
-                            const severityLabels = labels[0].filter(param =>
-                              param.startsWith("severity")
-                            );
-                            const severity = severityLabels.length
-                              ? severityLabels[0].split("severity:")[1]
-                              : null;
-                            resolve(severity);
-                          })
+              const all_checkers = [];
+              rules.forEach(rule => {
+                rule.checkers.map(checker => {
+                  const chk = new Checker({
+                    analyzerName: null,
+                    checkerId: checker
+                  });
+
+                  if (!all_checkers.some(
+                    c => c.checkerId === chk.checkerId)) {
+                    all_checkers.push(chk);
+                  }
+                });
+              });
+
+              const checkers_with_severity = await new Promise(resolve => {
+                ccService.getClient().getCheckerLabels(
+                  all_checkers, handleThriftError(labels => {
+                    resolve(
+                      labels.map((label, i) => {
+                        const severityLabels = label.filter(param =>
+                          param.startsWith("severity")
                         );
-                      });
+                        return severityLabels.length
+                          ? {
+                            checkerName: all_checkers[i].checkerId,
+                            severity: severityLabels[0].split("severity:")[1]
+                          }
+                          : {
+                            checkerName: all_checkers[i].checkerId,
+                            severity: null
+                          };
+                      })
+                    );
+                  })
+                );
+              });
 
-                      return {
-                        checkerName: checker,
-                        severity: severity
-                      };
-                    })
-                  );
-
-                  return {
-                    ruleId: rule.ruleId,
-                    title: rule.title,
-                    url: rule.url,
-                    checkers: checkers
-                  };
-                })
-              );
+              guidelines[guideline] = rules.map(rule => {
+                return {
+                  ruleId: rule.ruleId,
+                  title: rule.title,
+                  url: rule.url,
+                  checkers: checkers_with_severity.filter(
+                    cws => rule.checkers.includes(cws.checkerName))
+                };
+              });
             }
 
             resolve(guidelines);
@@ -491,3 +506,10 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+  .selection-item {
+    display: block;
+    width: 100%;
+  }
+</style>
