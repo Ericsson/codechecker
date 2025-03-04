@@ -180,13 +180,15 @@ class OAuthToken(Base):
     access_token = Column(String, nullable=False)
     refresh_token = Column(String, nullable=False)
     auth_session_id = Column(Integer, ForeignKey('auth_sessions.id',
-                                            deferrable=False,
-                                            ondelete='CASCADE'),
-                        nullable=False)
+                                                deferrable=False,
+                                                ondelete='CASCADE'),
+                            nullable=False)
+
     def __init__(self, access_token, refresh_token, auth_session_id):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.auth_session_id = auth_session_id
+
 
 IDENTIFIER = {
     'identifier': "ConfigDatabase",

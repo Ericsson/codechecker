@@ -410,11 +410,12 @@ class ThriftAuthHandler:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                         "Email fetch failed.")
-
+            access_token = oauth_token['access_token']
+            refresh_token = oauth_token['refresh_token']
             if allowed_users == ["*"] or username in allowed_users:
                 LOG.info("User %s is authorized.", username)
                 codecheker_session = self.__manager.create_session_oauth(
-                    provider, username, oauth_token['access_token'])
+                    provider, username, access_token, refresh_token)
                 return codecheker_session.token
 
             LOG.error("User %s is not authorized " +
