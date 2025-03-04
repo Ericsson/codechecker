@@ -134,18 +134,14 @@ class Session(Base):
 
     can_expire = Column(Boolean, server_default=true(), default=True)
 
-    # access token of oauth for later use in refresh token
-    oauth_access_token = Column(String)
-
     def __init__(self, token, user_name, groups, description=None,
-                 can_expire=True, oauth_access_token=None):
+                 can_expire=True):
         self.token = token
         self.user_name = user_name
         self.groups = groups
         self.description = description
         self.can_expire = can_expire
         self.last_access = datetime.now()
-        self.oauth_access_token = oauth_access_token
 
 
 class Configuration(Base):
@@ -177,6 +173,20 @@ class OAuthSession(Base):
         self.expires_at = expires_at
         self.code_verifier = code_verifier
 
+class OAuthToken(Base):
+    __tablename__ = 'oauth_tokens'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    access_token = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=False)
+    auth_session_id = Column(Integer, ForeignKey('auth_sessions.id',
+                                            deferrable=False,
+                                            ondelete='CASCADE'),
+                        nullable=False)
+    def __init__(self, access_token, refresh_token, auth_session_id):
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self.auth_session_id = auth_session_id
 
 IDENTIFIER = {
     'identifier': "ConfigDatabase",

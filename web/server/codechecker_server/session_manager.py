@@ -76,7 +76,7 @@ class _Session:
 
     def __init__(self, token, username, groups,
                  session_lifetime, refresh_time, is_root=False, database=None,
-                 last_access=None, can_expire=True, oauth_access_token=None):
+                 last_access=None, can_expire=True):
 
         self.token = token
         self.user = username
@@ -87,7 +87,6 @@ class _Session:
         self.__root = is_root
         self.__database = database
         self.__can_expire = can_expire
-        self.oauth_access_token = oauth_access_token
         self.last_access = last_access if last_access else datetime.now()
 
     def get_access_token(self):
@@ -621,8 +620,7 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None, can_expire=True,
-                               oauth_access_token=None):
+                               last_access=None, can_expire=True):
         """
         Returns a new local session object initalized by the given parameters.
         """
@@ -632,7 +630,7 @@ class SessionManager:
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
             self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire, oauth_access_token=oauth_access_token)
+            last_access, can_expire)
 
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
@@ -688,7 +686,7 @@ class SessionManager:
 
         return local_session
 
-    def create_session_oauth(self, provider, username, oauth_access_token):
+    def create_session_oauth(self, provider, username):
         """
         Creates a new session for the given auth-string
         if the provider is enabled for OAuth authentication.
@@ -711,15 +709,13 @@ class SessionManager:
         user_data = {'username': username,
                      'token': codechecker_session_token,
                      'groups': [],
-                     'is_root': False,
-                     'oauth_access_token': oauth_access_token}
+                     'is_root': False}
 
         local_session = self.__create_local_session(
             codechecker_session_token,
             user_data.get('username'),
             user_data.get('groups'),
-            user_data.get('is_root'),
-            oauth_access_token=user_data.get('oauth_access_token'))
+            user_data.get('is_root'))
 
         self.__sessions.append(local_session)
 
@@ -732,9 +728,7 @@ class SessionManager:
                 # Store the new session.
                 record = SessionRecord(codechecker_session_token,
                                        user_data.get('username'),
-                                       ';'.join(user_data.get('groups')),
-                                       oauth_access_token=user_data.get(
-                                           'oauth_access_token'))
+                                       ';'.join(user_data.get('groups')))
                 transaction.add(record)
                 transaction.commit()
             except Exception as e:
