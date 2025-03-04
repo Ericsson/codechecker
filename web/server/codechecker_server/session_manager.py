@@ -25,6 +25,7 @@ from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
+from .database.config_db_model import OAuthToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
 
@@ -686,7 +687,10 @@ class SessionManager:
 
         return local_session
 
-    def create_session_oauth(self, provider, username):
+    def create_session_oauth(self, provider,
+                             username,
+                             access_token,
+                             refresh_token):
         """
         Creates a new session for the given auth-string
         if the provider is enabled for OAuth authentication.
@@ -730,7 +734,19 @@ class SessionManager:
                                        user_data.get('username'),
                                        ';'.join(user_data.get('groups')))
                 transaction.add(record)
+                session_id = transaction.query(SessionRecord.id) \
+                    .filter(SessionRecord.user_name ==
+                            user_data.get('username')) \
+                    .first()
+
+                oauth_token_session = OAuthToken(
+                                                 access_token=access_token,
+                                                 refresh_token=refresh_token,
+                                                 auth_session_id=session_id[0]
+                                                 )
+                transaction.add(oauth_token_session)
                 transaction.commit()
+
             except Exception as e:
                 LOG.error("Couldn't store or update login record in "
                           "database:")
