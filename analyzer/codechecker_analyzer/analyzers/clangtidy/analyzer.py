@@ -15,13 +15,14 @@ import json
 import os
 from pathlib import Path
 import re
-import shlex
 import shutil
 import subprocess
+import sys
 from typing import Iterable, List, Set, Tuple
 
 import yaml
 
+from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
@@ -250,6 +251,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     # Cache object for get_analyzer_checkers().
     __analyzer_checkers = None
 
+    __additional_analyzer_config = {
+        'cc-verbatim-args-file':
+            'A file path containing flags that are forwarded verbatim to the '
+            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>'
+    }
+
     @classmethod
     def analyzer_binary(cls):
         return analyzer_context.get_context() \
@@ -348,9 +355,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
-            return parse_analyzer_config(result)
+            native_config = parse_analyzer_config(result)
         except (subprocess.CalledProcessError, OSError):
-            return []
+            native_config = []
+
+        return native_config + list(cls.__additional_analyzer_config.items())
 
     def get_checker_list(self, config) -> Tuple[List[str], List[str]]:
         """
@@ -623,24 +632,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             'add_gcc_include_dirs_with_isystem' in args and \
             args.add_gcc_include_dirs_with_isystem
 
-        # FIXME We cannot get the resource dir from the clang-tidy binary,
-        # therefore we get a sibling clang binary which of clang-tidy.
-        # TODO Support "clang-tidy -print-resource-dir" .
-        try:
-            with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
-                      errors='ignore') as tidy_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)',
-                           env.replace_env_var(args.tidy_args_cfg_file),
-                           tidy_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No clang tidy arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
-
         analyzer_config = {}
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker analyzers --analyzer-config. This command also
@@ -648,7 +639,19 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
-                if cfg.analyzer == cls.ANALYZER_NAME:
+                # TODO: The analyzer plugin should get only its own analyzer
+                # config options from outside.
+                if cfg.analyzer != cls.ANALYZER_NAME:
+                    continue
+
+                if cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
+                else:
                     analyzer_config[cfg.option] = cfg.value
 
         # Reports in headers are hidden by default in clang-tidy. Re-enable it

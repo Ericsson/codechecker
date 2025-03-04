@@ -2,7 +2,7 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:3.9.7-slim-buster as builder
+FROM python:3.10.16-slim-bullseye as builder
 
 ARG CC_REPO=https://github.com/Ericsson/CodeChecker.git
 ENV CC_REPO ${CC_REPO}
@@ -40,7 +40,7 @@ RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:3.9.7-slim-buster
+FROM python:3.10.16-slim-bullseye
 
 ARG CC_GID=950
 ARG CC_UID=950
@@ -67,6 +67,7 @@ RUN set -x && apt-get update -qq \
 
 RUN if [ "$INSTALL_AUTH" = "yes" ] ; then \
       apt-get install -qqy --no-install-recommends \
+        libldap-common \
         libldap2-dev \
         libsasl2-dev \
         libssl-dev; \

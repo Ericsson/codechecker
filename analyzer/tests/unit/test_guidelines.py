@@ -35,28 +35,28 @@ class TestGuidelines(unittest.TestCase):
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON50-CPP.+Do+not+destroy+a+mutex"
                                 "+while+it+is+locked",
-                    "rule_title": ""
+                    "title": ""
                 },
                 {
                     "rule_id": "con51-cpp",
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON51-CPP.+Ensure+actively+held+"
                                 "locks+are+released+on+exceptional+conditions",
-                    "rule_title": ""
+                    "title": ""
                 },
                 {
                     "rule_id": "con52-cpp",
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON52-CPP.+Prevent+data+races+when"
                                 "+accessing+bit-fields+from+multiple+threads",
-                    "rule_title": ""
+                    "title": ""
                 },
                 {
                     "rule_id": "con53-cpp",
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON53-CPP.+Avoid+deadlock+by+"
                                 "locking+in+a+predefined+order",
-                    "rule_title": ""
+                    "title": ""
                 },
             ]
         }
@@ -81,24 +81,24 @@ class TestGuidelines(unittest.TestCase):
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON50-CPP.+Do+not+destroy+a+mutex"
                                 "+while+it+is+locked",
-                    "rule_title": ""
+                    "title": ""
                 },
                 "con51-cpp": {
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON51-CPP.+Ensure+actively+held+"
                                 "locks+are+released+on+exceptional+conditions",
-                    "rule_title": ""
+                    "title": ""
                 },
                 "con52-cpp": {
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON52-CPP.+Prevent+data+races+when"
                                 "+accessing+bit-fields+from+multiple+threads",
-                    "rule_title": ""
+                    "title": ""
                 },
                 "con53-cpp": {
                     "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
                                 "/cplusplus/CON53-CPP.+Avoid+deadlock+by+"
                                 "locking+in+a+predefined+order",
-                    "rule_title": ""
+                    "title": ""
                 },
             })

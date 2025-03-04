@@ -344,9 +344,11 @@
     ],
     "bugprone-infinite-loop": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/infinite-loop.html",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-400",
       "severity:MEDIUM"
     ],
     "bugprone-integer-division": [
@@ -438,10 +440,12 @@
     ],
     "bugprone-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/narrowing-conversions.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:exp45-c",
       "sei-cert-c:fio34-c",
       "sei-cert-c:flp34-c",
@@ -563,11 +567,13 @@
     ],
     "bugprone-sizeof-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-expression.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:mem35-c",
       "severity:HIGH"
     ],
@@ -784,10 +790,14 @@
     ],
     "bugprone-unsafe-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:msc24-c",
       "sei-cert-c:msc33-c",
       "severity:LOW"
@@ -1011,6 +1021,10 @@
     ],
     "cert-msc24-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc24-c.html",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "severity:LOW"
     ],
     "cert-msc30-c": [
@@ -1023,6 +1037,10 @@
     ],
     "cert-msc33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc33-c.html",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "severity:LOW"
     ],
     "cert-msc50-cpp": [
@@ -1464,6 +1482,8 @@
     ],
     "clang-diagnostic-builtin-memcpy-chk-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbuiltin-memcpy-chk-size",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-builtin-requires-header": [
@@ -2609,11 +2629,13 @@
     ],
     "clang-diagnostic-format-security": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-security",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-20",
       "sei-cert-c:fio30-c",
       "severity:MEDIUM"
     ],
@@ -2653,6 +2675,8 @@
     ],
     "clang-diagnostic-fortify-source": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfortify-source",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-four-char-constants": [
@@ -3067,11 +3091,15 @@
     ],
     "clang-diagnostic-incompatible-pointer-types": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-pointer-types",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:exp32-c",
       "severity:MEDIUM"
     ],
@@ -3211,6 +3239,8 @@
     ],
     "clang-diagnostic-integer-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winteger-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-interrupt-service-routine": [
@@ -4823,6 +4853,8 @@
     ],
     "clang-diagnostic-shift-count-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-count-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-negative-value": [
@@ -4838,14 +4870,20 @@
     ],
     "clang-diagnostic-shift-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-sign-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-sign-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shorten-64-to-32": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshorten-64-to-32",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-compare": [
@@ -4857,6 +4895,8 @@
     ],
     "clang-diagnostic-sign-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-conversion",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-promo": [
@@ -5078,6 +5118,8 @@
     ],
     "clang-diagnostic-strncat-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstrncat-size",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-suggest-destructor-override": [
@@ -5106,9 +5148,11 @@
     ],
     "clang-diagnostic-switch": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wswitch",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-switch-bool": [

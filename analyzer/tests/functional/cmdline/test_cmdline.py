@@ -128,6 +128,31 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, out[0])
         self.assertEqual(True, "default" in out[1])
 
+    def test_checkers_label(self):
+        """ Listing checkers with given label. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--label']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('profile', out)
+        self.assertIn('severity', out)
+        self.assertIn('guideline', out)
+
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('HIGH', out)
+        self.assertIn('MEDIUM', out)
+        self.assertIn('LOW', out)
+
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity:HIGH']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('core.DivideZero', out)
+        self.assertIn('core.CallAndMessage', out)
+
     def test_analyzers(self):
         """ Listing available analyzers. """
 
@@ -152,6 +177,13 @@ class TestCmdline(unittest.TestCase):
 
     def test_checkers_guideline(self):
         """ Listing checkers by guideline. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'cwe-top-25-2024']
+        _, out, _ = run_cmd(checkers_cmd)
+
+        self.assertIn('NonNullParamChecker', out)
+        self.assertNotIn('CastToStruct', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
                         '--guideline', 'sei-cert-cpp']
@@ -184,7 +216,8 @@ class TestCmdline(unittest.TestCase):
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
         _, out, _ = run_cmd(checkers_cmd)
 
-        self.assertTrue(out.strip().startswith('Guideline: sei-cert'))
+        self.assertTrue(out.strip().startswith('Guideline: cwe-top-25-2024'))
+        self.assertIn('Guideline: sei-cert-cpp', out)
 
     def test_checkers_warnings(self):
         """ Listing checkers for compiler warnings. """

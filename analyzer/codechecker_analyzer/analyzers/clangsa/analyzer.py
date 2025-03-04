@@ -12,11 +12,11 @@ Clang Static Analyzer related functions.
 import os
 import plistlib
 import re
-import shlex
 import subprocess
+import sys
+from typing import List, Tuple
 
-from typing import List
-
+from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
@@ -42,7 +42,7 @@ LOG = get_logger('analyzer')
 def parse_clang_help_page(
     command: List[str],
     start_label: str
-) -> List[str]:
+) -> List[Tuple[str, str]]:
     """
     Parse the clang help page starting from a specific label.
     Returns a list of (flag, description) tuples.
@@ -120,6 +120,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     ANALYZER_NAME = 'clangsa'
 
     __ctu_autodetection = None
+
+    __additional_analyzer_config = {
+        'cc-verbatim-args-file':
+            'A file path containing flags that are forwarded verbatim to the '
+            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>'
+    }
 
     def __init__(self, cfg_handler, buildaction):
         super().__init__(cfg_handler, buildaction)
@@ -308,7 +314,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return parse_clang_help_page(command, 'OPTIONS:')
 
     @classmethod
-    def get_analyzer_config(cls) -> List[str]:
+    def get_analyzer_config(cls) -> List[Tuple[str, str]]:
         """Return the list of analyzer config options."""
         command = [cls.analyzer_binary(), "-cc1"]
 
@@ -316,7 +322,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         command.append("-analyzer-config-help")
 
-        return parse_clang_help_page(command, 'OPTIONS:')
+        native_config = parse_clang_help_page(command, 'OPTIONS:')
+
+        return native_config + list(cls.__additional_analyzer_config.items())
 
     def post_analyze(self, result_handler):
         """
@@ -636,21 +644,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 'ctu_ast_mode' in args and \
                 args.ctu_ast_mode == 'parse-on-demand'
 
-        try:
-            with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',
-                      errors='ignore') as sa_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)',
-                           env.replace_env_var(args.clangsa_args_cfg_file),
-                           sa_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No clangsa arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
-
         checkers = ClangSA.get_analyzer_checkers()
 
         try:
@@ -716,7 +709,19 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
-                if cfg.analyzer == cls.ANALYZER_NAME:
+                # TODO: The analyzer plugin should get only its own analyzer
+                # config options from outside.
+                if cfg.analyzer != cls.ANALYZER_NAME:
+                    continue
+
+                if cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
+                else:
                     handler.checker_config.append(f"{cfg.option}={cfg.value}")
 
         return handler

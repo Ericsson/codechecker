@@ -23,7 +23,8 @@ class Guidelines:
 
         guideline_yaml_files = map(
             lambda f: os.path.join(guidelines_dir, f),
-            os.listdir(guidelines_dir))
+            filter(lambda f: not f.endswith('.license'),
+                   os.listdir(guidelines_dir)))
 
         self.__all_rules = self.__union_guideline_files(guideline_yaml_files)
 

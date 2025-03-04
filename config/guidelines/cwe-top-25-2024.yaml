@@ -1,0 +1,78 @@
+guideline: cwe-top-25-2024
+guideline_title: CWE Top 25 Most Dangerous Software Weaknesses 2024
+rules:
+- rule_id: cwe-20
+  title: Improper Input Validation
+  rule_url: https://cwe.mitre.org/data/definitions/20.html
+- rule_id: cwe-22
+  title: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+  rule_url: https://cwe.mitre.org/data/definitions/22.html
+- rule_id: cwe-77
+  title: Improper Neutralization of Special Elements used in a Command ('Command Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/77.html
+- rule_id: cwe-78
+  title: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/78.html
+- rule_id: cwe-79
+  title: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+  rule_url: https://cwe.mitre.org/data/definitions/79.html
+- rule_id: cwe-89
+  title: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/89.html
+- rule_id: cwe-94
+  title: Improper Control of Generation of Code ('Code Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/94.html
+- rule_id: cwe-119
+  title: Improper Restriction of Operations within the Bounds of a Memory Buffer
+  rule_url: https://cwe.mitre.org/data/definitions/119.html
+- rule_id: cwe-125
+  title: Out-of-bounds Read
+  rule_url: https://cwe.mitre.org/data/definitions/125.html
+- rule_id: cwe-190
+  title: Integer Overflow or Wraparound
+  rule_url: https://cwe.mitre.org/data/definitions/190.html
+- rule_id: cwe-200
+  title: Exposure of Sensitive Information to an Unauthorized Actor
+  rule_url: https://cwe.mitre.org/data/definitions/200.html
+- rule_id: cwe-269
+  title: Improper Privilege Management
+  rule_url: https://cwe.mitre.org/data/definitions/269.html
+- rule_id: cwe-287
+  title: Improper Authentication
+  rule_url: https://cwe.mitre.org/data/definitions/287.html
+- rule_id: cwe-306
+  title: Missing Authentication for Critical Function
+  rule_url: https://cwe.mitre.org/data/definitions/306.html
+- rule_id: cwe-352
+  title: Cross-Site Request Forgery (CSRF)
+  rule_url: https://cwe.mitre.org/data/definitions/352.html
+- rule_id: cwe-400
+  title: Uncontrolled Resource Consumption
+  rule_url: https://cwe.mitre.org/data/definitions/400.html
+- rule_id: cwe-416
+  title: Use After Free
+  rule_url: https://cwe.mitre.org/data/definitions/416.html
+- rule_id: cwe-434
+  title: Unrestricted Upload of File with Dangerous Type
+  rule_url: https://cwe.mitre.org/data/definitions/434.html
+- rule_id: cwe-476
+  title: NULL Pointer Dereference
+  rule_url: https://cwe.mitre.org/data/definitions/476.html
+- rule_id: cwe-502
+  title: Deserialization of Untrusted Data
+  rule_url: https://cwe.mitre.org/data/definitions/502.html
+- rule_id: cwe-787
+  title: Out-of-bounds Write
+  rule_url: https://cwe.mitre.org/data/definitions/787.html
+- rule_id: cwe-798
+  title: Use of Hard-coded Credentials
+  rule_url: https://cwe.mitre.org/data/definitions/798.html
+- rule_id: cwe-862
+  title: Missing Authorization
+  rule_url: https://cwe.mitre.org/data/definitions/862.html
+- rule_id: cwe-863
+  title: Incorrect Authorization
+  rule_url: https://cwe.mitre.org/data/definitions/863.html
+- rule_id: cwe-918
+  title: Server-Side Request Forgery (SSRF)
+  rule_url: https://cwe.mitre.org/data/definitions/918.html

@@ -10,9 +10,11 @@ Util module.
 """
 import itertools
 import json
+import re
+import shlex
 import yaml
 import os
-from typing import TextIO
+from typing import List, TextIO
 
 import portalocker
 
@@ -150,3 +152,34 @@ def index_of(iterable, lambda_func) -> int:
             return i
 
     return -1
+
+
+def replace_env_var(cfg_file):
+    """
+    Returns a replacement function which can be used in RegEx functions such as
+    re.sub to replace matches with a string from the OS environment.
+    """
+    def replacer(matchobj):
+        env_var = matchobj.group(1)
+        if env_var not in os.environ:
+            LOG.error('%s environment variable not set in %s', env_var,
+                      cfg_file)
+            return ''
+        return os.environ[env_var]
+
+    return replacer
+
+
+def load_args_from_file(filepath: str) -> List[str]:
+    """
+    Returns the content of the given file as a list of command line arguments.
+    The file may contain parts in $(this) format. These will be replaced by the
+    environment variable with this given name.
+    Throws FileNotFoundError if the file doesn't exist.
+    """
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        content = re.sub(
+            r'\$\((.*?)\)',
+            replace_env_var(filepath),
+            f.read().strip())
+        return shlex.split(content)
