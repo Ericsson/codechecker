@@ -90,9 +90,9 @@
               example <code>CodeChecker analyze -e security command</code> is
               ambiguous as <code>security</code> is a checker group (all
               checkers starting with <code>security</code>), and a profile at
-              the same time. Please define explicitly <code>CodeChecker -e
-                prefix:security</code> if you mean the prefix group, or
-              <code>profile:security</code> if you mean the security profile.
+              the same time. Please define explicitly <code>CodeChecker -e prefix:security</code>
+              if you mean the prefix group, or <code>profile:security</code>
+              if you mean the security profile.
             </p>
             <p>
               <code>CodeChecker -e clang-diagnostic-format</code> will give an
@@ -152,8 +152,7 @@
             <p>
               Clang warnings only appear as <code>clang-diagnostic-*</code>
               checkers and they can be enabled using the standard checker
-              checker on/off mechanism e.g. <code>CodeChecker analyze -e
-                clang-diagnostic-unused-function</code>
+              checker on/off mechanism e.g. <code>CodeChecker analyze -e clang-diagnostic-unused-function</code>
             </p>
           </new-feature-item>
         </new-release-item>

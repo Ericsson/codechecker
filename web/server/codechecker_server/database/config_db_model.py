@@ -179,6 +179,7 @@ class OAuthToken(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     access_token = Column(String, nullable=False)
+    expires_at = Column(DateTime)
     refresh_token = Column(String, nullable=False)
     auth_session_id = Column(Integer,
                              ForeignKey('auth_sessions.id',
@@ -186,8 +187,10 @@ class OAuthToken(Base):
                                         ondelete='CASCADE'),
                              nullable=False)
 
-    def __init__(self, access_token, refresh_token, auth_session_id):
+    def __init__(self, access_token, expires_at, refresh_token,
+                 auth_session_id):
         self.access_token = access_token
+        self.expires_at = expires_at
         self.refresh_token = refresh_token
         self.auth_session_id = auth_session_id
 
