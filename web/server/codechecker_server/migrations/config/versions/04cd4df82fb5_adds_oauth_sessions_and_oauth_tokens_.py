@@ -1,9 +1,9 @@
 """
 adds oauth_sessions and oauth_tokens tables
 
-Revision ID: 0c043a4b7622
+Revision ID: 04cd4df82fb5
 Revises:     f59dfe4623fa
-Create Date: 2025-03-04 16:55:54.005131
+Create Date: 2025-03-07 15:33:59.555090
 """
 
 from logging import getLogger
@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # Revision identifiers, used by Alembic.
-revision = '0c043a4b7622'
+revision = '04cd4df82fb5'
 down_revision = 'f59dfe4623fa'
 branch_labels = None
 depends_on = None
@@ -34,14 +34,14 @@ def upgrade():
         'oauth_tokens',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('access_token', sa.String(), nullable=False),
+        sa.Column('expires_at', sa.DateTime(), nullable=True),
         sa.Column('refresh_token', sa.String(), nullable=False),
         sa.Column('auth_session_id', sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(['auth_session_id'],
-                                ['auth_sessions.id'],
-                                name=op.f(
-                                'fk_oauth_tokens_auth_session_id_auth_sessions'
-                                ),
-                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(
+            ['auth_session_id'],
+            ['auth_sessions.id'],
+            name=op.f('fk_oauth_tokens_auth_session_id_auth_sessions'),
+            ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_oauth_tokens'))
     )
     # ### end Alembic commands ###

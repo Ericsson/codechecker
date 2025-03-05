@@ -374,10 +374,7 @@ def enable_auth(workspace):
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "login"
-                },
-                "allowed_users": [
-                    "admin_github"
-                ]
+                }
             },
             "google": {
                 "enabled": True,
@@ -391,10 +388,7 @@ def enable_auth(workspace):
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "email"
-                },
-                "allowed_users": [
-                    "*"
-                ]
+                }
             },
             "dummy": {
                 "enabled": True,
@@ -408,8 +402,7 @@ def enable_auth(workspace):
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "email"
-                },
-                "allowed_users": []
+                }
             }
 
         }
