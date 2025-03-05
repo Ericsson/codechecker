@@ -90,9 +90,9 @@
               example <code>CodeChecker analyze -e security command</code> is
               ambiguous as <code>security</code> is a checker group (all
               checkers starting with <code>security</code>), and a profile at
-              the same time. Please define explicitly <code>CodeChecker -e
-              prefix:security</code> if you mean the prefix group, or
-              <code>profile:security</code> if you mean the security profile.
+              the same time. Please define explicitly <code>CodeChecker -e prefix:security</code>
+              if you mean the prefix group, or <code>profile:security</code>
+              if you mean the security profile.
             </p>
             <p>
               <code>CodeChecker -e clang-diagnostic-format</code> will give an
@@ -116,8 +116,8 @@
               <code>guideline:</code> - to match checkers belonging to a guideline
               <br>
               <code>severity:</code> - to match checkers belonging to a given severity
-              </p>
-              <br>
+            </p>
+            <br>
             <p>
               <b>The skip file handling was changed</b>
             </p>
@@ -130,7 +130,7 @@
               By default CodeChecker used to filter out all reports from files
               which were on the skip list. This can hide true positive reports
               starting from unskipped code and ending in skipped files (typical
-               with CTU and header related findings). This patch removes the
+              with CTU and header related findings). This patch removes the
               default report filtering post processing step from
               <code>CodeChecker analyze --skip SKIPFILE</code> operation.
               The legacy functionality is still available with the
@@ -152,8 +152,7 @@
             <p>
               Clang warnings only appear as <code>clang-diagnostic-*</code>
               checkers and they can be enabled using the standard checker
-              checker on/off mechanism e.g. <code>CodeChecker analyze -e
-              clang-diagnostic-unused-function</code>
+              checker on/off mechanism e.g. <code>CodeChecker analyze -e clang-diagnostic-unused-function</code>
             </p>
           </new-feature-item>
         </new-release-item>
