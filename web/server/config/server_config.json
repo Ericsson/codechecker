@@ -56,67 +56,47 @@
     },
     "method_oauth": {
       "enabled": false,
-      "groups": [
-        "allowed_users"
-      ],
       "providers" : {
         "github" : {
           "enabled" : false,
           "client_id" : "ExampleClientID",
           "client_secret": "ExampleClientSecret",
           "authorization_url": "https://github.com/login/oauth/authorize",
-          "callback_url": "http://codechecker_host/login/OAuthLogin/provider",
+          "callback_url": "http://server_host/login/OAuthLogin/provider",
           "token_url": "https://github.com/login/oauth/access_token",
           "user_info_url": "https://api.github.com/user",
-          "user_emails_endpoint": "https://api.github.com/user/emails",
-          "scope": "openid email profile",
+          "user_emails_url": "https://api.github.com/user/emails",
+          "scope": "user:email",
           "user_info_mapping": {
             "username": "login"
-          },
-          "allowed_users": [
-            "user1",
-            "user2",
-            "user3"
-          ]
+          }
         },
         "google": {
           "enabled" : false,
           "client_id" : "ExampleClientID",
           "client_secret" : "ExampleClientSecret",
           "authorization_url" : "https://accounts.google.com/o/oauth2/auth",
-          "callback_url" : "http://codechecker_host/login/OAuthLogin/provider",
+          "callback_url" : "http://server_host/login/OAuthLogin/provider",
           "token_url" : "https://accounts.google.com/o/oauth2/token",
           "user_info_url" : "https://www.googleapis.com/oauth2/v1/userinfo",
           "scope" : "openid email profile",
           "user_info_mapping" : {
             "username" : "email"
-          },
-          "allowed_users": [
-            "user1@gmail.com",
-            "user2@gmail.com",
-            "user3@gmail.com"
-          ]
+          }
         },
         "microsoft": {
           "enabled": false,
           "client_id": "ExampleClientID",
           "client_secret": "ExampleClientSecret",
-          "authorization_url": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/authorize",
-          "callback_url": "http://codechecker_host/login/OAuthLogin/provider",
-          "token_url": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/token",
+          "authorization_url": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize",
+          "callback_url": "http://server_host/login/OAuthLogin/provider",
+          "token_url": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token",
+          "jwks_url": "https://login.microsoftonline.com/{tenant-id}/discovery/v2.0/keys",
           "user_info_url": "https://graph.microsoft.com/v1.0/me",
-          "scope": "User.Read email profile openid",
+          "scope": "User.Read email profile openid offline_access",
           "user_info_mapping": {
             "username": "mail"
-          },
-          "allowed_users": [
-            "user1@gmail.com",
-            "user2@gmail.com",
-            "user3@gmail.com"
-          ],
-          "default_groups": [
-            "users_microsoft"
-          ]
+          }
         }
       }
     },

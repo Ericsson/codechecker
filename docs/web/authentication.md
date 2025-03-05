@@ -325,7 +325,7 @@ groups. For more information [see](permissions.md#managing-permissions).
 
 ### <i>OAuth</i> authentication <a name="oauth-authentication"></a>
 
-CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`. Users can be added into the `allowed_users`.
+CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`.
 
 #### OAuth Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
@@ -372,7 +372,7 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
           The URL to fetch the authenticated user's information.
 
-      * `user_emails_endpoint`
+      * `user_emails_url`
 
           The URL is used for making requests for emails associated with github account.
           This field only in relevant for github in current implementation.
@@ -394,9 +394,6 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
           * `fullname`
 
               Field for the fullname.
-      * `allowed_users`
-
-          list of approved usernames independently specified per each provider
 ~~~{.json}
 "method_oauth": {
       "enabled": false,
@@ -409,18 +406,11 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
           "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
           "token_url": "https://accounts.google.com/o/oauth2/token",
           "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
-          "user_emails_endpoint": "https://api.github.com/user/emails",
+          "user_emails_url": "https://api.github.com/user/emails",
           "scope": "openid email profile",
           "user_info_mapping": {
-            "username": "email",
-            "email": "email",
-            "fullname": "name"
-          },
-          "allowed_users": [
-            "user1",
-            "user2",
-            "user3"
-          ]
+            "username": "email"
+          }
         }
       }
     }
@@ -433,6 +423,8 @@ providers' settings when issuing an OAuth application.
 
 * Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
 Therefore PKCE is not used when users log in using GitHub.
+
+* Important: For the `Microsoft` provider, the `jwks_url` is used to fetch public keys that verify and decode the `id_token`. This token may include security groups, provided that Azure AD is configured to include groups as part of the token's optional claims.
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

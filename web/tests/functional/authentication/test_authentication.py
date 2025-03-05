@@ -220,23 +220,6 @@ class DictAuth(unittest.TestCase):
         session = self.try_login("google", "admin_github", "admin")
         self.assertIsNotNone(session, "allowed user could not login")
 
-        # The following user is NOT in the list: GITHUB
-        with self.assertRaises(RequestFailed):
-            self.try_login("github", "user_github", "user")
-
-    def test_oauth_allowed_users_special(self):
-        """
-        Testing the oauth, verifying special cases where
-        all users are allowed to login, or none of them.
-        """
-        # All users are allowed to login.
-        session = self.try_login("google", "user_google", "user")
-        self.assertIsNotNone(session, "allowed user could not login")
-
-        # No users are allowed to login.
-        with self.assertRaises(RequestFailed):
-            self.try_login("dummy", "user_google", "user")
-
     def test_oauth_invalid_credentials(self):
         """
         Testing the oauth using non-existent users.

@@ -126,6 +126,7 @@ class OauthServer(BaseHTTPRequestHandler):
                 token = self.tokens_by_code[code]
                 return self.show_json({
                     'access_token': token,
+                    'refresh_token': token,
                     'token_type': "bearer",
                     'scope': "user:email",
                     'expires_in': 3600

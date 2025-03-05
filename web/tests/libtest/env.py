@@ -370,14 +370,11 @@ def enable_auth(workspace):
                                 "OAuthLogin/github",
                 "token_url": "http://localhost:3000/token",
                 "user_info_url": "http://localhost:3000/get_user",
-                "user_emails_endpoint": "https://api.github.com/user/emails",
+                "user_emails_url": "https://api.github.com/user/emails",
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "login"
-                },
-                "allowed_users": [
-                    "admin_github"
-                ]
+                }
             },
             "google": {
                 "enabled": True,
@@ -391,10 +388,7 @@ def enable_auth(workspace):
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "email"
-                },
-                "allowed_users": [
-                    "*"
-                ]
+                }
             },
             "dummy": {
                 "enabled": True,
@@ -408,8 +402,7 @@ def enable_auth(workspace):
                 "scope": "openid email profile",
                 "user_info_mapping": {
                     "username": "email"
-                },
-                "allowed_users": []
+                }
             }
 
         }

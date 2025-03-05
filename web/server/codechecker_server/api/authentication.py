@@ -14,6 +14,7 @@ import datetime
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
+from authlib.jose import JsonWebToken
 
 from urllib.parse import urlparse, parse_qs
 
@@ -291,14 +292,6 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth authentication is not enabled.")
 
-            allowed_users = oauth_config.get("allowed_users", [])
-
-            if len(allowed_users) == 0:
-                LOG.error("The allowed users list is empty.")
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service")
-
             date_time = datetime.datetime.now()
             parsed_query = parse_qs(urlparse(url).query)
             state = parsed_query.get("state")[0]
@@ -372,6 +365,10 @@ class ThriftAuthHandler:
                     url=token_url,
                     authorization_response=url_modified,
                     code_verifier=code_verifier_db)
+
+                current_date = datetime.datetime.now()
+                access_token_expires_at = current_date + \
+                    datetime.timedelta(seconds=oauth_token['expires_in'])
             except Exception as ex:
                 LOG.error("Oauth Token fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -382,6 +379,15 @@ class ThriftAuthHandler:
 
             try:
                 user_info = oauth2_session.get(user_info_url).json()
+                groups = []
+                if provider == 'microsoft':
+                    id_token = oauth_token['id_token']
+                    jwks_url = oauth_config["jwks_url"]
+                    fetched_jwks = oauth2_session.get(jwks_url).json()
+                    jwt = JsonWebToken(['RS256'])
+                    claims = jwt.decode(id_token, fetched_jwks)
+                    claims.validate()
+                    groups = claims['groups']
                 username = user_info[
                     oauth_config["user_info_mapping"]["username"]]
                 LOG.info("User info fetched, username: %s", username)
@@ -398,9 +404,9 @@ class ThriftAuthHandler:
                     "localhost" not in \
                     user_info_url:
                 try:
-                    user_emails_endpoint = oauth_config["user_emails_endpoint"]
+                    user_emails_url = oauth_config["user_emails_url"]
                     for email in oauth2_session \
-                            .get(user_emails_endpoint).json():
+                            .get(user_emails_url).json():
                         if email['primary']:
                             username = email['email']
                             LOG.info("Primary email found: %s", username)
@@ -410,19 +416,25 @@ class ThriftAuthHandler:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                         "Email fetch failed.")
-            access_token = oauth_token['access_token']
-            refresh_token = oauth_token['refresh_token']
-            if allowed_users == ["*"] or username in allowed_users:
-                LOG.info("User %s is authorized.", username)
-                codecheker_session = self.__manager.create_session_oauth(
-                    provider, username, access_token, refresh_token)
-                return codecheker_session.token
-
-            LOG.error("User %s is not authorized " +
-                      "to access this service.", username)
-            raise codechecker_api_shared.ttypes.RequestFailed(
+            try:
+                access_token = oauth_token['access_token']
+                refresh_token = oauth_token['refresh_token']
+            except Exception as ex:
+                LOG.error("access or refresh token data is empty")
+                raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service")
+                    "Token information fetched incomplete: %s.", str(ex))
+            try:
+                codecheker_session = self.__manager.create_session_oauth(
+                    provider, username, access_token, access_token_expires_at,
+                    refresh_token, groups)
+                return codecheker_session.token
+            except Exception as ex:
+                LOG.error("OAuth session creation has gone wrong")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Session creation error: %s.", str(ex))
+
         LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,

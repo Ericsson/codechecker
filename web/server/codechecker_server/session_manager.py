@@ -687,14 +687,26 @@ class SessionManager:
 
         return local_session
 
-    def create_session_oauth(self, provider,
-                             username,
-                             access_token,
-                             refresh_token):
+    def create_session_oauth(self, provider: str,
+                             username: str,
+                             access_token: str,
+                             token_expires_at: datetime,
+                             refresh_token: str,
+                             groups: list = None
+                             ) -> _Session:
         """
         Creates a new session for the given auth-string
         if the provider is enabled for OAuth authentication.
+        and stores data for later refreshing of tokens
+        :param provider: name of provider.
+        :param username: username of the user.
+        :param access_token: access token value.
+        :param token_expires_at: expiration date of access_token.
+        :param access_token: refresh_access token value.
+        :param groups: security groups that user is part of.
         """
+        if groups is None:
+            groups = []
 
         if not self.__is_method_enabled('oauth'):
             return False
@@ -712,7 +724,7 @@ class SessionManager:
         # To be parsed later
         user_data = {'username': username,
                      'token': codechecker_session_token,
-                     'groups': [],
+                     'groups': groups,
                      'is_root': False}
 
         local_session = self.__create_local_session(
@@ -734,6 +746,7 @@ class SessionManager:
                                        user_data.get('username'),
                                        ';'.join(user_data.get('groups')))
                 transaction.add(record)
+                # Store oauth token data
                 session_id = transaction.query(SessionRecord.id) \
                     .filter(SessionRecord.user_name ==
                             user_data.get('username')) \
@@ -741,6 +754,7 @@ class SessionManager:
 
                 oauth_token_session = OAuthToken(
                                                  access_token=access_token,
+                                                 expires_at=token_expires_at,
                                                  refresh_token=refresh_token,
                                                  auth_session_id=session_id[0]
                                                  )
