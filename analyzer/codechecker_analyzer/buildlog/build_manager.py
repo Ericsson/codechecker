@@ -64,8 +64,7 @@ def perform_build_command(logfile, command, keep_link, silent=False,
     try:
         original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
         if original_env_file:
-            LOG.debug_analyzer('Loading original build env from: %s',
-                               original_env_file)
+            LOG.debug('Loading original build env from: %s', original_env_file)
 
             with open(original_env_file, 'rb') as env_file:
                 original_env = pickle.load(env_file, encoding='utf-8')
@@ -134,13 +133,13 @@ def perform_build_command(logfile, command, keep_link, silent=False,
                   "guidance.")
         sys.exit(1)
 
-    LOG.debug_analyzer(log_env)
+    LOG.debug(log_env)
     try:
         ret_code = execute_buildcmd(command, silent, log_env)
 
         if ret_code == 0:
             LOG.info("Build finished successfully.")
-            LOG.debug_analyzer("The logfile is: %s", logfile)
+            LOG.debug("The logfile is: %s", logfile)
         else:
             LOG.info("Build failed.")
             sys.exit(ret_code)

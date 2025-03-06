@@ -692,7 +692,7 @@ def check(check_data):
             result_file, action.source
 
     except Exception as e:
-        LOG.debug_analyzer(str(e))
+        LOG.debug(str(e))
         traceback.print_exc(file=sys.stdout)
         return 1, False, reanalyzed, action.analyzer_type, None, \
             action.source
@@ -830,7 +830,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
         LOG.info("----==== Summary ====----")
 
     for skp in skipped_actions:
-        LOG.debug_analyzer("%s is skipped", skp.source)
+        LOG.debug("%s is skipped", skp.source)
 
     LOG.info("Total analyzed compilation commands: %d",
              compile_cmd_count.analyze)
