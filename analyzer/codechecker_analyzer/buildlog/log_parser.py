@@ -10,6 +10,7 @@
 from collections import namedtuple
 from shutil import which
 from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 
 import glob
@@ -678,6 +679,7 @@ def __is_not_include_fixed(dirname):
     return os.path.basename(os.path.normpath(dirname)) != 'include-fixed'
 
 
+@lru_cache(8192)
 def __contains_no_intrinsic_headers(dirname):
     """
     Returns True if the given directory doesn't contain any intrinsic headers.
@@ -1121,8 +1123,8 @@ def parse_options(compilation_db_entry,
                 else:
                     flag = aopt
                     value = next(analyzer_options)
-                if os.path.isdir(value) and __contains_no_intrinsic_headers(
-                        value) or not os.path.isdir(value):
+                if ((is_dir := os.path.isdir(value)) and
+                   __contains_no_intrinsic_headers(value) or not is_dir):
                     if together:
                         aop_without_intrin.append(aopt)
                     else:
@@ -1156,7 +1158,6 @@ def extend_compilation_database_entries(compilation_database):
     command contains a response file we read those files and replace the
     response file with the options from the file.
     """
-    entries = []
     for entry in compilation_database:
         if 'command' in entry and '@' in entry['command']:
             cmd = []
@@ -1184,12 +1185,10 @@ def extend_compilation_database_entries(compilation_database):
                 for source_file in source_files:
                     new_entry = dict(entry)
                     new_entry['file'] = source_file
-                    entries.append(new_entry)
+                    yield new_entry
                 continue
 
-        entries.append(entry)
-
-    return entries
+        yield entry
 
 
 class CompileCommandEncoder(json.JSONEncoder):
@@ -1289,6 +1288,7 @@ def parse_unique_log(compilation_database,
             uniqueing_re = re.compile(compile_uniqueing)
 
         skipped_cmp_cmd_count = 0
+        __contains_no_intrinsic_headers.cache_clear()
 
         for entry in extend_compilation_database_entries(compilation_database):
             # Parse compilation db entry into an action object
