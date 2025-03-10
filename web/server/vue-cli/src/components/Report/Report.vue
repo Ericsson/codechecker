@@ -531,11 +531,8 @@ export default {
     },
 
     async loadReport(report) {
-      if (this.report && this.report.reportId.equals(report.reportId)) {
-        this.highlightReport(report);
-        this.loading = false;
+      if (!report)
         return;
-      }
 
       this.report = report;
 
@@ -783,10 +780,11 @@ export default {
       //If the warning message or location is different than the
       //the last bug path element, then we render the warning.
 
-      if (events.length == 0 ||
-          this.report.checkerMsg !==  events[events.length-1].msg ||
-          this.report.line.toNumber() !=
-            events[events.length-1].startLine.toNumber()
+      if (this.sourceFile.fileId.equals(this.report.fileId) &&
+          (events.length == 0 ||
+           this.report.checkerMsg !== events[events.length-1].msg ||
+           this.report.line.toNumber() !=
+             events[events.length-1].startLine.toNumber())
       ){
         const chkrmsg_data = { $id: 999,
           $message:this.report.checkerMsg,
