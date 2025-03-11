@@ -116,8 +116,8 @@ class TestSkeleton(unittest.TestCase):
 
         # Clean the test project before logging the compiler commands.
         out, err = call_command(test_project_clean,
-                                   cwd=test_project_path,
-                                   environ=self.env)
+                                cwd=test_project_path,
+                                environ=self.env)
         print(out)
         print(err)
 
@@ -126,8 +126,8 @@ class TestSkeleton(unittest.TestCase):
                    '-b']
         log_cmd.extend(test_project_build)
         out, err = call_command(log_cmd,
-                                   cwd=test_project_path,
-                                   environ=self.env)
+                                cwd=test_project_path,
+                                environ=self.env)
         print(out)
         print(err)
 
@@ -140,10 +140,10 @@ class TestSkeleton(unittest.TestCase):
         out, _ = call_command(cmd, cwd=test_project_path, environ=self.env)
 
         self.stats_capable = \
-                'Statistics options can only be enabled' not in out
+            'Statistics options can only be enabled' not in out
 
         print("'analyze' reported statistics collector-compatibility? " +
-            str(self.stats_capable))
+              str(self.stats_capable))
 
         if not self.stats_capable:
             try:
