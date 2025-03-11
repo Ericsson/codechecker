@@ -858,54 +858,6 @@ LLVM/Clang community, and thus discouraged.
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def check_satisfied_capabilities(args):
-    has_error = False
-    for attr in dir(args):
-        # NOTE: This is a heuristic: there are many arguments for statistics
-        # and for ctu, but conveniently, all of them store to stats* or ctu*
-        # names fields of args. Lets exploit that instead of manually listing
-        # args.
-        if attr.startswith("stats") and not \
-                analyzer_types.is_statistics_capable():
-            LOG.error("Statistics options can only be enabled if clang has "
-                      "statistics checkers available!")
-            LOG.info("CodeChecker has not found Clang Static Analyzer "
-                     "checkers statisticsCollector.ReturnValueCheck and "
-                     "statisticsCollector.SpecialReturnValue")
-            has_error = True
-            break
-        if attr.startswith("ctu") and not \
-                analyzer_types.is_ctu_capable():
-            LOG.error("CrossTranslation Unit options can only be enabled if "
-                      "clang itself supports it!")
-            LOG.info("hint: Clang 8.0.0 is the earliest version to support it")
-            has_error = True
-            break
-
-    if 'ctu_ast_mode' in args and not \
-            analyzer_types.is_ctu_on_demand_available():
-        LOG.error("Clang does not support on-demand Cross Translation Unit"
-                  "analysis!")
-        LOG.info("hint: Clang 11.0.0 is the earliest version to support it")
-        has_error = True
-
-    if 'enable_z3' in args and args.enable_z3 == 'on' and not \
-            analyzer_types.is_z3_capable():
-        LOG.error("Z3 solver cannot be enabled as Clang was not compiled with "
-                  "Z3!")
-        has_error = True
-
-    if 'enable_z3_refutation' in args and args.enable_z3_refutation == 'on' \
-            and not analyzer_types.is_z3_capable():
-        LOG.error("Z3 refutation cannot be enabled as Clang was not compiled "
-                  "with Z3!")
-        has_error = True
-
-    if has_error:
-        LOG.info("hint: Maybe CodeChecker found the wrong analyzer binary?")
-        sys.exit(1)
-
-
 def main(args):
     """
     Execute a wrapper over log-analyze-parse, aka 'check'.
@@ -940,7 +892,6 @@ def main(args):
     logfile = None
     analysis_exit_status = 1  # CodeChecker error.
 
-    check_satisfied_capabilities(args)
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:

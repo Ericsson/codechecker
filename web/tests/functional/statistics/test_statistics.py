@@ -110,12 +110,40 @@ class TestSkeleton(unittest.TestCase):
 
         self.env = env.codechecker_env()
 
+        test_project_path = self._testproject_data['project_path']
+        test_project_build = shlex.split(self._testproject_data['build_cmd'])
+        test_project_clean = shlex.split(self._testproject_data['clean_cmd'])
+
+        # Clean the test project before logging the compiler commands.
+        out, err = call_command(test_project_clean,
+                                   cwd=test_project_path,
+                                   environ=self.env)
+        print(out)
+        print(err)
+
+        # Create compilation log used in the tests.
+        log_cmd = [self._codechecker_cmd, 'log', '-o', 'compile_command.json',
+                   '-b']
+        log_cmd.extend(test_project_build)
+        out, err = call_command(log_cmd,
+                                   cwd=test_project_path,
+                                   environ=self.env)
+        print(out)
+        print(err)
+
         # Get if the package is able to collect statistics or not.
-        cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _ = call_command(cmd, cwd=test_workspace, environ=self.env)
-        self.stats_capable = '--stats' in output
+        cmd = [self._codechecker_cmd,
+               'analyze', 'compile_command.json',
+               '-o', 'reports',
+               '--stats']
+
+        out, _ = call_command(cmd, cwd=test_project_path, environ=self.env)
+
+        self.stats_capable = \
+                'Statistics options can only be enabled' not in out
+
         print("'analyze' reported statistics collector-compatibility? " +
-              str(self.stats_capable))
+            str(self.stats_capable))
 
         if not self.stats_capable:
             try:
@@ -124,27 +152,6 @@ class TestSkeleton(unittest.TestCase):
                 )
             except (ValueError, KeyError):
                 pass
-
-        test_project_path = self._testproject_data['project_path']
-        test_project_build = shlex.split(self._testproject_data['build_cmd'])
-        test_project_clean = shlex.split(self._testproject_data['clean_cmd'])
-
-        # Clean the test project before logging the compiler commands.
-        output, err = call_command(test_project_clean,
-                                   cwd=test_project_path,
-                                   environ=self.env)
-        print(output)
-        print(err)
-
-        # Create compilation log used in the tests.
-        log_cmd = [self._codechecker_cmd, 'log', '-o', 'compile_command.json',
-                   '-b']
-        log_cmd.extend(test_project_build)
-        output, err = call_command(log_cmd,
-                                   cwd=test_project_path,
-                                   environ=self.env)
-        print(output)
-        print(err)
 
     def test_stats(self):
         """
