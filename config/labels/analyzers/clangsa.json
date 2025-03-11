@@ -802,6 +802,7 @@
     "optin.taint.GenericTaint": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-20",
@@ -811,18 +812,27 @@
       "cwe-top-25-2024:cwe-79",
       "cwe-top-25-2024:cwe-89",
       "cwe-top-25-2024:cwe-94",
+      "owasp-top-10-2021:owasp-A01-2021",
+      "owasp-top-10-2021:owasp-A03-2021",
+      "owasp-top-10-2021:owasp-A04-2021",
+      "owasp-top-10-2021:owasp-A08-2021",
+      "owasp-top-10-2021:owasp-A10-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintedAlloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintedDiv": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-tainteddiv-c-c-objc",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintPropagation": [
@@ -970,11 +980,13 @@
     "security.SetgidSetuidOrder": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-setgidsetuidorder-c",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pos36-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:MEDIUM"
     ],
     "security.cert.env.InvalidPtr": [
@@ -1051,16 +1063,20 @@
     ],
     "security.insecureAPI.mktemp": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-mktemp-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.rand": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-rand-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.strcpy": [
