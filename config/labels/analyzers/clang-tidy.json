@@ -139,6 +139,8 @@
     ],
     "android-cloexec-open": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-open.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:HIGH"
     ],
     "android-cloexec-pipe": [
@@ -649,11 +651,13 @@
     "bugprone-suspicious-memset-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memset-usage.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:int31-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:HIGH"
     ],
     "bugprone-suspicious-missing-comma": [
@@ -743,12 +747,14 @@
     "bugprone-undefined-memory-manipulation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/undefined-memory-manipulation.html",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-cpp:exp62-cpp",
       "sei-cert-cpp:oop57-cpp",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:MEDIUM"
     ],
     "bugprone-undelegated-constructor": [
@@ -792,6 +798,7 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -800,6 +807,7 @@
       "cwe-top-25-2024:cwe-787",
       "sei-cert-c:msc24-c",
       "sei-cert-c:msc33-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:LOW"
     ],
     "bugprone-unused-local-non-trivial-variable": [
@@ -923,10 +931,12 @@
     "cert-env33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/env33-c.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:env33-c",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:MEDIUM"
     ],
     "cert-err09-cpp": [
@@ -1029,10 +1039,14 @@
     ],
     "cert-msc30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc30-c.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:LOW"
     ],
     "cert-msc32-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc32-c.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "cert-msc33-c": [
@@ -1047,22 +1061,26 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc50-cpp.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc30-c",
       "sei-cert-cpp:msc50-cpp",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:LOW"
     ],
     "cert-msc51-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc51-cpp.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc32-c",
       "sei-cert-cpp:msc51-cpp",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "cert-msc54-cpp": [
@@ -5897,8 +5915,10 @@
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:security",
       "sei-cert-c:con33-c",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "concurrency-thread-canceltype-asynchronous": [

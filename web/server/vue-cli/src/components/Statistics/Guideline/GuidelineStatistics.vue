@@ -182,6 +182,11 @@ export default {
         id: "cwe-top-25-2024",
         name: "CWE Top 25 Most Dangerous Software Weaknesses 2024",
         value: 2
+      },
+      {
+        id: "owasp-top-10-2021",
+        name: "OWASP Top 10 Web Application Security Risks 2021",
+        value: 3
       }
     ];
 
@@ -196,7 +201,7 @@ export default {
       runs: null,
       runData: [],
       selectedCheckerName: null,
-      selectedGuidelineIndexes: [ 0, 1, 2 ],
+      selectedGuidelineIndexes: [ 0, 1, 2, 3 ],
       showRuns: {
         enabled: false,
         disabled: false,

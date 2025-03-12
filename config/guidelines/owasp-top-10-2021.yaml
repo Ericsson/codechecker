@@ -1,0 +1,33 @@
+guideline: owasp-top-10-2021
+guideline_title: OWASP Top 10 Web Application Security Risks 2021
+rules:
+- rule_id: owasp-A01-2021
+  title: Broken Access Control
+  rule_url: https://owasp.org/Top10/A01_2021-Broken_Access_Control/
+- rule_id: owasp-A02-2021
+  title: Cryptographic Failures
+  rule_url: https://owasp.org/Top10/A02_2021-Cryptographic_Failures/
+- rule_id: owasp-A03-2021
+  title: Injection
+  rule_url: https://owasp.org/Top10/A03_2021-Injection/
+- rule_id: owasp-A04-2021
+  title: Insecure Design
+  rule_url: https://owasp.org/Top10/A04_2021-Insecure_Design/
+- rule_id: owasp-A05-2021
+  title: Security Misconfiguration
+  rule_url: https://owasp.org/Top10/A05_2021-Security_Misconfiguration/
+- rule_id: owasp-A06-2021
+  title: Vulnerable and Outdated Components
+  rule_url: https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/
+- rule_id: owasp-A07-2021
+  title: Identification and Authentication Failures
+  rule_url: https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/
+- rule_id: owasp-A08-2021
+  title: Software and Data Integrity Failures
+  rule_url: https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/
+- rule_id: owasp-A09-2021
+  title: Security Logging and Monitoring Failures
+  rule_url: https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/
+- rule_id: owasp-A10-2021
+  title: Server-Side Request Forgery (SSRF)
+  rule_url: https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/
