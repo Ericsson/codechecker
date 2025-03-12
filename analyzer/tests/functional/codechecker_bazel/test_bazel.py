@@ -51,10 +51,9 @@ class TestBaseTest(unittest.TestCase):
         os.environ = cls.save_env
 
     def setUp(self):
-        """Before every test"""
+        """Before every test: clean Bazel cache"""
         logging.debug("\n%s", "-" * 70)
 
-        """Before every test: clean Bazel cache"""
         self.check_command("bazel clean")
 
     def check_command(self, cmd, exit_code=0):
@@ -79,12 +78,13 @@ class TestBaseTest(unittest.TestCase):
         """Grep given filename"""
         pattern = re.compile(regex)
         logging.debug("RegEx = r'%s'", regex)
-        with open(filename, "r") as fileobj:
+        with open(filename, "r", encoding="utf-8") as fileobj:
             for line in fileobj:
                 if pattern.search(line):
                     logging.debug(line)
                     return line
         self.fail(f"Could not find r'{regex}' in '{filename}'")
+        return ""
 
     def test_bazel_test_all(self):
         """Test: bazel test ..."""
