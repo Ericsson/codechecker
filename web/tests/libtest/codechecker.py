@@ -56,7 +56,6 @@ def call_command(cmd, cwd, environ):
         if proc.returncode == 1:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
-            raise OSError("Unsuccessful run of command.")
         return out, err
     except OSError:
         show(out, err)
