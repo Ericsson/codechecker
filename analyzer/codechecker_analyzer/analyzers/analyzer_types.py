@@ -232,7 +232,7 @@ def check_supported_analyzers(analyzers):
 def construct_analyzer(buildaction, analyzer_config):
     analyzer_type = buildaction.analyzer_type
 
-    LOG.debug_analyzer('Constructing %s analyzer.', analyzer_type)
+    LOG.debug('Constructing %s analyzer.', analyzer_type)
     if analyzer_type in supported_analyzers:
         analyzer = \
             supported_analyzers[analyzer_type](analyzer_config, buildaction)
