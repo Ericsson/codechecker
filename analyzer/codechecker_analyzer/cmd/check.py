@@ -33,9 +33,10 @@ from codechecker_analyzer.cmd.parse import \
     EPILOG_ENV_VAR as parse_epilog_env_var
 
 from codechecker_common import arg, cmd_config, logger
-from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
+# pylint: disable=no-name-in-module
+from multiprocess import cpu_count
 
 
 LOG = logger.get_logger('system')

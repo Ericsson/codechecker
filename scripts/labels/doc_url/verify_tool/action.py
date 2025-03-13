@@ -9,7 +9,7 @@
 import sys
 from typing import List, Optional, Tuple, Type
 
-from codechecker_common.compatibility.multiprocessing import Pool
+from multiprocess import Pool
 
 from ...checker_labels import SingleLabels
 from ...output import Settings as GlobalOutputSettings, log, emoji, coloured
