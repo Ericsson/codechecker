@@ -26,7 +26,7 @@ import {
   GET_CURRENT_PRODUCT,
   GET_CURRENT_PRODUCT_CONFIG
 } from "@/store/actions.type";
-import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
+import { ADD_ERROR, CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import router from "./router";
@@ -45,6 +45,12 @@ let isFirstRouterResolve = true;
 
 // Ensure we checked auth before each page load.
 router.beforeResolve((to, from, next) => {
+  // Bail early when encountering an invalid endpoint.
+  if (to.params.endpoint && !to.params.endpoint.match(/^[A-Za-z0-9_\\-]+$/)) {
+    store.commit(ADD_ERROR, "Invalid product endpoint name!");
+    return next("/");
+  }
+
   // Update Thrift API services on endpoint change.
   if (from.params.endpoint === undefined ||
       to.params.endpoint !== from.params.endpoint
