@@ -220,6 +220,16 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
 
+    parser.add_argument('--plist-file-name',
+                        type=str,
+                        dest="plist_file_name",
+                        default='',
+                        required=False,
+                        help="If given, all the `.plist` files containing "
+                             "the analyzer result files will be merged "
+                             "into a single `.plist` file in the report "
+                             "output folder given by `-o/--output`.")
+
     parser.add_argument('--compiler-info-file',
                         dest="compiler_info_file",
                         required=False,
