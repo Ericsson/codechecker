@@ -9,7 +9,7 @@
 from collections import deque
 from enum import IntFlag, auto as Enumerator
 import sys
-from typing import List, NamedTuple, Optional, Tuple, Type, cast
+from typing import List, NamedTuple, Optional, Set, Tuple, Type, cast
 
 from ...checker_labels import SingleLabels
 from ...output import Settings as GlobalOutputSettings, log, coloured, emoji
@@ -26,7 +26,8 @@ class Statistics(NamedTuple):
     Analyser: str
     Generator: str
     Checkers: int
-    Skipped: Optional[int]
+    Generator_Skipped: Optional[int]
+    Directive_Skipped: Optional[int]
     Missing: Optional[int]
     OK: Optional[int]
     Updated: Optional[int]
@@ -55,13 +56,17 @@ class ReturnFlags(IntFlag):
     RemainsMissing = Enumerator()
 
 
-def run_generator(generator: Base, severities: SingleLabels) \
-        -> Tuple[List[str], SingleLabels, SingleLabels, List[str]]:
+def run_generator(generator: Base, severities: SingleLabels,
+                  checkers_to_skip: Set[str]) \
+        -> Tuple[List[str], SingleLabels, SingleLabels, List[str],
+                 List[str], List[str]]:
     analyser = generator.analyser
     ok: List[str] = []
     updated: SingleLabels = {}
     new: SingleLabels = {}
     gone: List[str] = []
+    generator_skip: List[str] = []
+    directive_skip: List[str] = []
 
     generation_result: SingleLabels = dict(generator.generate())
     for checker in sorted(severities.keys() | generation_result.keys()):
@@ -72,6 +77,16 @@ def run_generator(generator: Base, severities: SingleLabels) \
                     analyser, checker,
                     coloured("SKIP", "light_magenta"),
                     file=sys.stderr)
+            generator_skip.append(checker)
+            continue
+        if checker in checkers_to_skip:
+            if GlobalOutputSettings.trace():
+                log("%s%s/%s: %s",
+                    emoji(":stop_sign:  "),
+                    analyser, checker,
+                    coloured("DIRECTIVE-SKIP", "light_magenta"),
+                    file=sys.stderr)
+            directive_skip.append(checker)
             continue
 
         existing_severity, new_severity = \
@@ -119,7 +134,7 @@ def run_generator(generator: Base, severities: SingleLabels) \
                 existing_severity,
                 file=sys.stdout)
 
-    return ok, updated, new, gone
+    return ok, updated, new, gone, generator_skip, directive_skip
 
 
 def print_generation(analyser: str,
@@ -209,18 +224,22 @@ def print_missing(analyser: str,
                   maxlen=0)
 
 
-def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
-        -> Tuple[ReturnFlags, SingleLabels, Statistics]:
+def execute(
+    analyser: str,
+    generator_class: Type,
+    labels: SingleLabels,
+    checkers_to_skip: Set[str]
+) -> Tuple[ReturnFlags, SingleLabels, Statistics]:
     """
     Runs one instance of the generation for a specific analyser.
     """
     status = cast(ReturnFlags, 0)
-    generator = generator_class(analyser)
     missing = [checker for checker in labels if not labels[checker]]
     stats = Statistics(Analyser=analyser,
                        Generator=generator_class.kind,
                        Checkers=len(labels),
-                       Skipped=None,
+                       Generator_Skipped=None,
+                       Directive_Skipped=None,
                        Missing=len(missing) if missing else None,
                        OK=None,
                        Updated=None,
@@ -230,7 +249,10 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
                        Not_Found=len(missing) if missing else None,
                        )
     severities: SingleLabels = {}
-    ok, updated, new, gone = run_generator(generator_class(analyser), labels)
+    ok, updated, new, gone, generator_skip, directive_skip = \
+        run_generator(generator_class(analyser),
+                      labels,
+                      checkers_to_skip)
     print_generation(analyser, labels, ok, updated, new)
     severities.update(updated)
     severities.update(new)
@@ -238,15 +260,18 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
     ok = set(ok)
     new = set(new)
     gone = set(gone)
-    to_skip = {checker for checker
-               in (labels.keys() | ok | new | gone)
-               if generator.skip(checker)}
+    generator_skip = set(generator_skip)
+    directive_skip = set(directive_skip)
+    any_skip = generator_skip | directive_skip
 
     print_gone(analyser, {checker: labels[checker]
-                          for checker in gone - to_skip})
-    remaining_missing = list(labels.keys() - ok - updated.keys() - to_skip)
+                          for checker in gone - any_skip})
+    remaining_missing = list(labels.keys() - ok - updated.keys() - any_skip)
     print_missing(analyser, remaining_missing)
-    stats = stats._replace(Skipped=len(to_skip) if to_skip else None,
+    stats = stats._replace(Generator_Skipped=len(generator_skip)
+                           if generator_skip else None,
+                           Directive_Skipped=len(directive_skip)
+                           if directive_skip else None,
                            OK=len(ok) if ok else None,
                            Updated=len(updated) if updated else None,
                            Gone=len(gone) if gone else None,
