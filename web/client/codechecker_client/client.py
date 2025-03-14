@@ -12,8 +12,8 @@ Thrift client setup and configuration.
 
 import getpass
 import sys
-
 from thrift.Thrift import TApplicationException
+
 
 import codechecker_api_shared
 from codechecker_api.Authentication_v6 import ttypes as AuthTypes
