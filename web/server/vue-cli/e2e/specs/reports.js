@@ -666,7 +666,12 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    removeCleanupPlanDialog.click("@confirmBtn");
+    // removeCleanupPlanDialog.click("@confirmBtn"); // trying xpath instead:
+    browser
+      .useXpath()
+      .waitForElementVisible("/html/body/div/div[25]/div/div/div[3]/button[2]", 5000)
+      .click("/html/body/div/div[25]/div/div/div[3]/button[2]")
+      .useCss();
 
     dialogSection
       .waitForElementVisible("@emptyTable")
