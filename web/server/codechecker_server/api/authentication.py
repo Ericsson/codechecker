@@ -14,7 +14,6 @@ import datetime
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
-from authlib.jose import JsonWebToken
 
 from urllib.parse import urlparse, parse_qs
 
@@ -379,15 +378,16 @@ class ThriftAuthHandler:
 
             try:
                 user_info = oauth2_session.get(user_info_url).json()
+                # retrieve group memberships for Microsoft
                 groups = []
                 if provider == 'microsoft':
-                    id_token = oauth_token['id_token']
-                    jwks_url = oauth_config["jwks_url"]
-                    fetched_jwks = oauth2_session.get(jwks_url).json()
-                    jwt = JsonWebToken(['RS256'])
-                    claims = jwt.decode(id_token, fetched_jwks)
-                    claims.validate()
-                    groups = claims['groups']
+                    access_token = oauth_token['access_token']
+                    user_groups_url = oauth_config["user_groups_url"]
+                    response = oauth2_session.get(user_groups_url).json()
+                    for group in response["value"]:
+                        if group["onPremisesSyncEnabled"] and \
+                                group["securityEnabled"]:
+                            groups.append(group["displayName"])
                 username = user_info[
                     oauth_config["user_info_mapping"]["username"]]
                 LOG.info("User info fetched, username: %s", username)

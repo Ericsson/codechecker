@@ -91,7 +91,7 @@
           "authorization_url": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize",
           "callback_url": "http://server_host/login/OAuthLogin/provider",
           "token_url": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token",
-          "jwks_url": "https://login.microsoftonline.com/{tenant-id}/discovery/v2.0/keys",
+          "user_groups_url" : "https://graph.microsoft.com/v1.0/me/memberOf",
           "user_info_url": "https://graph.microsoft.com/v1.0/me",
           "scope": "User.Read email profile openid offline_access",
           "user_info_mapping": {

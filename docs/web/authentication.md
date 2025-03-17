@@ -374,8 +374,11 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
       * `user_emails_url`
 
-          The URL is used for making requests for emails associated with github account.
-          This field only in relevant for github in current implementation.
+          `GitHub` specific field to make requests for emails associated with github account.
+
+      * `user_groups_url`
+
+          `Microsoft` specific field to request security groups that the user is member of.
 
       * `scope`
 
@@ -424,7 +427,6 @@ providers' settings when issuing an OAuth application.
 * Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
 Therefore PKCE is not used when users log in using GitHub.
 
-* Important: For the `Microsoft` provider, the `jwks_url` is used to fetch public keys that verify and decode the `id_token`. This token may include security groups, provided that Azure AD is configured to include groups as part of the token's optional claims.
 
 # Client-side configuration <a name="client-side-configuration"></a>
 
