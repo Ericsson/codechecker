@@ -47,6 +47,16 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     # Load the module named as the argument.
     cmd_spec = machinery.PathFinder().find_spec(module_name,
                                                 target)
+    if not cmd_spec:
+        # Logger is not initialized just yet.
+        print(f"ERROR: Failed to locate module '{module_name}'!")
+        print(
+            "hint: Was CodeChecker built through the 'dev_package' make "
+            "target? If so, try 'export CC_LIB_DIR="
+            "/path/to/repo/build/CodeChecker/lib/python3/'.")
+        print("hint: Alternatively, build the 'package' target instead.")
+        sys.exit(1)
+
     command_module = cmd_spec.loader.load_module(module_name)
 
     # Now that the module is loaded, construct an ArgumentParser for it.

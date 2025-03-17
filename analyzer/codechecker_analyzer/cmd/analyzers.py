@@ -14,6 +14,8 @@ analyzers available in CodeChecker.
 import argparse
 import subprocess
 
+from portalocker.portalocker import sys
+
 from codechecker_report_converter import twodim
 
 from codechecker_analyzer import analyzer_context
@@ -190,6 +192,17 @@ def main(args):
     rows = []
     for analyzer_name, analyzer_class in \
             analyzer_types.supported_analyzers.items():
+
+        if not analyzer_class.analyzer_binary():
+            LOG.error("Failed to locate binary for the "
+                      f"'{analyzer_class.ANALYZER_NAME}' analyzer!")
+            LOG.info(
+                "Was CodeChecker built through the 'dev_package' make target? "
+                "If so, try 'export CC_LIB_DIR="
+                "/path/to/repo/build/CodeChecker/lib/python3/'.")
+            LOG.info("Alternatively, build the 'package' target instead.")
+            sys.exit(1)
+
         version = analyzer_class.get_binary_version()
         if not version:
             version = 'NOT FOUND'
