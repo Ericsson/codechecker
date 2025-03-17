@@ -666,12 +666,16 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    // removeCleanupPlanDialog.click("@confirmBtn"); // trying xpath instead:
-    browser
-      .useXpath()
-      .waitForElementVisible("/html/body/div/div[25]/div/div/div[3]/button[2]", 5000)
-      .click("/html/body/div/div[25]/div/div/div[3]/button[2]")
-      .useCss();
+    // Remove overlay as it blocks the dialog
+    browser.execute(function() {
+      let overlay = document.querySelector(".v-overlay");
+      if (overlay) {
+        overlay.remove();
+      }
+    });
+    browser.waitForElementNotPresent(".v-overlay__scrim", 5000);
+
+    removeCleanupPlanDialog.click("@confirmBtn"); 
 
     dialogSection
       .waitForElementVisible("@emptyTable")
@@ -724,6 +728,15 @@ module.exports = {
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
+
+    // Remove overlay as it blocks the dialog
+    browser.execute(function() {
+      let overlay = document.querySelector(".v-overlay");
+      if (overlay) {
+        overlay.remove();
+      }
+    });
+    browser.waitForElementNotPresent(".v-overlay__scrim", 5000);
 
     fromDateDialog
       .click("@date")
