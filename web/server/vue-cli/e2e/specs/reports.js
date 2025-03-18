@@ -713,49 +713,6 @@ module.exports = {
     });
   },
 
-"set detection date filters" (browser) {
-    const reportPage = browser.page.report();
-    const dateSection = reportPage.section.dateFilters;
-    const section = dateSection.section.detectionDateFilter;
-    const fromDateDialog = reportPage.section.fromDateDialog;
-    const toDateDialog = reportPage.section.toDateDialog;
-
-    section.click("@from");
-    reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
-    });
-
-    fromDateDialog.click("@ok");
-
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-
-    section.click("@to");
-    reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
-    });
-
-    toDateDialog.click("@ok");
-
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-    section.click("@clearBtn");
-
-    reportPage
-      .pause(500)
-      .waitForElementNotPresent("@progressBar");
-},
-
 "set fix date filters" (browser) {
     const reportPage = browser.page.report();
     const dateSection = reportPage.section.dateFilters;
