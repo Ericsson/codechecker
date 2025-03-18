@@ -666,19 +666,14 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    // Remove overlay as it blocks the dialog
+    // removeCleanupPlanDialog.click("@confirmBtn"); 
     browser.execute(function() {
-      let overlay = document.querySelector(".v-overlay");
-      if (overlay) {
-        overlay.remove();
-      }
+      document.querySelector(".confirm-btn").click();
     });
-    browser.waitForElementNotPresent(".v-overlay__scrim", 5000);
-
-    removeCleanupPlanDialog.click("@confirmBtn"); 
+    browser.pause(5000);
 
     dialogSection
-      .waitForElementVisible("@emptyTable")
+      .waitForElementVisible("@emptyTable", 5000)
       .pause(100)
       .click("@closeBtn");
   },
@@ -728,15 +723,6 @@ module.exports = {
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
-    // Remove overlay as it blocks the dialog
-    browser.execute(function() {
-      let overlay = document.querySelector(".v-overlay");
-      if (overlay) {
-        overlay.remove();
-      }
-    });
-    browser.waitForElementNotPresent(".v-overlay__scrim", 5000);
 
     fromDateDialog
       .click("@date")
