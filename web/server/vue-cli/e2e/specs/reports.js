@@ -731,7 +731,6 @@ module.exports = {
         }
     });
 
-    browser.waitForElementNotPresent(".v-overlay.v-overlay--active", 5000);
     fromDateDialog.click("@ok");
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
@@ -747,7 +746,6 @@ module.exports = {
         }
     });
 
-    browser.waitForElementNotPresent(".v-overlay.v-overlay--active", 5000);
     toDateDialog.click("@ok");
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
