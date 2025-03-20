@@ -59,7 +59,7 @@ class AnalyzerResult(AnalyzerResultBase):
                     get_or_create_file(
                         os.path.abspath(file_path), file_cache),
                     int(bug['line']),
-                    int(bug['column']),
+                    int(bug['column']) if bug['column'] else 0,
                     bug['message'],
                     bug['ruleId']))
 
