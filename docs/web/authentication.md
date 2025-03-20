@@ -15,7 +15,10 @@ Table of Contents
         * [<i>PAM</i> authentication](#pam-authentication)
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
-    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+      * [Membership in custom groups with <i>regex_groups</i>](#regex_groups-authentication)
+      * [<i>OAuth</i> authentication](#oauth-authentication)
+        * [<i>OAuth</i> Configuration options](#oauth-configuration-options)
+        * [<i>OAuth</i> details per each provider](#oauth-details-per-each-provider)
 * [Client-side configuration](#client-side-configuration)
     * [Web-browser client](#web-browser-client)
     * [Command-line client](#command-line-client)
@@ -39,23 +42,23 @@ is handled.
  * `enabled`
 
     Setting this to `false` disables privileged access
-    
+
  * `realm_name`
 
     The name to show for web-browser viewers' pop-up login window via
     *HTTP Authenticate*
-    
+
  * `realm_error`
 
     The error message shown in the browser when the user fails to authenticate
-    
+
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
@@ -63,7 +66,7 @@ is handled.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
@@ -243,12 +246,12 @@ servers as it can elongate the authentication process.
  * `groupPattern`
 
    Group query pattern used LDAP query expression to find the group objects
-   a user is a member of. It must contain a `$USERDN$` pattern. 
+   a user is a member of. It must contain a `$USERDN$` pattern.
    `$USERDN$` will be automatically replaced by the queried user account DN.
 
  * `groupNameAttr`
 
-   The attribute of the group object which contains the name of the group. 
+   The attribute of the group object which contains the name of the group.
 
  * `groupScope`
 
@@ -319,6 +322,111 @@ When we manage permissions on the GUI we can give permission to these
 groups. For more information [see](permissions.md#managing-permissions).
 
 ----
+
+### <i>OAuth</i> authentication <a name="oauth-authentication"></a>
+
+CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`.
+
+#### OAuth Configuration options <a name="oauth-configuration-options"></a>
+  * `enabled`
+
+    Indicates if OAuth authentication is enabled (required for any methods below)
+
+ * `providers`
+
+    The provider field contains configuration details for OAuth providers. Each provider's configuration includes but may vary depending on provider:
+
+  * `provider_name` as an object containing following properties:
+
+      * `enabled`
+
+          Indicates if current provider is enabled (github, google, etc.)
+
+      * `client_id`
+
+           Contains client ID provided by the OAuth provider.
+
+      * `client_secret`
+
+          The client secret must be provided by the OAuth provider.
+
+      * `authorization_url`
+
+          This link is used for redirecting user for provider's authentication page
+
+      * `callback_url`
+
+          User will be redirected back to the provided link after login with returned data.
+          It should be constructed in that format `http://codechecker_path/login/OAuthLogin/provider` where `provider` is the name of the provider of OAuth and should match existing `provider_name`. The `callback_url` should also match the callback url specified in the provider's configuration.
+
+          Example of correct link using github, google and microsoft
+          * http://localhost:8080/login/OAuthLogin/github
+          * http://localhost:8080/login/OAuthLogin/google
+          * http://localhost:8080/login/OAuthLogin/microsoft
+
+      * `token_url`
+
+          The URL to exchange the authorization code for an access token.
+
+      * `user_info_url`
+
+          The URL to fetch the authenticated user's information.
+
+      * `user_emails_url`
+
+          `GitHub` specific field to make requests for emails associated with github account.
+
+      * `user_groups_url`
+
+          `Microsoft` specific field to request security groups that the user is member of.
+
+      * `scope`
+
+          The scope of access requested from the OAuth provider.
+
+      * `user_info_mapping`
+
+          A mapping of user info fields from the provider to local fields.
+
+          * `username`
+
+              Field for the username.
+          * `email`
+
+              Field for the email.
+          * `fullname`
+
+              Field for the fullname.
+~~~{.json}
+"method_oauth": {
+      "enabled": false,
+      "providers": {
+        "example_provider": {
+          "enabled": false,
+          "client_id": "client id",
+          "client_secret": "client secret",
+          "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+          "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
+          "token_url": "https://accounts.google.com/o/oauth2/token",
+          "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
+          "user_emails_url": "https://api.github.com/user/emails",
+          "scope": "openid email profile",
+          "user_info_mapping": {
+            "username": "email"
+          }
+        }
+      }
+    }
+~~~
+
+#### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
+
+* Important: `callback_url` must always match with the link specified in the
+providers' settings when issuing an OAuth application.
+
+* Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
+Therefore PKCE is not used when users log in using GitHub.
+
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

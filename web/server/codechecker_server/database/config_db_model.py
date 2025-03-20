@@ -158,6 +158,43 @@ class Configuration(Base):
         self.config_value = config_value
 
 
+class OAuthSession(Base):
+    __tablename__ = 'oauth_sessions'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    provider = Column(String, nullable=False)
+    state = Column(String, nullable=False)
+    code_verifier = Column(String, nullable=False)
+    expires_at = Column(DateTime)
+
+    def __init__(self, provider, state, code_verifier, expires_at):
+        self.provider = provider
+        self.state = state
+        self.expires_at = expires_at
+        self.code_verifier = code_verifier
+
+
+class OAuthToken(Base):
+    __tablename__ = 'oauth_tokens'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    access_token = Column(String, nullable=False)
+    expires_at = Column(DateTime)
+    refresh_token = Column(String, nullable=False)
+    auth_session_id = Column(Integer,
+                             ForeignKey('auth_sessions.id',
+                                        deferrable=False,
+                                        ondelete='CASCADE'),
+                             nullable=False)
+
+    def __init__(self, access_token, expires_at, refresh_token,
+                 auth_session_id):
+        self.access_token = access_token
+        self.expires_at = expires_at
+        self.refresh_token = refresh_token
+        self.auth_session_id = auth_session_id
+
+
 IDENTIFIER = {
     'identifier': "ConfigDatabase",
     'orm_meta': CC_META

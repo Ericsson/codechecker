@@ -358,6 +358,55 @@ def enable_auth(workspace):
         {"admin_group_user": ["admin_GROUP"]}
     scfg_dict["authentication"]["regex_groups"]["enabled"] = True
 
+    scfg_dict["authentication"]["method_oauth"] = {
+        "enabled": True,
+        "providers": {
+            "github": {
+                "enabled": True,
+                "client_id": "1",
+                "client_secret": "1",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/github",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "user_emails_url": "https://api.github.com/user/emails",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "login"
+                }
+            },
+            "google": {
+                "enabled": True,
+                "client_id": "2",
+                "client_secret": "2",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/google",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "email"
+                }
+            },
+            "dummy": {
+                "enabled": True,
+                "client_id": "3",
+                "client_secret": "3",
+                "authorization_url": "http://localhost:3000/login",
+                "callback_url": "http://localhost:8080/login/" +
+                                "OAuthLogin/dummy",
+                "token_url": "http://localhost:3000/token",
+                "user_info_url": "http://localhost:3000/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "email"
+                }
+            }
+
+        }
+    }
     with open(server_cfg_file, 'w',
               encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)

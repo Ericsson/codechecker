@@ -57,7 +57,10 @@
               />
             </v-form>
           </v-card-text>
-          <v-card-actions class="justify-center px-0">
+          <v-card-actions
+            id="btn-container"
+            class="d-flex justify-center flex-column"
+          >
             <v-btn
               id="login-btn"
               block
@@ -67,17 +70,59 @@
             >
               Login
             </v-btn>
+            <v-btn
+              block
+              x-large
+              color="primary"
+              @click="openModal"
+            >
+              SSO login
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog
+      v-model="dialog"
+      width="500"
+      :scrollable="true"
+    >
+      <v-card>
+        <v-card-title
+          class="headline primary white--text"
+          primary-title
+        >
+          Login Methods
+
+          <v-spacer />
+
+          <v-btn icon dark @click="dialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <v-btn
+            v-for="provider in providers"
+            :id="login-btn-{provider}"
+            :key="provider"
+            block
+            x-large
+            color="primary"
+            style="margin-top: 10px"
+            @click="oauth(provider)"
+          >
+            Login with {{ provider }}
+          </v-btn>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
-
+import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
 
 export default {
@@ -94,7 +139,10 @@ export default {
       success: false,
       error: false,
       errorMsg: null,
-      valid: false
+      valid: false,
+      providers: [],
+      dialog: false,
+      on: false
     };
   },
 
@@ -121,14 +169,21 @@ export default {
 
   mounted() {
     this.fixAutocomplete();
+    this.getProviders();
   },
 
   methods: {
+    openModal() {
+      this.dialog = true;
+      this.on = true;
+    },
     login() {
       if (!this.valid) return;
 
       this.$store
-        .dispatch(LOGIN, { username: this.username, password: this.password })
+        .dispatch(LOGIN, { username: this.username, password: this.password,
+          type: "password"
+        })
         .then(() => {
           this.success = true;
           this.error = false;
@@ -139,6 +194,43 @@ export default {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
         });
+    },
+    getProviders() {
+      new Promise(resolve => {
+        authService.getClient().getOauthProviders(
+          handleThriftError(providers => {
+            resolve(providers);
+          }));
+      }).then(providers => {
+        if (providers) {
+          this.providers = providers;
+        }
+      }).catch(err => {
+        this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
+        this.error = true;
+      });
+    },
+    oauth(provider) {
+      new Promise(resolve => {
+        localStorage.setItem("oauth_provider", provider);
+        authService.getClient().createLink(provider,
+          handleThriftError(url => {
+            resolve(url);
+          }));
+      }).then(url => {
+        if (url) {
+          this.success = false;
+          this.error = false;
+
+          window.location.href = url;
+        } else {
+          this.errorMsg = `Server returned an invalid URL: ${url}`;
+          this.error = true;
+        }
+      }).catch(err => {
+        this.errorMsg = `Failed to access link. ${err.message}`;
+        this.error = true;
+      });
     },
 
     /**
@@ -180,6 +272,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+#btn-container > button {
+  margin: 0 !important;
+  margin-top: 10px !important;
+}
+
 #avatar {
   position: absolute;
   margin: 0 auto;
