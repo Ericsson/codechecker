@@ -1,13 +1,13 @@
-pycodestyle==2.12.0
-psycopg2-binary==2.8.6
-pg8000==1.15.2
-pylint==3.2.4
-pytest==7.3.1
-mkdocs==1.5.3
-coverage==5.5.0
+pycodestyle~=2.12
+psycopg2-binary~=2.8
+pg8000~=1.15
+pylint~=3.2.4
+pytest~=7.3
+mkdocs~=1.5
+coverage~=5.5
 
 -r ../../requirements.txt
 
 # publish packages to pypi
 twine
-cryptography==41.0.4
+cryptography~=41.0
