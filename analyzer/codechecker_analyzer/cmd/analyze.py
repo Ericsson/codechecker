@@ -30,10 +30,11 @@ from codechecker_analyzer.arg import \
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config, review_status_handler
-from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
 from codechecker_common.util import load_json
+# pylint: disable=no-name-in-module
+from multiprocess import cpu_count
 
 LOG = logger.get_logger('system')
 

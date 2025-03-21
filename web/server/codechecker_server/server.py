@@ -46,8 +46,7 @@ from codechecker_api.ServerInfo_v6 import \
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
-from codechecker_common.compatibility.multiprocessing import \
-    Pool, cpu_count
+from multiprocess import Pool, cpu_count
 
 from codechecker_web.shared import database_status
 from codechecker_web.shared.version import get_version_str

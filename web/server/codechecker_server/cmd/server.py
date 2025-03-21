@@ -33,7 +33,7 @@ from codechecker_api_shared.ttypes import DBStatus
 from codechecker_report_converter import twodim
 
 from codechecker_common import arg, cmd_config, logger, util
-from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
+from multiprocess import Pool, cpu_count
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
