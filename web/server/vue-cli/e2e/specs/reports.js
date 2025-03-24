@@ -279,9 +279,15 @@ module.exports = {
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    dateDialog
-      .click("@date")
-      .click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.compared-to-open-reports-date.v-dialog--active";
+      const currentDay = ".v-date-picker-table__current";
+      const okBtn = ".ok-btn";
+      const dateElement = document.querySelector(dialog).querySelector(currentDay);
+      if (dateElement) dateElement.click();
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
@@ -514,8 +520,11 @@ module.exports = {
       .to.be.visible.before(5000);
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
-    removeComponentDialog.pause(100).click("@confirmBtn");
+    browser.execute(function () {
+      const dialog = ".remove-source-component-dialog";
+      const btn = document.querySelector(dialog).querySelector(".remove-btn");
+      if (btn) btn.click();
+    });
 
     dialogSection
       .waitForElementVisible("@emptyTable")
@@ -666,14 +675,16 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    // removeCleanupPlanDialog.click("@confirmBtn"); 
-    browser.execute(function() {
-      document.querySelector(".confirm-btn").click();
+    browser.execute(function () {
+      const btn = document.querySelector(".confirm-btn");
+      if (btn) btn.click();
     });
-    browser.pause(5000);
+
+    reportPage.expect.element("@overlay")
+      .to.not.be.present.before(5000);
 
     dialogSection
-      .waitForElementVisible("@emptyTable", 5000)
+      .waitForElementVisible("@emptyTable")
       .pause(100)
       .click("@closeBtn");
   },
@@ -713,7 +724,7 @@ module.exports = {
     });
   },
 
-"set detection date filters" (browser) {
+  "set detection date filters" (browser) {
     const reportPage = browser.page.report();
     const dateSection = reportPage.section.dateFilters;
     const section = dateSection.section.detectionDateFilter;
@@ -724,39 +735,48 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
+    browser.execute(function () {
+      const dialog = ".v-dialog.detected-after.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
     });
-
-    fromDateDialog.click("@ok");
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@to");
+    browser.execute(function () {
+      Array.from(document.querySelectorAll("label")).map(label => {
+        if (label.innerText == "Detected before...") {
+          label.parentNode.querySelector("input").click();
+        }
+      });
+    });
+
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
+    browser.execute(function () {
+      const dialog = ".v-dialog.detected-before.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
     });
 
-    toDateDialog.click("@ok");
-
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-    section.click("@clearBtn");
+
+    browser.execute(function () {
+      const section = "#detection-date-filter";
+      const clrBtn = ".clear-btn";
+      const btn = document.querySelector(section).querySelector(clrBtn);
+      if (btn) btn.click();
+    });
 
     reportPage
       .pause(500)
       .waitForElementNotPresent("@progressBar");
-},
+  },
 
-"set fix date filters" (browser) {
+  "set fix date filters" (browser) {
     const reportPage = browser.page.report();
     const dateSection = reportPage.section.dateFilters;
     const section = dateSection.section.fixDateFilter;
@@ -767,38 +787,46 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
-    });
 
-    fromDateDialog.click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.fixed-after.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@to");
+    browser.execute(function () {
+      Array.from(document.querySelectorAll("label")).map(label => {
+        if (label.innerText == "Fixed before...") {
+          label.parentNode.querySelector("input").click();
+        }
+      });
+    });
+
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    browser.execute(function() {
-        const dateElement = document.querySelector("[data-test='date']");
-        if (dateElement) {
-            dateElement.click();
-        }
+    browser.execute(function () {
+      const dialog = ".v-dialog.fixed-before.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
     });
-
-    toDateDialog.click("@ok");
-
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-    section.click("@clearBtn");
+
+    browser.execute(function () {
+      const section = "#fix-date-filter";
+      const clrBtn = ".clear-btn";
+      const btn = document.querySelector(section).querySelector(clrBtn);
+      if (btn) btn.click();
+    });
 
     reportPage
       .pause(500)
       .waitForElementNotPresent("@progressBar");
-},
-
+  },
 
   "set report hash filter" (browser) {
     const reportPage = browser.page.report();
