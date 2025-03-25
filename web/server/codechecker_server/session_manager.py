@@ -282,7 +282,9 @@ class SessionManager:
             .get('providers', {})
         dict_to_return = {}
         for provider_name, provider_data in oauth_config.items():
-            dict_to_return[provider_name] = provider_data.get('callback_url')
+            if provider_data.get('enabled'):
+                dict_to_return[provider_name] = \
+                    provider_data.get('callback_url')
         return dict_to_return
 
     def turn_off_oauth_provider(self, provider_name: str):

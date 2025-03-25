@@ -1119,7 +1119,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
         match = pattern.match(callback_url)
         if match is None:
             LOG.warning("Configuration format of callback_url is "
-                        f"invalid for provider {provider_name}."
+                        f"invalid for provider {provider_name}. "
                         "Please check the configuration file.")
         return match is not None
 

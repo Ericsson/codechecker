@@ -13,7 +13,6 @@ import datetime
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
-from authlib.oauth2.rfc7636 import create_s256_code_challenge
 
 from urllib.parse import urlparse, parse_qs
 
@@ -282,6 +281,7 @@ class ThriftAuthHandler:
         elif auth_method == "oauth":
 
             provider, url = auth_string.split("@", 1)
+            url.strip("#")
 
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get('enabled'):
@@ -348,21 +348,12 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth2Session creation failed.")
 
-            cc = create_s256_code_challenge(code_verifier_db)
-
-            # FIXME: This is a workaround for the Microsoft OAuth2 provider
-            # which doesn't correctly fetch the code from url.
-            # the workaround is to construct the url manually
-            url_modified = url + \
-                "&code_challenge=" + cc + \
-                "&code_challenge_method=S256"
-
             try:
                 # code_verifier_db or PKCE is't supported by github
                 # if it will be fixed the code should adjust automatically
                 oauth_token = oauth2_session.fetch_token(
                     url=token_url,
-                    authorization_response=url_modified,
+                    authorization_response=url,
                     code_verifier=code_verifier_db)
 
                 current_date = datetime.datetime.now()
@@ -378,7 +369,8 @@ class ThriftAuthHandler:
 
             try:
                 user_info = oauth2_session.get(user_info_url).json()
-                # retrieve group memberships for Microsoft
+
+                # request group memberships for Microsoft
                 groups = []
                 if provider == 'microsoft':
                     access_token = oauth_token['access_token']
