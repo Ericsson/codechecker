@@ -2709,10 +2709,12 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than": [
+      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wframe-larger-than",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than=": [
+      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#id1",
       "severity:MEDIUM"
     ],
