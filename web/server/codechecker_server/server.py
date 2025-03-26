@@ -209,7 +209,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Command-line clients ignore overwriting the cookie, but web clients
         # will remove the cookie from the browser.
         # DEPRECATED: Will be removed in a future version.
-        elif self.headers.get('Cookie'):
+        # Note that if a request fails early in the process (eg. with a
+        # bad HTTP header), the headers attribute might not exist yet.
+        elif hasattr(self, 'headers') and self.headers.get('Cookie'):
             self.send_header('Set-Cookie',
                              session_manager.SESSION_COOKIE_NAME + '=; ' +
                              'Path=/; ' +
