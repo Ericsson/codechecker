@@ -377,8 +377,8 @@ class ThriftAuthHandler:
                     user_groups_url = oauth_config["user_groups_url"]
                     response = oauth2_session.get(user_groups_url).json()
                     for group in response["value"]:
-                        if group["onPremisesSyncEnabled"] and \
-                                group["securityEnabled"]:
+                        if group.get("onPremisesSyncEnabled") and \
+                                group.get("securityEnabled"):
                             groups.append(group["displayName"])
                 username = user_info[
                     oauth_config["user_info_mapping"]["username"]]
