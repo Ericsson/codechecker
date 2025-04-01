@@ -154,6 +154,12 @@ def get_diagtool_bin():
     if diagtool_bin.exists():
         return diagtool_bin
 
+    # Sometimes diagtool binary has a version number in its name: diagtool-14.
+    diagtool_bin = diagtool_bin.with_name(
+        f'diagtool-{str(ClangSA.version_info().major_version)}')
+    if diagtool_bin.exists():
+        return diagtool_bin
+
     LOG.warning(
         "'diagtool' can not be found next to the clang binary (%s)!",
         clang_bin)
