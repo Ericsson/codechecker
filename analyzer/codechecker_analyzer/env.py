@@ -17,31 +17,80 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-def get_log_env(logfile, original_env):
+def get_log_env(logfile, original_env, use_absolute_ldpreload_path=False):
     """
     Environment for logging. With the ld logger.
     Keep the original environment unmodified as possible.
     Only environment variables required for logging are changed.
+
+    If use_absolute_ldpreload_path is True, use absolute paths in LD_PRELOAD
+    instead of relying on LD_LIBRARY_PATH for loading the ldlogger.so library.
     """
     context = analyzer_context.get_context()
     new_env = original_env
 
     new_env[context.env_var_cc_logger_bin] = context.path_logger_bin
 
-    if 'LD_PRELOAD' in new_env:
-        new_env['LD_PRELOAD'] = new_env['LD_PRELOAD'] \
-            + " " + context.logger_lib_name
+    ldlogger_path = None
+
+    if use_absolute_ldpreload_path:
+        LOG.debug("Trying to use absolute paths for ldlogger.so library")
+        import platform
+
+        arch_bit = platform.architecture()[0]
+        arch_dir = "64bit" if arch_bit == "64bit" else "32bit"
+        arch_paths = context.path_logger_lib.split(":")
+
+        for path in arch_paths:
+            if path.endswith(arch_dir):
+                ldlogger_path = os.path.join(path, context.logger_lib_name)
+                break
+
+        if not ldlogger_path and arch_paths:
+            LOG.warning(
+                ('Could not find current architecture "%s" in list of '
+                 'potential paths "%s", falling back to first architecture '
+                 'path "%s"!'),
+                arch_dir,
+                context.path_logger_lib,
+                arch_paths[0],
+            )
+            ldlogger_path = os.path.join(
+                arch_paths[0], context.logger_lib_name)
+
+    if use_absolute_ldpreload_path and ldlogger_path:
+        LOG.debug(
+            'Successfully found absolute path for ldlogger.so library: "%s"',
+            ldlogger_path,
+        )
+        preload_value = ldlogger_path
     else:
-        new_env['LD_PRELOAD'] = context.logger_lib_name
+        LOG.debug(
+            ("Using LD_LIBRARY_PATH environment variable and a relative path "
+             "to load ldlogger.so library")
+        )
+        preload_value = context.logger_lib_name
 
-    try:
-        original_ld_library_path = new_env['LD_LIBRARY_PATH']
-        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + ':' + \
-            original_ld_library_path
-    except KeyError:
-        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib
+        try:
+            original_ld_library_path = new_env["LD_LIBRARY_PATH"]
+            new_env["LD_LIBRARY_PATH"] = (
+                context.path_logger_lib + ":" + original_ld_library_path
+            )
+        except KeyError:
+            new_env["LD_LIBRARY_PATH"] = context.path_logger_lib
+        LOG.debug(
+            'LD_LIBRARY_PATH environment variable set to: "%s"',
+            new_env["LD_LIBRARY_PATH"],
+        )
 
-    # Set ld logger logfile.
+    if "LD_PRELOAD" in new_env:
+        new_env["LD_PRELOAD"] = new_env["LD_PRELOAD"] + " " + preload_value
+    else:
+        new_env["LD_PRELOAD"] = preload_value
+
+    LOG.debug('LD_PRELOAD environment variable set to: "%s"',
+              new_env["LD_PRELOAD"])
+
     new_env[context.env_var_cc_logger_file] = logfile
 
     return new_env

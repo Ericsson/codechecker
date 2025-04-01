@@ -820,8 +820,22 @@ object files as input) should be captured. For further details see
 If your build tool overrides `LD_LIBRARY_PATH` during the build process, then
 `ldlogger.so` will not be found. The best solution is to making sure
 that the LD_LIBRARY_PATH is not overridden, only extended.
-If this is not possible, you can work around the situation by
-specifying the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
+
+If this is not possible, you have two options:
+
+1. Use the `--use-absolute-ldpreload-path` flag which automatically uses the absolute path to the appropriate `ldlogger.so` in the `LD_PRELOAD` environment variable instead of relying on `LD_LIBRARY_PATH`:
+
+```sh
+CodeChecker log --use-absolute-ldpreload-path -o compile_commands.json -b "make -j2"
+```
+
+This flag is also available for the `check` command:
+
+```sh
+CodeChecker check --use-absolute-ldpreload-path -b "make -j2" -o ./reports
+```
+
+2. Manually specify the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
 
 ```sh
 # For 64-bit compilers
