@@ -138,6 +138,17 @@ def add_arguments_to_parser(parser):
                         help="Do not print the output of the build tool into "
                              "the output of this command.")
 
+    parser.add_argument(
+        "--use-absolute-ldpreload-path",
+        dest="use_absolute_ldpreload_path",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        required=False,
+        help="Use absolute paths in LD_PRELOAD environment "
+        "variable instead of relying on LD_LIBRARY_PATH "
+        "for loading the ldlogger.so library.",
+    )
+
     parser.add_argument('--verbose',
                         type=str,
                         dest='verbose',
@@ -175,8 +186,11 @@ def main(args):
 
     verbose = args.verbose if 'verbose' in args else None
 
-    build_manager.perform_build_command(args.logfile,
-                                        args.command,
-                                        'keep_link' in args,
-                                        silent='quiet' in args,
-                                        verbose=verbose)
+    build_manager.perform_build_command(
+        args.logfile,
+        args.command,
+        "keep_link" in args,
+        silent="quiet" in args,
+        verbose=verbose,
+        use_absolute_ldpreload_path="use_absolute_ldpreload_path" in args,
+    )

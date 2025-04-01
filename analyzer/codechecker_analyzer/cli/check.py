@@ -189,6 +189,22 @@ used to generate a log file on the fly.""")
                           help="Use an already existing JSON compilation "
                                "command database file specified at this path.")
 
+    log_args = parser.add_argument_group(
+        "log extra arguments",
+        "Additional arguments which can be forwarded to the logging phase.",
+    )
+
+    log_args.add_argument(
+        "--use-absolute-ldpreload-path",
+        dest="use_absolute_ldpreload_path",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        required=False,
+        help="Use absolute paths in LD_PRELOAD environment "
+        "variable instead of relying on LD_LIBRARY_PATH "
+        "for loading the ldlogger.so library.",
+    )
+
     analyzer_opts = parser.add_argument_group("analyzer arguments")
     analyzer_opts.add_argument('-j', '--jobs',
                                type=int,
@@ -899,11 +915,11 @@ def main(args):
 
             # Translate the argument list between check and log.
             log_args = argparse.Namespace(
-                command=args.command,
-                logfile=logfile
-            )
-            __update_if_key_exists(args, log_args, 'quiet')
-            __update_if_key_exists(args, log_args, 'verbose')
+                command=args.command, logfile=logfile)
+            __update_if_key_exists(args, log_args, "quiet")
+            __update_if_key_exists(args, log_args, "verbose")
+            __update_if_key_exists(
+                args, log_args, "use_absolute_ldpreload_path")
 
             import codechecker_analyzer.cli.log as log_module
             LOG.debug("Calling LOG with args:")

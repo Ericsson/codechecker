@@ -53,8 +53,14 @@ def execute_buildcmd(command, silent=False, environ=None, cwd=None):
     return proc.returncode
 
 
-def perform_build_command(logfile, command, keep_link, silent=False,
-                          verbose=None):
+def perform_build_command(
+    logfile,
+    command,
+    keep_link,
+    silent=False,
+    verbose=None,
+    use_absolute_ldpreload_path=False,
+):
     """
     Build the project and create a log file.
     """
@@ -82,7 +88,8 @@ def perform_build_command(logfile, command, keep_link, silent=False,
 
         # Same as linux's touch.
         open(logfile, 'a', encoding="utf-8", errors="ignore").close()
-        log_env = env.get_log_env(logfile, original_env)
+        log_env = env.get_log_env(
+            logfile, original_env, use_absolute_ldpreload_path)
         if 'CC_LOGGER_GCC_LIKE' not in log_env:
             log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:/cc:c++'
         if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and
