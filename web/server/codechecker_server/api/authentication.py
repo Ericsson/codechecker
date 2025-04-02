@@ -13,6 +13,7 @@ import datetime
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
+from authlib.jose import JsonWebToken
 
 from urllib.parse import urlparse, parse_qs
 
@@ -368,21 +369,45 @@ class ThriftAuthHandler:
                      f" for provider: {provider}")
 
             try:
-                user_info = oauth2_session.get(user_info_url).json()
+                user_info_response = oauth2_session.get(user_info_url)
+                user_info_response.raise_for_status()
+                user_info = user_info_response.json()
 
                 # request group memberships for Microsoft
                 groups = []
                 if provider == 'microsoft':
-                    access_token = oauth_token['access_token']
+                    #decoding
+                    id_token = oauth_token['id_token']
+                    jwks_url = oauth_config["jwks_url"]
+
+                    jwks_response = oauth2_session.get(jwks_url)
+                    jwks_response.raise_for_status()
+                    jwks_fetched = jwks_response.json()
+
+                    jwt_decoder = JsonWebToken(['RS256'])
+                    claims = jwt_decoder.decode(id_token, key=jwks_fetched)
+                    claims.validate()
+
                     user_groups_url = oauth_config["user_groups_url"]
-                    response = oauth2_session.get(user_groups_url).json()
+                    group_response = oauth2_session.get(user_groups_url)
+                    group_response.raise_for_status()
+                    response = group_response.json()
+
                     for group in response["value"]:
                         if group.get("onPremisesSyncEnabled") and \
                                 group.get("securityEnabled"):
-                            groups.append(group["displayName"])
-                username = user_info[
-                    oauth_config["user_info_mapping"]["username"]]
+                            group_name = group.get("displayName")
+                            if group_name:
+                                groups.append(group_name)
+
+                if(oauth_config["user_info_mapping"]["username"]=="signum"):
+                        esignum = claims.get('Signum')
+                        username = esignum
+                else:
+                    username = user_info[
+                        oauth_config["user_info_mapping"]["username"]]
                 LOG.info("User info fetched, username: %s", username)
+
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
