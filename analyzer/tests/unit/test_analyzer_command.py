@@ -10,7 +10,7 @@ import argparse
 import unittest
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.buildlog import log_parser
-from codechecker_analyzer.cmd import analyze
+from codechecker_analyzer.cli import analyze
 from libtest.cmd_line import create_analyze_argparse
 
 
