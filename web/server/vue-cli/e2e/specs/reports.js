@@ -278,7 +278,9 @@ module.exports = {
     section.click("@input");
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    // dateDialog
+    // .click("@date")
+    // .click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.compared-to-open-reports-date.v-dialog--active";
       const currentDay = ".v-date-picker-table__current";
@@ -513,13 +515,14 @@ module.exports = {
     reportPage.expect.section(dialogSection).to.be.visible.before(5000);
 
     dialogSection.pause(500);
-
+    
     dialogSection.waitForElementVisible("@removeBtn");
     dialogSection.pause(100).click({ selector: "@removeBtn", index: 0 });
     reportPage.expect.section(removeComponentDialog)
       .to.be.visible.before(5000);
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
+    // removeComponentDialog.pause(100).click("@removeBtn");
     browser.execute(function () {
       const dialog = ".remove-source-component-dialog";
       const btn = document.querySelector(dialog).querySelector(".remove-btn");
@@ -674,7 +677,7 @@ module.exports = {
       .to.be.visible.before(5000);
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    // removeCleanUpPlanDialog.click("@confirmBtn");
     browser.execute(function () {
       const btn = document.querySelector(".confirm-btn");
       if (btn) btn.click();
@@ -734,7 +737,9 @@ module.exports = {
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    // fromDateDialog
+    // .click("@date")
+    // .click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.detected-after.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -743,7 +748,7 @@ module.exports = {
     });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-
+    // section.click(@to);
     browser.execute(function () {
       Array.from(document.querySelectorAll("label")).map(label => {
         if (label.innerText == "Detected before...") {
@@ -754,7 +759,9 @@ module.exports = {
 
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    // toDateDialog
+    // .click("@date")
+    // .click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.detected-before.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -763,7 +770,7 @@ module.exports = {
     });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-
+    // section.click(@clearBtn);
     browser.execute(function () {
       const section = "#detection-date-filter";
       const clrBtn = ".clear-btn";
@@ -787,6 +794,9 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
+    // toDateDialog
+    // .click("@date")
+    // .click("@ok");
 
     browser.execute(function () {
       const dialog = ".v-dialog.fixed-after.v-dialog--active";
@@ -796,7 +806,7 @@ module.exports = {
     });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-
+    // section.click(@to);
     browser.execute(function () {
       Array.from(document.querySelectorAll("label")).map(label => {
         if (label.innerText == "Fixed before...") {
@@ -807,7 +817,9 @@ module.exports = {
 
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    // toDateDialog
+    // .click("@date")
+    // .click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.fixed-before.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -815,7 +827,7 @@ module.exports = {
       if (btn) btn.click();
     });
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-
+    // section.click(@clearBtn);
     browser.execute(function () {
       const section = "#fix-date-filter";
       const clrBtn = ".clear-btn";
