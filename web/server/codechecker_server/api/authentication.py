@@ -281,7 +281,7 @@ class ThriftAuthHandler:
         elif auth_method == "oauth":
 
             provider, url = auth_string.split("@", 1)
-            url.strip("#")
+            url = url.rstrip("#")
 
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get('enabled'):
