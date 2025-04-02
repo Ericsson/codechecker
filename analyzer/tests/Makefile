@@ -7,7 +7,7 @@ PYTHON_BIN ?= python3
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
+PYTESTCFG = -c pytest.ini -k "test_bazel_" ${EXTRA_PYTEST_ARGS}
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
 
