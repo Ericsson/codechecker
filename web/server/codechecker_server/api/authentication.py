@@ -376,7 +376,7 @@ class ThriftAuthHandler:
                 # request group memberships for Microsoft
                 groups = []
                 if provider == 'microsoft':
-                    #decoding
+                    # decoding
                     id_token = oauth_token['id_token']
                     jwks_url = oauth_config["jwks_url"]
 
@@ -400,9 +400,9 @@ class ThriftAuthHandler:
                             if group_name:
                                 groups.append(group_name)
 
-                if(oauth_config["user_info_mapping"]["username"]=="signum"):
-                        esignum = claims.get('Signum')
-                        username = esignum
+                if oauth_config["user_info_mapping"]["username"] == "signum":
+                    esignum = claims.get('Signum')
+                    username = esignum
                 else:
                     username = user_info[
                         oauth_config["user_info_mapping"]["username"]]
