@@ -7,7 +7,7 @@ PYTHON_BIN ?= python3
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini -k "test_bazel_" ${EXTRA_PYTEST_ARGS}
+PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
 
@@ -69,7 +69,7 @@ test_unit_cov_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_COV_CMD)
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
-		pytest $(PYTESTCFG) tests/functional || exit 1
+		pytest $(PYTESTCFG) -k "test_bazel_" tests/functional || exit 1
 
 test_functional:
 	${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1;
