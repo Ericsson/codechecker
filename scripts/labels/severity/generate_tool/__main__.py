@@ -16,8 +16,8 @@ from typing import List, Optional, Set
 
 from tabulate import tabulate
 
-from ...checker_labels import SingleLabels, get_checker_labels, \
-    update_checker_labels
+from ...checker_labels import SingleLabels, SkipDirectiveRespectStyle, \
+    get_checker_labels, get_checkers_with_ignore_of_key, update_checker_labels
 from ...codechecker import default_checker_label_dir
 from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
@@ -66,6 +66,9 @@ In case after the analysis there are still checkers which do not have a
 """
 )
 epilogue: str = ""
+
+
+K_Severity: str = "severity"
 
 
 def arg_parser(parser: Optional[argparse.ArgumentParser]) \
@@ -225,7 +228,11 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 analyser,
                 path)
             try:
-                labels = get_checker_labels(analyser, path, "severity")
+                checkers_to_skip = get_checkers_with_ignore_of_key(
+                    path, K_Severity)
+                labels = get_checker_labels(
+                    analyser, path, K_Severity,
+                    SkipDirectiveRespectStyle.AS_PASSED, checkers_to_skip)
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -233,8 +240,8 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 error("Failed to obtain checker labels for '%s'!", analyser)
                 continue
 
-            geners = list(analyser_selection.select_generator(analyser))
-            if not geners:
+            generators = list(analyser_selection.select_generator(analyser))
+            if not generators:
                 log("%sSkipped '%s', no generator implementation!",
                     emoji(":no_littering:  "),
                     analyser)
@@ -242,7 +249,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
             severities: SingleLabels = {}
             conflicts: Set[str] = set()
-            for generator_class in geners:
+            for generator_class in generators:
                 log("%sGenerating '%s' as '%s' (%s)...",
                     emoji(":thought_balloon:  "),
                     analyser,
@@ -253,6 +260,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
                         analyser,
                         generator_class,
                         labels,
+                        checkers_to_skip,
                     )
                     statistics.append(statistic)
                     rc = int(tool.ReturnFlags(rc) | status)
@@ -277,8 +285,10 @@ def main(args: argparse.Namespace) -> Optional[int]:
                         analyser,
                         path)
                     try:
-                        update_checker_labels(analyser, path, "severity",
-                                              severities)
+                        update_checker_labels(
+                            analyser, path, K_Severity, severities,
+                            SkipDirectiveRespectStyle.AS_PASSED,
+                            checkers_to_skip)
                     except Exception:
                         import traceback
                         traceback.print_exc()
