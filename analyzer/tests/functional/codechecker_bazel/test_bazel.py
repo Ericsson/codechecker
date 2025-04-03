@@ -48,6 +48,9 @@ class TestBaseTest(unittest.TestCase):
         print("")
         print("test dir: " + cls.test_dir)
         print(find_prog("CodeChecker"))
+        print(subprocess.check_output(
+            ["ls", os.path.join(os.environ['REPO_ROOT'],
+                                'build', 'CodeChecker',  'bin')]))
 
     @classmethod
     def tearDownClass(cls):
