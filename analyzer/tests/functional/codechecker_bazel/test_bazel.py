@@ -22,13 +22,13 @@ import shlex
 import subprocess
 import unittest
 
-import sys
 
 def find_prog(prog):
     try:
         return subprocess.check_output(["which", prog])
     except subprocess.CalledProcessError:
         return None
+
 
 class TestBaseTest(unittest.TestCase):
     """Unittest base abstract class"""
