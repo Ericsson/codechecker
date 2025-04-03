@@ -37,6 +37,7 @@ def run_cmd(cmd, environ=None):
 
     out, err = proc.communicate()
     print(out)
+    print(err)
     return proc.returncode, out, err
 
 

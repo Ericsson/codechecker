@@ -1465,6 +1465,13 @@ def handle_list_result_types(args):
     def checker_count(checker_dict, key):
         return checker_dict.get(key, 0)
 
+    def formatted_guidelines(guideline_rules: Iterable[dict]) -> Optional[str]:
+        return ";  ".join(
+            f"{guideline_rule['guideline']}: "
+            f"{', '.join(guideline_rule['rules'])}"
+            for guideline_rule in guideline_rules
+        ) if guideline_rules else None
+
     client = setup_client(args.product_url)
 
     if 'component' in args:
@@ -1515,6 +1522,44 @@ def handle_list_result_types(args):
             "reports": count
         })
         severity_total += count
+
+    # Get checker coverage statistic
+    checker_details = client.getCheckerStatusVerificationDetails(
+        run_ids, all_checkers_report_filter)
+
+    checkers = [ttypes.Checker(stat.analyzerName, stat.checkerName)
+                for stat in checker_details.values()]
+    checker_labels = client.getCheckerLabels(checkers)
+
+    all_guideline_rules = []
+    for labels in checker_labels:
+        guideline_entries = []
+        guidelines = [label.split("guideline:")[1]
+                      for label in labels if label.startswith("guideline")]
+
+        for guideline in guidelines:
+            guideline_entries.append({
+                "guideline": guideline,
+                "rules": [label.split(f"{guideline}:")[1]
+                          for label in labels
+                          if label.startswith(f"{guideline}:")]
+            })
+        all_guideline_rules.append(guideline_entries)
+
+    for checker_id, guideline_rules in zip(
+            checker_details, all_guideline_rules):
+        setattr(checker_details[checker_id], "guidelineRules", guideline_rules)
+
+    checker_coverage_stat = [{
+        "checker": stat.checkerName,
+        "severity": stat.severity,
+        "guidelineRules": stat.guidelineRules,
+        "enabledInAllRuns": len(stat.disabled) == 0,
+        "enabledRunLength": len(stat.enabled),
+        "disabledRunLength": len(stat.disabled),
+        "closed": stat.closed,
+        "outstanding": stat.outstanding,
+    } for stat in checker_details.values()]
 
     all_results = []
     total = defaultdict(int)
@@ -1568,13 +1613,27 @@ def handle_list_result_types(args):
 
         rows = []
         for stat in severities:
-            rows.append((stat['severity'],
-                         str(stat['reports'])))
+            rows.append((stat['severity'], str(stat['reports'])))
 
         rows.append(('Total', str(severity_total)))
 
         print(twodim.to_str(args.output_format, header, rows,
                             separate_footer=True))
+
+        # Print checker coverage stat
+        header = ["Checker Name", "guideline", "Severity",
+                  "Enabled in all selected runs", "Closed Reports",
+                  "Outstanding Reports",]
+
+        rows = [(stat["checker"],
+                 formatted_guidelines(stat["guidelineRules"]),
+                 ttypes.Severity._VALUES_TO_NAMES[stat["severity"]],
+                 stat["enabledInAllRuns"],
+                 str(stat["closed"]),
+                 str(stat["outstanding"])) for stat in checker_coverage_stat]
+
+        print(twodim.to_str(args.output_format, header, rows,
+                            separate_footer=False))
 
 
 def handle_remove_run_results(args):
