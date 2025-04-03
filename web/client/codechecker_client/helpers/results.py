@@ -146,6 +146,14 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def getCheckerStatusVerificationDetails(self, runIds, reportFilter):
+        pass
+
+    @thrift_client_call
+    def getCheckerLabels(self, checkers):
+        pass
+
+    @thrift_client_call
     def exportData(self, runId):
         pass
 
