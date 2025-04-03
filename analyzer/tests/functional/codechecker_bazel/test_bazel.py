@@ -24,6 +24,11 @@ import unittest
 
 import sys
 
+def find_prog(prog):
+    try:
+        return subprocess.check_output(["which", prog])
+    except subprocess.CalledProcessError:
+        return None
 
 class TestBaseTest(unittest.TestCase):
     """Unittest base abstract class"""
@@ -42,7 +47,7 @@ class TestBaseTest(unittest.TestCase):
         os.chdir(cls.test_dir)
         print("")
         print("test dir: " + cls.test_dir)
-        print(sys.path)
+        print(find_prog("CodeChecker"))
 
     @classmethod
     def tearDownClass(cls):
