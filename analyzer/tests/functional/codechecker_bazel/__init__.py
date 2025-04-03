@@ -7,10 +7,10 @@
 #
 # -------------------------------------------------------------------------
 
-
 import os
 import sys
 
+# THIS TENDS TO CONTAIN analyzer/ ON THE END OF IT
 REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
 PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
