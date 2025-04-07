@@ -406,6 +406,11 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
+        # For SQLite-backed databases, make all paths relative. To create a
+        # SQLite-backed product in a different directory, we follow symlinks.
+        if dbc.engine == 'sqlite':
+            dbc.database = os.path.relpath(dbc.database, '/')
+
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
         if db_in_use:
