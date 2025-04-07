@@ -618,7 +618,8 @@ class MassStoreRun:
                     session.commit()
                     return
             except (sqlalchemy.exc.OperationalError,
-                    sqlalchemy.exc.ProgrammingError) as ex:
+                    sqlalchemy.exc.ProgrammingError,
+                    sqlalchemy.exc.IntegrityError) as ex:
                 LOG.error("Storing checkers of run '%s' failed: %s.\n"
                           "Waiting %d before trying again...",
                           self.__name, ex, wait_time)
