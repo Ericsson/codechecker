@@ -394,18 +394,16 @@ class ThriftAuthHandler:
                                 group.get("securityEnabled"):
                             groups.append(group["displayName"])
 
-                    username_key = oauth_config.get(
-                        "user_info_mapping", {}).get("username")
-
-                    if username_key == "signum":
-                        username = claims.get("Signum")
-                    elif username_key == "mail":
-                        username = user_info.get("mail")
-                    else:
-                        username = user_info.get("mail")
+                username_key = oauth_config.get(
+                    "user_info_mapping", {}).get("username")
+                if username_key == "signum":
+                    username = claims.get("Signum")
+                elif username_key == "email":
+                    username = user_info.get("email")
+                else:
+                    username = user_info.get("mail")
 
                 LOG.info("User info fetched, username: %s", username)
-
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
