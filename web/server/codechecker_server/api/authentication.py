@@ -389,23 +389,23 @@ class ThriftAuthHandler:
                     claims.validate()
 
                     user_groups_url = oauth_config["user_groups_url"]
-                    group_response = oauth2_session.get(user_groups_url)
-                    group_response.raise_for_status()
-                    response = group_response.json()
+                    response = oauth2_session.get(user_groups_url).json()
 
                     for group in response["value"]:
                         if group.get("onPremisesSyncEnabled") and \
                                 group.get("securityEnabled"):
-                            group_name = group.get("displayName")
-                            if group_name:
-                                groups.append(group_name)
+                            groups.append(group["displayName"])
 
-                if oauth_config["user_info_mapping"]["username"] == "signum":
-                    esignum = claims.get('Signum')
-                    username = esignum
-                else:
-                    username = user_info[
-                        oauth_config["user_info_mapping"]["username"]]
+                    username_key = oauth_config.get(
+                        "user_info_mapping", {}).get("username")
+
+                    if username_key == "signum":
+                        username = claims.get("Signum")
+                    elif username_key == "mail":
+                        username = user_info.get("mail")
+                    else:
+                        username = user_info.get("mail")
+
                 LOG.info("User info fetched, username: %s", username)
 
             except Exception as ex:
