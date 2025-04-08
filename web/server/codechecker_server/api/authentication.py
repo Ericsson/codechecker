@@ -369,9 +369,7 @@ class ThriftAuthHandler:
                      f" for provider: {provider}")
 
             try:
-                user_info_response = oauth2_session.get(user_info_url)
-                user_info_response.raise_for_status()
-                user_info = user_info_response.json()
+                user_info = oauth2_session.get(user_info_url).json()
 
                 # request group memberships for Microsoft
                 groups = []

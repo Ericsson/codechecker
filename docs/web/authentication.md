@@ -413,24 +413,24 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
             Key: `signum` – uses the user's Signum (a company-specific unique identifier).
 ~~~{.json}
 "method_oauth": {
-      "enabled": false,
-      "providers": {
-        "example_provider": {
-          "enabled": false,
-          "client_id": "client id",
-          "client_secret": "client secret",
-          "authorization_url": "https://accounts.google.com/o/oauth2/auth",
-          "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
-          "token_url": "https://accounts.google.com/o/oauth2/token",
-          "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
-          "user_emails_url": "https://api.github.com/user/emails",
-          "scope": "openid email profile",
-          "user_info_mapping": {
-            "username": "email"
-          }
+    "enabled": false,
+    "providers": {
+      "example_provider": {
+        "enabled": false,
+        "client_id": "client id",
+        "client_secret": "client secret",
+        "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+        "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
+        "token_url": "https://accounts.google.com/o/oauth2/token",
+        "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
+        "user_emails_url": "https://api.github.com/user/emails",
+        "scope": "openid email profile",
+        "user_info_mapping": {
+          "username": "email"
         }
       }
     }
+  }
 ~~~
 
 #### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
