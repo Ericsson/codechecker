@@ -394,23 +394,23 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
         The `username` field defines what value will be used as the user's unique identifier (i.e. their "username") depending on the OAuth provider.
 
-        Supported Providers and Options:
+        Currently there are only 2 options for this:
+         * `username`
+         * `email`
+
+        Expected output for each provider:
 
         `github`
-          * Key: `login`
-          * Important: To ensure consistency with other providers, we currently fetch the user's primary email address instead.
-          * If the user's email is hidden (private), this will result in an error.
+          * `username` - user's GitHub `login` will be user's identifier
+          * `email` - a request will be sent to fetch the primary email of account to be used as the user's identifier.
+            If it is hidden, an error will be thrown.
 
         `google`
-          * Key: `email` – uses the user's email address.
+          * Only supports `email`, and user's Gmail email will be considered his username.
 
         `microsoft`
-
-          * You can choose between:
-
-            Key: `mail` – uses the user's email address.
-
-            Key: `signum` – uses the user's Signum (a company-specific unique identifier).
+          * `username` - Company's signum will be the user's identifier.
+          * `email` - an email associated with this Microsoft account will be used as user's identifier.
 ~~~{.json}
 "method_oauth": {
     "enabled": false,

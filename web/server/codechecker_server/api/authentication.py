@@ -394,41 +394,47 @@ class ThriftAuthHandler:
                                 group.get("securityEnabled"):
                             groups.append(group["displayName"])
 
-                username_key = oauth_config.get(
-                    "user_info_mapping", {}).get("username")
-                if username_key == "signum":
-                    username = claims.get("Signum")
-                elif username_key == "email":
-                    username = user_info.get("email")
-                else:
-                    username = user_info.get("mail")
-
-                LOG.info("User info fetched, username: %s", username)
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User info fetch failed.")
 
+            username_key = oauth_config.get(
+                "user_info_mapping", {}).get("username")
+
             # if the provider is github it fetches primary email
             # from another api endpoint to maintain username as email
             # consistency between GitHub and other providers
-            if provider == "github" and \
-                    "localhost" not in \
-                    user_info_url:
-                try:
-                    user_emails_url = oauth_config["user_emails_url"]
-                    for email in oauth2_session \
-                            .get(user_emails_url).json():
-                        if email['primary']:
-                            username = email['email']
-                            LOG.info("Primary email found: %s", username)
-                            break
-                except Exception as ex:
-                    LOG.error("Email fetch failed: %s", str(ex))
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "Email fetch failed.")
+            try:
+                if provider == "github":
+                    if username_key == "email":
+                        if "localhost" not in \
+                            user_info_url:
+                                user_emails_url = \
+                                    oauth_config["user_emails_url"]
+                                for email in oauth2_session \
+                                        .get(user_emails_url).json():
+                                    if email['primary']:
+                                        username = email['email']
+                                        LOG.info("Primary email found: %s", \
+                                                username)
+                    else:
+                        username = user_info.get("login")
+                elif provider == "google":
+                    username = user_info.get("email")
+                elif provider == "microsoft":
+                    if username_key == "username":
+                        username = claims.get("Signum")
+                    else:
+                        username = user_info.get("mail")
+                LOG.info("Username fetched, for username: %s", username)
+            except Exception as ex:
+                LOG.error("Username fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Username fetch failed, error: %s.", str(ex))
+
             try:
                 access_token = oauth_token['access_token']
                 refresh_token = oauth_token['refresh_token']

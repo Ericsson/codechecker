@@ -95,7 +95,7 @@
           "user_info_url": "https://graph.microsoft.com/v1.0/me",
           "scope": "User.Read email profile openid offline_access",
           "user_info_mapping": {
-            "username": "mail"
+            "username": "email"
           }
         }
       }
