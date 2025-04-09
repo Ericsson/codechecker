@@ -710,6 +710,8 @@ class SessionManager:
         if groups is None:
             groups = []
 
+        LOG.debug(f"groups assigned to oauth_session: {groups}")
+
         if not self.__is_method_enabled('oauth'):
             return False
 

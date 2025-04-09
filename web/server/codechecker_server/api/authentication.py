@@ -428,6 +428,9 @@ class ThriftAuthHandler:
                         username = claims.get("Signum")
                     else:
                         username = user_info.get("mail")
+
+                LOG.debug(f"groups fetched for {username}, are: {groups}")
+
                 LOG.info("Username fetched, for username: %s", username)
             except Exception as ex:
                 LOG.error("Username fetch failed: %s", str(ex))
