@@ -378,7 +378,11 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
       * `user_groups_url`
 
-          `Microsoft` specific field to request security groups that the user is member of.
+          `Microsoft`-specific field used to request security groups that the user is member of.
+
+      * `jwks_url`
+
+          `Microsoft`-specific field used to request public signing keys for decoding JWT tokens.
 
       * `scope`
 
