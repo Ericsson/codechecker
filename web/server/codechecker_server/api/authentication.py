@@ -410,15 +410,15 @@ class ThriftAuthHandler:
                 if provider == "github":
                     if username_key == "email":
                         if "localhost" not in \
-                            user_info_url:
-                                user_emails_url = \
-                                    oauth_config["user_emails_url"]
-                                for email in oauth2_session \
-                                        .get(user_emails_url).json():
-                                    if email['primary']:
-                                        username = email['email']
-                                        LOG.info("Primary email found: %s", \
-                                                username)
+                                user_info_url:
+                            user_emails_url = \
+                                oauth_config["user_emails_url"]
+                            for email in oauth2_session \
+                                    .get(user_emails_url).json():
+                                if email['primary']:
+                                    username = email['email']
+                                    LOG.info("Primary email found: %s",
+                                             username)
                     else:
                         username = user_info.get("login")
                 elif provider == "google":
