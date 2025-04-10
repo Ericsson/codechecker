@@ -14,7 +14,7 @@ jobs:
   lint:
     name: Linters (pylint, pycodestyle)
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
@@ -29,7 +29,7 @@ jobs:
 
   tools:
     name: Tools (report-converter, etc.)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
@@ -85,7 +85,7 @@ jobs:
 
   analyzer:
     name: Analyzer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
@@ -111,7 +111,7 @@ jobs:
 
   common:
     name: Common libraries
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
@@ -130,7 +130,7 @@ jobs:
 
   web:
     name: Web
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -185,7 +185,7 @@ jobs:
 
   gui:
     name: GUI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
