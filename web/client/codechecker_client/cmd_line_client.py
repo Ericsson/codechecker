@@ -648,8 +648,7 @@ def handle_list_runs(args):
                 constants.MAX_QUERY_SIZE,
                 0)
             for info in info_list:
-                analyzers = info.checkers.keys()
-                for analyzer in analyzers:
+                for analyzer in info.checkers:
                     if analyzer not in enabled_checkers:
                         enabled_checkers[analyzer] = []
 
