@@ -415,27 +415,60 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
         `microsoft`
           * `username` - Company's signum will be the user's identifier.
           * `email` - an email associated with this Microsoft account will be used as user's identifier.
-~~~{.json}
-"method_oauth": {
-    "enabled": false,
-    "providers": {
-      "example_provider": {
-        "enabled": false,
-        "client_id": "client id",
-        "client_secret": "client secret",
-        "authorization_url": "https://accounts.google.com/o/oauth2/auth",
-        "callback_url": "http://localhost:8080/login/OAuthLogin/provider",
-        "token_url": "https://accounts.google.com/o/oauth2/token",
-        "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
-        "user_emails_url": "https://api.github.com/user/emails",
-        "scope": "openid email profile",
-        "user_info_mapping": {
-          "username": "email"
-        }
+
+    ### 🔧 Example: OAuth Configuration for GitHub
+    ~~~{.json}
+    "github": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "authorization_url": "https://github.com/login/oauth/authorize",
+      "callback_url": "https://<server_host>/login/OAuthLogin/github",
+      "token_url": "https://github.com/login/oauth/access_token",
+      "user_info_url": "https://api.github.com/user",
+      "user_emails_url": "https://api.github.com/user/emails",
+      "scope": "user:email",
+      "user_info_mapping": {
+        "username": "username"
       }
     }
-  }
-~~~
+    ~~~
+    ### 🔧 Example: OAuth Configuration for Google
+    ~~~{.json}
+    "google": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+      "callback_url": "https://<server_host>/login/OAuthLogin/google",
+      "token_url": "https://accounts.google.com/o/oauth2/token",
+      "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
+      "scope": "openid email profile",
+      "user_info_mapping": {
+        "username": "email"
+      }
+    }
+    ~~~
+    ### 🔧 Example: OAuth Configuration for Microsoft
+    ~~~{.json}
+    "microsoft": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "authorization_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/authorize",
+      "callback_url": "https://<server_host>/login/OAuthLogin/microsoft",
+      "token_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/token",
+      "user_groups_url": "https://graph.microsoft.com/v1.0/me/memberOf",
+      "jwks_url": "https://login.microsoftonline.com/<tenant-id>/discovery/v2.0/keys",
+      "user_info_url": "https://graph.microsoft.com/v1.0/me",
+      "scope": "User.Read email profile openid offline_access",
+      "user_info_mapping": {
+        "username": "email"
+      }
+    }
+    ~~~
+
+
 
 #### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 

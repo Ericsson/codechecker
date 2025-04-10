@@ -68,7 +68,7 @@
           "user_emails_url": "https://api.github.com/user/emails",
           "scope": "user:email",
           "user_info_mapping": {
-            "username": "login"
+            "username": "username"
           }
         },
         "google": {
