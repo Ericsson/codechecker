@@ -13,6 +13,7 @@ import datetime
 
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.common.security import generate_token
+from authlib.jose import JsonWebToken
 
 from urllib.parse import urlparse, parse_qs
 
@@ -373,41 +374,70 @@ class ThriftAuthHandler:
                 # request group memberships for Microsoft
                 groups = []
                 if provider == 'microsoft':
-                    access_token = oauth_token['access_token']
+                    # decoding
+                    id_token = oauth_token['id_token']
+                    jwks_url = oauth_config["jwks_url"]
+
+                    jwks_response = oauth2_session.get(jwks_url)
+                    jwks_response.raise_for_status()
+                    jwks_fetched = jwks_response.json()
+
+                    jwt_decoder = JsonWebToken(['RS256'])
+                    claims = jwt_decoder.decode(id_token, key=jwks_fetched)
+                    claims.validate()
+
                     user_groups_url = oauth_config["user_groups_url"]
                     response = oauth2_session.get(user_groups_url).json()
+
                     for group in response["value"]:
                         if group.get("onPremisesSyncEnabled") and \
                                 group.get("securityEnabled"):
                             groups.append(group["displayName"])
-                username = user_info[
-                    oauth_config["user_info_mapping"]["username"]]
-                LOG.info("User info fetched, username: %s", username)
+
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User info fetch failed.")
 
+            username_key = oauth_config.get(
+                "user_info_mapping", {}).get("username")
+
             # if the provider is github it fetches primary email
             # from another api endpoint to maintain username as email
             # consistency between GitHub and other providers
-            if provider == "github" and \
-                    "localhost" not in \
-                    user_info_url:
-                try:
-                    user_emails_url = oauth_config["user_emails_url"]
-                    for email in oauth2_session \
-                            .get(user_emails_url).json():
-                        if email['primary']:
-                            username = email['email']
-                            LOG.info("Primary email found: %s", username)
-                            break
-                except Exception as ex:
-                    LOG.error("Email fetch failed: %s", str(ex))
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "Email fetch failed.")
+            try:
+                if provider == "github":
+                    if username_key == "email":
+                        if "localhost" not in \
+                                user_info_url:
+                            user_emails_url = \
+                                oauth_config["user_emails_url"]
+                            for email in oauth2_session \
+                                    .get(user_emails_url).json():
+                                if email['primary']:
+                                    username = email['email']
+                                    LOG.info("Primary email found: %s",
+                                             username)
+                    else:
+                        username = user_info.get("login")
+                elif provider == "google":
+                    username = user_info.get("email")
+                elif provider == "microsoft":
+                    if username_key == "username":
+                        username = claims.get("Signum")
+                    else:
+                        username = user_info.get("mail")
+
+                LOG.debug(f"groups fetched for {username}, are: {groups}")
+
+                LOG.info("Username fetched, for username: %s", username)
+            except Exception as ex:
+                LOG.error("Username fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Username fetch failed, error: %s.", str(ex))
+
             try:
                 access_token = oauth_token['access_token']
                 refresh_token = oauth_token['refresh_token']
