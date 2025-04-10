@@ -278,7 +278,8 @@ module.exports = {
     section.click("@input");
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
+    
+    // dateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.compared-to-open-reports-date.v-dialog--active";
       const currentDay = ".v-date-picker-table__current";
