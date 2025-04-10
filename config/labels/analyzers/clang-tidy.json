@@ -139,6 +139,8 @@
     ],
     "android-cloexec-open": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-open.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:HIGH"
     ],
     "android-cloexec-pipe": [
@@ -344,9 +346,11 @@
     ],
     "bugprone-infinite-loop": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/infinite-loop.html",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-400",
       "severity:MEDIUM"
     ],
     "bugprone-integer-division": [
@@ -438,10 +442,12 @@
     ],
     "bugprone-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/narrowing-conversions.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:exp45-c",
       "sei-cert-c:fio34-c",
       "sei-cert-c:flp34-c",
@@ -563,11 +569,13 @@
     ],
     "bugprone-sizeof-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-expression.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:mem35-c",
       "severity:HIGH"
     ],
@@ -643,11 +651,13 @@
     "bugprone-suspicious-memset-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memset-usage.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:int31-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:HIGH"
     ],
     "bugprone-suspicious-missing-comma": [
@@ -737,12 +747,14 @@
     "bugprone-undefined-memory-manipulation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/undefined-memory-manipulation.html",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-cpp:exp62-cpp",
       "sei-cert-cpp:oop57-cpp",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:MEDIUM"
     ],
     "bugprone-undelegated-constructor": [
@@ -784,12 +796,18 @@
     ],
     "bugprone-unsafe-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:msc24-c",
       "sei-cert-c:msc33-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:LOW"
     ],
     "bugprone-unused-local-non-trivial-variable": [
@@ -913,10 +931,12 @@
     "cert-env33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/env33-c.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:env33-c",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:MEDIUM"
     ],
     "cert-err09-cpp": [
@@ -1011,40 +1031,56 @@
     ],
     "cert-msc24-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc24-c.html",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "severity:LOW"
     ],
     "cert-msc30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc30-c.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:LOW"
     ],
     "cert-msc32-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc32-c.html",
+      "guideline:owasp-top-10-2021",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "cert-msc33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc33-c.html",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "severity:LOW"
     ],
     "cert-msc50-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc50-cpp.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc30-c",
       "sei-cert-cpp:msc50-cpp",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:LOW"
     ],
     "cert-msc51-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc51-cpp.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc32-c",
       "sei-cert-cpp:msc51-cpp",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "cert-msc54-cpp": [
@@ -1464,6 +1500,8 @@
     ],
     "clang-diagnostic-builtin-memcpy-chk-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbuiltin-memcpy-chk-size",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-builtin-requires-header": [
@@ -2609,11 +2647,13 @@
     ],
     "clang-diagnostic-format-security": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-security",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-20",
       "sei-cert-c:fio30-c",
       "severity:MEDIUM"
     ],
@@ -2653,6 +2693,8 @@
     ],
     "clang-diagnostic-fortify-source": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfortify-source",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-four-char-constants": [
@@ -2667,10 +2709,12 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than": [
+      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wframe-larger-than",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than=": [
+      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#id1",
       "severity:MEDIUM"
     ],
@@ -3067,11 +3111,15 @@
     ],
     "clang-diagnostic-incompatible-pointer-types": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-pointer-types",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:exp32-c",
       "severity:MEDIUM"
     ],
@@ -3211,6 +3259,8 @@
     ],
     "clang-diagnostic-integer-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winteger-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-interrupt-service-routine": [
@@ -4823,6 +4873,8 @@
     ],
     "clang-diagnostic-shift-count-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-count-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-negative-value": [
@@ -4838,14 +4890,20 @@
     ],
     "clang-diagnostic-shift-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-sign-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-sign-overflow",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shorten-64-to-32": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshorten-64-to-32",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-compare": [
@@ -4857,6 +4915,8 @@
     ],
     "clang-diagnostic-sign-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-conversion",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-promo": [
@@ -5078,6 +5138,8 @@
     ],
     "clang-diagnostic-strncat-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstrncat-size",
+      "guideline:cwe-top-25-2024",
+      "cwe-top-25-2024:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-suggest-destructor-override": [
@@ -5106,9 +5168,11 @@
     ],
     "clang-diagnostic-switch": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wswitch",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-switch-bool": [
@@ -5853,8 +5917,10 @@
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:security",
       "sei-cert-c:con33-c",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "concurrency-thread-canceltype-asynchronous": [

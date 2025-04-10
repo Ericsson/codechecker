@@ -243,13 +243,14 @@ def __get_detailed_checker_info(
             if args.profile not in available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",
                           args.profile)
-                LOG.error("To list available profiles, use '--profile list'.")
+                LOG.error("To list available profiles, use '--profile' "
+                          "without argument.")
                 sys.exit(1)
 
             profile_checkers.append((f'profile:{args.profile}', True))
 
         if 'label' in args:
-            profile_checkers.extend((label, True) for label in args.label)
+            profile_checkers.append((args.label, True))
 
         if 'severity' in args:
             profile_checkers.append((f'severity:{args.severity}', True))

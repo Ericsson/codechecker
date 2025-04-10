@@ -5,12 +5,13 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-from collections import defaultdict
 from packaging.version import Version
 import shlex
 import subprocess
+import sys
 
 from codechecker_common.logger import get_logger
+from codechecker_common import util
 
 from codechecker_analyzer import analyzer_context
 
@@ -80,6 +81,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
         if not has_flag('-x', analyzer_cmd):
             analyzer_cmd.extend(['-x', compile_lang])
 
+        analyzer_cmd.extend(config.analyzer_extra_arguments)
+
         analyzer_cmd.append(self.source_file)
 
         LOG.debug_analyzer("Running analysis command "
@@ -126,7 +129,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         Config options for gcc.
         """
         # TODO
-        return []
+        return [
+            ('cc-verbatim-args-file',
+             'A file path containing flags that are forwarded verbatim to the '
+             'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>')
+        ]
 
     @classmethod
     def get_checker_config(cls):
@@ -216,24 +223,29 @@ class Gcc(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
         handler = GccConfigHandler()
 
-        analyzer_config = defaultdict(list)
-
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
-                if cfg.analyzer == cls.ANALYZER_NAME:
-                    analyzer_config[cfg.option].append(cfg.value)
+                # TODO: The analyzer plugin should get only its own analyzer
+                # config options from outside.
+                if cfg.analyzer != cls.ANALYZER_NAME:
+                    continue
 
-        handler.analyzer_config = analyzer_config
+                if cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
 
         checkers = cls.get_analyzer_checkers()
 
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
-            LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for %s',
-                               cls.ANALYZER_NAME)
+            LOG.debug('No checkers were defined in the command line for %s',
+                      cls.ANALYZER_NAME)
             cmdline_checkers = []
 
         handler.initialize_checkers(

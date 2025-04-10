@@ -301,6 +301,7 @@
         <router-link
           :to="{ name: 'reports', query: {
             ...uniqueMode,
+            'run': $router.currentRoute.query.run,
             ...getBaseQueryParams(item),
             'report-status': reportStatusFromCodeToString(ReportStatus.CLOSED)
           }}"
@@ -318,6 +319,7 @@
         <router-link
           :to="{ name: 'reports', query: {
             ...uniqueMode,
+            'run': $router.currentRoute.query.run,
             ...getBaseQueryParams(item),
             'report-status': reportStatusFromCodeToString(
               ReportStatus.OUTSTANDING
@@ -477,6 +479,7 @@
               <router-link
                 :to="{ name: 'reports', query: {
                   ...uniqueMode,
+                  'run': $router.currentRoute.query.run,
                   ...getBaseQueryParams({
                     checker: checker.name,
                     severity: checker.severity}),
@@ -508,11 +511,11 @@
       <div v-else class="guideline-statistics">
         <table>
           <tr v-for="checker in item.checkers" :key="checker.name">
-            <!-- <td>{{ checker.closed }}</td> -->
             <td v-if="checker.closed">
               <router-link
                 :to="{ name: 'reports', query: {
                   ...uniqueMode,
+                  'run': $router.currentRoute.query.run,
                   ...getBaseQueryParams({
                     checker: checker.name,
                     severity: checker.severity}),

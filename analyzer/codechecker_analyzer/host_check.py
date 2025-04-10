@@ -26,7 +26,7 @@ def check_analyzer(compiler_bin):
     Simple check if clang is available.
     """
     clang_version_cmd = [compiler_bin, '--version']
-    LOG.debug_analyzer(' '.join(clang_version_cmd))
+    LOG.debug(' '.join(clang_version_cmd))
     environ = analyzer_context.get_context().get_env_for_bin(
         compiler_bin)
     try:
@@ -56,7 +56,7 @@ def has_analyzer_config_option(clang_bin, config_option_name):
     """Check if an analyzer config option is available."""
     cmd = [clang_bin, "-cc1", "-analyzer-config-help"]
 
-    LOG.debug('run: "%s"', ' '.join(cmd))
+    LOG.debug_analyzer('run: "%s"', ' '.join(cmd))
     context = analyzer_context.get_context()
 
     try:
@@ -67,8 +67,8 @@ def has_analyzer_config_option(clang_bin, config_option_name):
             env=context.get_env_for_bin(clang_bin),
             encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
-        LOG.debug("stdout:\n%s", out)
-        LOG.debug("stderr:\n%s", err)
+        LOG.debug_analyzer("stdout:\n%s", out)
+        LOG.debug_analyzer("stderr:\n%s", err)
 
         match = re.search(config_option_name, out)
         if match:
@@ -91,7 +91,7 @@ def has_analyzer_option(clang_bin, feature):
         cmd.extend(feature)
         cmd.extend([input_file.name, "-o", "-"])
 
-        LOG.debug('run: "%s"', ' '.join(cmd))
+        LOG.debug_analyzer('run: "%s"', ' '.join(cmd))
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -100,8 +100,8 @@ def has_analyzer_option(clang_bin, feature):
                 env=analyzer_context.get_context().get_env_for_bin(clang_bin),
                 encoding="utf-8", errors="ignore")
             out, err = proc.communicate()
-            LOG.debug("stdout:\n%s", out)
-            LOG.debug("stderr:\n%s", err)
+            LOG.debug_analyzer("stdout:\n%s", out)
+            LOG.debug_analyzer("stderr:\n%s", err)
 
             return proc.returncode == 0
         except OSError:

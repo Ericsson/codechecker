@@ -10,15 +10,15 @@ Module for Facebook Infer analyzer related methods
 """
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
-import re
 import shlex
 import subprocess
 import json
 from pathlib import Path
+import sys
 
+from codechecker_common import util
 from codechecker_common.logger import get_logger
 
-import codechecker_analyzer
 from codechecker_analyzer import analyzer_context
 
 from .. import analyzer_base
@@ -109,12 +109,12 @@ class Infer(analyzer_base.SourceAnalyzer):
                  "r", encoding="utf-8"))
         checker_list = []
         try:
-            environ = analyzer_context.get_context().get_env_for_bin(
+            env = analyzer_context.get_context().get_env_for_bin(
                 cls.analyzer_binary())
-            environ.update(TZ='UTC')
+            env.update(TZ='UTC')
             output = subprocess.check_output(command,
                                              stderr=subprocess.DEVNULL,
-                                             env=environ)
+                                             env=env)
             for entry in output.decode().split('\n'):
                 data = entry.strip().split(":")
                 if len(data) < 7:
@@ -142,7 +142,11 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Config options for infer.
         """
-        return []
+        return [
+            ('cc-verbatim-args-file',
+             'A file path containing flags that are forwarded verbatim to the '
+             'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>')
+        ]
 
     @classmethod
     def get_checker_config(cls):
@@ -240,9 +244,8 @@ class Infer(analyzer_base.SourceAnalyzer):
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
-            LOG.debug_analyzer('No checkers were defined in '
-                               'the command line for %s',
-                               cls.ANALYZER_NAME)
+            LOG.debug('No checkers were defined in the command line for %s',
+                      cls.ANALYZER_NAME)
             cmdline_checkers = []
 
         handler.initialize_checkers(
@@ -250,20 +253,20 @@ class Infer(analyzer_base.SourceAnalyzer):
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 
-        try:
-            with open(args.infer_args_cfg_file, 'r', encoding='utf-8',
-                      errors='ignore') as infer_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)',
-                           codechecker_analyzer.env.replace_env_var(
-                               args.infer_args_cfg_file),
-                           infer_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No infer arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                # TODO: The analyzer plugin should get only its own analyzer
+                # config options from outside.
+                if cfg.analyzer != cls.ANALYZER_NAME:
+                    continue
+
+                if cfg.option == 'cc-verbatim-args-file':
+                    try:
+                        handler.analyzer_extra_arguments = \
+                            util.load_args_from_file(cfg.value)
+                    except FileNotFoundError:
+                        LOG.error(f"File not found: {cfg.value}")
+                        sys.exit(1)
 
         return handler

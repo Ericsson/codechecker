@@ -23,9 +23,10 @@ from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
-        import is_compiler_warning, ClangTidyConfigHandler
-from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
-from codechecker_analyzer.cmd.analyze import \
+    import ClangTidyConfigHandler
+from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig, \
+    analyzer_config
+from codechecker_analyzer.cli.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
 
 from codechecker_analyzer import analyzer_context
@@ -397,7 +398,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
 
 class MockClangTidyCheckerLabels:
-    def checkers_by_labels(self, labels):
+    def checkers_by_labels(self, labels, _=None):
         if labels[0] == 'profile:default':
             return [
                 'bugprone-assert-side-effect',
@@ -643,9 +644,6 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
             'clang-analyzer',
             analyzer.construct_analyzer_cmd(result_handler)))
 
-        self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
-        self.assertFalse(is_compiler_warning('hicpp'))
-
         analyzer = create_analyzer_tidy(['--enable', 'Wreserved-id-macro'])
         result_handler = create_result_handler(analyzer)
 
@@ -835,7 +833,8 @@ class CheckerHandlingCppcheckTest(unittest.TestCase):
                 f.write('--max-ctu-depth=42')
 
             args = Namespace()
-            args.cppcheck_args_cfg_file = cppcheckargs
+            args.analyzer_config = [analyzer_config(
+                f"cppcheck:cc-verbatim-args-file={cppcheckargs}")]
 
             analyzer = create_analyzer_cppcheck(args, tmp_ws)
             result_handler = create_result_handler(analyzer)

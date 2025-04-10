@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import unittest
+import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
@@ -66,6 +67,7 @@ class DictAuth(unittest.TestCase):
 
         with self.assertRaises(RequestFailed):
             auth_client.performLogin("Username:Password", None)
+            print("Empty credentials gave us a token!")
 
         # A non-authenticated session should return an empty user.
         user = auth_client.getLoggedInUser()
@@ -182,6 +184,51 @@ class DictAuth(unittest.TestCase):
         # self.assertFalse(handshake.sessionStillActive,
         #                  "Destroyed session was " +
         #                  "reported to be still active.")
+
+    def try_login(self, provider, username, password):
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        link = auth_client.createLink(provider)
+        data = requests.get(
+            url=f"{link}&username={username}&password={password}",
+            timeout=10).json()
+
+        if 'error' in data:
+            raise RequestFailed(data['error'])
+
+        link = link.split('?')[0]
+        code, state, code_challenge, code_challenge_method = \
+            data['code'], data['state'], \
+            data['code_challenge'], \
+            data['code_challenge_method']
+        auth_string = f"{link}?code={code}&state={state}" \
+            f"&code_challenge_method={code_challenge_method}" \
+            f"&code_challenge={code_challenge}"
+
+        self.session_token = auth_client.performLogin(
+            "oauth", provider + "@" + auth_string)
+
+        return self.session_token
+
+    def test_oauth_allowed_users_default(self):
+        """
+        Testing the authentication using external oauth provider
+        made for this case that simulates the behavior of the real provider.
+        """
+        # The following user is in the list of allowed users: GITHUB
+        session = self.try_login("google", "admin_github", "admin")
+        self.assertIsNotNone(session, "allowed user could not login")
+
+    def test_oauth_invalid_credentials(self):
+        """
+        Testing the oauth using non-existent users.
+        """
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "nonexistant", "test")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "nonexistant", "test")
 
     def test_nonauth_storage(self):
         """

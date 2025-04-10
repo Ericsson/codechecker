@@ -22,14 +22,14 @@ from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
     analyzer_config, checker_config, existing_abspath
 
-from codechecker_analyzer.cmd.analyze import \
+from codechecker_analyzer.cli.analyze import \
     EPILOG_ENV_VAR as analyzer_epilog_env_var, \
     EPILOG_ISSUE_HASHES as analyzer_epilog_issue_hashes
 
-from codechecker_analyzer.cmd.log import \
+from codechecker_analyzer.cli.log import \
     EPILOG_ENV_VAR as log_epilog_env_var
 
-from codechecker_analyzer.cmd.parse import \
+from codechecker_analyzer.cli.parse import \
     EPILOG_ENV_VAR as parse_epilog_env_var
 
 from codechecker_common import arg, cmd_config, logger
@@ -349,31 +349,39 @@ used to generate a log file on the fly.""")
                                dest="cppcheck_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Cppcheck.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Cppcheck. The "
+                                    "option has been migrated under the "
+                                    "cppcheck anayzer options: "
+                                    "--analyzer-config "
+                                    "cppcheck:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
                                     "forwarded verbatim for the Clang Static "
-                                    "analyzer.")
+                                    "Analyzer. The opion has been migrated "
+                                    "under the clangsa analyzer options: "
+                                    "--analyzer-config "
+                                    "clangsa:cc-verbatim-args-file=<filepath>")
 
     analyzer_opts.add_argument('--tidyargs',
                                dest="tidy_args_cfg_file",
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for the Clang-Tidy "
-                                    "analyzer.")
-
-    analyzer_opts.add_argument('--inferargs',
-                               dest="infer_args_cfg_file",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="File containing argument which will be "
-                                    "forwarded verbatim for Facebook Infer.")
+                               help="DEPRECATED. "
+                                    "File containing argument which will be "
+                                    "forwarded verbatim for Clang-Tidy. "
+                                    "The opion has been migrated under the "
+                                    "clang-tidy analyzer options: "
+                                    "--analyzer-config "
+                                    "clang-tidy:cc-verbatim-args-file="
+                                    "<filepath>")
 
     analyzer_opts.add_argument('--tidy-config',
                                dest='tidy_config',
@@ -391,7 +399,7 @@ used to generate a log file on the fly.""")
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=argparse.SUPPRESS,
+                               default=[],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
@@ -444,178 +452,176 @@ used to generate a log file on the fly.""")
                                     "assigned to specific directories, "
                                     "checkers, bug hashes.")
 
-    clang_has_z3 = analyzer_types.is_z3_capable()
-
-    if clang_has_z3:
-        analyzer_opts.add_argument('--z3',
-                                   dest='enable_z3',
-                                   choices=['on', 'off'],
-                                   default='off',
-                                   help="Enable Z3 as the solver backend. "
-                                        "This allows reasoning over more "
-                                        "complex queries, but performance is "
-                                        "much worse than the default "
-                                        "range-based constraint solver "
-                                        "system. WARNING: Z3 as the only "
-                                        "backend is a highly experimental "
-                                        "and likely unstable feature.")
+    analyzer_opts.add_argument('--z3',
+                               dest='enable_z3',
+                               choices=['on', 'off'],
+                               default='off',
+                               help="Enable Z3 as the solver backend. "
+                                    "This allows reasoning over more "
+                                    "complex queries, but performance is "
+                                    "much worse than the default "
+                                    "range-based constraint solver "
+                                    "system. WARNING: Z3 as the only "
+                                    "backend is a highly experimental "
+                                    "and likely unstable feature.")
 
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable()
 
-    if clang_has_z3_refutation:
-        analyzer_opts.add_argument('--z3-refutation',
-                                   dest='enable_z3_refutation',
-                                   choices=['on', 'off'],
-                                   default='on' if clang_has_z3_refutation
-                                   else 'off',
-                                   help="Switch on/off the Z3 SMT Solver "
-                                        "backend to "
-                                        "reduce false positives. The results "
-                                        "of the ranged based constraint "
-                                        "solver in the Clang Static Analyzer "
-                                        "will be cross checked with the Z3 "
-                                        "SMT solver. This should not cause "
-                                        "that much of a slowdown compared to "
-                                        "using only the Z3 solver.")
+    analyzer_opts.add_argument('--z3-refutation',
+                               dest='enable_z3_refutation',
+                               choices=['on', 'off'],
+                               default='on' if clang_has_z3_refutation
+                               else 'off',
+                               help="Switch on/off the Z3 SMT Solver "
+                                    "backend to "
+                                    "reduce false positives. The results "
+                                    "of the ranged based constraint "
+                                    "solver in the Clang Static Analyzer "
+                                    "will be cross checked with the Z3 "
+                                    "SMT solver. This should not cause "
+                                    "that much of a slowdown compared to "
+                                    "using only the Z3 solver.")
 
-    if analyzer_types.is_ctu_capable():
-        ctu_opts = parser.add_argument_group(
-            "cross translation unit analysis arguments",
-            """
+    ctu_opts = parser.add_argument_group(
+        "cross translation unit analysis arguments",
+        """
 These arguments are only available if the Clang Static Analyzer supports
-Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker check'
-is called.""")
+Cross-TU analysis. By default, no CTU analysis is run when
+'CodeChecker analyze' is called.""")
 
-        ctu_modes = ctu_opts.add_mutually_exclusive_group()
+    ctu_modes = ctu_opts.add_mutually_exclusive_group()
+    ctu_modes.add_argument('--ctu', '--ctu-all',
+                           action='store_const',
+                           const=[True, True],
+                           dest='ctu_phases',
+                           default=argparse.SUPPRESS,
+                           help="Perform Cross Translation Unit (CTU) "
+                                "analysis, both 'collect' and 'analyze' "
+                                "phases. In this mode, the extra files "
+                                "created by 'collect' are cleaned up "
+                                "after the analysis.")
 
-        ctu_modes.add_argument('--ctu', '--ctu-all',
-                               action='store_const',
-                               const=[True, True],
-                               dest='ctu_phases',
-                               default=argparse.SUPPRESS,
-                               help="Perform Cross Translation Unit (CTU) "
-                                    "analysis, both 'collect' and 'analyze' "
-                                    "phases. In this mode, the extra files "
-                                    "created by 'collect' are cleaned up "
-                                    "after the analysis.")
+    ctu_modes.add_argument('--ctu-collect',
+                           action='store_const',
+                           const=[True, False],
+                           dest='ctu_phases',
+                           default=argparse.SUPPRESS,
+                           help="Perform the first, 'collect' phase of "
+                                "Cross-TU analysis. This phase generates "
+                                "extra files needed by CTU analysis, and "
+                                "puts them into '<OUTPUT_DIR>/ctu-dir'. "
+                                "NOTE: If this argument is present, "
+                                "CodeChecker will NOT execute the "
+                                "analyzers!")
 
-        ctu_modes.add_argument('--ctu-collect',
-                               action='store_const',
-                               const=[True, False],
-                               dest='ctu_phases',
-                               default=argparse.SUPPRESS,
-                               help="Perform the first, 'collect' phase of "
-                                    "Cross-TU analysis. This phase generates "
-                                    "extra files needed by CTU analysis, and "
-                                    "puts them into '<OUTPUT_DIR>/ctu-dir'. "
-                                    "NOTE: If this argument is present, "
-                                    "CodeChecker will NOT execute the "
-                                    "analyzers!")
+    ctu_modes.add_argument('--ctu-analyze',
+                           action='store_const',
+                           const=[False, True],
+                           dest='ctu_phases',
+                           default=argparse.SUPPRESS,
+                           help="Perform the second, 'analyze' phase of "
+                                "Cross-TU analysis, using already "
+                                "available extra files in "
+                                "'<OUTPUT_DIR>/ctu-dir'. (These files "
+                                "will not be cleaned up in this mode.)")
 
-        ctu_modes.add_argument('--ctu-analyze',
-                               action='store_const',
-                               const=[False, True],
-                               dest='ctu_phases',
-                               default=argparse.SUPPRESS,
-                               help="Perform the second, 'analyze' phase of "
-                                    "Cross-TU analysis, using already "
-                                    "available extra files in "
-                                    "'<OUTPUT_DIR>/ctu-dir'. (These files "
-                                    "will not be cleaned up in this mode.)")
+    ctu_opts.add_argument('--ctu-reanalyze-on-failure',
+                          action='store_true',
+                          dest='ctu_reanalyze_on_failure',
+                          default=argparse.SUPPRESS,
+                          help="If Cross-TU analysis is enabled and fails "
+                               "for some reason, try to re analyze the "
+                               "same translation unit without "
+                               "Cross-TU enabled.")
 
-        ctu_opts.add_argument('--ctu-reanalyze-on-failure',
-                              action='store_true',
-                              dest='ctu_reanalyze_on_failure',
-                              default=argparse.SUPPRESS,
-                              help="If Cross-TU analysis is enabled and "
-                                   "fails for some reason, try to re analyze "
-                                   "the same translation unit without "
-                                   "Cross-TU enabled.")
+    # Only check for AST loading modes if CTU is available.
+    ctu_opts.add_argument('--ctu-ast-mode',
+                          action='store',
+                          dest='ctu_ast_mode',
+                          choices=['load-from-pch', 'parse-on-demand'],
+                          default=argparse.SUPPRESS,
+                          help="Choose the way ASTs are loaded during "
+                               "CTU analysis. Mode 'load-from-pch' "
+                               "generates PCH format serialized ASTs "
+                               "during the 'collect' phase. Mode "
+                               "'parse-on-demand' only generates the "
+                               "invocations needed to parse the ASTs. "
+                               "Mode 'load-from-pch' can use "
+                               "significant disk-space for the "
+                               "serialized ASTs, while mode "
+                               "'parse-on-demand' can incur some "
+                               "runtime CPU overhead in the second "
+                               "phase of the analysis. NOTE: Only "
+                               "available if CTU mode is enabled. "
+                               "(default: parse-on-demand)")
 
-        # Only check for AST loading modes if CTU is available.
-        if analyzer_types.is_ctu_on_demand_available():
-            ctu_opts.add_argument('--ctu-ast-mode',
-                                  action='store',
-                                  dest='ctu_ast_mode',
-                                  choices=['load-from-pch', 'parse-on-demand'],
-                                  default=argparse.SUPPRESS,
-                                  help="Choose the way ASTs are loaded during "
-                                       "CTU analysis. Only available if CTU "
-                                       "mode is enabled. Mode 'load-from-pch' "
-                                       "generates PCH format serialized ASTs "
-                                       "during the 'collect' phase. Mode "
-                                       "'parse-on-demand' only generates the "
-                                       "invocations needed to parse the ASTs. "
-                                       "Mode 'load-from-pch' can use "
-                                       "significant disk-space for the "
-                                       "serialized ASTs, while mode "
-                                       "'parse-on-demand' can incur some "
-                                       "runtime CPU overhead in the second "
-                                       "phase of the analysis. (default: "
-                                       "parse-on-demand)")
+    stats_capable = analyzer_types.is_statistics_capable()
 
-    if analyzer_types.is_statistics_capable():
-        stat_opts = parser.add_argument_group(
-            "Statistics analysis feature arguments",
-            """
+    stat_opts = parser.add_argument_group(
+        "Statistics analysis feature arguments",
+        """
 These arguments are only available if the Clang Static Analyzer supports
 Statistics-based analysis (e.g. statisticsCollector.ReturnValueCheck,
 statisticsCollector.SpecialReturnValue checkers are available).""")
 
-        stat_opts.add_argument('--stats-collect', '--stats-collect',
-                               action='store',
-                               default=argparse.SUPPRESS,
-                               dest='stats_output',
-                               help="Perform the first, 'collect' phase of "
-                                    "Statistical analysis. This phase "
-                                    "generates extra files needed by "
-                                    "statistics analysis, and "
-                                    "puts them into "
-                                    "'<STATS_OUTPUT>'."
-                                    " NOTE: If this argument is present, "
-                                    "CodeChecker will NOT execute the "
-                                    "analyzers!")
+    stat_opts.add_argument('--stats-collect', '--stats-collect',
+                           action='store',
+                           default=argparse.SUPPRESS,
+                           dest='stats_output',
+                           help="Perform the first, 'collect' phase of "
+                                "Statistical analysis. This phase "
+                                "generates extra files needed by "
+                                "statistics analysis, and "
+                                "puts them into "
+                                "'<STATS_OUTPUT>'."
+                                " NOTE: If this argument is present, "
+                                "CodeChecker will NOT execute the "
+                                "analyzers!")
 
-        stat_opts.add_argument('--stats-use', '--stats-use',
-                               action='store',
-                               default=argparse.SUPPRESS,
-                               dest='stats_dir',
-                               help="Use the previously generated statistics "
-                                    "results for the analysis from the given "
-                                    "'<STATS_DIR>'.")
+    stat_opts.add_argument('--stats-use', '--stats-use',
+                           action='store',
+                           default=argparse.SUPPRESS,
+                           dest='stats_dir',
+                           help="Use the previously generated statistics "
+                                "results for the analysis from the given "
+                                "'<STATS_DIR>'.")
 
-        stat_opts.add_argument('--stats',
-                               action='store_true',
-                               default=argparse.SUPPRESS,
-                               dest='stats_enabled',
-                               help="Perform both phases of "
-                                    "Statistical analysis. This phase "
-                                    "generates extra files needed by "
-                                    "statistics analysis and enables "
-                                    "the statistical checkers. "
-                                    "No need to enable them explicitly.")
+    stat_opts.add_argument('--stats',
+                           action="store_true",
+                           default=argparse.SUPPRESS,
+                           dest='stats_enabled',
+                           help="Perform both phases of "
+                                "Statistical analysis. This phase "
+                                "generates extra files needed by "
+                                "statistics analysis and enables "
+                                "the statistical checkers. "
+                                "No need to enable them explicitly.")
 
-        stat_opts.add_argument('--stats-min-sample-count',
-                               action='store',
-                               default="10",
-                               type=int,
-                               dest='stats_min_sample_count',
-                               help="Minimum number of samples (function call"
-                                    " occurrences) to be collected"
-                                    " for a statistics to be relevant.")
+    stat_opts.add_argument('--stats-min-sample-count',
+                           action='store',
+                           default="10" if stats_capable
+                                   else argparse.SUPPRESS,
+                           type=int,
+                           dest='stats_min_sample_count',
+                           help="Minimum number of samples (function call"
+                                " occurrences) to be collected"
+                                " for a statistics to be relevant "
+                                "'<MIN-SAMPLE-COUNT>'.")
 
-        stat_opts.add_argument('--stats-relevance-threshold',
-                               action='store',
-                               default="0.85",
-                               type=float,
-                               dest='stats_relevance_threshold',
-                               help="The minimum ratio of calls of function "
-                                    "f that must have a certain property "
-                                    "property to consider it true for that "
-                                    "function (calculated as calls "
-                                    "with a property/all calls)."
-                                    " CodeChecker will warn for"
-                                    " calls of f do not have that property.")
+    stat_opts.add_argument('--stats-relevance-threshold',
+                           action='store',
+                           default="0.85" if stats_capable
+                                   else argparse.SUPPRESS,
+                           type=float,
+                           dest='stats_relevance_threshold',
+                           help="The minimum ratio of calls of function "
+                                "f that must have a certain property "
+                                "property to consider it true for that "
+                                "function (calculated as calls "
+                                "with a property/all calls)."
+                                " CodeChecker will warn for"
+                                " calls of f do not have that property."
+                                "'<RELEVANCE_THRESHOLD>'.")
 
     checkers_opts = parser.add_argument_group(
         "checker configuration",
@@ -885,6 +891,7 @@ def main(args):
 
     logfile = None
     analysis_exit_status = 1  # CodeChecker error.
+
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
@@ -898,7 +905,7 @@ def main(args):
             __update_if_key_exists(args, log_args, 'quiet')
             __update_if_key_exists(args, log_args, 'verbose')
 
-            import codechecker_analyzer.cmd.log as log_module
+            import codechecker_analyzer.cli.log as log_module
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
 
@@ -935,7 +942,6 @@ def main(args):
                           'cppcheck_args_cfg_file',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
-                          'infer_args_cfg_file',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',
@@ -967,7 +973,7 @@ def main(args):
         __update_if_key_exists(args, analyze_args, 'verbose')
         __update_if_key_exists(args, analyze_args, 'no_missing_checker_error')
 
-        import codechecker_analyzer.cmd.analyze as analyze_module
+        import codechecker_analyzer.cli.analyze as analyze_module
         LOG.debug("Calling ANALYZE with args:")
         LOG.debug(analyze_args)
 
@@ -985,7 +991,7 @@ def main(args):
         __update_if_key_exists(args, parse_args, 'skipfile')
         __update_if_key_exists(args, parse_args, 'suppress')
 
-        import codechecker_analyzer.cmd.parse as parse_module
+        import codechecker_analyzer.cli.parse as parse_module
         LOG.debug("Calling PARSE with args:")
         LOG.debug(parse_args)
 

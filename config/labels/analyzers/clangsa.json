@@ -322,23 +322,27 @@
     ],
     "core.BitwiseShift": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-bitwiseshift-c-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:int32-c",
       "sei-cert-c:int34-c",
       "severity:HIGH"
     ],
     "core.CallAndMessage": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-callandmessage-c-c-objc",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
       "sei-cert-c:dcl41-c",
       "sei-cert-c:exp30-c",
       "sei-cert-c:exp33-c",
@@ -372,11 +376,13 @@
     ],
     "core.NonNullParamChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nonnullparamchecker-c-c-objc",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
       "severity:HIGH"
     ],
@@ -387,11 +393,13 @@
     ],
     "core.NullDereference": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nulldereference-c-c-objc",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
       "severity:HIGH"
     ],
@@ -433,11 +441,13 @@
     ],
     "core.VLASize": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-vlasize-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
       "sei-cert-c:arr32-c",
       "severity:HIGH"
     ],
@@ -455,11 +465,13 @@
     ],
     "core.uninitialized.ArraySubscript": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-arraysubscript-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
       "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
@@ -495,11 +507,13 @@
     ],
     "core.uninitialized.NewArraySize": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-newarraysize-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
       "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
@@ -525,31 +539,37 @@
     ],
     "cplusplus.InnerPointer": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-innerpointer-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "sei-cert-cpp:mem50-cpp",
       "sei-cert-cpp:str52-cpp",
       "severity:HIGH"
     ],
     "cplusplus.Move": [
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "sei-cert-cpp:exp63-cpp",
       "severity:HIGH"
     ],
     "cplusplus.NewDelete": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-newdelete-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "sei-cert-cpp:exp54-cpp",
       "sei-cert-cpp:mem50-cpp",
       "sei-cert-cpp:mem51-cpp",
@@ -599,11 +619,14 @@
     ],
     "cplusplus.StringChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-stringchecker-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-476",
       "sei-cert-cpp:str51-cpp",
       "severity:HIGH"
     ],
@@ -684,9 +707,11 @@
     ],
     "nullability.NullReturnedFromNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullreturnedfromnonnull-objc",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
       "severity:HIGH"
     ],
     "nullability.NullabilityBase": [
@@ -776,20 +801,38 @@
     ],
     "optin.taint.GenericTaint": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
+      "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-20",
+      "cwe-top-25-2024:cwe-22",
+      "cwe-top-25-2024:cwe-77",
+      "cwe-top-25-2024:cwe-78",
+      "cwe-top-25-2024:cwe-79",
+      "cwe-top-25-2024:cwe-89",
+      "cwe-top-25-2024:cwe-94",
+      "owasp-top-10-2021:owasp-A01-2021",
+      "owasp-top-10-2021:owasp-A03-2021",
+      "owasp-top-10-2021:owasp-A04-2021",
+      "owasp-top-10-2021:owasp-A08-2021",
+      "owasp-top-10-2021:owasp-A10-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintedAlloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintedDiv": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-tainteddiv-c-c-objc",
+      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A03-2021",
       "severity:HIGH"
     ],
     "optin.taint.TaintPropagation": [
@@ -883,6 +926,17 @@
     "osx.coreFoundation.containers.PointerSizedValues": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-containers-pointersizedvalues-c"
     ],
+    "security.ArrayBound": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-arraybound-c-c",
+      "guideline:cwe-top-25-2024",
+      "profile:default",
+      "profile:security",
+      "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
+      "severity:HIGH"
+    ],
     "security.FloatLoopCounter": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-floatloopcounter-c",
       "guideline:sei-cert-c",
@@ -903,11 +957,13 @@
     ],
     "security.PointerSub": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-pointersub-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
       "sei-cert-c:arr36-c",
       "severity:HIGH"
     ],
@@ -924,11 +980,13 @@
     "security.SetgidSetuidOrder": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-setgidsetuidorder-c",
       "guideline:sei-cert-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pos36-c",
+      "owasp-top-10-2021:owasp-A04-2021",
       "severity:MEDIUM"
     ],
     "security.cert.env.InvalidPtr": [
@@ -984,11 +1042,15 @@
     ],
     "security.insecureAPI.gets": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-gets-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:str31-c",
       "severity:MEDIUM"
     ],
@@ -1001,24 +1063,32 @@
     ],
     "security.insecureAPI.mktemp": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-mktemp-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A01-2021",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.rand": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-rand-c",
+      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.strcpy": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-strcpy-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:extreme",
       "profile:security",
       "sei-cert-c:str31-c",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-787",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.vfork": [
@@ -1063,11 +1133,15 @@
     ],
     "unix.Malloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-20",
+      "cwe-top-25-2024:cwe-400",
+      "cwe-top-25-2024:cwe-416",
       "sei-cert-c:mem30-c",
       "sei-cert-c:mem31-c",
       "sei-cert-c:mem34-c",
@@ -1077,11 +1151,13 @@
     ],
     "unix.MallocSizeof": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mallocsizeof-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-190",
       "sei-cert-c:mem35-c",
       "severity:MEDIUM"
     ],
@@ -1097,11 +1173,16 @@
     ],
     "unix.StdCLibraryFunctions": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stdclibraryfunctions-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-119",
+      "cwe-top-25-2024:cwe-125",
+      "cwe-top-25-2024:cwe-476",
+      "cwe-top-25-2024:cwe-787",
       "sei-cert-c:arr38-c",
       "sei-cert-c:err33-c",
       "sei-cert-c:pos52-c",
@@ -1109,11 +1190,13 @@
     ],
     "unix.Stream": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stream-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-400",
       "sei-cert-c:fio42-c",
       "severity:MEDIUM"
     ],
@@ -1144,11 +1227,13 @@
     ],
     "unix.cstring.NullArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg-c",
+      "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
       "severity:HIGH"
     ],
