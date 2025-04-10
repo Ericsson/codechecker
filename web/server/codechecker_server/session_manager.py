@@ -278,8 +278,8 @@ class SessionManager:
         return result
 
     def get_oauth_callback_urls(self):
-        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
-            .get('providers', {})
+        oauth_config = self.scfg_dict.get('authentication', {}) \
+            .get('method_oauth', {}).get('providers', {})
         dict_to_return = {}
         for provider_name, provider_data in oauth_config.items():
             if provider_data.get('enabled'):
