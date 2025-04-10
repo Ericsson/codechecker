@@ -278,7 +278,8 @@ module.exports = {
     section.click("@input");
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
-    
+
+    // TODO: change this back afte Vue3 update.
     // dateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.compared-to-open-reports-date.v-dialog--active";
@@ -521,6 +522,8 @@ module.exports = {
       .to.be.visible.before(5000);
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
+
+    //removeComponentDialog.pause(100).click("@confirmBtn");
     browser.execute(function () {
       const dialog = ".remove-source-component-dialog";
       const btn = document.querySelector(dialog).querySelector(".remove-btn");
@@ -676,6 +679,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
+    // removeCleanupPlanDialog.click("@confirmBtn");
     browser.execute(function () {
       const btn = document.querySelector(".confirm-btn");
       if (btn) btn.click();
@@ -736,6 +740,7 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
+    //    fromDateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.detected-after.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -745,6 +750,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
+    // section.click("@to");
     browser.execute(function () {
       Array.from(document.querySelectorAll("label")).map(label => {
         if (label.innerText == "Detected before...") {
@@ -756,6 +762,7 @@ module.exports = {
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
+    // toDateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.detected-before.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -765,6 +772,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
+    // section.click("@clearBtn");
     browser.execute(function () {
       const section = "#detection-date-filter";
       const clrBtn = ".clear-btn";
@@ -788,7 +796,7 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-
+    // fromDateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.fixed-after.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -798,6 +806,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
+    // section.click("@to");
     browser.execute(function () {
       Array.from(document.querySelectorAll("label")).map(label => {
         if (label.innerText == "Fixed before...") {
@@ -809,6 +818,7 @@ module.exports = {
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
+    // toDateDialog.click("@date").click("@ok");
     browser.execute(function () {
       const dialog = ".v-dialog.fixed-before.v-dialog--active";
       const okBtn = ".ok-btn";
@@ -817,6 +827,7 @@ module.exports = {
     });
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
+    // section.click("@clearBtn");
     browser.execute(function () {
       const section = "#fix-date-filter";
       const clrBtn = ".clear-btn";
