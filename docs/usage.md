@@ -118,7 +118,7 @@ it will contain much information about this.
   [user guide](analyzer/user_guide.md#log).
 * MacOS users need `intercept-build` to be available on the system,
   and in most cases, _System Integrity Protection_ needs to be turned off.
-  See the [README](/README.md#mac-os-x) for details.
+  See the [README](README.md#mac-os-x) for details.
 
 ## Step 2: Analyze your code
 Once the build is logged successfully and the `compile_commands.json` was
