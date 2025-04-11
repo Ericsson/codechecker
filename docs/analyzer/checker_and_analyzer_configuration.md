@@ -12,29 +12,32 @@ Listing the available configuration options:
 Setting analyzer configuration options:
 `CodeChecker analyze --analyzer-config <key=value>`
 
-You can find a comprehensive list of analyzer configuration options at the
-[clang static analyzer
-documentation](https://github.com/llvm-mirror/clang/tree/master/docs) pages.
+The descriptions of these global analyzer options are also available on the
+[Configuring the
+Analyzer](https://clang.llvm.org/docs/analyzer/user-docs/Options.html) page of
+the Clang Static Analyzer Documentation.
 
 ## Checker Configuration <a name="checker-configuration"></a>
 
-Clang Static Analyzer checkers can be enabled and disabled using the
-`CodeChekcer analyze --enable <checker_name> --disable <checker_name>` flags.
-You can list/enable/disable all checkers for Clang Static Analyzer, except for
-the developer (debug and modeling) checkers.
+Clang Static Analyzer checkers can be enabled and disabled with the flags
+`CodeChecker analyze --enable <checker_name> --disable <checker_name>`. The
+checkers can be listed with `CodeChecker checkers --analyzers clangsa` and
+their full documentation can be found at the [Available
+Checkers](https://clang.llvm.org/docs/analyzer/checkers.html) page.
 
-Some checkers can be customized using checker specific configuration options.
+Note that these high-level CodeChecker operations hide some internal (debug or
+modeling) checkers that are only relevant for the developers of the Clang
+Static Analyzer.
 
-These can be listed using the `CodeChecker checkers --checker-config` command
-and can be set by `CodeChecker analyze --checker-config
-clangsa:<option-name>=<value>`.
-
-You can find the documentation of the configuration options at the [Clang Static
-Analyzer
-checkers](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers)
-page.
+Some checkers can be customized using checker specific configuration options,
+which can be set by `CodeChecker analyze --checker-config
+clangsa:<option-name>=<value>`. These options are documented on the [Available
+Checkers](https://clang.llvm.org/docs/analyzer/checkers.html) page (within the
+description of the corresponding checker) and they can be listed with the command
+`CodeChecker checkers --checker-config`.
 
 ## Clang Static Analyzer Special Configuration Options
+
 In special cases, when the checker and analyzer configurability that is provided
 by CodeChecker is not enough, the Clang Static analyzer configuration can be
 extended through the `--saargs` analysis option. The content of the saargs file
@@ -58,6 +61,7 @@ maximum number of times the analyzer will go through a loop, the default
 value is 4).
 
 ### Enabling developer checkers
+
 You cannot enable/disable developer checkers in CodeChecker using the `--enable`
 or `--disable` flags.
 
