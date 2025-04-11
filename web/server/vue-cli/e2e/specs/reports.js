@@ -279,9 +279,17 @@ module.exports = {
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    dateDialog
-      .click("@date")
-      .click("@ok");
+    // TODO: change this back afte Vue3 update.
+    // dateDialog.click("@date").click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.compared-to-open-reports-date.v-dialog--active";
+      const currentDay = ".v-date-picker-table__current";
+      const okBtn = ".ok-btn";
+      const dateElement = document.querySelector(dialog).querySelector(currentDay);
+      if (dateElement) dateElement.click();
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
@@ -515,7 +523,12 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    removeComponentDialog.pause(100).click("@confirmBtn");
+    //removeComponentDialog.pause(100).click("@confirmBtn");
+    browser.execute(function () {
+      const dialog = ".remove-source-component-dialog";
+      const btn = document.querySelector(dialog).querySelector(".remove-btn");
+      if (btn) btn.click();
+    });
 
     dialogSection
       .waitForElementVisible("@emptyTable")
@@ -666,7 +679,14 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    removeCleanupPlanDialog.click("@confirmBtn");
+    // removeCleanupPlanDialog.click("@confirmBtn");
+    browser.execute(function () {
+      const btn = document.querySelector(".confirm-btn");
+      if (btn) btn.click();
+    });
+
+    reportPage.expect.element("@overlay")
+      .to.not.be.present.before(5000);
 
     dialogSection
       .waitForElementVisible("@emptyTable")
@@ -720,22 +740,45 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    fromDateDialog
-      .click("@date")
-      .click("@ok");
+    //    fromDateDialog.click("@date").click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.detected-after.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@to");
+    // section.click("@to");
+    browser.execute(function () {
+      Array.from(document.querySelectorAll("label")).map(label => {
+        if (label.innerText == "Detected before...") {
+          label.parentNode.querySelector("input").click();
+        }
+      });
+    });
+
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    toDateDialog
-      .click("@date")
-      .click("@ok");
+    // toDateDialog.click("@date").click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.detected-before.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
-    section.click("@clearBtn");
+
+    // section.click("@clearBtn");
+    browser.execute(function () {
+      const section = "#detection-date-filter";
+      const clrBtn = ".clear-btn";
+      const btn = document.querySelector(section).querySelector(clrBtn);
+      if (btn) btn.click();
+    });
 
     reportPage
       .pause(500)
@@ -753,23 +796,44 @@ module.exports = {
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    fromDateDialog
-      .click("@date")
-      .click("@ok");
+    // fromDateDialog.click("@date").click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.fixed-after.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@to");
+    // section.click("@to");
+    browser.execute(function () {
+      Array.from(document.querySelectorAll("label")).map(label => {
+        if (label.innerText == "Fixed before...") {
+          label.parentNode.querySelector("input").click();
+        }
+      });
+    });
+
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    toDateDialog
-      .click("@date")
-      .click("@ok");
-
+    // toDateDialog.click("@date").click("@ok");
+    browser.execute(function () {
+      const dialog = ".v-dialog.fixed-before.v-dialog--active";
+      const okBtn = ".ok-btn";
+      const btn = document.querySelector(dialog).querySelector(okBtn);
+      if (btn) btn.click();
+    });
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    section.click("@clearBtn");
+    // section.click("@clearBtn");
+    browser.execute(function () {
+      const section = "#fix-date-filter";
+      const clrBtn = ".clear-btn";
+      const btn = document.querySelector(section).querySelector(clrBtn);
+      if (btn) btn.click();
+    });
 
     reportPage
       .pause(500)

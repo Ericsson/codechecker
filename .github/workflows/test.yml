@@ -214,6 +214,7 @@ jobs:
       - name: Build the package
         run: |
           make pip_dev_deps
+          pip3 install -r web/requirements_py/auth/requirements.txt
           make package
 
       - name: Run tests
