@@ -26,6 +26,8 @@ further details.
 The Web application separates products based on their unique endpoint. The
 home page of the server is the product list, shown above.
 
+**
+
 Table of Contents
 =================
 * [First start](#first-start)
@@ -45,6 +47,12 @@ with a SQLite database file next to the configuration database, in
 
 This does NOT hold true for PostgreSQL configuration backends. These servers,
 as PostgreSQL is advanced usage, must be configured manually.
+
+**Note:** In earlier versions, absolute paths to SQLite databases were allowed.
+These databases will continue to work, but new SQLite databases can only be
+created in the CodeChecker server's configuration directory
+(`/home/<username>/.codechecker` by default). If an SQLite database needs to be
+stored in another directory, place symlinks inside the config directory.
 
 # Managing products through the command-line tool, `CodeChecker cmd` <a name="cmd"></a>
 
