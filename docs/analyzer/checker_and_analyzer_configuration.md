@@ -17,9 +17,6 @@ The descriptions of these global analyzer options are also available on the
 Analyzer](https://clang.llvm.org/docs/analyzer/user-docs/Options.html) page of
 the Clang Static Analyzer Documentation.
 
-See also ``CodeChecker analyze --help`` for more specific applications, e.g.
-alternatives for the old deprecated ``--saargs`` flag.
-
 ## Checker Configuration <a name="checker-configuration"></a>
 
 Clang Static Analyzer checkers can be enabled and disabled with the flags
