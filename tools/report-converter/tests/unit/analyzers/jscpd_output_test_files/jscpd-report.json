@@ -1,0 +1,133 @@
+{
+  "statistics": {
+    "detectionDate": "2025-04-13T17:26:17.283Z",
+    "formats": {
+      "c": {
+        "sources": {
+          "files/duplicate2.c": {
+            "lines": 11,
+            "tokens": 88,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 9,
+            "duplicatedTokens": 77,
+            "percentage": 81.82,
+            "percentageTokens": 87.5,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "files/duplicate1.c": {
+            "lines": 29,
+            "tokens": 236,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 25,
+            "duplicatedTokens": 211,
+            "percentage": 86.21,
+            "percentageTokens": 89.41,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 40,
+          "tokens": 324,
+          "sources": 2,
+          "clones": 2,
+          "duplicatedLines": 17,
+          "duplicatedTokens": 144,
+          "percentage": 42.5,
+          "percentageTokens": 44.44,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 40,
+      "tokens": 324,
+      "sources": 2,
+      "clones": 2,
+      "duplicatedLines": 17,
+      "duplicatedTokens": 144,
+      "percentage": 42.5,
+      "percentageTokens": 44.44,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "c",
+      "lines": 9,
+      "fragment": "oid greet_and_add2() {\n    printf(\"Hello, User! How are you doing today?\\n\");\n    int a = 5;\n    int b = 7;\n    int result = a + b;\n    printf(\"The sum of %d and %d is: %d\\n\", a, b, result);\n}\n\nv",
+      "tokens": 0,
+      "firstFile": {
+        "name": "files/duplicate1.c",
+        "start": 11,
+        "end": 19,
+        "startLoc": {
+          "line": 11,
+          "column": 15,
+          "position": 73
+        },
+        "endLoc": {
+          "line": 19,
+          "column": 15,
+          "position": 140
+        }
+      },
+      "secondFile": {
+        "name": "files/duplicate1.c",
+        "start": 3,
+        "end": 11,
+        "startLoc": {
+          "line": 3,
+          "column": 15,
+          "position": 5
+        },
+        "endLoc": {
+          "line": 11,
+          "column": 15,
+          "position": 72
+        }
+      }
+    },
+    {
+      "format": "c",
+      "lines": 10,
+      "fragment": "a, b, result);\n}\n\nvoid greet_and_add3() {\n    printf(\"Hey there! What's up?\\n\");\n    int a = 5;\n    int c = 6;\n    int result = a * c;\n    printf(\"The result of %d * %d is: %d\\n\", a, c, result);\n}\n\nint main() {\n",
+      "tokens": 0,
+      "firstFile": {
+        "name": "files/duplicate1.c",
+        "start": 19,
+        "end": 28,
+        "startLoc": {
+          "line": 19,
+          "column": 1,
+          "position": 138
+        },
+        "endLoc": {
+          "line": 28,
+          "column": 15,
+          "position": 215
+        }
+      },
+      "secondFile": {
+        "name": "files/duplicate2.c",
+        "start": 3,
+        "end": 12,
+        "startLoc": {
+          "line": 3,
+          "column": 1,
+          "position": 2
+        },
+        "endLoc": {
+          "line": 12,
+          "column": 15,
+          "position": 79
+        }
+      }
+    }
+  ]
+}
