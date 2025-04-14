@@ -105,3 +105,11 @@ def merge_if_no_collision(existing: Dict[Any, Any],
         except KeyError:
             # No conflicts for truly new elements.
             existing[k] = v
+
+
+def remove_falsy_mapped(d: Dict[Any, Optional[Any]]) -> Dict[Any, Any]:
+    """
+    Returns a copy of the dictionary `d` where keys which have a _falsy_ value
+    mapped are removed.
+    """
+    return dict(filter(lambda kv: kv[1], d.items()))
