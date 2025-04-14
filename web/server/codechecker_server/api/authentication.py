@@ -33,7 +33,7 @@ from codechecker_common.logger import get_logger
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Product, ProductPermission, Session, \
-    OAuthSession, PersonalAccessToken as PersonalAccessTokenDB, \
+    OAuthSession, OAuthToken, PersonalAccessToken as PersonalAccessTokenDB, \
     SystemPermission
 from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
@@ -155,7 +155,7 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
-    def __insertOAuthSession(self,
+    def insertOAuthSession(self,
                              state: str,
                              code_verifier: str,
                              provider: str):

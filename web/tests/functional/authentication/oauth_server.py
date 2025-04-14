@@ -217,7 +217,6 @@ class OauthServer(BaseHTTPRequestHandler):
         else:
             return self.show_rejection("Unsupported POST path")
 
-
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
 print(f"Server started http://{HOSTNAME}:{SERVERPORT}")
