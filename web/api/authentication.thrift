@@ -51,6 +51,10 @@ struct AccessControl {
   1: Permissions globalPermissions,
   2: map<string, Permissions> productPermissions,
 }
+struct OauthDataTable {
+  1: string item1,
+  2: string item2,
+}
 
 service codeCheckerAuthentication {
 
@@ -77,6 +81,18 @@ service codeCheckerAuthentication {
   string performLogin(1: string authMethod,
                       2: string authString)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Handles reguesting state stored in database for OAuth
+  bool validateOAuthSession(1: string state),
+
+  // Handles reguesting access_token stored in database for OAuth verification
+  bool validateOAuthTokenSession(1: string access_code)
+
+  // Handles insertion of OAuth data for temporary use in database
+  void insertOAuthSession(1: string state,
+                          2: string code_verifier
+                          3: string provider)
+                          throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns a list of providers for OAuth for respective appearance of buttons.
   list<string> getOauthProviders(),

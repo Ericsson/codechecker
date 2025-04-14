@@ -215,10 +215,23 @@ class DictAuth(unittest.TestCase):
             f"&code_challenge_method={code_challenge_method}" \
             f"&code_challenge={code_challenge}"
 
+        validate_result = auth_client.validateOAuthSession(state)
+        self.assertTrue(validate_result, "State in begigning and" \
+                        " ending of OAuth is different")
+
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
 
         return self.session_token
+
+    def test_oauth_token_session(self):
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        self.try_login("github", "admin_github", "admin")
+        result = auth_client.validateOAuthTokenSession("github1")
+
+        self.assertTrue(result, "Access_token wasn't inserted in Database")
 
     def test_oauth_allowed_users_default(self):
         """
@@ -228,6 +241,48 @@ class DictAuth(unittest.TestCase):
         # The following user is in the list of allowed users: GITHUB
         session = self.try_login("google", "admin_github", "admin")
         self.assertIsNotNone(session, "allowed user could not login")
+
+    def test_oauth_create_link(self):
+        """
+        Tests functionality of create_link method
+        that checks if it creates unique links correctly.
+
+        """
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        link_github = auth_client.createLink("github")
+        link_google = auth_client.createLink("google")
+
+        self.assertIsNotNone(link_github,
+                             "Authorization link for Github created empty")
+
+        self.assertIsNotNone(link_google,
+                             "Authorization link for Google created empty")
+
+        self.assertNotEqual(link_github,
+                            link_google,
+                            "Function created identical links")
+
+    def test_oauth_insert_oauth_session(self):
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+        state = "GTUHGJ"
+        code_verifier = "54GJITG3gVBT"
+        provider = "github"
+        auth_client.insertOAuthSession(state,
+                                       code_verifier,
+                                       provider)
+
+        result = auth_client.validateOAuthSession(state)
+
+        self.assertTrue(result, "No entry found in database, " \
+        "unexpected behavior")
+
+        with self.assertRaises(TypeError):
+            auth_client.insertOAuthSession(1,
+                                           2,
+                                           3)
 
     def test_oauth_invalid_credentials(self):
         """
