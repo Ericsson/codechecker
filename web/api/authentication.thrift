@@ -33,6 +33,15 @@ struct SessionTokenData {
 }
 typedef list<SessionTokenData> SessionTokenDataList
 
+struct PersonalAccessToken {
+  1: string token,
+  2: string name,
+  3: string description,
+  4: string lastAccess,
+  5: string expiration,
+}
+typedef list<PersonalAccessToken> PersonalAccessTokenList
+
 struct Permissions {
   1: map<string, list<string>> user,
   2: map<string, list<string>> group,
@@ -154,4 +163,14 @@ service codeCheckerAuthentication {
   bool removeToken(1: string token)
                    throws (1: codechecker_api_shared.RequestFailed requestError)
 
+  PersonalAccessTokenList getPersonalAccessTokens()
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
+  PersonalAccessToken newPersonalAccessToken(
+    1: string name,
+    2: optional string description)
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
+  bool removePersonalAccessToken(1: string name)
+    throws (1: codechecker_api_shared.RequestFailed requestError)
 }

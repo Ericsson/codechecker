@@ -366,7 +366,8 @@ class DictAuth(unittest.TestCase):
         port = codechecker_cfg['viewer_port']
 
         new_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'new',
-                         '--url', env.parts_to_url(codechecker_cfg)]
+                         '--url', env.parts_to_url(codechecker_cfg),
+                         '--name', 'my_token']
 
         with self.assertRaises(subprocess.CalledProcessError):
             subprocess.check_output(
@@ -411,7 +412,7 @@ class DictAuth(unittest.TestCase):
         # Remove personal access token.
         del_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'del',
                          '--url', env.parts_to_url(codechecker_cfg),
-                         tokens[0]['token']]
+                         tokens[0]['name']]
 
         subprocess.check_output(
             del_token_cmd,
