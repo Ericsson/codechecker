@@ -106,14 +106,7 @@ class OauthServer(BaseHTTPRequestHandler):
         else:
             return self.show_rejection("Invalid token")
 
-    def do_GET(self):
-        if self.path.startswith("/login"):
-            return self.login_tester()
-        elif self.path.startswith("/get_user"):
-            return self.get_user()
-        return self.path
-
-    def do_POST(self):
+    def handle_user_token_request(self):
         params = {}
         raw = self.rfile.read(
             int(self.headers.get('Content-Length'))).decode("utf-8")
@@ -135,6 +128,18 @@ class OauthServer(BaseHTTPRequestHandler):
                 return self.show_rejection("Invalid code")
         return self.path
 
+    def do_GET(self):
+        if self.path.startswith("/login"):
+            return self.login_tester()
+        elif self.path.startswith("/get_user"):
+            return self.get_user()
+        return self.path
+
+    def do_POST(self):
+        if self.path.endswith("/token"):
+            return self.handle_user_token_request()
+        else:
+            return self.show_rejection("Unsupported POST path")
 
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
