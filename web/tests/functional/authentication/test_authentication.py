@@ -98,19 +98,22 @@ class DictAuth(unittest.TestCase):
         self.assertEqual(user, "cc")
 
         # No personal token in the database.
-        personal_tokens = authd_auth_client.getTokens()
+        personal_tokens = authd_auth_client.getPersonalAccessTokens()
         self.assertEqual(len(personal_tokens), 0)
 
         # Create a new personal token.
         description = "description"
-        personal_token = authd_auth_client.newToken(description)
+        name = "name"
+        personal_token = authd_auth_client.newPersonalAccessToken(
+            name, description)
         token = personal_token.token
         self.assertEqual(personal_token.description, description)
 
         # Check whether the new token has been added.
-        personal_tokens = authd_auth_client.getTokens()
+        personal_tokens = authd_auth_client.getPersonalAccessTokens()
         self.assertEqual(len(personal_tokens), 1)
-        self.assertEqual(personal_tokens[0].token, token)
+        self.assertEqual(personal_tokens[0].token, "")
+        self.assertEqual(personal_tokens[0].name, name)
         self.assertEqual(personal_tokens[0].description, description)
 
         auth_client = env.setup_auth_client(self._test_workspace,
@@ -143,6 +146,9 @@ class DictAuth(unittest.TestCase):
         self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
+        auth_token_client = \
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=self.session_token)
         user = auth_token_client.getLoggedInUser()
         self.assertEqual(user, "cc")
 
@@ -161,11 +167,11 @@ class DictAuth(unittest.TestCase):
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token=self.session_token)
         # Remove the generated personal token.
-        ret = auth_client.removeToken(token)
+        ret = auth_client.removePersonalAccessToken(name)
         self.assertTrue(ret)
 
         # Check whether no more personal token in the database.
-        personal_tokens = auth_client.getTokens()
+        personal_tokens = auth_client.getPersonalAccessTokens()
         self.assertEqual(len(personal_tokens), 0)
 
         result = auth_client.destroySession()
@@ -366,7 +372,8 @@ class DictAuth(unittest.TestCase):
         port = codechecker_cfg['viewer_port']
 
         new_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'new',
-                         '--url', env.parts_to_url(codechecker_cfg)]
+                         '--url', env.parts_to_url(codechecker_cfg),
+                         'my_token']
 
         with self.assertRaises(subprocess.CalledProcessError):
             subprocess.check_output(
@@ -411,7 +418,7 @@ class DictAuth(unittest.TestCase):
         # Remove personal access token.
         del_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'del',
                          '--url', env.parts_to_url(codechecker_cfg),
-                         tokens[0]['token']]
+                         tokens[0]['name']]
 
         subprocess.check_output(
             del_token_cmd,

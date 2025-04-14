@@ -634,14 +634,24 @@ Personal tokens can be written instead of the user's password in the
 usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
                                  [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
+                                 NAME
 
 Creating a new personal access token.
 
-optional arguments:
+positional arguments:
+  NAME                  A unique name that identifies the access token.
+
+options:
   -h, --help            show this help message and exit
   --description DESCRIPTION
                         A custom textual description to be shown alongside the
                         token.
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>
 
@@ -654,13 +664,22 @@ optional arguments:
 ```
 usage: CodeChecker cmd token list [-h] [--url SERVER_URL]
                                   [-o {plaintext,html,rows,table,csv,json}]
-                                  [-e EXPORT_DIR] [-c]
                                   [--verbose {info,debug,debug_analyzer}]
 
 List the available personal access tokens.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
+  -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
+                        The output format(s) to use in showing the data. Mind
+                        that some output formats are (like 'json') more verbose
+                        than others (like 'plaintext'). (default: plaintext)
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>
 
@@ -673,11 +692,20 @@ optional arguments:
 ```
 usage: CodeChecker cmd token del [-h] [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
-                                 TOKEN
+                                 NAME
 
 Removes the specified access token.
 
 positional arguments:
-  TOKEN                 Personal access token which will be deleted.
+  NAME                  Name of the personal access token that will be deleted.
+
+options:
+  -h, --help            show this help message and exit
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>

@@ -77,15 +77,16 @@ def login_user(protocol, host, port, username, login=False):
     If login is False the user will be logged out.
     """
     session = UserCredentials()
-    auth_client = ThriftAuthHelper(protocol, host, port,
-                                   '/v' + CLIENT_API + '/Authentication')
 
     if not login:
+        auth_client = init_auth_client(protocol, host, port)
         logout_done = auth_client.destroySession()
         if logout_done:
             session.save_token(host, port, None, True)
             LOG.info("Successfully logged out.")
         return
+
+    auth_client = setup_auth_client(protocol, host, port)
 
     try:
         handshake = auth_client.getAuthParameters()

@@ -26,6 +26,7 @@ from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import OAuthToken
+from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
 
@@ -418,7 +419,8 @@ class SessionManager:
 
         This validation object contains two keys: username and groups.
         """
-        validation = self.__try_auth_dictionary(auth_string) \
+        validation = self.__try_personal_access_token(auth_string) \
+            or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string)
         if not validation:
@@ -450,9 +452,11 @@ class SessionManager:
             # Try the database, if it is connected.
             transaction = self.__database_connection()
             auth_session = transaction.query(SessionRecord.token) \
-                .filter(SessionRecord.user_name == user_name) \
-                .filter(SessionRecord.token == token) \
-                .filter(SessionRecord.can_expire.is_(False)) \
+                .join(
+                    PersonalAccessToken,
+                    PersonalAccessToken.auth_session_id == SessionRecord.id) \
+                .filter(PersonalAccessToken.user_name == user_name) \
+                .filter(PersonalAccessToken.token == token) \
                 .limit(1).one_or_none()
 
             if not auth_session:
@@ -467,6 +471,34 @@ class SessionManager:
                 transaction.close()
 
         return None
+
+    def __try_personal_access_token(self, auth_string):
+        if not self.__database_connection:
+            return None
+
+        user_name, token = auth_string.split(':', 1)
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            personal_access_token = transaction.query(PersonalAccessToken) \
+                .filter(PersonalAccessToken.user_name == user_name) \
+                .filter(PersonalAccessToken.token == token) \
+                .limit(1).one_or_none()
+        except Exception as e:
+            LOG.error("Couldn't check login in the database:")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
+
+        if not personal_access_token:
+            return False
+
+        return {
+            'username': personal_access_token.user_name,
+            'groups': personal_access_token.groups
+        }
 
     def __try_auth_dictionary(self, auth_string):
         """
@@ -570,31 +602,6 @@ class SessionManager:
     @staticmethod
     def get_user_name(auth_string):
         return auth_string.split(':')[0]
-
-    def get_db_auth_session_tokens(self, user_name):
-        """
-        Get authentication session token from the database for the given user.
-        """
-        if not self.__database_connection:
-            return None
-
-        transaction = None
-        try:
-            # Try the database, if it is connected.
-            transaction = self.__database_connection()
-            session_tokens = transaction.query(SessionRecord) \
-                .filter(SessionRecord.user_name == user_name) \
-                .filter(SessionRecord.can_expire.is_(True)) \
-                .all()
-            return session_tokens
-        except Exception as e:
-            LOG.error("Couldn't check login in the database: ")
-            LOG.error(str(e))
-        finally:
-            if transaction:
-                transaction.close()
-
-        return None
 
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """

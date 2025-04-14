@@ -1233,6 +1233,11 @@ def __register_token(parser):
     """
 
     def __register_new(parser):
+        parser.add_argument("name",
+                            type=str,
+                            metavar='NAME',
+                            help="A unique name that identifies the access "
+                                 "token.")
         parser.add_argument("--description",
                             type=str,
                             metavar='DESCRIPTION',
@@ -1245,12 +1250,12 @@ def __register_token(parser):
         """
         Add argparse subcommand parser for the "del token" action.
         """
-        parser.add_argument("token",
+        parser.add_argument("name",
                             type=str,
-                            metavar='TOKEN',
+                            metavar='NAME',
                             default=argparse.SUPPRESS,
-                            help="Personal access token which will be "
-                                 "deleted.")
+                            help="Name of the personal access token that will "
+                                 "be deleted.")
 
     subcommands = parser.add_subparsers(title='available actions')
 
