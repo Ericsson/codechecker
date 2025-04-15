@@ -156,9 +156,9 @@ class ThriftAuthHandler:
 
     @timeit
     def insertOAuthSession(self,
-                             state: str,
-                             code_verifier: str,
-                             provider: str):
+                           state: str,
+                           code_verifier: str,
+                           provider: str):
         """
         Removes the expired oauth sessions #Subject to change.
         Inserts a new row of oauth data into database containing:
@@ -251,8 +251,8 @@ class ThriftAuthHandler:
             )
 
         self.insertOAuthSession(state=state,
-                                  code_verifier=pkce_verifier,
-                                  provider=provider)
+                                code_verifier=pkce_verifier,
+                                provider=provider)
         return url
 
     @timeit
@@ -294,9 +294,9 @@ class ThriftAuthHandler:
         with DBSession(self.__config_db) as session:
             state_db, code_verifier_db, provider_db, expires_at_db = \
                 session.query(OAuthSession.state,
-                                OAuthSession.code_verifier,
-                                OAuthSession.provider,
-                                OAuthSession.expires_at) \
+                              OAuthSession.code_verifier,
+                              OAuthSession.provider,
+                              OAuthSession.expires_at) \
                 .filter(OAuthSession.state == state) \
                 .first()
             if not state_db or not code_verifier_db \
