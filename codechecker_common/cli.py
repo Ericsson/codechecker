@@ -165,6 +165,7 @@ output.
             for subcommand in subcommands:
                 try:
                     print(str(help("modules")))
+                    print(str(sys.executable))
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
