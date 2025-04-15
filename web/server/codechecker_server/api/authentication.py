@@ -389,10 +389,17 @@ class ThriftAuthHandler:
                     user_groups_url = oauth_config["user_groups_url"]
                     response = oauth2_session.get(user_groups_url).json()
 
-                    for group in response["value"]:
-                        if group.get("onPremisesSyncEnabled") and \
-                                group.get("securityEnabled"):
-                            groups.append(group["displayName"])
+                    morePages = True
+                    while morePages:
+                        for group in response["value"]:
+                            if group.get("onPremisesSyncEnabled") and \
+                                    group.get("securityEnabled"):
+                                groups.append(group["displayName"])
+                        # paging of groups
+                        morePages = "@odata.nextLink" in response
+                        if morePages:
+                            response = oauth2_session.get(
+                                response["@odata.nextLink"]).json()
 
             except Exception as ex:
                 LOG.error("User info fetch failed: %s", str(ex))
