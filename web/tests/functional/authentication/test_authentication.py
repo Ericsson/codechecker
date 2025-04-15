@@ -216,7 +216,7 @@ class DictAuth(unittest.TestCase):
             f"&code_challenge={code_challenge}"
 
         validate_result = auth_client.validateOAuthSession(state)
-        self.assertTrue(validate_result, "State in begigning and" \
+        self.assertTrue(validate_result, "State in begigning and"
                         " ending of OAuth is different")
 
         self.session_token = auth_client.performLogin(
@@ -276,8 +276,8 @@ class DictAuth(unittest.TestCase):
 
         result = auth_client.validateOAuthSession(state)
 
-        self.assertTrue(result, "No entry found in database, " \
-        "unexpected behavior")
+        self.assertTrue(result, "No entry found in database, "
+                        "unexpected behavior")
 
         with self.assertRaises(TypeError):
             auth_client.insertOAuthSession(1,
