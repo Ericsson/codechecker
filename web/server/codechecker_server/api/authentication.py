@@ -156,9 +156,9 @@ class ThriftAuthHandler:
 
     @timeit
     def insertOAuthSession(self,
-                             state: str,
-                             code_verifier: str,
-                             provider: str):
+                           state: str,
+                           code_verifier: str,
+                           provider: str):
         """
         Removes the expired oauth sessions #Subject to change.
         Inserts a new row of oauth data into database containing:
