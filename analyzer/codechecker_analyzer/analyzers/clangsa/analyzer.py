@@ -180,11 +180,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_binary_version(cls, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
+        if not cls.analyzer_binary():
+            return None
 
         environ = analyzer_context.get_context().get_env_for_bin(
             cls.analyzer_binary())
-        if not cls.analyzer_binary():
-            return None
 
         if details:
             ver = [cls.analyzer_binary(), '--version']
