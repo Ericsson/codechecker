@@ -164,8 +164,9 @@ output.
             lib_dir_path = os.environ.get('CC_LIB_DIR')
             for subcommand in subcommands:
                 try:
-                    print(str(help("modules")))
-                    print(str(sys.executable))
+                    print('Modules list from CodeChecker:')
+                    help("modules")
+                    print(f'CodeChecker interpreter: {str(sys.executable)}')
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
