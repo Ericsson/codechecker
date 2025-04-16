@@ -165,8 +165,9 @@ output.
             lib_dir_path = os.environ.get('CC_LIB_DIR')
             for subcommand in subcommands:
                 try:
-                    print('Modules list from CodeChecker: %s', str(
+                    print(f'Modules list from CodeChecker:', str(
                         [name for _, name, _ in pkgutil.iter_modules()]))
+                    print('Env from CodeChecker:', str(os.environ))
                     print(f'CodeChecker interpreter: {str(sys.executable)}')
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
