@@ -168,7 +168,8 @@ output.
                     print(f'Modules list from CodeChecker:', str(
                         [name for _, name, _ in pkgutil.iter_modules()]))
                     print('Env from CodeChecker:', str(os.environ))
-                    print(f'CodeChecker interpreter: {str(sys.executable)}')
+                    print('CodeChecker interpreter: ' \
+                          f'{os.path.realpath(sys.executable)}')
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
