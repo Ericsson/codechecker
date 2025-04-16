@@ -19,6 +19,7 @@
             </v-container>
           </v-card-title>
           <v-card-actions
+            v-if="providers.length !== 0"
             id="btn-container"
             class="d-flex justify-center flex-column"
           >
@@ -226,6 +227,7 @@ export default {
         if (providers) {
           this.providers = providers;
         }
+        this.optionsShow = this.providers.length === 0;
       }).catch(err => {
         this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
         this.error = true;
