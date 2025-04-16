@@ -21,6 +21,7 @@ import re
 import shlex
 import subprocess
 import unittest
+import sys
 
 
 def find_prog(prog):
@@ -45,12 +46,7 @@ class TestBaseTest(unittest.TestCase):
         # Move to test dir
         cls.test_dir = os.path.abspath(os.path.dirname(__file__))
         os.chdir(cls.test_dir)
-        print("")
-        print("test dir: " + cls.test_dir)
-        print(find_prog("CodeChecker"))
-        print(subprocess.check_output(
-            ["ls", os.path.join(os.environ['REPO_ROOT'],
-                                'build', 'CodeChecker',  'bin')]))
+        print(f"test interpreter: {os.path.realpath(sys.executable)}")
 
     @classmethod
     def tearDownClass(cls):
