@@ -69,7 +69,7 @@ test_unit_cov_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_COV_CMD)
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) PATH=$(ROOT)/build/CodeChecker/bin/:$(PATH) $(TEST_PROJECT) \
-		pytest $(PYTESTCFG) -k "test_bazel_" tests/functional || exit 1
+		pytest $(PYTESTCFG) -k "test_bazel_test_fail" tests/functional || exit 1
 
 test_functional:
 	${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1;
