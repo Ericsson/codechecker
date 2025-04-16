@@ -167,7 +167,6 @@ output.
                 try:
                     print('Modules list from CodeChecker: %s', str(
                         [name for _, name, _ in pkgutil.iter_modules()]))
-                    help("modules")
                     print(f'CodeChecker interpreter: {str(sys.executable)}')
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
