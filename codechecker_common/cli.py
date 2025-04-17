@@ -17,6 +17,7 @@ import json
 import os
 import signal
 import sys
+import pkgutil
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -164,6 +165,11 @@ output.
             lib_dir_path = os.environ.get('CC_LIB_DIR')
             for subcommand in subcommands:
                 try:
+                    print(f'Modules list from CodeChecker:', str(
+                        [name for _, name, _ in pkgutil.iter_modules()]))
+                    print('Env from CodeChecker:', str(os.environ))
+                    print('CodeChecker interpreter: ' \
+                          f'{os.path.realpath(sys.executable)}')
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
