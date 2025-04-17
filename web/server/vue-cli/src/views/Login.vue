@@ -27,9 +27,9 @@
               block
               x-large
               color="primary"
-              @click="openModal"
+              @click="ssoButtonHandleClickEvent"
             >
-              SSO login
+              {{ ssoButtonText }}
             </v-btn>
             <a
               href="#"
@@ -168,7 +168,11 @@ export default {
   computed: {
     ...mapGetters([
       "isAuthenticated"
-    ])
+    ]),
+    ssoButtonText() {
+      return this.providers.length === 1 ?
+        `Login with ${this.providers[0]}` : "SSO Login";
+    }
   },
 
   watch: {
@@ -198,6 +202,10 @@ export default {
     },
     toggleOtherLoginOptions() {
       this.optionsShow = !this.optionsShow;
+    },
+    ssoButtonHandleClickEvent() {
+      return this.providers.length === 1 ?
+        this.oauth(this.providers[0]) : this.openModal();
     },
     login() {
       if (!this.valid) return;
