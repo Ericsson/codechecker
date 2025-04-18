@@ -95,3 +95,15 @@ class ThriftAuthHelper(BaseClientHelper):
     @thrift_client_call
     def getTokens(self):
         pass
+
+    @thrift_client_call
+    def newPersonalAccessToken(self, name, description):
+        pass
+
+    @thrift_client_call
+    def removePersonalAccessToken(self, name):
+        pass
+
+    @thrift_client_call
+    def getPersonalAccessTokens(self):
+        pass

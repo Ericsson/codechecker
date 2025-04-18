@@ -64,6 +64,10 @@
 
       <v-divider />
 
+      <personal-access-token-btn />
+
+      <v-divider />
+
       <v-card-actions>
         <v-spacer />
 
@@ -89,10 +93,13 @@ import { Permission } from "@cc/shared-types";
 
 import { UserIcon } from "@/components/Icons";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
+import PersonalAccessTokenBtn from
+  "@/components/Layout/PersonalAccessTokenBtn";
 
 export default {
   name: "UserInfoMenu",
   components: {
+    PersonalAccessTokenBtn,
     UserIcon
   },
   data() {
