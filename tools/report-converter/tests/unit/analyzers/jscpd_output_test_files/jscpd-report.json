@@ -1,0 +1,85 @@
+{
+    "statistics": {
+      "detectionDate": "2023-05-21T21:55:38.706Z",
+      "formats": {
+        "python": {
+          "sources": {
+            "main_copy.py": {
+              "lines": 19,
+              "tokens": 122,
+              "sources": 1,
+              "clones": 2,
+              "duplicatedLines": 14,
+              "duplicatedTokens": 90,
+              "percentage": 73.68,
+              "percentageTokens": 73.77,
+              "newDuplicatedLines": 0,
+              "newClones": 0
+            }
+          },
+          "total": {
+            "lines": 19,
+            "tokens": 122,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 7,
+            "duplicatedTokens": 45,
+            "percentage": 36.84,
+            "percentageTokens": 36.89,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        }
+      },
+      "total": {
+        "lines": 19,
+        "tokens": 122,
+        "sources": 1,
+        "clones": 1,
+        "duplicatedLines": 7,
+        "duplicatedTokens": 45,
+        "percentage": 36.84,
+        "percentageTokens": 36.89,
+        "newDuplicatedLines": 0,
+        "newClones": 0
+      }
+    },
+    "duplicates": [
+      {
+        "format": "python",
+        "lines": 8,
+        "fragment": "():\n    print(\"Hello, User! How are you doing today?\")\n    a = 5\n    b = 7\n    result = a + b\n    print(f\"The sum of {a} and {b} is: {result}\")\n\ndef main",
+        "tokens": 0,
+        "firstFile": {
+          "name": "files/duplicate.py",
+          "start": 8,
+          "end": 15,
+          "startLoc": {
+            "line": 8,
+            "column": 15,
+            "position": 49
+          },
+          "endLoc": {
+            "line": 15,
+            "column": 5,
+            "position": 94
+          }
+        },
+        "secondFile": {
+          "name": "files/duplicate.py",
+          "start": 1,
+          "end": 8,
+          "startLoc": {
+            "line": 1,
+            "column": 15,
+            "position": 3
+          },
+          "endLoc": {
+            "line": 8,
+            "column": 15,
+            "position": 48
+          }
+        }
+      }
+    ]
+  }
