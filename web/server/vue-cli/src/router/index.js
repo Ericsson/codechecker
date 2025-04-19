@@ -132,6 +132,6 @@ CheckerCoverageStatistics"),
           component: () => import("@/views/SourceComponent")
         },
       ]
-    }
+    },
   ]
 });

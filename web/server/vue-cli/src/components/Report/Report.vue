@@ -265,6 +265,26 @@
         />
       </v-col>
     </v-row>
+
+    <div class="code-viewer">
+      <div class="toolbar">
+        <v-btn
+          :title="showCoverage ? 'Hide coverage' : 'Show coverage'"
+          small
+          icon
+          @click="toggleCoverageView(!showCoverage)"
+        >
+          <v-icon>mdi-chart-bar</v-icon>
+        </v-btn>
+      </div>
+      <coverage-visualization
+        v-if="showCoverage"
+        :coverage-data="coverageData"
+        :file-name="currentFile"
+        :code-lines="fileContent"
+        @toggle-coverage="toggleCoverage"
+      />
+    </div>
   </v-container>
 </template>
 
@@ -317,6 +337,7 @@ import SelectSameReport from "./SelectSameReport";
 import { ReportInfoButton, ShowReportInfoDialog } from "./ReportInfo";
 
 import ReportStepMessage from "./ReportStepMessage";
+import CoverageVisualization from "./CoverageVisualization.vue";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 
 export default {
@@ -332,7 +353,8 @@ export default {
     SetCleanupPlanBtn,
     ShowReportInfoDialog,
     ToggleBlameViewBtn,
-    UserIcon
+    UserIcon,
+    CoverageVisualization
   },
   directives: { FillHeight },
   mixins: [ GitBlameMixin ],
@@ -364,9 +386,49 @@ export default {
       annotation: null,
       selectedChecker: null,
       analysisInfoDialog: false,
-      reportId: null,
+      reportId: "test-report-123",
       enableBlameView,
-      docUrl: null
+      docUrl: null,
+      showCoverage: true,
+      coverageData: {
+        totalLines: 100,
+        coveredLines: 75,
+        lineCoverage: {
+          1: 1,   // covered
+          2: 1,   // covered
+          3: 0,   // uncovered
+          4: 1,   // covered
+          5: 0.5, // partially covered
+          6: 1,   // covered
+          7: 0,   // uncovered
+          8: 1,   // covered
+          9: 0,   // uncovered
+          10: 1   // covered
+        }
+      },
+      currentFile: "test.cpp",
+      fileContent: [
+        "#include <iostream>",
+        "",
+        "int main() {",
+        "    int x = 5;      // Line 1 - covered",
+        "    int y = 10;     // Line 2 - covered",
+        "    ",
+        "    if (x > 0) {    // Line 3 - uncovered",
+        "        x++;        // Line 4 - covered",
+        "    }",
+        "    ",
+        "    y = x * 2;      // Line 5 - partially covered",
+        "    ",
+        "    std::cout << \"x: \" << x << std::endl;  // Line 6 - covered",
+        "    ",
+        "    if (y < 0) {    // Line 7 - uncovered",
+        "        y = 0;      // Line 8 - covered",
+        "    }",
+        "    ",
+        "    return 0;       // Line 9 - uncovered",
+        "}                   // Line 10 - covered"
+      ]
     };
   },
 
@@ -455,6 +517,31 @@ export default {
     });
     this.editor.setSize("100%", "100%");
 
+    // Add test code
+    const testCode = `#include <iostream>
+
+int main() {
+    int x = 5;      // Line 1 - covered
+    int y = 10;     // Line 2 - covered
+    
+    if (x > 0) {    // Line 3 - uncovered
+        x++;        // Line 4 - covered
+    }
+    
+    y = x * 2;      // Line 5 - partially covered
+    
+    std::cout << "x: " << x << std::endl;  // Line 6 - covered
+    
+    if (y < 0) {    // Line 7 - uncovered
+        y = 0;      // Line 8 - covered
+    }
+    
+    return 0;       // Line 9 - uncovered
+}                   // Line 10 - covered`;
+
+    this.editor.setValue(testCode);
+    this.updateCodeMirrorCoverage();
+
     this.editor.on("viewportChange", (cm, from, to) => {
       this.drawLines(from, to);
     });
@@ -489,6 +576,8 @@ export default {
         checkerId: this.report.checkerId
       });
     });
+
+    this.loadCoverageData();
   },
 
   methods: {
@@ -914,6 +1003,42 @@ export default {
     openAnalysisInfoDialog() {
       this.reportId = this.report.reportId;
       this.analysisInfoDialog = true;
+    },
+
+    async loadCoverageData() {
+      this.updateCodeMirrorCoverage();
+    },
+    updateCodeMirrorCoverage() {
+      if (!this.editor) return;
+      
+      const doc = this.editor.getDoc();
+      const lineCoverage = this.coverageData.lineCoverage;
+      
+      doc.eachLine((line, lineNo) => {
+        const coverage = lineCoverage[lineNo + 1];
+        if (coverage) {
+          const className = coverage === 1 ? "covered-line" :
+            coverage === 0 ? "uncovered-line" : "partial-line";
+          doc.addLineClass(lineNo, "background", className);
+        }
+      });
+    },
+    toggleCoverageView(show) {
+      this.showCoverage = show;
+      if (this.editor) {
+        const doc = this.editor.getDoc();
+        doc.eachLine((line, lineNo) => {
+          doc.removeLineClass(lineNo, "background", "covered-line");
+          doc.removeLineClass(lineNo, "background", "uncovered-line");
+          doc.removeLineClass(lineNo, "background", "partial-line");
+        });
+        if (show) {
+          this.updateCodeMirrorCoverage();
+        }
+      }
+    },
+    toggleCoverage() {
+      this.showCoverage = !this.showCoverage;
     }
   }
 };
@@ -997,5 +1122,28 @@ export default {
 ::v-deep .report-step-msg {
   opacity: 0.7;
   font-weight: lighter;
+}
+
+.covered-line {
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+.uncovered-line {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.partial-line {
+  background-color: rgba(255, 165, 0, 0.1);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.toolbar button {
+  margin-right: 8px;
 }
 </style>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Coverage Visualization</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .coverage-container {
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .coverage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .coverage-stats {
+      display: flex;
+      gap: 20px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+    .progress-container {
+      margin-top: 20px;
+    }
+    .code-container {
+      background: #f8f9fa;
+      border-radius: 4px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .line-number {
+      color: #666;
+      padding-right: 10px;
+      user-select: none;
+    }
+    .line-content {
+      padding-left: 10px;
+    }
+    .covered {
+      background-color: #e6ffe6;
+    }
+    .uncovered {
+      background-color: #ffe6e6;
+    }
+    .partially-covered {
+      background-color: #fff2e6;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="coverage-container">
+      <div class="coverage-header">
+        <h2>Code Coverage</h2>
+        <button @click="toggleCoverage" style="padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          {{ showCoverage ? 'Hide' : 'Show' }} Coverage
+        </button>
+      </div>
+      
+      <div v-if="showCoverage">
+        <div class="coverage-stats">
+          <div class="stat-item">
+            <div class="stat-value">{{ coverageData.totalLines }}</div>
+            <div class="stat-label">Total Lines</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ coverageData.coveredLines }}</div>
+            <div class="stat-label">Covered Lines</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ coveragePercentage }}%</div>
+            <div class="stat-label">Coverage</div>
+          </div>
+        </div>
+
+        <div class="progress-container">
+          <div style="height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden;">
+            <div :style="{ width: coveragePercentage + '%', height: '100%', background: '#4caf50' }"></div>
+          </div>
+        </div>
+
+        <div class="code-container" style="margin-top: 20px;">
+          <div v-for="(line, index) in sampleCode" :key="index" :class="getLineClass(index)">
+            <span class="line-number">{{ index + 1 }}</span>
+            <span class="line-content">{{ line }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        showCoverage: true,
+        coverageData: {
+          totalLines: 100,
+          coveredLines: 75,
+          uncoveredLines: 20,
+          partiallyCoveredLines: 5
+        },
+        sampleCode: [
+          "#include <iostream>",
+          "",
+          "class Calculator {",
+          "public:",
+          "    int add(int a, int b) {",
+          "        return a + b;",
+          "    }",
+          "",
+          "    int subtract(int a, int b) {",
+          "        return a - b;",
+          "    }",
+          "",
+          "    int multiply(int a, int b) {",
+          "        return a * b;",
+          "    }",
+          "",
+          "    int divide(int a, int b) {",
+          "        if (b == 0) {",
+          "            throw std::runtime_error(\"Division by zero\");",
+          "        }",
+          "        return a / b;",
+          "    }",
+          "};",
+          "",
+          "int main() {",
+          "    Calculator calc;",
+          "    std::cout << \"2 + 3 = \" << calc.add(2, 3) << std::endl;",
+          "    std::cout << \"5 - 2 = \" << calc.subtract(5, 2) << std::endl;",
+          "    return 0;",
+          "}"
+        ]
+      },
+      computed: {
+        coveragePercentage() {
+          return Math.round((this.coverageData.coveredLines / this.coverageData.totalLines) * 100);
+        }
+      },
+      methods: {
+        toggleCoverage() {
+          this.showCoverage = !this.showCoverage;
+        },
+        getLineClass(lineNumber) {
+          // This is just for demonstration - in a real app, you'd get this from your coverage data
+          if (lineNumber < 5) return 'covered';
+          if (lineNumber < 10) return 'uncovered';
+          if (lineNumber < 15) return 'partially-covered';
+          return '';
+        }
+      }
+    });
+  </script>
+</body>
+</html> 
