@@ -11,7 +11,8 @@
         :cols="editorCols"
       >
         <v-container fluid class="pa-0 mb-2">
-          <v-row class="ma-0">
+          <!-- First row -->
+          <v-row class="ma-0 mb-2">
             <v-col
               cols="auto"
               class="pa-0 mr-2"
@@ -46,7 +47,30 @@
 
             <v-col
               cols="auto"
-              class="review-status-wrapper pa-0"
+              class="py-0 pr-2"
+              align-self="center"
+            >
+              <v-btn
+                class="comments-btn"
+                color="primary"
+                outlined
+                small
+                :loading="loadNumOfComments"
+                @click="showComments = !showComments"
+              >
+                <v-icon
+                  class="mr-1"
+                  small
+                >
+                  mdi-comment-multiple-outline
+                </v-icon>
+                Comments ({{ numOfComments }})
+              </v-btn>
+            </v-col>
+
+            <v-col
+              cols="auto"
+              class="review-status-wrapper pa-0 mr-2"
               align-self="center"
             >
               <v-container fluid class="pa-0">
@@ -109,22 +133,6 @@
 
             <v-col
               cols="auto"
-              class="pa-0"
-              align-self="center"
-            >
-              <v-checkbox
-                v-model="showArrows"
-                class="show-arrows mx-2 my-0 align-center justify-center"
-                label="Show arrows"
-                dense
-                :hide-details="true"
-              />
-            </v-col>
-
-            <v-spacer />
-
-            <v-col
-              cols="auto"
               class="py-0 pr-0"
               align-self="center"
             >
@@ -133,28 +141,45 @@
                 :disabled="!hasBlameInfo"
               />
             </v-col>
+          </v-row>
+
+          <!-- Second row -->
+          <v-row class="ma-0">
+            <v-col
+              cols="auto"
+              class="pa-0 mr-4"
+              align-self="center"
+            >
+              <v-checkbox
+                v-model="showArrows"
+                class="show-arrows my-0 align-center justify-center"
+                label="Show arrows"
+                dense
+                :hide-details="true"
+              />
+            </v-col>
 
             <v-col
               cols="auto"
-              class="py-0 pr-0"
+              class="pa-0"
               align-self="center"
             >
-              <v-btn
-                class="comments-btn mx-2 mr-0"
-                color="primary"
-                outlined
-                small
-                :loading="loadNumOfComments"
-                @click="showComments = !showComments"
-              >
-                <v-icon
-                  class="mr-1"
-                  small
+              <div class="d-flex align-center">
+                <v-checkbox
+                  v-model="showCoverage"
+                  class="show-coverage my-0 align-center justify-center"
+                  label="Show coverage"
+                  dense
+                  :hide-details="true"
+                  :loading="coverageLoading"
+                />
+                <span 
+                  v-if="showCoverage && coverageData" 
+                  class="coverage-percentage grey--text text--darken-1"
                 >
-                  mdi-comment-multiple-outline
-                </v-icon>
-                Comments ({{ numOfComments }})
-              </v-btn>
+                  ({{ Math.round(coverageData.coveragePercentage) }}% covered)
+                </span>
+              </div>
             </v-col>
           </v-row>
         </v-container>
@@ -172,6 +197,22 @@
 
             <v-col class="pa-0">
               <v-container fluid class="pa-0">
+                <v-row
+                  class="file-info pa-2 ma-0"
+                  justify="space-between"
+                >
+                  <v-col cols="12" class="pa-0">
+                    <div class="file-path-display">
+                      <v-icon small class="mr-1">
+                        mdi-file-outline
+                      </v-icon>
+                      <span v-if="sourceFile" class="monospace">
+                        {{ sourceFile.filePath }}
+                      </span>
+                    </div>
+                  </v-col>
+                </v-row>
+
                 <v-row
                   class="header pa-1 ma-0"
                   justify="space-between"
@@ -265,26 +306,6 @@
         />
       </v-col>
     </v-row>
-
-    <div class="code-viewer">
-      <div class="toolbar">
-        <v-btn
-          :title="showCoverage ? 'Hide coverage' : 'Show coverage'"
-          small
-          icon
-          @click="toggleCoverageView(!showCoverage)"
-        >
-          <v-icon>mdi-chart-bar</v-icon>
-        </v-btn>
-      </div>
-      <coverage-visualization
-        v-if="showCoverage"
-        :coverage-data="coverageData"
-        :file-name="currentFile"
-        :code-lines="fileContent"
-        @toggle-coverage="toggleCoverage"
-      />
-    </div>
   </v-container>
 </template>
 
@@ -337,7 +358,6 @@ import SelectSameReport from "./SelectSameReport";
 import { ReportInfoButton, ShowReportInfoDialog } from "./ReportInfo";
 
 import ReportStepMessage from "./ReportStepMessage";
-import CoverageVisualization from "./CoverageVisualization.vue";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 
 export default {
@@ -353,8 +373,7 @@ export default {
     SetCleanupPlanBtn,
     ShowReportInfoDialog,
     ToggleBlameViewBtn,
-    UserIcon,
-    CoverageVisualization
+    UserIcon
   },
   directives: { FillHeight },
   mixins: [ GitBlameMixin ],
@@ -386,49 +405,12 @@ export default {
       annotation: null,
       selectedChecker: null,
       analysisInfoDialog: false,
-      reportId: "test-report-123",
+      reportId: null,
       enableBlameView,
       docUrl: null,
-      showCoverage: true,
-      coverageData: {
-        totalLines: 100,
-        coveredLines: 75,
-        lineCoverage: {
-          1: 1,   // covered
-          2: 1,   // covered
-          3: 0,   // uncovered
-          4: 1,   // covered
-          5: 0.5, // partially covered
-          6: 1,   // covered
-          7: 0,   // uncovered
-          8: 1,   // covered
-          9: 0,   // uncovered
-          10: 1   // covered
-        }
-      },
-      currentFile: "test.cpp",
-      fileContent: [
-        "#include <iostream>",
-        "",
-        "int main() {",
-        "    int x = 5;      // Line 1 - covered",
-        "    int y = 10;     // Line 2 - covered",
-        "    ",
-        "    if (x > 0) {    // Line 3 - uncovered",
-        "        x++;        // Line 4 - covered",
-        "    }",
-        "    ",
-        "    y = x * 2;      // Line 5 - partially covered",
-        "    ",
-        "    std::cout << \"x: \" << x << std::endl;  // Line 6 - covered",
-        "    ",
-        "    if (y < 0) {    // Line 7 - uncovered",
-        "        y = 0;      // Line 8 - covered",
-        "    }",
-        "    ",
-        "    return 0;       // Line 9 - uncovered",
-        "}                   // Line 10 - covered"
-      ]
+      coverageData: null,
+      showCoverage: false,
+      coverageLoading: false,
     };
   },
 
@@ -467,14 +449,29 @@ export default {
         await this.hideBlameView();
       }
 
-      // Scroll to the current bug step item.
-      this.jumpTo(
-        this.treeItem.step?.startLine.toNumber() ||
-        this.treeItem.report.line.toNumber());
+      // Scroll to the current bug step item with null checks
+      if (this.treeItem) {
+        const line = this.treeItem.step?.startLine?.toNumber() ||
+                    this.treeItem.report?.line?.toNumber() ||
+                    1;
+        this.jumpTo(line);
+      }
     },
 
-    treeItem() {
-      this.init(this.treeItem);
+    treeItem: {
+      handler(newVal) {
+        if (!newVal) return;
+
+        if (newVal.coverageData) {
+          console.log("New coverage data received:", newVal.coverageData);
+          this.coverageData = newVal.coverageData;
+          if (this.showCoverage) {
+            this.updateCoverageHighlighting();
+          }
+        }
+        this.init(newVal);
+      },
+      immediate: true
     },
 
     showArrows() {
@@ -485,13 +482,29 @@ export default {
       }
     },
 
-    report() {
-      this.loadNumOfComments = true;
-      ccService.getClient().getCommentCount(this.report.reportId,
-        handleThriftError(numOfComments => {
-          this.numOfComments = numOfComments;
-          this.loadNumOfComments = false;
-        }));
+    report: {
+      handler(newVal) {
+        if (newVal) {
+          this.loadNumOfComments = true;
+          ccService.getClient().getCommentCount(newVal.reportId,
+            handleThriftError(numOfComments => {
+              this.numOfComments = numOfComments;
+              this.loadNumOfComments = false;
+            }));
+          this.loadCoverageData();
+        }
+      },
+      immediate: true
+    },
+
+    showCoverage: {
+      handler(newVal) {
+        if (newVal) {
+          this.updateCoverageHighlighting();
+        } else {
+          this.clearCoverageHighlighting();
+        }
+      }
     }
   },
 
@@ -510,37 +523,12 @@ export default {
       lineNumbers: true,
       readOnly: true,
       mode: "text/x-c++src",
-      gutters: [ "CodeMirror-linenumbers", "bugInfo" ],
-      extraKeys: {},
-      viewportMargin: 200,
-      highlightSelectionMatches : { showToken: /\w/, annotateScrollbar: true }
+      theme: "default",
+      lineWrapping: true,
+      gutters: [ "CodeMirror-linenumbers", "CodeMirror-foldgutter" ],
+      foldGutter: true
     });
     this.editor.setSize("100%", "100%");
-
-    // Add test code
-    const testCode = `#include <iostream>
-
-int main() {
-    int x = 5;      // Line 1 - covered
-    int y = 10;     // Line 2 - covered
-    
-    if (x > 0) {    // Line 3 - uncovered
-        x++;        // Line 4 - covered
-    }
-    
-    y = x * 2;      // Line 5 - partially covered
-    
-    std::cout << "x: " << x << std::endl;  // Line 6 - covered
-    
-    if (y < 0) {    // Line 7 - uncovered
-        y = 0;      // Line 8 - covered
-    }
-    
-    return 0;       // Line 9 - uncovered
-}                   // Line 10 - covered`;
-
-    this.editor.setValue(testCode);
-    this.updateCodeMirrorCoverage();
 
     this.editor.on("viewportChange", (cm, from, to) => {
       this.drawLines(from, to);
@@ -576,34 +564,36 @@ int main() {
         checkerId: this.report.checkerId
       });
     });
-
-    this.loadCoverageData();
   },
 
   methods: {
     init(treeItem) {
+      if (!treeItem) return;
+      
       this.loading = true;
 
       if (treeItem.step) {
         this.loadReportStep(treeItem.report, {
-          stepId: this.treeItem.id,
+          stepId: treeItem.id,
           ...treeItem.step
         });
       } else if (treeItem.data) {
         this.loadReportStep(treeItem.report, {
-          stepId: this.treeItem.id,
+          stepId: treeItem.id,
           ...treeItem.data
         });
-      } else {
+      } else if (treeItem.report) {
         this.loadReport(treeItem.report);
+      } else {
+        this.loading = false;
       }
     },
 
     async loadReportStep(report, { stepId, fileId, startLine }) {
       if (!this.report ||
-          !this.report.reportId.equals(report.reportId) ||
-          !this.sourceFile ||
-          !fileId.equals(this.sourceFile.fileId)
+        !this.report.reportId.equals(report.reportId) ||
+        !this.sourceFile ||
+        !fileId.equals(this.sourceFile.fileId)
       ) {
         this.report = report;
 
@@ -870,10 +860,10 @@ int main() {
       //the last bug path element, then we render the warning.
 
       if (this.sourceFile.fileId.equals(this.report.fileId) &&
-          (events.length == 0 ||
-           this.report.checkerMsg !== events[events.length-1].msg ||
-           this.report.line.toNumber() !=
-             events[events.length-1].startLine.toNumber())
+        (events.length === 0 ||
+          this.report.checkerMsg !== events[events.length-1].msg ||
+          this.report.line.toNumber() !==
+          events[events.length-1].startLine.toNumber())
       ){
         const chkrmsg_data = { $id: 999,
           $message:this.report.checkerMsg,
@@ -1006,40 +996,180 @@ int main() {
     },
 
     async loadCoverageData() {
-      this.updateCodeMirrorCoverage();
+      if (!this.report || !this.report.fileId) return;
+
+      this.coverageLoading = true;
+      try {
+        // Mock data for testing
+        this.coverageData = {
+          fileId: this.report.fileId,
+          filePath: "example.c",
+          totalLines: 12,
+          coveredLines: 8,
+          uncoveredLines: 4,
+          coveragePercentage: 66.67,
+          lineCoverage: [
+            { 
+              lineNumber: 1, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 2, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 3, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 4, 
+              covered: false, 
+              executionCount: 0, 
+              lastExecution: null 
+            }, // Uncovered - division by zero
+            { 
+              lineNumber: 5, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 6, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 7, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 8, 
+              covered: false, 
+              executionCount: 0, 
+              lastExecution: null 
+            }, // Uncovered - division by zero
+            { 
+              lineNumber: 9, 
+              covered: false, 
+              executionCount: 0, 
+              lastExecution: null 
+            }, // Uncovered - division by zero
+            { 
+              lineNumber: 10, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 11, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            },
+            { 
+              lineNumber: 12, 
+              covered: true, 
+              executionCount: 1, 
+              lastExecution: "2024-04-20T10:00:00Z" 
+            }
+          ]
+        };
+        
+        // Original backend call commented out for testing
+        /*
+        const runIds = this.report.runId ? [ this.report.runId ] : [];
+        this.coverageData = await ccService.getCodeCoverage(
+          this.report.fileId,
+          runIds
+        );
+        */
+        
+        this.updateCoverageHighlighting();
+      } catch (err) {
+        console.error("Failed to load coverage data:", err);
+      } finally {
+        this.coverageLoading = false;
+      }
     },
-    updateCodeMirrorCoverage() {
+
+    updateCoverageHighlighting() {
+      if (!this.coverageData || !this.showCoverage) return;
+
+      console.group("Coverage Highlighting Update");
+      console.log("Total lines in editor:", this.editor.lineCount());
+      console.log("Coverage data:", this.coverageData);
+
+      // Create a map for faster line lookup
+      const coverageMap = new Map(
+        this.coverageData.lineCoverage.map(line => [ line.lineNumber, line ])
+      );
+
+      this.editor.operation(() => {
+        for (let i = 0; i < this.editor.lineCount(); i++) {
+          const lineData = coverageMap.get(i + 1);
+          if (lineData) {
+            let className;
+            if (lineData.partiallyCovered) {
+              className = "coverage-partial-line";
+            } else {
+              className = lineData.covered 
+                ? "coverage-covered-line" 
+                : "coverage-uncovered-line";
+            }
+            
+            console.log(`Line ${i + 1}:`, {
+              covered: lineData.covered,
+              partiallyCovered: lineData.partiallyCovered,
+              executionCount: lineData.executionCount,
+              lastExecution: lineData.lastExecution,
+              className
+            });
+
+            [ "wrap", "background", "gutter", "line" ].forEach(type => {
+              this.editor.addLineClass(i, type, className);
+            });
+          } else {
+            console.log(`Line ${i + 1}: No coverage data available`);
+          }
+        }
+      });
+
+      console.groupEnd();
+    },
+
+    clearCoverageHighlighting() {
       if (!this.editor) return;
-      
-      const doc = this.editor.getDoc();
-      const lineCoverage = this.coverageData.lineCoverage;
-      
-      doc.eachLine((line, lineNo) => {
-        const coverage = lineCoverage[lineNo + 1];
-        if (coverage) {
-          const className = coverage === 1 ? "covered-line" :
-            coverage === 0 ? "uncovered-line" : "partial-line";
-          doc.addLineClass(lineNo, "background", className);
+
+      this.editor.operation(() => {
+        for (let i = 0; i < this.editor.lineCount(); i++) {
+          [ "wrap", "background", "gutter", "line" ].forEach(type => {
+            this.editor.removeLineClass(i, type, "coverage-covered-line");
+            this.editor.removeLineClass(i, type, "coverage-uncovered-line");
+            this.editor.removeLineClass(i, type, "coverage-partial-line");
+          });
         }
       });
     },
-    toggleCoverageView(show) {
-      this.showCoverage = show;
-      if (this.editor) {
-        const doc = this.editor.getDoc();
-        doc.eachLine((line, lineNo) => {
-          doc.removeLineClass(lineNo, "background", "covered-line");
-          doc.removeLineClass(lineNo, "background", "uncovered-line");
-          doc.removeLineClass(lineNo, "background", "partial-line");
-        });
-        if (show) {
-          this.updateCodeMirrorCoverage();
-        }
-      }
+
+    getLineCoverageClass(lineNumber) {
+      if (!this.coverageData || !this.showCoverage) return "";
+      
+      const lineInfo = this.coverageData.lineCoverage.find(
+        line => line.lineNumber === lineNumber
+      );
+      
+      if (!lineInfo) return "coverage-unknown";
+      return lineInfo.covered ? "coverage-covered" : "coverage-uncovered";
     },
-    toggleCoverage() {
-      this.showCoverage = !this.showCoverage;
-    }
   }
 };
 </script>
@@ -1048,11 +1178,67 @@ int main() {
 .scrollbar-bug-annotation {
   background-color: red;
 }
+
+.coverage-covered-line {
+  background-color: rgba(0, 255, 0, 0.1) !important;
+}
+
+.coverage-uncovered-line {
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
+.coverage-partial-line {
+  background-color: rgba(255, 255, 0, 0.1) !important;
+}
+
+.CodeMirror {
+  .coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  .coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+
+  .coverage-partial-line {
+    background-color: rgba(255, 255, 0, 0.1) !important;
+  }
+
+  pre.coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  pre.coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+
+  .CodeMirror-line.coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  .CodeMirror-line.coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+}
 </style>
 
 <style lang="scss" scoped>
 #editor-wrapper {
   border: 1px solid #d8dbe0;
+
+  .file-info {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d8dbe0;
+
+    .file-path-display {
+      font-size: 0.9em;
+      color: var(--v-grey-darken3);
+      
+      .monospace {
+        font-family: monospace;
+      }
+    }
+  }
 
   .header {
     background-color: "#f7f7f7";
@@ -1074,6 +1260,11 @@ int main() {
         content: '\200e';
       }
     }
+  }
+
+  .coverage-percentage {
+    font-size: 0.9em;
+    color: var(--v-grey-darken3);
   }
 
   .editor {
@@ -1124,26 +1315,7 @@ int main() {
   font-weight: lighter;
 }
 
-.covered-line {
-  background-color: rgba(0, 255, 0, 0.1);
-}
-
-.uncovered-line {
-  background-color: rgba(255, 0, 0, 0.1);
-}
-
-.partial-line {
-  background-color: rgba(255, 165, 0, 0.1);
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.toolbar button {
-  margin-right: 8px;
+::v-deep .CodeMirror-linenumber {
+  color: #666;
 }
 </style>

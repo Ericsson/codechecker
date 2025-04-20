@@ -14,7 +14,7 @@ const CC_SERVICE_ENDPOINTS = [
 // Location of the Thrift API server.
 const CC_THRIFT_API_HOST =
   process.env.CC_THRIFT_API_HOST || 'http://localhost';
-const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8002;
+const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8001;
 
 module.exports = merge(common, {
   mode: 'development',

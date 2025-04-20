@@ -1,5 +1,5 @@
 const host = process.env.HOST || "localhost";
-const port = process.env.PORT || 8002;
+const port = process.env.PORT || 8001;
 const chromeHeadless = process.env.CHROME_HEADLESS;
 
 module.exports = {
