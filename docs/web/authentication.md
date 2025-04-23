@@ -98,6 +98,8 @@ option of `CodeChecker server` command.
 
 ## <i>Dictionary</i> authentication <a name="dictionary-authentication"></a>
 
+> *Note*: Storing passwords in a plain text file is *strongly discouraged* due to security risks. If no other option is available, ensure that the file permissions are restricted to 0600 to limit access *only* to the file owner.
+
 The `authentication.method_dictionary` contains a plaintext `username:password`
 credentials for authentication. If the user's login matches any of the
 credentials listed, the user will be authenticated.
