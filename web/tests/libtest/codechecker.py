@@ -780,8 +780,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
         add_command += _pg_db_config_to_cmdline_params(pg_config)
     else:
         # SQLite databases are put under the workspace of the appropriate test.
-        add_command += ['--sqlite',
-                        os.path.join(test_folder, database_name)]
+        add_command += ['--sqlite', database_name]
 
     print(' '.join(add_command))
 
