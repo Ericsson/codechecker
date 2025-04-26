@@ -88,6 +88,7 @@
     <pane>
       <report
         :tree-item="treeItem"
+        :coverage-data="treeItem?.coverageData"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
         @update-review-data="updateReviewData"
@@ -128,7 +129,8 @@ export default {
       treeItem: null,
       showComments: true,
       reportNotFound: false,
-      reviewStatus: null
+      reviewStatus: null,
+      coverageData: null
     };
   },
   computed: {
@@ -216,127 +218,6 @@ export default {
       }
     },
 
-    async loadCoverageData(fileId) {
-      try {
-        console.log("Loading coverage data for fileId:", fileId);
-        // Mock data with partially covered lines
-        const coverageData = {
-          fileId: fileId,
-          filePath: "example.c",
-          totalLines: 14,
-          coveredLines: 8,
-          uncoveredLines: 4,
-          coveragePercentage: 66.67,
-          lineCoverage: [
-            { 
-              lineNumber: 1, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 5,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 2, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 3,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 3, 
-              covered: true,
-              partiallyCovered: true, // Partially covered
-              executionCount: 2,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 4, 
-              covered: false,
-              partiallyCovered: false,
-              executionCount: 0,
-              lastExecution: null
-            },
-            { 
-              lineNumber: 5, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 4,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 6, 
-              covered: true,
-              partiallyCovered: true, // Partially covered
-              executionCount: 1,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 7, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 6,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 8, 
-              covered: false,
-              partiallyCovered: false,
-              executionCount: 0,
-              lastExecution: null
-            },
-            { 
-              lineNumber: 9, 
-              covered: true,
-              partiallyCovered: true, // Partially covered
-              executionCount: 1,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 10, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 2,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 11, 
-              covered: false,
-              partiallyCovered: false,
-              executionCount: 0,
-              lastExecution: null
-            },
-            { 
-              lineNumber: 12, 
-              covered: true,
-              partiallyCovered: false,
-              executionCount: 3,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 13, 
-              covered: true,
-              partiallyCovered: true, // Partially covered
-              executionCount: 1,
-              lastExecution: new Date().toISOString()
-            },
-            { 
-              lineNumber: 14, 
-              covered: false,
-              partiallyCovered: false,
-              executionCount: 0,
-              lastExecution: null
-            }
-          ]
-        };
-        
-        console.log("Coverage data loaded:", coverageData);
-        return coverageData;
-      } catch (err) {
-        console.error("Failed to load coverage data:", err);
-        return null;
-      }
-    },
-
     async onReportTreeClick(item) {
       if (!item) return;
 
@@ -345,10 +226,111 @@ export default {
         this.updateUrl();
       }
 
-      // Load coverage data when a new file is selected
       if (item.report && item.report.fileId) {
-        const coverageData = await this.loadCoverageData(item.report.fileId);
-        item.coverageData = coverageData;
+        try {
+          // Original backend fetching method (commented out)
+          // const coverageData = await ccService.getCodeCoverage(
+          //   item.report.fileId,
+          //   this.runIds
+          // );
+          // item.coverageData = coverageData;
+
+          // Mock data for testing
+          const mockCoverageData = {
+            fileId: item.report.fileId,
+            filePath: item.report.checkedFile,
+            totalLines: 14,
+            coveredLines: 8,
+            uncoveredLines: 6,
+            coveragePercentage: 57.1,
+            lineCoverage: [
+              {
+                lineNumber: 1,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 5
+              },
+              {
+                lineNumber: 2,
+                covered: false,
+                partiallyCovered: false
+              },
+              {
+                lineNumber: 3,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 10
+              },
+              {
+                lineNumber: 4,
+                covered: true,
+                partiallyCovered: true,
+                executionCount: 3
+              },
+              {
+                lineNumber: 5,
+                covered: false,
+                partiallyCovered: false
+              },
+              {
+                lineNumber: 6,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 2
+              },
+              {
+                lineNumber: 7,
+                covered: true,
+                partiallyCovered: true,
+                executionCount: 8
+              },
+              {
+                lineNumber: 8,
+                covered: false,
+                partiallyCovered: false
+              },
+              {
+                lineNumber: 9,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 4
+              },
+              {
+                lineNumber: 10,
+                covered: true,
+                partiallyCovered: true,
+                executionCount: 6
+              },
+              {
+                lineNumber: 11,
+                covered: false,
+                partiallyCovered: false
+              },
+              {
+                lineNumber: 12,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 7
+              },
+              {
+                lineNumber: 13,
+                covered: true,
+                partiallyCovered: false,
+                executionCount: 9
+              },
+              {
+                lineNumber: 14,
+                covered: false,
+                partiallyCovered: false
+              }
+            ]
+          };
+          
+          console.log("Using mock coverage data:", mockCoverageData);
+          item.coverageData = mockCoverageData;
+        } catch (err) {
+          console.error("Failed to load coverage data:", err);
+        }
       }
 
       this.treeItem = item;

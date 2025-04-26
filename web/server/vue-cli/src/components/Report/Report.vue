@@ -161,7 +161,7 @@
 
             <v-col
               cols="auto"
-              class="pa-0"
+              class="pa-0 mr-4"
               align-self="center"
             >
               <div class="d-flex align-center">
@@ -172,10 +172,17 @@
                   dense
                   :hide-details="true"
                   :loading="coverageLoading"
+                  @change="val => {
+                    if (val) {
+                      loadCoverageData();
+                    } else {
+                      clearCoverageHighlighting();
+                    }
+                  }"
                 />
                 <span 
                   v-if="showCoverage && coverageData" 
-                  class="coverage-percentage grey--text text--darken-1"
+                  class="coverage-percentage ml-2 grey--text text--darken-1"
                 >
                   ({{ Math.round(coverageData.coveragePercentage) }}% covered)
                 </span>
@@ -373,12 +380,13 @@ export default {
     SetCleanupPlanBtn,
     ShowReportInfoDialog,
     ToggleBlameViewBtn,
-    UserIcon
+    UserIcon,
   },
   directives: { FillHeight },
   mixins: [ GitBlameMixin ],
   props: {
-    treeItem: { type: Object, default: null }
+    treeItem: { type: Object, default: null },
+    coverageData: { type: Object, default: null }
   },
 
   emits: [ "update-review-data" ],
@@ -408,7 +416,6 @@ export default {
       reportId: null,
       enableBlameView,
       docUrl: null,
-      coverageData: null,
       showCoverage: false,
       coverageLoading: false,
     };
@@ -505,6 +512,19 @@ export default {
           this.clearCoverageHighlighting();
         }
       }
+    },
+
+    coverageData: {
+      handler(newVal) {
+        console.log("Coverage data changed:", newVal);
+        if (newVal) {
+          this.coverageData = newVal;
+          if (this.showCoverage) {
+            this.updateCoverageHighlighting();
+          }
+        }
+      },
+      immediate: true
     }
   },
 
@@ -1000,100 +1020,22 @@ export default {
 
       this.coverageLoading = true;
       try {
-        // Mock data for testing
-        this.coverageData = {
-          fileId: this.report.fileId,
-          filePath: "example.c",
-          totalLines: 12,
-          coveredLines: 8,
-          uncoveredLines: 4,
-          coveragePercentage: 66.67,
-          lineCoverage: [
-            { 
-              lineNumber: 1, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 2, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 3, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 4, 
-              covered: false, 
-              executionCount: 0, 
-              lastExecution: null 
-            }, // Uncovered - division by zero
-            { 
-              lineNumber: 5, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 6, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 7, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 8, 
-              covered: false, 
-              executionCount: 0, 
-              lastExecution: null 
-            }, // Uncovered - division by zero
-            { 
-              lineNumber: 9, 
-              covered: false, 
-              executionCount: 0, 
-              lastExecution: null 
-            }, // Uncovered - division by zero
-            { 
-              lineNumber: 10, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 11, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            },
-            { 
-              lineNumber: 12, 
-              covered: true, 
-              executionCount: 1, 
-              lastExecution: "2024-04-20T10:00:00Z" 
-            }
-          ]
-        };
-        
-        // Original backend call commented out for testing
-        /*
+        // Use the coverage data from props if available
+        if (this.coverageData) {
+          console.log("Using coverage data from props:", this.coverageData);
+          this.updateCoverageHighlighting();
+          return;
+        }
+
+        // Fallback to loading coverage data if not provided via props
         const runIds = this.report.runId ? [ this.report.runId ] : [];
         this.coverageData = await ccService.getCodeCoverage(
           this.report.fileId,
           runIds
         );
-        */
         
         this.updateCoverageHighlighting();
+        console.log("Loaded coverageData:", this.coverageData);
       } catch (err) {
         console.error("Failed to load coverage data:", err);
       } finally {
@@ -1262,9 +1204,13 @@ export default {
     }
   }
 
+  .show-coverage {
+    margin-right: 8px;
+  }
+
   .coverage-percentage {
     font-size: 0.9em;
-    color: var(--v-grey-darken3);
+    white-space: nowrap;
   }
 
   .editor {
@@ -1317,5 +1263,14 @@ export default {
 
 ::v-deep .CodeMirror-linenumber {
   color: #666;
+}
+
+::v-deep .v-input--checkbox.show-coverage {
+  margin-top: 0;
+  margin-bottom: 0;
+  
+  .v-input__slot {
+    margin-bottom: 0;
+  }
 }
 </style>

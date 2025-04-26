@@ -118,14 +118,12 @@ class CodeCheckerService extends BaseService {
    *     {
    *       lineNumber: 1,
    *       covered: true,
-   *       executionCount: 5,
-   *       lastExecution: "2024-04-20T10:00:00Z"
+   *       partiallyCovered: false
    *     },
    *     {
    *       lineNumber: 2,
    *       covered: false,
-   *       executionCount: 0,
-   *       lastExecution: null
+   *       partiallyCovered: false
    *     }
    *   ]
    * }
