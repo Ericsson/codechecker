@@ -348,7 +348,7 @@ class OptionParserTest(unittest.TestCase):
     def test_ignore_xclang_flags_clang(self):
         """Skip some specific xclang constructs"""
 
-        def fake_clang_version(_a, _b):
+        def fake_clang_version(_a):
             return True
 
         clang_flags = ["-std=gnu++14",
