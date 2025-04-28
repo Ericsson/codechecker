@@ -185,17 +185,20 @@ class RequestHandler(SimpleHTTPRequestHandler):
         They are adapted to not allow any cross-site requests.
         """
         if self.command in ['GET', 'HEAD', 'POST']:
+            csp_header = 'default-src \'self\'; ' + \
+                         'style-src \'unsafe-inline\' \'self\'; ' + \
+                         'script-src \'unsafe-inline\' \'self\'; ' + \
+                         'form-action \'self\'; ' + \
+                         'frame-ancestors \'none\''
+            if self.server.ssl_enabled:
+                csp_header = csp_header + '; ' + \
+                             'upgrade-insecure-requests; ' + \
+                             'block-all-mixed-content'
+
             self.send_header('X-Frame-Options', 'DENY')
             self.send_header('X-XSS-Protection', '1; mode=block')
             self.send_header('X-Content-Type-Options', 'nosniff')
-            self.send_header('Content-Security-Policy',
-                             'default-src \'self\'; ' +
-                             'style-src \'unsafe-inline\' \'self\'; ' +
-                             'script-src \'unsafe-inline\' \'self\'; ' +
-                             'form-action \'self\'; ' +
-                             'frame-ancestors \'none\'; ' +
-                             'upgrade-insecure-requests; ' +
-                             'block-all-mixed-content')
+            self.send_header('Content-Security-Policy', csp_header)
             self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
             self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
             self.send_header('Cross-Origin-Resource-Policy', 'same-origin')
@@ -830,7 +833,10 @@ class CCSimpleHttpServer(HTTPServer):
 
             self.configure_keepalive()
 
-            if os.path.isfile(ssl_key_file) and os.path.isfile(ssl_cert_file):
+            self.ssl_enabled = os.path.isfile(ssl_key_file) and \
+                os.path.isfile(ssl_cert_file)
+
+            if self.ssl_enabled:
                 LOG.info("Initiating SSL. Server listening on secure socket.")
                 LOG.debug("Using cert file: %s", ssl_cert_file)
                 LOG.debug("Using key file: %s", ssl_key_file)
@@ -845,7 +851,6 @@ class CCSimpleHttpServer(HTTPServer):
                 ssl_context.options |= (ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
                 self.socket = ssl_context.wrap_socket(self.socket,
                                                       server_side=True)
-
             else:
                 LOG.info("Searching for SSL key at %s, cert at %s, "
                          "not found...", ssl_key_file, ssl_cert_file)
