@@ -231,7 +231,7 @@ For this reason, you need to use `codechecker` command instead of `CodeChecker`
 everywhere. For a full list of available commands in the _codechecker_ snap
 package, run `snap info codechecker`.
 
-## Linux
+## Linux: Build from source
 
 For a detailed dependency list, and for instructions on how to install newer
 Clang and Clang-Tidy versions, please see [Requirements](deps.md).
