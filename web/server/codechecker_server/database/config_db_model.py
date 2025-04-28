@@ -8,11 +8,11 @@
 """
 SQLAlchemy ORM model for the product configuration database.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 
 from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
-    Integer, MetaData, String, Text
+    Integer, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import false, true
 
@@ -142,6 +142,51 @@ class Session(Base):
         self.description = description
         self.can_expire = can_expire
         self.last_access = datetime.now()
+
+
+class PersonalAccessToken(Base):
+    __tablename__ = 'personal_access_tokens'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+
+    user_name = Column(String)
+
+    token_name = Column(String)
+    token = Column(CHAR(32), nullable=False, unique=True)
+
+    description = Column(String)
+    # List of group names separated by semicolons.
+    groups = Column(String)
+
+    last_access = Column(DateTime, nullable=False)
+    expiration = Column(DateTime)
+
+    auth_session_id = Column(
+        Integer,
+        ForeignKey('auth_sessions.id', deferrable=False, ondelete='SET NULL'),
+        nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('user_name', 'token_name'),
+    )
+
+    def __init__(
+        self,
+        user_name,
+        token_name,
+        token,
+        description,
+        groups,
+        auth_session_id
+    ):
+        self.user_name = user_name
+        self.token_name = token_name
+        self.token = token
+        self.description = description
+        self.groups = groups
+        self.auth_session_id = auth_session_id
+        self.last_access = datetime.now()
+        self.expiration = self.last_access + timedelta(days=365)
 
 
 class Configuration(Base):
