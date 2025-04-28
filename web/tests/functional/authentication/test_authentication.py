@@ -13,6 +13,8 @@ Authentication tests.
 
 import json
 import os
+import io
+import contextlib
 import subprocess
 import unittest
 import requests
@@ -20,6 +22,7 @@ import requests
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
 from codechecker_client.credential_manager import UserCredentials
+from codechecker_web.shared import convert
 from libtest import codechecker
 from libtest import env
 
@@ -426,3 +429,34 @@ class DictAuth(unittest.TestCase):
             errors="ignore")
 
         cred_manager.save_token(host, port, session_token, True)
+
+    def test_announcement_showing_in_cli(self):
+        """
+        Test if the announcement message posted on the CodeChecker GUI shows
+        up in cli.
+        """
+        # Authenticate (SU permission required)
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+        session_token = auth_client.performLogin(
+            "Username:Password", "root:root")
+
+        auth_client.addPermission(Permission.SUPERUSER, "root", False, "")
+
+        # Set announcement message
+        su_config_client = env.setup_config_client(self._test_workspace,
+                                                   session_token=session_token)
+
+        su_config_client.setNotificationBannerText(
+            convert.to_b64('Test announcement msg!'))
+
+        # Check if the message shows up
+        f = io.StringIO()
+        with contextlib.redirect_stdout(f):
+            codechecker.login(self._test_cfg['codechecker_cfg'],
+                              self._test_workspace,
+                              'root',
+                              'root')
+        output = f.getvalue()
+
+        self.assertIn("Announcement: Test announcement msg!", output)

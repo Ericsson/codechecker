@@ -42,7 +42,7 @@ from codechecker_common.util import load_json
 from codechecker_web.shared import convert, webserver_context
 
 from codechecker_client import report_type_converter
-from .client import login_user, setup_client
+from .client import login_user, setup_client, init_config_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
 
@@ -1636,11 +1636,20 @@ def handle_suppress(args):
                 client.changeReviewStatus(report.reportId, rw_status, comment)
 
 
+def get_announcement_msg(protocol, host, port):
+    config_client = init_config_client(protocol, host, port)
+    return config_client.getNotificationBannerText()
+
+
 def handle_login(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
+    encoded_announcement_msg = get_announcement_msg(protocol, host, port)
+    if encoded_announcement_msg:
+        announcement_msg = convert.from_b64(encoded_announcement_msg)
+        LOG.info(f"Announcement: {announcement_msg}")
     login_user(protocol, host, port, args.username,
                login='logout' not in args)
 

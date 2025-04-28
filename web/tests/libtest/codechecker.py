@@ -159,14 +159,18 @@ def login(codechecker_cfg, test_project_path, username, password,
 
     try:
         print(' '.join(login_cmd))
-        out = subprocess.call(
+        out = subprocess.run(
             shlex.split(
                 ' '.join(login_cmd)),
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",
-            errors="ignore")
-        print(out)
+            errors="ignore",
+            check=False,
+            capture_output=True,
+            text=True
+        )
+        print(repr(out.stdout))
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(login_cmd))

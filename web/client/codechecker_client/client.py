@@ -24,6 +24,7 @@ from codechecker_web.shared import env
 from codechecker_web.shared.version import CLIENT_API
 
 from codechecker_client.helpers.authentication import ThriftAuthHelper
+from codechecker_client.helpers.configuration import ThriftConfigHelper
 from codechecker_client.helpers.product import ThriftProductHelper
 from codechecker_client.helpers.results import ThriftResultsHelper
 from .credential_manager import UserCredentials
@@ -69,6 +70,13 @@ def setup_auth_client(protocol, host, port, session_token=None):
                               session_token)
 
     return client
+
+
+def init_config_client(protocol, host, port):
+    """ Setup a new config client. """
+    config_client = ThriftConfigHelper(protocol, host, port, '/v' +
+                                       CLIENT_API + '/Configuration')
+    return config_client
 
 
 def login_user(protocol, host, port, username, login=False):
