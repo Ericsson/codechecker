@@ -14,7 +14,7 @@ import sys
 from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
     Integer, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.expression import false, true
+from sqlalchemy.sql.expression import false
 
 from ..permissions import get_permissions
 
@@ -132,15 +132,11 @@ class Session(Base):
     # Token description.
     description = Column(String)
 
-    can_expire = Column(Boolean, server_default=true(), default=True)
-
-    def __init__(self, token, user_name, groups, description=None,
-                 can_expire=True):
+    def __init__(self, token, user_name, groups, description=None):
         self.token = token
         self.user_name = user_name
         self.groups = groups
         self.description = description
-        self.can_expire = can_expire
         self.last_access = datetime.now()
 
 
@@ -161,11 +157,6 @@ class PersonalAccessToken(Base):
     last_access = Column(DateTime, nullable=False)
     expiration = Column(DateTime)
 
-    auth_session_id = Column(
-        Integer,
-        ForeignKey('auth_sessions.id', deferrable=False, ondelete='SET NULL'),
-        nullable=True)
-
     __table_args__ = (
         UniqueConstraint('user_name', 'token_name'),
     )
@@ -176,15 +167,13 @@ class PersonalAccessToken(Base):
         token_name,
         token,
         description,
-        groups,
-        auth_session_id
+        groups
     ):
         self.user_name = user_name
         self.token_name = token_name
         self.token = token
         self.description = description
         self.groups = groups
-        self.auth_session_id = auth_session_id
         self.last_access = datetime.now()
         self.expiration = self.last_access + timedelta(days=365)
 

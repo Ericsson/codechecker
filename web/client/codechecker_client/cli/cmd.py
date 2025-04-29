@@ -778,8 +778,10 @@ def __register_products(parser):
                              default=sqlite_product_endpoint_default_var,
                              required=False,
                              help="Path of the SQLite database file to use. "
-                                  "Not absolute paths will be relative to "
-                                  "the server's <CONFIG_DIRECTORY>.")
+                                  "All paths will be relative to the server's "
+                                  "<CONFIG_DIRECTORY>. If an SQLite server "
+                                  "needs to have a different directory, use "
+                                  "symlinks inside the config directory.")
 
         dbmodes.add_argument('--postgresql',
                              dest="postgresql",
