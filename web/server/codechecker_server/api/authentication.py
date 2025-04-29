@@ -662,6 +662,7 @@ class ThriftAuthHandler:
     def newToken(self, description):
         """
         Generate a new personal access token with the given description.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
         name = ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
@@ -676,16 +677,16 @@ class ThriftAuthHandler:
     def removeToken(self, token):
         """
         Removes the given personal access token of the logged in user.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
         with DBSession(self.__config_db) as session:
             # Check if the given token is a personal access token so it can be
             # removed.
             user = self.getLoggedInUser()
-            num_of_removed = session.query(Session) \
+            num_of_removed = session.query(PersonalAccessTokenDB) \
                 .filter(Session.user_name == user) \
                 .filter(Session.token == token) \
-                .filter(Session.can_expire.is_(False)) \
                 .delete(synchronize_session=False)
             session.commit()
 
@@ -707,6 +708,7 @@ class ThriftAuthHandler:
     def getTokens(self):
         """
         Get available personal access tokens of the logged in user.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
         with DBSession(self.__config_db) as session:
@@ -743,8 +745,7 @@ class ThriftAuthHandler:
                 generate_session_token(),
                 auth_session.user_name,
                 auth_session.groups,
-                auth_session.description,
-                False)
+                auth_session.description)
 
             session.add(auth_session)
             session.flush()
@@ -754,7 +755,7 @@ class ThriftAuthHandler:
             name = name.strip()
             access_token = PersonalAccessTokenDB(
                 user, name, token, description,
-                auth_session.groups, auth_session.id)
+                auth_session.groups)
 
             session.add(access_token)
 
@@ -794,9 +795,6 @@ class ThriftAuthHandler:
                     f"Personal access token with name '{name}' was not found "
                     f"in the database for the user '{user}'.")
 
-            session.query(Session) \
-                .filter(Session.id == personal_access_token.auth_session_id) \
-                .delete(synchronize_session=False)
             personal_access_token_q.delete()
             session.commit()
 
