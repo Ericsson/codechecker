@@ -495,6 +495,9 @@ class SessionManager:
         if not personal_access_token:
             return False
 
+        if (personal_access_token.expiration - datetime.now()).total_seconds() <= 0:
+            return False
+
         return {
             'username': personal_access_token.user_name,
             'groups': personal_access_token.groups
