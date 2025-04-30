@@ -1247,32 +1247,4 @@ def start_server(config_directory, package_data, port, config_sql_server,
     http_server.serve_forever()
 
     LOG.info("Webserver quit.")
-
-
-def add_initial_run_database(config_sql_server, product_connection):
-    """
-    Create a default run database as SQLite in the config directory,
-    and add it to the list of products in the config database specified by
-    db_conn_string.
-    """
-
-    # Connect to the configuration database
-    LOG.debug("Creating database engine for CONFIG DATABASE...")
-    __engine = config_sql_server.create_engine()
-    product_session = sessionmaker(bind=__engine)
-
-    # Load the initial list of products and create the connections.
-    sess = product_session()
-    products = sess.query(ORMProduct).all()
-    if products:
-        raise ValueError("Called create_initial_run_database on non-empty "
-                         "config database -- you shouldn't have done this!")
-
-    LOG.debug("Adding default product to the config db...")
-    product = ORMProduct('Default', product_connection, 'Default',
-                         "Default product created at server start.")
-    sess.add(product)
-    sess.commit()
-    sess.close()
-
-    LOG.debug("Default product set up.")
+    
