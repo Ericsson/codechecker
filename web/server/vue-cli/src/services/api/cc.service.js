@@ -115,16 +115,18 @@ class CodeCheckerService extends BaseService {
    *   uncoveredLines: 20,
    *   coveragePercentage: 80,
    *   lineCoverage: [
-   *     {
-   *       lineNumber: 1,
-   *       covered: true,
-   *       partiallyCovered: false
-   *     },
-   *     {
-   *       lineNumber: 2,
-   *       covered: false,
-   *       partiallyCovered: false
-   *     }
+   *    {
+    *     lineRange: { start: 1, end: 2 },
+    *     coverageStatus: "uncovered",
+   *    },
+   *   {
+   *     lineRange: { start: 3, end: 4 },
+   *     coverageStatus: "covered",
+   *   },
+   *   {
+   *     lineRange: { start: 5, end: 6 },
+   *     coverageStatus: "partially-covered",
+   *   }
    *   ]
    * }
    */

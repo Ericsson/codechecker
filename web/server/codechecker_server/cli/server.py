@@ -33,7 +33,7 @@ from codechecker_api_shared.ttypes import DBStatus
 from codechecker_report_converter import twodim
 
 from codechecker_common import arg, cmd_config, logger, util
-from codechecker_common.compatibility.multiprocessing import cpu_count
+from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
@@ -46,8 +46,6 @@ from codechecker_server.database.run_db_model \
 
 from codechecker_web.shared import webserver_context, database_status, \
     host_check, env
-
-import concurrent.futures
 
 LOG = logger.get_logger('server')
 
@@ -717,10 +715,9 @@ def __db_migration_multiple(
         failed_products: List[Tuple[str, DBStatus]] = []
         thr_count = util.clamp(1, len(scheduled_upgrades_or_inits),
                                cpu_count())
-        with concurrent.futures.ProcessPoolExecutor(max_workers=thr_count) as executor:
+        with Pool(max_workers=thr_count) as executor:
             LOG.info("Initialising/upgrading products using %d concurrent "
                      "jobs...", thr_count)
-            futures = []
             for product_cfg, return_status in \
                     zip(scheduled_upgrades_or_inits, executor.map(
                         # Bind the first 2 non-changing arguments of

@@ -1050,29 +1050,32 @@ export default {
       console.log("Total lines in editor:", this.editor.lineCount());
       console.log("Coverage data:", this.coverageData);
 
-      // Create a map for faster line lookup
-      const coverageMap = new Map(
-        this.coverageData.lineCoverage.map(line => [ line.lineNumber, line ])
-      );
-
       this.editor.operation(() => {
         for (let i = 0; i < this.editor.lineCount(); i++) {
-          const lineData = coverageMap.get(i + 1);
+          const lineNumber = i + 1;
+          const lineData = this.coverageData.lineCoverage.find(line => {
+            const { start, end } = line.lineRange;
+            return start <= lineNumber && end >= lineNumber;
+          });
+          
           if (lineData) {
             let className;
-            if (lineData.partiallyCovered) {
+            switch (lineData.coverageStatus) {
+            case "covered":
+              className = "coverage-covered-line";
+              break;
+            case "uncovered":
+              className = "coverage-uncovered-line";
+              break;
+            case "partially-covered":
               className = "coverage-partial-line";
-            } else {
-              className = lineData.covered 
-                ? "coverage-covered-line" 
-                : "coverage-uncovered-line";
+              break;
+            default:
+              className = "";
             }
             
-            console.log(`Line ${i + 1}:`, {
-              covered: lineData.covered,
-              partiallyCovered: lineData.partiallyCovered,
-              executionCount: lineData.executionCount,
-              lastExecution: lineData.lastExecution,
+            console.log(`Line ${lineNumber}:`, {
+              coverageStatus: lineData.coverageStatus,
               className
             });
 
@@ -1080,7 +1083,7 @@ export default {
               this.editor.addLineClass(i, type, className);
             });
           } else {
-            console.log(`Line ${i + 1}: No coverage data available`);
+            console.log(`Line ${lineNumber}: No coverage data available`);
           }
         }
       });
@@ -1105,12 +1108,23 @@ export default {
     getLineCoverageClass(lineNumber) {
       if (!this.coverageData || !this.showCoverage) return "";
       
-      const lineInfo = this.coverageData.lineCoverage.find(
-        line => line.lineNumber === lineNumber
-      );
+      const lineInfo = this.coverageData.lineCoverage.find(line => {
+        const { start, end } = line.lineRange;
+        return start <= lineNumber && end >= lineNumber;
+      });
       
       if (!lineInfo) return "coverage-unknown";
-      return lineInfo.covered ? "coverage-covered" : "coverage-uncovered";
+      
+      switch (lineInfo.coverageStatus) {
+      case "covered":
+        return "coverage-covered";
+      case "uncovered":
+        return "coverage-uncovered";
+      case "partially-covered":
+        return "coverage-partial";
+      default:
+        return "coverage-unknown";
+      }
     },
   }
 };

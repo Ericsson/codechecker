@@ -14,7 +14,7 @@ const CC_SERVICE_ENDPOINTS = [
 // Location of the Thrift API server.
 const CC_THRIFT_API_HOST =
   process.env.CC_THRIFT_API_HOST || 'http://localhost';
-const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8001;
+const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8002;
 
 module.exports = merge(common, {
   mode: 'development',
@@ -24,7 +24,7 @@ module.exports = merge(common, {
   },
   devtool: 'inline-source-map',
   devServer: {
-    port: 8081,
+    port: 8080,
     hot: true,
     historyApiFallback: {
       // If the URL contains a product endpoint and we server a static file

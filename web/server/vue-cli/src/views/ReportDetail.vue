@@ -245,87 +245,64 @@ export default {
             coveragePercentage: 57.1,
             lineCoverage: [
               {
-                lineNumber: 1,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 5
+                lineRange: { start: 1, end: 1 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 2,
-                covered: false,
-                partiallyCovered: false
+                lineRange: { start: 2, end: 2 },
+                coverageStatus: "uncovered"
               },
               {
-                lineNumber: 3,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 10
+                lineRange: { start: 3, end: 3 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 4,
-                covered: true,
-                partiallyCovered: true,
-                executionCount: 3
+                lineRange: { start: 4, end: 4 },
+                coverageStatus: "partially-covered"
               },
               {
-                lineNumber: 5,
-                covered: false,
-                partiallyCovered: false
+                lineRange: { start: 5, end: 5 },
+                coverageStatus: "uncovered"
               },
               {
-                lineNumber: 6,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 2
+                lineRange: { start: 6, end: 6 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 7,
-                covered: true,
-                partiallyCovered: true,
-                executionCount: 8
+                lineRange: { start: 7, end: 7 },
+                coverageStatus: "partially-covered"
               },
               {
-                lineNumber: 8,
-                covered: false,
-                partiallyCovered: false
+                lineRange: { start: 8, end: 8 },
+                coverageStatus: "uncovered"
               },
               {
-                lineNumber: 9,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 4
+                lineRange: { start: 9, end: 9 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 10,
-                covered: true,
-                partiallyCovered: true,
-                executionCount: 6
+                lineRange: { start: 10, end: 10 },
+                coverageStatus: "partially-covered"
               },
               {
-                lineNumber: 11,
-                covered: false,
-                partiallyCovered: false
+                lineRange: { start: 11, end: 11 },
+                coverageStatus: "uncovered"
               },
               {
-                lineNumber: 12,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 7
+                lineRange: { start: 12, end: 12 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 13,
-                covered: true,
-                partiallyCovered: false,
-                executionCount: 9
+                lineRange: { start: 13, end: 13 },
+                coverageStatus: "covered"
               },
               {
-                lineNumber: 14,
-                covered: false,
-                partiallyCovered: false
+                lineRange: { start: 14, end: 14 },
+                coverageStatus: "uncovered"
               }
             ]
           };
-          
+
           console.log("Using mock coverage data:", mockCoverageData);
           item.coverageData = mockCoverageData;
         } catch (err) {

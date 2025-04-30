@@ -67,8 +67,6 @@ from .database.config_db_model import Product as ORMProduct, \
 from .database.database import DBSession
 from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
 
-import concurrent.futures
-
 LOG = get_logger('server')
 
 
@@ -701,7 +699,32 @@ class Product:
         return True
 
 
-def _do_db_cleanup(config_database, context, check_env) \
+def _do_db_cleanup(context, check_env,
+                   id_: int, endpoint: str, display_name: str,
+                   connection_str: str) -> Tuple[Optional[bool], str]:
+    # This functions is a concurrent job handler!
+    try:
+        prod = Product(id_, endpoint, display_name, connection_str,
+                       context, check_env)
+        prod.connect(init_db=False)
+        if prod.db_status != DBStatus.OK:
+            status_str = database_status.db_status_msg.get(prod.db_status)
+            return None, \
+                f"Cleanup not attempted, database status is \"{status_str}\""
+
+        prod.cleanup_run_db()
+        prod.teardown()
+
+        # Result is hard-wired to True, because the db_cleanup routines
+        # swallow and log the potential errors but do not return them.
+        return True, ""
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return False, str(e)
+
+
+def _do_db_cleanups(config_database, context, check_env) \
         -> Tuple[bool, List[Tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -729,16 +752,14 @@ def _do_db_cleanup(config_database, context, check_env) \
 
     thr_count = util.clamp(1, len(products), cpu_count())
     overall_result, failures = True, []
-    with concurrent.futures.ProcessPoolExecutor(max_workers=thr_count) as executor:
+    with Pool(max_workers=thr_count) as executor:
         LOG.info("Performing database cleanup using %d concurrent jobs...",
                  thr_count)
-        futures = []
-        for product in products:
-            futures.append(executor.submit(
-                partial(_do_db_cleanup, context, check_env),
-                *product))
-        for future in concurrent.futures.as_completed(futures):
-            success, reason = future.result()
+        for product, result in \
+                zip(products, executor.map(
+                    partial(_do_db_cleanup, context, check_env),
+                    *zip(*products))):
+            success, reason = result
             if not success:
                 _, endpoint, _, _ = product
                 overall_result = False
@@ -1127,7 +1148,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
         sys.exit(1)
 
     if not skip_db_cleanup:
-        all_success, fails = _do_db_cleanup(config_sql_server,
+        all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
                                              check_env)
         if not all_success:
