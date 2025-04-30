@@ -348,6 +348,8 @@ def enable_auth(workspace):
 
     scfg_dict = load_json(server_cfg_file, {})
     scfg_dict["authentication"]["enabled"] = True
+    scfg_dict["authentication"]["failed_auth_message"] = \
+        "Personal access token based authentication only"
     scfg_dict["authentication"]["super_user"] = "root"
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \

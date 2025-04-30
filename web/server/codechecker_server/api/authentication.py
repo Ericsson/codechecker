@@ -274,6 +274,10 @@ class ThriftAuthHandler:
                 msg = f"Invalid credentials supplied for user " \
                     f"'{user_name}'. Refusing authentication!"
 
+                auth_msg = self.__manager.get_failed_auth_message().get('msg')
+                if auth_msg:
+                    msg += f"\nNote: {auth_msg}"
+
                 LOG.warning(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
