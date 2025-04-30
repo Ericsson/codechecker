@@ -430,6 +430,21 @@ class DictAuth(unittest.TestCase):
 
         cred_manager.save_token(host, port, session_token, True)
 
+    def test_config_failed_auth_message_showing_in_cli(self):
+        """
+        Test if the failed_auth_message from the server config shows up in
+        cli upon failed authentication.
+        """
+
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+
+        with self.assertRaises(RequestFailed) as msg:
+            auth_client.performLogin("Username:Password", "invalid:invalid")
+
+        self.assertIn("Note: Personal access token based authentication only",
+                      str(msg.exception))
+
     def test_announcement_showing_in_cli(self):
         """
         Test if the announcement message posted on the CodeChecker GUI shows
