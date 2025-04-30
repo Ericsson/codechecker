@@ -306,7 +306,7 @@ export default {
           // console.log("Using mock coverage data:", mockCoverageData);
           // item.coverageData = mockCoverageData;
         } catch (err) {
-          console.error("Failed to load coverage data:", err);
+          //console.error("Failed to load coverage data:", err);
         }
       }
 
