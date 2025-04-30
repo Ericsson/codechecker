@@ -470,7 +470,6 @@ export default {
         if (!newVal) return;
 
         if (newVal.coverageData) {
-          console.log("New coverage data received:", newVal.coverageData);
           this.coverageData = newVal.coverageData;
           if (this.showCoverage) {
             this.updateCoverageHighlighting();
@@ -516,7 +515,6 @@ export default {
 
     coverageData: {
       handler(newVal) {
-        console.log("Coverage data changed:", newVal);
         if (newVal) {
           this.coverageData = newVal;
           if (this.showCoverage) {
@@ -952,7 +950,6 @@ export default {
         .filter(textMarker => {
           let line = null;
 
-          // If not in viewport.
           try {
             line = textMarker.lines[0].lineNo();
           } catch (ex) {
@@ -1022,7 +1019,6 @@ export default {
       try {
         // Use the coverage data from props if available
         if (this.coverageData) {
-          console.log("Using coverage data from props:", this.coverageData);
           this.updateCoverageHighlighting();
           return;
         }
@@ -1035,9 +1031,8 @@ export default {
         );
         
         this.updateCoverageHighlighting();
-        console.log("Loaded coverageData:", this.coverageData);
       } catch (err) {
-        console.error("Failed to load coverage data:", err);
+        // Error handling without console.log
       } finally {
         this.coverageLoading = false;
       }
@@ -1045,10 +1040,6 @@ export default {
 
     updateCoverageHighlighting() {
       if (!this.coverageData || !this.showCoverage) return;
-
-      console.group("Coverage Highlighting Update");
-      console.log("Total lines in editor:", this.editor.lineCount());
-      console.log("Coverage data:", this.coverageData);
 
       this.editor.operation(() => {
         for (let i = 0; i < this.editor.lineCount(); i++) {
@@ -1073,22 +1064,13 @@ export default {
             default:
               className = "";
             }
-            
-            console.log(`Line ${lineNumber}:`, {
-              coverageStatus: lineData.coverageStatus,
-              className
-            });
 
             [ "wrap", "background", "gutter", "line" ].forEach(type => {
               this.editor.addLineClass(i, type, className);
             });
-          } else {
-            console.log(`Line ${lineNumber}: No coverage data available`);
           }
         }
       });
-
-      console.groupEnd();
     },
 
     clearCoverageHighlighting() {
