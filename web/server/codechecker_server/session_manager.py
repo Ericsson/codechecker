@@ -78,7 +78,7 @@ class _Session:
 
     def __init__(self, token, username, groups,
                  session_lifetime, refresh_time, is_root=False, database=None,
-                 last_access=None, can_expire=True):
+                 last_access=None):
 
         self.token = token
         self.user = username
@@ -88,7 +88,6 @@ class _Session:
         self.refresh_time = refresh_time if refresh_time else None
         self.__root = is_root
         self.__database = database
-        self.__can_expire = can_expire
         self.last_access = last_access if last_access else datetime.now()
 
     def get_access_token(self):
@@ -117,20 +116,9 @@ class _Session:
         Returns if the session is alive and usable, that is, within its
         lifetime.
         """
-        if not self.__can_expire:
-            return True
 
         return (datetime.now() - self.last_access).total_seconds() <= \
             self.session_lifetime
-
-    @property
-    def can_expire(self):
-        """
-        Returns if the session can expire.
-        Expiring sessions are created through the web interface, non-expiring
-        sessions are created through the command-line client.
-        """
-        return self.__can_expire
 
     def revalidate(self):
         """
@@ -633,7 +621,7 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None, can_expire=True):
+                               last_access=None):
         """
         Returns a new local session object initalized by the given parameters.
         """
@@ -643,7 +631,7 @@ class SessionManager:
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
             self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire)
+            last_access)
 
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
@@ -861,8 +849,7 @@ class SessionManager:
                 return self.__create_local_session(token, user_name,
                                                    groups,
                                                    is_root,
-                                                   db_record.last_access,
-                                                   db_record.can_expire)
+                                                   db_record.last_access)
         except Exception as e:
             LOG.error("Couldn't check login in the database: ")
             LOG.error(str(e))
@@ -930,7 +917,6 @@ class SessionManager:
             if transaction:
                 transaction.query(SessionRecord) \
                     .filter(SessionRecord.token == token) \
-                    .filter(SessionRecord.can_expire.is_(True)) \
                     .delete()
                 transaction.commit()
 
