@@ -26,6 +26,7 @@ from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import OAuthToken
+from .database.config_db_model import Session
 from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
@@ -440,11 +441,8 @@ class SessionManager:
             # Try the database, if it is connected.
             transaction = self.__database_connection()
             auth_session = transaction.query(SessionRecord.token) \
-                .join(
-                    PersonalAccessToken,
-                    PersonalAccessToken.auth_session_id == SessionRecord.id) \
-                .filter(PersonalAccessToken.user_name == user_name) \
-                .filter(PersonalAccessToken.token == token) \
+                .filter(Session.user_name == user_name) \
+                .filter(Session.token == token) \
                 .limit(1).one_or_none()
 
             if not auth_session:
@@ -644,7 +642,7 @@ class SessionManager:
                 self.__auth_config['logins_until_cleanup']:
             self.__cleanup_sessions()
 
-        # Try authenticate user with personal access token.
+        # Try authenticate user with session auth token.
         auth_token = self.__try_auth_token(auth_string)
         if auth_token:
             local_session = self.__get_local_session_from_db(
