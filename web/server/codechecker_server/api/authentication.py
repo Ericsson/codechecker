@@ -33,7 +33,7 @@ from codechecker_common.logger import get_logger
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Product, ProductPermission, Session, \
-    OAuthSession, OAuthToken, PersonalAccessToken as PersonalAccessTokenDB, \
+    OAuthSession, PersonalAccessToken as PersonalAccessTokenDB, \
     SystemPermission
 from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
