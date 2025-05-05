@@ -182,7 +182,7 @@ setuptools.setup(
         'install': Install,
         'build_ext': BuildExt,
     },
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     scripts=[
         'scripts/gerrit_changed_files_to_skipfile.py'
     ],

@@ -17,7 +17,7 @@ apps:
     command: CodeChecker/bin/CodeChecker
     environment:
       PATH: ${SNAP}/usr/bin:${PATH}
-      PYTHONPATH: ${SNAP}/usr/lib/python3.8
+      PYTHONPATH: ${SNAP}/usr/lib/python3.9
   report-converter:
     command: CodeChecker/bin/report-converter
   post-process-stats:

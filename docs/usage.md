@@ -65,7 +65,7 @@ There are some prerequisite to successfully take this example:
 - [Install](README.md/#install-guide) CodeChecker.
 - Install analyzer binaries: `clang` / `clang-tidy` (on debian based systems update-alternatives is your friend).
 - Install `gcc` and `make` to compile our example project.
-- Install Python 3 (>= 3.8)
+- Install Python 3 (>= 3.9)
 
 ## Step 1: Integrate CodeChecker into your build system
 CodeChecker analyzes sources and dependencies that are built by your
