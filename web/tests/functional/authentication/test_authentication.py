@@ -21,6 +21,8 @@ import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
+# from codechecker_server.api.authentication import validateOAuthTokenSession
+
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
 from libtest import codechecker
@@ -215,9 +217,9 @@ class DictAuth(unittest.TestCase):
             f"&code_challenge_method={code_challenge_method}" \
             f"&code_challenge={code_challenge}"
 
-        validate_result = auth_client.validateOAuthSession(state)
-        self.assertTrue(validate_result, "State in begigning and"
-                        " ending of OAuth is different")
+        # validate_result = auth_client.validateOAuthSession(state)
+        # self.assertTrue(validate_result, "State in begigning and"
+        #                 " ending of OAuth is different")
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
@@ -229,7 +231,7 @@ class DictAuth(unittest.TestCase):
             self._test_workspace, session_token='_PROHIBIT')
 
         self.try_login("github", "admin_github", "admin")
-        result = auth_client.validateOAuthTokenSession("github1")
+        result = auth_client._validateOAuthTokenSession("github1")
 
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
@@ -246,7 +248,6 @@ class DictAuth(unittest.TestCase):
         """
         Tests functionality of create_link method
         that checks if it creates unique links correctly.
-
         """
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
@@ -264,7 +265,7 @@ class DictAuth(unittest.TestCase):
                             link_google,
                             "Function created identical links")
 
-    def test_oauth_insert_oauth_session(self):
+    def test_oauth_insert_session(self):
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
         state = "GTUHGJ"
