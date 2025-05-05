@@ -792,9 +792,6 @@ class ThriftAuthHandler:
                     f"Personal access token with name '{name}' was not found "
                     f"in the database for the user '{user}'.")
 
-            session.query(Session) \
-                .filter(Session.id == personal_access_token.auth_session_id) \
-                .delete(synchronize_session=False)
             personal_access_token_q.delete()
             session.commit()
 
