@@ -256,11 +256,12 @@ class ThriftAuthHandler:
         return url
 
     @timeit
-    def validateOAuthTokenSession(self, access_token):
+    def _validateOAuthTokenSession(self, access_token):
         """
-        Returns true of false depending
+        Helper function that returns bool depending
         if the OAuth token exists
         """
+        # self.__require_privilaged_access()
 
         access_token_db = None
         with DBSession(self.__config_db) as session:
@@ -272,11 +273,12 @@ class ThriftAuthHandler:
             and access_token_db == access_token
 
     @timeit
-    def validateOAuthSession(self, state):
+    def _validateOAuthSession(self, state):
         """
-        Returns true of false depending
+        Helper function that returns bool depending
         if the OAuth state exists
         """
+        self.__require_privilaged_access()
 
         state_db = None
         with DBSession(self.__config_db) as session:
@@ -287,7 +289,7 @@ class ThriftAuthHandler:
         return state_db is not None and state_db == state
 
     @timeit
-    def getOAuthRow(self, state):
+    def __getOAuthRow(self, state):
         """
         Returns OAuth row from table.
         """
@@ -361,7 +363,7 @@ class ThriftAuthHandler:
             expires_at_db = None
 
             state_db, code_verifier_db, provider_db, expires_at_db \
-                = self.getOAuthRow(state=state)
+                = self.__getOAuthRow(state=state)
 
             if state_db != state:
                 LOG.error("State mismatch.")

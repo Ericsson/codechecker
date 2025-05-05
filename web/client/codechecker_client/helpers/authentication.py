@@ -49,21 +49,6 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
-    def validateOAuthSession(self, state):
-        pass
-
-    @thrift_client_call
-    def validateOAuthTokenSession(self, access_code):
-        pass
-
-    @thrift_client_call
-    def insertOAuthSession(self,
-                           state,
-                           code_verifier,
-                           provider):
-        pass
-
-    @thrift_client_call
     def getOauthProviders(self):
         pass
 
