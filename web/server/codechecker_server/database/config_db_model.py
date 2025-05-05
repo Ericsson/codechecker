@@ -14,7 +14,7 @@ import sys
 from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
     Integer, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.expression import false, true
+from sqlalchemy.sql.expression import false
 
 from ..permissions import get_permissions
 
