@@ -256,39 +256,6 @@ class ThriftAuthHandler:
         return url
 
     @timeit
-    def _validateOAuthTokenSession(self, access_token):
-        """
-        Helper function that returns bool depending
-        if the OAuth token exists
-        """
-        # self.__require_privilaged_access()
-
-        access_token_db = None
-        with DBSession(self.__config_db) as session:
-            access_token_db, *_ = \
-                session.query(OAuthToken.access_token) \
-                .filter(OAuthToken.access_token == access_token) \
-                .first()
-        return access_token_db is not None \
-            and access_token_db == access_token
-
-    @timeit
-    def _validateOAuthSession(self, state):
-        """
-        Helper function that returns bool depending
-        if the OAuth state exists
-        """
-        self.__require_privilaged_access()
-
-        state_db = None
-        with DBSession(self.__config_db) as session:
-            state_db, *_ = \
-                session.query(OAuthSession.state) \
-                .filter(OAuthSession.state == state) \
-                .first()
-        return state_db is not None and state_db == state
-
-    @timeit
     def __getOAuthRow(self, state):
         """
         Returns OAuth row from table.
