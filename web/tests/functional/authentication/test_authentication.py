@@ -21,7 +21,6 @@ import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
-# from codechecker_server.api.authentication import validateOAuthTokenSession
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -200,6 +199,8 @@ class DictAuth(unittest.TestCase):
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
 
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
         link = auth_client.createLink(provider)
         data = requests.get(
             url=f"{link}&username={username}&password={password}",
@@ -217,9 +218,9 @@ class DictAuth(unittest.TestCase):
             f"&code_challenge_method={code_challenge_method}" \
             f"&code_challenge={code_challenge}"
 
-        # validate_result = auth_client.validateOAuthSession(state)
-        # self.assertTrue(validate_result, "State in begigning and"
-        #                 " ending of OAuth is different")
+        validate_result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(validate_result, "State in begigning and"
+                        " ending of OAuth is different")
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
@@ -227,13 +228,36 @@ class DictAuth(unittest.TestCase):
         return self.session_token
 
     def test_oauth_token_session(self):
-        auth_client = env.setup_auth_client(
-            self._test_workspace, session_token='_PROHIBIT')
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         self.try_login("github", "admin_github", "admin")
-        result = auth_client._validateOAuthTokenSession("github1")
+
+        result = env.validate_oauth_token_session(session_factory, "github1",)
 
         self.assertTrue(result, "Access_token wasn't inserted in Database")
+
+    def test_oauth_insert_session(self):
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        state = "GTUHGJ"
+        code_verifier = "54GJITG3gVBT"
+        provider = "github"
+
+        env.insert_oauth_session(session_factory,
+                                 state,
+                                 code_verifier,
+                                 provider)
+
+        result = env.validate_oauth_session(session_factory, state)
+
+        self.assertTrue(result, "No entry found in database, "
+                        "unexpected behavior")
+
+        with self.assertRaises(TypeError):
+            env.insert_oauth_session(session_factory,
+                                     1,
+                                     2,
+                                     3)
 
     def test_oauth_allowed_users_default(self):
         """
@@ -264,26 +288,6 @@ class DictAuth(unittest.TestCase):
         self.assertNotEqual(link_github,
                             link_google,
                             "Function created identical links")
-
-    def test_oauth_insert_session(self):
-        auth_client = env.setup_auth_client(
-            self._test_workspace, session_token='_PROHIBIT')
-        state = "GTUHGJ"
-        code_verifier = "54GJITG3gVBT"
-        provider = "github"
-        auth_client.insertOAuthSession(state,
-                                       code_verifier,
-                                       provider)
-
-        result = auth_client.validateOAuthSession(state)
-
-        self.assertTrue(result, "No entry found in database, "
-                        "unexpected behavior")
-
-        with self.assertRaises(TypeError):
-            auth_client.insertOAuthSession(1,
-                                           2,
-                                           3)
 
     def test_oauth_invalid_credentials(self):
         """
