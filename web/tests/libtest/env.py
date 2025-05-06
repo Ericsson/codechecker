@@ -178,6 +178,8 @@ def setup_auth_client(workspace,
     # If the host is not set try to get it from the workspace config file.
     if not host and not port:
         codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
+        print("CodeChecker workspace: " + str(workspace))
+        print("CodeChecker config: " + str(codechecker_cfg))
         port = codechecker_cfg['viewer_port']
         host = codechecker_cfg['viewer_host']
 

@@ -20,13 +20,7 @@ import unittest
 import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
-
-<<<<<<< HEAD
 import datetime
-
-=======
-# from codechecker_server.api.authentication import validateOAuthTokenSession
->>>>>>> 5622e16d (new tests verification)
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -231,9 +225,9 @@ class DictAuth(unittest.TestCase):
                 state=state
                 )
 
-        # validate_result = auth_client.validateOAuthSession(state)
-        # self.assertTrue(validate_result, "State in begigning and"
-        #                 " ending of OAuth is different")
+        validate_result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(validate_result, "State in begigning and"
+                        " ending of OAuth is different")
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
@@ -246,6 +240,10 @@ class DictAuth(unittest.TestCase):
         """
 
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        self.try_login("github", "admin_github", "admin")
+
+        result = env.validate_oauth_token_session(session_factory, "github1",)
 
         session_token = self.try_login("github", "admin_github", "admin")
         self.assertIsNotNone(session_token,
@@ -277,6 +275,9 @@ class DictAuth(unittest.TestCase):
         """
         Testing insertion of wrong session data."""
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        self.assertTrue(result, "No entry found in database, "
+                        "unexpected behavior")
 
         with self.assertRaises(TypeError):
             env.insert_oauth_session(session_factory,
