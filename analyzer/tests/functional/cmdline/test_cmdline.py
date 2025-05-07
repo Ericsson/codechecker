@@ -15,7 +15,6 @@ import os
 import shutil
 import subprocess
 import unittest
-import sys
 
 from libtest import env
 
@@ -50,8 +49,6 @@ class TestCmdline(unittest.TestCase):
 
         global TEST_WORKSPACE
         TEST_WORKSPACE = env.get_workspace('cmdline')
-
-        print(f"test interpreter: {os.path.realpath(sys.executable)}")
 
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 

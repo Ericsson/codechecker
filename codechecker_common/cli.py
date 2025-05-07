@@ -173,12 +173,12 @@ output.
             lib_dir_path = os.environ.get('CC_LIB_DIR')
             for subcommand in subcommands:
                 try:
-                    #print(f'Modules list from CodeChecker:', str(
-                    #    [name for _, name, _ in pkgutil.iter_modules()]))
-                    #print('Env from CodeChecker:', str(os.environ))
-                    print('CodeChecker interpreter: ' \
-                          f'{sys.executable}')
-                    #print('which python3: ', find_prog('python3'))
+                    # print(f'Modules list from CodeChecker:', str(
+                    #     [name for _, name, _ in pkgutil.iter_modules()]))
+                    # print('Env from CodeChecker:', str(os.environ))
+                    # print('CodeChecker interpreter: ' \
+                    #       f'{sys.executable}')
+                    # print('which python3: ', find_prog('python3'))
                     add_subcommand(subparsers, subcommand,
                                    subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
