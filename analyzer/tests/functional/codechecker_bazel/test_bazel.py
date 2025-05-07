@@ -103,6 +103,20 @@ class TestBaseTest(unittest.TestCase):
         self.check_command("bazel test :codechecker_fail", exit_code=3)
         logfile = os.path.join(
             self.BAZEL_BIN_DIR, "codechecker_fail", "codechecker.log")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        with open(logfile, 'r') as f:
+            print(f.read())
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         self.grep_file(
             logfile,
             r"clang-diagnostic-unused-variable\s+\|\s+MEDIUM\s+\|\s+1")
