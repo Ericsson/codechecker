@@ -168,6 +168,10 @@ class ThriftAuthHandler:
         """
         # TODO remove this purge sesisons system to another place
         # where it will happen semi regularly
+        if not all(isinstance(arg, str) for arg in (state,
+                                                    code_verifier,
+                                                    provider)):
+            raise TypeError("All OAuth fields must be strings")
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:

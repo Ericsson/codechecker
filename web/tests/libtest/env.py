@@ -178,8 +178,6 @@ def setup_auth_client(workspace,
     # If the host is not set try to get it from the workspace config file.
     if not host and not port:
         codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
-        print("CodeChecker workspace: " + str(workspace))
-        print("CodeChecker config: " + str(codechecker_cfg))
         port = codechecker_cfg['viewer_port']
         host = codechecker_cfg['viewer_host']
 
@@ -555,6 +553,10 @@ def insert_oauth_session(session_alchemy,
     """
     Insert a new OAuth session into the database.
     """
+    if not all(isinstance(arg, str) for arg in (state,
+                                                code_verifier,
+                                                provider)):
+        raise TypeError("All OAuth fields must be strings")
     try:
         with DBSession(session_alchemy) as session:
             date = (datetime.datetime.now() +
@@ -570,3 +572,4 @@ def insert_oauth_session(session_alchemy,
             print(f"State {state} inserted successfully.")
     except Exception as exc:
         print(f"Failed to insert state {state}: {exc}")
+        raise exc

@@ -51,10 +51,6 @@ struct AccessControl {
   1: Permissions globalPermissions,
   2: map<string, Permissions> productPermissions,
 }
-struct OauthDataTable {
-  1: string item1,
-  2: string item2,
-}
 
 service codeCheckerAuthentication {
 
