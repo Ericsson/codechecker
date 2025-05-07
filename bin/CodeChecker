@@ -113,7 +113,7 @@ def main(subcommand=None):
         signal.signal(signal.SIGHUP, signal_reload_handler)
 
     print('CodeChecker caller interpreter: ' \
-          f'{os.path.realpath(sys.executable)}')
+          f'{sys.executable}')
     try:
         run_codechecker(checker_env, subcommand)
     finally:
