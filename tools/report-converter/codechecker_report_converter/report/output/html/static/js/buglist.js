@@ -162,6 +162,12 @@ var BugList = {
       document.createTextNode(data['timestamp'] || ''));
     row.appendChild(timestamp_col);
 
+    let chronological_col = document.createElement('td');
+    chronological_col.setAttribute('class', 'dynamic');
+    chronological_col.appendChild(
+      document.createTextNode(data['chronological-order'] || ''));
+      row.appendChild(chronological_col);
+
     return row;
   },
 
@@ -177,7 +183,7 @@ var BugList = {
     for (var i = startIdx; i < endIdx; ++i) {
       report_list.appendChild(this.buildRow(reports[i], i + 1));
 
-      if (reports[i]['testcase'] || reports[i]['timestamp'])
+      if (reports[i]['testcase'] || reports[i]['timestamp'] || reports[i]['chronological-order'])
         dynamic_cols_needed = true;
     }
 
