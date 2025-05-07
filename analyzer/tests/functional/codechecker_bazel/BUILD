@@ -148,6 +148,9 @@ codechecker_test(
     tags = [
         "manual",
     ],
+    analyze = [
+        "--analyzers clangsa clang-tidy",
+    ],
     targets = [
         "test_fail",
     ],
