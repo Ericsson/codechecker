@@ -46,6 +46,8 @@ git reset HEAD web/server/vue-cli/package-lock.json
   * Github doesn't support PKCE and If GitHub starts supporting PKCE in the future, the code should automatically
   start using it ,and in that case, this note can be removed.
 
+  * If a new OAuth provider is added, add it to `OAUTH_TEMPLATES`, instead of the `server-config.json`.
+
   * Important: for different providers there are different requirements for providing refresh token.
 
     In case of of google you need to specify these 2 attributes `access_type='offline'` and `prompt='consent'` prompts `google` to return `refresh_token`.
@@ -60,7 +62,7 @@ git reset HEAD web/server/vue-cli/package-lock.json
     Whereas GitHub return refresh token by default.
 
 ```.py
-  if provider == "google":
+  if template == "google/v1":
               url, state = session.create_authorization_url(
                   url=authorization_url,
                   state=stored_state,

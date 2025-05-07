@@ -56,47 +56,45 @@
     },
     "method_oauth": {
       "enabled": false,
+      "shared_variables" : {
+        "host": "https://<server_host>"
+      },
       "providers" : {
         "github" : {
           "enabled" : false,
           "client_id" : "<ExampleClientID>",
           "client_secret": "<ExampleClientSecret>",
-          "authorization_url": "https://github.com/login/oauth/authorize",
-          "callback_url": "https://<server_host>/login/OAuthLogin/github",
-          "token_url": "https://github.com/login/oauth/access_token",
-          "user_info_url": "https://api.github.com/user",
-          "user_emails_url": "https://api.github.com/user/emails",
-          "scope": "user:email",
-          "user_info_mapping": {
-            "username": "username"
-          }
+          "template": "github/v1"
         },
         "google": {
           "enabled" : false,
           "client_id" : "<ExampleClientID>",
           "client_secret" : "<ExampleClientSecret>",
-          "authorization_url" : "https://accounts.google.com/o/oauth2/auth",
-          "callback_url" : "https://<server_host>/login/OAuthLogin/google",
-          "token_url" : "https://accounts.google.com/o/oauth2/token",
-          "user_info_url" : "https://www.googleapis.com/oauth2/v1/userinfo",
-          "scope" : "openid email profile",
-          "user_info_mapping" : {
-            "username" : "email"
-          }
+          "template": "google/v1"
         },
         "microsoft": {
           "enabled": false,
           "client_id": "<ExampleClientID>",
           "client_secret": "<ExampleClientSecret>",
-          "authorization_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/authorize",
-          "callback_url": "https://<server_host>/login/OAuthLogin/microsoft",
-          "token_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/token",
-          "user_groups_url" : "https://graph.microsoft.com/v1.0/me/memberOf",
-          "jwks_url": "https://login.microsoftonline.com/<tenant-id>/discovery/v2.0/keys",
-          "user_info_url": "https://graph.microsoft.com/v1.0/me",
-          "scope": "User.Read email profile openid offline_access",
+          "template": "ms_entra/v2.0",
+          "variables": {
+            "tenant_id": "common"
+          }
+        },
+        "custom": {
+          "enabled": false,
+          "client_id": "<ExampleClientID>",
+          "client_secret": "<ExampleClientSecret>",
+          "variables": {
+            "github_api_host": "https://api.github.com"
+          },
+          "authorization_url": "https://github.com/login/oauth/authorize",
+          "callback_url": "{host}/login/OAuthLogin/{provider}",
+          "token_url": "https://github.com/login/oauth/access_token",
+          "user_info_url": "{github_api_host}/user",
+          "scope": "user:email",
           "user_info_mapping": {
-            "username": "email"
+              "username": "username"
           }
         }
       }

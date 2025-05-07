@@ -328,11 +328,17 @@ groups. For more information [see](permissions.md#managing-permissions).
 ### <i>OAuth</i> authentication <a name="oauth-authentication"></a>
 
 CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`.
+Specific behavior related to each provider is configured by a provider `template`. In addition to default values, the template supplies the parsing logic for the individual OAuth responses.
 
 #### OAuth Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
 
     Indicates if OAuth authentication is enabled (required for any methods below)
+
+  * `shared_variables`
+
+      A key-value table that is used to set variables across all providers, for convenience.
+      If using the `host` variable, it should be in the format `http://example.com`, including the protocol.
 
  * `providers`
 
@@ -352,43 +358,77 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
           The client secret must be provided by the OAuth provider.
 
-      * `authorization_url`
+      * `variables`
 
-          This link is used for redirecting user for provider's authentication page
+          A key-value table that is used to set variables used inside parameters.  
+          To use a variable, specify it using `{variable}`.
+          The `{provider}` variable is automatically set.
+
+          Template `ms_entra/v2.0` uses the `{tenant_id}` variable.
+
+      * `template`
+
+          A configuration preset that applies default values and special handling for each available OAuth provider.
+          Available values are `github/v1`, `google/v1`, and `ms_entra/v2.0`.
+
+          If a template is specified, you most likely do not need to specify any other `url` option.
+
+          **Note**: Specifying no template is currently not supported.
 
       * `callback_url`
 
           User will be redirected back to the provided link after login with returned data.
-          It should be constructed in that format `http://codechecker_path/login/OAuthLogin/provider` where `provider` is the name of the provider of OAuth and should match existing `provider_name`. The `callback_url` should also match the callback url specified in the provider's configuration.
+          It should be constructed in that format `{host}/login/OAuthLogin/{provider}` where the `host` variable includes the protocol used by the website. The `callback_url` should also match the callback url specified in the provider's configuration.
+          You can use the variables `{host}` and `{provider}` for convenience.
 
-          Example of correct link using github, google and microsoft
-          * http://localhost:8080/login/OAuthLogin/github
-          * http://localhost:8080/login/OAuthLogin/google
-          * http://localhost:8080/login/OAuthLogin/microsoft
+          *Default*: `{host}/login/OAuthLogin/{provider}`
+
+          Examples of specifying the correct link
+          * `http://localhost:8080/login/OAuthLogin/{provider}`
+          * `https://example.com/login/OAuthLogin/google`
+          * `{host}/login/OAuthLogin/{provider}` (where `host` is set as `https://example.com`)
+
+      * `authorization_url`
+
+          This link is used for redirecting user for provider's authentication page.
+
+          *Default*: Set by template.
 
       * `token_url`
 
           The URL to exchange the authorization code for an access token.
 
+          *Default*: Set by template.
+
       * `user_info_url`
 
           The URL to fetch the authenticated user's information.
+
+          *Default*: Set by template.
 
       * `user_emails_url`
 
           `GitHub` specific field to make requests for emails associated with github account.
 
+          *Default*: Set by template.
+
       * `user_groups_url`
 
           `Microsoft`-specific field used to request security groups that the user is member of.
+
+          *Default*: Set by template.
 
       * `jwks_url`
 
           `Microsoft`-specific field used to request public signing keys for decoding JWT tokens.
 
+          *Default*: Set by template.
+
       * `scope`
 
           The scope of access requested from the OAuth provider.
+
+          *Default*: Set by template.
 
       * `user_info_mapping`
 
@@ -402,45 +442,61 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
 
         Currently there are only 2 options for this:
          * `username`
-         * `email`
+         * `email` (*default*)
 
         Expected output for each provider:
 
-        `github`
+        `github/v1`
           * `username` - user's GitHub `login` will be user's identifier
           * `email` - a request will be sent to fetch the primary email of account to be used as the user's identifier.
             If it is hidden, an error will be thrown.
 
-        `google`
+        `google/v1`
           * Only supports `email`, and user's Gmail email will be considered his username.
 
-        `microsoft`
+        `ms_entra/v2.0`
           * `username` - Company's signum will be the user's identifier.
           * `email` - an email associated with this Microsoft account will be used as user's identifier.
 
-    ### 🔧 Example: OAuth Configuration for GitHub
-    ~~~{.json}
+    ### 🔧 Example: OAuth Configuration using templates
+    
+    ```jsonc
     "github": {
       "enabled": false,
       "client_id": "<ExampleClientID>",
       "client_secret": "<ExampleClientSecret>",
-      "authorization_url": "https://github.com/login/oauth/authorize",
-      "callback_url": "https://<server_host>/login/OAuthLogin/github",
-      "token_url": "https://github.com/login/oauth/access_token",
-      "user_info_url": "https://api.github.com/user",
-      "user_emails_url": "https://api.github.com/user/emails",
-      "scope": "user:email",
-      "user_info_mapping": {
+      "template": "github/v1",
+      "user_info_mapping": { // optional
         "username": "username"
       }
     }
-    ~~~
-    ### 🔧 Example: OAuth Configuration for Google
-    ~~~{.json}
+    ```
+
+    ### 🔧 Example: OAuth Configuration for Microsoft
+
+    ```jsonc
+    "microsoft": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "template": "ms_entra/v2.0",
+      "variables": {
+        "tenant_id": "common" // replace with your own tenant ID, if not using multi-tenant mode
+      },
+      "user_info_mapping": { // optional
+        "username": "email"
+      }
+    }
+    ```
+
+    ### 🔧 Example: OAuth Configuration without templates
+
+    ```jsonc
     "google": {
       "enabled": false,
       "client_id": "<ExampleClientID>",
       "client_secret": "<ExampleClientSecret>",
+      "template": "google/v1", // still needed for the response handling logic
       "authorization_url": "https://accounts.google.com/o/oauth2/auth",
       "callback_url": "https://<server_host>/login/OAuthLogin/google",
       "token_url": "https://accounts.google.com/o/oauth2/token",
@@ -450,25 +506,9 @@ CodeChecker also supports OAuth-based authentication. The `authentication.method
         "username": "email"
       }
     }
-    ~~~
-    ### 🔧 Example: OAuth Configuration for Microsoft
-    ~~~{.json}
-    "microsoft": {
-      "enabled": false,
-      "client_id": "<ExampleClientID>",
-      "client_secret": "<ExampleClientSecret>",
-      "authorization_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/authorize",
-      "callback_url": "https://<server_host>/login/OAuthLogin/microsoft",
-      "token_url": "https://login.microsoftonline.com/<tenant-id>/oauth2/v2.0/token",
-      "user_groups_url": "https://graph.microsoft.com/v1.0/me/memberOf",
-      "jwks_url": "https://login.microsoftonline.com/<tenant-id>/discovery/v2.0/keys",
-      "user_info_url": "https://graph.microsoft.com/v1.0/me",
-      "scope": "User.Read email profile openid offline_access",
-      "user_info_mapping": {
-        "username": "email"
-      }
-    }
-    ~~~
+    ```
+
+    For more information about the default values in templates, see [oauth_templates.py](../../web/codechecker_web/server/oauth_templates.py)
 
 
 
