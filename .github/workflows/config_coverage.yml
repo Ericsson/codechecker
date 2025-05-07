@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: "Install dependencies"
         run: |
           # Some packages, e.g. build-essential and curl are available

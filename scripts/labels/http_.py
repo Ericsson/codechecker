@@ -18,7 +18,7 @@ from .output import trace
 
 
 Response = urllib3.response.BaseHTTPResponse
-URL = Union[str, urllib.parse.ParseResult]
+URL = Union[str, urllib.parse.ParseResult]  # pylint: disable=invalid-name
 
 
 class HTMLAcquirer:
