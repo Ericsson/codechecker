@@ -46,12 +46,6 @@ class TestBaseTest(unittest.TestCase):
         # Move to test dir
         cls.test_dir = os.path.abspath(os.path.dirname(__file__))
         os.chdir(cls.test_dir)
-        print(f"test interpreter: {sys.executable}")
-        print("%%%%%%%%%%%%%")
-        print("%%%%%%%%%%%%%")
-        print(sys.path)
-        print("%%%%%%%%%%%%%")
-        print("%%%%%%%%%%%%%")
 
     @classmethod
     def tearDownClass(cls):
