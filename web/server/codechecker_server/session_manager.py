@@ -389,6 +389,11 @@ class SessionManager:
             "error": self.__auth_config.get('realm_error')
         }
 
+    def get_failed_auth_message(self):
+        return {
+            "msg": self.__auth_config.get('failed_auth_message'),
+        }
+
     @property
     def get_super_user(self):
         return {
