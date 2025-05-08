@@ -167,6 +167,7 @@ class OauthServer(BaseHTTPRequestHandler):
         for field in raw.split('&'):
             key, value = field.split('=')
             params[key] = value
+            print(f"key: {key}, value: {value}")
         if "code" in params:
             code = params['code']
             # check for PKCE code challenge similarity
