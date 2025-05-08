@@ -210,17 +210,17 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state, code_challenge, code_challenge_method = \
-            data['code'], data['state'], \
-            data['code_challenge'], \
-            data['code_challenge_method']
-        auth_string = f"{link}?code={code}&state={state}" \
-            f"&code_challenge_method={code_challenge_method}" \
-            f"&code_challenge={code_challenge}"
 
-        validate_result = env.validate_oauth_session(session_factory, state)
-        self.assertTrue(validate_result, "State in begigning and"
-                        " ending of OAuth is different")
+        code, state = data['code'], data['state']
+        auth_string = f"{link}?code={code}&state={state}"
+
+        # PKCE attack case
+        if username == "user_pkce":
+            env.change_oauth_session_verifier(
+                session_alchemy=session_factory,
+                code_verifier="fake_code_verifier",
+                state=state
+                )
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
@@ -296,11 +296,36 @@ class DictAuth(unittest.TestCase):
         """
         Testing the oauth using non-existent users.
         """
+
         with self.assertRaises(RequestFailed):
             self.try_login("google", "nonexistant", "test")
 
         with self.assertRaises(RequestFailed):
             self.try_login("github", "nonexistant", "test")
+
+    def test_oauth_csrf_attack_protection(self):
+        """
+        Tests if authorization server returns a state
+        that doesn't exist in database.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_csrf", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_csrf", "user")
+
+    def test_oauth_pkce_attack_protection(self):
+        """
+        Tests if after logic authorization server returns a code_verifier
+        that doesn't exist in database.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_pkce", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_pkce", "user")
 
     def test_nonauth_storage(self):
         """

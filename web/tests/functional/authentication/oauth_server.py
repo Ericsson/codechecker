@@ -3,6 +3,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+from authlib.oauth2.rfc7636 import create_s256_code_challenge as hash_s256
 
 # Server config
 HOSTNAME = "0.0.0.0"
@@ -26,6 +27,14 @@ class OauthServer(BaseHTTPRequestHandler):
         "user_dummy:user": {
             "code": "4",
             "token": "dummy4"
+        },
+        "user_csrf:user": {
+            "code": "5",
+            "token": "user_csrf5"
+        },
+        "user_pkce:user": {
+            "code": "6",
+            "token": "user_pkce6"
         }
     }
 
@@ -33,8 +42,13 @@ class OauthServer(BaseHTTPRequestHandler):
         "1": "github1",
         "2": "github2",
         "3": "google3",
-        "4": "dummy4"
+        "4": "dummy4",
+        "5": "user_csrf5",
+        "6": "user_pkce6"
     }
+
+    # Store pkce code challenge
+    code_challenges = {}
 
     users_by_token = {
         "github1": {
@@ -56,6 +70,16 @@ class OauthServer(BaseHTTPRequestHandler):
             "login": "user_dummy",
             "email": "dummy@dummy.com",
             "name": "User @dummy"
+        },
+        "user_csrf5": {
+            "login": "user_csrf",
+            "email": "user_csrf5@fake.com",
+            "name": "User @csrf"
+        },
+        "user_pkce6": {
+            "login": "user_pkce6",
+            "email": "user_pkce6@fake.com",
+            "name": "User @pkce"
         }
     }
 
@@ -84,16 +108,33 @@ class OauthServer(BaseHTTPRequestHandler):
             if "username" in query_params:
                 query = f"{params['username']}:{params['password']}"
                 query_result = self.users_by_data.get(query, None)
-                if query_result:
+                # csrf attack case
+                if params['username'] == "user_csrf":
+                    print("CSRF attack detected")
+                    state = "fake_state"
+                    code = query_result['code']
+                    code_challenge = params['code_challenge']
+                    # store code_challenge in the server
+                    self.code_challenges[code] = {
+                        "code_challenge": code_challenge,
+                        "code_challenge_method": params[
+                            'code_challenge_method']}
+
+                    return self.show_json({"code": code,
+                                           "state": state})
+                # normal case
+                elif query_result:
                     state = params['state']
                     code = query_result['code']
                     code_challenge = params['code_challenge']
-                    ccm = params['code_challenge_method']
-                    return self.show_json({"code": code,
-                                           "state": state,
-                                           "code_challenge": code_challenge,
-                                           "code_challenge_method": ccm})
+                    # store code_challenge in the server
+                    self.code_challenges[code] = {
+                        "code_challenge": code_challenge,
+                        "code_challenge_method": params[
+                            'code_challenge_method']}
 
+                    return self.show_json({"code": code,
+                                           "state": state})
             return self.show_rejection("Invalid credentials")
         except IndexError:
             return self.show_rejection("Invalid query parameters")
@@ -113,8 +154,27 @@ class OauthServer(BaseHTTPRequestHandler):
         for field in raw.split('&'):
             key, value = field.split('=')
             params[key] = value
+            print(f"key: {key}, value: {value}")
         if "code" in params:
             code = params['code']
+            # check for PKCE code challenge similarity
+            if code in self.code_challenges:
+
+                entry = self.code_challenges[code]
+                code_challenge = entry.get("code_challenge", None)
+                code_challenge_method = entry.get(
+                    "code_challenge_method", None)
+
+                if code_challenge_method and \
+                        code_challenge_method == "S256":
+                    # PKCE verifier
+                    if code_challenge:
+                        if hash_s256(params['code_verifier']) != \
+                                code_challenge:
+                            return self.show_rejection("Invalid code verifier")
+                else:
+                    return self.show_rejection("Invalid code challenge method")
+
             if code in self.tokens_by_code:
                 token = self.tokens_by_code[code]
                 return self.show_json({
