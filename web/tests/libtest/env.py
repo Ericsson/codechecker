@@ -27,6 +27,15 @@ from .thrift_client_to_db import get_viewer_client
 from functional import PKG_ROOT
 from functional import REPO_ROOT
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from codechecker_server.database.config_db_model import OAuthToken
+from codechecker_server.database.config_db_model import OAuthSession
+from codechecker_server.database.database import DBSession
+
+import datetime
+
 
 def get_free_port():
     """
@@ -479,3 +488,109 @@ def get_session_token(workspace, viewer_host, viewer_port):
     except KeyError as err:
         print("Could not load session for session getter because " + str(err))
         return None
+
+
+def create_sqlalchemy_session(workspace):
+    """
+    Create a SQLAlchemy session using sessionmaker to connect to the
+    sqlite database.
+    """
+    try:
+        db_path = os.path.join(workspace, 'config.sqlite')
+        engine = create_engine('sqlite:///' + db_path)
+
+        session = sessionmaker(bind=engine)
+        return session
+
+    except ImportError as err:
+        print("SQLAlchemy is not installed. Please install it to use this "
+              "function.")
+        raise err
+    except Exception as err:
+        print("An error occurred while creating the SQLAlchemy session: " +
+              str(err))
+        raise err
+
+
+def validate_oauth_token_session(session_alchemy, access_token):
+    """
+    Helper function that returns bool depending
+    if the OAuth token exists
+    """
+
+    access_token_db = None
+    with DBSession(session_alchemy) as session:
+        access_token_db, *_ = \
+            session.query(OAuthToken.access_token) \
+            .filter(OAuthToken.access_token == access_token) \
+            .first()
+    return access_token_db is not None \
+        and access_token_db == access_token
+
+
+def validate_oauth_session(session_alchemy, state):
+    """
+    Helper function that returns bool depending
+    if the OAuth state exists
+    """
+
+    state_db = None
+    with DBSession(session_alchemy) as session:
+        state_db, *_ = \
+            session.query(OAuthSession.state) \
+            .filter(OAuthSession.state == state) \
+            .first()
+    return state_db is not None and state_db == state
+
+
+def insert_oauth_session(session_alchemy,
+                         state: str,
+                         code_verifier: str,
+                         provider: str):
+    """
+    Insert a new OAuth session into the database.
+    """
+    if not all(isinstance(arg, str) for arg in (state,
+                                                code_verifier,
+                                                provider)):
+        raise TypeError("All OAuth fields must be strings")
+    try:
+        with DBSession(session_alchemy) as session:
+            date = (datetime.datetime.now() +
+                    datetime.timedelta(minutes=15))
+
+            oauth_session_entry = OAuthSession(state=state,
+                                               code_verifier=code_verifier,
+                                               expires_at=date,
+                                               provider=provider)
+            session.add(oauth_session_entry)
+            session.commit()
+
+            print(f"State {state} inserted successfully.")
+    except Exception as exc:
+        print(f"Failed to insert state {state}: {exc}")
+        raise exc
+
+
+def change_oauth_session_verifier(session_alchemy,
+                                  code_verifier: str,
+                                  state: str):
+    """
+    Change the code_verifier of an existing OAuth session in the database
+    for checking pkce verifier code integrity.
+    """
+    print("Changing code_verifier was called")
+    if not isinstance(code_verifier, str):
+        raise TypeError("The OAuth code_verifier field must be string")
+    try:
+        with DBSession(session_alchemy) as session:
+
+            # Update the code_verifier for the current state
+            session.query(OAuthSession).filter(
+                OAuthSession.state == state).update(
+                {OAuthSession.code_verifier: code_verifier})
+            session.commit()
+            print(f"State {state} updated successfully.")
+    except Exception as exc:
+        print(f"Failed to update state {state}: {exc}")
+        raise exc

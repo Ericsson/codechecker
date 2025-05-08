@@ -155,10 +155,10 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
-    def __insertOAuthSession(self,
-                             state: str,
-                             code_verifier: str,
-                             provider: str):
+    def insertOAuthSession(self,
+                           state: str,
+                           code_verifier: str,
+                           provider: str):
         """
         Removes the expired oauth sessions #Subject to change.
         Inserts a new row of oauth data into database containing:
@@ -168,6 +168,10 @@ class ThriftAuthHandler:
         """
         # TODO remove this purge sesisons system to another place
         # where it will happen semi regularly
+        if not all(isinstance(arg, str) for arg in (state,
+                                                    code_verifier,
+                                                    provider)):
+            raise TypeError("All OAuth fields must be strings")
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
@@ -249,10 +253,36 @@ class ThriftAuthHandler:
                 code_verifier=pkce_verifier
             )
 
-        self.__insertOAuthSession(state=state,
-                                  code_verifier=pkce_verifier,
-                                  provider=provider)
+        self.insertOAuthSession(state=state,
+                                code_verifier=pkce_verifier,
+                                provider=provider)
         return url
+
+    @timeit
+    def __getOAuthRow(self, state):
+        """
+        Returns OAuth row from table.
+        """
+        try:
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                    .filter(OAuthSession.state == state) \
+                    .first()
+                if not state_db or not code_verifier_db \
+                        or not provider_db or not expires_at_db:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth querying received empty values.")
+        except Exception as ex:
+            LOG.error("OAuth data fetch from database failed.: %s", str(ex))
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data fetch from database failed.")
+        return state_db, code_verifier_db, provider_db, expires_at_db
 
     @timeit
     def performLogin(self, auth_method, auth_string):
@@ -304,31 +334,23 @@ class ThriftAuthHandler:
             provider_db = None
             expires_at_db = None
 
-            with DBSession(self.__config_db) as session:
-                state_db, code_verifier_db, provider_db, expires_at_db = \
-                    session.query(OAuthSession.state,
-                                  OAuthSession.code_verifier,
-                                  OAuthSession.provider,
-                                  OAuthSession.expires_at) \
-                    .filter(OAuthSession.state == state) \
-                    .first()
-                if not state_db or not code_verifier_db \
-                        or not provider_db or not expires_at_db:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "OAuth querying received empty values.")
+            state_db, code_verifier_db, provider_db, expires_at_db \
+                = self.__getOAuthRow(state=state)
 
-                if state_db != state:
-                    LOG.error("State mismatch.")
-                if provider_db != provider:
-                    LOG.error("Provider mismatch.")
-                if date_time > expires_at_db:
-                    LOG.error("Expiery time mismatch.")
-                if state_db != state or provider_db != provider \
-                        or date_time > expires_at_db:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "OAuth data mismatch.")
+            mismatch = False
+            if state_db != state:
+                mismatch = True
+                LOG.error("State mismatch.")
+            if provider_db != provider:
+                mismatch = True
+                LOG.error("Provider mismatch.")
+            if date_time > expires_at_db:
+                mismatch = True
+                LOG.error("Expiery time mismatch.")
+            if mismatch:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth data mismatch.")
 
             client_id = oauth_config["client_id"]
             client_secret = oauth_config["client_secret"]
