@@ -573,3 +573,27 @@ def insert_oauth_session(session_alchemy,
     except Exception as exc:
         print(f"Failed to insert state {state}: {exc}")
         raise exc
+
+
+def change_oauth_session_verifier(session_alchemy,
+                                  code_verifier: str,
+                                  state: str):
+    """
+    Change the code_verifier of an existing OAuth session in the database
+    for checking pkce verifier code integrity.
+    """
+    print("Changing code_verifier was called")
+    if not isinstance(code_verifier, str):
+        raise TypeError("The OAuth code_verifier field must be string")
+    try:
+        with DBSession(session_alchemy) as session:
+
+            # Update the code_verifier for the current state
+            session.query(OAuthSession).filter(
+                OAuthSession.state == state).update(
+                {OAuthSession.code_verifier: code_verifier})
+            session.commit()
+            print(f"State {state} updated successfully.")
+    except Exception as exc:
+        print(f"Failed to update state {state}: {exc}")
+        raise exc

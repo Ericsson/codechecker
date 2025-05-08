@@ -264,19 +264,25 @@ class ThriftAuthHandler:
         """
         Returns OAuth row from table.
         """
-        with DBSession(self.__config_db) as session:
-            state_db, code_verifier_db, provider_db, expires_at_db = \
-                session.query(OAuthSession.state,
-                              OAuthSession.code_verifier,
-                              OAuthSession.provider,
-                              OAuthSession.expires_at) \
-                .filter(OAuthSession.state == state) \
-                .first()
-            if not state_db or not code_verifier_db \
-                    or not provider_db or not expires_at_db:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth querying received empty values.")
+        try:
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                    .filter(OAuthSession.state == state) \
+                    .first()
+                if not state_db or not code_verifier_db \
+                        or not provider_db or not expires_at_db:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth querying received empty values.")
+        except Exception as ex:
+            LOG.error("OAuth data fetch from database failed.: %s", str(ex))
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data fetch from database failed.")
         return state_db, code_verifier_db, provider_db, expires_at_db
 
     @timeit
@@ -336,14 +342,17 @@ class ThriftAuthHandler:
             state_db, code_verifier_db, provider_db, expires_at_db \
                 = self.__getOAuthRow(state=state)
 
+            mismatch = False
             if state_db != state:
+                mismatch = True
                 LOG.error("State mismatch.")
             if provider_db != provider:
+                mismatch = True
                 LOG.error("Provider mismatch.")
             if date_time > expires_at_db:
+                mismatch = True
                 LOG.error("Expiery time mismatch.")
-            if state_db != state or provider_db != provider \
-                    or date_time > expires_at_db:
+            if mismatch:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth data mismatch.")
