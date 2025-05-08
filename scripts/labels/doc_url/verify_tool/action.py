@@ -19,7 +19,14 @@ from ..verifiers import HTTPStatusCodeVerifier, Status
 
 
 class Worker(_Singleton):
-    """Implementation of methods executed in a parallel computation context."""
+    """
+    Implementation of methods executed in a parallel computation context.
+
+    This object, living as a globalised `_Singleton`, may bind objects of
+    global state (with an **UNSYNCHRONISED** copy living in each interpreter
+    process as spawned by the `Pool`) that can not be transmitted through the
+    usual IPC means used by ``Pool.map()``.
+    """
 
     def __init__(self):
         """Returns the instance that was loaded as a `Singleton`."""

@@ -8,38 +8,39 @@
 # -------------------------------------------------------------------------
 """Implementation of the user-facing entry point to the script."""
 import argparse
-from functools import partial
+from copy import deepcopy
+import fnmatch
+import operator
 import os
 import pathlib
 import sys
-from typing import List, Optional, Set
+from typing import List, Optional, Type
 
 from tabulate import tabulate
 
-from ...checker_labels import SingleLabels, SkipDirectiveRespectStyle, \
-    get_checker_labels, get_checkers_with_ignore_of_key, update_checker_labels
+from codechecker_common.compatibility.multiprocessing import cpu_count
+from codechecker_common.util import clamp
+
+from ...checker_labels import apply_label_fixes, \
+    get_checker_labels_multiple, update_checker_labels_multiple_overwrite
 from ...codechecker import default_checker_label_dir
-from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
     error, log, trace, coloured, emoji
-from ...util import merge_if_no_collision, plural
-from ..generators import analyser_selection
+from ...util import plural
 from ..output import Settings as OutputSettings
+from ..rules import Base as RuleBase, rules_visible_to_user
 from . import tool
 
 
 short_help: str = """
-Auto-generate 'severity' labels for checkers based on analyser-specific
-information and heuristics.
+Verify various implicit invariants that should be upheld by the checker label
+configuration files.
 """
 description: str = (
     """
-Automatically generate the 'severity' categorisation labels from a known and
-available, analyser-specific (this tool does not support a "generic" execution
-pattern) heuristic.
-This could be a "Table of Contents" (ToC) structure officially maintained by
-the analyser, or an another form of similar classification, or an entirely
-customised classifier heuristic implemented only by CodeChecker.
+Verifies that the checker label configuration files adhere to some implicitly
+considered invariants without which the behaviour of CodeChecker may become
+unexpected.
 
 The tool's output is primarily engineered to be human readable (with the added
 sprinkle of colours and emojis).
@@ -53,22 +54,13 @@ execution.
 In every other case, the return value is the OR of a bitmask:
 """
     f"""
-If there was a checker which already had a 'severity' but now the generator
-generated a different value, the '{tool.ReturnFlags.HadUpdate}' bit will be
-set.
-If there were checkers without a 'severity' (or without any labels at all) but
-the tool generated a valid 'severity' for them, the '{tool.ReturnFlags.HadNew}'
-bit will be set.
-If there are checkers with 'severity' labels that are no longer available in
-the generated result, the '{tool.ReturnFlags.HadGone}' bit will be set.
-In case after the analysis there are still checkers which do not have a
-'severity' at all, the '{tool.ReturnFlags.RemainsMissing}' bit will be set.
+If there was a checker which failed invariant verification, the
+'{tool.ReturnFlags.HadNotOK}' bit will be set.
+If there was a checker which failed but could be automatically fixed, the
+'{tool.ReturnFlags.HadFixed}' bit will be set.
 """
 )
 epilogue: str = ""
-
-
-K_Severity: str = "severity"
 
 
 def arg_parser(parser: Optional[argparse.ArgumentParser]) \
@@ -91,11 +83,32 @@ The configuration directory where the checker labels are available.
 """)
 
     parser.add_argument(
+        "-l", "--list-rules",
+        dest="list_rules",
+        action="store_true",
+        help="""
+List the available rules that the verification toolkit can verify.
+This action disables running the verification itself!
+""")
+
+    parser.add_argument(
+        "-j", "--jobs",
+        metavar="COUNT",
+        dest="jobs",
+        type=int,
+        default=cpu_count(),
+        help="""
+The number of parallel processes to use for verification of the invariants.
+Defaults to all available logical cores.
+""")
+
+    parser.add_argument(
         "-f", "--fix",
         dest="apply_fixes",
         action="store_true",
         help="""
-Apply the updated or generated 'severity' labels back into the input
+Apply the updates resulting from the automatic fixing of invariants
+(whereever, but not in all cases, applicable) back into the input
 configuration file.
 """)
 
@@ -111,6 +124,24 @@ Filter for only the specified analysers before executing the verification.
 Each analyser's configuration is present in exactly one JSON file, named
 '<analyser-name>.json'.
 If 'None' is given, automatically run for every found configuration file.
+""")
+
+    filters.add_argument(
+        "--rules",
+        metavar="RULE",
+        nargs='*',
+        type=str,
+        help=f"""
+Filter for only the specified invariant rules to verify (and fix).
+It is not an error to specify filters that do not match anything.
+It is possible to match entire patterns of names using the '?' and '*'
+wildcards, as understood by the 'fnmatch' library, see
+"https://docs.python.org/{sys.version_info[0]}.{sys.version_info[1]}/library/\
+fnmatch.html#fnmatch.fnmatchcase"
+for details.
+Depending on your shell, you might have to specify wildcards in single quotes,
+e.g., 'profile.*', to prevent the shell from globbing first!
+If 'None' is given, automatically run for every checker.
 """)
 
     output = parser.add_argument_group("output control arguments", """
@@ -131,22 +162,13 @@ Does not enable any trace or debug information.
 """)
 
     output.add_argument(
-        "--report-missing",
-        dest="report_missing",
-        action="store_true",
-        help="""
-If set, the output will contain an additional list that details which checkers
-remain in the configuration file without an appropriate 'severity' label
-("MISSING").
-""")
-
-    output.add_argument(
         "--report-ok",
         dest="report_ok",
         action="store_true",
         help="""
-If set, the output will contain the "OK" reports for checkers which
-severity classification is already the same as would be generated by this tool.
+If set, the output will contain the "OK" reports for checkers which pass the
+invariant verification steps.
+By default, only errors are reported.
 """)
 
     output.add_argument(
@@ -175,23 +197,31 @@ def _handle_package_args(args: argparse.Namespace):
             emoji(":no_entry:  "))
         raise argparse.ArgumentError(None,
                                      "positional argument 'checker_label_dir'")
-    OutputSettings.set_report_missing(args.report_missing or
-                                      args.verbose or
-                                      args.very_verbose)
+    if args.jobs < 0:
+        log("%sFATAL: There can not be a non-positive number of jobs.",
+            emoji(":no_entry:  "))
+        raise argparse.ArgumentError(None, "-j/--jobs")
     OutputSettings.set_report_ok(args.report_ok or
                                  args.verbose or
                                  args.very_verbose)
     GlobalOutputSettings.set_trace(args.verbose_debug or args.very_verbose)
 
 
-def _emit_collision_error(analyser: str,
-                          checker: str,
-                          existing_fix: str,
-                          new_fix: str):
-    error("%s%s/%s: %s [%s] =/= [%s]", emoji(":collision:  "),
-          analyser, checker,
-          coloured("FIX COLLISION", "red"),
-          existing_fix, new_fix)
+def _list_rules(rules: List[Type[RuleBase]]):
+    for clazz in rules:
+        log(tabulate(
+            tabular_data=[
+                ("Name", clazz.kind),
+                ("Description", clazz.description.replace('\n', ' ')),
+                ("Supports fixes?",
+                 emoji(":check_mark_button:  ") if clazz.supports_fixes
+                 and sys.stderr.isatty()
+                 else '+' if clazz.supports_fixes
+                 else "")
+            ],
+            tablefmt="fancy_grid" if sys.stderr.isatty()
+            else "grid"),
+            file=sys.stderr)
 
 
 def main(args: argparse.Namespace) -> Optional[int]:
@@ -200,6 +230,19 @@ def main(args: argparse.Namespace) -> Optional[int]:
     except argparse.ArgumentError as arg_err:
         # Simulate argparse's return code of parse_args.
         raise SystemExit(2) from arg_err
+
+    rules: List[Type[RuleBase]] = [rule
+                                   for rule in rules_visible_to_user
+                                   for filter_ in args.rules
+                                   if fnmatch.fnmatchcase(rule.kind, filter_)]
+    rules.sort(key=operator.attrgetter("kind"))
+    if args.list_rules:
+        _list_rules(rules)
+        return 0
+    if not rules:
+        log("%sSkipping, no rules match the enable filter!",
+            emoji(":no_littering:  "))
+        return 1
 
     rc = 0
     statistics: List[tool.Statistics] = []
@@ -228,11 +271,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 analyser,
                 path)
             try:
-                checkers_to_skip = get_checkers_with_ignore_of_key(
-                    path, K_Severity)
-                labels = get_checker_labels(
-                    analyser, path, K_Severity,
-                    SkipDirectiveRespectStyle.AS_PASSED, checkers_to_skip)
+                labels = get_checker_labels_multiple(path)
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -240,62 +279,50 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 error("Failed to obtain checker labels for '%s'!", analyser)
                 continue
 
-            generators = list(analyser_selection.select_generator(analyser))
-            if not generators:
-                log("%sSkipped '%s', no generator implementation!",
-                    emoji(":no_littering:  "),
-                    analyser)
-                continue
+            process_count = clamp(1, args.jobs, len(labels)) \
+                if len(labels) > 2 * args.jobs else 1
 
-            severities: SingleLabels = {}
-            conflicts: Set[str] = set()
-            for generator_class in generators:
-                log("%sGenerating '%s' as '%s' (%s)...",
-                    emoji(":thought_balloon:  "),
+            log("%sVerifying '%s' ...",
+                emoji(":thought_balloon:  "),
+                analyser)
+            status, stats, fixes = tool.execute(
+                analyser,
+                rules,
+                labels,
+                process_count)
+            statistics.extend(stats)
+            rc = int(tool.ReturnFlags(rc) | status)
+
+            if args.apply_fixes and fixes:
+                all_fix_count = sum((len(fs) for fs in fixes.values()))
+                log("%sApplying %s %s to %s %s for '%s'... ('%s')",
+                    emoji(":writing_hand:  "),
+                    coloured(f"{all_fix_count}", "green"),
+                    plural(all_fix_count, "fix", "fixes"),
+                    coloured(f"{len(fixes)}", "green"),
+                    plural(fixes, "checker", "checkers"),
                     analyser,
-                    generator_class.kind,
-                    generator_class)
+                    path)
                 try:
-                    status, generated_urls, statistic = tool.execute(
-                        analyser,
-                        generator_class,
-                        labels,
-                        checkers_to_skip,
-                    )
-                    statistics.append(statistic)
-                    rc = int(tool.ReturnFlags(rc) | status)
-                except EngineError:
+                    new_labels = apply_label_fixes(deepcopy(labels), fixes)
+                except Exception:
                     import traceback
                     traceback.print_exc()
 
-                    error("Failed to execute generator '%s' (%s)",
-                          generator_class.kind, generator_class)
-                    rc = int(tool.ReturnFlags(rc) |
-                             tool.ReturnFlags.GeneralError)
+                    error("Failed to fix-up checker labels for '%s'!",
+                          analyser)
                     continue
 
-                merge_if_no_collision(severities, generated_urls, conflicts,
-                                      partial(_emit_collision_error, analyser))
+                try:
+                    update_checker_labels_multiple_overwrite(
+                        analyser, path, new_labels)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
 
-                if args.apply_fixes and severities:
-                    log("%sUpdating %s %s for '%s'... ('%s')",
-                        emoji(":writing_hand:  "),
-                        coloured(f"{len(severities)}", "green"),
-                        plural(severities, "checker", "checkers"),
-                        analyser,
-                        path)
-                    try:
-                        update_checker_labels(
-                            analyser, path, K_Severity, severities,
-                            SkipDirectiveRespectStyle.AS_PASSED,
-                            checkers_to_skip)
-                    except Exception:
-                        import traceback
-                        traceback.print_exc()
-
-                        error("Failed to write checker labels for '%s'!",
-                              analyser)
-                        continue
+                    error("Failed to write checker labels for '%s'!",
+                          analyser)
+                    continue
 
     log(tabulate(tabular_data=statistics,
                  headers=tuple(map(lambda s: s.replace('_', ' '),

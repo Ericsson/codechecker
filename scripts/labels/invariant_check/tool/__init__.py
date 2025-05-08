@@ -10,9 +10,11 @@ This subpackage implements logic that is primarily user-facing, as opposed to
 reusable library-like components.
 """
 from . import \
+    action, \
     tool
 
 
 __all__ = [
+    "action",
     "tool",
 ]

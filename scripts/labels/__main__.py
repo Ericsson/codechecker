@@ -14,6 +14,7 @@ import sys
 try:
     from .doc_url.generate_tool import __main__ as doc_url_generate
     from .doc_url.verify_tool import __main__ as doc_url_verify
+    from .invariant_check.tool import __main__ as invariant_check
     from .severity.generate_tool import __main__ as severity_generate
 except ModuleNotFoundError as e:
     import traceback
@@ -39,7 +40,10 @@ internal library.
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(
         title="subcommands",
-        description="Please select a subcommand to continue.",
+        description="""
+'label-tool' is a collection of semi-individual sub-tools.
+Please select one to continue.
+""",
         dest="subcommand",
         required=True)
 
@@ -56,6 +60,7 @@ internal library.
 
     add_subparser(doc_url_generate)
     add_subparser(doc_url_verify)
+    add_subparser(invariant_check)
     add_subparser(severity_generate)
 
     return parser
