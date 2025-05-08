@@ -685,7 +685,6 @@ class ThriftAuthHandler:
             num_of_removed = session.query(Session) \
                 .filter(Session.user_name == user) \
                 .filter(Session.token == token) \
-                .filter(Session.can_expire.is_(False)) \
                 .delete(synchronize_session=False)
             session.commit()
 
@@ -743,8 +742,7 @@ class ThriftAuthHandler:
                 generate_session_token(),
                 auth_session.user_name,
                 auth_session.groups,
-                auth_session.description,
-                False)
+                auth_session.description)
 
             session.add(auth_session)
             session.flush()
@@ -794,9 +792,6 @@ class ThriftAuthHandler:
                     f"Personal access token with name '{name}' was not found "
                     f"in the database for the user '{user}'.")
 
-            session.query(Session) \
-                .filter(Session.id == personal_access_token.auth_session_id) \
-                .delete(synchronize_session=False)
             personal_access_token_q.delete()
             session.commit()
 

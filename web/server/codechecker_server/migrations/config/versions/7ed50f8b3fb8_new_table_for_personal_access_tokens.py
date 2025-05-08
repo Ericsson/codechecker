@@ -33,13 +33,6 @@ def upgrade():
         sa.Column('groups', sa.String(), nullable=True),
         sa.Column('last_access', sa.DateTime(), nullable=False),
         sa.Column('expiration', sa.DateTime(), nullable=True),
-        sa.Column('auth_session_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(
-            ['auth_session_id'],
-            ['auth_sessions.id'],
-            name=op.f(
-                'fk_personal_access_tokens_auth_session_id_auth_sessions'),
-            ondelete='SET NULL'),
         sa.PrimaryKeyConstraint(
             'id',
             name=op.f('pk_personal_access_tokens')),
@@ -50,25 +43,6 @@ def upgrade():
             'user_name',
             'token_name', name=op.f('uq_personal_access_tokens_user_name'))
     )
-
-    one_year_later = datetime.now() + timedelta(days=365)
-
-    dialect = op.get_context().dialect.name
-
-    if dialect == "sqlite":
-        random_string = "hex(randomblob(4))"
-    else:
-        random_string = "substr(md5(random()::text), 1, 8)"
-
-    op.execute(
-        f"""
-        INSERT INTO personal_access_tokens (user_name, token_name, token,
-            description, last_access, expiration, auth_session_id)
-        SELECT user_name, {random_string}, token, description, last_access,
-            '{one_year_later}', id
-        FROM auth_sessions
-        WHERE can_expire = false
-        """)
     # ### end Alembic commands ###
 
 
