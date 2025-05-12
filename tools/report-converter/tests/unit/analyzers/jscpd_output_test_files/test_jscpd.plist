@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>jscpd</string>
+			<key>check_name</key>
+			<string>jscpd</string>
+			<key>description</key>
+			<string>Duplicated code of 9 lines. Duplicates files/duplicate1.c, starting line 3</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>0910de8793a7bccb21b7d2c230c5b51f</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>15</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>11</integer>
+			</dict>
+			<key>notes</key>
+			<array>
+				<dict>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>15</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>3</integer>
+					</dict>
+					<key>message</key>
+					<string>Duplicated code of 9 lines. Duplicates files/duplicate1.c, starting line 11</string>
+				</dict>
+			</array>
+			<key>path</key>
+			<array/>
+			<key>type</key>
+			<string>jscpd</string>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>jscpd</string>
+			<key>check_name</key>
+			<string>jscpd</string>
+			<key>description</key>
+			<string>Duplicated code of 10 lines. Duplicates files/duplicate2.c, starting line 3</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>9d3f0a8d24aaee3165d799d97376569d</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>1</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>19</integer>
+			</dict>
+			<key>notes</key>
+			<array>
+				<dict>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>1</integer>
+						<key>file</key>
+						<integer>1</integer>
+						<key>line</key>
+						<integer>3</integer>
+					</dict>
+					<key>message</key>
+					<string>Duplicated code of 10 lines. Duplicates files/duplicate1.c, starting line 19</string>
+				</dict>
+			</array>
+			<key>path</key>
+			<array/>
+			<key>type</key>
+			<string>jscpd</string>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>files/duplicate1.c</string>
+		<string>files/duplicate2.c</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>jscpd</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
