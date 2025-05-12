@@ -1026,12 +1026,11 @@ def parse_options(compilation_db_entry,
             LOG.error(cerr)
             compiler_version_info = False
 
-    ImplicitCompilerInfo.compiler_versions[details['compiler']] \
-        = compiler_version_info
+        ImplicitCompilerInfo.compiler_versions[details['compiler']] \
+            = compiler_version_info
 
     using_same_clang_to_compile_and_analyze = False
-    compiler_clang = \
-        ImplicitCompilerInfo.compiler_versions.get(details['compiler'])
+    compiler_clang = compiler_version_info
 
     if compiler_clang:
         # Based on the version information the compiler is clang.
