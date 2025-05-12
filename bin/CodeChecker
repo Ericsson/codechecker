@@ -42,11 +42,10 @@ def run_codechecker(checker_env, subcommand=None):
     checker_env['PYTHONPATH'] = lib_dir_path
     checker_env['CC_BIN_DIR'] = package_bin
 
-    python3 = os.path.join('python3')
     codechecker_main = \
         os.path.join(lib_dir_path, 'codechecker_common', 'cli.py')
 
-    checker_cmd = [python3, codechecker_main]
+    checker_cmd = [sys.executable, codechecker_main]
 
     if subcommand:
         # If a subcommand is specified (script is executed from a
