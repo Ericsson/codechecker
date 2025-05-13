@@ -438,7 +438,7 @@ export default {
     window.addEventListener("resize", this.onResize);
   },
 
-  destoryed() {
+  destroyed() {
     document.removeEventListener("keydown", this.findText);
     window.removeEventListener("resize", this.onResize);
   },
@@ -757,12 +757,33 @@ export default {
         element.startLine.toNumber() - 1, widget.$el));
     },
 
+    renderMainWarning(events) {
+      if (!this.sourceFile.fileId.equals(this.report.fileId)) {
+        return false;
+      }
+
+      if (events.length == 0) {
+        return true;
+      }
+
+      const lastEvent = events[events.length - 1];
+      if (this.report.checkerMsg !== lastEvent.msg ||
+        this.report.line.toNumber() != lastEvent.startLine.toNumber()) {
+        return true;
+      }
+
+      return false;
+    },
+
     addEvents(events) {
       this.editor.operation(() => {
         events.forEach(event => {
-          const type = event.$isResult
-            ? "error" : event.msg.indexOf(" (fixit)") > -1
-              ? "fixit" : "info";
+          let type = "info";
+          if (event.$isResult) {
+            type = this.renderMainWarning(events) ? "info" : "error";
+          } else if (event.msg.indexOf(" (fixit)") > -1) {
+            type = "fixit";
+          }
 
           const props = {
             type: type,
@@ -779,13 +800,7 @@ export default {
 
       //If the warning message or location is different than the
       //the last bug path element, then we render the warning.
-
-      if (this.sourceFile.fileId.equals(this.report.fileId) &&
-          (events.length == 0 ||
-           this.report.checkerMsg !== events[events.length-1].msg ||
-           this.report.line.toNumber() !=
-             events[events.length-1].startLine.toNumber())
-      ){
+      if (this.renderMainWarning(events)) {
         const chkrmsg_data = { $id: 999,
           $message:this.report.checkerMsg,
           startLine:this.report.line, startCol:this.report.column };
