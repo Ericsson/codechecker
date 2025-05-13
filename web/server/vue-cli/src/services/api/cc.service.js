@@ -100,6 +100,47 @@ class CodeCheckerService extends BaseService {
         }));
     });
   }
+
+  /**
+   * Get code coverage data for a specific file
+   * @param {number} fileId - The ID of the file to get coverage for
+   * @param {Array<number>} runIds - Array of run IDs to get coverage from
+   * @returns {Promise<Object>} - Returns promise that resolves to coverage data
+   * @example
+   * {
+   *   fileId: 123,
+   *   filePath: "/path/to/file.cpp",
+   *   totalLines: 100,
+   *   coveredLines: 80,
+   *   uncoveredLines: 20,
+   *   coveragePercentage: 80,
+   *   lineCoverage: [
+   *    {
+    *     lineRange: { start: 1, end: 2 },
+    *     coverageStatus: "uncovered",
+   *    },
+   *   {
+   *     lineRange: { start: 3, end: 4 },
+   *     coverageStatus: "covered",
+   *   },
+   *   {
+   *     lineRange: { start: 5, end: 6 },
+   *     coverageStatus: "partially-covered",
+   *   }
+   *   ]
+   * }
+   */
+  getCodeCoverage(fileId, runIds) {
+    return new Promise(resolve => {
+      this.getClient().getCodeCoverage(
+        fileId,
+        runIds,
+        handleThriftError(coverageData => {
+          resolve(coverageData);
+        })
+      );
+    });
+  }
 }
 
 const ccService = new CodeCheckerService();

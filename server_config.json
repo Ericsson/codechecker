@@ -1,0 +1,13 @@
+{
+  "view_port": 8001,
+  "workspace": "/Users/shepelenkomykhailo/.codechecker",
+  "products": {
+    "Default": {
+      "connection": "sqlite",
+      "database": "/Users/shepelenkomykhailo/.codechecker/Default.sqlite"
+    }
+  },
+  "server": {
+    "max_workers": 1
+  }
+}
