@@ -188,7 +188,7 @@ class OauthServer(BaseHTTPRequestHandler):
                 return self.show_json({
                     'access_token': "user_incomplete_token7",
                 })
-            if code in self.tokens_by_code:
+            elif code != "7" and code in self.tokens_by_code:
                 token = self.tokens_by_code[code]
                 return self.show_json({
                     'access_token': token,
