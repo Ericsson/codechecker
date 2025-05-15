@@ -219,6 +219,7 @@ class ThriftAuthHandler:
         stored_state = generate_token()
         client_id = oauth_config["client_id"]
         client_secret = oauth_config["client_secret"]
+        template = oauth_config.get("template", "default")
         scope = oauth_config["scope"]
         authorization_url = oauth_config["authorization_url"]
         callback_url = oauth_config["callback_url"]
@@ -234,7 +235,7 @@ class ThriftAuthHandler:
 
         # each provider has different requirements
         # for requesting refresh token
-        if provider == "google":
+        if template == "google/v1":
             url, state = oauth2_session.create_authorization_url(
                 url=authorization_url,
                 state=stored_state,
@@ -332,6 +333,7 @@ class ThriftAuthHandler:
 
             client_id = oauth_config["client_id"]
             client_secret = oauth_config["client_secret"]
+            template = oauth_config.get("template", "default")
             scope = oauth_config["scope"]
             token_url = oauth_config["token_url"]
             user_info_url = oauth_config["user_info_url"]
@@ -377,7 +379,7 @@ class ThriftAuthHandler:
 
                 # request group memberships for Microsoft
                 groups = []
-                if provider == 'microsoft':
+                if template == 'ms_entra/v2.0':
                     # decoding
                     id_token = oauth_token['id_token']
                     jwks_url = oauth_config["jwks_url"]
@@ -418,7 +420,7 @@ class ThriftAuthHandler:
             # from another api endpoint to maintain username as email
             # consistency between GitHub and other providers
             try:
-                if provider == "github":
+                if template == "github/v1":
                     if username_key == "email":
                         if "localhost" not in \
                                 user_info_url:
@@ -432,9 +434,9 @@ class ThriftAuthHandler:
                                              username)
                     else:
                         username = user_info.get("login")
-                elif provider == "google":
+                elif template == "google/v1":
                     username = user_info.get("email")
-                elif provider == "microsoft":
+                elif template == "ms_entra/v2.0":
                     if username_key == "username":
                         username = claims.get("Signum")
                     else:

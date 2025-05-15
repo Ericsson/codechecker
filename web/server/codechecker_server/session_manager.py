@@ -23,6 +23,7 @@ from codechecker_common.util import load_json
 
 from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
+from codechecker_web.server.oauth_templates import OAUTH_TEMPLATES
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import OAuthToken
@@ -243,7 +244,18 @@ class SessionManager:
 
             if 'method_oauth' in self.__auth_config and \
                     self.__auth_config['method_oauth'].get('enabled'):
-                found_auth_method = True
+                self.__oauth_apply_templates()
+
+                for _, provider in self.__auth_config['method_oauth'] \
+                                       .get("providers").items():
+                    if provider.get("enabled"):
+                        found_auth_method = True
+                        break
+                else:
+                    LOG.warning("OAuth authentication was enabled but "
+                                "no OAuth provider was enabled"
+                                "... Disabling OAuth authentication.")
+                    self.__auth_config['method_oauth']['enabled'] = False
 
             if not found_auth_method:
                 if force_auth:
@@ -256,6 +268,64 @@ class SessionManager:
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
+
+    def __oauth_apply_templates(self):
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get('providers', {})
+
+        shared_variables = self.__auth_config.get(
+            'method_oauth', {}).get('shared_variables', {})
+
+        for provider_name, provider in providers.items():
+            if not provider.get('enabled'):
+                continue
+
+            template_name = provider.get('template', 'default')
+
+            if not OAUTH_TEMPLATES.get(template_name):
+                LOG.warning(f"OAuth provider {provider_name} tried to use "
+                            f"template '{template_name}', but it "
+                            " does not exist... Disabling OAuth provider "
+                            f"{provider_name}.")
+                provider['enabled'] = False
+                continue
+
+            if template_name == 'default':
+                LOG.warning(f"OAuth provider {provider_name} tried to use the "
+                            "default template. This template does not support"
+                            " fetching of users or emails in this release. "
+                            "Please use one of the available templates"
+                            f"... Disabling OAuth provider {provider_name}.")
+                provider['enabled'] = False
+                continue
+
+            for item, default_value in OAUTH_TEMPLATES[template_name].items():
+                provider.setdefault(item, default_value)
+
+            # Shared variables are overridden by the provider's own variables.
+            variables = {}
+            variables.update(shared_variables)
+            variables.update(provider.get('variables', {}))
+            variables['provider'] = provider_name
+
+            # Host has not been set, unset the default value.
+            if variables.get('host') == "https://<server_host>":
+                del variables['host']
+
+            for param, param_value in provider.items():
+                if param in ['enabled', 'client_id', 'client_secret',
+                             'template', 'variables', 'user_info_mapping']:
+                    continue
+
+                try:
+                    provider[param] = param_value.format(**variables)
+                except KeyError as e:
+                    LOG.warning(f"Parameter {param} in OAuth provider "
+                                f"{provider_name} tried accessing variable "
+                                f"{e.args[0]}, but it was not defined... "
+                                f"Disabling OAuth provider {provider_name}.")
+                    provider['enabled'] = False
+                    break
 
     def get_oauth_providers(self):
         result = []
