@@ -23,6 +23,7 @@ from codechecker_api_shared.ttypes import RequestFailed, Permission
 
 import datetime
 
+
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
 from libtest import codechecker
@@ -350,7 +351,13 @@ class DictAuth(unittest.TestCase):
         code_verifier_r = "54GJITG3gVBT"
         provider_r = "github"
         # creates a session that should expire on new login.
-        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=20)
+        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=32)
+        print("\n")
+        print("*************************")
+        print("Inserted expires_at_r:", expires_at_r)
+        print("Now during test:", datetime.datetime.now())
+        print("*************************")
+        print("\n")
 
         env.insert_oauth_session(session_alchemy=session_factory,
                                  state=state_r,
