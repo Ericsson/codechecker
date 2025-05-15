@@ -155,10 +155,10 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
-    def insertOAuthSession(self,
-                           state: str,
-                           code_verifier: str,
-                           provider: str):
+    def __insertOAuthSession(self,
+                             state: str,
+                             code_verifier: str,
+                             provider: str):
         """
         Removes the expired oauth sessions #Subject to change.
         Inserts a new row of oauth data into database containing:
@@ -255,9 +255,9 @@ class ThriftAuthHandler:
                     code_verifier=pkce_verifier
                 )
 
-            self.insertOAuthSession(state=state,
-                                    code_verifier=pkce_verifier,
-                                    provider=provider)
+            self.__insertOAuthSession(state=state,
+                                      code_verifier=pkce_verifier,
+                                      provider=provider)
         except Exception as ex:
             LOG.error("OAuth createLink failed: %s", str(ex))
             raise codechecker_api_shared.ttypes.RequestFailed(
