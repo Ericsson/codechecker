@@ -354,6 +354,11 @@ class ImplicitCompilerInfo:
         Returns the stderr of a compiler invocation as string
         or None in case of error.
         """
+
+        # Set locale to C, as the pattern matching in __parse_compiler_includes
+        # might not work, if a different locale is set.
+        patched_env = os.environ.copy()
+        patched_env["LC_ALL"] = "C"
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -362,6 +367,7 @@ class ImplicitCompilerInfo:
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
                 encoding="utf-8",
+                env=patched_env,
                 errors="ignore")
 
             # The parameter is usually a compile command in this context which
