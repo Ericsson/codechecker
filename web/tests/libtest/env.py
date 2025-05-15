@@ -550,13 +550,6 @@ def insert_oauth_session(session_alchemy,
     """
     Insert a new OAuth session into the database.
     """
-    if isinstance(expires_at, str):
-        expires_at = datetime.datetime.strptime(
-            expires_at, "%Y-%m-%d %H:%M:%S.%f")
-    if expires_at is None:
-        expires_at = (datetime.datetime.now() +
-                        datetime.timedelta(minutes=15))
-
     if not all(isinstance(arg, str) for arg in (state,
                                                 code_verifier,
                                                 provider)):
