@@ -337,8 +337,12 @@ Specific behavior related to each provider is configured by a provider `template
 
   * `shared_variables`
 
-      A key-value table that is used to set variables across all providers, for convenience.
-      If using the `host` variable, it should be in the format `http://example.com`, including the protocol.
+    A key-value table that is used to set variables across all providers, for convenience.
+
+    Any variable can be specified. If using the `host` variable, it should be in the format `https://example.com`, including the protocol.
+    
+    The `callback_url`'s default value uses the `host` and `provider` variables.
+    Template `ms_entra/v2.0` uses the `tenant_id` variable.
 
  * `providers`
 
@@ -358,22 +362,56 @@ Specific behavior related to each provider is configured by a provider `template
 
           The client secret must be provided by the OAuth provider.
 
+      * `template`
+
+          A configuration preset that applies default values and special handling for each available OAuth provider.
+          Available values are `github/v1` (for Github's OAuth apps), `google/v1` (for Google Workspace SSO), and `ms_entra/v2.0` (for Microsoft Entra SSO).
+
+          If a template is specified, you most likely do not need to specify any other `url` option.
+          Some templates rely on variables for their values. See `variables` for more information.
+
+          **Note**: Specifying no template is currently not supported.
+
       * `variables`
 
           A key-value table that is used to set variables used inside parameters.  
           To use a variable, specify it using `{variable}`.
           The `{provider}` variable is automatically set.
 
-          Template `ms_entra/v2.0` uses the `{tenant_id}` variable.
+          Any variable can be specified. If a shared variable exists with the same name, it will be overridden.
 
-      * `template`
+          The `callback_url`'s default value uses the `host` and `provider` variables.
+          Template `ms_entra/v2.0` uses the `tenant_id` variable.
 
-          A configuration preset that applies default values and special handling for each available OAuth provider.
-          Available values are `github/v1`, `google/v1`, and `ms_entra/v2.0`.
+      * `user_info_mapping`
 
-          If a template is specified, you most likely do not need to specify any other `url` option.
+          A mapping of user info fields from the provider to local fields.
 
-          **Note**: Specifying no template is currently not supported.
+          * `username`
+
+              Field for the username.
+
+        The `username` field defines what value will be used as the user's unique identifier (i.e. their "username") depending on the OAuth provider.
+
+        Currently there are only 2 options for this:
+         * `username`
+         * `email` (*default*)
+
+        Expected output for each available template:
+
+        `github/v1`
+          * `username` - user's GitHub `login` will be user's identifier
+          * `email` - a request will be sent to fetch the primary email of account to be used as the user's identifier.
+            If it is hidden, an error will be thrown.
+
+        `google/v1`
+          * Only supports `email`, and user's Gmail email will be considered his username.
+
+        `ms_entra/v2.0`
+          * `username` - Company's signum will be the user's identifier.
+          * `email` - an email associated with this Microsoft account will be used as user's identifier.
+
+      The properties below are automatically set by templates, but can be overridden for testing purposes, and when using a custom OAuth provider.
 
       * `callback_url`
 
@@ -430,34 +468,6 @@ Specific behavior related to each provider is configured by a provider `template
 
           *Default*: Set by template.
 
-      * `user_info_mapping`
-
-          A mapping of user info fields from the provider to local fields.
-
-          * `username`
-
-              Field for the username.
-
-        The `username` field defines what value will be used as the user's unique identifier (i.e. their "username") depending on the OAuth provider.
-
-        Currently there are only 2 options for this:
-         * `username`
-         * `email` (*default*)
-
-        Expected output for each provider:
-
-        `github/v1`
-          * `username` - user's GitHub `login` will be user's identifier
-          * `email` - a request will be sent to fetch the primary email of account to be used as the user's identifier.
-            If it is hidden, an error will be thrown.
-
-        `google/v1`
-          * Only supports `email`, and user's Gmail email will be considered his username.
-
-        `ms_entra/v2.0`
-          * `username` - Company's signum will be the user's identifier.
-          * `email` - an email associated with this Microsoft account will be used as user's identifier.
-
     ### 🔧 Example: OAuth Configuration using templates
     
     ```jsonc
@@ -472,7 +482,7 @@ Specific behavior related to each provider is configured by a provider `template
     }
     ```
 
-    ### 🔧 Example: OAuth Configuration for Microsoft
+    ### 🔧 Example: OAuth Configuration for Microsoft Entra
 
     ```jsonc
     "microsoft": {
@@ -496,9 +506,9 @@ Specific behavior related to each provider is configured by a provider `template
       "enabled": false,
       "client_id": "<ExampleClientID>",
       "client_secret": "<ExampleClientSecret>",
-      "template": "google/v1", // still needed for the response handling logic
+      "template": "google/v1", // still needed for the response handling logic, but all properties can be overridden
       "authorization_url": "https://accounts.google.com/o/oauth2/auth",
-      "callback_url": "https://<server_host>/login/OAuthLogin/google",
+      "callback_url": "{host}/login/OAuthLogin/{provider}", // variables can be freely used in properties
       "token_url": "https://accounts.google.com/o/oauth2/token",
       "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
       "scope": "openid email profile",

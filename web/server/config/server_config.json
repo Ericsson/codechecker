@@ -80,22 +80,6 @@
           "variables": {
             "tenant_id": "common"
           }
-        },
-        "custom": {
-          "enabled": false,
-          "client_id": "<ExampleClientID>",
-          "client_secret": "<ExampleClientSecret>",
-          "variables": {
-            "github_api_host": "https://api.github.com"
-          },
-          "authorization_url": "https://github.com/login/oauth/authorize",
-          "callback_url": "{host}/login/OAuthLogin/{provider}",
-          "token_url": "https://github.com/login/oauth/access_token",
-          "user_info_url": "{github_api_host}/user",
-          "scope": "user:email",
-          "user_info_mapping": {
-              "username": "username"
-          }
         }
       }
     },
