@@ -362,6 +362,7 @@ class ImplicitCompilerInfo:
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
                 encoding="utf-8",
+                env={"LC_ALL":"C"},
                 errors="ignore")
 
             # The parameter is usually a compile command in this context which
