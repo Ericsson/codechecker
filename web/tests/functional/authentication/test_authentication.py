@@ -23,6 +23,7 @@ from codechecker_api_shared.ttypes import RequestFailed, Permission
 
 import datetime
 
+
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
 from libtest import codechecker
