@@ -231,10 +231,11 @@ class DictAuth(unittest.TestCase):
     def test_oauth_token_session(self):
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
-        self.try_login("github", "admin_github", "admin")
+        session_token = self.try_login("github", "admin_github", "admin")
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
 
         result = env.validate_oauth_token_session(session_factory, "github1",)
-
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
     def test_oauth_insert_session(self):
@@ -243,14 +244,12 @@ class DictAuth(unittest.TestCase):
         state = "GTUHGJ"
         code_verifier = "54GJITG3gVBT"
         provider = "github"
-
         env.insert_oauth_session(session_factory,
                                  state,
                                  code_verifier,
                                  provider)
 
         result = env.validate_oauth_session(session_factory, state)
-
         self.assertTrue(result, "No entry found in database, "
                         "unexpected behavior")
 
@@ -269,8 +268,8 @@ class DictAuth(unittest.TestCase):
         made for this case that simulates the behavior of the real provider.
         """
         # The following user is in the list of allowed users: GITHUB
-        session = self.try_login("google", "admin_github", "admin")
-        self.assertIsNotNone(session, "allowed user could not login")
+        session_token = self.try_login("google", "admin_github", "admin")
+        self.assertIsNotNone(session_token, "allowed user could not login")
 
     def test_oauth_create_link(self):
         """
@@ -338,7 +337,7 @@ class DictAuth(unittest.TestCase):
                            "user_incomplete_token",
                            "user")
 
-    def test_oauth_remove_old_oauth_sessions(self):
+    def test_oauth_remove_old_sessions(self):
         """
         Tests if the old oauth sessions are removed from database
         during the login process.
@@ -365,7 +364,9 @@ class DictAuth(unittest.TestCase):
                         "was not inserted")
 
         # user that should login successfully and remove the old session
-        self.try_login("google", "admin_github", "admin")
+        session_token = self.try_login("google", "admin_github", "admin")
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
 
         validate_removed = env.validate_oauth_session(session_factory, state_r)
         self.assertFalse(validate_removed, "old oauth session wasn't removed")
