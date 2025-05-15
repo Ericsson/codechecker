@@ -558,13 +558,8 @@ def insert_oauth_session(session_alchemy,
         with DBSession(session_alchemy) as session:
 
             if expires_at is None:
-                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@22")
-                print("No expiration date provided, setting to 15 minutes from now.")
                 expires_at = (datetime.datetime.now() +
                               datetime.timedelta(minutes=15))
-                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@22")
-                print(f"Expiration date set to: {expires_at}")
-
 
             oauth_session_entry = OAuthSession(state=state,
                                                code_verifier=code_verifier,

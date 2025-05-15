@@ -173,13 +173,7 @@ class ThriftAuthHandler:
                                                     provider)):
             raise TypeError("All OAuth fields must be strings")
         try:
-            date = datetime.datetime.now()
-            with DBSession(self.__config_db) as session:
-                sessions = session.query(OAuthSession.expires_at).all()
-                print("Session expiration dates:")
-                for (expires_at,) in sessions:
-                    print(expires_at)
-
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
                 session.query(OAuthSession) \
                     .filter(OAuthSession.expires_at < date) \
@@ -261,9 +255,9 @@ class ThriftAuthHandler:
                     code_verifier=pkce_verifier
                 )
 
-            self.__insertOAuthSession(state=state,
-                                      code_verifier=pkce_verifier,
-                                      provider=provider)
+            self.insertOAuthSession(state=state,
+                                    code_verifier=pkce_verifier,
+                                    provider=provider)
         except Exception as ex:
             LOG.error("OAuth createLink failed: %s", str(ex))
             raise codechecker_api_shared.ttypes.RequestFailed(
