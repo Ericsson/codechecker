@@ -173,13 +173,7 @@ class ThriftAuthHandler:
                                                     provider)):
             raise TypeError("All OAuth fields must be strings")
         try:
-            date = datetime.datetime.now()
-            with DBSession(self.__config_db) as session:
-                sessions = session.query(OAuthSession.expires_at).all()
-                print("Session expiration dates:")
-                for (expires_at,) in sessions:
-                    print(expires_at)
-
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
                 session.query(OAuthSession) \
                     .filter(OAuthSession.expires_at < date) \
@@ -220,49 +214,55 @@ class ThriftAuthHandler:
         login via specified provider.
         And inserts state, code, pkce_verifier in oauth table.
         """
-        oauth_config = self.__manager.get_oauth_config(provider)
-        if not oauth_config.get('enabled'):
+        try:
+            oauth_config = self.__manager.get_oauth_config(provider)
+            if not oauth_config.get('enabled'):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    f"OAuth authentication is not enabled "
+                    f"for provider: {provider}")
+
+            stored_state = generate_token()
+            client_id = oauth_config["client_id"]
+            client_secret = oauth_config["client_secret"]
+            scope = oauth_config["scope"]
+            authorization_url = oauth_config["authorization_url"]
+            callback_url = oauth_config["callback_url"]
+            pkce_verifier = generate_token(48)
+
+            oauth2_session = OAuth2Session(
+                client_id,
+                client_secret,
+                scope=scope,
+                redirect_uri=callback_url,
+                code_challenge_method='S256'
+                )
+
+            # each provider has different requirements
+            # for requesting refresh token
+            if provider == "google":
+                url, state = oauth2_session.create_authorization_url(
+                    url=authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier,
+                    access_type='offline',
+                    prompt='consent'
+                )
+            else:
+                url, state = oauth2_session.create_authorization_url(
+                    authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier
+                )
+
+            self.insertOAuthSession(state=state,
+                                    code_verifier=pkce_verifier,
+                                    provider=provider)
+        except Exception as ex:
+            LOG.error("OAuth createLink failed: %s", str(ex))
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                f"OAuth authentication is not enabled for provider:{provider}")
-
-        stored_state = generate_token()
-        client_id = oauth_config["client_id"]
-        client_secret = oauth_config["client_secret"]
-        template = oauth_config.get("template", "default")
-        scope = oauth_config["scope"]
-        authorization_url = oauth_config["authorization_url"]
-        callback_url = oauth_config["callback_url"]
-        pkce_verifier = generate_token(48)
-
-        oauth2_session = OAuth2Session(
-            client_id,
-            client_secret,
-            scope=scope,
-            redirect_uri=callback_url,
-            code_challenge_method='S256'
-            )
-
-        # each provider has different requirements
-        # for requesting refresh token
-        if template == "google/v1":
-            url, state = oauth2_session.create_authorization_url(
-                url=authorization_url,
-                state=stored_state,
-                code_verifier=pkce_verifier,
-                access_type='offline',
-                prompt='consent'
-            )
-        else:
-            url, state = oauth2_session.create_authorization_url(
-                authorization_url,
-                state=stored_state,
-                code_verifier=pkce_verifier
-            )
-
-        self.insertOAuthSession(state=state,
-                                code_verifier=pkce_verifier,
-                                provider=provider)
+                "createLink process failed.")
         return url
 
     @timeit

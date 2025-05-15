@@ -347,11 +347,12 @@ class DictAuth(unittest.TestCase):
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         # user that should be removed
-        state_r = "OGHTJG"
+        state_r = "FAKESTATE"
         code_verifier_r = "54GJITG3gVBT"
         provider_r = "github"
         # creates a session that should expire on new login.
-        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=16)
+        expires_at_r = datetime.datetime.now() \
+            - datetime.timedelta(minutes=32)
 
         env.insert_oauth_session(session_alchemy=session_factory,
                                  state=state_r,
