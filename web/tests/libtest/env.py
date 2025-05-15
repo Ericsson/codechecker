@@ -536,20 +536,17 @@ def validate_oauth_session(session_alchemy, state):
     Helper function that returns bool depending
     if the OAuth state exists
     """
-
-    state_db = None
     with DBSession(session_alchemy) as session:
-        state_db, *_ = \
-            session.query(OAuthSession.state) \
-            .filter(OAuthSession.state == state) \
-            .first()
-    return state_db is not None and state_db == state
+        return session.query(OAuthSession.state) \
+               .filter(OAuthSession.state == state) \
+               .first() is not None
 
 
 def insert_oauth_session(session_alchemy,
                          state: str,
                          code_verifier: str,
-                         provider: str):
+                         provider: str,
+                         expires_at: datetime.datetime = None):
     """
     Insert a new OAuth session into the database.
     """
@@ -559,12 +556,14 @@ def insert_oauth_session(session_alchemy,
         raise TypeError("All OAuth fields must be strings")
     try:
         with DBSession(session_alchemy) as session:
-            date = (datetime.datetime.now() +
-                    datetime.timedelta(minutes=15))
+
+            if expires_at is None:
+                expires_at = (datetime.datetime.now() +
+                              datetime.timedelta(minutes=15))
 
             oauth_session_entry = OAuthSession(state=state,
                                                code_verifier=code_verifier,
-                                               expires_at=date,
+                                               expires_at=expires_at,
                                                provider=provider)
             session.add(oauth_session_entry)
             session.commit()

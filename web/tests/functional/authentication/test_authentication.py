@@ -21,6 +21,7 @@ import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
+import datetime
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -336,6 +337,38 @@ class DictAuth(unittest.TestCase):
             self.try_login("github",
                            "user_incomplete_token",
                            "user")
+
+    def test_oauth_remove_old_oauth_sessions(self):
+        """
+        Tests if the old oauth sessions are removed from database
+        during the login process.
+        """
+
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        # user that should be removed
+        state_r = "GTUHGJ"
+        code_verifier_r = "54GJITG3gVBT"
+        provider_r = "github"
+        # creates a session that should expire on new login.
+        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=16)
+
+        env.insert_oauth_session(session_alchemy=session_factory,
+                                 state=state_r,
+                                 code_verifier=code_verifier_r,
+                                 provider=provider_r,
+                                 expires_at=expires_at_r)
+
+        result = env.validate_oauth_session(session_factory, state_r)
+        # validate that the session was inserted
+        self.assertTrue(result, "Session that will be removed "
+                        "was not inserted")
+
+        # user that should login successfully and remove the old session
+        self.try_login("google", "admin_github", "admin")
+
+        validate_removed = env.validate_oauth_session(session_factory, state_r)
+        self.assertFalse(validate_removed, "old oauth session wasn't removed")
 
     def test_nonauth_storage(self):
         """
