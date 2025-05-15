@@ -219,9 +219,9 @@ class DictAuth(unittest.TestCase):
 
         # PKCE attack case
         if username == "user_pkce":
-            env.change_oauth_session_verifier(
+            env.change_oauth_session_data(
                 session_alchemy=session_factory,
-                code_verifier="fake_code_verifier",
+                code_verifier="dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
                 state=state
                 )
 
