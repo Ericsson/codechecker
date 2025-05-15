@@ -29,7 +29,7 @@ setuptools.setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     entry_points={
         'console_scripts': [
             'tu-collector = tu_collector.tu_collector:main'
