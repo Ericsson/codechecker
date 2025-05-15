@@ -27,6 +27,15 @@ from .thrift_client_to_db import get_viewer_client
 from functional import PKG_ROOT
 from functional import REPO_ROOT
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from codechecker_server.database.config_db_model import OAuthToken
+from codechecker_server.database.config_db_model import OAuthSession
+from codechecker_server.database.database import DBSession
+
+import datetime
+
 
 def get_free_port():
     """
@@ -479,3 +488,128 @@ def get_session_token(workspace, viewer_host, viewer_port):
     except KeyError as err:
         print("Could not load session for session getter because " + str(err))
         return None
+
+
+def create_sqlalchemy_session(workspace):
+    """
+    Create a SQLAlchemy session using sessionmaker to connect to the
+    sqlite database.
+    """
+    try:
+        db_path = os.path.join(workspace, 'config.sqlite')
+        engine = create_engine('sqlite:///' + db_path)
+
+        session = sessionmaker(bind=engine)
+        return session
+
+    except ImportError as err:
+        print("SQLAlchemy is not installed. Please install it to use this "
+              "function.")
+        raise err
+    except Exception as err:
+        print("An error occurred while creating the SQLAlchemy session: " +
+              str(err))
+        raise err
+
+
+def validate_oauth_token_session(session_alchemy, access_token):
+    """
+    Helper function that returns bool depending
+    if the OAuth token exists
+    """
+
+    access_token_db = None
+    with DBSession(session_alchemy) as session:
+        access_token_db, *_ = \
+            session.query(OAuthToken.access_token) \
+            .filter(OAuthToken.access_token == access_token) \
+            .first()
+    return access_token_db is not None \
+        and access_token_db == access_token
+
+
+def validate_oauth_session(session_alchemy, state):
+    """
+    Helper function that returns bool depending
+    if the OAuth state exists
+    """
+    with DBSession(session_alchemy) as session:
+        return session.query(OAuthSession.state) \
+               .filter(OAuthSession.state == state) \
+               .first() is not None
+
+
+def insert_oauth_session(session_alchemy,
+                         state: str,
+                         code_verifier: str,
+                         provider: str,
+                         expires_at: datetime.datetime = None):
+    """
+    Insert a new OAuth session into the database.
+    """
+    if not all(isinstance(arg, str) for arg in (state,
+                                                code_verifier,
+                                                provider)):
+        raise TypeError("All OAuth fields must be strings")
+    try:
+        with DBSession(session_alchemy) as session:
+
+            if expires_at is None:
+                expires_at = (datetime.datetime.now() +
+                              datetime.timedelta(minutes=15))
+
+            oauth_session_entry = OAuthSession(state=state,
+                                               code_verifier=code_verifier,
+                                               expires_at=expires_at,
+                                               provider=provider)
+            session.add(oauth_session_entry)
+            session.commit()
+
+            print(f"State {state} inserted successfully.")
+    except Exception as exc:
+        print(f"Failed to insert state {state}: {exc}")
+        raise exc
+
+
+def change_oauth_session_data(session_alchemy,
+                              provider: str = None,
+                              code_verifier: str = None,
+                              state: str = None,
+                              expires_at: datetime = None):
+    """
+    Change the session data of an existing OAuth session in the database
+    for session integrity tests.
+    """
+    try:
+        with DBSession(session_alchemy) as session:
+
+            oauth_session = session.query(OAuthSession).filter(
+                OAuthSession.state == state).first()
+
+            if oauth_session:
+                if provider is not None:
+                    if not isinstance(provider, str):
+                        raise TypeError(
+                            "The OAuth provider field must be string")
+                    oauth_session.provider = provider
+                if code_verifier is not None:
+                    if not isinstance(code_verifier, str):
+                        raise TypeError(
+                            "The OAuth code_verifier field must be string")
+                    oauth_session.code_verifier = code_verifier
+                if state is not None:
+                    if not isinstance(state, str):
+                        raise TypeError(
+                            "The OAuth state field must be string")
+                    oauth_session.state = state
+                if expires_at is not None:
+                    print(f"TYPE OF DATE: {type(expires_at)}")
+                    if not isinstance(expires_at, datetime.datetime):
+                        raise TypeError(
+                            "The OAuth expires_at field must be datetime")
+                    oauth_session.expires_at = expires_at
+
+            session.commit()
+    except Exception as exc:
+        print(f"Failed to update state {state}: {exc}")
+        raise exc

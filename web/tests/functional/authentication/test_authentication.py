@@ -21,6 +21,9 @@ import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
+import datetime
+
+
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
 from libtest import codechecker
@@ -198,6 +201,8 @@ class DictAuth(unittest.TestCase):
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
 
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
         link = auth_client.createLink(provider)
         data = requests.get(
             url=f"{link}&username={username}&password={password}",
@@ -207,18 +212,56 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state, code_challenge, code_challenge_method = \
-            data['code'], data['state'], \
-            data['code_challenge'], \
-            data['code_challenge_method']
-        auth_string = f"{link}?code={code}&state={state}" \
-            f"&code_challenge_method={code_challenge_method}" \
-            f"&code_challenge={code_challenge}"
+
+        code, state = data['code'], data['state']
+        auth_string = f"{link}?code={code}&state={state}"
+
+        # PKCE attack case
+        if username == "user_pkce":
+            env.change_oauth_session_data(
+                session_alchemy=session_factory,
+                code_verifier="dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
+                state=state
+                )
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
 
         return self.session_token
+
+    def test_oauth_token_session(self):
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        session_token = self.try_login("github", "admin_github", "admin")
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        result = env.validate_oauth_token_session(session_factory, "github1",)
+        self.assertTrue(result, "Access_token wasn't inserted in Database")
+
+    def test_oauth_insert_session(self):
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        state = "GTUHGJ"
+        code_verifier = "54GJITG3gVBT"
+        provider = "github"
+        env.insert_oauth_session(session_factory,
+                                 state,
+                                 code_verifier,
+                                 provider)
+
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(result, "No entry found in database, "
+                        "unexpected behavior")
+
+    def test_oauth_insert_session_failure(self):
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        with self.assertRaises(TypeError):
+            env.insert_oauth_session(session_factory,
+                                     1,
+                                     2,
+                                     3)
 
     def test_oauth_allowed_users_default(self):
         """
@@ -226,18 +269,109 @@ class DictAuth(unittest.TestCase):
         made for this case that simulates the behavior of the real provider.
         """
         # The following user is in the list of allowed users: GITHUB
-        session = self.try_login("google", "admin_github", "admin")
-        self.assertIsNotNone(session, "allowed user could not login")
+        session_token = self.try_login("google", "admin_github", "admin")
+        self.assertIsNotNone(session_token, "allowed user could not login")
+
+    def test_oauth_create_link(self):
+        """
+        Tests functionality of create_link method
+        that checks if it creates unique links correctly.
+        """
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        link_github = auth_client.createLink("github")
+        link_google = auth_client.createLink("google")
+
+        self.assertIsNotNone(link_github,
+                             "Authorization link for Github created empty")
+
+        self.assertIsNotNone(link_google,
+                             "Authorization link for Google created empty")
+
+        self.assertNotEqual(link_github,
+                            link_google,
+                            "Function created identical links")
 
     def test_oauth_invalid_credentials(self):
         """
         Testing the oauth using non-existent users.
         """
+
         with self.assertRaises(RequestFailed):
             self.try_login("google", "nonexistant", "test")
 
         with self.assertRaises(RequestFailed):
             self.try_login("github", "nonexistant", "test")
+
+    def test_oauth_csrf_attack_protection(self):
+        """
+        Tests if authorization server returns a state
+        that doesn't exist in database.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_csrf", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_csrf", "user")
+
+    def test_oauth_pkce_attack_protection(self):
+        """
+        Tests if after logic authorization server returns a code_verifier
+        that doesn't exist in database.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_pkce", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_pkce", "user")
+
+    def test_oauth_incomplete_token_data(self):
+        """
+        Tests if the token data was received incomplete.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github",
+                           "user_incomplete_token",
+                           "user")
+
+    def test_oauth_remove_old_sessions(self):
+        """
+        Tests if the old oauth sessions are removed from database
+        during the login process.
+        """
+
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        # user that should be removed
+        state_r = "FAKESTATE"
+        code_verifier_r = "54GJITG3gVBT"
+        provider_r = "github"
+        # creates a session that should expire on new login.
+        expires_at_r = datetime.datetime.now() \
+            - datetime.timedelta(minutes=32)
+
+        env.insert_oauth_session(session_alchemy=session_factory,
+                                 state=state_r,
+                                 code_verifier=code_verifier_r,
+                                 provider=provider_r,
+                                 expires_at=expires_at_r)
+
+        result = env.validate_oauth_session(session_factory, state_r)
+        # validate that the session was inserted
+        self.assertTrue(result, "Session that will be removed "
+                        "was not inserted")
+
+        # user that should login successfully and remove the old session
+        session_token = self.try_login("github", "admin_github", "admin")
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        validate_removed = env.validate_oauth_session(session_factory, state_r)
+        self.assertFalse(validate_removed, "old oauth session wasn't removed")
 
     def test_nonauth_storage(self):
         """
