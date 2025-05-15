@@ -347,7 +347,7 @@ class DictAuth(unittest.TestCase):
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         # user that should be removed
-        state_r = "GTUHGJ"
+        state_r = "OGHTJG"
         code_verifier_r = "54GJITG3gVBT"
         provider_r = "github"
         # creates a session that should expire on new login.
@@ -365,7 +365,7 @@ class DictAuth(unittest.TestCase):
                         "was not inserted")
 
         # user that should login successfully and remove the old session
-        session_token = self.try_login("google", "admin_github", "admin")
+        session_token = self.try_login("github", "admin_github", "admin")
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
