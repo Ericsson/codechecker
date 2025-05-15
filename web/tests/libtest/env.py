@@ -575,25 +575,45 @@ def insert_oauth_session(session_alchemy,
         raise exc
 
 
-def change_oauth_session_verifier(session_alchemy,
-                                  code_verifier: str,
-                                  state: str):
+def change_oauth_session_data(session_alchemy,
+                              provider: str = None,
+                              code_verifier: str = None,
+                              state: str = None,
+                              expires_at: datetime = None):
     """
-    Change the code_verifier of an existing OAuth session in the database
-    for checking pkce verifier code integrity.
+    Change the session data of an existing OAuth session in the database
+    for session integrity tests.
     """
-    print("Changing code_verifier was called")
-    if not isinstance(code_verifier, str):
-        raise TypeError("The OAuth code_verifier field must be string")
     try:
         with DBSession(session_alchemy) as session:
 
-            # Update the code_verifier for the current state
-            session.query(OAuthSession).filter(
-                OAuthSession.state == state).update(
-                {OAuthSession.code_verifier: code_verifier})
+            oauth_session = session.query(OAuthSession).filter(
+                OAuthSession.state == state).first()
+
+            if oauth_session:
+                if provider is not None:
+                    if not isinstance(provider, str):
+                        raise TypeError(
+                            "The OAuth provider field must be string")
+                    oauth_session.provider = provider
+                if code_verifier is not None:
+                    if not isinstance(code_verifier, str):
+                        raise TypeError(
+                            "The OAuth code_verifier field must be string")
+                    oauth_session.code_verifier = code_verifier
+                if state is not None:
+                    if not isinstance(state, str):
+                        raise TypeError(
+                            "The OAuth state field must be string")
+                    oauth_session.state = state
+                if expires_at is not None:
+                    print(f"TYPE OF DATE: {type(expires_at)}")
+                    if not isinstance(expires_at, datetime.datetime):
+                        raise TypeError(
+                            "The OAuth expires_at field must be datetime")
+                    oauth_session.expires_at = expires_at
+
             session.commit()
-            print(f"State {state} updated successfully.")
     except Exception as exc:
         print(f"Failed to update state {state}: {exc}")
         raise exc

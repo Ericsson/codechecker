@@ -389,6 +389,17 @@ class ThriftAuthHandler:
                     authorization_response=url,
                     code_verifier=code_verifier_db)
 
+                # validate the token is not empty or incomplete
+                if oauth_token.get('access_token') is None or \
+                        oauth_token.get('refresh_token') is None or \
+                        oauth_token.get('token_type') is None or \
+                        oauth_token.get('scope') is None or \
+                        oauth_token.get('expires_in') is None:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth token fetch failed. Token is empty or "
+                        "incomplete.")
+
                 current_date = datetime.datetime.now()
                 access_token_expires_at = current_date + \
                     datetime.timedelta(seconds=oauth_token['expires_in'])

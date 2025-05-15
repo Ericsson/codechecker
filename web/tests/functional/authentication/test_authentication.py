@@ -216,9 +216,9 @@ class DictAuth(unittest.TestCase):
 
         # PKCE attack case
         if username == "user_pkce":
-            env.change_oauth_session_verifier(
+            env.change_oauth_session_data(
                 session_alchemy=session_factory,
-                code_verifier="fake_code_verifier",
+                code_verifier="dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
                 state=state
                 )
 
@@ -326,6 +326,16 @@ class DictAuth(unittest.TestCase):
 
         with self.assertRaises(RequestFailed):
             self.try_login("google", "user_pkce", "user")
+
+    def test_oauth_incomplete_token_data(self):
+        """
+        Tests if the token data was received incomplete.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github",
+                           "user_incomplete_token",
+                           "user")
 
     def test_nonauth_storage(self):
         """
