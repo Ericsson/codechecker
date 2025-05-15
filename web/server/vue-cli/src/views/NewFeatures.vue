@@ -2,6 +2,96 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.26.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.26.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              OAauth2 based Single Sign On Authentication
+            </template>
+            <p>
+              CodeChecker now provides OAauth2 based user authentication
+              through various providers. It is now possible to configure up
+              your CodeChecker server instance to accept user logins with
+              their Google, Microsoft or GitHub accounts.
+            </p>
+            <p>
+              To enable this feature, you will first need to configure your
+              CodeChecker server instance with the corresponding OAuth
+              provider and add a new authentication method section in the
+              CodeChecker server configuration file.
+            </p>
+            <p>
+              If the user group memberships are managed by a Microsoft Entra
+              identity server, these memberships will be fetched by
+              CodeChecker through the graph API.
+            </p>
+            <p>
+              See the
+              <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/authentication.md#oauth-authentication-" target="_blank">
+                CodeChecker authentication document</a>
+              for configuration details.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.26.0/oauth.png"
+              alt="OAuth Login Methods"
+              width="100%"
+            >
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Personal Access Token Management
+            </template>
+            <p>
+              Personal access tokens are generated "passwords" which can be
+              used to login to CodeChecker. If MultiFacor Authentication is
+              enabled, it is the only way to authenticate through the CLI.
+            </p>
+            <ul>
+              <li>
+                The Personal Access Tokens now can be created on the GUI too,
+                not only through the CLI.
+              </li>
+              <li>
+                It is accessible if you click on you username in the top right
+                corner.
+              </li>
+            </ul>
+            <br>
+            <img
+              src="@/assets/userguide/images/new_features/6.26.0/personal_access_token.png"
+              alt="Personal Access Token"
+              width="100%"
+            >
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              <v-alert dense outlined type="error" class="py-0 ma-0">
+                Backward incompatible changes!
+              </v-alert>
+            </template>
+            <p>
+              The Personal Access Tokens cannot be viewed after creation. It
+              used to be possible to list the values of the personal access
+              tokens after creation, but after this version it will only be
+              possible to view once at creation time.
+            </p>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
           <template v-slot:title>

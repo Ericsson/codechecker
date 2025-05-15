@@ -322,10 +322,11 @@ var BugViewer = {
     // error node.
     var lastEvent = null
     if (currentEvents.length > 0)
-      lastEvent =currentEvents[currentEvents.length - 1];
+      lastEvent = currentEvents[currentEvents.length - 1];
     if (!lastEvent ||
+          this._currentReport.fileId == this._filepath.innerHTML && (
           lastEvent.message != this._currentReport.message ||
-          lastEvent.line != this._currentReport.line){
+          lastEvent.line != this._currentReport.line)){
         var element = document.createElement('div');
         var left = that._codeMirror.defaultCharWidth() * lastEvent.column + 'px';
         element.setAttribute('style', 'margin-left: ' + left);

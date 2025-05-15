@@ -885,3 +885,139 @@ class AnalyzeParseTestCase(
                 f"Expected 2 64-bit compilations. Logged commands:\
                  {logged_commands}"
             )
+
+    def test_use_absolute_paths_flag(self):
+        """
+        Test if CodeChecker can properly log compilation commands when using
+        the --use-absolute-ldpreload-path flag.
+
+        This verifies that when the flag is used, CodeChecker correctly uses
+        an absolute path in LD_PRELOAD instead of relying on LD_LIBRARY_PATH
+        for loading the ldlogger.so library.
+        """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            simple_c = os.path.join(self.test_dir, "simple.c")
+            shutil.copy(simple_c, tmp_dir)
+
+            # Log commands without the flag
+            log_file_normal = os.path.join(
+                tmp_dir, "compile_commands_normal.json")
+            cmd_normal = [
+                "CodeChecker",
+                "log",
+                "-b",
+                "gcc -c simple.c",
+                "-o",
+                log_file_normal,
+                "--verbose",
+                "debug",
+            ]
+
+            out_normal, err_normal, returncode = call_command(
+                cmd_normal, cwd=tmp_dir, env=self.env.copy()
+            )
+
+            self.assertEqual(
+                returncode, 0, f"CodeChecker log failed: {err_normal}")
+
+            # Log commands with the flag '--use-absolute-ldpreload-path'
+            log_file_abs = os.path.join(tmp_dir, "compile_commands_abs.json")
+            cmd_abs = [
+                "CodeChecker",
+                "log",
+                "--use-absolute-ldpreload-path",
+                "-b",
+                "gcc -c simple.c",
+                "-o",
+                log_file_abs,
+                "--verbose",
+                "debug",
+            ]
+
+            out_abs, err_abs, returncode = call_command(
+                cmd_abs, cwd=tmp_dir, env=self.env.copy()
+            )
+
+            self.assertEqual(
+                returncode,
+                0,
+                "CodeChecker log with --use-absolute-ldpreload-path failed: "
+                + err_abs,
+            )
+
+            # Verify both logs contain the compilation command
+            with open(log_file_normal, "r", encoding="utf-8") as f:
+                logged_commands_normal = json.load(f)
+
+            with open(log_file_abs, "r", encoding="utf-8") as f:
+                logged_commands_abs = json.load(f)
+
+            self.assertEqual(
+                len(logged_commands_normal),
+                1,
+                "Expected 1 command in normal log. Got: "
+                + str(logged_commands_normal),
+            )
+            self.assertEqual(
+                len(logged_commands_abs),
+                1,
+                "Expected 1 command in absolute paths log. Got: "
+                + str(logged_commands_abs),
+            )
+
+            # Verify output of CodeChecker log commands
+            self.assertTrue(
+                ("Using LD_LIBRARY_PATH environment variable "
+                 "and a relative path")
+                in out_normal,
+                "LD_LIBRARY_PATH not set in normal mode",
+            )
+
+            self.assertTrue(
+                ("Trying to use absolute paths "
+                 "for ldlogger.so library") in out_abs,
+                "Not using absolute paths mode despite the flag",
+            )
+
+            # The LD_PRELOAD values should be different
+            ld_preload_normal_match = re.search(
+                r'LD_PRELOAD environment variable set to: "(.+?)"', out_normal
+            )
+            ld_preload_abs_match = re.search(
+                r'LD_PRELOAD environment variable set to: "(.+?)"', out_abs
+            )
+
+            self.assertIsNotNone(
+                ld_preload_normal_match,
+                "LD_PRELOAD value not found in normal output"
+            )
+            self.assertIsNotNone(
+                ld_preload_abs_match,
+                "LD_PRELOAD value not found in absolute paths output",
+            )
+
+            ld_preload_normal = ld_preload_normal_match.group(1)
+            ld_preload_abs = ld_preload_abs_match.group(1)
+
+            # In normal mode, LD_PRELOAD should just contain the library name
+            self.assertTrue(
+                "/" not in ld_preload_normal
+                and "ldlogger.so" in ld_preload_normal,
+                "Expected just library name in normal mode, got: " +
+                ld_preload_normal,
+            )
+
+            # In absolute paths mode, LD_PRELOAD should contain a full path
+            self.assertTrue(
+                "/" in ld_preload_abs
+                and "ldlogger.so" in ld_preload_abs,
+                "Expected absolute path in absolute paths mode, got: " +
+                ld_preload_abs,
+            )
+
+            # Verify that in absolute mode, we get the success message
+            self.assertTrue(
+                ("Successfully found absolute path "
+                 "for ldlogger.so library") in out_abs,
+                "Did not find success message for absolute path mode",
+            )

@@ -154,13 +154,13 @@ service codeCheckerAuthentication {
                      2: string            extraParams)
                      throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  SessionTokenDataList getTokens()
+  SessionTokenDataList getTokens() // !Deprecated!
                                  throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  SessionTokenData newToken(1: string description)
+  SessionTokenData newToken(1: string description) // !Deprecated!
                             throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  bool removeToken(1: string token)
+  bool removeToken(1: string token) // !Deprecated!
                    throws (1: codechecker_api_shared.RequestFailed requestError)
 
   PersonalAccessTokenList getPersonalAccessTokens()

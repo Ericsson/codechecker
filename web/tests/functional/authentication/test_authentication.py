@@ -350,7 +350,7 @@ class DictAuth(unittest.TestCase):
         code_verifier_r = "54GJITG3gVBT"
         provider_r = "github"
         # creates a session that should expire on new login.
-        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=16)
+        expires_at_r = datetime.datetime.now() - datetime.timedelta(minutes=20)
 
         env.insert_oauth_session(session_alchemy=session_factory,
                                  state=state_r,
