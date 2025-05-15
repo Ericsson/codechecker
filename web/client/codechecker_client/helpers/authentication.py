@@ -97,7 +97,7 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
-    def newPersonalAccessToken(self, name, description):
+    def newPersonalAccessToken(self, name, description, expiration):
         pass
 
     @thrift_client_call

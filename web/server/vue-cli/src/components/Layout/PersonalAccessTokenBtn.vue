@@ -103,11 +103,18 @@
             <v-text-field
               ref="tokenNameField"
               v-model="newTokenName"
+              clearable
               label="New token name"
             />
             <v-text-field
               v-model="newTokenDescription"
+              clearable
               label="New token description"
+            />
+            <v-text-field
+              v-model.number="newTokenExpiration"
+              clearable
+              label="New token expiration"
             />
           </v-card-text>
         </v-card>
@@ -134,7 +141,8 @@ export default {
       accessTokens: [],
       token: {},
       newTokenName: "",
-      newTokenDescription: ""
+      newTokenDescription: "",
+      newTokenExpiration: 1
     };
   },
 
@@ -149,12 +157,14 @@ export default {
       authService.getClient().newPersonalAccessToken(
         this.newTokenName,
         this.newTokenDescription,
+        this.newTokenExpiration,
         handleThriftError(newToken => {
           this.token = newToken;
           this.newDialog = true;
           this.loadTokens();
           this.newTokenName = "";
           this.newTokenDescription = "";
+          this.newTokenExpiration = 1;
         })
       );
     },
