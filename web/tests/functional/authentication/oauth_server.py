@@ -35,6 +35,10 @@ class OauthServer(BaseHTTPRequestHandler):
         "user_pkce:user": {
             "code": "6",
             "token": "user_pkce6"
+        },
+        "user_incomplete_token:user": {
+            "code": "7",
+            "token": "user_incomplete_token7"
         }
     }
 
@@ -44,7 +48,8 @@ class OauthServer(BaseHTTPRequestHandler):
         "3": "google3",
         "4": "dummy4",
         "5": "user_csrf5",
-        "6": "user_pkce6"
+        "6": "user_pkce6",
+        "7": "user_incomplete_token7"
     }
 
     # Store pkce code challenge
@@ -80,6 +85,11 @@ class OauthServer(BaseHTTPRequestHandler):
             "login": "user_pkce6",
             "email": "user_pkce6@fake.com",
             "name": "User @pkce"
+        },
+        "user_incomplete_token7": {
+            "login": "user_incomplete_token",
+            "email": "user_incomplete_token@fake.com",
+            "name": "User @incomplete_token"
         }
     }
 
@@ -174,7 +184,11 @@ class OauthServer(BaseHTTPRequestHandler):
                             return self.show_rejection("Invalid code verifier")
                 else:
                     return self.show_rejection("Invalid code challenge method")
-
+            # return incomplete token information for test purposes.
+            if code == "7":
+                return self.show_json({
+                    'access_token': "user_incomplete_token7",
+                })
             if code in self.tokens_by_code:
                 token = self.tokens_by_code[code]
                 return self.show_json({
