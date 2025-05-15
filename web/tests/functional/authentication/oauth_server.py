@@ -148,6 +148,9 @@ class OauthServer(BaseHTTPRequestHandler):
             return self.show_rejection("Invalid credentials")
         except IndexError:
             return self.show_rejection("Invalid query parameters")
+        except Exception as ex:
+            print(f"Error: {ex}")
+            return self.show_rejection("Internal server error")
 
     def get_user(self):
         token = self.headers.get("Authorization").split("Bearer ")[1]
