@@ -173,7 +173,7 @@ class ThriftAuthHandler:
                                                     provider)):
             raise TypeError("All OAuth fields must be strings")
         try:
-            date = datetime.datetime.now()
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
                 session.query(OAuthSession) \
                     .filter(OAuthSession.expires_at < date) \
