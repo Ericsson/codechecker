@@ -52,6 +52,10 @@ is handled.
 
     The error message shown in the browser when the user fails to authenticate
 
+  * `failed_auth_message`
+
+    The message shown upon failed authentication in the CodeChecker CLI
+
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an

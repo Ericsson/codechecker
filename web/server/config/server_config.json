@@ -17,6 +17,7 @@
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
     "realm_error" : "Access requires valid credentials.",
+    "failed_auth_message": "",
     "session_lifetime" : 300,
     "refresh_time" : 60,
     "logins_until_cleanup" : 30,
