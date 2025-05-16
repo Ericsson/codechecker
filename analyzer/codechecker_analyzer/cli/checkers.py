@@ -551,8 +551,11 @@ def __print_checker_config(args: argparse.Namespace):
                 analyzer_failures.append(analyzer)
                 continue
 
-        rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
-                    else (':'.join((analyzer, c[0])),) for c in configs)
+        rows.extend(
+            (f'{analyzer}:{c.checker}:{c.option}', c.documentation)
+            if 'details' in args
+            else (f'{analyzer}:{c.checker}:{c.option}',)
+            for c in configs)
 
     if rows:
         print(twodim.to_str(args.output_format, header, rows))

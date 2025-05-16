@@ -11,6 +11,7 @@ Cppcheck related functions.
 
 from collections import defaultdict
 import sys
+from typing import List
 from packaging.version import Version
 from pathlib import Path
 import os
@@ -299,26 +300,33 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return []
 
     @classmethod
-    def get_analyzer_config(cls):
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """
         Config options for cppcheck.
         """
         return [
-            ("addons", "A list of cppcheck addon files."),
-            ("libraries", "A list of cppcheck library definiton files."),
-            ("platform", "The platform configuration .xml file."),
-            ("inconclusive", "Enable inconclusive reports."),
-            ("cc-verbatim-args-file",
-             "A file path containing flags that are forwarded verbatim to the "
-             "analyzer tool. E.g.: cc-verbatim-args-file=<filepath>")
+            analyzer_base.AnalyzerConfig(
+                "addons",
+                "A list of cppcheck addon files.",
+                str),
+            analyzer_base.AnalyzerConfig(
+                "libraries",
+                "A list of cppcheck library definiton files.",
+                str),
+            analyzer_base.AnalyzerConfig(
+                "platform",
+                "The platform configuration .xml file.",
+                str),
+            analyzer_base.AnalyzerConfig(
+                "inconclusive",
+                "Enable inconclusive reports.",
+                str),
+            analyzer_base.AnalyzerConfig(
+                "cc-verbatim-args-file",
+                "A file path containing flags that are forwarded verbatim to "
+                "the analyzer tool. E.g.: cc-verbatim-args-file=<filepath>",
+                util.ExistingPath)
         ]
-
-    @classmethod
-    def get_checker_config(cls):
-        """
-        TODO add config options for cppcheck checkers.
-        """
-        return []
 
     def post_analyze(self, result_handler):
         """
