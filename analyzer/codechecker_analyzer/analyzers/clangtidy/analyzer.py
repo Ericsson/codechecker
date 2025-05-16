@@ -256,11 +256,19 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     # Cache object for get_analyzer_checkers().
     __analyzer_checkers = None
 
-    __additional_analyzer_config = {
-        'cc-verbatim-args-file':
+    __additional_analyzer_config = [
+        analyzer_base.AnalyzerConfig(
+            'cc-verbatim-args-file',
             'A file path containing flags that are forwarded verbatim to the '
-            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>'
-    }
+            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>',
+            util.ExistingPath),
+        analyzer_base.AnalyzerConfig(
+            'take-config-from-directory',
+            'The .clang-tidy config file should be taken into account when '
+            'analysis is executed through CodeChecker. Possible values: true, '
+            'false. Default: false',
+            str)
+    ]
 
     @classmethod
     def analyzer_binary(cls):
@@ -334,24 +342,29 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_checker_config(cls):
+    def get_checker_config(cls) -> List[analyzer_base.CheckerConfig]:
         """
         Return the checker configuration of the all of the supported checkers.
         """
         try:
-            result = subprocess.check_output(
+            help_page = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
                 .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
-            return parse_checker_config(result)
         except (subprocess.CalledProcessError, OSError):
             return []
 
+        result = []
+        for cfg, doc in parse_checker_config(help_page):
+            result.append(analyzer_base.CheckerConfig(*cfg.split(':', 1), doc))
+
+        return result
+
     @classmethod
-    def get_analyzer_config(cls):
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """
         Return the analyzer configuration with all checkers enabled.
         """
@@ -370,7 +383,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         except (subprocess.CalledProcessError, OSError):
             native_config = []
 
-        return native_config + list(cls.__additional_analyzer_config.items())
+        native_config = map(
+            lambda cfg: analyzer_base.AnalyzerConfig(cfg[0], cfg[1], str),
+            native_config)
+
+        return list(native_config) + list(cls.__additional_analyzer_config)
 
     def get_checker_list(self, config) -> Tuple[List[str], List[str]]:
         """
