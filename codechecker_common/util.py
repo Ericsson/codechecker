@@ -14,6 +14,7 @@ import re
 import shlex
 import yaml
 import os
+import pathlib
 from typing import List, TextIO
 
 import portalocker
@@ -183,3 +184,11 @@ def load_args_from_file(filepath: str) -> List[str]:
             replace_env_var(filepath),
             f.read().strip())
         return shlex.split(content)
+
+
+class ExistingPath():
+    def __init__(self, *pathsegments):
+        path = pathlib.Path(*pathsegments)
+
+        if not path.exists():
+            raise FileNotFoundError(f"File does not exist: {path.absolute()}")
