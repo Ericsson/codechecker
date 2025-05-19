@@ -275,12 +275,6 @@ class DictAuth(unittest.TestCase):
         Testing insertion of wrong session data."""
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
-        self.assertTrue(result, "No entry found in database, "
-                        "unexpected behavior")
-
-    def test_oauth_insert_session_failure(self):
-        session_factory = env.create_sqlalchemy_session(self._test_workspace)
-
         with self.assertRaises(TypeError):
             env.insert_oauth_session(session_factory,
                                      1,
