@@ -198,6 +198,9 @@ class DictAuth(unittest.TestCase):
         #                  "reported to be still active.")
 
     def try_login(self, provider, username, password):
+        """
+        Emulating login flow of user in CodeChecker.
+        """
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
 
@@ -230,6 +233,10 @@ class DictAuth(unittest.TestCase):
         return self.session_token
 
     def test_oauth_token_session(self):
+        """
+        Testing if correct login flow will return a token.
+        """
+
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         session_token = self.try_login("github", "admin_github", "admin")
@@ -240,6 +247,10 @@ class DictAuth(unittest.TestCase):
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
     def test_oauth_insert_session(self):
+        """
+        Testing if the session is inserted correctly in the database.
+        """
+
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         state = "GTUHGJ"
@@ -255,6 +266,8 @@ class DictAuth(unittest.TestCase):
                         "unexpected behavior")
 
     def test_oauth_insert_session_failure(self):
+        """
+        Testing insertion of wrong session data."""
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
         with self.assertRaises(TypeError):
@@ -319,7 +332,7 @@ class DictAuth(unittest.TestCase):
     def test_oauth_pkce_attack_protection(self):
         """
         Tests if after logic authorization server returns a code_verifier
-        that doesn't exist in database.
+        that doesn't exist in database the authentication should fail.
         """
 
         with self.assertRaises(RequestFailed):
@@ -330,7 +343,8 @@ class DictAuth(unittest.TestCase):
 
     def test_oauth_incomplete_token_data(self):
         """
-        Tests if the token data was received incomplete.
+        Tests if the token data was received incomplete results
+        in error.
         """
 
         with self.assertRaises(RequestFailed):
