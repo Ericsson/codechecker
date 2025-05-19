@@ -222,6 +222,12 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "bugprone-capturing-this-in-member-variable": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/capturing-this-in-member-variable.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "bugprone-casting-through-void": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/casting-through-void.html",
       "profile:extreme",
@@ -336,6 +342,12 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
+    ],
+    "bugprone-incorrect-enable-shared-from-this": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-enable-shared-from-this.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
     ],
     "bugprone-incorrect-roundings": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-roundings.html",
@@ -465,15 +477,15 @@
       "profile:extreme",
       "severity:STYLE"
     ],
-    "bugprone-not-null-terminated-result": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/not-null-terminated-result.html",
+    "bugprone-nondeterministic-pointer-iteration-order": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/nondeterministic-pointer-iteration-order.html",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
-    "bugprone-nondeterministic-pointer-iteration-order": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/nondeterministic-pointer-iteration-order.html",
+    "bugprone-not-null-terminated-result": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/not-null-terminated-result.html",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
@@ -690,13 +702,6 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
-    "bugprone-tagged-union-member-count": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/tagged-union-member-count.html",
-      "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "severity:MEDIUM"
-    ],
     "bugprone-suspicious-stringview-data-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-stringview-data-usage.html",
       "profile:default",
@@ -717,6 +722,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
+    ],
+    "bugprone-tagged-union-member-count": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/tagged-union-member-count.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
     ],
     "bugprone-terminating-continue": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/terminating-continue.html",
@@ -783,6 +795,13 @@
       "profile:sensitive",
       "sei-cert-cpp:oop54-cpp",
       "severity:MEDIUM"
+    ],
+    "bugprone-unintended-char-ostream-output": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unintended-char-ostream-output.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "bugprone-unique-ptr-array-mismatch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unique-ptr-array-mismatch.html",
@@ -1292,6 +1311,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wargument-undefined-behaviour",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-arm-interrupt-save-fp-no-vfp-unit": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warm-interrupt-save-fp-no-vfp-unit",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-array-bounds": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-bounds",
       "severity:MEDIUM"
@@ -1304,6 +1329,18 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:arr39-c",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-array-compare": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-compare",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-array-compare-cxx26": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-compare-cxx26",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-array-parameter": [
@@ -1506,6 +1543,12 @@
     ],
     "clang-diagnostic-builtin-requires-header": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbuiltin-requires-header",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-c++-keyword": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wc-keyword",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-c++-compat": [
@@ -1932,6 +1975,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcoro-non-aligned-allocation-function",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-coro-type-aware-allocation-function": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcoro-type-aware-allocation-function",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-coroutine": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcoroutine",
       "severity:MEDIUM"
@@ -1984,6 +2033,13 @@
       "sei-cert-cpp:mem50-cpp",
       "severity:HIGH"
     ],
+    "clang-diagnostic-dangling-capture": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling-capture",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-dangling-else": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling-else",
       "profile:default",
@@ -2021,6 +2077,48 @@
     ],
     "clang-diagnostic-declaration-after-statement": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeclaration-after-statement",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init-field": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-field",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init-field-unsafe": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-field-unsafe",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init-unsafe": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-unsafe",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init-var": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-default-const-init-var-unsafe": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var-unsafe",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-defaulted-function-deleted": [
@@ -2178,6 +2276,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-literal-operator",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-deprecated-missing-comma-variadic-parameter": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-missing-comma-variadic-parameter",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-deprecated-module-dot-map": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-module-dot-map",
       "severity:MEDIUM"
@@ -2196,6 +2300,12 @@
     ],
     "clang-diagnostic-deprecated-objc-pointer-introspection-performselector": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-objc-pointer-introspection-performselector",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-deprecated-octal-literals": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-octal-literals",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-pragma": [
@@ -2929,6 +3039,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#whlsl-extensions",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-hlsl-implicit-binding": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#whlsl-implicit-binding",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-idiomatic-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#widiomatic-parentheses",
       "severity:MEDIUM"
@@ -2939,6 +3055,12 @@
     ],
     "clang-diagnostic-ignored-availability-without-sdk-settings": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wignored-availability-without-sdk-settings",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-ignored-base-class-qualifiers": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wignored-base-class-qualifiers",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-ignored-gch": [
@@ -2997,6 +3119,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-conversion-floating-point-to-bool",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-implicit-enum-enum-cast": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-enum-enum-cast",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-implicit-exception-spec-mismatch": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-exception-spec-mismatch",
       "severity:MEDIUM"
@@ -3045,12 +3173,24 @@
       "sei-cert-c:int36-c",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-implicit-int-enum-cast": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-enum-cast",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-implicit-int-float-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-float-conversion",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit-retain-self": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-retain-self",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-implicit-void-ptr-cast": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-void-ptr-cast",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicitly-unsigned-literal": [
@@ -3191,6 +3331,12 @@
       "sei-cert-cpp:dcl56-cpp",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-init-priority-reserved": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winit-priority-reserved",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-init-self": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winit-self",
       "severity:MEDIUM"
@@ -3326,6 +3472,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-source-encoding",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-invalid-specialization": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-specialization",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-invalid-static-assert-message": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-static-assert-message",
       "severity:HIGH"
@@ -3340,6 +3492,12 @@
     ],
     "clang-diagnostic-invalid-utf8": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-utf8",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-jump-misses-init": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wjump-misses-init",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-jump-seh-finally": [
@@ -3548,6 +3706,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmicrosoft-init-from-predefined",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-microsoft-inline-on-non-function": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmicrosoft-inline-on-non-function",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-microsoft-mutable-reference": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmicrosoft-mutable-reference",
       "severity:MEDIUM"
@@ -3727,6 +3891,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmodule-file-extension",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-module-file-mapping-mismatch": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmodule-file-mapping-mismatch",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-module-import": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#rmodule-import",
       "severity:LOW"
@@ -3742,6 +3912,12 @@
     "clang-diagnostic-module-lock": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#rmodule-lock",
       "severity:LOW"
+    ],
+    "clang-diagnostic-module-map": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#rmodule-map",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
     ],
     "clang-diagnostic-modules-ambiguous-internal-linkage": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmodules-ambiguous-internal-linkage",
@@ -3881,6 +4057,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonportable-private-system-apinotes-path",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-nonportable-sycl": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonportable-sycl",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-nonportable-system-include-path": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonportable-system-include-path",
       "severity:MEDIUM"
@@ -3891,6 +4073,12 @@
     ],
     "clang-diagnostic-nontrivial-memaccess": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnontrivial-memaccess",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-nontrivial-memcall": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnontrivial-memcall",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nsconsumed-mismatch": [
@@ -4132,6 +4320,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wobjc-unsafe-perform-selector",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-octal-prefix-extension": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woctal-prefix-extension",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-odr": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wodr",
       "severity:MEDIUM"
@@ -4146,6 +4340,12 @@
     ],
     "clang-diagnostic-openacc": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wopenacc",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-openacc-confusing-routine-name": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wopenacc-confusing-routine-name",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-openacc-self-if-potential-conflict": [
@@ -4498,6 +4698,18 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpredefined-identifier-outside-function",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-preferred-type-bitfield-enum-conversion": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpreferred-type-bitfield-enum-conversion",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-preferred-type-bitfield-width": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpreferred-type-bitfield-width",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-private-extern": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wprivate-extern",
       "profile:default",
@@ -4596,6 +4808,18 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wredeclared-class-member",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-reduced-bmi-output-overrided": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreduced-bmi-output-overrided",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-redundant-attribute": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wredundant-attribute",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-redundant-consteval-if": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wredundant-consteval-if",
       "severity:MEDIUM"
@@ -4653,6 +4877,12 @@
     ],
     "clang-diagnostic-requires-super-attribute": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wrequires-super-attribute",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-reserved-attribute-identifier": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-attribute-identifier",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reserved-id-macro": [
@@ -4865,6 +5095,12 @@
     ],
     "clang-diagnostic-shadow-uncaptured-local": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshadow-uncaptured-local",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-shift-bool": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-bool",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-count-negative": [
@@ -5302,6 +5538,12 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtentative-definition-array",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-tentative-definition-compat": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtentative-definition-compat",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-tentative-definition-incomplete-type": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtentative-definition-incomplete-type",
       "severity:MEDIUM"
@@ -5324,6 +5566,14 @@
     ],
     "clang-diagnostic-thread-safety-negative": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wthread-safety-negative",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-thread-safety-pointer": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wthread-safety-pointer",
+      "guideline:sei-cert-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert-c:msc54-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-thread-safety-precise": [
@@ -5391,6 +5641,12 @@
     ],
     "clang-diagnostic-undef-prefix": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wundef-prefix",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-undef-true": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wundef-true",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-undefined-arm-streaming": [
@@ -5493,6 +5749,21 @@
       "sei-cert-c:exp33-c",
       "severity:MEDIUM"
     ],
+    "clang-diagnostic-uninitialized-explicit-init": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized-explicit-init",
+      "guideline:sei-cert-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert-c:exp33-c",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-unique-object-duplication": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunique-object-duplication",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "clang-diagnostic-unknown-argument": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunknown-argument",
       "severity:MEDIUM"
@@ -5534,6 +5805,13 @@
     ],
     "clang-diagnostic-unnamed-type-template-args": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunnamed-type-template-args",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-unnecessary-virtual-specifier": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunnecessary-virtual-specifier",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unneeded-internal-declaration": [
@@ -5639,6 +5917,12 @@
     ],
     "clang-diagnostic-unsupported-visibility": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunsupported-visibility",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-unterminated-string-initialization": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunterminated-string-initialization",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unusable-partial-specialization": [
@@ -5815,6 +6099,12 @@
       "profile:security",
       "sei-cert-c:exp47-c",
       "sei-cert-cpp:exp58-cpp",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-variadic-macro-arguments-omitted": [
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvariadic-macro-arguments-omitted",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-variadic-macros": [
@@ -7020,6 +7310,11 @@
       "profile:extreme",
       "severity:STYLE"
     ],
+    "modernize-use-integer-sign-comparison": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-integer-sign-comparison.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
     "modernize-use-nodiscard": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-nodiscard.html",
       "profile:extreme",
@@ -7276,8 +7571,8 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
-    "readability-math-missing-parentheses": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/math-missing-parentheses.html",
+    "readability-ambiguous-smartptr-reset-call": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/ambiguous-smartptr-reset-call.html",
       "profile:extreme",
       "severity:LOW"
     ],
@@ -7391,6 +7686,11 @@
     "readability-make-member-function-const": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/make-member-function-const.html",
       "severity:STYLE"
+    ],
+    "readability-math-missing-parentheses": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/math-missing-parentheses.html",
+      "profile:extreme",
+      "severity:LOW"
     ],
     "readability-misleading-indentation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/misleading-indentation.html",

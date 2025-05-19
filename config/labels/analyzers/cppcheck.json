@@ -146,6 +146,9 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-checkLevelNormal": [
+      "severity:MEDIUM"
+    ],
     "cppcheck-clarifyCalculation": [
       "severity:STYLE"
     ],
@@ -256,6 +259,14 @@
     ],
     "cppcheck-cstyleCast": [
       "severity:STYLE"
+    ],
+    "cppcheck-ctunullpointer": [
+      "cwe-top-25-2024:cwe-476",
+      "guideline:cwe-top-25-2024",
+      "guideline:sei-cert-c",
+      "profile:security",
+      "sei-cert-c:exp34-c",
+      "severity:HIGH"
     ],
     "cppcheck-danglingLifetime": [
       "profile:default",
@@ -668,6 +679,12 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-legacyUninitvar": [
+      "guideline:sei-cert-c",
+      "profile:security",
+      "sei-cert-c:exp33-c",
+      "severity:HIGH"
+    ],
     "cppcheck-literalWithCharPtrCompare": [
       "profile:default",
       "profile:extreme",
@@ -1025,6 +1042,10 @@
     "cppcheck-redundantCondition": [
       "severity:STYLE"
     ],
+    "cppcheck-redundantContinue": [
+      "profile:default",
+      "severity:LOW"
+    ],
     "cppcheck-redundantCopy": [
       "severity:LOW"
     ],
@@ -1069,6 +1090,9 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
+    ],
+    "cppcheck-returnByReference": [
+      "severity:LOW"
     ],
     "cppcheck-returnDanglingLifetime": [
       "profile:default",
@@ -1286,6 +1310,9 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-suspiciousFloatingPointCast": [
+      "severity:STYLE"
+    ],
     "cppcheck-suspiciousSemicolon": [
       "profile:default",
       "profile:extreme",
@@ -1491,12 +1518,6 @@
       "severity:LOW"
     ],
     "cppcheck-uselessOverride": [
-      "severity:STYLE"
-    ],
-    "cppcheck-returnByReference": [
-      "severity:LOW"
-    ],
-    "cppcheck-suspiciousFloatingPointCast": [
       "severity:STYLE"
     ],
     "cppcheck-va_end_missing": [

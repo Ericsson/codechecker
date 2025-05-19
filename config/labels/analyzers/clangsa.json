@@ -248,13 +248,6 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
-    "unix.BlockInCriticalSection": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-blockincriticalsection-c",
-      "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "severity:LOW"
-    ],
     "alpha.unix.Chroot": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-chroot-c",
       "profile:extreme",
@@ -312,6 +305,27 @@
       "profile:extreme",
       "severity:HIGH"
     ],
+    "alpha.webkit.ForwardDeclChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-forwarddeclchecker",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.webkit.MemoryUnsafeCastChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-memoryunsafecastchecker",
+      "profile:extreme",
+      "profile:security",
+      "severity:HIGH"
+    ],
+    "alpha.webkit.NoUnretainedMemberChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-nounretainedmemberchecker",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.webkit.RetainPtrCtorAdoptChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-retainptrctoradoptchecker",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
     "alpha.webkit.UncountedCallArgsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedcallargschecker",
       "profile:extreme"
@@ -319,6 +333,21 @@
     "alpha.webkit.UncountedLocalVarsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
+    ],
+    "alpha.webkit.UnretainedCallArgsChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedcallargschecker",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.webkit.UnretainedLambdaCapturesChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedlambdacaptureschecker",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.webkit.UnretainedLocalVarsChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedlocalvarschecker",
+      "profile:extreme",
+      "severity:MEDIUM"
     ],
     "core.BitwiseShift": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-bitwiseshift-c-c",
@@ -373,6 +402,16 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "core.FixedAddressDereference": [
+      "cwe-top25:cwe-119",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-fixedaddressdereference-c-c-objc",
+      "guideline:cwe-top25-2024",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "core.NonNullParamChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nonnullparamchecker-c-c-objc",
@@ -819,6 +858,12 @@
       "owasp-top-10-2021:owasp-A10-2021",
       "severity:HIGH"
     ],
+    "optin.taint.TaintPropagation": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
     "optin.taint.TaintedAlloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
       "guideline:owasp-top-10-2021",
@@ -833,12 +878,6 @@
       "profile:extreme",
       "profile:sensitive",
       "owasp-top-10-2021:owasp-A03-2021",
-      "severity:HIGH"
-    ],
-    "optin.taint.TaintPropagation": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "osx.API": [
@@ -1111,8 +1150,16 @@
       "sei-cert-c:exp37-c",
       "severity:MEDIUM"
     ],
+    "unix.BlockInCriticalSection": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-blockincriticalsection-c-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "unix.Chroot": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-chroot-c",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
@@ -1224,6 +1271,14 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive"
+    ],
+    "unix.cstring.NotNullTerminated": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-notnullterminated-c",
+      "guideline:sei-cert-c",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert-c:str31-c",
+      "severity:HIGH"
     ],
     "unix.cstring.NullArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg-c",
