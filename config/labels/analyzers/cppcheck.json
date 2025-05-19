@@ -161,6 +161,9 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-class_X_Y": [
+      "severity:LOW"
+    ],
     "cppcheck-commaSeparatedReturn": [
       "severity:STYLE"
     ],
@@ -472,6 +475,9 @@
     "cppcheck-instantiationError": [
       "severity:CRITICAL"
     ],
+    "cppcheck-invalidConstFunctionType": [
+      "severity:LOW"
+    ],
     "cppcheck-integerOverflow": [
       "profile:default",
       "profile:extreme",
@@ -694,6 +700,9 @@
     "cppcheck-localMutex": [
       "severity:MEDIUM"
     ],
+    "cppcheck-macroWithSemicolon": [
+      "severity:LOW"
+    ],
     "cppcheck-mallocOnClassError": [
       "profile:default",
       "profile:extreme",
@@ -868,6 +877,9 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-nonStandardCharLiteral": [
+      "severity:LOW"
+    ],
     "cppcheck-nullPointer": [
       "profile:default",
       "profile:extreme",
@@ -888,6 +900,16 @@
     ],
     "cppcheck-nullPointerDefaultArg": [
       "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nullPointerOutOfMemory": [
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-nullPointerOutOfResources": [
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
