@@ -5,4 +5,4 @@ PyYAML==6.0.1
 types-PyYAML==6.0.12.12
 sarif-tools==3.0.4
 multiprocess==0.70.15
-setuptools==70.2.0
+setuptools==78.1.1
