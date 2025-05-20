@@ -244,7 +244,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 #       In case of Cppcheck, the minimal supported version is 1.80.
 #       In case of gcc, the minimal supported version is 13.0.0.
 #       Infer: https://fbinfer.com/docs/getting-started
-sudo apt-get install clang clang-tidy cppcheck g++ build-essential curl
+sudo apt-get install clang clang-tidy cppcheck g++ build-essential curl \
       gcc-multilib git python3-dev python3-venv python3-setuptools
 
 # In case of venv_dev target and Ubuntu 23 Linux, install an additional library:
