@@ -162,10 +162,13 @@ function formatExtendedReportDataChildren(report, extendedData, kind) {
   });
 }
 
-function getReportStepIcon(step, index, isResult) {
-  var type = isResult
-    ? "error" : step.msg.indexOf(" (fixit)") > -1
-      ? "fixit" : "info";
+function getReportStepIcon(step, index, isResult, report) {
+  var type = "info";
+  if (isResult) {
+    type = report.checkerMsg === step.msg ? "error" : "info";
+  } else if (step.msg.indexOf(" (fixit)") > -1) {
+    type = "fixit";
+  }
 
   return {
     index: index + 1,
@@ -199,7 +202,7 @@ function formatReportEvents(report, events) {
     }
 
     const highlightData = getHighlightData(highlightStack, step);
-    const reportStepIcon = getReportStepIcon(step, index, isResult);
+    const reportStepIcon = getReportStepIcon(step, index, isResult, report);
 
     if (highlightData.icon === ReportStepIconType.ENTERED_CALL) {
       indentation += 1;
