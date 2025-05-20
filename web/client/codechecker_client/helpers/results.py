@@ -196,3 +196,7 @@ class ThriftResultsHelper(BaseClientHelper):
     @thrift_client_call
     def storeAnalysisStatistics(self, run_name, zip_file):
         pass
+
+    @thrift_client_call
+    def getAnalysisInfo(self, analysis_info_filter, limit, offset):
+        pass
