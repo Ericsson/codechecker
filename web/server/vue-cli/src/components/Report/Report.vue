@@ -11,7 +11,8 @@
         :cols="editorCols"
       >
         <v-container fluid class="pa-0 mb-2">
-          <v-row class="ma-0">
+          <!-- First row -->
+          <v-row class="ma-0 mb-2">
             <v-col
               cols="auto"
               class="pa-0 mr-2"
@@ -46,7 +47,30 @@
 
             <v-col
               cols="auto"
-              class="review-status-wrapper pa-0"
+              class="py-0 pr-2"
+              align-self="center"
+            >
+              <v-btn
+                class="comments-btn"
+                color="primary"
+                outlined
+                small
+                :loading="loadNumOfComments"
+                @click="showComments = !showComments"
+              >
+                <v-icon
+                  class="mr-1"
+                  small
+                >
+                  mdi-comment-multiple-outline
+                </v-icon>
+                Comments ({{ numOfComments }})
+              </v-btn>
+            </v-col>
+
+            <v-col
+              cols="auto"
+              class="review-status-wrapper pa-0 mr-2"
               align-self="center"
             >
               <v-container fluid class="pa-0">
@@ -109,22 +133,6 @@
 
             <v-col
               cols="auto"
-              class="pa-0"
-              align-self="center"
-            >
-              <v-checkbox
-                v-model="showArrows"
-                class="show-arrows mx-2 my-0 align-center justify-center"
-                label="Show arrows"
-                dense
-                :hide-details="true"
-              />
-            </v-col>
-
-            <v-spacer />
-
-            <v-col
-              cols="auto"
               class="py-0 pr-0"
               align-self="center"
             >
@@ -133,28 +141,52 @@
                 :disabled="!hasBlameInfo"
               />
             </v-col>
+          </v-row>
+
+          <!-- Second row -->
+          <v-row class="ma-0">
+            <v-col
+              cols="auto"
+              class="pa-0 mr-4"
+              align-self="center"
+            >
+              <v-checkbox
+                v-model="showArrows"
+                class="show-arrows my-0 align-center justify-center"
+                label="Show arrows"
+                dense
+                :hide-details="true"
+              />
+            </v-col>
 
             <v-col
               cols="auto"
-              class="py-0 pr-0"
+              class="pa-0 mr-4"
               align-self="center"
             >
-              <v-btn
-                class="comments-btn mx-2 mr-0"
-                color="primary"
-                outlined
-                small
-                :loading="loadNumOfComments"
-                @click="showComments = !showComments"
-              >
-                <v-icon
-                  class="mr-1"
-                  small
+              <div class="d-flex align-center">
+                <v-checkbox
+                  v-model="showCoverage"
+                  class="show-coverage my-0 align-center justify-center"
+                  label="Show coverage"
+                  dense
+                  :hide-details="true"
+                  :loading="coverageLoading"
+                  @change="val => {
+                    if (val) {
+                      loadCoverageData();
+                    } else {
+                      clearCoverageHighlighting();
+                    }
+                  }"
+                />
+                <span 
+                  v-if="showCoverage && coverageData" 
+                  class="coverage-percentage ml-2 grey--text text--darken-1"
                 >
-                  mdi-comment-multiple-outline
-                </v-icon>
-                Comments ({{ numOfComments }})
-              </v-btn>
+                  ({{ Math.round(coverageData.coveragePercentage) }}% covered)
+                </span>
+              </div>
             </v-col>
           </v-row>
         </v-container>
@@ -172,6 +204,22 @@
 
             <v-col class="pa-0">
               <v-container fluid class="pa-0">
+                <v-row
+                  class="file-info pa-2 ma-0"
+                  justify="space-between"
+                >
+                  <v-col cols="12" class="pa-0">
+                    <div class="file-path-display">
+                      <v-icon small class="mr-1">
+                        mdi-file-outline
+                      </v-icon>
+                      <span v-if="sourceFile" class="monospace">
+                        {{ sourceFile.filePath }}
+                      </span>
+                    </div>
+                  </v-col>
+                </v-row>
+
                 <v-row
                   class="header pa-1 ma-0"
                   justify="space-between"
@@ -332,12 +380,13 @@ export default {
     SetCleanupPlanBtn,
     ShowReportInfoDialog,
     ToggleBlameViewBtn,
-    UserIcon
+    UserIcon,
   },
   directives: { FillHeight },
   mixins: [ GitBlameMixin ],
   props: {
-    treeItem: { type: Object, default: null }
+    treeItem: { type: Object, default: null },
+    coverageData: { type: Object, default: null }
   },
 
   emits: [ "update-review-data" ],
@@ -366,7 +415,9 @@ export default {
       analysisInfoDialog: false,
       reportId: null,
       enableBlameView,
-      docUrl: null
+      docUrl: null,
+      showCoverage: false,
+      coverageLoading: false,
     };
   },
 
@@ -405,14 +456,28 @@ export default {
         await this.hideBlameView();
       }
 
-      // Scroll to the current bug step item.
-      this.jumpTo(
-        this.treeItem.step?.startLine.toNumber() ||
-        this.treeItem.report.line.toNumber());
+      // Scroll to the current bug step item with null checks
+      if (this.treeItem) {
+        const line = this.treeItem.step?.startLine?.toNumber() ||
+                    this.treeItem.report?.line?.toNumber() ||
+                    1;
+        this.jumpTo(line);
+      }
     },
 
-    treeItem() {
-      this.init(this.treeItem);
+    treeItem: {
+      handler(newVal) {
+        if (!newVal) return;
+
+        if (newVal.coverageData) {
+          this.coverageData = newVal.coverageData;
+          if (this.showCoverage) {
+            this.updateCoverageHighlighting();
+          }
+        }
+        this.init(newVal);
+      },
+      immediate: true
     },
 
     showArrows() {
@@ -423,13 +488,41 @@ export default {
       }
     },
 
-    report() {
-      this.loadNumOfComments = true;
-      ccService.getClient().getCommentCount(this.report.reportId,
-        handleThriftError(numOfComments => {
-          this.numOfComments = numOfComments;
-          this.loadNumOfComments = false;
-        }));
+    report: {
+      handler(newVal) {
+        if (newVal) {
+          this.loadNumOfComments = true;
+          ccService.getClient().getCommentCount(newVal.reportId,
+            handleThriftError(numOfComments => {
+              this.numOfComments = numOfComments;
+              this.loadNumOfComments = false;
+            }));
+          this.loadCoverageData();
+        }
+      },
+      immediate: true
+    },
+
+    showCoverage: {
+      handler(newVal) {
+        if (newVal) {
+          this.updateCoverageHighlighting();
+        } else {
+          this.clearCoverageHighlighting();
+        }
+      }
+    },
+
+    coverageData: {
+      handler(newVal) {
+        if (newVal) {
+          this.coverageData = newVal;
+          if (this.showCoverage) {
+            this.updateCoverageHighlighting();
+          }
+        }
+      },
+      immediate: true
     }
   },
 
@@ -448,10 +541,10 @@ export default {
       lineNumbers: true,
       readOnly: true,
       mode: "text/x-c++src",
-      gutters: [ "CodeMirror-linenumbers", "bugInfo" ],
-      extraKeys: {},
-      viewportMargin: 200,
-      highlightSelectionMatches : { showToken: /\w/, annotateScrollbar: true }
+      theme: "default",
+      lineWrapping: true,
+      gutters: [ "CodeMirror-linenumbers", "CodeMirror-foldgutter" ],
+      foldGutter: true
     });
     this.editor.setSize("100%", "100%");
 
@@ -493,28 +586,32 @@ export default {
 
   methods: {
     init(treeItem) {
+      if (!treeItem) return;
+      
       this.loading = true;
 
       if (treeItem.step) {
         this.loadReportStep(treeItem.report, {
-          stepId: this.treeItem.id,
+          stepId: treeItem.id,
           ...treeItem.step
         });
       } else if (treeItem.data) {
         this.loadReportStep(treeItem.report, {
-          stepId: this.treeItem.id,
+          stepId: treeItem.id,
           ...treeItem.data
         });
-      } else {
+      } else if (treeItem.report) {
         this.loadReport(treeItem.report);
+      } else {
+        this.loading = false;
       }
     },
 
     async loadReportStep(report, { stepId, fileId, startLine }) {
       if (!this.report ||
-          !this.report.reportId.equals(report.reportId) ||
-          !this.sourceFile ||
-          !fileId.equals(this.sourceFile.fileId)
+        !this.report.reportId.equals(report.reportId) ||
+        !this.sourceFile ||
+        !fileId.equals(this.sourceFile.fileId)
       ) {
         this.report = report;
 
@@ -781,10 +878,10 @@ export default {
       //the last bug path element, then we render the warning.
 
       if (this.sourceFile.fileId.equals(this.report.fileId) &&
-          (events.length == 0 ||
-           this.report.checkerMsg !== events[events.length-1].msg ||
-           this.report.line.toNumber() !=
-             events[events.length-1].startLine.toNumber())
+        (events.length === 0 ||
+          this.report.checkerMsg !== events[events.length-1].msg ||
+          this.report.line.toNumber() !==
+          events[events.length-1].startLine.toNumber())
       ){
         const chkrmsg_data = { $id: 999,
           $message:this.report.checkerMsg,
@@ -853,7 +950,6 @@ export default {
         .filter(textMarker => {
           let line = null;
 
-          // If not in viewport.
           try {
             line = textMarker.lines[0].lineNo();
           } catch (ex) {
@@ -914,7 +1010,104 @@ export default {
     openAnalysisInfoDialog() {
       this.reportId = this.report.reportId;
       this.analysisInfoDialog = true;
-    }
+    },
+
+    async loadCoverageData() {
+      if (!this.report || !this.report.fileId) return;
+
+      this.coverageLoading = true;
+      try {
+        // Use the coverage data from props if available
+        if (this.coverageData) {
+          this.updateCoverageHighlighting();
+          return;
+        }
+
+        // Fallback to loading coverage data if not provided via props
+        const runIds = this.report.runId ? [ this.report.runId ] : [];
+        this.coverageData = await ccService.getCodeCoverage(
+          this.report.fileId,
+          runIds
+        );
+        
+        this.updateCoverageHighlighting();
+      } catch (err) {
+        // Error handling without console.log
+      } finally {
+        this.coverageLoading = false;
+      }
+    },
+
+    updateCoverageHighlighting() {
+      if (!this.coverageData || !this.showCoverage) return;
+
+      this.editor.operation(() => {
+        for (let i = 0; i < this.editor.lineCount(); i++) {
+          const lineNumber = i + 1;
+          const lineData = this.coverageData.lineCoverage.find(line => {
+            const { start, end } = line.lineRange;
+            return start <= lineNumber && end >= lineNumber;
+          });
+          
+          if (lineData) {
+            let className;
+            switch (lineData.coverageStatus) {
+            case "covered":
+              className = "coverage-covered-line";
+              break;
+            case "uncovered":
+              className = "coverage-uncovered-line";
+              break;
+            case "partially-covered":
+              className = "coverage-partial-line";
+              break;
+            default:
+              className = "";
+            }
+
+            [ "wrap", "background", "gutter", "line" ].forEach(type => {
+              this.editor.addLineClass(i, type, className);
+            });
+          }
+        }
+      });
+    },
+
+    clearCoverageHighlighting() {
+      if (!this.editor) return;
+
+      this.editor.operation(() => {
+        for (let i = 0; i < this.editor.lineCount(); i++) {
+          [ "wrap", "background", "gutter", "line" ].forEach(type => {
+            this.editor.removeLineClass(i, type, "coverage-covered-line");
+            this.editor.removeLineClass(i, type, "coverage-uncovered-line");
+            this.editor.removeLineClass(i, type, "coverage-partial-line");
+          });
+        }
+      });
+    },
+
+    getLineCoverageClass(lineNumber) {
+      if (!this.coverageData || !this.showCoverage) return "";
+      
+      const lineInfo = this.coverageData.lineCoverage.find(line => {
+        const { start, end } = line.lineRange;
+        return start <= lineNumber && end >= lineNumber;
+      });
+      
+      if (!lineInfo) return "coverage-unknown";
+      
+      switch (lineInfo.coverageStatus) {
+      case "covered":
+        return "coverage-covered";
+      case "uncovered":
+        return "coverage-uncovered";
+      case "partially-covered":
+        return "coverage-partial";
+      default:
+        return "coverage-unknown";
+      }
+    },
   }
 };
 </script>
@@ -923,11 +1116,67 @@ export default {
 .scrollbar-bug-annotation {
   background-color: red;
 }
+
+.coverage-covered-line {
+  background-color: rgba(0, 255, 0, 0.1) !important;
+}
+
+.coverage-uncovered-line {
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
+.coverage-partial-line {
+  background-color: rgba(255, 255, 0, 0.1) !important;
+}
+
+.CodeMirror {
+  .coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  .coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+
+  .coverage-partial-line {
+    background-color: rgba(255, 255, 0, 0.1) !important;
+  }
+
+  pre.coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  pre.coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+
+  .CodeMirror-line.coverage-covered-line {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+  }
+
+  .CodeMirror-line.coverage-uncovered-line {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+  }
+}
 </style>
 
 <style lang="scss" scoped>
 #editor-wrapper {
   border: 1px solid #d8dbe0;
+
+  .file-info {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d8dbe0;
+
+    .file-path-display {
+      font-size: 0.9em;
+      color: var(--v-grey-darken3);
+      
+      .monospace {
+        font-family: monospace;
+      }
+    }
+  }
 
   .header {
     background-color: "#f7f7f7";
@@ -949,6 +1198,15 @@ export default {
         content: '\200e';
       }
     }
+  }
+
+  .show-coverage {
+    margin-right: 8px;
+  }
+
+  .coverage-percentage {
+    font-size: 0.9em;
+    white-space: nowrap;
   }
 
   .editor {
@@ -997,5 +1255,18 @@ export default {
 ::v-deep .report-step-msg {
   opacity: 0.7;
   font-weight: lighter;
+}
+
+::v-deep .CodeMirror-linenumber {
+  color: #666;
+}
+
+::v-deep .v-input--checkbox.show-coverage {
+  margin-top: 0;
+  margin-bottom: 0;
+  
+  .v-input__slot {
+    margin-bottom: 0;
+  }
 }
 </style>

@@ -88,6 +88,7 @@
     <pane>
       <report
         :tree-item="treeItem"
+        :coverage-data="treeItem?.coverageData"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
         @update-review-data="updateReviewData"
@@ -128,7 +129,8 @@ export default {
       treeItem: null,
       showComments: true,
       reportNotFound: false,
-      reviewStatus: null
+      reviewStatus: null,
+      coverageData: null
     };
   },
   computed: {
@@ -216,12 +218,96 @@ export default {
       }
     },
 
-    onReportTreeClick(item) {
+    async onReportTreeClick(item) {
       if (!item) return;
 
       if (item.report) {
         this.report = item.report;
         this.updateUrl();
+      }
+
+      if (item.report && item.report.fileId) {
+        try {
+          // Original backend fetching method (commented out)
+          // const coverageData = await ccService.getCodeCoverage(
+          //   item.report.fileId,
+          //   this.runIds
+          // );
+          // item.coverageData = coverageData;
+
+          // Mock data for testing
+          // const mockCoverageData = {
+          //   fileId: item.report.fileId,
+          //   filePath: item.report.checkedFile,
+          //   totalLines: 14,
+          //   coveredLines: 8,
+          //   uncoveredLines: 6,
+          //   coveragePercentage: 57.1,
+          //   lineCoverage: [
+          //     {
+          //       lineRange: { start: 1, end: 1 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 2, end: 2 },
+          //       coverageStatus: "uncovered"
+          //     },
+          //     {
+          //       lineRange: { start: 3, end: 3 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 4, end: 4 },
+          //       coverageStatus: "partially-covered"
+          //     },
+          //     {
+          //       lineRange: { start: 5, end: 5 },
+          //       coverageStatus: "uncovered"
+          //     },
+          //     {
+          //       lineRange: { start: 6, end: 6 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 7, end: 7 },
+          //       coverageStatus: "partially-covered"
+          //     },
+          //     {
+          //       lineRange: { start: 8, end: 8 },
+          //       coverageStatus: "uncovered"
+          //     },
+          //     {
+          //       lineRange: { start: 9, end: 9 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 10, end: 10 },
+          //       coverageStatus: "partially-covered"
+          //     },
+          //     {
+          //       lineRange: { start: 11, end: 11 },
+          //       coverageStatus: "uncovered"
+          //     },
+          //     {
+          //       lineRange: { start: 12, end: 12 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 13, end: 13 },
+          //       coverageStatus: "covered"
+          //     },
+          //     {
+          //       lineRange: { start: 14, end: 14 },
+          //       coverageStatus: "uncovered"
+          //     }
+          //   ]
+          // };
+
+          // console.log("Using mock coverage data:", mockCoverageData);
+          // item.coverageData = mockCoverageData;
+        } catch (err) {
+          //console.error("Failed to load coverage data:", err);
+        }
       }
 
       this.treeItem = item;

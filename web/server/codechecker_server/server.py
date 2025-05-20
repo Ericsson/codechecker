@@ -1281,3 +1281,4 @@ def add_initial_run_database(config_sql_server, product_connection):
     sess.close()
 
     LOG.debug("Default product set up.")
+
