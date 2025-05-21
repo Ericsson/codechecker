@@ -167,7 +167,8 @@ class PersonalAccessToken(Base):
         token_name,
         token,
         description,
-        groups
+        groups,
+        expiration
     ):
         self.user_name = user_name
         self.token_name = token_name
@@ -175,7 +176,7 @@ class PersonalAccessToken(Base):
         self.description = description
         self.groups = groups
         self.last_access = datetime.now()
-        self.expiration = self.last_access + timedelta(days=365)
+        self.expiration = self.last_access + timedelta(days=expiration)
 
 
 class Configuration(Base):

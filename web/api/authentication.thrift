@@ -168,7 +168,8 @@ service codeCheckerAuthentication {
 
   PersonalAccessToken newPersonalAccessToken(
     1: string name,
-    2: optional string description)
+    2: optional string description,
+    3: optional i64 expiration)
     throws (1: codechecker_api_shared.RequestFailed requestError)
 
   bool removePersonalAccessToken(1: string name)
