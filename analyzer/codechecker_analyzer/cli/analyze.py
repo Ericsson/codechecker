@@ -25,7 +25,7 @@ from codechecker_analyzer import analyzer, analyzer_context, \
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
-    analyzer_config, checker_config, AnalyzerConfig, CheckerConfig
+    analyzer_config, checker_config, AnalyzerConfigArg, CheckerConfigArg
 
 from codechecker_analyzer.buildlog import log_parser
 
@@ -861,85 +861,99 @@ LLVM/Clang community, and thus discouraged.
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def is_analyzer_config_valid(analyzer_conf: List[AnalyzerConfig]) -> bool:
+def is_analyzer_config_valid(
+    analyzer_config_args: List[AnalyzerConfigArg]
+) -> bool:
     """
     Ensure that the analyzer_config parameter is set to a valid value
     by verifying if it belongs to the set of allowed values.
     """
-    wrong_configs = []
+    wrong_config_messages = []
     supported_analyzers = analyzer_types.supported_analyzers
 
-    for cfg in analyzer_conf:
-        if cfg.analyzer not in supported_analyzers:
-            wrong_configs.append((cfg.analyzer, None))
+    analyzer_configs = {
+        analyzer_name: analyzer_class.get_analyzer_config()
+        for analyzer_name, analyzer_class
+        in supported_analyzers.items()
+    }
+
+    for cfg_arg in analyzer_config_args:
+        if cfg_arg.analyzer not in supported_analyzers:
+            wrong_config_messages.append(
+                f"Invalid argument to --analyzer-config: '{cfg_arg.analyzer}' "
+                f"is not a supported analyzer. Supported analyzers are: "
+                f"{', '.join(a for a in supported_analyzers)}.")
             continue
 
-        analyzer_class = supported_analyzers[cfg.analyzer]
-        analyzer_name = analyzer_class.ANALYZER_NAME
-        analyzers = [analyzer[0] for analyzer in
-                     analyzer_class.get_analyzer_config()]
+        analyzer_cfg = next(
+            (x for x in analyzer_configs[cfg_arg.analyzer]
+             if x.option == cfg_arg.option),
+            None)
 
-        # Make sure "[clang-tidy] Allow to override checker list #3203" works
-        if analyzer_name == 'clang-tidy':
-            analyzers.append('take-config-from-directory')
+        if analyzer_cfg is None:
+            wrong_config_messages.append(
+                f"Invalid argument to --analyzer-config: {cfg_arg.analyzer} "
+                f"has no config named '{cfg_arg.option}'. Use the "
+                f"'CodeChecker analyzers --analyzer-config "
+                f"{cfg_arg.analyzer}' command to see available configs.")
+        else:
+            try:
+                analyzer_cfg.value_type(cfg_arg.value)
+            except Exception as ex:
+                wrong_config_messages.append(
+                    f"Invalid value to --analyzer-config: "
+                    f"'{cfg_arg.analyzer}:{cfg_arg.option}={cfg_arg.value}'. "
+                    f"{ex}")
 
-        if cfg.analyzer == analyzer_name and cfg.option not in analyzers:
-            wrong_configs.append((analyzer_name, cfg.option))
-
-    if wrong_configs:
-        for analyzer_name, option in wrong_configs:
-            if option is None:
-                LOG.error(
-                    f"Invalid argument to --analyzer-config: {analyzer_name} "
-                    f"is not a supported analyzer. Supported analyzers are: "
-                    f"{', '.join(a for a in supported_analyzers)}.")
-            else:
-                LOG.error(
-                    f"Invalid argument to --analyzer-config: {analyzer_name} "
-                    f"has no config named {option}. Use the 'CodeChecker "
-                    f"analyzers --analyzer-config {analyzer_name}' command to "
-                    f"see available configs.")
+    if wrong_config_messages:
+        for wrong_config_message in wrong_config_messages:
+            LOG.error(wrong_config_message)
 
         return False
 
     return True
 
 
-def is_checker_config_valid(checker_conf: List[CheckerConfig]) -> bool:
+def is_checker_config_valid(
+    checker_config_args: List[CheckerConfigArg]
+) -> bool:
     """
     Ensure that the checker_config parameter is set to a valid value
     by verifying if it belongs to the set of allowed values.
     """
-    wrong_configs = []
+    wrong_config_messages = []
     supported_analyzers = analyzer_types.supported_analyzers
 
-    for cfg in checker_conf:
-        if cfg.analyzer not in supported_analyzers:
-            wrong_configs.append((cfg.analyzer, None))
+    checker_configs = {
+        analyzer_name: analyzer_class.get_checker_config()
+        for analyzer_name, analyzer_class
+        in supported_analyzers.items()
+    }
+
+    for cfg_arg in checker_config_args:
+        if cfg_arg.analyzer not in supported_analyzers:
+            wrong_config_messages.append(
+                f"Invalid argument to --checker-config: '{cfg_arg.analyzer}' "
+                f"is not a supported analyzer. Supported analyzers are: "
+                f"{', '.join(a for a in supported_analyzers)}.")
             continue
 
-        analyzer_class = supported_analyzers[cfg.analyzer]
-        analyzer_name = analyzer_class.ANALYZER_NAME
-        checker_conf_opt = f"{cfg.checker}:{cfg.option}"
-        checkers = [checker[0] for checker in
-                    analyzer_class.get_checker_config()]
+        checker_cfg = next(
+            (x for x in checker_configs[cfg_arg.analyzer]
+             if x.checker == cfg_arg.checker and x.option == cfg_arg.option),
+            None)
 
-        if cfg.analyzer == analyzer_name and checker_conf_opt not in checkers:
-            wrong_configs.append((analyzer_name, checker_conf_opt))
+        if checker_cfg is None:
+            wrong_config_messages.append(
+                f"Invalid argument to --checker-config: invalid checker "
+                f"'{cfg_arg.checker}' and/or checker option "
+                f"'{cfg_arg.option}' for {cfg_arg.analyzer}. Use the "
+                f"'CodeChecker checkers --checker-config' command to see "
+                f"available checker options.")
 
-    if wrong_configs:
-        for analyzer_name, conf_opt in wrong_configs:
-            if conf_opt is None:
-                LOG.error(
-                    f"Invalid argument to --checker-config: {analyzer_name} "
-                    f"is not a supported analyzer. Supported analyzers are: "
-                    f"{', '.join(a for a in supported_analyzers)}.")
-            else:
-                LOG.error(
-                    f"Invalid argument to --checker-config: invalid checker "
-                    f"and/or checker option '{conf_opt}' for {analyzer_name}. "
-                    f"Use the 'CodeChecker checkers --checker-config' command "
-                    f"to see available checkers.")
+    if wrong_config_messages:
+        for wrong_config_message in wrong_config_messages:
+            LOG.error(wrong_config_message)
 
         return False
 

@@ -15,6 +15,7 @@ import subprocess
 import json
 from pathlib import Path
 import sys
+from typing import List
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -138,22 +139,17 @@ class Infer(analyzer_base.SourceAnalyzer):
         return []
 
     @classmethod
-    def get_analyzer_config(cls):
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """
         Config options for infer.
         """
         return [
-            ('cc-verbatim-args-file',
-             'A file path containing flags that are forwarded verbatim to the '
-             'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>')
+            analyzer_base.AnalyzerConfig(
+                'cc-verbatim-args-file',
+                'A file path containing flags that are forwarded verbatim to '
+                'the analyzer tool. E.g.: cc-verbatim-args-file=<filepath>',
+                util.ExistingPath)
         ]
-
-    @classmethod
-    def get_checker_config(cls):
-        """
-        Config options for infer checkers.
-        """
-        return []
 
     def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
 

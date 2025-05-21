@@ -14,6 +14,7 @@ import re
 import shlex
 import yaml
 import os
+import pathlib
 from typing import List, TextIO
 
 import portalocker
@@ -183,3 +184,16 @@ def load_args_from_file(filepath: str) -> List[str]:
             replace_env_var(filepath),
             f.read().strip())
         return shlex.split(content)
+
+
+# TODO: This class is used for checking if a path exists. This class should
+# inherit from pathlib.Path, however it is not possible before Python 3.12 due
+# to a bug:
+# https://stackoverflow.com/questions/61689391/error-with-simple-subclassing-
+# of-pathlib-path-no-flavour-attribute
+class ExistingPath:
+    def __init__(self, *pathsegments):
+        path = pathlib.Path(*pathsegments)
+
+        if not path.exists():
+            raise FileNotFoundError(f"File does not exist: {path.absolute()}")
