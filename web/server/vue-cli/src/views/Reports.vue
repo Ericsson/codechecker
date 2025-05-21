@@ -337,15 +337,18 @@ export default {
         }
 
         if (header.value === "timestamp") {
-          return this.hasTimeStamp;
+          return this.hasTimeStamp &&
+            !this.reportFilter.isUnique;
         }
 
         if (header.value === "testcase") {
-          return this.hasTestCase;
+          return this.hasTestCase &&
+            !this.reportFilter.isUnique;
         }
 
         if (header.value === "chronological_order") {
-          return this.hasChronologicalOrder;
+          return this.hasChronologicalOrder &&
+            !this.reportFilter.isUnique;
         }
 
         return true;
