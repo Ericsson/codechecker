@@ -44,6 +44,7 @@ def handle_add_token(args):
 
     print("The following access token has been generated for your account: " +
           personal_access_token.token)
+    print("The token is valid until: " + personal_access_token.expiration)
 
 
 def handle_list_tokens(args):
