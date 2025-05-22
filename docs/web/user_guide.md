@@ -250,7 +250,7 @@ To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
 
 
 CodeChecker server can use PostgreSQL or SQLite databases to store the analysis
-results. SQlite is only recommended high volume production usage,
+results. SQLite is not recommended for high volume production usage,
 only for small test installations.
 
 
