@@ -256,6 +256,23 @@ var BugViewer = {
     });
   },
 
+  renderMainWarning : function (currentEvents) {
+    if (this._currentReport.fileId != this._filepath.innerHTML)
+      return false;
+
+    if (currentEvents.length == 0) {
+      return true;
+    }
+
+    var lastEvent = currentEvents[currentEvents.length - 1];
+    if (lastEvent.message != this._currentReport.message ||
+      lastEvent.line != this._currentReport.line) {
+      return true;
+    }
+
+    return false;
+  },
+
   drawBugPath : function () {
     var that = this;
 
@@ -272,6 +289,9 @@ var BugViewer = {
 
       var left = that._codeMirror.defaultCharWidth() * event.column + 'px';
       var type = step === currentEvents.length - 1 ? 'error' : 'info';
+      if (that.renderMainWarning(currentEvents)) {
+        type = 'info';
+      }
 
       var element = document.createElement('div');
       element.setAttribute('style', 'margin-left: ' + left);
@@ -313,35 +333,29 @@ var BugViewer = {
         element.appendChild(nextBug);
       }
 
-
       that._lineWidgets.push(that._codeMirror.addLineWidget(
         event.line - 1, element));
     });
     // If there are no events, or the last event does not match
     // the main warning message we print the warning message as a separate
     // error node.
-    var lastEvent = null
-    if (currentEvents.length > 0)
-      lastEvent = currentEvents[currentEvents.length - 1];
-    if (!lastEvent ||
-          this._currentReport.fileId == this._filepath.innerHTML && (
-          lastEvent.message != this._currentReport.message ||
-          lastEvent.line != this._currentReport.line)){
-        var element = document.createElement('div');
-        var left = that._codeMirror.defaultCharWidth() * lastEvent.column + 'px';
-        element.setAttribute('style', 'margin-left: ' + left);
-        element.setAttribute('class', 'check-msg ' + "error");
-        var error_tag = document.createElement('span');
-        error_tag.setAttribute('class', 'checker-enum error');
-        error_tag.innerHTML = "E";
-        element.appendChild(error_tag);
-        var msg = document.createElement('span');
-        msg.innerHTML = that.escapeHTML(this._currentReport.message)
-          .replace(/(?:\r\n|\r|\n)/g, '<br>');
-        element.appendChild(msg);
-        that._lineWidgets.push(that._codeMirror.addLineWidget(
-          this._currentReport.line - 1, element));
-      }
+    var lastEvent = currentEvents.length > 0 ? currentEvents[currentEvents.length - 1] : null;
+    if (this.renderMainWarning(currentEvents)) {
+      var element = document.createElement('div');
+      var left = lastEvent ? that._codeMirror.defaultCharWidth() * lastEvent.column + 'px' : '0px';
+      element.setAttribute('style', 'margin-left: ' + left);
+      element.setAttribute('class', 'check-msg ' + "error");
+      var error_tag = document.createElement('span');
+      error_tag.setAttribute('class', 'checker-enum error');
+      error_tag.innerHTML = "E";
+      element.appendChild(error_tag);
+      var msg = document.createElement('span');
+      msg.innerHTML = that.escapeHTML(this._currentReport.message)
+        .replace(/(?:\r\n|\r|\n)/g, '<br>');
+      element.appendChild(msg);
+      that._lineWidgets.push(that._codeMirror.addLineWidget(
+        this._currentReport.line - 1, element));
+    }
   },
 
   jumpTo : function (line, column) {
