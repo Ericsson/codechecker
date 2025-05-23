@@ -57,9 +57,29 @@ static int matchToProgramList(
 
     if (strchr(token, '/'))
     {
-      const char* posOfToken = strstr(progPath_, token);
-      if (posOfToken)
-        found = strcmp(posOfToken, token) == 0;
+      // When the token contains '/', then the program name is considered as a
+      // suffix:
+      //
+      //    token ->     /cc
+      // -------------------
+      // no match ->       c
+      //    match ->      cc
+      // no match ->     gcc
+      // no match ->  ccache
+      //    match -> bin2/cc
+      if (token[0] == '/')
+        ++token;
+
+      int len_token = strlen(token);
+      int len_prog = strlen(progPath_);
+
+      if (len_token >= len_prog)
+        found = strcmp(token, progPath_) == 0;
+      else
+      {
+        const char* suffix = progPath_ + len_prog - len_token;
+        found = suffix[-1] == '/' && strcmp(token, suffix) == 0;
+      }
     }
     else
     {
