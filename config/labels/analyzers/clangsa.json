@@ -1275,6 +1275,7 @@
     "unix.cstring.NotNullTerminated": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-notnullterminated-c",
       "guideline:sei-cert-c",
+      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "sei-cert-c:str31-c",
