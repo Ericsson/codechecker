@@ -24,7 +24,7 @@ from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
     import ClangTidyConfigHandler
-from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig, \
+from codechecker_analyzer.arg import AnalyzerConfigArg, CheckerConfigArg, \
     analyzer_config
 from codechecker_analyzer.cli.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
@@ -663,26 +663,26 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         --analyzer-config or --checker-config parameter is specified.
         """
 
-        analyzer_cfg_valid = [AnalyzerConfig(
+        analyzer_cfg_valid = [AnalyzerConfigArg(
             'clangsa', 'faux-bodies', 'false')]
-        checker_cfg_valid = [CheckerConfig(
+        checker_cfg_valid = [CheckerConfigArg(
             'clang-tidy', 'performance-unnecessary-value-param',
             'IncludeStyle', 'false')]
 
         self.assertTrue(is_analyzer_config_valid(analyzer_cfg_valid))
         self.assertTrue(is_checker_config_valid(checker_cfg_valid))
 
-        analyzer_cfg_invalid_analyzer = [AnalyzerConfig(
+        analyzer_cfg_invalid_analyzer = [AnalyzerConfigArg(
             'asd', 'faux-bodies', 'false')]
-        analyzer_cfg_invalid_conf = [AnalyzerConfig(
+        analyzer_cfg_invalid_conf = [AnalyzerConfigArg(
             'clangsa', 'asd', 'false')]
-        checker_cfg_invalid_analyzer = [CheckerConfig(
+        checker_cfg_invalid_analyzer = [CheckerConfigArg(
             'asd', 'performance-unnecessary-value-param',
             'IncludeStyle', 'false')]
-        checker_cfg_invalid_checker = [CheckerConfig(
+        checker_cfg_invalid_checker = [CheckerConfigArg(
             'clang-tidy', 'asd',
             'IncludeStyle', 'false')]
-        checker_cfg_invalid_checker_option = [CheckerConfig(
+        checker_cfg_invalid_checker_option = [CheckerConfigArg(
             'clang-tidy', 'performance-unnecessary-value-param',
             'asd', 'false')]
 

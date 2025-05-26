@@ -173,7 +173,9 @@ def main(args):
                         "be the case, try to update your analyzer or check "
                         "whether CodeChecker found the intended binary.")
 
-        rows = [(':'.join((analyzer_name, c[0])), c[1]) for c in configs]
+        rows = [
+            (':'.join((analyzer_name, c.option)), c.documentation)
+            for c in configs]
 
         print(twodim.to_str(args.output_format, header, rows))
 

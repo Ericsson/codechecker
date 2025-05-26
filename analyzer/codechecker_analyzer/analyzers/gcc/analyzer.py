@@ -5,6 +5,7 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+from typing import List
 from packaging.version import Version
 import shlex
 import subprocess
@@ -124,24 +125,18 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return []
 
     @classmethod
-    def get_analyzer_config(cls):
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """
         Config options for gcc.
         """
         # TODO
         return [
-            ('cc-verbatim-args-file',
-             'A file path containing flags that are forwarded verbatim to the '
-             'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>')
+            analyzer_base.AnalyzerConfig(
+                'cc-verbatim-args-file',
+                'A file path containing flags that are forwarded verbatim to '
+                'the analyzer tool. E.g.: cc-verbatim-args-file=<filepath>',
+                util.ExistingPath)
         ]
-
-    @classmethod
-    def get_checker_config(cls):
-        """
-        TODO add config options for gcc checkers.
-        """
-        # TODO
-        return []
 
     def post_analyze(self, result_handler: GccResultHandler):
         """
