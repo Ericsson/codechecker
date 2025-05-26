@@ -573,6 +573,7 @@ def insert_oauth_session(session_alchemy,
         print(f"Failed to insert state {state}: {exc}")
         raise exc
 
+
 def change_oauth_session_data(session_alchemy,
                               provider: str = None,
                               code_verifier: str = None,

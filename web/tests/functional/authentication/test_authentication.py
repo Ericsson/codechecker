@@ -261,6 +261,7 @@ class DictAuth(unittest.TestCase):
         state = "GTUHGJ"
         code_verifier = "54GJITG3gVBT"
         provider = "github"
+
         env.insert_oauth_session(session_factory,
                                  state,
                                  code_verifier,
@@ -277,9 +278,9 @@ class DictAuth(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             env.insert_oauth_session(session_factory,
-                                     1,
-                                     2,
-                                     3)
+                                     state=1,
+                                     code_verifier=2,
+                                     provider=3)
 
     def test_oauth_allowed_users_default(self):
         """
@@ -310,47 +311,6 @@ class DictAuth(unittest.TestCase):
         self.assertNotEqual(link_github,
                             link_google,
                             "Function created identical links")
-
-    def test_oauth_create_link(self):
-        """
-        Tests functionality of create_link method
-        that checks if it creates unique links correctly.
-        """
-        auth_client = env.setup_auth_client(
-            self._test_workspace, session_token='_PROHIBIT')
-
-        link_github = auth_client.createLink("github")
-        link_google = auth_client.createLink("google")
-
-        self.assertIsNotNone(link_github,
-                             "Authorization link for Github created empty")
-
-        self.assertIsNotNone(link_google,
-                             "Authorization link for Google created empty")
-
-        self.assertNotEqual(link_github,
-                            link_google,
-                            "Function created identical links")
-
-    def test_oauth_insert_session(self):
-        auth_client = env.setup_auth_client(
-            self._test_workspace, session_token='_PROHIBIT')
-        state = "GTUHGJ"
-        code_verifier = "54GJITG3gVBT"
-        provider = "github"
-        auth_client.insertOAuthSession(state,
-                                       code_verifier,
-                                       provider)
-
-        result = auth_client.validateOAuthSession(state)
-
-        self.assertTrue(result, "No entry found in database, "
-                        "unexpected behavior")
-
-        with self.assertRaises(TypeError):
-            auth_client.insertOAuthSession(1,
-                                           2,
-                                           3)
 
     def test_oauth_invalid_credentials(self):
         """
