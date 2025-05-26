@@ -17,12 +17,26 @@ import subprocess
 import sys
 import shlex
 
-from typing import Optional
+from typing import List, Optional
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('analyzer')
+
+
+class AnalyzerConfig:
+    def __init__(self, option: str, documentation: str, value_type: type):
+        self.option = option
+        self.documentation = documentation
+        self.value_type = value_type
+
+
+class CheckerConfig:
+    def __init__(self, checker: str, option: str, documentation: str):
+        self.checker = checker
+        self.option = option
+        self.documentation = documentation
 
 
 class SourceAnalyzer(metaclass=ABCMeta):
@@ -137,6 +151,14 @@ class SourceAnalyzer(metaclass=ABCMeta):
         Return the checkers available in the analyzer.
         """
         raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    def get_analyzer_config(cls) -> List[AnalyzerConfig]:
+        return []
+
+    @classmethod
+    def get_checker_config(cls) -> List[CheckerConfig]:
+        return []
 
     def post_analyze(self, result_handler):
         """
