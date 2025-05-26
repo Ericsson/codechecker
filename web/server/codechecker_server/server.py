@@ -23,8 +23,6 @@ import ssl
 import sys
 from typing import List, Optional, Tuple
 
-import re
-
 import multiprocess
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -1109,38 +1107,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
                      "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
-    def check_callback_url_format(provider_name: str, callback_url: str):
-        """
-        check the format of callback url using regex
-        """
-        if "@" in provider_name:
-            LOG.warning(f"provider {provider_name} contains '@' "
-                        "which is not allowed, turning off provider.")
-            return None
-        protocol = "http(s|)"
-        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5}|)"
-        paths = "login[/]OAuthLogin"
-
-        pattern_str = f"^{protocol}://{website}/{paths}/{provider_name}$"
-        pattern = re.compile(pattern_str)
-        match = pattern.match(callback_url)
-        if match is None:
-            LOG.warning("Configuration format of callback_url is "
-                        f"invalid for provider {provider_name}. "
-                        "Please check the configuration file.")
-        return match is not None
-
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
             force_auth)
-
-        oauth_config = manager.get_oauth_callback_urls()
-        for provider_name, callback_url in oauth_config.items():
-            if not check_callback_url_format(provider_name, callback_url):
-                # Turn off the provider if the callback URL is invalid
-                LOG.warning("Turning off the provider: %s", provider_name)
-                manager.turn_off_oauth_provider(provider_name)
 
     except IOError as ioerr:
         LOG.debug(ioerr)
