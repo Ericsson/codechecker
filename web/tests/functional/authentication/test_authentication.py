@@ -384,6 +384,7 @@ class DictAuth(unittest.TestCase):
 
         new_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'new',
                          '--url', env.parts_to_url(codechecker_cfg),
+                         '--expiration', '10',
                          'my_token']
 
         with self.assertRaises(subprocess.CalledProcessError):
