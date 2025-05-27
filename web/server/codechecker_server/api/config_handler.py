@@ -48,7 +48,7 @@ class ThriftConfigHandler:
                 codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                 "You are not authorized to execute this action.")
 
-        if (not (self.__auth_session is None) and
+        if (self.__auth_session is not None and
                 not self.__auth_session.is_root):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
@@ -78,7 +78,7 @@ class ThriftConfigHandler:
     def setNotificationBannerText(self, notification_b64):
         """
         Sets the notification banner remove_products_except.
-        Beware: This method only works if the use is a SUPERUSER.
+        Beware: This method only works if the user is a SUPERUSER.
         """
 
         self.__require_supermission()
