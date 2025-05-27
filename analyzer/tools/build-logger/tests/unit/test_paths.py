@@ -444,3 +444,60 @@ class EscapingTests(BasicLoggerTest):
             file=file,
             directory=binary_dirname,
         )
+
+    def test_suffix_match_on_non_absolute_path(self):
+        """
+        Test that CC_LOGGER_GCC_LIKE with a '/cc' value matches
+        both 'cc' and '/usr/bin/cc', but not 'gcc' or 'ccache'.
+        This covers the fix for suffix matching on non-absolute paths
+        (see PR #4577).
+        """
+        logger_env = self.get_envvars()
+        logger_env["CC_LOGGER_GCC_LIKE"] = "/cc"
+        file = self.source_file
+        binary = self.binary_file
+
+        # Should match 'cc' (non-absolute)
+        cc = shutil.which("cc")
+        if cc:
+            self.assume_successful_command(
+                [cc, file, "-o", binary], logger_env
+            )
+            self.assume_successful_command(
+                [binary], env=empty_env, outs="--VARIABLE--"
+            )
+            self.assert_json(
+                command=f"{cc} {file} -o {binary}",
+                file=file
+            )
+            os.remove(self.logger_file)
+
+        # Should not match 'gcc'
+        # This can be an interesting edge case test because
+        # gcc has 'cc' in the end of the path
+        gcc = shutil.which("gcc")
+        if gcc:
+            self.assume_successful_command(
+                [gcc, file, "-o", binary], logger_env
+            )
+            self.assume_successful_command(
+                [binary], env=empty_env, outs="--VARIABLE--"
+            )
+            actual_json = self.read_actual_json()
+            self.assertEqual(actual_json, "[\n]")
+            os.remove(self.logger_file)
+
+        # Should not match 'ccache'
+        # This can be an interesting edge case test because
+        # ccache has 'cc' at the beginning of the path
+        ccache = shutil.which("ccache")
+        if ccache:
+            self.assume_successful_command(
+                [ccache, file, "-o", binary], logger_env
+            )
+            self.assume_successful_command(
+                [binary], env=empty_env, outs="--VARIABLE--"
+            )
+            actual_json = self.read_actual_json()
+            self.assertEqual(actual_json, "[\n]")
+            os.remove(self.logger_file)
