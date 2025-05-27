@@ -737,7 +737,10 @@ class ThriftAuthHandler:
     def newPersonalAccessToken(self, name, description, expiration=365):
         self.__require_privilaged_access()
         if expiration not in range(1, 366):
-            expiration = 365
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "Invalid expiration length. The length must be "
+                "between 1 and 365!")
 
         with DBSession(self.__config_db) as session:
             auth_session = session.query(Session) \

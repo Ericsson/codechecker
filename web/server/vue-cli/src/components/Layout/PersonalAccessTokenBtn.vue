@@ -1,7 +1,7 @@
 <template>
   <div>
     <confirm-dialog
-      v-model="deleteDialog"
+      v-model="deletePersonalAccessTokenDialog"
       confirm-btn-color="error"
       confirm-btn-label="Delete access token"
       cancel-btn-color="primary"
@@ -20,9 +20,9 @@
     </confirm-dialog>
 
     <confirm-dialog
-      v-model="newDialog"
+      v-model="reviewPersonalAccessTokenDialog"
       confirm-btn-label="OK"
-      @confirm="newDialog = false"
+      @confirm="reviewPersonalAccessTokenDialog = false"
     >
       <template v-slot:title>
         New Personal Access Token
@@ -49,7 +49,7 @@
     </confirm-dialog>
 
     <confirm-dialog
-      v-model="dialog"
+      v-model="addPersonalAccessTokenDialog"
       confirm-btn-label="Add new token"
       @confirm="addNewToken()"
     >
@@ -100,22 +100,31 @@
           </v-simple-table>
 
           <v-card-text>
-            <v-text-field
-              ref="tokenNameField"
-              v-model="newTokenName"
-              clearable
-              label="New token name"
-            />
-            <v-text-field
-              v-model="newTokenDescription"
-              clearable
-              label="New token description"
-            />
-            <v-text-field
-              v-model.number="newTokenExpiration"
-              clearable
-              label="New token expiration"
-            />
+            <v-form ref="newPersonalAccessTokenForm">
+              <v-text-field
+                ref="tokenNameField"
+                v-model="newTokenName"
+                :rules="[rules.required]"
+                clearable
+                label="New token name"
+              />
+              <v-text-field
+                v-model="newTokenDescription"
+                clearable
+                label="New token description"
+              />
+              <v-text-field
+                v-model.number="newTokenExpiration"
+                hint="Expiration must be between 1 and 365 days"
+                :rules="[
+                  rules.required,
+                  rules.min,
+                  rules.max
+                ]"
+                clearable
+                label="New token expiration"
+              />
+            </v-form>
           </v-card-text>
         </v-card>
       </template>
@@ -135,43 +144,51 @@ export default {
 
   data() {
     return {
-      dialog: false,
-      deleteDialog: false,
-      newDialog: false,
+      addPersonalAccessTokenDialog: false,
+      deletePersonalAccessTokenDialog: false,
+      reviewPersonalAccessTokenDialog: false,
       accessTokens: [],
       token: {},
       newTokenName: "",
       newTokenDescription: "",
-      newTokenExpiration: 1
+      newTokenExpiration: 1,
+      rules: {
+        required: v => !!v || "This field is required",
+        min: v => v >= 1 || "Minimum length is 1 day!",
+        max: v => v <= 365 || "Maximum length is 365 days!"
+      }
     };
+  },
+
+  watch: {
+    addPersonalAccessTokenDialog(addPersonalTokenDialogOpen) {
+      if (!addPersonalTokenDialogOpen) {
+        this.$refs.newPersonalAccessTokenForm.reset();
+      }
+    }
   },
 
   methods: {
     addNewToken() {
-      if (!this.newTokenName) {
-        this.$refs.tokenNameField.focus();
-        this.$refs.tokenNameField.error = true;
-        return;
+      const isFormValid = this.$refs.newPersonalAccessTokenForm.validate();
+      if (isFormValid) {
+        authService.getClient().newPersonalAccessToken(
+          this.newTokenName,
+          this.newTokenDescription,
+          this.newTokenExpiration,
+          handleThriftError(newToken => {
+            this.token = newToken;
+            this.reviewPersonalAccessTokenDialog = true;
+            this.loadTokens();
+            this.$refs.newPersonalAccessTokenForm.reset();
+          })
+        );
       }
-
-      authService.getClient().newPersonalAccessToken(
-        this.newTokenName,
-        this.newTokenDescription,
-        this.newTokenExpiration,
-        handleThriftError(newToken => {
-          this.token = newToken;
-          this.newDialog = true;
-          this.loadTokens();
-          this.newTokenName = "";
-          this.newTokenDescription = "";
-          this.newTokenExpiration = 1;
-        })
-      );
     },
 
     confirmDelete(token) {
       this.token = token;
-      this.deleteDialog = true;
+      this.deletePersonalAccessTokenDialog = true;
     },
 
     dateFormat(str) {
@@ -182,7 +199,7 @@ export default {
       authService.getClient().removePersonalAccessToken(name,
         handleThriftError(() => {
           this.loadTokens();
-          this.deleteDialog = false;
+          this.deletePersonalAccessTokenDialog = false;
         }));
     },
 
