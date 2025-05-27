@@ -415,8 +415,22 @@ def enable_auth(workspace):
                 "user_info_mapping": {
                     "username": "email"
                 }
+            },
+            "always_off": {
+                "enabled": True,
+                "client_id": "4",
+                "client_secret": "4",
+                "template": "github/v1",
+                "authorization_url": "{oauth_host}/login",
+                "callback_url": \
+                    "https://codechecker.com//login/OAuthLogin/fakeprovider",
+                "token_url": "{oauth_host}/token",
+                "user_info_url": "{oauth_host}/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "email"
+                }
             }
-
         }
     }
     with open(server_cfg_file, 'w',

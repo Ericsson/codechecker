@@ -393,6 +393,22 @@ class DictAuth(unittest.TestCase):
         validate_removed = env.validate_oauth_session(session_factory, state_r)
         self.assertFalse(validate_removed, "old oauth session wasn't removed")
 
+    def test_oauth_wrong_callback_url_format(self):
+        """
+        Tests if 'always_off' provider with wrong callback URL format
+        is not in the list of providers.
+        In the test server configuration the 'always_off' provider
+        is configured with a callback URL that does not match the
+        expected format.
+        """
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        providers = auth_client.getOauthProviders()
+        self.assertNotIn("always_off", providers, "'always_off' provider "
+                         "should not be in the list of providers."
+                         "Callback_URL checker is not working properly.")
+
     def test_nonauth_storage(self):
         """
         Storing the result should fail.

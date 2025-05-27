@@ -346,14 +346,15 @@ class SessionManager:
                         "which is not allowed, turning off provider.")
             return None
         protocol = "http(s|)"
-        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5}|)"
+        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5})?(?<!/)"
         paths = "login[/]OAuthLogin"
 
-        pattern_str = f"^{protocol}://{website}/{paths}/{provider_name}$"
+        pattern_str = (
+            rf"^{protocol}://{website}/(?!/){paths}/{provider_name}$"
+        )
         pattern = re.compile(pattern_str)
         LOG.info("Checking callback URL format for provider '%s': %s",
                  provider_name, callback_url)
-        print(callback_url)
         match = pattern.match(callback_url)
         if match is None:
             LOG.warning("Configuration format of callback_url is "
