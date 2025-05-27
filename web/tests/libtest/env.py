@@ -422,8 +422,7 @@ def enable_auth(workspace):
                 "client_secret": "4",
                 "template": "github/v1",
                 "authorization_url": "{oauth_host}/login",
-                "callback_url": \
-                    "https://codechecker.com//login/OAuthLogin/fakeprovider",
+                "callback_url": "https://gjtujg//loginOAuthLogin/fakeprovider",
                 "token_url": "{oauth_host}/token",
                 "user_info_url": "{oauth_host}/get_user",
                 "scope": "openid email profile",

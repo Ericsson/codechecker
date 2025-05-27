@@ -22,6 +22,7 @@ import requests
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 import datetime
 
+from codechecker_server.session_manager import SessionManager as sm
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -408,6 +409,52 @@ class DictAuth(unittest.TestCase):
         self.assertNotIn("always_off", providers, "'always_off' provider "
                          "should not be in the list of providers."
                          "Callback_URL checker is not working properly.")
+
+    def test_oauth_callback_url_valid(self):
+        """
+        Tests a valid case of callback URL format.
+        The callback URL should be in the format:
+        <host>/login/OAuthLogin/<provider>
+        """
+        # Check a correct callback URL format.
+        valid_callback_url = "https://example.com/login/OAuthLogin/github"
+        self.assertTrue(sm.check_callback_url_format("github",
+                                                     valid_callback_url),
+                        "Valid callback URL was rejected.")
+
+    def test_oauth_callback_url_format_checker(self):
+        """
+        Tests if the callback URL format checker correctly
+        rejects invalid callback URLs.
+        The callback URL should be in the format:
+        <host>/login/OAuthLogin/<provider>
+        """
+
+        valid_callback_url = "https://example.com/login/OAuthLogin/banana"
+        self.assertFalse(sm.check_callback_url_format("github",
+                                                      valid_callback_url),
+                         "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://example.com/login/OAuthLogin/github/"
+        self.assertFalse(sm.check_callback_url_format("github",
+                                                      invalid_callback_url),
+                         "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://examputhLogin/github/"
+        self.assertFalse(sm.check_callback_url_format("github",
+                                                      invalid_callback_url),
+                         "Invalid callback URL was accepted.")
+
+        invalid_callback_url = \
+            "https://example.com/login/OAuthLogin/github/extra"
+        self.assertFalse(sm.check_callback_url_format("github",
+                                                      invalid_callback_url),
+                         "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://example.com/OAuthLogin/github"
+        self.assertFalse(sm.check_callback_url_format("github",
+                                                      invalid_callback_url),
+                         "Invalid callback URL was accepted.")
 
     def test_nonauth_storage(self):
         """

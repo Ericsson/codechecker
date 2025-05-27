@@ -335,9 +335,10 @@ class SessionManager:
                     provider['enabled'] = False
                     break
 
-    def check_callback_url_format(self, provider_name: str, callback_url: str):
+    @staticmethod
+    def check_callback_url_format(provider_name: str, callback_url: str):
         """
-        check the format of callback url using regex
+        Check the format of callback url using regex.
         """
         print("Checking callback URL format for provider '%s': %s",
               provider_name, callback_url)
