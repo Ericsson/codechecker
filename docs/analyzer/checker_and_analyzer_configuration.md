@@ -116,7 +116,7 @@ options) from three mutually exclusive sources:
 1. It can be specified directly with the flag `--config=<CONFIGURATION>`.
 2. It can be specified with the flag `--config-file=<FILE>` which is
    equivalent to passing the content of the file to `"--config"`.
-3. If these frags are both absent (or they specify the empty string as
+3. If these flags are both absent (or they specify the empty string as
    configuration), then for each source file Clang-Tidy will attempt to find a
    file named `.clang-tidy` located in the closest path directory of that
    source file and reads configuration from this file (if it exists).
@@ -196,7 +196,7 @@ line. For example a configuration file that looks like
 can be used to directly specify the Clang-Tidy configuration.
 
 **Note:**
-* Insted of `--analyzer-config clang-tidy:cc-verbatim-args-file=<FILE>`, older
+* Instead of `--analyzer-config clang-tidy:cc-verbatim-args-file=<FILE>`, older
   versions of CodeChecker used a standalone flag `--tidyargs <FILE>` which is
   now deprecated and will be removed in the future.
 
@@ -240,7 +240,7 @@ CodeChecker check -l ./compile_commands.json \
   `--enable` flag.
 * All Cppcheck Errors and Warnings are enabled by default.
 * Cppcheck addon support is limited in terms of configuration. Checkers
-  residing in Cppcheck addons cannot be listed through the Cppcheck commandline
+  residing in Cppcheck addons cannot be listed through the Cppcheck command line
   interface. Because of this limitation, these checkers cannot be disabled.
   Right now the only way to silence a report is to suppress them after the
   analysis. These addon checkers also cannot be listed with the `CodeChecker
