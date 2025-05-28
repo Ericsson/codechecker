@@ -244,12 +244,13 @@ class DictAuth(unittest.TestCase):
                              "Valid credentials didn't give us a token!")
 
         result = env.validate_oauth_token_session(session_factory, "github1",)
+        self.assertTrue(result, "Access_token wasn't inserted in Database")
 
-        session_token = self.try_login("github", "admin_github", "admin")
+        session_token = self.try_login("google", "user_google", "user")
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
-        result = env.validate_oauth_token_session(session_factory, "github1",)
+        result = env.validate_oauth_token_session(session_factory, "google3",)
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
     def test_oauth_insert_session(self):
