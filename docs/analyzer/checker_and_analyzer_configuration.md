@@ -111,10 +111,10 @@ The checks and config options provided by Clang-Tidy are described within the
 
 ### Using Clang-Tidy configuration files
 
-When Clang-Tidy is executed without an explicit configuration, it will load
-implicit configuration from files named `.clang-tidy`: for each analyzed source
-file it will load configuration from the file named `.clang-tidy` located in the
-closest enclosing directory of that source file.
+When Clang-Tidy is executed without an explicit configuration, it will
+implicitly load configuration from files named `.clang-tidy`: for each analyzed
+source file it will load configuration from the file named `.clang-tidy`
+located in the closest enclosing directory of that source file.
 
 When Clang-Tidy is executed by CodeChecker, the default behavior is that
 CodeChecker runs `clang-tidy --config=...` to forward the configuration
@@ -234,11 +234,11 @@ CodeChecker check -l ./compile_commands.json \
   `--enable` flag.
 * All Cppcheck Errors and Warnings are enabled by default.
 * Cppcheck addon support is limited in terms of configuration. Checkers
-  residing in Cppcheck addons cannot be listed through the Cppcheck command line
-  interface. Because of this limitation, these checkers cannot be disabled.
-  Right now the only way to silence a report is to suppress them after the
-  analysis. These addon checkers also cannot be listed with the `CodeChecker
-  checkers` command.
+  residing in Cppcheck addons cannot be listed through the Cppcheck command
+  line interface. Because of this limitation, these checkers cannot be
+  disabled. Right now the only way to silence a report is to suppress them
+  after the analysis. These addon checkers also cannot be listed with the
+  `CodeChecker checkers` command.
 * If not configured, `Native` platform will be assumed for the analyzed
   compilation database (i.e. the type sizes of the host system are used). No
   platform translation will occur by CodeChecker. If another one is needed,
