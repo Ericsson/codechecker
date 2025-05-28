@@ -986,6 +986,12 @@ class CCSimpleHttpServer(HTTPServer):
         self.cfg_sess_private.commit()
         self.cfg_sess_private.close()
 
+        # the config database counts as an open database as well
+        cfg_url = self.__engine.url
+        cfg_entry = (cfg_url.drivername, cfg_url.database, cfg_url.host,
+                     cfg_url.port)
+        current_connected_databases.append(cfg_entry)
+
         # True if found, False otherwise
         return to_add in current_connected_databases
 

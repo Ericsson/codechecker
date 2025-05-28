@@ -159,8 +159,7 @@ class TestProductConfigShare(unittest.TestCase):
                     port=None,
                     username_b64='',
                     password_b64='',
-                    database=os.path.join(self.test_workspace_secondary,
-                                          'data.sqlite')))
+                    database='data.sqlite'))
 
         product_cfg = create_test_product('producttest_second',
                                           'producttest_second')
