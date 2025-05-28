@@ -263,7 +263,7 @@ class DictAuth(unittest.TestCase):
     def test_oauth_token_session(self):
         """
         Testing if correct login flow inserts
-        user's oauth tokens data into the oauth_tokens table.
+        user's oauth token data into the oauth_tokens table.
         """
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
@@ -289,15 +289,6 @@ class DictAuth(unittest.TestCase):
             .get('session_token', None)
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
-
-    def test_oauth_mock_server_non_existant_user(self):
-        """
-        Testing loggin with not existing user data in mock server,
-        results in RequestFailed exception.
-        """
-
-        with self.assertRaises(RequestFailed):
-            self.try_login("github", "none_existant", "test")
 
     def test_oauth_create_link(self):
         """
@@ -326,10 +317,10 @@ class DictAuth(unittest.TestCase):
         """
 
         with self.assertRaises(RequestFailed):
-            self.try_login("google", "nonexistant", "test")
+            self.try_login("google", "non-existant", "test")
 
         with self.assertRaises(RequestFailed):
-            self.try_login("github", "nonexistant", "test")
+            self.try_login("github", "non-existant", "test")
 
     def test_oauth_csrf_attack_protection(self):
         """
