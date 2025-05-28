@@ -38,11 +38,13 @@ def handle_add_token(args):
     client = init_auth_client(protocol, host, port)
 
     description = args.description if 'description' in args else None
+    expiration = args.expiration if 'expiration' in args else None
     personal_access_token = \
-        client.newPersonalAccessToken(args.name, description)
+        client.newPersonalAccessToken(args.name, description, expiration)
 
     print("The following access token has been generated for your account: " +
           personal_access_token.token)
+    print("The token is valid until: " + personal_access_token.expiration)
 
 
 def handle_list_tokens(args):
@@ -64,12 +66,13 @@ def handle_list_tokens(args):
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(tokens))
     else:  # plaintext, csv
-        header = ['Name', 'Description', 'Last access']
+        header = ['Name', 'Description', 'Last access', 'Expiration']
         rows = []
         for res in tokens:
             rows.append((res.name,
                          res.description if res.description else '',
-                         res.lastAccess))
+                         res.lastAccess,
+                         res.expiration))
 
         print(twodim.to_str(args.output_format, header, rows))
 

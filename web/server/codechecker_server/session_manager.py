@@ -694,10 +694,8 @@ class SessionManager:
 
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """
-        if 'super_user' not in self.__auth_config:
-            return False
-
-        if self.__auth_config['super_user'] == user_name:
+        if 'super_user' in self.__auth_config and \
+                self.__auth_config['super_user'] == user_name:
             return True
 
         transaction = None
@@ -806,7 +804,7 @@ class SessionManager:
         if groups is None:
             groups = []
 
-        LOG.debug(f"groups assigned to oauth_session: {groups}")
+        LOG.debug(f"Groups assigned to oauth_session: {groups}")
 
         if not self.__is_method_enabled('oauth'):
             return False

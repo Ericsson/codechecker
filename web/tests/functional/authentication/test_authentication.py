@@ -18,6 +18,7 @@ import contextlib
 import subprocess
 import unittest
 import requests
+from datetime import datetime, timedelta
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
@@ -110,10 +111,15 @@ class DictAuth(unittest.TestCase):
         # Create a new personal token.
         description = "description"
         name = "name"
+        expiration = 7
+        exp_expiry_date = datetime.today() + timedelta(days=expiration)
+        exp_expiry_date_str = exp_expiry_date.strftime("%Y-%m-%d %H:%M:%S")
         personal_token = authd_auth_client.newPersonalAccessToken(
-            name, description)
+            name, description, expiration)
+        act_expiry_date_str = personal_token.expiration.split('.')[0]
         token = personal_token.token
         self.assertEqual(personal_token.description, description)
+        self.assertEqual(act_expiry_date_str, exp_expiry_date_str)
 
         # Check whether the new token has been added.
         personal_tokens = authd_auth_client.getPersonalAccessTokens()
@@ -121,6 +127,8 @@ class DictAuth(unittest.TestCase):
         self.assertEqual(personal_tokens[0].token, "")
         self.assertEqual(personal_tokens[0].name, name)
         self.assertEqual(personal_tokens[0].description, description)
+        pers_token_expiry_str = personal_tokens[0].expiration.split('.')[0]
+        self.assertEqual(pers_token_expiry_str, exp_expiry_date_str)
 
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token=self.session_token)
@@ -594,6 +602,7 @@ class DictAuth(unittest.TestCase):
 
         new_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'new',
                          '--url', env.parts_to_url(codechecker_cfg),
+                         '--expiration', '10',
                          'my_token']
 
         with self.assertRaises(subprocess.CalledProcessError):
