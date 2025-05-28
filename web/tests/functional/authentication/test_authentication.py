@@ -20,7 +20,6 @@ import unittest
 import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
-import datetime
 
 from codechecker_server.session_manager import SessionManager as sm
 
