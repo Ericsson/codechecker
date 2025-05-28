@@ -22,8 +22,8 @@ import requests
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
 from datetime import datetime, timedelta
-from codechecker_server.session_manager import SessionManager as SessMgr
-# from codechecker_server.api.authentication import ThriftAuthHandler as AuthHandler
+from codechecker_server.session_manager \
+    import SessionManager as SessMgr
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -250,19 +250,20 @@ class DictAuth(unittest.TestCase):
         """
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
-        state = self.try_login("github", "admin_github", "admin").get('state', None)
+        state = self.try_login("github", "admin_github", "admin")\
+            .get('state', None)
         result = env.validate_oauth_session(session_factory, state)
         self.assertTrue(result, "OAuth state wasn't inserted in Database")
 
-        state = self.try_login("google", "user_google", "user").get('state', None)
+        state = self.try_login("google", "user_google", "user")\
+            .get('state', None)
         result = env.validate_oauth_session(session_factory, state)
         self.assertTrue(result, "OAuth state wasn't inserted in Database")
-
 
     def test_oauth_token_session(self):
         """
-        Testing if correct login flow inserts user's oauth tokens data into the
-        oauth_tokens table.
+        Testing if correct login flow inserts
+        user's oauth tokens data into the oauth_tokens table.
         """
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
@@ -274,17 +275,18 @@ class DictAuth(unittest.TestCase):
         result = env.validate_oauth_token_session(session_factory, "google3",)
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
-
     def test_oauth_regular_users(self):
         """
         Tests if the regular users can log in with OAuth.
         """
         # The following user is in the list of allowed users: GITHUB
-        session_token = self.try_login("github", "admin_github", "admin").get('session_token', None)
+        session_token = self.try_login("github", "admin_github", "admin")\
+            .get('session_token', None)
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
-        session_token = self.try_login("google", "user_google", "user").get('session_token', None)
+        session_token = self.try_login("google", "user_google", "user")\
+            .get('session_token', None)
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
@@ -343,8 +345,10 @@ class DictAuth(unittest.TestCase):
 
     def test_oauth_pkce_attack_protection(self):
         """
-        Tests if after logic authorization server returns a code_verifier
-        that doesn't exist in database the authentication should fail.
+        Tests using pkce user performs attack to validate presence of
+        pkce attack protection.
+        The user tries to login with a code_verifier that is not in the
+        database, so the authentication should fail.
         """
 
         with self.assertRaises(RequestFailed):
@@ -373,8 +377,8 @@ class DictAuth(unittest.TestCase):
         """
         Tests if the old oauth sessions are removed from database
         during the login process.
-        Test manually inserts a session with expired time, etc(15 minutes ago)
-        and then tries to login with valid credentials.
+        Test manually inserts a session with expired time,
+        etc(15 minutes ago) and then tries to login with valid credentials.
         The old session should be removed and the new one should be created.
         """
 
@@ -400,7 +404,8 @@ class DictAuth(unittest.TestCase):
                         "was not inserted")
 
         # user that should login successfully and remove the old session
-        session_token = self.try_login("github", "admin_github", "admin").get('session_token', None)
+        session_token = self.try_login("github", "admin_github", "admin")\
+            .get('session_token', None)
         self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
@@ -444,30 +449,30 @@ class DictAuth(unittest.TestCase):
         """
 
         valid_callback_url = "https://example.com/login/OAuthLogin/banana"
-        self.assertFalse(SessMgr.check_callback_url_format("github",
-                                                           valid_callback_url),
-                         "Invalid callback URL was accepted.")
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", valid_callback_url),
+            "Invalid callback URL was accepted.")
 
         invalid_callback_url = "https://example.com/login/OAuthLogin/github/"
-        self.assertFalse(SessMgr.check_callback_url_format("github",
-                                                           invalid_callback_url),
-                         "Invalid callback URL was accepted.")
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
 
         invalid_callback_url = "https://examputhLogin/github/"
-        self.assertFalse(SessMgr.check_callback_url_format("github",
-                                                           invalid_callback_url),
-                         "Invalid callback URL was accepted.")
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
 
         invalid_callback_url = \
             "https://example.com/login/OAuthLogin/github/extra"
-        self.assertFalse(SessMgr.check_callback_url_format("github",
-                                                           invalid_callback_url),
-                         "Invalid callback URL was accepted.")
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
 
         invalid_callback_url = "https://example.com/OAuthLogin/github"
-        self.assertFalse(SessMgr.check_callback_url_format("github",
-                                                           invalid_callback_url),
-                         "Invalid callback URL was accepted.")
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
 
     def test_nonauth_storage(self):
         """
