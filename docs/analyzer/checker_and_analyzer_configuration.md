@@ -111,29 +111,23 @@ The checks and config options provided by Clang-Tidy are described within the
 
 ### Using Clang-Tidy configuration files
 
-Clang-Tidy can read its configuration (enabled checkers + analyzer and checker
-options) from three mutually exclusive sources:
-1. It can be specified directly with the flag `--config=<CONFIGURATION>`.
-2. It can be specified with the flag `--config-file=<FILE>` which is
-   equivalent to passing the content of the file to `"--config"`.
-3. If these flags are both absent (or they specify the empty string as
-   configuration), then for each source file Clang-Tidy will attempt to find a
-   file named `.clang-tidy` located in the closest path directory of that
-   source file and reads configuration from this file (if it exists).
+When Clang-Tidy is executed without an explicit configuration, it will load
+implicit configuration from files named `.clang-tidy`: for each analyzed source
+file it will load configuration from the file named `.clang-tidy` located in the
+closest enclosing directory of that source file.
 
-When Clang-Tidy is invoked by CodeChecker, the default behavior is that
-CodeChecker uses `--config` to forward configuration to Clang-Tidy, and
-therefore the `.clang-tidy` files are ignored. However, it's possible to use
-the "magic" analyzer option `clang-tidy:take-config-from-directory=true` which
-disables the use of `--config`. When this option is specified:
-* Configuration (directly or indirectly enabled checkers + analyzer and checker
-  options) specified in CodeChecker **is not forwarded** and will not affect
-  the analysis performed by Clang-Tidy.
-* Clang-Tidy will read configuration from the `.clang-tidy` files.
+When Clang-Tidy is executed by CodeChecker, the default behavior is that
+CodeChecker runs `clang-tidy --config=...` to forward the configuration
+specified in CodeChecker (the enabled checkers + analyzer and checker options)
+and therefore the `.clang-tidy` files are ignored in this default workflow.
 
-The Clang-Tidy configuration (which is passed to `--config` or is stored in the
-`--config-file` or the `.clang-tidy` files) should be specified in the YAML
-format, for example:
+However, the config forwarding can be disabled by the "magic" analyzer option
+`clang-tidy:take-config-from-directory=true`; when this is specified,
+Clang-Tidy will read configuration from the `.clang-tidy` files; but
+configuration specified in CodeChecker (enabled checkers and profiles, analyzer
+and checker options) **will be ignored by Clang-Tidy!**
+
+The `.clang-tidy` files should be specified in the YAML format, for example:
 
 ```yaml
 ---
