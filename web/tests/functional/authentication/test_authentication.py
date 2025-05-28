@@ -18,7 +18,6 @@ import contextlib
 import subprocess
 import unittest
 import requests
-from datetime import datetime, timedelta
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
@@ -381,8 +380,8 @@ class DictAuth(unittest.TestCase):
         code_verifier_r = "54GJITG3gVBT"
         provider_r = "github"
         # creates a session that should expire on new login.
-        expires_at_r = datetime.datetime.now() \
-            - datetime.timedelta(minutes=32)
+        expires_at_r = datetime.now() \
+            - timedelta(minutes=32)
 
         env.insert_oauth_session(session_alchemy=session_factory,
                                  state=state_r,
