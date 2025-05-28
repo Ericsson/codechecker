@@ -1245,6 +1245,13 @@ def __register_token(parser):
                             required=False,
                             help="A custom textual description to be shown "
                                  "alongside the token.")
+        parser.add_argument("--expiration",
+                            type=int,
+                            metavar='EXPIRATION',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="The expiry of the token in days. Minimum 1 "
+                                 "and maximum 365.")
 
     def __register_del(parser):
         """
