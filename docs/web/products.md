@@ -46,6 +46,12 @@ with a SQLite database file next to the configuration database, in
 This does NOT hold true for PostgreSQL configuration backends. These servers,
 as PostgreSQL is advanced usage, must be configured manually.
 
+**Note:** In earlier versions, absolute paths to SQLite databases were allowed.
+These databases will continue to work, but new SQLite databases can only be
+created in the CodeChecker server's configuration directory
+(`/home/<username>/.codechecker` by default). If an SQLite database needs to be
+stored in another directory, place symlinks inside the config directory.
+
 # Managing products through the command-line tool, `CodeChecker cmd` <a name="cmd"></a>
 
 Please see the [User guide](user_guide.md) for overview on the `cmd`
@@ -151,9 +157,11 @@ database arguments:
   NOTE: These database arguments are relative to the server machine, as it
   is the server which will make the database connection.
 
-  --sqlite SQLITE_FILE  Path of the SQLite database file to use. Not absolute
-                        paths will be relative to the server's
-                        <CONFIG_DIRECTORY>. (default: <ENDOPINT>.sqlite)
+  --sqlite SQLITE_FILE  Path of the SQLite database file to use. All paths will
+                        be relative to the server's <CONFIG_DIRECTORY>. If an 
+                        SQLite server needs to have a different directory, use
+                        symlinks inside the config directory.
+                        (default: <ENDOPINT>.sqlite)
   --postgresql          Specifies that a PostgreSQL database is to be used
                         instead of SQLite. See the "PostgreSQL arguments"
                         section on how to configure the database connection.

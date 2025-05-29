@@ -22,6 +22,7 @@ import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
+from codechecker_common.util import path_for_fake_root
 
 from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
@@ -285,7 +286,14 @@ class ThriftProductHandler:
                 db_host = ""
                 db_port = 0
                 db_user = ""
-                db_name = args['sqlite']
+                # Strip the config directory from the path, to allow for
+                # easier editing
+                config_dir = \
+                    os.path.normpath(self.__server.config_directory) + "/"
+                if args['sqlite'].startswith(config_dir):
+                    db_name = args['sqlite'][len(config_dir):]
+                else:
+                    db_name = args['sqlite']
 
             dbc = ttypes.DatabaseConnection(
                 engine=db_engine,
@@ -406,6 +414,13 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
+        # For SQLite-backed databases, make all paths relative. To create a
+        # SQLite-backed product in a different directory, we follow
+        # symlinks, but not when storing the path.
+        if dbc.engine == 'sqlite':
+            dbc.database = path_for_fake_root(os.path.join("/", dbc.database),
+                                              self.__server.config_directory)
+
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
         if db_in_use:
@@ -425,12 +440,6 @@ class ThriftProductHandler:
             if product.displayedName_b64 else product.endpoint
         description = convert.from_b64(product.description_b64) \
             if product.description_b64 else None
-
-        if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
-            # Transform the database relative path to be under the
-            # server's config directory.
-            dbc.database = os.path.join(self.__server.config_directory,
-                                        dbc.database)
 
         # Transform arguments into a database connection string.
         if dbc.engine == 'postgresql':
@@ -568,6 +577,17 @@ class ThriftProductHandler:
                 LOG.info("User renamed product '%s' to '%s'",
                          product.endpoint, new_config.endpoint)
 
+            # For SQLite-backed databases, make all paths relative. To create a
+            # SQLite-backed product in a different directory, we follow
+            # symlinks, but not when storing the path. Old absolute paths are
+            # preserved as is, if they are unchanged.
+
+            old_args = SQLServer.connection_string_to_args(product.connection)
+            if dbc.engine == 'sqlite' and dbc.database != old_args['sqlite']:
+                dbc.database = path_for_fake_root(
+                    os.path.join("/", dbc.database),
+                    self.__server.config_directory)
+
             # Some values come encoded as Base64, decode these.
             displayed_name = convert.from_b64(new_config.displayedName_b64) \
                 if new_config.displayedName_b64 \
@@ -576,12 +596,6 @@ class ThriftProductHandler:
                 if new_config.description_b64 else None
 
             confidentiality = confidentiality_str(new_config.confidentiality)
-
-            if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
-                # Transform the database relative path to be under the
-                # server's config directory.
-                dbc.database = os.path.join(self.__server.config_directory,
-                                            dbc.database)
 
             # Transform arguments into a database connection string.
             if dbc.engine == 'postgresql':
