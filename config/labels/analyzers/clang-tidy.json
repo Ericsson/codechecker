@@ -3188,7 +3188,6 @@
     "clang-diagnostic-implicit-void-ptr-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-void-ptr-cast",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicitly-unsigned-literal": [
