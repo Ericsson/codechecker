@@ -186,7 +186,8 @@ export default {
 
   created() {
     if (this.isAuthenticated) {
-      this.$router.replace({ name: "products" });
+      const returnTo = this.$router.currentRoute.query["return_to"];
+      this.$router.replace(returnTo || { name: "products" });
     }
   },
 
