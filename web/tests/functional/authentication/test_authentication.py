@@ -225,6 +225,11 @@ class DictAuth(unittest.TestCase):
         link = link.split('?')[0]
 
         code, state = data['code'], data['state']
+
+        # CSRF attack case
+        if username == "user_csrf":
+            state = "FAKESTATE"
+
         auth_string = f"{link}?code={code}&state={state}"
 
         # PKCE attack case
@@ -295,15 +300,28 @@ class DictAuth(unittest.TestCase):
         Tests functionality of create_link method
         that checks if it creates unique links correctly.
         """
+
+        from urllib.parse import urlparse, parse_qs
+
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
+        # check 1
         link_github = auth_client.createLink("github")
-        link_google = auth_client.createLink("google")
-
+        parsed_query = parse_qs(urlparse(link_github).query)
+        state = parsed_query.get("state")[0]
+        result = env.validate_oauth_session(session_factory, state)
         self.assertIsNotNone(link_github,
                              "Authorization link for Github created empty")
+        self.assertTrue(result, "create link wasn't seccesfully executed")
 
+        # check 2
+        link_google = auth_client.createLink("google")
+        parsed_query = parse_qs(urlparse(link_google).query)
+        state = parsed_query.get("state")[0]
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(result, "create link wasn't seccesfully executed")
         self.assertIsNotNone(link_google,
                              "Authorization link for Google created empty")
 

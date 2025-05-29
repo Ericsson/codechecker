@@ -1,9 +1,21 @@
-# pylint: disable=invalid-name
+#
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
+"""
+A mock OAuth server that simulates the behavior of an OAuth provider.
+"""
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+
 from authlib.oauth2.rfc7636 import create_s256_code_challenge as hash_s256
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Server config
 HOSTNAME = "0.0.0.0"
@@ -116,24 +128,10 @@ class OauthServer(BaseHTTPRequestHandler):
                 params[key] = value
 
             if "username" in query_params:
+                # print(f"Login request with username: {params['username']}")
                 query = f"{params['username']}:{params['password']}"
                 query_result = self.users_by_data.get(query, None)
-                # csrf attack case
-                if params['username'] == "user_csrf":
-                    print("CSRF attack detected")
-                    state = "fake_state"
-                    code = query_result['code']
-                    code_challenge = params['code_challenge']
-                    # store code_challenge in the server
-                    self.code_challenges[code] = {
-                        "code_challenge": code_challenge,
-                        "code_challenge_method": params[
-                            'code_challenge_method']}
-
-                    return self.show_json({"code": code,
-                                           "state": state})
-                # normal case
-                elif query_result:
+                if query_result:
                     state = params['state']
                     code = query_result['code']
                     code_challenge = params['code_challenge']
@@ -149,7 +147,7 @@ class OauthServer(BaseHTTPRequestHandler):
         except IndexError:
             return self.show_rejection("Invalid query parameters")
         except Exception as ex:
-            print(f"Error: {ex}")
+            print(f"Error in login_tester of OAuth mock server: {ex}")
             return self.show_rejection("Internal server error")
 
     def get_user(self):
@@ -204,6 +202,7 @@ class OauthServer(BaseHTTPRequestHandler):
                 return self.show_rejection("Invalid code")
         return self.path
 
+    # pylint: disable=invalid-name
     def do_GET(self):
         if self.path.startswith("/login"):
             return self.login_tester()
@@ -211,6 +210,7 @@ class OauthServer(BaseHTTPRequestHandler):
             return self.get_user()
         return self.path
 
+    # pylint: disable=invalid-name
     def do_POST(self):
         if self.path.endswith("/token"):
             return self.handle_user_token_request()
@@ -220,8 +220,8 @@ class OauthServer(BaseHTTPRequestHandler):
 
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
-print(f"Server started http://{HOSTNAME}:{SERVERPORT}")
+# print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}")
 
 webServer.serve_forever()
 webServer.server_close()
-print("Server stopped.")
+print(f"OAuth mock server stopped on http://{HOSTNAME}:{SERVERPORT}")

@@ -323,9 +323,9 @@ class SessionManager:
                     if param == 'callback_url':
                         if not self.check_callback_url_format(
                                 provider_name, provider[param]):
-                            LOG.warning("Disabling OAuth "
-                                        f"provider {provider_name} "
-                                        "due to invalid callback URL format.")
+                            LOG.error("Disabling OAuth "
+                                      f"provider {provider_name} "
+                                      "due to invalid callback URL format.")
                             provider['enabled'] = False
                 except KeyError as e:
                     LOG.warning(f"Parameter {param} in OAuth provider "
@@ -389,8 +389,8 @@ class SessionManager:
             self.__auth_config["method_oauth"]["providers"][provider][
                 "enabled"] = False
 
-            LOG.warning("OAuth configuration was set to default values. " +
-                        "Disabling oauth provider: %s", provider)
+            LOG.error("OAuth configuration was set to default values. " +
+                      "Disabling oauth provider: %s", provider)
 
         return self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})
