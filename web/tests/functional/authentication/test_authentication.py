@@ -110,10 +110,10 @@ class DictAuth(unittest.TestCase):
         name = "name"
         expiration = 7
         exp_expiry_date = datetime.today() + timedelta(days=expiration)
-        exp_expiry_date_str = exp_expiry_date.strftime("%Y-%m-%d %H:%M:%S")
+        exp_expiry_date_str = exp_expiry_date.strftime("%Y-%m-%d")
         personal_token = authd_auth_client.newPersonalAccessToken(
             name, description, expiration)
-        act_expiry_date_str = personal_token.expiration.split('.')[0]
+        act_expiry_date_str = personal_token.expiration.split()[0]
         token = personal_token.token
         self.assertEqual(personal_token.description, description)
         self.assertEqual(act_expiry_date_str, exp_expiry_date_str)
@@ -124,7 +124,7 @@ class DictAuth(unittest.TestCase):
         self.assertEqual(personal_tokens[0].token, "")
         self.assertEqual(personal_tokens[0].name, name)
         self.assertEqual(personal_tokens[0].description, description)
-        pers_token_expiry_str = personal_tokens[0].expiration.split('.')[0]
+        pers_token_expiry_str = personal_tokens[0].expiration.split()[0]
         self.assertEqual(pers_token_expiry_str, exp_expiry_date_str)
 
         auth_client = env.setup_auth_client(self._test_workspace,
