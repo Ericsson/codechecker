@@ -147,8 +147,6 @@ export default {
           this.success = true;
           this.$emit("on-complete",
             new ProductConfiguration(this.productConfig));
-        }, () => {
-          this.error = true;
         }));
 
       // Save permissions.

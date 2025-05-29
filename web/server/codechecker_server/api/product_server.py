@@ -418,6 +418,11 @@ class ThriftProductHandler:
         # SQLite-backed product in a different directory, we follow
         # symlinks, but not when storing the path.
         if dbc.engine == 'sqlite':
+            if os.path.isabs(dbc.database):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "SQLite database must be given by relative path!")
+
             dbc.database = path_for_fake_root(os.path.join("/", dbc.database),
                                               self.__server.config_directory)
 
@@ -493,6 +498,16 @@ class ThriftProductHandler:
             # Connect and create the database schema.
             self.__server.add_product(orm_prod, init_db=True)
             connection_wrapper = self.__server.get_product(product.endpoint)
+
+            if connection_wrapper is None:
+                err_msg = "Failed to add product."
+                if dbc.engine == 'sqlite':
+                    err_msg += " The SQLite database file must be under the " \
+                               "server workspace directory."
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    err_msg)
+
             if connection_wrapper.last_connection_failure:
                 msg = \
                     f"The configured connection for '/{product.endpoint}' " \
@@ -584,6 +599,10 @@ class ThriftProductHandler:
 
             old_args = SQLServer.connection_string_to_args(product.connection)
             if dbc.engine == 'sqlite' and dbc.database != old_args['sqlite']:
+                if os.path.isabs(dbc.database):
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "SQLite database must be given by relative path!")
                 dbc.database = path_for_fake_root(
                     os.path.join("/", dbc.database),
                     self.__server.config_directory)
@@ -667,6 +686,17 @@ class ThriftProductHandler:
                 LOG.debug("Product database successfully connected to.")
 
                 connection_wrapper = self.__server.get_product(dummy_endpoint)
+
+                if connection_wrapper is None:
+                    err_msg = "Failed to edit product."
+                    if dbc.engine == 'sqlite':
+                        err_msg += " The SQLite database file must be under " \
+                                   "the server workspace directory."
+
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        err_msg)
+
                 if connection_wrapper.last_connection_failure:
                     msg = \
                         f"The configured connection for " \

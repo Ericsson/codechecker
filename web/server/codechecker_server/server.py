@@ -934,6 +934,13 @@ class CCSimpleHttpServer(HTTPServer):
 
         # Update the product database status.
         prod.connect()
+
+        if prod.db_status == DBStatus.FAILED_TO_CONNECT:
+            LOG.debug(
+                "Failed to connect to database for product '%s'",
+                orm_product.endpoint)
+            return
+
         if prod.db_status == DBStatus.SCHEMA_MISSING and init_db:
             LOG.debug("Schema was missing in the database. Initializing new")
             prod.connect(init_db=True)
