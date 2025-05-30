@@ -1,5 +1,5 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_DOCKER_IMAGE = "thrift"
+THRIFT_DOCKER_IMAGE = "codechecker/thrift"
 THRIFT_DOCKER_TAG = "0.22.0"
 TARGET_PY = --gen py
 TARGET_JS = --gen js:node
