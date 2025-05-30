@@ -23,7 +23,8 @@ new pypi and npm packages. It will modify the following files:
   - [`py/codechecker_api/dist/codechecker_api.tar.gz`](py/codechecker_api/dist/codechecker_api.tar.gz)
   - [`py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz`](py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz)
   - [`js/codechecker-api-node/dist/codechecker-api-x.y.z.tgz`](js/codechecker-api-node/dist/)
-- Run `make clean_package && make package` in the root directory of this
+- Run `make clean_venv` or `make clean_venv_dev` to clean the virtual environment then create a new one with either `make venv` or `make venv_dev`.
+- Run `make clean && make clean_package && make package` in the root directory of this
 repository to create a new CodeChecker package and see whether the new API
 works properly.
 - Before commit make sure to add new pypi/npm package files to git.

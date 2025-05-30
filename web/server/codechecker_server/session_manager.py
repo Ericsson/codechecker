@@ -452,6 +452,9 @@ class SessionManager:
             "msg": self.__auth_config.get('failed_auth_message'),
         }
 
+    def get_max_auth_token_expiration(self):
+        return self.__auth_config.get('max_pers_auth_token_expiration_length')
+
     @property
     def get_super_user(self):
         return {

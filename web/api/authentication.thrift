@@ -166,6 +166,9 @@ service codeCheckerAuthentication {
   PersonalAccessTokenList getPersonalAccessTokens()
     throws (1: codechecker_api_shared.RequestFailed requestError)
 
+  i16 getMaxTokenExpiration()
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
   PersonalAccessToken newPersonalAccessToken(
     1: string name,
     2: optional string description,
