@@ -70,6 +70,10 @@ from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
 LOG = get_logger('server')
 
 
+class ProductNotFoundError(ValueError):
+    pass
+
+
 class RequestHandler(SimpleHTTPRequestHandler):
     """
     Handle thrift and browser requests
@@ -319,7 +323,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         product = self.server.get_product(product_endpoint)
         if not product:
-            raise ValueError(
+            raise ProductNotFoundError(
                 f"The product with the given endpoint '{product_endpoint}' "
                 "does not exist!")
 
@@ -510,9 +514,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             import traceback
             traceback.print_exc()
         except Exception as ex:
-            LOG.warning("%s failed with Exception: %s", api_info, str(ex))
-            import traceback
-            traceback.print_exc()
+            if isinstance(ex, ProductNotFoundError):
+                LOG.debug("%s failed with Exception: %s", api_info, str(ex))
+            else:
+                LOG.warning("%s failed with Exception: %s", api_info, str(ex))
+                import traceback
+                traceback.print_exc()
 
             cstringio_buf = itrans.cstringio_buf.getvalue()
             if cstringio_buf:
