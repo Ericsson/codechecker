@@ -52,6 +52,7 @@ def is_valid_product_endpoint(uripart):
     if uripart in NON_PRODUCT_ENDPOINTS:
         return False
 
+    # Should be kept in sync with the regex in router/index.js on the frontend.
     pattern = r'^[A-Za-z0-9_\-]+$'
     if not re.match(pattern, uripart):
         return False
