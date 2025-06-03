@@ -221,18 +221,14 @@
     ],
     "alpha.webkit.MemoryUnsafeCastChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-memoryunsafecastchecker",
-      "profile:extreme",
-      "profile:security",
       "severity:HIGH"
     ],
     "alpha.webkit.NoUnretainedMemberChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-nounretainedmemberchecker",
-      "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.webkit.RetainPtrCtorAdoptChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-retainptrctoradoptchecker",
-      "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.webkit.UncountedCallArgsChecker": [
@@ -243,17 +239,14 @@
     ],
     "alpha.webkit.UnretainedCallArgsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedcallargschecker",
-      "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.webkit.UnretainedLambdaCapturesChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedlambdacaptureschecker",
-      "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.webkit.UnretainedLocalVarsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-unretainedlocalvarschecker",
-      "profile:extreme",
       "severity:MEDIUM"
     ],
     "core.BitwiseShift": [
