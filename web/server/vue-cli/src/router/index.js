@@ -42,7 +42,9 @@ export default new Router({
       component: () => import("@/views/NotFound")
     },
     {
-      path: "/:endpoint",
+      // Should be kept in sync with the regex from is_valid_product_endpoint
+      // on the backend.
+      path: "/:endpoint([A-Za-z0-9_-]+)",
       meta: {
         requiresAuth: true
       },
@@ -132,6 +134,10 @@ CheckerCoverageStatistics"),
           component: () => import("@/views/SourceComponent")
         },
       ]
+    },
+    {
+      path: "/:unknown(.*)*",
+      redirect: "/404"
     }
   ]
 });
