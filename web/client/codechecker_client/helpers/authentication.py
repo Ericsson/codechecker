@@ -107,3 +107,7 @@ class ThriftAuthHelper(BaseClientHelper):
     @thrift_client_call
     def getPersonalAccessTokens(self):
         pass
+
+    @thrift_client_call
+    def getMaxTokenExpiration(self):
+        pass

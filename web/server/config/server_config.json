@@ -21,6 +21,7 @@
     "session_lifetime" : 300,
     "refresh_time" : 60,
     "logins_until_cleanup" : 30,
+    "max_pers_auth_token_expiration_length": 365,
     "method_dictionary": {
       "enabled" : false,
       "auths" : [],

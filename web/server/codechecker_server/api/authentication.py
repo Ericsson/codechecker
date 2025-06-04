@@ -734,13 +734,18 @@ class ThriftAuthHandler:
             return result
 
     @timeit
+    def getMaxTokenExpiration(self):
+        return self.__manager.get_max_auth_token_expiration()
+
+    @timeit
     def newPersonalAccessToken(self, name, description, expiration=365):
         self.__require_privilaged_access()
-        if expiration not in range(1, 366):
+        max_token_length = self.__manager.get_max_auth_token_expiration()
+        if expiration not in range(1, max_token_length + 1):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 "Invalid expiration length. The length must be "
-                "between 1 and 365!")
+                f"between 1 and {max_token_length}!")
 
         with DBSession(self.__config_db) as session:
             auth_session = session.query(Session) \

@@ -115,7 +115,7 @@
               />
               <v-text-field
                 v-model.number="newTokenExpiration"
-                hint="Expiration must be between 1 and 365 days"
+                :hint="personalTokenExpirationHint"
                 :rules="[
                   rules.required,
                   rules.min,
@@ -152,12 +152,20 @@ export default {
       newTokenName: "",
       newTokenDescription: "",
       newTokenExpiration: 1,
+      maxTokenExpiration: 365,
       rules: {
         required: v => !!v || "This field is required",
         min: v => v >= 1 || "Minimum length is 1 day!",
-        max: v => v <= 365 || "Maximum length is 365 days!"
+        max: v => v <= this.maxTokenExpiration || "Maximum length is "
+          + this.maxTokenExpiration + " days!"
       }
     };
+  },
+
+  computed: {
+    personalTokenExpirationHint() {
+      return `Expiration must be between 1 and ${this.maxTokenExpiration} days`;
+    }
   },
 
   watch: {
@@ -166,6 +174,10 @@ export default {
         this.$refs.newPersonalAccessTokenForm.reset();
       }
     }
+  },
+
+  created() {
+    this.maxTokenExpiration = this.getMaxTokenExpiration();
   },
 
   methods: {
@@ -184,6 +196,13 @@ export default {
           })
         );
       }
+    },
+
+    getMaxTokenExpiration() {
+      authService.getClient().getMaxTokenExpiration(
+        handleThriftError(maxTokenExpiration => {
+          this.maxTokenExpiration = maxTokenExpiration;
+        }));
     },
 
     confirmDelete(token) {
