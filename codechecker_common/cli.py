@@ -13,6 +13,7 @@ Main CodeChecker script.
 
 import argparse
 from importlib import machinery
+import io
 import json
 import os
 import signal
@@ -89,10 +90,31 @@ def get_data_files_dir_path():
     sys.exit(1)
 
 
+def configure_utf8_output():
+    """
+    Force UTF-8 encoding for stdout/stderr globally.
+    Note that the errors argument changed from the default 'strict'.
+    """
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer,
+        encoding='utf-8',
+        errors='backslashreplace',
+        line_buffering=sys.stdout.line_buffering
+    )
+    sys.stderr = io.TextIOWrapper(
+        sys.stderr.buffer,
+        encoding='utf-8',
+        errors='backslashreplace',
+        line_buffering=sys.stderr.line_buffering
+    )
+
+
 def main():
     """
     CodeChecker main command line.
     """
+    configure_utf8_output()
+
     if not os.environ.get('CC_LIB_DIR'):
         os.environ['CC_LIB_DIR'] = \
                 os.path.dirname(os.path.dirname(__file__))
