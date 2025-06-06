@@ -453,7 +453,10 @@ class SessionManager:
         }
 
     def get_max_auth_token_expiration(self):
-        return self.__auth_config.get('max_pers_auth_token_expiration_length')
+        return self.__auth_config.get(
+            'max_pers_auth_token_expiration_length',
+            365
+        )
 
     @property
     def get_super_user(self):
