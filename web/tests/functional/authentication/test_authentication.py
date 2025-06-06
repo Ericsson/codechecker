@@ -18,9 +18,12 @@ import contextlib
 import subprocess
 import unittest
 import requests
-from datetime import datetime, timedelta
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
+
+from datetime import datetime, timedelta
+from codechecker_server.session_manager \
+    import SessionManager as SessMgr
 
 from codechecker_client.credential_manager import UserCredentials
 from codechecker_web.shared import convert
@@ -203,6 +206,9 @@ class DictAuth(unittest.TestCase):
         #                  "reported to be still active.")
 
     def try_login(self, provider, username, password):
+        """
+        Emulating login flow of user in CodeChecker.
+        """
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
 
@@ -215,37 +221,266 @@ class DictAuth(unittest.TestCase):
             raise RequestFailed(data['error'])
 
         link = link.split('?')[0]
-        code, state, code_challenge, code_challenge_method = \
-            data['code'], data['state'], \
-            data['code_challenge'], \
-            data['code_challenge_method']
-        auth_string = f"{link}?code={code}&state={state}" \
-            f"&code_challenge_method={code_challenge_method}" \
-            f"&code_challenge={code_challenge}"
+
+        code, state = data['code'], data['state']
+
+        # CSRF attack case
+        if username == "user_csrf":
+            state = "FAKESTATE"
+
+        auth_string = f"{link}?code={code}&state={state}"
+
+        # PKCE attack case
+        if username == "user_pkce":
+            code = "wrong_code"
+            auth_string = f"{link}?code={code}&state={state}"
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
 
-        return self.session_token
+        return {
+            "session_token": self.session_token,
+            "state": state
+        }
 
-    def test_oauth_allowed_users_default(self):
+    def test_oauth_insert_session(self):
         """
-        Testing the authentication using external oauth provider
-        made for this case that simulates the behavior of the real provider.
+        Testing if correct login flow inserts user's session data in
+        oauth_sessions table.
+        """
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        state = self.try_login("github", "admin_github", "admin")\
+            .get('state', None)
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(result, "OAuth state wasn't inserted in Database")
+
+        state = self.try_login("google", "user_google", "user")\
+            .get('state', None)
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(result, "OAuth state wasn't inserted in Database")
+
+    def test_oauth_token_session(self):
+        """
+        Testing if correct login flow inserts
+        user's oauth token data into the oauth_tokens table.
+        """
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        session = self.try_login("github", "admin_github", "admin")
+        self.assertTrue(session, "Authentication failed")
+
+        result = env.validate_oauth_token_session(session_factory, "github1",)
+        self.assertTrue(result, "Access_token wasn't inserted in Database")
+
+        session = self.try_login("google", "user_google", "user")
+        self.assertTrue(session, "Authentication failed")
+
+        result = env.validate_oauth_token_session(session_factory, "google3",)
+        self.assertTrue(result, "Access_token wasn't inserted in Database")
+
+    def test_oauth_regular_users(self):
+        """
+        Tests if the regular users can log in with OAuth.
         """
         # The following user is in the list of allowed users: GITHUB
-        session = self.try_login("google", "admin_github", "admin")
-        self.assertIsNotNone(session, "allowed user could not login")
+        session_token = self.try_login("github", "admin_github", "admin")\
+            .get('session_token', None)
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        session_token = self.try_login("google", "user_google", "user")\
+            .get('session_token', None)
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+    def test_oauth_create_link(self):
+        """
+        Tests functionality of create_link method
+        that checks if it creates unique links correctly.
+        """
+
+        from urllib.parse import urlparse, parse_qs
+
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        # check 1
+        link_github = auth_client.createLink("github")
+        parsed_query = parse_qs(urlparse(link_github).query)
+        state = parsed_query.get("state")[0]
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertIsNotNone(link_github,
+                             "Authorization link for Github created empty")
+        self.assertTrue(result, "create link wasn't seccesfully executed")
+
+        # check 2
+        link_google = auth_client.createLink("google")
+        parsed_query = parse_qs(urlparse(link_google).query)
+        state = parsed_query.get("state")[0]
+        result = env.validate_oauth_session(session_factory, state)
+        self.assertTrue(result, "create link wasn't seccesfully executed")
+        self.assertIsNotNone(link_google,
+                             "Authorization link for Google created empty")
+
+        self.assertNotEqual(link_github,
+                            link_google,
+                            "Function created identical links")
 
     def test_oauth_invalid_credentials(self):
         """
         Testing the oauth using non-existent users.
         """
-        with self.assertRaises(RequestFailed):
-            self.try_login("google", "nonexistant", "test")
 
         with self.assertRaises(RequestFailed):
-            self.try_login("github", "nonexistant", "test")
+            self.try_login("google", "non-existant", "test")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "non-existant", "test")
+
+    def test_oauth_csrf_attack_protection(self):
+        """
+        Tests if authorization server returns a state
+        that doesn't exist in database.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_csrf", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_csrf", "user")
+
+    def test_oauth_pkce_attack_protection(self):
+        """
+        Tests using pkce user performs attack to validate presence of
+        pkce attack protection.
+        The user tries to login with a code_verifier that is not in the
+        database, so the authentication should fail.
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_pkce", "user")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "user_pkce", "user")
+
+    def test_oauth_incomplete_token_data(self):
+        """
+        Tests if in case of returned incomplete tokens data,
+        etc.
+        missing access_token,
+        missing expires_in(access token expiration time),
+        missing refresh_token,
+        missing token type,
+        missing scope,
+        """
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github",
+                           "user_incomplete_token",
+                           "user")
+
+    def test_oauth_remove_old_sessions(self):
+        """
+        Tests if the old oauth sessions are removed from database
+        during the login process.
+        Test manually inserts a session with expired time,
+        etc(15 minutes ago) and then tries to login with valid credentials.
+        The old session should be removed and the new one should be created.
+        """
+
+        session_factory = env.create_sqlalchemy_session(self._test_workspace)
+
+        # user that should be removed
+        state_r = "FAKESTATE"
+        code_verifier_r = "54GJITG3gVBT"
+        provider_r = "github"
+        # creates a session that should expire on new login.
+        expires_at_r = datetime.now() \
+            - timedelta(minutes=32)
+
+        env.insert_oauth_session(session_alchemy=session_factory,
+                                 state=state_r,
+                                 code_verifier=code_verifier_r,
+                                 provider=provider_r,
+                                 expires_at=expires_at_r)
+
+        result = env.validate_oauth_session(session_factory, state_r)
+        # validate that the session was inserted
+        self.assertTrue(result, "Session that will be removed "
+                        "was not inserted")
+
+        # user that should login successfully and remove the old session
+        session_token = self.try_login("github", "admin_github", "admin")\
+            .get('session_token', None)
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        validate_removed = env.validate_oauth_session(session_factory, state_r)
+        self.assertFalse(validate_removed, "old oauth session wasn't removed")
+
+    def test_oauth_wrong_callback_url_format(self):
+        """
+        Tests if 'always_off' provider with wrong callback URL format
+        is not in the list of providers.
+        In the test server configuration the 'always_off' provider
+        is configured with a callback URL that does not match the
+        expected format.
+        """
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        providers = auth_client.getOauthProviders()
+        self.assertNotIn("always_off", providers, "'always_off' provider "
+                         "should not be in the list of providers."
+                         "Callback_URL checker is not working properly.")
+
+    def test_oauth_callback_url_valid(self):
+        """
+        Tests a valid case of callback URL format.
+        The callback URL should be in the format:
+        <host>/login/OAuthLogin/<provider>
+        """
+        # Check a correct callback URL format.
+        valid_callback_url = "https://example.com/login/OAuthLogin/github"
+        self.assertTrue(SessMgr.check_callback_url_format("github",
+                                                          valid_callback_url),
+                        "Valid callback URL was rejected.")
+
+    def test_oauth_callback_url_format_checker(self):
+        """
+        Tests if the callback URL format checker correctly
+        rejects invalid callback URLs.
+        The callback URL should be in the format:
+        <host>/login/OAuthLogin/<provider>
+        """
+
+        valid_callback_url = "https://example.com/login/OAuthLogin/banana"
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", valid_callback_url),
+            "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://example.com/login/OAuthLogin/github/"
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://examputhLogin/github/"
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
+
+        invalid_callback_url = \
+            "https://example.com/login/OAuthLogin/github/extra"
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
+
+        invalid_callback_url = "https://example.com/OAuthLogin/github"
+        self.assertFalse(
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
+            "Invalid callback URL was accepted.")
 
     def test_nonauth_storage(self):
         """

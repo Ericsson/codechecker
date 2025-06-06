@@ -1,8 +1,21 @@
-# pylint: disable=invalid-name
+#
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
+"""
+A mock OAuth server that simulates the behavior of an OAuth provider.
+"""
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+
+from authlib.oauth2.rfc7636 import create_s256_code_challenge as hash_s256
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Server config
 HOSTNAME = "0.0.0.0"
@@ -26,6 +39,18 @@ class OauthServer(BaseHTTPRequestHandler):
         "user_dummy:user": {
             "code": "4",
             "token": "dummy4"
+        },
+        "user_csrf:user": {
+            "code": "5",
+            "token": "user_csrf5"
+        },
+        "user_pkce:user": {
+            "code": "6",
+            "token": "user_pkce6"
+        },
+        "user_incomplete_token:user": {
+            "code": "7",
+            "token": "user_incomplete_token7"
         }
     }
 
@@ -33,8 +58,14 @@ class OauthServer(BaseHTTPRequestHandler):
         "1": "github1",
         "2": "github2",
         "3": "google3",
-        "4": "dummy4"
+        "4": "dummy4",
+        "5": "user_csrf5",
+        "6": "user_pkce6",
+        "7": "user_incomplete_token7"
     }
+
+    # Store pkce code challenge
+    code_challenges = {}
 
     users_by_token = {
         "github1": {
@@ -56,6 +87,21 @@ class OauthServer(BaseHTTPRequestHandler):
             "login": "user_dummy",
             "email": "dummy@dummy.com",
             "name": "User @dummy"
+        },
+        "user_csrf5": {
+            "login": "user_csrf",
+            "email": "user_csrf5@fake.com",
+            "name": "User @csrf"
+        },
+        "user_pkce6": {
+            "login": "user_pkce6",
+            "email": "user_pkce6@fake.com",
+            "name": "User @pkce"
+        },
+        "user_incomplete_token7": {
+            "login": "user_incomplete_token",
+            "email": "user_incomplete_token@fake.com",
+            "name": "User @incomplete_token"
         }
     }
 
@@ -82,21 +128,27 @@ class OauthServer(BaseHTTPRequestHandler):
                 params[key] = value
 
             if "username" in query_params:
+                # print(f"Login request with username: {params['username']}")
                 query = f"{params['username']}:{params['password']}"
                 query_result = self.users_by_data.get(query, None)
                 if query_result:
                     state = params['state']
                     code = query_result['code']
                     code_challenge = params['code_challenge']
-                    ccm = params['code_challenge_method']
-                    return self.show_json({"code": code,
-                                           "state": state,
-                                           "code_challenge": code_challenge,
-                                           "code_challenge_method": ccm})
+                    # store code_challenge in the server
+                    self.code_challenges[code] = {
+                        "code_challenge": code_challenge,
+                        "code_challenge_method": params[
+                            'code_challenge_method']}
 
+                    return self.show_json({"code": code,
+                                           "state": state})
             return self.show_rejection("Invalid credentials")
         except IndexError:
             return self.show_rejection("Invalid query parameters")
+        except Exception as ex:
+            print(f"Error in login_tester of OAuth mock server: {ex}")
+            return self.show_rejection("Internal server error")
 
     def get_user(self):
         token = self.headers.get("Authorization").split("Bearer ")[1]
@@ -106,14 +158,7 @@ class OauthServer(BaseHTTPRequestHandler):
         else:
             return self.show_rejection("Invalid token")
 
-    def do_GET(self):
-        if self.path.startswith("/login"):
-            return self.login_tester()
-        elif self.path.startswith("/get_user"):
-            return self.get_user()
-        return self.path
-
-    def do_POST(self):
+    def handle_user_token_request(self):
         params = {}
         raw = self.rfile.read(
             int(self.headers.get('Content-Length'))).decode("utf-8")
@@ -122,7 +167,29 @@ class OauthServer(BaseHTTPRequestHandler):
             params[key] = value
         if "code" in params:
             code = params['code']
-            if code in self.tokens_by_code:
+            # check for PKCE code challenge similarity
+            if code in self.code_challenges:
+
+                entry = self.code_challenges[code]
+                code_challenge = entry.get("code_challenge", None)
+                code_challenge_method = entry.get(
+                    "code_challenge_method", None)
+
+                if code_challenge_method and \
+                        code_challenge_method == "S256":
+                    # PKCE verifier
+                    if code_challenge:
+                        if hash_s256(params['code_verifier']) != \
+                                code_challenge:
+                            return self.show_rejection("Invalid code verifier")
+                else:
+                    return self.show_rejection("Invalid code challenge method")
+            # return incomplete token information for test purposes.
+            if code == "7":
+                return self.show_json({
+                    'access_token': "user_incomplete_token7",
+                })
+            elif code != "7" and code in self.tokens_by_code:
                 token = self.tokens_by_code[code]
                 return self.show_json({
                     'access_token': token,
@@ -135,11 +202,26 @@ class OauthServer(BaseHTTPRequestHandler):
                 return self.show_rejection("Invalid code")
         return self.path
 
+    # pylint: disable=invalid-name
+    def do_GET(self):
+        if self.path.startswith("/login"):
+            return self.login_tester()
+        elif self.path.startswith("/get_user"):
+            return self.get_user()
+        return self.path
+
+    # pylint: disable=invalid-name
+    def do_POST(self):
+        if self.path.endswith("/token"):
+            return self.handle_user_token_request()
+        else:
+            return self.show_rejection("Unsupported POST path")
+
 
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
-print(f"Server started http://{HOSTNAME}:{SERVERPORT}")
+# print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}")
 
 webServer.serve_forever()
 webServer.server_close()
-print("Server stopped.")
+print(f"OAuth mock server stopped on http://{HOSTNAME}:{SERVERPORT}")

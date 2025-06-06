@@ -168,6 +168,10 @@ class ThriftAuthHandler:
         """
         # TODO remove this purge sesisons system to another place
         # where it will happen semi regularly
+        if not all(isinstance(arg, str) for arg in (state,
+                                                    code_verifier,
+                                                    provider)):
+            raise TypeError("All OAuth fields must be strings")
         try:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with DBSession(self.__config_db) as session:
@@ -210,50 +214,82 @@ class ThriftAuthHandler:
         login via specified provider.
         And inserts state, code, pkce_verifier in oauth table.
         """
-        oauth_config = self.__manager.get_oauth_config(provider)
-        if not oauth_config.get('enabled'):
+        try:
+            oauth_config = self.__manager.get_oauth_config(provider)
+            if not oauth_config.get('enabled'):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    f"OAuth authentication is not enabled "
+                    f"for provider: {provider}")
+
+            stored_state = generate_token()
+            client_id = oauth_config["client_id"]
+            client_secret = oauth_config["client_secret"]
+            scope = oauth_config["scope"]
+            authorization_url = oauth_config["authorization_url"]
+            callback_url = oauth_config["callback_url"]
+            pkce_verifier = generate_token(48)
+
+            oauth2_session = OAuth2Session(
+                client_id,
+                client_secret,
+                scope=scope,
+                redirect_uri=callback_url,
+                code_challenge_method='S256'
+                )
+
+            # each provider has different requirements
+            # for requesting refresh token
+            if provider == "google":
+                url, state = oauth2_session.create_authorization_url(
+                    url=authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier,
+                    access_type='offline',
+                    prompt='consent'
+                )
+            else:
+                url, state = oauth2_session.create_authorization_url(
+                    authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier
+                )
+
+            self.__insertOAuthSession(state=state,
+                                      code_verifier=pkce_verifier,
+                                      provider=provider)
+        except Exception as ex:
+            LOG.error("OAuth createLink failed: %s", str(ex))
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                f"OAuth authentication is not enabled for provider:{provider}")
-
-        stored_state = generate_token()
-        client_id = oauth_config["client_id"]
-        client_secret = oauth_config["client_secret"]
-        template = oauth_config.get("template", "default")
-        scope = oauth_config["scope"]
-        authorization_url = oauth_config["authorization_url"]
-        callback_url = oauth_config["callback_url"]
-        pkce_verifier = generate_token(48)
-
-        oauth2_session = OAuth2Session(
-            client_id,
-            client_secret,
-            scope=scope,
-            redirect_uri=callback_url,
-            code_challenge_method='S256'
-            )
-
-        # each provider has different requirements
-        # for requesting refresh token
-        if template == "google/v1":
-            url, state = oauth2_session.create_authorization_url(
-                url=authorization_url,
-                state=stored_state,
-                code_verifier=pkce_verifier,
-                access_type='offline',
-                prompt='consent'
-            )
-        else:
-            url, state = oauth2_session.create_authorization_url(
-                authorization_url,
-                state=stored_state,
-                code_verifier=pkce_verifier
-            )
-
-        self.__insertOAuthSession(state=state,
-                                  code_verifier=pkce_verifier,
-                                  provider=provider)
+                "createLink process failed.")
         return url
+
+    @timeit
+    def __getOAuthRow(self, state):
+        """
+        Returns OAuth row from table.
+        """
+        try:
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                    .filter(OAuthSession.state == state) \
+                    .first()
+                if not state_db or not code_verifier_db \
+                        or not provider_db or not expires_at_db:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth querying received empty values.")
+        except Exception as ex:
+            LOG.error("OAuth data fetch from database failed.: %s", str(ex))
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data fetch from database failed.")
+        return state_db, code_verifier_db, provider_db, expires_at_db
 
     @timeit
     def performLogin(self, auth_method, auth_string):
@@ -309,31 +345,23 @@ class ThriftAuthHandler:
             provider_db = None
             expires_at_db = None
 
-            with DBSession(self.__config_db) as session:
-                state_db, code_verifier_db, provider_db, expires_at_db = \
-                    session.query(OAuthSession.state,
-                                  OAuthSession.code_verifier,
-                                  OAuthSession.provider,
-                                  OAuthSession.expires_at) \
-                    .filter(OAuthSession.state == state) \
-                    .first()
-                if not state_db or not code_verifier_db \
-                        or not provider_db or not expires_at_db:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "OAuth querying received empty values.")
+            state_db, code_verifier_db, provider_db, expires_at_db \
+                = self.__getOAuthRow(state=state)
 
-                if state_db != state:
-                    LOG.error("State mismatch.")
-                if provider_db != provider:
-                    LOG.error("Provider mismatch.")
-                if date_time > expires_at_db:
-                    LOG.error("Expiery time mismatch.")
-                if state_db != state or provider_db != provider \
-                        or date_time > expires_at_db:
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                        "OAuth data mismatch.")
+            mismatch = False
+            if state_db != state:
+                mismatch = True
+                LOG.error("State mismatch.")
+            if provider_db != provider:
+                mismatch = True
+                LOG.error("Provider mismatch.")
+            if date_time > expires_at_db:
+                mismatch = True
+                LOG.error("Expiery time mismatch.")
+            if mismatch:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth data mismatch.")
 
             client_id = oauth_config["client_id"]
             client_secret = oauth_config["client_secret"]
@@ -366,6 +394,17 @@ class ThriftAuthHandler:
                     url=token_url,
                     authorization_response=url,
                     code_verifier=code_verifier_db)
+
+                # validate the token is not empty or incomplete
+                if oauth_token.get('access_token') is None or \
+                        oauth_token.get('refresh_token') is None or \
+                        oauth_token.get('token_type') is None or \
+                        oauth_token.get('scope') is None or \
+                        oauth_token.get('expires_in') is None:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth token fetch failed. Token is empty or "
+                        "incomplete.")
 
                 current_date = datetime.datetime.now()
                 access_token_expires_at = current_date + \

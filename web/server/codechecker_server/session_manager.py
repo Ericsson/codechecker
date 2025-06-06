@@ -319,6 +319,14 @@ class SessionManager:
 
                 try:
                     provider[param] = param_value.format(**variables)
+                    # Check the callback URL format if it is set correctly.
+                    if param == 'callback_url':
+                        if not self.check_callback_url_format(
+                                provider_name, provider[param]):
+                            LOG.error("Disabling OAuth "
+                                      f"provider {provider_name} "
+                                      "due to invalid callback URL format.")
+                            provider['enabled'] = False
                 except KeyError as e:
                     LOG.warning(f"Parameter {param} in OAuth provider "
                                 f"{provider_name} tried accessing variable "
@@ -326,6 +334,34 @@ class SessionManager:
                                 f"Disabling OAuth provider {provider_name}.")
                     provider['enabled'] = False
                     break
+
+    @staticmethod
+    def check_callback_url_format(provider_name: str, callback_url: str):
+        """
+        Check the format of callback url using regex.
+        """
+        print("Checking callback URL format for provider '%s': %s",
+              provider_name, callback_url)
+        if "@" in provider_name:
+            LOG.warning(f"provider {provider_name} contains '@' "
+                        "which is not allowed, turning off provider.")
+            return None
+        protocol = "http(s|)"
+        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5})?(?<!/)"
+        paths = "login[/]OAuthLogin"
+
+        pattern_str = (
+            rf"^{protocol}://{website}/(?!/){paths}/{provider_name}$"
+        )
+        pattern = re.compile(pattern_str)
+        LOG.info("Checking callback URL format for provider '%s': %s",
+                 provider_name, callback_url)
+        match = pattern.match(callback_url)
+        if match is None:
+            LOG.warning("Configuration format of callback_url is "
+                        f"invalid for provider {provider_name}. "
+                        "Please check the configuration file.")
+        return match is not None
 
     def get_oauth_providers(self):
         result = []
@@ -335,16 +371,6 @@ class SessionManager:
             if providers[provider].get('enabled', False):
                 result.append(provider)
         return result
-
-    def get_oauth_callback_urls(self):
-        oauth_config = self.scfg_dict.get('authentication', {}) \
-            .get('method_oauth', {}).get('providers', {})
-        dict_to_return = {}
-        for provider_name, provider_data in oauth_config.items():
-            if provider_data.get('enabled'):
-                dict_to_return[provider_name] = \
-                    provider_data.get('callback_url')
-        return dict_to_return
 
     def turn_off_oauth_provider(self, provider_name: str):
         oauth_config = self.scfg_dict['authentication']['method_oauth'] \
@@ -363,8 +389,8 @@ class SessionManager:
             self.__auth_config["method_oauth"]["providers"][provider][
                 "enabled"] = False
 
-            LOG.warning("OAuth configuration was set to default values. " +
-                        "Disabling oauth provider: %s", provider)
+            LOG.error("OAuth configuration was set to default values. " +
+                      "Disabling oauth provider: %s", provider)
 
         return self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})

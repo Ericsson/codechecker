@@ -27,6 +27,15 @@ from .thrift_client_to_db import get_viewer_client
 from functional import PKG_ROOT
 from functional import REPO_ROOT
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from codechecker_server.database.config_db_model import OAuthToken
+from codechecker_server.database.config_db_model import OAuthSession
+from codechecker_server.database.database import DBSession
+
+import datetime
+
 
 def get_free_port():
     """
@@ -406,8 +415,21 @@ def enable_auth(workspace):
                 "user_info_mapping": {
                     "username": "email"
                 }
+            },
+            "always_off": {
+                "enabled": True,
+                "client_id": "4",
+                "client_secret": "4",
+                "template": "github/v1",
+                "authorization_url": "{oauth_host}/login",
+                "callback_url": "https://gjtujg//loginOAuthLogin/fakeprovider",
+                "token_url": "{oauth_host}/token",
+                "user_info_url": "{oauth_host}/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "email"
+                }
             }
-
         }
     }
     with open(server_cfg_file, 'w',
@@ -482,3 +504,84 @@ def get_session_token(workspace, viewer_host, viewer_port):
     except KeyError as err:
         print("Could not load session for session getter because " + str(err))
         return None
+
+
+def create_sqlalchemy_session(workspace):
+    """
+    Create a SQLAlchemy session using sessionmaker to connect to the
+    sqlite database.
+    """
+    try:
+        db_path = os.path.join(workspace, 'config.sqlite')
+        engine = create_engine('sqlite:///' + db_path)
+
+        session = sessionmaker(bind=engine)
+        return session
+
+    except ImportError as err:
+        print("SQLAlchemy is not installed. Please install it to use this "
+              "function.")
+        raise err
+    except Exception as err:
+        print("An error occurred while creating the SQLAlchemy session: " +
+              str(err))
+        raise err
+
+
+def validate_oauth_token_session(session_alchemy, access_token):
+    """
+    Helper function that returns bool depending
+    if the OAuth token exists
+    """
+
+    access_token_db = None
+    with DBSession(session_alchemy) as session:
+        access_token_db, *_ = \
+            session.query(OAuthToken.access_token) \
+            .filter(OAuthToken.access_token == access_token) \
+            .first()
+    return access_token_db is not None \
+        and access_token_db == access_token
+
+
+def validate_oauth_session(session_alchemy, state):
+    """
+    Helper function that returns bool depending
+    if the OAuth state exists
+    """
+    with DBSession(session_alchemy) as session:
+        return session.query(OAuthSession.state) \
+               .filter(OAuthSession.state == state) \
+               .first() is not None
+
+
+def insert_oauth_session(session_alchemy,
+                         state: str,
+                         code_verifier: str,
+                         provider: str,
+                         expires_at: datetime.datetime = None):
+    """
+    Insert a new OAuth session into the database.
+    """
+    if not all(isinstance(arg, str) for arg in (state,
+                                                code_verifier,
+                                                provider)):
+        raise TypeError("All OAuth fields must be strings")
+    try:
+        with DBSession(session_alchemy) as session:
+
+            if expires_at is None:
+                expires_at = (datetime.datetime.now() +
+                              datetime.timedelta(minutes=15))
+
+            oauth_session_entry = OAuthSession(state=state,
+                                               code_verifier=code_verifier,
+                                               expires_at=expires_at,
+                                               provider=provider)
+            session.add(oauth_session_entry)
+            session.commit()
+
+            print(f"State {state} inserted successfully.")
+    except Exception as exc:
+        print(f"Failed to insert state {state}: {exc}")
+        raise exc
