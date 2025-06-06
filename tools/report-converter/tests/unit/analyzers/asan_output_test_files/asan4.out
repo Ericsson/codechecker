@@ -1,0 +1,42 @@
+=================================================================
+==10288==ERROR: AddressSanitizer: global-buffer-overflow on address 0x000000502cf4 at pc 0x0000004ce57e bp 0x7ffc4b618610 sp 0x7ffc4b618608
+READ of size 4 at 0x000000502cf4 thread T0
+    #0 0x4ce57d in main files/asan4.c:4:10
+    #1 0x7f0b1f42262f in __libc_start_call_main (/lib64/libc.so.6+0x4062f)
+    #2 0x7f0b1f4226ef in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x406ef)
+    #3 0x41f284 in _start /BUILD/glibc-2.35/csu/../sysdeps/x86_64/start.S:115
+
+0x000000502cf4 is located 4 bytes to the right of global variable 'global_array' defined in 'files/asan4.c:2:5' (0x502b60) of size 400
+SUMMARY: AddressSanitizer: global-buffer-overflow files/asan4.c:4:10 in main
+Shadow bytes around the buggy address:
+  0x000080098540: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080098550: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080098560: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080098570: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080098580: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x000080098590: 00 00 00 00 00 00 00 00 00 00 00 00 00 00[f9]f9
+  0x0000800985a0: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x0000800985b0: f9 f9 f9 f9 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0000800985c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0000800985d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0000800985e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==10288==ABORTING
