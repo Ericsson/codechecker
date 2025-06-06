@@ -212,8 +212,6 @@ class DictAuth(unittest.TestCase):
         auth_client = env.setup_auth_client(
             self._test_workspace, session_token='_PROHIBIT')
 
-        session_factory = env.create_sqlalchemy_session(self._test_workspace)
-
         link = auth_client.createLink(provider)
         data = requests.get(
             url=f"{link}&username={username}&password={password}",
