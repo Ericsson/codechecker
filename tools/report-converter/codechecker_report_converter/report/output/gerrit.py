@@ -85,8 +85,12 @@ def __convert_reports(reports: List[Report],
         report_count += 1
 
         # file_name can be without a path in the report.
-        rel_file_path = os.path.relpath(file_name, repo_dir) \
-            if repo_dir and os.path.dirname(file_name) != "" else file_name
+        if repo_dir \
+                and os.path.dirname(file_name) != "" \
+                and os.path.isabs(file_name):
+            rel_file_path = os.path.relpath(file_name, repo_dir)
+        else:
+            rel_file_path = file_name
 
         checked_file = rel_file_path \
             + ':' + str(report.line) + ":" + str(report.column)
