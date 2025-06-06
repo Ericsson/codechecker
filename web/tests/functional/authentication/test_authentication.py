@@ -234,11 +234,8 @@ class DictAuth(unittest.TestCase):
 
         # PKCE attack case
         if username == "user_pkce":
-            env.change_oauth_session_data(
-                session_alchemy=session_factory,
-                code_verifier="dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
-                state=state
-                )
+            code="wrong_code"
+            auth_string = f"{link}?code={code}&state={state}"
 
         self.session_token = auth_client.performLogin(
             "oauth", provider + "@" + auth_string)
@@ -272,11 +269,15 @@ class DictAuth(unittest.TestCase):
         """
         session_factory = env.create_sqlalchemy_session(self._test_workspace)
 
-        self.try_login("github", "admin_github", "admin")
+        session = self.try_login("github", "admin_github", "admin")
+        self.assertTrue(session, "Authentication failed")
+
         result = env.validate_oauth_token_session(session_factory, "github1",)
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
-        self.try_login("google", "user_google", "user")
+        session = self.try_login("google", "user_google", "user")
+        self.assertTrue(session, "Authentication failed")
+
         result = env.validate_oauth_token_session(session_factory, "google3",)
         self.assertTrue(result, "Access_token wasn't inserted in Database")
 
