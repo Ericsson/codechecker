@@ -232,7 +232,7 @@ class DictAuth(unittest.TestCase):
 
         # PKCE attack case
         if username == "user_pkce":
-            code="wrong_code"
+            code = "wrong_code"
             auth_string = f"{link}?code={code}&state={state}"
 
         self.session_token = auth_client.performLogin(
