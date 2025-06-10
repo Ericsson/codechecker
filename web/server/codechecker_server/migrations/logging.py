@@ -63,7 +63,10 @@ def setup_logger(schema: str):
     logger = logging.getLogger(f"migration/{schema}")
     logging.setLoggerClass(existing_logger_cls)
 
-    if not logger.hasHandlers():
+    # logger.hasHandlers() falls back on parent's handlers, however,
+    # logger.handlers contains the immediate handlers only. It is important to
+    # check this list directly otherwise list indexing fails on "else" branch.
+    if not logger.handlers:
         fmt = MigrationFormatter(schema)
         handler = logging.StreamHandler()
         handler.setFormatter(fmt)
