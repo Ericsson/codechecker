@@ -9,6 +9,7 @@
 # --- COMMIT END ---
 # Tag can be
 #    analyzer      (Analyzer related changes)
+#    ci            (CI/CD related changes)
 #    clang         (Clang Static Analyzer related changes)
 #    clang-tidy    (Clang Tidy related changes)
 #    cmd           (Command line changes)
