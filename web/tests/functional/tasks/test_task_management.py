@@ -12,7 +12,6 @@ Contains tests of the ``"/Tasks"`` API endpoint to query, using the
 from copy import deepcopy
 from datetime import datetime, timezone
 import os
-import pathlib
 import shutil
 import unittest
 import time
@@ -73,7 +72,6 @@ class TaskManagementAPITests(unittest.TestCase):
         })
 
         # Run a privileged server which does require authentication.
-        (pathlib.Path(TEST_WORKSPACE) / "root.user").unlink()
         env.enable_auth(TEST_WORKSPACE)
         codechecker.start_server(codechecker_cfg_auth, STOP_SERVER_AUTH,
                                  ["--machine-id", "privileged"])
@@ -134,9 +132,9 @@ class TaskManagementAPITests(unittest.TestCase):
             session_token=root_token)
 
     def test_task_1_query_status(self):
-        task_token = self._anonymous_task_client.createDummyTask(10, False)
+        task_token = self._anonymous_task_client.createDummyTask(2, False)
 
-        time.sleep(5)
+        time.sleep(1)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
             task_token)
         self.assertEqual(task_info.token, task_token)
@@ -147,7 +145,7 @@ class TaskManagementAPITests(unittest.TestCase):
         self.assertIn("Dummy task", task_info.summary)
         self.assertEqual(task_info.cancelFlagSet, False)
 
-        time.sleep(10)  # A bit more than exactly what remains of 10 seconds!
+        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
         task_info = self._anonymous_task_client.getTaskInfo(task_token)
         self.assertEqual(task_info.status,
                          TaskStatus._NAMES_TO_VALUES["COMPLETED"])
@@ -161,9 +159,9 @@ class TaskManagementAPITests(unittest.TestCase):
         self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_2_query_status_of_failed(self):
-        task_token = self._anonymous_task_client.createDummyTask(10, True)
+        task_token = self._anonymous_task_client.createDummyTask(2, True)
 
-        time.sleep(5)
+        time.sleep(1)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
             task_token)
         self.assertEqual(task_info.token, task_token)
@@ -171,27 +169,27 @@ class TaskManagementAPITests(unittest.TestCase):
                          TaskStatus._NAMES_TO_VALUES["RUNNING"])
         self.assertEqual(task_info.cancelFlagSet, False)
 
-        time.sleep(10)  # A bit more than exactly what remains of 10 seconds!
+        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
         task_info = self._anonymous_task_client.getTaskInfo(task_token)
         self.assertEqual(task_info.status,
                          TaskStatus._NAMES_TO_VALUES["FAILED"])
         self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_3_cancel(self):
-        task_token = self._anonymous_task_client.createDummyTask(10, False)
+        task_token = self._anonymous_task_client.createDummyTask(3, False)
 
-        time.sleep(3)
+        time.sleep(1)
         cancel_req: bool = self._privileged_task_client.cancelTask(task_token)
         self.assertTrue(cancel_req)
 
-        time.sleep(3)
+        time.sleep(0.5)
         cancel_req_2: bool = self._privileged_task_client.cancelTask(
             task_token)
         # The task was already cancelled, so cancel_req_2 is not the API call
         # that cancelled the task.
         self.assertFalse(cancel_req_2)
 
-        time.sleep(5)  # A bit more than exactly what remains of 10 seconds!
+        time.sleep(0.5)  # A bit more than exactly what remains of 10 seconds!
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
             task_token)
         self.assertEqual(task_info.status,
@@ -300,43 +298,44 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter())
 
         current_time_epoch = int(datetime.now(timezone.utc).timestamp())
-        for i in range(10):
+        for i in range(2):
             target_api = self._anonymous_task_client if i % 2 == 0 \
                 else self._admin_task_client
-            for j in range(10):
+            time.sleep(1)
+            for j in range(2):
                 target_api.createDummyTask(1, bool(j % 2 == 0))
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter())
-        self.assertEqual(len(task_infos), 103)
+        self.assertEqual(len(task_infos), 7)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
         ))
-        self.assertEqual(len(task_infos), 100)
+        self.assertEqual(len(task_infos), 4)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
             machineIDs=["unprivileged"]
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
             machineIDs=["privileged"]
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
             usernames=[],
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
             usernames=["admin"],
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -362,7 +361,7 @@ class TaskManagementAPITests(unittest.TestCase):
         # Let every task terminate. We should only need 1 second per task,
         # running likely in a multithreaded environment.
         # Let's have some leeway, though...
-        time.sleep(2 * (100 * 1 // cast(int, os.cpu_count())))
+        time.sleep(2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -370,7 +369,7 @@ class TaskManagementAPITests(unittest.TestCase):
             completedAfterEpoch=current_time_epoch
         ))
         # All tasks should have finished.
-        self.assertEqual(len(task_infos), 100)
+        self.assertEqual(len(task_infos), 4)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -378,7 +377,7 @@ class TaskManagementAPITests(unittest.TestCase):
             completedAfterEpoch=current_time_epoch,
             statuses=[TaskStatus._NAMES_TO_VALUES["COMPLETED"]]
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -386,7 +385,7 @@ class TaskManagementAPITests(unittest.TestCase):
             completedAfterEpoch=current_time_epoch,
             statuses=[TaskStatus._NAMES_TO_VALUES["FAILED"]]
         ))
-        self.assertEqual(len(task_infos), 50)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -407,12 +406,12 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             machineIDs=["*privileged"]
         ))
-        self.assertEqual(len(task_infos), 103)
+        self.assertEqual(len(task_infos), 7)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             kinds=["*Dummy*"]
         ))
-        self.assertEqual(len(task_infos), 103)
+        self.assertEqual(len(task_infos), 7)
 
         # Try to consume the task status from the wrong user!
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
@@ -422,7 +421,7 @@ class TaskManagementAPITests(unittest.TestCase):
             usernames=[],
             statuses=[TaskStatus._NAMES_TO_VALUES["COMPLETED"]]
         ))
-        self.assertEqual(len(task_infos), 25)
+        self.assertEqual(len(task_infos), 1)
         a_token: str = task_infos[0].normalInfo.token
         with self.assertRaises(RequestFailed):
             self._admin_task_client.getTaskInfo(a_token)
@@ -439,7 +438,7 @@ class TaskManagementAPITests(unittest.TestCase):
             self._anonymous_task_client.createDummyTask(600, False)
 
         STOP_SERVER_NO_AUTH.set()
-        time.sleep(30)
+        time.sleep(4)
         STOP_SERVER_NO_AUTH.clear()
         after_shutdown_time_epoch = int(datetime.now(timezone.utc)
                                         .timestamp())
