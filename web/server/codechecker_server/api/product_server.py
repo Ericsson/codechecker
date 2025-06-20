@@ -123,8 +123,12 @@ class ThriftProductHandler:
 
         args = {'config_db_session': session,
                 'productID': product.id}
-        product_access = permissions.require_permission(
+
+        has_product_permission = permissions.require_permission(
             permissions.PRODUCT_VIEW, args, self.__auth_session)
+        has_global_permission = permissions.require_permission(
+            permissions.PERMISSION_VIEW, args, self.__auth_session)
+        has_access_permission = has_product_permission or has_global_permission
 
         admin_perm_name = permissions.PRODUCT_ADMIN.name
         admins = session.query(ProductPermission). \
@@ -154,7 +158,7 @@ class ThriftProductHandler:
             runCount=product.num_of_runs,
             latestStoreToProduct=latest_storage_date,
             connected=connected,
-            accessible=product_access,
+            accessible=has_access_permission,
             administrating=self.__administrating(args),
             databaseStatus=server_product.db_status,
             admins=[admin.name for admin in admins],
@@ -260,9 +264,10 @@ class ThriftProductHandler:
         Get the product configuration --- WITHOUT THE DB PASSWORD --- of the
         given product.
         """
-        self.__require_permission([permissions.PRODUCT_VIEW], {
-            'productID': product_id
-        })
+        self.__require_permission([
+            permissions.PRODUCT_VIEW,
+            permissions.PERMISSION_VIEW
+        ], {'productID': product_id})
 
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
