@@ -29,6 +29,8 @@ from codechecker_analyzer.analyzers import clangsa
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json
 
+from codechecker_common.compatibility import multiprocessing
+
 from .. import gcc_toolchain
 from .build_action import BuildAction
 
@@ -1215,12 +1217,72 @@ class CompileActionUniqueingType(Enum):
     # recognizing symlink and remove duplication
 
 
+def _parse_options_parallel(task_bundle):
+    """Helper function for parallel processing of compilation database entries.
+
+    Args:
+        task_bundle: List of tuples, each containing (entry,
+                    compiler_info_file, keep_gcc_include_fixed,
+                    keep_gcc_intrin, analyzer_clang_version)
+
+    Returns:
+        List of tuples (action, skip) where action is the parsed
+        BuildAction and skip is a boolean indicating if this entry
+        should be skipped.
+    """
+    results = []
+    for args in task_bundle:
+        try:
+            entry = args[0]
+            compiler_info_file = args[1]
+            keep_gcc_include_fixed = args[2]
+            keep_gcc_intrin = args[3]
+            analyzer_clang_version = args[4]
+
+            action = parse_options(
+                entry,
+                compiler_info_file,
+                keep_gcc_include_fixed,
+                keep_gcc_intrin,
+                clangsa.version.get,
+                analyzer_clang_version)
+
+            # Check if action should be skipped based on basic criteria
+            skip = not action.lang or action.action_type != BuildAction.COMPILE
+            results.append((action, skip))
+
+        except Exception as ex:
+            LOG.debug("Error parsing options: %s", str(ex))
+            results.append((None, True))
+
+    return results
+
+
+def _create_task_bundles(tasks, chunk_size):
+    """Split tasks into bundles of approx. chunk_size.
+
+    Args:
+        tasks: List of tasks to be split
+        chunk_size: Approx. number of tasks per bundle
+
+    Returns:
+        List of task bundles
+    """
+    bundle_count = len(tasks) // chunk_size
+    if bundle_count == 0:
+        return [tasks]
+    k, m = divmod(len(tasks), bundle_count)
+    return [tasks[i * k + min(i, m):(i + 1) * k + min(i + 1, m)]
+            for i in range(bundle_count)]
+
+
 def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
                      compiler_info_file=None,
                      keep_gcc_include_fixed=False,
                      keep_gcc_intrin=False,
+                     jobs=None,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
                      ctu_or_stats_enabled=False,
@@ -1261,6 +1323,7 @@ def parse_unique_log(compilation_database,
                        kept among the implicit include paths. Use this flag if
                        Clang analysis fails with error message related to
                        __builtin symbols.
+    jobs -- Number of processes to use for parsing the compilation_database
 
     Separate skip handlers are required because it is possible that different
     files are skipped during pre analysis and the actual analysis. In the
@@ -1279,6 +1342,11 @@ def parse_unique_log(compilation_database,
     try:
         uniqued_build_actions = {}
         uniqueing_re = None
+        skipped_cmp_cmd_count = 0
+        __contains_no_intrinsic_headers.cache_clear()
+
+        if jobs is None:
+            jobs = multiprocessing.cpu_count()
 
         if compile_uniqueing == "alpha":
             build_action_uniqueing = CompileActionUniqueingType.SOURCE_ALPHA
@@ -1292,19 +1360,44 @@ def parse_unique_log(compilation_database,
             build_action_uniqueing = CompileActionUniqueingType.SOURCE_REGEX
             uniqueing_re = re.compile(compile_uniqueing)
 
-        skipped_cmp_cmd_count = 0
-        __contains_no_intrinsic_headers.cache_clear()
-
+        # Prepare arguments for parallel processing
+        parallel_args = []
         for entry in extend_compilation_database_entries(compilation_database):
-            # Parse compilation db entry into an action object
-            action = parse_options(entry,
-                                   compiler_info_file,
-                                   keep_gcc_include_fixed,
-                                   keep_gcc_intrin,
-                                   clangsa.version.get,
-                                   analyzer_clang_version)
+            args = (
+                entry,
+                compiler_info_file,
+                keep_gcc_include_fixed,
+                keep_gcc_intrin,
+                analyzer_clang_version
+            )
+            parallel_args.append(args)
 
-            # Skip parsing the compilaton commands if it should be skipped
+        # Calculate optimal chunk size based on number of tasks and CPUs
+        total_tasks = len(parallel_args)
+        chunk_size = total_tasks if jobs <= 1 else max(
+            1024, total_tasks // (4 * jobs))
+        # Create task bundles
+        task_bundles = _create_task_bundles(parallel_args, chunk_size)
+        effective_pool_size = min(jobs, len(task_bundles))
+        LOG.debug_analyzer("jobs: %d, pool size: %d, chunk size=%d, chunks=%d",
+                           jobs, effective_pool_size,
+                           chunk_size, len(task_bundles))
+
+        with multiprocessing.Pool(effective_pool_size) as pool:
+            bundle_results = pool.map(_parse_options_parallel, task_bundles)
+
+        # Flatten results from all bundles
+        results = []
+        for bundle in bundle_results:
+            results.extend(bundle)
+
+        # Process results and apply uniqueing logic
+        for action, skip in results:
+            if skip or action is None:
+                skipped_cmp_cmd_count += 1
+                continue
+
+            # Skip parsing the compilation commands if it should be skipped
             # at both analysis phases (pre analysis and analysis).
             # Skipping of the compile commands is done differently if no
             # CTU or statistics related feature was enabled.
@@ -1317,12 +1410,6 @@ def parse_unique_log(compilation_database,
                 LOG.debug("skipping: %s", action.source)
                 continue
 
-            if not action.lang:
-                skipped_cmp_cmd_count += 1
-                continue
-            if action.action_type != BuildAction.COMPILE:
-                skipped_cmp_cmd_count += 1
-                continue
             if build_action_uniqueing == CompileActionUniqueingType.NONE:
                 if action not in uniqued_build_actions:
                     uniqued_build_actions[action] = action
@@ -1344,7 +1431,7 @@ def parse_unique_log(compilation_database,
                         uniqued_build_actions[action.source].output:
                     uniqued_build_actions[action.source] = action
             elif build_action_uniqueing == CompileActionUniqueingType.SYMLINK:
-                real_path = os.path.realpath(entry['file'])
+                real_path = os.path.realpath(action.source)
                 if real_path not in uniqued_build_actions:
                     uniqued_build_actions[real_path] = action
             elif build_action_uniqueing ==\
