@@ -26,6 +26,7 @@ from typing import Dict, List, Optional
 
 from codechecker_analyzer.analyzers import clangsa
 
+from codechecker_common.compatibility import multiprocessing
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json
 
@@ -1215,12 +1216,36 @@ class CompileActionUniqueingType(Enum):
     # recognizing symlink and remove duplication
 
 
+def _process_entry_worker(args):
+    """
+    Worker function for processing compilation database entries in parallel.
+
+    args -- Tuple containing (entry, compiler_info_file,
+            keep_gcc_include_fixed, keep_gcc_intrin, analyzer_clang_version)
+    """
+    (entry, compiler_info_file, keep_gcc_include_fixed,
+     keep_gcc_intrin, analyzer_clang_version) = args
+
+    try:
+        action = parse_options(entry,
+                               compiler_info_file,
+                               keep_gcc_include_fixed,
+                               keep_gcc_intrin,
+                               clangsa.version.get,
+                               analyzer_clang_version)
+        return action
+    except Exception as e:
+        LOG.error("Error processing entry: %s", e)
+        return None
+
+
 def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
                      compiler_info_file=None,
                      keep_gcc_include_fixed=False,
                      keep_gcc_intrin=False,
+                     jobs=None,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
                      ctu_or_stats_enabled=False,
@@ -1261,6 +1286,7 @@ def parse_unique_log(compilation_database,
                        kept among the implicit include paths. Use this flag if
                        Clang analysis fails with error message related to
                        __builtin symbols.
+    jobs -- Number of processes to use for parsing the compilation_database
 
     Separate skip handlers are required because it is possible that different
     files are skipped during pre analysis and the actual analysis. In the
@@ -1295,77 +1321,94 @@ def parse_unique_log(compilation_database,
         skipped_cmp_cmd_count = 0
         __contains_no_intrinsic_headers.cache_clear()
 
-        for entry in extend_compilation_database_entries(compilation_database):
-            # Parse compilation db entry into an action object
-            action = parse_options(entry,
-                                   compiler_info_file,
-                                   keep_gcc_include_fixed,
-                                   keep_gcc_intrin,
-                                   clangsa.version.get,
-                                   analyzer_clang_version)
+        if jobs is None:
+            jobs = multiprocessing.cpu_count()
 
-            # Skip parsing the compilaton commands if it should be skipped
-            # at both analysis phases (pre analysis and analysis).
-            # Skipping of the compile commands is done differently if no
-            # CTU or statistics related feature was enabled.
-            if analysis_skip_handlers \
-                and analysis_skip_handlers.should_skip(action.source) \
-                and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
-                     and pre_analysis_skip_handlers.should_skip(
-                         action.source)):
-                skipped_cmp_cmd_count += 1
-                LOG.debug("skipping: %s", action.source)
-                continue
+        # Prepare entries for parallel processing
+        entries = extend_compilation_database_entries(compilation_database)
 
-            if not action.lang:
-                skipped_cmp_cmd_count += 1
-                continue
-            if action.action_type != BuildAction.COMPILE:
-                skipped_cmp_cmd_count += 1
-                continue
-            if build_action_uniqueing == CompileActionUniqueingType.NONE:
-                if action not in uniqued_build_actions:
-                    uniqued_build_actions[action] = action
-            elif build_action_uniqueing == CompileActionUniqueingType.STRICT:
-                if action.source not in uniqued_build_actions:
-                    uniqued_build_actions[action.source] = action
-                else:
-                    LOG.error("Build Action uniqueing failed"
-                              " as both '%s' and '%s'",
-                              uniqued_build_actions[action.source]
-                              .original_command,
-                              action.original_command)
-                    sys.exit(1)
-            elif build_action_uniqueing ==\
-                    CompileActionUniqueingType.SOURCE_ALPHA:
-                if action.source not in uniqued_build_actions:
-                    uniqued_build_actions[action.source] = action
-                elif action.output <\
-                        uniqued_build_actions[action.source].output:
-                    uniqued_build_actions[action.source] = action
-            elif build_action_uniqueing == CompileActionUniqueingType.SYMLINK:
-                real_path = os.path.realpath(entry['file'])
-                if real_path not in uniqued_build_actions:
-                    uniqued_build_actions[real_path] = action
-            elif build_action_uniqueing ==\
-                    CompileActionUniqueingType.SOURCE_REGEX:
-                LOG.debug("uniqueing regex")
-                if action.source not in uniqued_build_actions:
-                    uniqued_build_actions[action.source] = action
-                elif uniqueing_re.match(action.original_command) and\
-                    not uniqueing_re.match(
-                        uniqued_build_actions[action.source].original_command):
-                    uniqued_build_actions[action.source] = action
-                elif uniqueing_re.match(action.original_command) and\
-                    uniqueing_re.match(
-                        uniqued_build_actions[action.source].original_command):
-                    LOG.error("Build Action uniqueing failed as both \n %s"
-                              "\n and \n %s \n match regex pattern:%s",
-                              uniqued_build_actions[action.source].
-                              original_command,
-                              action.original_command,
-                              compile_uniqueing)
-                    sys.exit(1)
+        # Create arguments for worker function as generator
+        worker_args = ((entry, compiler_info_file, keep_gcc_include_fixed,
+                       keep_gcc_intrin, analyzer_clang_version)
+                       for entry in entries)
+
+        # Process entries in parallel using imap_unordered with chunk size 1024
+        with multiprocessing.Pool(jobs) as pool:
+            # Convert generator to list for map function
+            worker_args_list = list(worker_args)
+            results = pool.map(_process_entry_worker, worker_args_list)
+
+            for action in results:
+                if action is None:
+                    skipped_cmp_cmd_count += 1
+                    continue
+
+                # Skip parsing the compilaton commands if it should be skipped
+                # at both analysis phases (pre analysis and analysis).
+                # Skipping of the compile commands is done differently if no
+                # CTU or statistics related feature was enabled.
+                if (analysis_skip_handlers
+                    and analysis_skip_handlers.should_skip(action.source)
+                    and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
+                         and pre_analysis_skip_handlers.should_skip(
+                             action.source))):
+                    skipped_cmp_cmd_count += 1
+                    LOG.debug("skipping: %s", action.source)
+                    continue
+
+                if not action.lang:
+                    skipped_cmp_cmd_count += 1
+                    continue
+                if action.action_type != BuildAction.COMPILE:
+                    skipped_cmp_cmd_count += 1
+                    continue
+                if build_action_uniqueing == CompileActionUniqueingType.NONE:
+                    if action not in uniqued_build_actions:
+                        uniqued_build_actions[action] = action
+                elif build_action_uniqueing ==\
+                        CompileActionUniqueingType.STRICT:
+                    if action.source not in uniqued_build_actions:
+                        uniqued_build_actions[action.source] = action
+                    else:
+                        LOG.error("Build Action uniqueing failed"
+                                  " as both '%s' and '%s'",
+                                  uniqued_build_actions[action.source]
+                                  .original_command,
+                                  action.original_command)
+                        sys.exit(1)
+                elif build_action_uniqueing ==\
+                        CompileActionUniqueingType.SOURCE_ALPHA:
+                    if action.source not in uniqued_build_actions:
+                        uniqued_build_actions[action.source] = action
+                    elif action.output <\
+                            uniqued_build_actions[action.source].output:
+                        uniqued_build_actions[action.source] = action
+                elif build_action_uniqueing ==\
+                        CompileActionUniqueingType.SYMLINK:
+                    real_path = os.path.realpath(action.source)
+                    if real_path not in uniqued_build_actions:
+                        uniqued_build_actions[real_path] = action
+                elif build_action_uniqueing ==\
+                        CompileActionUniqueingType.SOURCE_REGEX:
+                    LOG.debug("uniqueing regex")
+                    if action.source not in uniqued_build_actions:
+                        uniqued_build_actions[action.source] = action
+                    elif uniqueing_re.match(action.original_command) and\
+                        not uniqueing_re.match(
+                            uniqued_build_actions[action.source]
+                            .original_command):
+                        uniqued_build_actions[action.source] = action
+                    elif uniqueing_re.match(action.original_command) and\
+                        uniqueing_re.match(
+                            uniqued_build_actions[action.source]
+                            .original_command):
+                        LOG.error("Build Action uniqueing failed as both \n %s"
+                                  "\n and \n %s \n match regex pattern:%s",
+                                  uniqued_build_actions[action.source].
+                                  original_command,
+                                  action.original_command,
+                                  compile_uniqueing)
+                        sys.exit(1)
 
         ImplicitCompilerInfo.dump_compiler_info(
             os.path.join(report_dir, "compiler_info.json"))
