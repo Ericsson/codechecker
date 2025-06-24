@@ -13,8 +13,15 @@ import sys
 # pylint: disable=no-name-in-module
 # pylint: disable=unused-import
 if sys.platform in ["darwin", "win32"]:
-    from multiprocess import Pool  # type: ignore
-    from multiprocess import cpu_count
+    from multiprocess import \
+        Pool, Process, \
+        Queue, \
+        Value, \
+        cpu_count
 else:
-    from concurrent.futures import ProcessPoolExecutor as Pool  # type: ignore
-    from multiprocessing import cpu_count
+    from concurrent.futures import ProcessPoolExecutor as Pool
+    from multiprocessing import \
+        Process, \
+        Queue, \
+        Value, \
+        cpu_count
