@@ -17,6 +17,7 @@ import time
 import traceback
 import zipfile
 
+from functools import lru_cache
 from threading import Timer
 
 import multiprocess
@@ -781,9 +782,17 @@ def start_workers(actions_map, actions, analyzer_config_map,
                    'reproducer': reproducer_dir,
                    'ctu_connections': ctu_connections_dir}
 
+    @lru_cache
+    def __analyzer_config_map_get(analyzer_type):
+        """
+        analyzer_config_map is not a Dict, but multiprocess.managers.DictProxy,
+        so caching is necessary.
+        """
+        return analyzer_config_map.get(analyzer_type)
+
     analyzed_actions = [(actions_map,
                          build_action,
-                         analyzer_config_map.get(build_action.analyzer_type),
+                         __analyzer_config_map_get(build_action.analyzer_type),
                          output_path,
                          skip_handlers,
                          filter_handlers,
