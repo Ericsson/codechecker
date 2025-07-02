@@ -81,3 +81,7 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
     border-bottom: thin solid rgba(0, 0, 0, 0.12);
   }
 }
+
+.highlight-row {
+  background-color: $outstanding-bg-color !important;
+}
