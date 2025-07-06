@@ -73,9 +73,13 @@ export default {
   },
   data() {
     return {
-      Severity,
-      color: this.severityFromCodeToColor(this.status)
+      Severity
     };
+  },
+  computed: {
+    color() {
+      return this.severityFromCodeToColor(this.status);
+    }
   }
 };
 </script>
