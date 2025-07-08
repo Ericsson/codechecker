@@ -37,8 +37,6 @@ const getters = {
 
 const actions = {
   [GET_AUTH_PARAMS]({ commit }) {
-    if (state.authParams) return state.authParams;
-
     return new Promise(resolve => {
       authService.getClient().getAuthParameters(
         handleThriftError(params => {

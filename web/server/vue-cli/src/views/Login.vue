@@ -167,6 +167,7 @@ export default {
 
   computed: {
     ...mapGetters([
+      "authParams",
       "isAuthenticated"
     ]),
     ssoButtonText() {
@@ -185,7 +186,7 @@ export default {
   },
 
   created() {
-    if (this.isAuthenticated) {
+    if (this.isAuthenticated && this.authParams.sessionStillActive) {
       const returnTo = this.$router.currentRoute.query["return_to"];
       this.$router.replace(returnTo || { name: "products" });
     }
