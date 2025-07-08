@@ -29,7 +29,6 @@ within each project. Create this file in your project root directory:
 
 ```yml
 code_quality:
-  allow_failure: false
   script:
     - bash .gitlab/ci/run_codechecker.sh
   after_script:
@@ -39,6 +38,7 @@ code_quality:
       codequality: gl-code-quality-report.json
     paths: [gl-code-quality-report.json]
     expire_in: '2 mos'
+    expose_as: 'Code Quality Report'
   stage: test
 ```
 
@@ -46,6 +46,9 @@ code_quality:
 expire and are therefore deleted. You can set it to a lower or a higher value.
 For more information
 [see](https://docs.gitlab.com/ee/ci/yaml/README.html#artifactsexpire_in).
+
+`expose_as` makes the report JSON file downloadable directly from the ongoing
+merge requests.
 
 Script is a shell script which will be executed by the Runner.
 
@@ -74,9 +77,9 @@ CodeChecker parse \
   -e codeclimate \
   ./reports > gl-code-quality-report.json
 
-# Exit with status code 1 if there is any report in the output file.
-status=$(cat gl-code-quality-report.json)
-if [[ -n "$status" && "$status" != "[]" ]]; then
+# Exit with status code 1 if the report file was not generated.
+if [ ! -f "gl-code-quality-report.json" ]; then
+  echo Report file (gl-code-quality-report.json) does not exist."
   exit 1
 fi
 ```
@@ -106,17 +109,11 @@ CodeChecker cmd diff \
 out_file="codeclimate/codeclimate_issues.json"
 
 if [ ! -f "$out_file" ]; then
-  echo "${out_file} does not exists."
+  echo "Report file (${out_file}) does not exist."
   exit 1
 fi
 
 cp $out_file gl-code-quality-report.json
-
-# Exit with status code 1 if there is any report in the output file.
-status=$(cat gl-code-quality-report.json)
-if [[ -n "$status" && "$status" != "[]" ]]; then
-  exit 1
-fi
 ```
 
 # 4. Create a merge request
