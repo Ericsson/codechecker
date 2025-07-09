@@ -32,9 +32,5 @@ jobs:
           CODECHECKER_TOKEN: ${{ secrets.CODECHECKER_STORE_TOKEN }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          pwd
-          ls
-          touch ~/.codechecker.passwords.json
-          chmod 0600 ~/.codechecker.passwords.json
           echo "{\"client_autologin\" : true,\"credentials\": {\"*\": \"store:$CODECHECKER_TOKEN\"}}" > ~/.codechecker.passwords.json
           bash ./ci/github_analysis/codechecker_gate_master.sh
