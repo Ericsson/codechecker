@@ -1,8 +1,8 @@
-lxml==5.3.0
-portalocker==3.1.1
-psutil==5.8.0
-PyYAML==6.0.1
-types-PyYAML==6.0.12.12
-sarif-tools==3.0.4
-multiprocess==0.70.15
-setuptools==70.2.0
+lxml~=5.3
+portalocker~=3.1
+psutil~=5.8
+PyYAML~=6.0
+types-PyYAML~=6.0
+sarif-tools~=3.0
+multiprocess~=0.70
+setuptools~=70.2
