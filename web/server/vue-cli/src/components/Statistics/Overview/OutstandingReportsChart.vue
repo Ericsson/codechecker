@@ -1,8 +1,8 @@
 <script>
 import _ from "lodash";
 import {
-  endOfMonth, endOfToday, endOfWeek, endOfYear, format, subDays, subMonths,
-  subWeeks, subYears
+  endOfDay, endOfMonth, endOfToday, endOfWeek, endOfYear,
+  format, subDays, subMonths, subWeeks, subYears
 } from "date-fns";
 import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -120,6 +120,7 @@ export default {
 
     // Initialize the chart.
     this.renderChart(this.chartData, this.options);
+    this.addMouseEventListener();
   },
 
   activated() {
@@ -133,6 +134,7 @@ export default {
         return;
 
       let dateFormat = "yyyy. MMM. dd";
+      this.filterDateFormat = "yyyy-MM-dd";
 
       if (this.resolution === "days") {
         const today = endOfToday();
@@ -150,6 +152,7 @@ export default {
           subMonths(endOfCurrentMonth, i));
 
         dateFormat = "yyyy. MMM";
+        this.filterDateFormat = "yyyy-MM";
       }
       else if (this.resolution === "years") {
         const endOfCurrentYear = endOfYear(new Date());
@@ -157,6 +160,7 @@ export default {
           subYears(endOfCurrentYear, i));
 
         dateFormat = "yyyy";
+        this.filterDateFormat = "yyyy";
       }
 
       this.chartData.labels = [ ...this.dates ].reverse().map((d, idx) => {
@@ -198,7 +202,6 @@ export default {
         this.chartData = { ...this.chartData };
       });
     },
-
     fetchOutstandingReports(date) {
       const { runIds, reportFilter } = this.getStatisticsFilters();
 
@@ -211,6 +214,50 @@ export default {
       return new Promise(resolve => {
         ccService.getClient().getSeverityCounts(runIds, rFilter, cmpData,
           handleThriftError(res => resolve(res)));
+      });
+    },
+    addMouseEventListener() {
+      const canvas = this.$refs.canvas;
+      const chartInstance = this.$data._chart;
+
+      canvas.addEventListener("click", event => {
+        const points = chartInstance.getElementAtEvent(event);
+        if (points.length > 0) {
+          const firstPoint = points[0];
+          const datasetIndex = firstPoint._datasetIndex;
+          this.runName = this.$router.currentRoute.query["run"];
+          this.severity = chartInstance.data.datasets[datasetIndex].label;
+          const date = this.dates.reverse()[firstPoint._index];
+          const formattedDate = new Date(format(date, this.filterDateFormat));
+          if (this.resolution === "days") {
+            this.reportsDate = endOfDay(formattedDate);
+          } else if (this.resolution === "weeks") {
+            this.reportsDate = endOfWeek(formattedDate);
+          } else if (this.resolution === "months") {
+            this.reportsDate = endOfMonth(formattedDate);
+          } else if (this.resolution === "years") {
+            this.reportsDate = endOfYear(formattedDate);
+          }
+          this.$router.push({
+            name: "reports",
+            query: {
+              "run": this.runName,
+              "is-unique": "off",
+              "diff-type": "New",
+              "open-reports-date": `${this.dateTimeToStr(this.reportsDate)}`,
+              "severity": this.severity
+            }
+          });
+        }
+      });
+
+      canvas.addEventListener("mousemove", event => {
+        const points = chartInstance.getElementAtEvent(event);
+        if (points.length > 0) {
+          canvas.style.cursor = "pointer";
+        } else {
+          canvas.style.cursor = "default";
+        }
       });
     }
   }
