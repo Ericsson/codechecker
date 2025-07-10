@@ -236,8 +236,12 @@ test_unit_cov_in_env:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_cov_in_env
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit_cov_in_env
 
-test_functional:
+test_functional: test_analyzer_functional test_web_functional
+
+test_analyzer_functional:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional
+
+test_web_functional:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_functional
 
 test_functional_in_env:
