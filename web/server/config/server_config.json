@@ -82,6 +82,12 @@
           "variables": {
             "tenant_id": "common"
           }
+        },
+        "gitlab": {
+          "enabled": false,
+          "client_id": "<ExampleClientID>",
+          "client_secret": "<ExampleClientSecret>",
+          "template": "gitlab/v1"
         }
       }
     },
