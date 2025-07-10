@@ -1468,7 +1468,10 @@ class ThriftRequestHandler:
         self.__require_permission([permissions.PRODUCT_STORE])
 
     def __require_view(self):
-        self.__require_permission([permissions.PRODUCT_VIEW])
+        self.__require_permission([
+            permissions.PRODUCT_VIEW,
+            permissions.PERMISSION_VIEW
+        ])
 
     def __add_comment(self, bug_id, message, kind=CommentKindValue.USER,
                       date=None):

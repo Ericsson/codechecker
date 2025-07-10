@@ -64,7 +64,8 @@ router.beforeResolve((to, from, next) => {
   store.dispatch(GET_AUTH_PARAMS).then(() => {
     if (to.matched.some(record => record.meta.requiresAuth)) {
       if (store.getters.authParams.requiresAuthentication &&
-        !store.getters.isAuthenticated
+        (!store.getters.authParams.sessionStillActive ||
+         !store.getters.isAuthenticated)
       ) {
         // Redirect the user to the login page but keep the original path to
         // redirect the user back once logged in.

@@ -1,7 +1,9 @@
 name: codechecker-pr-analysis
 
 # Triggers the workflow on push or pull request events.
-on: [push, pull_request]
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
 
 jobs:
   codechecker-pr-analyis:
@@ -29,10 +31,5 @@ jobs:
           CODECHECKER_TOKEN: ${{ secrets.CODECHECKER_STORE_TOKEN }}
           PR_NUMBER: ${{ github.event.number }}
         run: |
-          pwd
-          ls
-          CodeChecker version
-          touch ~/.codechecker.passwords.json
-          chmod 0600 ~/.codechecker.passwords.json
-          echo "{\"client_autologin\" : true,\"credentials\": {\"https://codechecker-demo.eastus.cloudapp.azure.com\": \"store:$CODECHECKER_TOKEN\"}}" > ~/.codechecker.passwords.json
+          echo "{\"client_autologin\" : true,\"credentials\": {\"https://codechecker-demo.eastus.cloudapp.azure.com\": \"store:${CODECHECKER_TOKEN}\"}}" > ~/.codechecker.passwords.json
           bash ./ci/github_analysis/codechecker_gate_pr.sh $GITHUB_REF

@@ -592,7 +592,7 @@ class SessionManager:
 
         return {
             'username': personal_access_token.user_name,
-            'groups': personal_access_token.groups
+            'groups': str(personal_access_token.groups).split(";")
         }
 
     def __try_auth_dictionary(self, auth_string):
@@ -615,6 +615,8 @@ class SessionManager:
         group_list = method_config['groups'][username] if \
             'groups' in method_config and \
             username in method_config['groups'] else []
+
+        self.__update_personal_access_token_groups(username, group_list)
 
         return {
             'username': username,
@@ -648,7 +650,36 @@ class SessionManager:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
                     self.__update_groups(username, groups)
+                    self.__update_personal_access_token_groups(
+                        username,
+                        groups
+                    )
                     return {'username': username, 'groups': groups}
+
+        return False
+
+    def __update_personal_access_token_groups(self, user_name, groups):
+        """
+        Update the groups assigned to a personal access token.
+        """
+        if not self.__database_connection:
+            return None
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            transaction.query(PersonalAccessToken) \
+                .filter(PersonalAccessToken.user_name == user_name) \
+                .update({PersonalAccessToken.groups: ';'.join(groups)})
+            transaction.commit()
+            return True
+        except Exception as e:
+            LOG.error(
+                f"Couldn't find personal access token for user "
+                f"{user_name}: {str(e)}")
+        finally:
+            if transaction:
+                transaction.close()
 
         return False
 
@@ -838,6 +869,8 @@ class SessionManager:
             user_data.get('is_root'))
 
         self.__sessions.append(local_session)
+
+        self.__update_personal_access_token_groups(username, groups)
 
         # Store the session in the database.
         transaction = None
