@@ -1130,7 +1130,7 @@ class MassStoreRun:
                 # rules, only review status source code comments
                 if old_report and old_report.review_status in \
                         ['false_positive', 'intentional']:
-                    fixed_at = old_report.review_status_date
+                    fixed_at = old_report.fixed_at
                 else:
                     fixed_at = run_history_time
 
@@ -1322,7 +1322,7 @@ class MassStoreRun:
                 # rules, only review status source code comments
                 if old_report and old_report.review_status in \
                         ['false_positive', 'intentional']:
-                    fixed_at = old_report.review_status_date
+                    fixed_at = old_report.fixed_at
                 else:
                     fixed_at = run_history_time
 
