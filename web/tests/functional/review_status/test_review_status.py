@@ -885,14 +885,13 @@ int main() {
         self.assertEqual(report.fixedAt, fixed_at)
 
         # A reopened and false positive report gets its "fixed at" date from
-        # ReviewStatus table. This is the date when the false positive review
-        # status was assigned to this bug.
+        # where the false positive status firstly given.
 
         setup_test_project(3)
         report = get_report()
         self.assertEqual(report.detectionStatus, DetectionStatus.REOPENED)
         self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
-        self.assertNotEqual(report.fixedAt, fixed_at)
+        self.assertEqual(report.fixedAt, fixed_at)
 
         # Setting its review status to confirmed makes it outstanding.
 
