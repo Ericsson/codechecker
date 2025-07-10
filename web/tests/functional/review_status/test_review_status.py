@@ -892,7 +892,7 @@ int main() {
         report = get_report()
         self.assertEqual(report.detectionStatus, DetectionStatus.REOPENED)
         self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
-        self.assertNotEqual(report.fixedAt, fixed_at)
+        self.assertEqual(report.fixedAt, fixed_at)
 
         # Setting its review status to confirmed makes it outstanding.
 
