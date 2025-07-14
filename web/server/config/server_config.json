@@ -87,7 +87,10 @@
           "enabled": false,
           "client_id": "<ExampleClientID>",
           "client_secret": "<ExampleClientSecret>",
-          "template": "gitlab/v1"
+          "template": "gitlab/v1",
+          "variables": {
+
+          }
         }
       }
     },
