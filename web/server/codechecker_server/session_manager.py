@@ -163,7 +163,7 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, force_auth=False):
+    def __init__(self, configuration_file, secrets_file, force_auth=False):
         """
         Initialise a new Session Manager on the server.
 
@@ -176,6 +176,7 @@ class SessionManager:
         self.__logins_since_prune = 0
         self.__sessions = []
         self.__configuration_file = configuration_file
+        self.__secrets_file = secrets_file
 
         self.scfg_dict = self.__get_config_dict()
 
@@ -409,6 +410,38 @@ class SessionManager:
             # have been parsed from it.
             raise ValueError("Server configuration file was invalid, or "
                              "empty.")
+
+        LOG.debug(self.__secrets_file)
+        if os.path.exists(self.__secrets_file):
+            secrets_dict = load_json(self.__secrets_file, {})
+            check_file_owner_rw(self.__secrets_file)
+        else:
+            secrets_dict = {}
+
+        secret_re = re.compile(r'^\$SECRET:[a-zA-Z0-9_-]+\$$')
+
+        def resolve_secrets_failed(var):
+            if not os.path.exists(self.__secrets_file):
+                LOG.error("Secrets were used in server configuration file, "
+                          f"but {self.__secrets_file} does not exist!")
+
+            raise ValueError(f"Secret '{var}' could not "
+                "be resolved in server configuration file.")
+
+        def resolve_secrets(d):
+            items = d.items() if isinstance(d, dict) else enumerate(d)
+
+            for k, v in items:
+                if isinstance(v, dict) or isinstance(v, list):
+                    resolve_secrets(v)
+                elif isinstance(v, str) and secret_re.search(v):
+                    secret_var = v.split(':')[1][:-1]
+                    if secret_var in secrets_dict:
+                        d[k] = secrets_dict[secret_var]
+                    else:
+                        resolve_secrets_failed(secret_var)
+
+        resolve_secrets(cfg_dict)
         return cfg_dict
 
     def reload_config(self):
