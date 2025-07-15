@@ -69,9 +69,16 @@
                 </template>
               </v-select>
             </v-col>
+            <v-col cols="6">
+              <v-checkbox
+                v-model="hideNotOutstanding"
+                label="Hide compliant rules"
+                density="comfortable"
+              />
+            </v-col>
           </v-row>
           <guideline-statistics-table
-            :items="statistics"
+            :items="filteredStatistics"
             :loading="loading"
             @enabled-click="showingRuns"
           />
@@ -209,6 +216,7 @@ export default {
       },
       statistics: [],
       type: null,
+      hideNotOutstanding: false,
     };
   },
 
@@ -223,6 +231,15 @@ export default {
       return this.selectedGuidelineIndexes.map(idx => new Guideline({
         guidelineName: this.guidelineOptions[idx].id
       }));
+    },
+
+    filteredStatistics() {
+      if (this.hideNotOutstanding) {
+        return this.statistics.filter(stat =>
+          stat.checkers.some(checker => checker.outstanding > 0)
+        );
+      }
+      return this.statistics;
     }
   },
 
