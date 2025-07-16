@@ -219,7 +219,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
             # unusedFunction check is for whole program analysis,
             # which is not compatible with per source file analysis.
-            analyzer_cmd.append('--suppress=unusedFunction')
+            if '--suppress=unusedFunction' not in analyzer_cmd:
+                analyzer_cmd.append('--suppress=unusedFunction')
 
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
