@@ -97,6 +97,31 @@ from product_db_access_handler import ThriftProductHandler
 # ... your code here
 ```
 
+### Code quality
+
+Any change in the Pull Request against the codechecker repository will be checked
+with CodeChecker itself for potential issues. If any new issue found, the Pull Request
+cannot be merged before fixing them.
+
+#### Running quality check locally
+
+Quality check script can also be used locally which needs setting up the environment before the first run:
+
+* Create a local settings file for automatically logging in to the CodeChecker Code Quality server
+
+``` json
+{
+ "client_autologin" : true,
+ "credentials": {
+  "https://codechecker-demo.eastus.cloudapp.azure.com": "codechecker:codechecker"
+ }
+}
+```
+
+* Run `ci/github_analysis/codechecker_gate_pr.sh` to analyze the code.
+
+__Important:__ Make sure you are running CodeChecker version equal or lower than the server version when running the script! Always check the current version at: https://codechecker-demo.eastus.cloudapp.azure.com/
+
 ### Directory layout
 
 #### `analyzer`
