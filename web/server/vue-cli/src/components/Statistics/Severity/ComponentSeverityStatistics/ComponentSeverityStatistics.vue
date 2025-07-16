@@ -4,15 +4,15 @@
       <v-col>
         <v-card flat>
           <v-card-title class="justify-center">
-            Component statistics
+            Component severity statistics
 
             <tooltip-help-icon>
               This table shows component statistics per severity
-              levels.<br><br>
-
+              levels.
+              <br><br>
               Each row can be expanded which will show a checker statistics
-              for the actual component.<br><br>
-
+              for the actual component.
+              <br><br>
               The following filters don't affect these values:
               <ul>
                 <li><b>Severity</b> filter.</li>
@@ -95,11 +95,10 @@
         <v-card flat>
           <v-card-title class="justify-center">
             Report severities
-
             <tooltip-help-icon>
               This pie chart shows the checker severity distribution in the
-              product.<br><br>
-
+              product.
+              <br><br>
               The following filters don't affect these values:
               <ul>
                 <li><b>Severity</b> filter.</li>
@@ -107,7 +106,6 @@
               </ul>
             </tooltip-help-icon>
           </v-card-title>
-
           <v-row justify="center">
             <v-overlay
               :value="loading"
@@ -119,12 +117,11 @@
                 size="64"
               />
             </v-overlay>
+            <component-severity-statistics-chart
+              :loading="loading"
+              :statistics="statistics"
+            />
           </v-row>
-
-          <component-severity-statistics-chart
-            :loading="loading"
-            :statistics="statistics"
-          />
         </v-card>
       </v-col>
     </v-row>
