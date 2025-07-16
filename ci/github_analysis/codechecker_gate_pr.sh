@@ -8,8 +8,7 @@ fi
 
 ./ci/github_analysis/pylint_analyze.sh
 report-converter -c -t pylint -o ./reports-pylint ./pylint-reports.json
-CodeChecker store -f ./reports-pylint --url "$CC_URL" --trim-path-prefix "$(pwd)" -n "$1"
-CodeChecker cmd diff --url "$CC_URL" -b master -n "$1" --new
+CodeChecker cmd diff --url "$CC_URL" -b master -n ./reports-pylint --new
 if [ "$?" -ne 0 ]; then
     echo "ERROR. YOUR PR FAILED GATING! Please check new reports at $CC_URL/reports?run=master&newcheck=$1"
     exit 1
