@@ -97,6 +97,12 @@ from product_db_access_handler import ThriftProductHandler
 # ... your code here
 ```
 
+### Code quality
+
+Any change in the Pull Request against the codechecker repository will be checked
+with CodeChecker itself for potential issues. If any issue found, the Pull Request
+cannot be merged before fixing them.
+
 ### Directory layout
 
 #### `analyzer`
