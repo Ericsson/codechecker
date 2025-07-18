@@ -419,29 +419,36 @@ class SessionManager:
             secrets_dict = {}
 
         secret_re = re.compile(r'^\$SECRET:[a-zA-Z0-9_-]+\$$')
+        env_re = re.compile(r'^\$ENV:[a-zA-Z0-9_-]+\$$')
 
-        def resolve_secrets_failed(var):
-            if not os.path.exists(self.__secrets_file):
+        def resolve_variables_failed(var):
+            if secret_re.search(var) and not os.path.exists(self.__secrets_file):
                 LOG.error("Secrets were used in server configuration file, "
                           f"but {self.__secrets_file} does not exist!")
 
-            raise ValueError(f"Secret '{var}' could not "
+            raise ValueError(f"Variable '{var}' could not "
                 "be resolved in server configuration file.")
 
-        def resolve_secrets(d):
+        def resolve_variables(d):
             items = d.items() if isinstance(d, dict) else enumerate(d)
 
             for k, v in items:
                 if isinstance(v, dict) or isinstance(v, list):
-                    resolve_secrets(v)
-                elif isinstance(v, str) and secret_re.search(v):
-                    secret_var = v.split(':')[1][:-1]
-                    if secret_var in secrets_dict:
-                        d[k] = secrets_dict[secret_var]
-                    else:
-                        resolve_secrets_failed(secret_var)
+                    resolve_variables(v)
+                elif isinstance(v, str):
+                    secret_matched = secret_re.search(v)
+                    env_matched = env_re.search(v)
 
-        resolve_secrets(cfg_dict)
+                    if secret_matched or env_matched:
+                        var_name = v.split(':')[1][:-1]
+                        if secret_matched and var_name in secrets_dict:
+                            d[k] = secrets_dict[var_name]
+                        elif env_matched and var_name in os.environ:
+                            d[k] = os.environ.get(var_name)
+                        else:
+                            resolve_variables_failed(v)
+
+        resolve_variables(cfg_dict)
         return cfg_dict
 
     def reload_config(self):

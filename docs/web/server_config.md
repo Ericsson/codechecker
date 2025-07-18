@@ -117,6 +117,8 @@ For authentication configuration options and which options can be reloaded see
 the [Authentication](authentication.md) documentation.
 
 ## Secrets
+
+### server_secrets.json
 Optionally, one can store sensitive data (e.g., passwords, secret tokens) outside
 of `server_config.json`. To do this, create a separate `server_secrets.json` file 
 in the server's *workspace* folder. In `server_config.json`, replace sensitive data 
@@ -127,3 +129,8 @@ Then, secrets can be defined in `server_secrets.json`, as an example:
   "NAME_OF_SECRET": "MySecurePassword123"
 }
 ```
+
+### Environmental variables
+Alternatively, CodeChecker can also read sensitive data from environmental variables.
+To do this, replace sensitive data in `server_config.json` with `$ENV:VARIABLE_NAME$`.
+In this case, value will be read from environmental variable `VARIABLE_NAME`.
