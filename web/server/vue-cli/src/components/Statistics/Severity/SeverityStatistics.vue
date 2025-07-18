@@ -22,17 +22,17 @@
         </h3>
 
         <v-card-title class="justify-center">
-            Severity statistics
-            <tooltip-help-icon>
-              This table shows severity statistics for the product.
-              <br><br>
-              The following filters don't affect these values:
-              <ul>
-                <li><b>Severity</b> filter.</li>
-                <li><b>Source component</b> filter.</li>
-              </ul>
-            </tooltip-help-icon>
-          </v-card-title>
+          Severity statistics
+          <tooltip-help-icon>
+            This table shows severity statistics for the product.
+            <br><br>
+            The following filters don't affect these values:
+            <ul>
+              <li><b>Severity</b> filter.</li>
+              <li><b>Source component</b> filter.</li>
+            </ul>
+          </tooltip-help-icon>
+        </v-card-title>
 
         <severity-statistics-table
           :items="statistics"
