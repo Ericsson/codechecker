@@ -29,4 +29,4 @@ jobs:
           CODECHECKER_TOKEN: ${{ secrets.CODECHECKER_STORE_TOKEN }}
         run: |
           echo "{\"client_autologin\" : true,\"credentials\": {\"https://codechecker-demo.eastus.cloudapp.azure.com\": \"demo:demo\"}}" > ~/.codechecker.passwords.json
-          bash ./ci/github_analysis/codechecker_gate_pr.sh $GITHUB_REF
+          bash ./ci/github_analysis/codechecker_gate_pr.sh
