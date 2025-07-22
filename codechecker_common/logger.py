@@ -6,16 +6,18 @@
 #
 # -------------------------------------------------------------------------
 
-
 import argparse
+import datetime
 import json
 import logging
 from logging import config
 from pathlib import Path
 import os
+import sys
+from typing import Optional
 
-# The logging leaves can be accesses without
-# importing the logging module in other modules.
+# The logging leaves can be accesses without importing the logging module in
+# other modules.
 DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARNING = logging.WARNING
@@ -25,14 +27,24 @@ NOTSET = logging.NOTSET
 
 CMDLINE_LOG_LEVELS = ['info', 'debug_analyzer', 'debug']
 
-DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15  # type: ignore
+DEBUG_ANALYZER = 15
 logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
+
+
+_Levels = {"DEBUG": DEBUG,
+           "DEBUG_ANALYZER": DEBUG_ANALYZER,
+           "INFO": INFO,
+           "WARNING": WARNING,
+           "ERROR": ERROR,
+           "CRITICAL": CRITICAL,
+           "NOTSET": NOTSET,
+           }
 
 
 class CCLogger(logging.Logger):
     def debug_analyzer(self, msg, *args, **kwargs):
-        if self.isEnabledFor(logging.DEBUG_ANALYZER):
-            self._log(logging.DEBUG_ANALYZER, msg, args, **kwargs)
+        if self.isEnabledFor(DEBUG_ANALYZER):
+            self._log(DEBUG_ANALYZER, msg, args, **kwargs)
 
 
 logging.setLoggerClass(CCLogger)
@@ -111,6 +123,36 @@ def validate_loglvl(log_level):
         return "INFO"
 
     return log_level
+
+
+def raw_sprint_log(logger: logging.Logger, level: str, message: str) \
+        -> Optional[str]:
+    """
+    Formats a raw log `message` using the date format of the specified
+    `logger`, without actually invoking the logging infrastructure.
+    """
+    if not logger.isEnabledFor(_Levels[level]):
+        return None
+
+    formatter = logger.handlers[0].formatter if len(logger.handlers) > 0 \
+        else None
+    datefmt = formatter.datefmt if formatter else None
+    time = datetime.datetime.now().strftime(datefmt) if datefmt \
+        else str(datetime.datetime.now())
+
+    return f"[{validate_loglvl(level)} {time}] - {message}"
+
+
+def signal_log(logger: logging.Logger, level: str, message: str):
+    """
+    Simulates a log output and logs a message within a signal handler, without
+    triggering a `RuntimeError` due to reentrancy in `print`-like method calls.
+    """
+    formatted = raw_sprint_log(logger, level, message)
+    if not formatted:
+        return
+
+    os.write(sys.stderr.fileno(), f"{formatted}\n".encode())
 
 
 class LogCfgServer:
