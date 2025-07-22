@@ -202,6 +202,17 @@ struct RunData {
 }
 typedef list<RunData> RunDataList
 
+struct SubmittedRunOptions {
+  1:          string       runName,
+  2:          string       tag,
+  3:          string       version,          // The version of CodeChecker with
+                                             // which the analysis was done.
+  4:          bool         force,            // If set, existing results in
+                                             // the run are removed first.
+  5:          list<string> trimPathPrefixes,
+  6: optional string       description,
+}
+
 struct RunHistoryData {
   1: i64                     runId,              // Unique id of the run.
   2: string                  runName,            // Name of the run.
@@ -209,8 +220,7 @@ struct RunHistoryData {
   4: string                  user,               // User name who analysed the run.
   5: string                  time,               // Date time when the run was analysed.
   6: i64                     id,                 // Id of the run history tag.
-  // !!!DEPRECATED!!! This field will be empty so use the getCheckCommand() API function to get the check command for a run.
-  7: string                  checkCommand,
+  7: string                  checkCommand,       // Check command. !!!DEPRECATED!!! This field will be empty so use the getCheckCommand API function to get the check command for a run.
   8: string                  codeCheckerVersion, // CodeChecker client version of the latest analysis.
   9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers. Only number of failed and successfully analyzed
                                                  // files field will be set. To get full analyzer statistics please use the
@@ -961,32 +971,47 @@ service codeCheckerDBAccess {
   //============================================
 
   // The client can ask the server whether a file is already stored in the
-  // database. If it is, then it is not necessary to send it in the ZIP file
-  // with massStoreRun() function. This function requires a list of file hashes
-  // (sha256) and returns the ones which are not stored yet.
+  // database.
+  // If it is present, then it is not necessary to send the file in the ZIP
+  // to the massStoreRunAsynchronous() function.
+  // This function requires a list of file hashes (sha256) and returns the
+  // ones which are not stored yet.
+  //
   // PERMISSION: PRODUCT_STORE
   list<string> getMissingContentHashes(1: list<string> fileHashes)
                                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // The client can ask the server whether a blame info is already stored in the
-  // database. If it is, then it is not necessary to send it in the ZIP file
-  // with massStoreRun() function. This function requires a list of file hashes
-  // (sha256) and returns the ones to which no blame info is stored yet.
+  // database.
+  // If it is, then it is not necessary to send the info in the ZIP file
+  // to the massStoreRunAsynchronous() function.
+  // This function requires a list of file hashes (sha256) and returns the
+  // ones to which no blame info is stored yet.
+  //
   // PERMISSION: PRODUCT_STORE
   list<string> getMissingContentHashesForBlameInfo(1: list<string> fileHashes)
                                                    throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
-  // The ZIP file has to be compressed and sent as a base64 encoded string. The
-  // ZIP file must contain a "reports" and an optional "root" sub-folder.
-  // The former one is the output of 'CodeChecker analyze' command and the
-  // latter one contains the source files on absolute paths starting as if
-  // "root" was the "/" directory. The source files are not necessary to be
-  // wrapped in the ZIP file (see getMissingContentHashes() function).
+  // The ZIP file has to be compressed by ZLib and the compressed buffer
+  // sent as a Base64-encoded string. The ZIP file must contain a "reports" and
+  // an optional "root" sub-directory. The former one is the output of the
+  // 'CodeChecker analyze' command and the latter one contains the source files
+  // on absolute paths starting as if "root" was the "/" directory. The source
+  // files are not necessary to be wrapped in the ZIP file
+  // (see getMissingContentHashes() function).
   //
   // The "version" parameter is the used CodeChecker version which checked this
   // run.
   // The "force" parameter removes existing analysis results for a run.
+  //
+  // !DEPRECATED!: Use of this function is deprecated as the storing client
+  // process is prone to infinite hangs while waiting for the return value of
+  // the Thrift call if the network communication terminates during the time
+  // the server is processing the sent data, which might take a very long time.
+  // Appropriately modern clients are expected to use the
+  // massStoreRunAsynchronous() function and the Task API instead!
+  //
   // PERMISSION: PRODUCT_STORE
   i64 massStoreRun(1: string          runName,
                    2: string          tag,
@@ -996,6 +1021,35 @@ service codeCheckerDBAccess {
                    6: list<string>    trimPathPrefixes,
                    7: optional string description)
                    throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // This function stores an entire analysis run encapsulated and sent as a
+  // ZIP file. The ZIP file must be compressed by ZLib and sent as a
+  // Base64-encoded string. It must contain a "reports" and an optional "root"
+  // sub-directory. "reports" contains the output of the `CodeChecker analyze`
+  // command, while "root", if present, contains the source code of the project
+  // with their full paths, with the logical "root" replacing the original
+  // "/" directory.
+  //
+  // The source files are not necessary to be present in the ZIP, see
+  // getMissingContentHashes() for details.
+  //
+  // After performing an initial validation of the well-formedness of the
+  // submitted structure (ill-formedness is reported as an exception), the
+  // potentially lengthy processing of the data and the database operations are
+  // done asynchronously.
+  //
+  // This function returns a TaskToken, which SHOULD be used as the argument to
+  // the tasks::getTaskInfo() function such that clients retrieve the
+  // processing's state. Clients MAY decide to "detach", i.e., not to wait
+  // for the processing of the submitted data, and ignore the returned handle.
+  // Even if the client detached, the processing of the stored reports will
+  // likely eventually conclude.
+  //
+  // PERMISSION: PRODUCT_STORE
+  codechecker_api_shared.TaskToken massStoreRunAsynchronous(
+      1: string              zipfileBlob,  // Base64-encoded string.
+      2: SubmittedRunOptions storeOpts)
+      throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns true if analysis statistics information can be sent to the server,
   // otherwise it returns false.
