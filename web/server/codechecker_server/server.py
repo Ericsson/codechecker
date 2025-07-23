@@ -1127,9 +1127,12 @@ def start_server(config_directory, package_data, port, config_sql_server,
                      "created at '%s'", server_cfg_file)
             shutil.copyfile(example_cfg_file, server_cfg_file)
 
+    server_secrets_file = os.path.join(config_directory, 'server_secrets.json')
+
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
+            server_secrets_file,
             force_auth)
 
     except IOError as ioerr:
@@ -1138,8 +1141,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
                   "is missing or can not be read!")
         sys.exit(1)
     except ValueError as verr:
-        LOG.debug(verr)
-        LOG.error("The server's configuration file is invalid!")
+        LOG.error(verr)
         sys.exit(1)
 
     if not skip_db_cleanup:
