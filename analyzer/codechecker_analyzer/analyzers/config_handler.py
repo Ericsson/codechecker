@@ -245,7 +245,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
                                               for label, option
                                               in possible_options.items())
 
-                    LOG.error("The %s is ambigous. Please select one of these"
+                    LOG.error("The %s is ambiguous. Please select one of these"
                               " options to clarify the checker list: %s.",
                               identifier, error_options)
                     sys.exit(1)
