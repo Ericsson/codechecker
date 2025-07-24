@@ -15,6 +15,7 @@ import re
 import uuid
 
 from datetime import datetime
+import hashlib
 from typing import Optional
 
 from codechecker_common.compatibility.multiprocessing import cpu_count
@@ -606,12 +607,41 @@ class SessionManager:
         if not method_config:
             return False
 
-        valid = self.__is_method_enabled('dictionary') and \
-            auth_string in method_config.get('auths')
-        if not valid:
+        if not self.__is_method_enabled('dictionary'):
             return False
 
-        username = SessionManager.get_user_name(auth_string)
+        auth_string_split = auth_string.split(':', 1)
+        username = auth_string_split[0]
+
+        saved_auth_string = [auth for auth in method_config.get('auths')
+                             if auth.split(':', 1)[0] == username]
+        if len(saved_auth_string) == 0:
+            return False
+
+        saved_auth_string = saved_auth_string[0]
+        if saved_auth_string != auth_string:
+            saved_auth_string_split = saved_auth_string.split(':', 3)
+            try:
+                hash_algorithm = saved_auth_string_split[2]
+            except IndexError:
+                return False
+
+            if not hasattr(hashlib, hash_algorithm):
+                return False
+
+            password = auth_string_split[1]
+            try:
+                salt = saved_auth_string_split[3]
+                password += salt
+            except IndexError:
+                pass
+
+            password = password.encode("utf-8")
+            saved_password_hash = saved_auth_string_split[1]
+            if not saved_password_hash == \
+                    getattr(hashlib, hash_algorithm)(password).hexdigest():
+                return False
+
         group_list = method_config['groups'][username] if \
             'groups' in method_config and \
             username in method_config['groups'] else []
