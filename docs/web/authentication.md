@@ -102,11 +102,27 @@ option of `CodeChecker server` command.
 
 ## <i>Dictionary</i> authentication <a name="dictionary-authentication"></a>
 
-> *Note*: Storing passwords in a plain text file is *strongly discouraged* due to security risks. If no other option is available, ensure that the file permissions are restricted to 0600 to limit access *only* to the file owner.
+> *Note*: Storing passwords in a plain text file is *strongly discouraged* due to security risks.
+If no other option is available, ensure that the file permissions are restricted to 0600
+to limit access *only* to the file owner.
 
-The `authentication.method_dictionary` contains a plaintext `username:password`
-credentials for authentication. If the user's login matches any of the
-credentials listed, the user will be authenticated.
+The `authentication.method_dictionary` may contain several formats of user credentials:
+
+- `username:password`
+  - legacy user credential format, **not recommended**
+- `username:password_hash:hash_algorithm`
+  - recommended user credential format
+- `username:password_hash:hash_algorithm:salt`
+  - highest security user credential format, `password_hash`
+    is calculated by appending `salt` to the provided password
+
+Supported `hash_algorithm` string values depend on hash algorithms supported by
+the [hashlib](https://docs.python.org/3/library/hashlib.html#hash-algorithms)
+Python module. Examples of supported `hash_algorithm` values:
+- `sha224`, `sha256`, `sha384`, `sha512`
+- added in Python 3.6: `sha3_224`, `sha3_256`, `sha3_384`, `sha3_512`
+
+If the user's login matches any of the credentials listed, the user will be authenticated.
 
 Groups are configured in a map which maps to each username the list of groups
 the user belongs to.
