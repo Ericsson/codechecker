@@ -619,7 +619,7 @@ def assemble_zip(inputs,
 
     # Fail store early if too many reports.
     p = prod_client.getCurrentProduct()
-    if len(unique_reports) > p.reportLimit:
+    if len(unique_report_hashes) > p.reportLimit:
         LOG.error(f"""Report Limit Exceeded
 
 This report folder cannot be stored because the number of reports in the
