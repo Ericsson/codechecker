@@ -22,10 +22,10 @@ def upgrade():
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('run_history_id', sa.Integer(), nullable=True),
                     sa.Column('analyzer_type', sa.String(), nullable=True),
-                    sa.Column('version', sa.Binary(), nullable=True),
+                    sa.Column('version', sa.LargeBinary(), nullable=True),
                     sa.Column('successful', sa.Integer(), nullable=True),
                     sa.Column('failed', sa.Integer(), nullable=True),
-                    sa.Column('failed_files', sa.Binary(), nullable=True),
+                    sa.Column('failed_files', sa.LargeBinary(), nullable=True),
                     sa.ForeignKeyConstraint(
                         ['run_history_id'], ['run_histories.id'],
                         name=op.f('fk_analyzer_statistics_run_history_id_'

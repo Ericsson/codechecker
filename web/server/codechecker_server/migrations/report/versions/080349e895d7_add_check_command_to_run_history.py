@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.add_column('run_histories',
-                  sa.Column('check_command', sa.Binary(), nullable=True))
+                  sa.Column('check_command', sa.LargeBinary(), nullable=True))
 
 
 def downgrade():
