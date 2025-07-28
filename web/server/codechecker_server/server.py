@@ -788,6 +788,7 @@ class CCSimpleHttpServer(HTTPServer):
                  server_address,
                  RequestHandlerClass,
                  config_directory,
+                 workspace_directory,
                  product_db_sql_server,
                  pckg_data,
                  context,
@@ -797,6 +798,7 @@ class CCSimpleHttpServer(HTTPServer):
         LOG.debug("Initializing HTTP server...")
 
         self.config_directory = config_directory
+        self.workspace_directory = workspace_directory
         self.www_root = pckg_data['www_root']
         self.doc_root = pckg_data['doc_root']
         self.version = pckg_data['version']
@@ -1086,9 +1088,10 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
     address_family = socket.AF_INET6
 
 
-def start_server(config_directory, package_data, port, config_sql_server,
-                 listen_address, force_auth, skip_db_cleanup: bool,
-                 context, check_env):
+def start_server(config_directory: str, workspace_directory: str,
+                 package_data, port: int, config_sql_server,
+                 listen_address: str, force_auth: bool,
+                 skip_db_cleanup: bool, context, check_env) -> int:
     """
     Start http server to handle web client and thrift requests.
     """
@@ -1168,6 +1171,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
     http_server = server_clazz(server_addr,
                                RequestHandler,
                                config_directory,
+                               workspace_directory,
                                config_sql_server,
                                package_data,
                                context,

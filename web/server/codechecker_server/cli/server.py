@@ -87,14 +87,11 @@ def add_arguments_to_parser(parser):
                         default=default_workspace,
                         required=False,
                         help="Directory where CodeChecker can store analysis "
-                             "result related data, such as the database. "
-                             "(Cannot be specified at the same time with "
-                             "'--sqlite' or '--config-directory'.)")
+                             "result related data, such as the database.")
 
     parser.add_argument('-f', '--config-directory',
                         type=str,
                         dest="config_directory",
-                        default=default_workspace,
                         required=False,
                         help="Directory where CodeChecker server should read "
                              "server-specific configuration (such as "
@@ -152,9 +149,6 @@ def add_arguments_to_parser(parser):
                          type=str,
                          dest="sqlite",
                          metavar='SQLITE_FILE',
-                         default=os.path.join(
-                             '<CONFIG_DIRECTORY>',
-                             "config.sqlite"),
                          required=False,
                          help="Path of the SQLite database file to use.")
 
@@ -356,54 +350,24 @@ databases.
             # is intended later on.
             delattr(args, 'not_host_only')
 
-        # --workspace and --sqlite cannot be specified either, as
-        # both point to a database location.
-        options = ['--sqlite', '--workspace']
-        options_short = ['--sqlite', '-w']
-        if set(arg_match(options)) == set(options) or \
-                set(arg_match(options_short)) == set(options_short):
-            parser.error("argument --sqlite: not allowed with "
-                         "argument --workspace")
-
-        # --workspace and --config-directory also aren't allowed together now,
-        # the latter one is expected to replace the earlier.
-        options = ['--config-directory', '--workspace']
-        options_short = ['--config-directory', '-w']
-        if set(arg_match(options)) == set(options) or \
-                set(arg_match(options_short)) == set(options_short):
-            parser.error("argument --config-directory: not allowed with "
-                         "argument --workspace")
-
-        # If workspace is specified, sqlite is workspace/config.sqlite
-        # and config_directory is the workspace directory.
-        if arg_match(['--workspace', '-w']):
+        # If config_directory is not specified, it will be the same
+        # as the workspace directory.
+        if not args.config_directory:
             args.config_directory = args.workspace
+
+        # If sqlite path is not specified, it will be set to
+        # workspace/config.sqlite
+        if not args.sqlite:
             args.sqlite = os.path.join(args.workspace,
                                        'config.sqlite')
-            setattr(args, 'dbdatadir', os.path.join(args.workspace,
-                                                    'pgsql_data'))
-
-        # Workspace should not exist as a Namespace key.
-        delattr(args, 'workspace')
-
-        if '<CONFIG_DIRECTORY>' in args.sqlite:
-            # Replace the placeholder variable with the actual value.
-            args.sqlite = args.sqlite.replace('<CONFIG_DIRECTORY>',
-                                              args.config_directory)
 
         # Convert relative sqlite file path to absolute.
-        if 'sqlite' in args:
-            args.sqlite = os.path.abspath(args.sqlite)
+        args.sqlite = os.path.abspath(args.sqlite)
 
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually
             # present, even though the default is suppressed in the optstring.
             setattr(args, 'postgresql', False)
-
-            # This is not needed by the database starter as we are
-            # running SQLite.
-            if 'dbdatadir' in args:
-                delattr(args, 'dbdatadir')
         else:
             # If --postgresql is given, --sqlite is useless.
             delattr(args, 'sqlite')
@@ -411,6 +375,10 @@ databases.
         # Indicate in args that we are in instance manager mode.
         if "list" in args or "stop" in args or "stop_all" in args:
             setattr(args, "instance_manager", True)
+
+        # Log directories
+        LOG.info(f"Workspace directory: {args.workspace}")
+        LOG.info(f"Config directory: {args.config_directory}")
 
         # If everything is fine, do call the handler for the subcommand.
         main(args)
@@ -827,7 +795,7 @@ def __instance_management(args):
             if 'stop' in args and \
                 not (i['port'] == args.view_port and
                      os.path.abspath(i['workspace']) ==
-                     os.path.abspath(args.config_directory)):
+                     os.path.abspath(args.workspace)):
                 continue
 
             try:
@@ -855,7 +823,7 @@ def __reload_config(args):
         if 'reload' in args and \
                 not (i['port'] == args.view_port and
                      os.path.abspath(i['workspace']) ==
-                     os.path.abspath(args.config_directory)):
+                     os.path.abspath(args.workspace)):
             continue
 
         try:
@@ -909,13 +877,6 @@ def server_init_start(args):
     if not host_check.check_zlib():
         raise ModuleNotFoundError("zlib is not available on the system!")
 
-    # WARNING
-    # In case of SQLite args.dbaddress default value is used
-    # for which the is_localhost should return true.
-    if is_localhost(args.dbaddress) and \
-            not os.path.exists(args.config_directory):
-        os.makedirs(args.config_directory)
-
     # Make sure the SQLite file can be created if it not exists.
     if 'sqlite' in args and \
             not os.path.isdir(os.path.dirname(args.sqlite)):
@@ -926,7 +887,7 @@ def server_init_start(args):
                  "option. The server will ask for users to authenticate!")
 
     context = webserver_context.get_context()
-    context.codechecker_workspace = args.config_directory
+    context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
     environ = env.extend(context.path_env_extra,
@@ -1012,8 +973,8 @@ def server_init_start(args):
 
     # Create the main database link from the arguments passed over the
     # command line.
-    cfg_dir = os.path.abspath(args.config_directory)
-    default_product_path = os.path.join(cfg_dir, 'Default.sqlite')
+    workspace_dir = os.path.abspath(args.workspace)
+    default_product_path = os.path.join(workspace_dir, 'Default.sqlite')
     create_default_product = 'sqlite' in args and \
                              not os.path.exists(default_product_path)
 
@@ -1087,15 +1048,16 @@ def server_init_start(args):
                     'version': context.package_git_tag}
 
     try:
-        server.start_server(args.config_directory,
-                            package_data,
-                            args.view_port,
-                            cfg_sql_server,
-                            args.listen_address,
-                            'force_auth' in args,
-                            args.skip_db_cleanup,
-                            context,
-                            environ)
+        return server.start_server(args.config_directory,
+                                   args.workspace,
+                                   package_data,
+                                   args.view_port,
+                                   cfg_sql_server,
+                                   args.listen_address,
+                                   'force_auth' in args,
+                                   args.skip_db_cleanup,
+                                   context,
+                                   environ)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe port number (%s) is "
@@ -1112,17 +1074,21 @@ def main(args):
     Setup a logger server based on the configuration and
     manage the CodeChecker server.
     """
-    workspace = (
-        args.config_directory
-        if "config_directory" in args and not hasattr(args, "instance_manager")
-        else None
-    )
 
     # Create workspace directory before logging is initialized.
-    if workspace and not os.path.exists(args.config_directory):
-        LOG.info("Creating non existing config directory: %s",
-                 args.config_directory)
-        os.makedirs(args.config_directory)
+    workspace = None
+    if not hasattr(args, "instance_manager"):
+        workspace = args.workspace
+
+        if not os.path.exists(workspace):
+            LOG.info("Creating non existing workspace directory: %s",
+                     workspace)
+            os.makedirs(workspace)
+
+        if not os.path.exists(args.config_directory):
+            LOG.info("Creating non existing config directory: %s",
+                     args.config_directory)
+            os.makedirs(args.config_directory)
 
     with logger.LogCfgServer(
         args.verbose if "verbose" in args else None, workspace=workspace

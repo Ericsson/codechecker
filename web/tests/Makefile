@@ -62,7 +62,7 @@ SHUTDOWN_GLOBAL_SERVERS_CMD = \
       echo "Shutting down server..."; \
       HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server -l; \
       HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server \
-        --config-directory $${TEST_ROOT} \
+        --workspace $${TEST_ROOT} \
         --port `cat "$${TEST_ROOT}/serverport"` --stop; \
       rm -f "$${TEST_ROOT}/serverport"; \
       HOME="$${TEST_ROOT}" ${CODECHECKER_CMD} server -l; \

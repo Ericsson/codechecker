@@ -163,9 +163,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -w WORKSPACE, --workspace WORKSPACE
                         Directory where CodeChecker can store analysis result
-                        related data, such as the database. (Cannot be
-                        specified at the same time with '--sqlite' or
-                        '--config-directory'.) (default:
+                        related data, such as the database. (default:
                         /home/<username>/.codechecker)
   -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
                         Directory where CodeChecker server should read server-
@@ -200,7 +198,7 @@ optional arguments:
 
 configuration database arguments:
   --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
-                        <CONFIG_DIRECTORY>/config.sqlite)
+                        <WORKSPACE_DIRECTORY>/config.sqlite)
   --postgresql          Specifies that a PostgreSQL database is to be used
                         instead of SQLite. See the "PostgreSQL arguments"
                         section on how to configure the database connection.
