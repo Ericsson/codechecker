@@ -3,7 +3,7 @@ import { BaseService } from "./_base.service";
 
 class ConfigurationService extends BaseService {
   constructor() {
-    super("Configuration", ServiceClient);
+    super("Configuration", ServiceClient, "v6.61", false);
   }
 }
 

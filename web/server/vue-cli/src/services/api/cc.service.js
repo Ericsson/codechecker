@@ -27,7 +27,7 @@ function extractTagWithRunName(runWithTagName) {
 
 class CodeCheckerService extends BaseService {
   constructor() {
-    super("CodeCheckerService", ServiceClient);
+    super("CodeCheckerService", ServiceClient,"v6.61", true);
   }
 
   getSameReports(bugHash) {

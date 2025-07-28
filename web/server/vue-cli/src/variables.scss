@@ -1,3 +1,6 @@
-$font-size-root: 14px;
+@use 'vuetify/lib/styles/settings' with (
+  $body-font-family: 'Roboto, sans-serif',
+  $font-size-root: 14px
+);
 
-@import '~vuetify/src/styles/styles.sass';
+@use 'sass:math';
