@@ -347,7 +347,7 @@ class SessionManager:
                         "which is not allowed, turning off provider.")
             return None
         protocol = "http(s|)"
-        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5})?(?<!/)"
+        website = r"[a-zA-Z0-9._-]+([:][0-9]{2,5})?(?<!`\\`)"
         paths = "login[/]OAuthLogin"
 
         pattern_str = (
