@@ -802,6 +802,7 @@ class CCSimpleHttpServer(HTTPServer):
                  server_address,
                  RequestHandlerClass,
                  config_directory,
+                 workspace_directory,
                  product_db_sql_server,
                  pckg_data,
                  context,
@@ -814,6 +815,7 @@ class CCSimpleHttpServer(HTTPServer):
         LOG.debug("Initializing HTTP server...")
 
         self.config_directory = config_directory
+        self.workspace_directory = workspace_directory
         self.www_root = pckg_data['www_root']
         self.doc_root = pckg_data['doc_root']
         self.version = pckg_data['version']
@@ -1147,10 +1149,11 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
         return f"[{str(self.address)}]:{self.port}"
 
 
-def start_server(config_directory: str, package_data, port: int,
-                 config_sql_server, listen_address: str,
-                 force_auth: bool, skip_db_cleanup: bool,
-                 context, check_env, machine_id: str) -> int:
+def start_server(config_directory: str, workspace_directory: str,
+                 package_data, port: int, config_sql_server,
+                 listen_address: str, force_auth: bool,
+                 skip_db_cleanup: bool, context, check_env,
+                 machine_id: str) -> int:
     """
     Starts the HTTP server to handle Web client and Thrift requests, execute
     background jobs.
@@ -1260,6 +1263,7 @@ def start_server(config_directory: str, package_data, port: int,
     http_server = server_clazz((listen_address, port),
                                RequestHandler,
                                config_directory,
+                               workspace_directory,
                                config_sql_server,
                                package_data,
                                context,
