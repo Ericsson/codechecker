@@ -86,7 +86,7 @@
 
       <template #item.runCount="{ item }">
         <v-chip
-          :color="getRunCountColor(item.runCount)"
+          :color="getRunDataColor(item.runCount)"
           dark
         >
           {{ item.runCount }}
@@ -155,9 +155,9 @@ export default {
 
   data() {
     const itemsPerPageOptions = [ 25 ];
-    const sortBy = this.$router.currentRoute.query["sort-by"];
-    const sortDesc = this.$router.currentRoute.query["sort-desc"];
-    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
+    const sortBy = this.$route.query["sort-by"];
+    const sortDesc = this.$route.query["sort-desc"];
+    const page = parseInt(this.$route.query["page"]) || 1;
 
     return {
       DBStatus,
@@ -250,7 +250,7 @@ export default {
   },
 
   created() {
-    this.productNameSearch = this.$router.currentRoute.query["name"] || null;
+    this.productNameSearch = this.$route.query["name"] || null;
 
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
       handleThriftError(isSuperUser => {
@@ -278,13 +278,16 @@ export default {
 
   methods: {
     fetchProducts() {
+
       this.loading = true;
 
       const productNameFilter = this.productNameSearch
         ? `*${this.productNameSearch}*` : null;
 
+
       prodService.getClient().getProducts(null, productNameFilter,
         handleThriftError(products => {
+
           this.products = products.map(product => {
             const description = product.description_b64 ?
               window.atob(product.description_b64) : null;
@@ -299,7 +302,6 @@ export default {
           }).sort(this.sortProducts);
 
           this.pagination.page = this.page;
-
           this.loading = false;
         }));
     },
@@ -357,7 +359,7 @@ export default {
       this.products = this.products.filter(p => p.id !== product.id);
     },
 
-    getRunCountColor(runCount) {
+    getRunDataColor(runCount) {
       if (runCount > 500) {
         return "red";
       } else if (runCount > 200) {
@@ -375,17 +377,17 @@ export default {
   white-space: normal;
 }
 
+:deep(.v-chip-max-width-wrapper .v-chip__content) {
+  line-height: 32px;
+  display: inline-block !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
 .v-chip-max-width-wrapper {
   display: inline-block;
   max-width: 150px;
-
-  ::v-deep .v-chip__content {
-    line-height: 32px;
-    display: inline-block !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    position: relative;
-  }
 }
 </style>
