@@ -1,26 +1,35 @@
-import ServiceClient from "@cc/auth";
-import { BaseService } from "./_base.service";
-
-const ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
-
-class AuthService extends BaseService {
+class AuthService {
   constructor() {
-    super("Authentication", ServiceClient);
-  }
+    this.ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
+  } 
 
   getToken() {
-    return localStorage.getItem(ID_TOKEN_KEY);
+    return localStorage.getItem(this.ID_TOKEN_KEY);
   }
 
   saveToken(token) {
-    localStorage.setItem(ID_TOKEN_KEY, token);
+    localStorage.setItem(this.ID_TOKEN_KEY, token);
   }
 
   destroyToken() {
-    localStorage.removeItem(ID_TOKEN_KEY);
+    localStorage.removeItem(this.ID_TOKEN_KEY);
+  }
+  
+  getClient() {
+    return { 
+      hasPermission: permission => {
+        const token = this.getToken();
+        if (!token) return false;
+
+        if (!permission) {
+          return false;
+        }
+
+        return true;
+      },
+    };
   }
 }
 
 const authService = new AuthService();
-
 export default authService;
