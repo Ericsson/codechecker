@@ -89,11 +89,9 @@ def remove_unused_files(product):
                   product.endpoint)
         try:
             bpe_files = session.query(BugPathEvent.file_id) \
-                .group_by(BugPathEvent.file_id) \
-                .subquery()
+                .group_by(BugPathEvent.file_id)
             brp_files = session.query(BugReportPoint.file_id) \
-                .group_by(BugReportPoint.file_id) \
-                .subquery()
+                .group_by(BugReportPoint.file_id)
 
             files_to_delete = session.query(File.id) \
                 .filter(File.id.notin_(bpe_files), File.id.notin_(brp_files))
@@ -111,8 +109,7 @@ def remove_unused_files(product):
                 LOG.debug("%d dangling files deleted.", total_count)
 
             files = session.query(File.content_hash) \
-                .group_by(File.content_hash) \
-                .subquery()
+                .group_by(File.content_hash)
 
             session.query(FileContent) \
                 .filter(FileContent.content_hash.notin_(files)) \
@@ -137,8 +134,7 @@ def remove_unused_comments(product):
                 .join(Report,
                       Comment.bug_hash == Report.bug_id,
                       isouter=True) \
-                .filter(Report.id.is_(None)) \
-                .subquery()
+                .filter(Report.id.is_(None))
             count = session.query(Comment) \
                 .filter(Comment.id.in_(sub)) \
                 .delete(synchronize_session=False)
@@ -192,8 +188,7 @@ def remove_unused_analysis_info(product):
                     isouter=True) \
                 .filter(
                     RunHistoryAnalysisInfo.c.analysis_info_id.is_(None),
-                    ReportAnalysisInfo.c.analysis_info_id.is_(None)) \
-                .subquery()
+                    ReportAnalysisInfo.c.analysis_info_id.is_(None))
 
             count = session.query(AnalysisInfo) \
                 .filter(AnalysisInfo.id.in_(to_delete)) \

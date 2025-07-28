@@ -28,6 +28,7 @@ import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, union_all, select, bindparam, literal_column, case, cast
 from sqlalchemy.orm import contains_eager
+from sqlalchemy.types import ARRAY, String
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -1162,8 +1163,7 @@ def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
             .outerjoin(
                 RunHistory,
                 RunHistory.id == AnalyzerStatistic.run_history_id) \
-            .group_by(RunHistory.run_id) \
-            .subquery()
+            .group_by(RunHistory.run_id)
 
         query = query.filter(
             AnalyzerStatistic.run_history_id.in_(history_ids_subq))
@@ -1833,8 +1833,9 @@ class ThriftRequestHandler:
                         base_hashes, run_ids, tag_ids)
 
                 if self._product.driver_name == 'postgresql':
-                    new_hashes = select([func.unnest(report_hashes)
-                                         .label('bug_id')]) \
+                    new_hashes = select([
+                        func.unnest(cast(report_hashes, ARRAY(String)))
+                            .label('bug_id')]) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -1850,8 +1851,10 @@ class ThriftRequestHandler:
                             select([bindparam('bug_id' + str(i), h)
                                     .label('bug_id')])
                             for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query]).except_(base_hashes)
-                        new_hashes.extend([res[0] for res in session.query(q)])
+                        q = select([new_hashes_query.subquery()]) \
+                            .except_(base_hashes)
+                        new_hashes.extend([
+                            res[0] for res in session.query(q.subquery())])
 
                     return new_hashes
             elif diff_type == DiffType.RESOLVED:

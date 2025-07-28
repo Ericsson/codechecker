@@ -27,7 +27,7 @@ def upgrade():
     analysis_info_tbl = op.create_table(
         'analysis_info',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('analyzer_command', sa.Binary(), nullable=True),
+        sa.Column('analyzer_command', sa.LargeBinary(), nullable=True),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_analysis_info'))
     )
 
