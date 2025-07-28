@@ -1,26 +1,27 @@
-const { DefinePlugin } = require("webpack");
-const { merge } = require("webpack-merge");
+const { DefinePlugin } = require('webpack');
+const { merge } = require('webpack-merge');
 
-const common = require("./webpack.common.js");
+const common = require('./webpack.common.js');
 
 const CC_SERVICE_ENDPOINTS = [
-  "Authentication",
-  "Configuration",
-  "CodeCheckerService",
-  "Products",
-  "ServerInfo"
+  'Authentication',
+  'Configuration',
+  'CodeCheckerService',
+  'Products',
+  'ServerInfo'
 ];
 
-const CC_THRIFT_API_HOST = process.env.CC_THRIFT_API_HOST || "http://localhost";
+const CC_THRIFT_API_HOST =
+  process.env.CC_THRIFT_API_HOST || 'http://localhost';
 const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8001;
 
 module.exports = merge(common, {
-  mode: "development",
+  mode: 'development',
   output: {
-    filename: "[name].[contenthash].js",
+    filename: '[name].[contenthash].js',
     publicPath: "/"
   },
-  devtool: "inline-source-map",
+  devtool: 'inline-source-map',
   devServer: {
     port: 8080,
     hot: true,
