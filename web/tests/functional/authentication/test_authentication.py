@@ -76,6 +76,26 @@ class DictAuth(unittest.TestCase):
             auth_client.performLogin("Username:Password", None)
             print("Empty credentials gave us a token!")
 
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password", "colon:my:pass:word")
+            print("Incorrect password gave us a token!")
+
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password", "colon:mypassword")
+            print("Incorrect password gave us a token!")
+
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password",
+                                     "hashtest1:hashtest1")
+            print(("Pre-saved credentials with invalid "
+                   "hash algorithm gave us a token!"))
+
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password",
+                                     "hashtest2:hashtest2")
+            print("Pre-saved credentials with invalid "
+                  "hash value gave us a token!")
+
         # A non-authenticated session should return an empty user.
         user = auth_client.getLoggedInUser()
         self.assertEqual(user, "")
@@ -136,14 +156,22 @@ class DictAuth(unittest.TestCase):
 
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
-        self.session_token = auth_client.performLogin(
-            "Username:Password", "colon:my:password")
-        self.assertIsNotNone(self.session_token,
-                             "Valid credentials didn't give us a token!")
+        valid_credentials = ["colon:my:password",
+                             "colon123:my:password",
+                             "hashtest3:hashtest3",
+                             "hashtest4:hashtest4",
+                             "hashtest5:hashtest5"]
 
-        result = auth_client.destroySession()
+        for credential in valid_credentials:
+            self.session_token = auth_client.performLogin(
+                "Username:Password", credential)
+            self.assertIsNotNone(self.session_token,
+                                 "Valid credentials didn't give us a token!")
 
-        self.assertTrue(result, "Server did not allow us to destroy session.")
+            result = auth_client.destroySession()
+
+            self.assertTrue(result,
+                            "Server did not allow us to destroy session.")
 
         # Kill the session token that was created by login() too.
         codechecker.logout(self._test_cfg['codechecker_cfg'],
