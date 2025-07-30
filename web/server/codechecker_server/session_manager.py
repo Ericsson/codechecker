@@ -422,18 +422,19 @@ class SessionManager:
         env_re = re.compile(r'^\$ENV:[a-zA-Z0-9_-]+\$$')
 
         def resolve_variables_failed(var):
-            if secret_re.search(var) and not os.path.exists(self.__secrets_file):
+            if (secret_re.search(var) and
+                    not os.path.exists(self.__secrets_file)):
                 LOG.error("Secrets were used in server configuration file, "
                           f"but {self.__secrets_file} does not exist!")
 
             raise ValueError(f"Variable '{var}' could not "
-                "be resolved in server configuration file.")
+                             "be resolved in server configuration file.")
 
         def resolve_variables(d):
             items = d.items() if isinstance(d, dict) else enumerate(d)
 
             for k, v in items:
-                if isinstance(v, dict) or isinstance(v, list):
+                if isinstance(v, (dict, list)):
                     resolve_variables(v)
                 elif isinstance(v, str):
                     secret_matched = secret_re.search(v)
