@@ -444,7 +444,7 @@ class SessionManager:
                         if secret_matched and var_name in secrets_dict:
                             d[k] = secrets_dict[var_name]
                         elif env_matched and var_name in os.environ:
-                            d[k] = os.environ.get(var_name)
+                            d[k] = os.environ[var_name]
                         else:
                             resolve_variables_failed(v)
 
