@@ -129,6 +129,16 @@ Then, secrets can be defined in `server_secrets.json`, as an example:
   "NAME_OF_SECRET": "MySecurePassword123"
 }
 ```
+Alternatively, one can also define entire sections as a secret, for instance:
+```json
+{
+  "NAME_OF_SECRET": {
+    "enabled" : true,
+    "client_id" : "<ExampleClientID>",
+    "client_secret": "<ExampleClientSecret>"
+  }
+}
+```
 
 ### Environmental variables
 Alternatively, CodeChecker can also read sensitive data from environmental variables.
