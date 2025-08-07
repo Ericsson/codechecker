@@ -214,7 +214,7 @@ def setup_product_client(protocol, host, port, auth_client=None,
         # Attach to the server-wide product service.
         product_client = ThriftProductHelper(
             protocol, host, port,
-            '/v' + CLIENT_API + '/Products',
+            f"/v{CLIENT_API}/Products",
             session_token,
             lambda: get_new_token(protocol, host, port, cred_manager))
     else:
@@ -269,6 +269,6 @@ def setup_client(product_url) -> ThriftResultsHelper:
 
     return ThriftResultsHelper(
         protocol, host, port,
-        '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
+        f"/{product_name}/v{CLIENT_API}/CodeCheckerService",
         session_token,
         lambda: get_new_token(protocol, host, port, cred_manager))

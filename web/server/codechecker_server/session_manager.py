@@ -20,7 +20,7 @@ from typing import Optional
 
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json
+from codechecker_common.util import generate_random_token, load_json
 
 from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
@@ -61,18 +61,25 @@ def get_worker_processes(scfg_dict):
     """
     Return number of worker processes from the config dictionary.
 
-    Return 'worker_processes' field from the config dictionary or returns the
-    default value if this field is not set or the value is negative.
+    Return 'worker_processes' and 'background_worker_processes' fields from
+    the config dictionary or returns the default value if this field is not
+    set or the value is negative.
     """
     default = cpu_count()
-    worker_processes = scfg_dict.get('worker_processes', default)
+    worker_processes = scfg_dict.get("worker_processes", default)
+    background_worker_processes = scfg_dict.get("background_worker_processes",
+                                                default)
 
-    if worker_processes < 0:
+    if not worker_processes or worker_processes < 0:
         LOG.warning("Number of worker processes can not be negative! Default "
                     "value will be used: %s", default)
         worker_processes = default
+    if not background_worker_processes or background_worker_processes < 0:
+        LOG.warning("Number of task worker processes can not be negative! "
+                    "Default value will be used: %s", worker_processes)
+        background_worker_processes = worker_processes
 
-    return worker_processes
+    return worker_processes, background_worker_processes
 
 
 class _Session:
@@ -184,7 +191,8 @@ class SessionManager:
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(self.scfg_dict)
+        self.__worker_processes, self.__background_worker_processes = \
+            get_worker_processes(self.scfg_dict)
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
@@ -467,6 +475,10 @@ class SessionManager:
     @property
     def worker_processes(self):
         return self.__worker_processes
+
+    @property
+    def background_worker_processes(self) -> int:
+        return self.__background_worker_processes
 
     def get_realm(self):
         return {
@@ -822,7 +834,7 @@ class SessionManager:
             return False
 
         # Generate a new token and create a local session.
-        token = generate_session_token()
+        token = generate_random_token(32)
         user_name = validation.get('username')
         groups = validation.get('groups', [])
         is_root = validation.get('root', False)
