@@ -17,11 +17,19 @@ Table of Contents
     * [Size of the compilation database](#size-of-the-compilation-database)
 * [Authentication](#authentication)
 
-## Number of worker processes
+## Number of API worker processes
 The `worker_processes` section of the config file controls how many processes
 will be started on the server to process API requests.
 
 *Default value*: <CPU count>
+
+The server needs to be restarted if the value is changed in the config file.
+
+### Number of task worker processes
+The `background_worker_processes` section of the config file controls how many
+processes will be started on the server to process background jobs.
+
+*Default value*: Fallback to same amount as `worker_processes`.
 
 The server needs to be restarted if the value is changed in the config file.
 
