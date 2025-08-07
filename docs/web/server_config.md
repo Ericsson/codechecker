@@ -115,3 +115,32 @@ By default the server will use the value from your host configured by the
 ## Authentication
 For authentication configuration options and which options can be reloaded see
 the [Authentication](authentication.md) documentation.
+
+## Secrets
+
+### server_secrets.json
+Optionally, one can store sensitive data (e.g., passwords, secret tokens) outside
+of `server_config.json`. To do this, create a separate `server_secrets.json` file 
+in the server's *workspace* folder. In `server_config.json`, replace sensitive data 
+with `$SECRET:NAME_OF_SECRET$`.
+Then, secrets can be defined in `server_secrets.json`, as an example:
+```json
+{
+  "NAME_OF_SECRET": "MySecurePassword123"
+}
+```
+Alternatively, one can also define entire sections as a secret, for instance:
+```json
+{
+  "NAME_OF_SECRET": {
+    "enabled" : true,
+    "client_id" : "<ExampleClientID>",
+    "client_secret": "<ExampleClientSecret>"
+  }
+}
+```
+
+### Environmental variables
+Alternatively, CodeChecker can also read sensitive data from environmental variables.
+To do this, replace sensitive data in `server_config.json` with `$ENV:VARIABLE_NAME$`.
+In this case, value will be read from environmental variable `VARIABLE_NAME`.
