@@ -71,15 +71,16 @@
                     ...{
                       'detection-status': undefined,
                       'run': runName,
+                    },
+                    ...(reportType.id === 'new' ? {
+                      'diff-type': 'New',
                       'newcheck': runName,
                       'open-reports-date': dateTimeToStr(columnData.date[0]),
                       'compared-to-open-reports-date':
                         dateTimeToStr(columnData.date[1]),
-                    },
-                    ...(reportType.id === 'new' ? {
-                      'diff-type': 'New'
                     } : {
-                      'diff-type': 'Resolved',
+                      'fixed-after': dateTimeToStr(columnData.date[0]),
+                      'fixed-before': dateTimeToStr(columnData.date[1])
                     })
                   }
                 }"
