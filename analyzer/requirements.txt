@@ -1,6 +1,6 @@
 lxml==5.3.0
 portalocker==3.1.1
-psutil==5.8.0
+psutil==5.9.8
 PyYAML==6.0.1
 types-PyYAML==6.0.12.12
 sarif-tools==3.0.4
