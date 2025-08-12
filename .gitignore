@@ -52,3 +52,7 @@ TAGS
 
 # mkdocs
 site
+
+# Node.js / MCP server dependencies
+node_modules/
+package-lock.json
