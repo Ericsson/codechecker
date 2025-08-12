@@ -9,26 +9,38 @@
 Handle Thrift requests for authentication.
 """
 
+from authlib.integrations.requests_client import OAuth2Session
+from authlib.common.security import generate_token
+from authlib.jose import JsonWebToken
 
+from urllib.parse import urlparse, parse_qs
+
+import datetime
 import json
 import codechecker_api_shared
+import random
+import sqlalchemy
+import string
 
 from collections import defaultdict
 
 from codechecker_api.Authentication_v6.ttypes import AccessControl, \
-    AuthorisationList, HandshakeInformation, Permissions, SessionTokenData
+    AuthorisationList, HandshakeInformation, Permissions, \
+    PersonalAccessToken, SessionTokenData
 
 from codechecker_common.logger import get_logger
 
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Product, ProductPermission, Session, \
+    OAuthSession, PersonalAccessToken as PersonalAccessTokenDB, \
     SystemPermission
 from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
     require_manager, require_permission
 from ..server import permissions
 from ..session_manager import generate_session_token
+
 
 LOG = get_logger('server')
 
@@ -94,7 +106,7 @@ class ThriftAuthHandler:
 
     @timeit
     def getAcceptedAuthMethods(self):
-        return ["Username:Password"]
+        return ["Username:Password", "oauth"]
 
     @timeit
     def getAccessControl(self):
@@ -143,6 +155,143 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
+    def __insertOAuthSession(self,
+                             state: str,
+                             code_verifier: str,
+                             provider: str):
+        """
+        Removes the expired oauth sessions #Subject to change.
+        Inserts a new row of oauth data into database containing:
+        state: a randomly generated string of symbols
+        code_verifyer: a randomly generated string that will be hashed
+        provider: OAuth provider's name
+        """
+        # TODO remove this purge sesisons system to another place
+        # where it will happen semi regularly
+        if not all(isinstance(arg, str) for arg in (state,
+                                                    code_verifier,
+                                                    provider)):
+            raise TypeError("All OAuth fields must be strings")
+        try:
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with DBSession(self.__config_db) as session:
+                session.query(OAuthSession) \
+                    .filter(OAuthSession.expires_at < date) \
+                    .delete()
+                session.commit()
+        except Exception as exc:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data removal failed. Please try again.') from exc
+
+        try:
+            with DBSession(self.__config_db) as session:
+                LOG.debug(f"State {state} insertion started.")
+                date = (datetime.datetime.now() +
+                        datetime.timedelta(minutes=15))
+
+                oauth_session_entry = OAuthSession(state=state,
+                                                   code_verifier=code_verifier,
+                                                   expires_at=date,
+                                                   provider=provider)
+                session.add(oauth_session_entry)
+                session.commit()
+
+                LOG.debug(f"State {state} inserted successfully.")
+        except Exception as exc:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                'OAuth data insertion failed. Please try again.') from exc
+
+    @timeit
+    def getOauthProviders(self):
+        return self.__manager.get_oauth_providers()
+
+    @timeit
+    def createLink(self, provider):
+        """
+        Create a link what the user will be redirected to
+        login via specified provider.
+        And inserts state, code, pkce_verifier in oauth table.
+        """
+        try:
+            oauth_config = self.__manager.get_oauth_config(provider)
+            if not oauth_config.get('enabled'):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    f"OAuth authentication is not enabled "
+                    f"for provider: {provider}")
+
+            stored_state = generate_token()
+            client_id = oauth_config["client_id"]
+            client_secret = oauth_config["client_secret"]
+            scope = oauth_config["scope"]
+            authorization_url = oauth_config["authorization_url"]
+            callback_url = oauth_config["callback_url"]
+            pkce_verifier = generate_token(48)
+
+            oauth2_session = OAuth2Session(
+                client_id,
+                client_secret,
+                scope=scope,
+                redirect_uri=callback_url,
+                code_challenge_method='S256'
+                )
+
+            # each provider has different requirements
+            # for requesting refresh token
+            if provider == "google":
+                url, state = oauth2_session.create_authorization_url(
+                    url=authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier,
+                    access_type='offline',
+                    prompt='consent'
+                )
+            else:
+                url, state = oauth2_session.create_authorization_url(
+                    authorization_url,
+                    state=stored_state,
+                    code_verifier=pkce_verifier
+                )
+
+            self.__insertOAuthSession(state=state,
+                                      code_verifier=pkce_verifier,
+                                      provider=provider)
+        except Exception as ex:
+            LOG.error("OAuth createLink failed: %s", str(ex))
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "createLink process failed.")
+        return url
+
+    @timeit
+    def __getOAuthRow(self, state):
+        """
+        Returns OAuth row from table.
+        """
+        try:
+            with DBSession(self.__config_db) as session:
+                state_db, code_verifier_db, provider_db, expires_at_db = \
+                    session.query(OAuthSession.state,
+                                  OAuthSession.code_verifier,
+                                  OAuthSession.provider,
+                                  OAuthSession.expires_at) \
+                    .filter(OAuthSession.state == state) \
+                    .first()
+                if not state_db or not code_verifier_db \
+                        or not provider_db or not expires_at_db:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth querying received empty values.")
+        except Exception as ex:
+            LOG.error("OAuth data fetch from database failed.: %s", str(ex))
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth data fetch from database failed.")
+        return state_db, code_verifier_db, provider_db, expires_at_db
+
+    @timeit
     def performLogin(self, auth_method, auth_string):
         if not auth_string:
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -162,11 +311,209 @@ class ThriftAuthHandler:
                 msg = f"Invalid credentials supplied for user " \
                     f"'{user_name}'. Refusing authentication!"
 
+                auth_msg = self.__manager.get_failed_auth_message().get('msg')
+                if auth_msg:
+                    msg += f"\nNote: {auth_msg}"
+
                 LOG.warning(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
 
+        # Example of auth_string for OAuth
+        # The following lines represent one continuous string:
+        # github@http://localhost:8080/login/OAuthLogin/github
+        #   ?code=ZzQ2YzE5YjMtNDJlOS0&state=3X1RzK8pT6V9jQ2wFgHfMw
+        elif auth_method == "oauth":
+
+            provider, url = auth_string.split("@", 1)
+            url = url.rstrip("#")
+
+            oauth_config = self.__manager.get_oauth_config(provider)
+            if not oauth_config.get('enabled'):
+                LOG.error("OAuth authentication is " +
+                          "not enabled for provider: %s", provider)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth authentication is not enabled.")
+
+            date_time = datetime.datetime.now()
+            parsed_query = parse_qs(urlparse(url).query)
+            state = parsed_query.get("state")[0]
+            code_verifier_db = None
+            state_db = None
+            provider_db = None
+            expires_at_db = None
+
+            state_db, code_verifier_db, provider_db, expires_at_db \
+                = self.__getOAuthRow(state=state)
+
+            mismatch = False
+            if state_db != state:
+                mismatch = True
+                LOG.error("State mismatch.")
+            if provider_db != provider:
+                mismatch = True
+                LOG.error("Provider mismatch.")
+            if date_time > expires_at_db:
+                mismatch = True
+                LOG.error("Expiery time mismatch.")
+            if mismatch:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth data mismatch.")
+
+            client_id = oauth_config["client_id"]
+            client_secret = oauth_config["client_secret"]
+            template = oauth_config.get("template", "default")
+            scope = oauth_config["scope"]
+            token_url = oauth_config["token_url"]
+            user_info_url = oauth_config["user_info_url"]
+            callback_url = oauth_config["callback_url"]
+            LOG.info("OAuth configuration loaded for provider: %s", provider)
+            oauth2_session = None
+            try:
+                oauth2_session = OAuth2Session(
+                    client_id,
+                    client_secret,
+                    scope=scope,
+                    redirect_uri=callback_url,
+                    code_challenge_method='S256'
+                    )
+
+            except Exception as ex:
+                LOG.error("OAuth2Session creation failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth2Session creation failed.")
+
+            try:
+                # code_verifier_db or PKCE is't supported by github
+                # if it will be fixed the code should adjust automatically
+                oauth_token = oauth2_session.fetch_token(
+                    url=token_url,
+                    authorization_response=url,
+                    code_verifier=code_verifier_db)
+
+                # validate the token is not empty or incomplete
+                if oauth_token.get('access_token') is None or \
+                        oauth_token.get('refresh_token') is None or \
+                        oauth_token.get('token_type') is None or \
+                        oauth_token.get('scope') is None or \
+                        oauth_token.get('expires_in') is None:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                        "OAuth token fetch failed. Token is empty or "
+                        "incomplete.")
+
+                current_date = datetime.datetime.now()
+                access_token_expires_at = current_date + \
+                    datetime.timedelta(seconds=oauth_token['expires_in'])
+            except Exception as ex:
+                LOG.error("Oauth Token fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth Token fetch failed.")
+            LOG.info("OAuth Token fetched successfully"
+                     f" for provider: {provider}")
+
+            try:
+                user_info = oauth2_session.get(user_info_url).json()
+
+                # request group memberships for Microsoft
+                groups = []
+                if template == 'ms_entra/v2.0':
+                    # decoding
+                    id_token = oauth_token['id_token']
+                    jwks_url = oauth_config["jwks_url"]
+
+                    jwks_response = oauth2_session.get(jwks_url)
+                    jwks_response.raise_for_status()
+                    jwks_fetched = jwks_response.json()
+
+                    jwt_decoder = JsonWebToken(['RS256'])
+                    claims = jwt_decoder.decode(id_token, key=jwks_fetched)
+                    claims.validate()
+
+                    user_groups_url = oauth_config["user_groups_url"]
+                    response = oauth2_session.get(user_groups_url).json()
+
+                    morePages = True
+                    while morePages:
+                        for group in response["value"]:
+                            if group.get("onPremisesSyncEnabled") and \
+                                    group.get("securityEnabled"):
+                                groups.append(group["displayName"])
+                        # paging of groups
+                        morePages = "@odata.nextLink" in response
+                        if morePages:
+                            response = oauth2_session.get(
+                                response["@odata.nextLink"]).json()
+
+            except Exception as ex:
+                LOG.error("User info fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User info fetch failed.")
+
+            username_key = oauth_config.get(
+                "user_info_mapping", {}).get("username")
+
+            # if the provider is github it fetches primary email
+            # from another api endpoint to maintain username as email
+            # consistency between GitHub and other providers
+            try:
+                if template == "github/v1":
+                    if username_key == "email":
+                        if "localhost" not in \
+                                user_info_url:
+                            user_emails_url = \
+                                oauth_config["user_emails_url"]
+                            for email in oauth2_session \
+                                    .get(user_emails_url).json():
+                                if email['primary']:
+                                    username = email['email']
+                                    LOG.info("Primary email found: %s",
+                                             username)
+                    else:
+                        username = user_info.get("login")
+                elif template == "google/v1":
+                    username = user_info.get("email")
+                elif template == "ms_entra/v2.0":
+                    if username_key == "username":
+                        username = claims.get("Signum")
+                    else:
+                        username = user_info.get("mail")
+
+                LOG.debug(f"groups fetched for {username}, are: {groups}")
+
+                LOG.info("Username fetched, for username: %s", username)
+            except Exception as ex:
+                LOG.error("Username fetch failed: %s", str(ex))
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Username fetch failed, error: %s.", str(ex))
+
+            try:
+                access_token = oauth_token['access_token']
+                refresh_token = oauth_token['refresh_token']
+            except Exception as ex:
+                LOG.error("access or refresh token data is empty")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Token information fetched incomplete: %s.", str(ex))
+            try:
+                codecheker_session = self.__manager.create_session_oauth(
+                    provider, username, access_token, access_token_expires_at,
+                    refresh_token, groups)
+                return codecheker_session.token
+            except Exception as ex:
+                LOG.error("OAuth session creation has gone wrong")
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Session creation error: %s.", str(ex))
+
+        LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
@@ -360,38 +707,31 @@ class ThriftAuthHandler:
     def newToken(self, description):
         """
         Generate a new personal access token with the given description.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
-        with DBSession(self.__config_db) as session:
-            token = generate_session_token()
-            user = self.getLoggedInUser()
-            groups = ';'.join(self.__auth_session.groups)
-            session_token = Session(token, user, groups, description, False)
+        name = ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
+        access_token = self.newPersonalAccessToken(name, description)
 
-            session.add(session_token)
-            session.commit()
-
-            LOG.info("New personal access token '%s...' has been generated "
-                     "by '%s'.", token[:5], self.getLoggedInUser())
-
-            return SessionTokenData(token,
-                                    description,
-                                    str(session_token.last_access))
+        return SessionTokenData(
+            access_token.token,
+            description,
+            access_token.lastAccess)
 
     @timeit
     def removeToken(self, token):
         """
         Removes the given personal access token of the logged in user.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
         with DBSession(self.__config_db) as session:
             # Check if the given token is a personal access token so it can be
             # removed.
             user = self.getLoggedInUser()
-            num_of_removed = session.query(Session) \
+            num_of_removed = session.query(PersonalAccessTokenDB) \
                 .filter(Session.user_name == user) \
                 .filter(Session.token == token) \
-                .filter(Session.can_expire.is_(False)) \
                 .delete(synchronize_session=False)
             session.commit()
 
@@ -413,20 +753,130 @@ class ThriftAuthHandler:
     def getTokens(self):
         """
         Get available personal access tokens of the logged in user.
+        DEPRECATED: As of 6.26.0 this function is getting deprecated.
         """
         self.__require_privilaged_access()
         with DBSession(self.__config_db) as session:
             user = self.getLoggedInUser()
-            sessionTokens = session.query(Session) \
-                .filter(Session.user_name == user) \
-                .filter(Session.can_expire.is_(False)) \
+            accessTokens = session.query(PersonalAccessTokenDB) \
+                .filter(PersonalAccessTokenDB.user_name == user) \
                 .all()
 
             result = []
-            for t in sessionTokens:
+            for t in accessTokens:
                 result.append(SessionTokenData(
-                    t.token,
+                    "",
                     t.description,
-                    str(t.last_access)))
+                    str(t.last_access)
+                ))
+
+            return result
+
+    @timeit
+    def getMaxTokenExpiration(self):
+        return self.__manager.get_max_auth_token_expiration()
+
+    @timeit
+    def newPersonalAccessToken(self, name, description, expiration=365):
+        self.__require_privilaged_access()
+        max_token_length = self.__manager.get_max_auth_token_expiration()
+        if expiration not in range(1, max_token_length + 1):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "Invalid expiration length. The length must be "
+                f"between 1 and {max_token_length}!")
+
+        with DBSession(self.__config_db) as session:
+            auth_session = session.query(Session) \
+                .filter(Session.token == self.__auth_session.token) \
+                .first()
+
+            if not auth_session:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "Invalid session token. Make sure to login to the "
+                    "CodeChecker server first.")
+
+            auth_session = Session(
+                generate_session_token(),
+                auth_session.user_name,
+                auth_session.groups,
+                auth_session.description)
+
+            session.add(auth_session)
+            session.flush()
+
+            token = generate_session_token()
+            user = self.getLoggedInUser()
+            name = name.strip()
+            access_token = PersonalAccessTokenDB(
+                user, name, token, description,
+                auth_session.groups, expiration)
+
+            session.add(access_token)
+
+            try:
+                session.commit()
+            except sqlalchemy.exc.IntegrityError:
+                # pylint: disable=raise-missing-from
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"Personal access token with name '{name}' already "
+                    "exists.")
+
+            LOG.info(
+                "New personal access token '%s...' has been generated by "
+                "'%s'.", token, user)
+
+            return PersonalAccessToken(
+                token,
+                name,
+                description,
+                str(access_token.last_access),
+                str(access_token.expiration))
+
+    @timeit
+    def removePersonalAccessToken(self, name):
+        self.__require_privilaged_access()
+        with DBSession(self.__config_db) as session:
+            user = self.getLoggedInUser()
+            personal_access_token_q = session.query(PersonalAccessTokenDB) \
+                .filter(PersonalAccessTokenDB.user_name == user) \
+                .filter(PersonalAccessTokenDB.token_name == name)
+            personal_access_token = personal_access_token_q.first()
+
+            if not personal_access_token:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"Personal access token with name '{name}' was not found "
+                    f"in the database for the user '{user}'.")
+
+            personal_access_token_q.delete()
+            session.commit()
+
+            LOG.info(
+                "Personal access token with name '%s' has been removed by "
+                "'%s'.", name, user)
+
+            return True
+
+    @timeit
+    def getPersonalAccessTokens(self):
+        self.__require_privilaged_access()
+        with DBSession(self.__config_db) as session:
+            user = self.getLoggedInUser()
+            accessTokens = session.query(PersonalAccessTokenDB) \
+                .filter(PersonalAccessTokenDB.user_name == user) \
+                .all()
+
+            result = []
+            for t in accessTokens:
+                result.append(PersonalAccessToken(
+                    "",
+                    t.token_name,
+                    t.description,
+                    str(t.last_access),
+                    str(t.expiration)
+                ))
 
             return result

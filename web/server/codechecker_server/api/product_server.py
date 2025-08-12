@@ -22,6 +22,7 @@ import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
+from codechecker_common.util import path_for_fake_root
 
 from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
@@ -122,8 +123,12 @@ class ThriftProductHandler:
 
         args = {'config_db_session': session,
                 'productID': product.id}
-        product_access = permissions.require_permission(
+
+        has_product_permission = permissions.require_permission(
             permissions.PRODUCT_VIEW, args, self.__auth_session)
+        has_global_permission = permissions.require_permission(
+            permissions.PERMISSION_VIEW, args, self.__auth_session)
+        has_access_permission = has_product_permission or has_global_permission
 
         admin_perm_name = permissions.PRODUCT_ADMIN.name
         admins = session.query(ProductPermission). \
@@ -153,7 +158,7 @@ class ThriftProductHandler:
             runCount=product.num_of_runs,
             latestStoreToProduct=latest_storage_date,
             connected=connected,
-            accessible=product_access,
+            accessible=has_access_permission,
             administrating=self.__administrating(args),
             databaseStatus=server_product.db_status,
             admins=[admin.name for admin in admins],
@@ -259,9 +264,10 @@ class ThriftProductHandler:
         Get the product configuration --- WITHOUT THE DB PASSWORD --- of the
         given product.
         """
-        self.__require_permission([permissions.PRODUCT_VIEW], {
-            'productID': product_id
-        })
+        self.__require_permission([
+            permissions.PRODUCT_VIEW,
+            permissions.PERMISSION_VIEW
+        ], {'productID': product_id})
 
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
@@ -285,7 +291,14 @@ class ThriftProductHandler:
                 db_host = ""
                 db_port = 0
                 db_user = ""
-                db_name = args['sqlite']
+                # Strip the config directory from the path, to allow for
+                # easier editing
+                config_dir = \
+                    os.path.normpath(self.__server.config_directory) + "/"
+                if args['sqlite'].startswith(config_dir):
+                    db_name = args['sqlite'][len(config_dir):]
+                else:
+                    db_name = args['sqlite']
 
             dbc = ttypes.DatabaseConnection(
                 engine=db_engine,
@@ -406,6 +419,18 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
+        # For SQLite-backed databases, make all paths relative. To create a
+        # SQLite-backed product in a different directory, we follow
+        # symlinks, but not when storing the path.
+        if dbc.engine == 'sqlite':
+            if os.path.isabs(dbc.database):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "SQLite database must be given by relative path!")
+
+            dbc.database = path_for_fake_root(os.path.join("/", dbc.database),
+                                              self.__server.config_directory)
+
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
         if db_in_use:
@@ -425,12 +450,6 @@ class ThriftProductHandler:
             if product.displayedName_b64 else product.endpoint
         description = convert.from_b64(product.description_b64) \
             if product.description_b64 else None
-
-        if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
-            # Transform the database relative path to be under the
-            # server's config directory.
-            dbc.database = os.path.join(self.__server.config_directory,
-                                        dbc.database)
 
         # Transform arguments into a database connection string.
         if dbc.engine == 'postgresql':
@@ -484,6 +503,16 @@ class ThriftProductHandler:
             # Connect and create the database schema.
             self.__server.add_product(orm_prod, init_db=True)
             connection_wrapper = self.__server.get_product(product.endpoint)
+
+            if connection_wrapper is None:
+                err_msg = "Failed to add product."
+                if dbc.engine == 'sqlite':
+                    err_msg += " The SQLite database file must be under the " \
+                               "server workspace directory."
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    err_msg)
+
             if connection_wrapper.last_connection_failure:
                 msg = \
                     f"The configured connection for '/{product.endpoint}' " \
@@ -568,6 +597,21 @@ class ThriftProductHandler:
                 LOG.info("User renamed product '%s' to '%s'",
                          product.endpoint, new_config.endpoint)
 
+            # For SQLite-backed databases, make all paths relative. To create a
+            # SQLite-backed product in a different directory, we follow
+            # symlinks, but not when storing the path. Old absolute paths are
+            # preserved as is, if they are unchanged.
+
+            old_args = SQLServer.connection_string_to_args(product.connection)
+            if dbc.engine == 'sqlite' and dbc.database != old_args['sqlite']:
+                if os.path.isabs(dbc.database):
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "SQLite database must be given by relative path!")
+                dbc.database = path_for_fake_root(
+                    os.path.join("/", dbc.database),
+                    self.__server.config_directory)
+
             # Some values come encoded as Base64, decode these.
             displayed_name = convert.from_b64(new_config.displayedName_b64) \
                 if new_config.displayedName_b64 \
@@ -576,12 +620,6 @@ class ThriftProductHandler:
                 if new_config.description_b64 else None
 
             confidentiality = confidentiality_str(new_config.confidentiality)
-
-            if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
-                # Transform the database relative path to be under the
-                # server's config directory.
-                dbc.database = os.path.join(self.__server.config_directory,
-                                            dbc.database)
 
             # Transform arguments into a database connection string.
             if dbc.engine == 'postgresql':
@@ -653,6 +691,17 @@ class ThriftProductHandler:
                 LOG.debug("Product database successfully connected to.")
 
                 connection_wrapper = self.__server.get_product(dummy_endpoint)
+
+                if connection_wrapper is None:
+                    err_msg = "Failed to edit product."
+                    if dbc.engine == 'sqlite':
+                        err_msg += " The SQLite database file must be under " \
+                                   "the server workspace directory."
+
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        err_msg)
+
                 if connection_wrapper.last_connection_failure:
                     msg = \
                         f"The configured connection for " \

@@ -65,7 +65,7 @@ There are some prerequisite to successfully take this example:
 - [Install](README.md/#install-guide) CodeChecker.
 - Install analyzer binaries: `clang` / `clang-tidy` (on debian based systems update-alternatives is your friend).
 - Install `gcc` and `make` to compile our example project.
-- Install Python 3 (>= 3.8)
+- Install Python 3 (>= 3.9)
 
 ## Step 1: Integrate CodeChecker into your build system
 CodeChecker analyzes sources and dependencies that are built by your
@@ -118,7 +118,7 @@ it will contain much information about this.
   [user guide](analyzer/user_guide.md#log).
 * MacOS users need `intercept-build` to be available on the system,
   and in most cases, _System Integrity Protection_ needs to be turned off.
-  See the [README](/README.md#mac-os-x) for details.
+  See the [README](README.md#mac-os-x) for details.
 
 ## Step 2: Analyze your code
 Once the build is logged successfully and the `compile_commands.json` was
@@ -444,7 +444,8 @@ CodeChecker store \
 ```
 
 ### Definition of "run"
-A run, in the simplest case is a single analysis snapshot of your software.
+
+A "run" is a single execution of an analysis on a given version of the software. A run can contain the result of multiple analyzers (e.g. clang-tidy, clang static analyzer, cppcheck, etc.).
 
 You can follow up the quality status of your product by storing the analysis
 results of consecutive git commits of a git branch into the same run. In this
@@ -561,8 +562,7 @@ the suppression will be stored in a database that is unrelated to the source
 code.
 
 It is also possible to suppress multiple reports located in a specific folder
-or reported by a given checker. For further details see
-(this guide)[analyzer/user_guide.md#setting-with-config-file].
+or reported by a given checker. For further details see [this guide](analyzer/user_guide.md#setting-with-config-file).
 
 ### Ignore modules from your analysis
 You can ignore analysis results for certain files for example 3rd party
@@ -576,7 +576,7 @@ modules. For that use the `--ignore` parameter of the analyze command:
 For the skip file format see the [user guide](analyzer/user_guide.md#skip).
 
 ```sh
-CodeChecker analyze --build "make" --ignore ./skip.file" --output ./reports
+CodeChecker analyze --build "make" --ignore ./skip.file --output ./reports
 ```
 
 ### Enable/Disable Checkers
@@ -584,7 +584,6 @@ You can list the checkers using the following command
 ```sh
 CodeChecker checkers --details
 ```
-those marked with (+) are enabled by default.
 
 Every supported checker is reported by the `checkers` command and all of its
 subcommands.

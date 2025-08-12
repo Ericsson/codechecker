@@ -15,16 +15,20 @@ import re
 import uuid
 
 from datetime import datetime
+import hashlib
 from typing import Optional
 
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json
+from codechecker_common.util import generate_random_token, load_json
 
 from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
+from codechecker_web.server.oauth_templates import OAUTH_TEMPLATES
 
 from .database.config_db_model import Session as SessionRecord
+from .database.config_db_model import OAuthToken
+from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
 
@@ -57,18 +61,25 @@ def get_worker_processes(scfg_dict):
     """
     Return number of worker processes from the config dictionary.
 
-    Return 'worker_processes' field from the config dictionary or returns the
-    default value if this field is not set or the value is negative.
+    Return 'worker_processes' and 'background_worker_processes' fields from
+    the config dictionary or returns the default value if this field is not
+    set or the value is negative.
     """
     default = cpu_count()
-    worker_processes = scfg_dict.get('worker_processes', default)
+    worker_processes = scfg_dict.get("worker_processes", default)
+    background_worker_processes = scfg_dict.get("background_worker_processes",
+                                                default)
 
-    if worker_processes < 0:
+    if not worker_processes or worker_processes < 0:
         LOG.warning("Number of worker processes can not be negative! Default "
                     "value will be used: %s", default)
         worker_processes = default
+    if not background_worker_processes or background_worker_processes < 0:
+        LOG.warning("Number of task worker processes can not be negative! "
+                    "Default value will be used: %s", worker_processes)
+        background_worker_processes = worker_processes
 
-    return worker_processes
+    return worker_processes, background_worker_processes
 
 
 class _Session:
@@ -76,7 +87,7 @@ class _Session:
 
     def __init__(self, token, username, groups,
                  session_lifetime, refresh_time, is_root=False, database=None,
-                 last_access=None, can_expire=True):
+                 last_access=None):
 
         self.token = token
         self.user = username
@@ -86,8 +97,10 @@ class _Session:
         self.refresh_time = refresh_time if refresh_time else None
         self.__root = is_root
         self.__database = database
-        self.__can_expire = can_expire
         self.last_access = last_access if last_access else datetime.now()
+
+    def get_access_token(self):
+        return self.oauth_access_token
 
     @property
     def is_root(self):
@@ -112,20 +125,9 @@ class _Session:
         Returns if the session is alive and usable, that is, within its
         lifetime.
         """
-        if not self.__can_expire:
-            return True
 
         return (datetime.now() - self.last_access).total_seconds() <= \
             self.session_lifetime
-
-    @property
-    def can_expire(self):
-        """
-        Returns if the session can expire.
-        Expiring sessions are created through the web interface, non-expiring
-        sessions are created through the command-line client.
-        """
-        return self.__can_expire
 
     def revalidate(self):
         """
@@ -169,7 +171,7 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, force_auth=False):
+    def __init__(self, configuration_file, secrets_file, force_auth=False):
         """
         Initialise a new Session Manager on the server.
 
@@ -182,18 +184,20 @@ class SessionManager:
         self.__logins_since_prune = 0
         self.__sessions = []
         self.__configuration_file = configuration_file
+        self.__secrets_file = secrets_file
 
-        scfg_dict = self.__get_config_dict()
+        self.scfg_dict = self.__get_config_dict()
 
         # FIXME: Refactor this. This is irrelevant to authentication config,
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(scfg_dict)
-        self.__max_run_count = scfg_dict.get('max_run_count', None)
-        self.__store_config = scfg_dict.get('store', {})
-        self.__keepalive_config = scfg_dict.get('keepalive', {})
-        self.__auth_config = scfg_dict['authentication']
+        self.__worker_processes, self.__background_worker_processes = \
+            get_worker_processes(self.scfg_dict)
+        self.__max_run_count = self.scfg_dict.get('max_run_count', None)
+        self.__store_config = self.scfg_dict.get('store', {})
+        self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
             LOG.debug("Authentication was force-enabled.")
@@ -221,7 +225,7 @@ class SessionManager:
             self.__group_regexes_compiled = d
 
         # If no methods are configured as enabled, disable authentication.
-        if scfg_dict['authentication'].get('enabled'):
+        if self.scfg_dict['authentication'].get('enabled'):
             found_auth_method = False
 
             if 'method_dictionary' in self.__auth_config and \
@@ -248,6 +252,21 @@ class SessionManager:
                                 "... Disabling PAM authentication.")
                     self.__auth_config['method_pam']['enabled'] = False
 
+            if 'method_oauth' in self.__auth_config and \
+                    self.__auth_config['method_oauth'].get('enabled'):
+                self.__oauth_apply_templates()
+
+                for _, provider in self.__auth_config['method_oauth'] \
+                                       .get("providers").items():
+                    if provider.get("enabled"):
+                        found_auth_method = True
+                        break
+                else:
+                    LOG.warning("OAuth authentication was enabled but "
+                                "no OAuth provider was enabled"
+                                "... Disabling OAuth authentication.")
+                    self.__auth_config['method_oauth']['enabled'] = False
+
             if not found_auth_method:
                 if force_auth:
                     LOG.warning("Authentication was manually enabled, but no "
@@ -259,6 +278,132 @@ class SessionManager:
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
+
+    def __oauth_apply_templates(self):
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get('providers', {})
+
+        shared_variables = self.__auth_config.get(
+            'method_oauth', {}).get('shared_variables', {})
+
+        for provider_name, provider in providers.items():
+            if not provider.get('enabled'):
+                continue
+
+            template_name = provider.get('template', 'default')
+
+            if not OAUTH_TEMPLATES.get(template_name):
+                LOG.warning(f"OAuth provider {provider_name} tried to use "
+                            f"template '{template_name}', but it "
+                            " does not exist... Disabling OAuth provider "
+                            f"{provider_name}.")
+                provider['enabled'] = False
+                continue
+
+            if template_name == 'default':
+                LOG.warning(f"OAuth provider {provider_name} tried to use the "
+                            "default template. This template does not support"
+                            " fetching of users or emails in this release. "
+                            "Please use one of the available templates"
+                            f"... Disabling OAuth provider {provider_name}.")
+                provider['enabled'] = False
+                continue
+
+            for item, default_value in OAUTH_TEMPLATES[template_name].items():
+                provider.setdefault(item, default_value)
+
+            # Shared variables are overridden by the provider's own variables.
+            variables = {}
+            variables.update(shared_variables)
+            variables.update(provider.get('variables', {}))
+            variables['provider'] = provider_name
+
+            # Host has not been set, unset the default value.
+            if variables.get('host') == "https://<server_host>":
+                del variables['host']
+
+            for param, param_value in provider.items():
+                if param in ['enabled', 'client_id', 'client_secret',
+                             'template', 'variables', 'user_info_mapping']:
+                    continue
+
+                try:
+                    provider[param] = param_value.format(**variables)
+                    # Check the callback URL format if it is set correctly.
+                    if param == 'callback_url':
+                        if not self.check_callback_url_format(
+                                provider_name, provider[param]):
+                            LOG.error("Disabling OAuth "
+                                      f"provider {provider_name} "
+                                      "due to invalid callback URL format.")
+                            provider['enabled'] = False
+                except KeyError as e:
+                    LOG.warning(f"Parameter {param} in OAuth provider "
+                                f"{provider_name} tried accessing variable "
+                                f"{e.args[0]}, but it was not defined... "
+                                f"Disabling OAuth provider {provider_name}.")
+                    provider['enabled'] = False
+                    break
+
+    @staticmethod
+    def check_callback_url_format(provider_name: str, callback_url: str):
+        """
+        Check the format of callback url using regex.
+        """
+        print("Checking callback URL format for provider '%s': %s",
+              provider_name, callback_url)
+        if "@" in provider_name:
+            LOG.warning(f"provider {provider_name} contains '@' "
+                        "which is not allowed, turning off provider.")
+            return None
+        protocol = "http(s|)"
+        website = "[a-zA-Z0-9.-_]+([:][0-9]{2,5})?(?<!/)"
+        paths = "login[/]OAuthLogin"
+
+        pattern_str = (
+            rf"^{protocol}://{website}/(?!/){paths}/{provider_name}$"
+        )
+        pattern = re.compile(pattern_str)
+        LOG.info("Checking callback URL format for provider '%s': %s",
+                 provider_name, callback_url)
+        match = pattern.match(callback_url)
+        if match is None:
+            LOG.warning("Configuration format of callback_url is "
+                        f"invalid for provider {provider_name}. "
+                        "Please check the configuration file.")
+        return match is not None
+
+    def get_oauth_providers(self):
+        result = []
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+        for provider in providers:
+            if providers[provider].get('enabled', False):
+                result.append(provider)
+        return result
+
+    def turn_off_oauth_provider(self, provider_name: str):
+        oauth_config = self.scfg_dict['authentication']['method_oauth'] \
+            .get('providers', {})
+        oauth_config[provider_name]['enabled'] = False
+
+    def get_oauth_config(self, provider):
+        provider_cfg = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
+
+        # turn off configuration if it is set to default values
+        if provider_cfg.get("client_secret",
+                            "ExampleClientSecret") == "ExampleClientSecret" \
+                or provider_cfg.get("client_id",
+                                    "ExampleClientID") == "ExampleClientID":
+            self.__auth_config["method_oauth"]["providers"][provider][
+                "enabled"] = False
+
+            LOG.error("OAuth configuration was set to default values. " +
+                      "Disabling oauth provider: %s", provider)
+
+        return self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
 
     def __get_config_dict(self):
         """
@@ -274,6 +419,46 @@ class SessionManager:
             # have been parsed from it.
             raise ValueError("Server configuration file was invalid, or "
                              "empty.")
+
+        LOG.debug(self.__secrets_file)
+        if os.path.exists(self.__secrets_file):
+            secrets_dict = load_json(self.__secrets_file, {})
+            check_file_owner_rw(self.__secrets_file)
+        else:
+            secrets_dict = {}
+
+        secret_re = re.compile(r'^\$SECRET:[a-zA-Z0-9_-]+\$$')
+        env_re = re.compile(r'^\$ENV:[a-zA-Z0-9_-]+\$$')
+
+        def resolve_variables_failed(var):
+            if (secret_re.search(var) and
+                    not os.path.exists(self.__secrets_file)):
+                LOG.error("Secrets were used in server configuration file, "
+                          f"but {self.__secrets_file} does not exist!")
+
+            raise ValueError(f"Variable '{var}' could not "
+                             "be resolved in server configuration file.")
+
+        def resolve_variables(d):
+            items = d.items() if isinstance(d, dict) else enumerate(d)
+
+            for k, v in items:
+                if isinstance(v, (dict, list)):
+                    resolve_variables(v)
+                elif isinstance(v, str):
+                    secret_matched = secret_re.search(v)
+                    env_matched = env_re.search(v)
+
+                    if secret_matched or env_matched:
+                        var_name = v.split(':')[1][:-1]
+                        if secret_matched and var_name in secrets_dict:
+                            d[k] = secrets_dict[var_name]
+                        elif env_matched and var_name in os.environ:
+                            d[k] = os.environ[var_name]
+                        else:
+                            resolve_variables_failed(v)
+
+        resolve_variables(cfg_dict)
         return cfg_dict
 
     def reload_config(self):
@@ -332,11 +517,26 @@ class SessionManager:
     def worker_processes(self):
         return self.__worker_processes
 
+    @property
+    def background_worker_processes(self) -> int:
+        return self.__background_worker_processes
+
     def get_realm(self):
         return {
             "realm": self.__auth_config.get('realm_name'),
             "error": self.__auth_config.get('realm_error')
         }
+
+    def get_failed_auth_message(self):
+        return {
+            "msg": self.__auth_config.get('failed_auth_message'),
+        }
+
+    def get_max_auth_token_expiration(self):
+        return self.__auth_config.get(
+            'max_pers_auth_token_expiration_length',
+            365
+        )
 
     @property
     def get_super_user(self):
@@ -368,7 +568,8 @@ class SessionManager:
 
         This validation object contains two keys: username and groups.
         """
-        validation = self.__try_auth_dictionary(auth_string) \
+        validation = self.__try_personal_access_token(auth_string) \
+            or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string)
         if not validation:
@@ -402,7 +603,6 @@ class SessionManager:
             auth_session = transaction.query(SessionRecord.token) \
                 .filter(SessionRecord.user_name == user_name) \
                 .filter(SessionRecord.token == token) \
-                .filter(SessionRecord.can_expire.is_(False)) \
                 .limit(1).one_or_none()
 
             if not auth_session:
@@ -418,6 +618,37 @@ class SessionManager:
 
         return None
 
+    def __try_personal_access_token(self, auth_string):
+        if not self.__database_connection:
+            return None
+
+        user_name, token = auth_string.split(':', 1)
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            personal_access_token = transaction.query(PersonalAccessToken) \
+                .filter(PersonalAccessToken.user_name == user_name) \
+                .filter(PersonalAccessToken.token == token) \
+                .limit(1).one_or_none()
+        except Exception as e:
+            LOG.error("Couldn't check login in the database:")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
+
+        if not personal_access_token:
+            return False
+
+        if personal_access_token.expiration < datetime.now():
+            return False
+
+        return {
+            'username': personal_access_token.user_name,
+            'groups': str(personal_access_token.groups).split(";")
+        }
+
     def __try_auth_dictionary(self, auth_string):
         """
         Try to authenticate the user against the hardcoded credential list.
@@ -429,15 +660,46 @@ class SessionManager:
         if not method_config:
             return False
 
-        valid = self.__is_method_enabled('dictionary') and \
-            auth_string in method_config.get('auths')
-        if not valid:
+        if not self.__is_method_enabled('dictionary'):
             return False
 
-        username = SessionManager.get_user_name(auth_string)
+        auth_string_split = auth_string.split(':', 1)
+        username = auth_string_split[0]
+
+        saved_auth_string = [auth for auth in method_config.get('auths')
+                             if auth.split(':', 1)[0] == username]
+        if len(saved_auth_string) == 0:
+            return False
+
+        saved_auth_string = saved_auth_string[0]
+        if saved_auth_string != auth_string:
+            saved_auth_string_split = saved_auth_string.split(':', 3)
+            try:
+                hash_algorithm = saved_auth_string_split[2]
+            except IndexError:
+                return False
+
+            if not hasattr(hashlib, hash_algorithm):
+                return False
+
+            password = auth_string_split[1]
+            try:
+                salt = saved_auth_string_split[3]
+                password += salt
+            except IndexError:
+                pass
+
+            password = password.encode("utf-8")
+            saved_password_hash = saved_auth_string_split[1]
+            if not saved_password_hash == \
+                    getattr(hashlib, hash_algorithm)(password).hexdigest():
+                return False
+
         group_list = method_config['groups'][username] if \
             'groups' in method_config and \
             username in method_config['groups'] else []
+
+        self.__update_personal_access_token_groups(username, group_list)
 
         return {
             'username': username,
@@ -471,7 +733,36 @@ class SessionManager:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
                     self.__update_groups(username, groups)
+                    self.__update_personal_access_token_groups(
+                        username,
+                        groups
+                    )
                     return {'username': username, 'groups': groups}
+
+        return False
+
+    def __update_personal_access_token_groups(self, user_name, groups):
+        """
+        Update the groups assigned to a personal access token.
+        """
+        if not self.__database_connection:
+            return None
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            transaction.query(PersonalAccessToken) \
+                .filter(PersonalAccessToken.user_name == user_name) \
+                .update({PersonalAccessToken.groups: ';'.join(groups)})
+            transaction.commit()
+            return True
+        except Exception as e:
+            LOG.error(
+                f"Couldn't find personal access token for user "
+                f"{user_name}: {str(e)}")
+        finally:
+            if transaction:
+                transaction.close()
 
         return False
 
@@ -521,37 +812,10 @@ class SessionManager:
     def get_user_name(auth_string):
         return auth_string.split(':')[0]
 
-    def get_db_auth_session_tokens(self, user_name):
-        """
-        Get authentication session token from the database for the given user.
-        """
-        if not self.__database_connection:
-            return None
-
-        transaction = None
-        try:
-            # Try the database, if it is connected.
-            transaction = self.__database_connection()
-            session_tokens = transaction.query(SessionRecord) \
-                .filter(SessionRecord.user_name == user_name) \
-                .filter(SessionRecord.can_expire.is_(True)) \
-                .all()
-            return session_tokens
-        except Exception as e:
-            LOG.error("Couldn't check login in the database: ")
-            LOG.error(str(e))
-        finally:
-            if transaction:
-                transaction.close()
-
-        return None
-
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """
-        if 'super_user' not in self.__auth_config:
-            return False
-
-        if self.__auth_config['super_user'] == user_name:
+        if 'super_user' in self.__auth_config and \
+                self.__auth_config['super_user'] == user_name:
             return True
 
         transaction = None
@@ -573,18 +837,17 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None, can_expire=True):
+                               last_access=None):
         """
         Returns a new local session object initalized by the given parameters.
         """
         if not is_root:
             is_root = self.__is_root_user(user_name)
-
         return _Session(
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
             self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire)
+            last_access)
 
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
@@ -597,10 +860,11 @@ class SessionManager:
                 self.__auth_config['logins_until_cleanup']:
             self.__cleanup_sessions()
 
-        # Try authenticate user with personal access token.
+        # Try authenticate user with session auth token.
         auth_token = self.__try_auth_token(auth_string)
         if auth_token:
-            local_session = self.__get_local_session_from_db(auth_token.token)
+            local_session = self.__get_local_session_from_db(
+                auth_token.token)
             local_session.revalidate()
             self.__sessions.append(local_session)
             return local_session
@@ -611,7 +875,7 @@ class SessionManager:
             return False
 
         # Generate a new token and create a local session.
-        token = generate_session_token()
+        token = generate_random_token(32)
         user_name = validation.get('username')
         groups = validation.get('groups', [])
         is_root = validation.get('root', False)
@@ -629,6 +893,94 @@ class SessionManager:
                                        ';'.join(groups))
                 transaction.add(record)
                 transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't store or update login record in "
+                          "database:")
+                LOG.error(str(e))
+            finally:
+                if transaction:
+                    transaction.close()
+
+        return local_session
+
+    def create_session_oauth(self, provider: str,
+                             username: str,
+                             access_token: str,
+                             token_expires_at: datetime,
+                             refresh_token: str,
+                             groups: list = None
+                             ) -> _Session:
+        """
+        Creates a new session for the given auth-string
+        if the provider is enabled for OAuth authentication.
+        and stores data for later refreshing of tokens
+        :param provider: name of provider.
+        :param username: username of the user.
+        :param access_token: access token value.
+        :param token_expires_at: expiration date of access_token.
+        :param access_token: refresh_access token value.
+        :param groups: security groups that user is part of.
+        """
+        if groups is None:
+            groups = []
+
+        LOG.debug(f"Groups assigned to oauth_session: {groups}")
+
+        if not self.__is_method_enabled('oauth'):
+            return False
+
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+
+        if provider not in providers or \
+                not providers.get(provider).get('enabled'):
+            return False
+
+        # Generate a new token and create a local session.
+        codechecker_session_token = generate_session_token()
+
+        # To be parsed later
+        user_data = {'username': username,
+                     'token': codechecker_session_token,
+                     'groups': groups,
+                     'is_root': False}
+
+        local_session = self.__create_local_session(
+            codechecker_session_token,
+            user_data.get('username'),
+            user_data.get('groups'),
+            user_data.get('is_root'))
+
+        self.__sessions.append(local_session)
+
+        self.__update_personal_access_token_groups(username, groups)
+
+        # Store the session in the database.
+        transaction = None
+        if self.__database_connection:
+            try:
+                transaction = self.__database_connection()
+
+                # Store the new session.
+                record = SessionRecord(codechecker_session_token,
+                                       user_data.get('username'),
+                                       ';'.join(user_data.get('groups')))
+                transaction.add(record)
+                # Store oauth token data
+                session_id = transaction.query(SessionRecord.id) \
+                    .filter(SessionRecord.user_name ==
+                            user_data.get('username')) \
+                    .first()
+
+                oauth_token_session = OAuthToken(
+                                                 access_token=access_token,
+                                                 expires_at=token_expires_at,
+                                                 refresh_token=refresh_token,
+                                                 auth_session_id=session_id[0]
+                                                 )
+                transaction.add(oauth_token_session)
+                transaction.commit()
+
             except Exception as e:
                 LOG.error("Couldn't store or update login record in "
                           "database:")
@@ -715,8 +1067,7 @@ class SessionManager:
                 return self.__create_local_session(token, user_name,
                                                    groups,
                                                    is_root,
-                                                   db_record.last_access,
-                                                   db_record.can_expire)
+                                                   db_record.last_access)
         except Exception as e:
             LOG.error("Couldn't check login in the database: ")
             LOG.error(str(e))
@@ -784,7 +1135,6 @@ class SessionManager:
             if transaction:
                 transaction.query(SessionRecord) \
                     .filter(SessionRecord.token == token) \
-                    .filter(SessionRecord.can_expire.is_(True)) \
                     .delete()
                 transaction.commit()
 

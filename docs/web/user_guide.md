@@ -145,8 +145,9 @@ or via the `CodeChecker cmd` command-line client.
 
 ```
 usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
-                          [--host LISTEN_ADDRESS] [-v PORT] [--not-host-only]
-                          [--skip-db-cleanup] [--config CONFIG_FILE]
+                          [--machine-id MACHINE_ID]  [--host LISTEN_ADDRESS]
+                          [-v PORT] [--not-host-only] [--skip-db-cleanup]
+                          [--config CONFIG_FILE]
                           [--sqlite SQLITE_FILE | --postgresql]
                           [--dbaddress DBADDRESS] [--dbport DBPORT]
                           [--dbusername DBUSERNAME] [--dbname DBNAME]
@@ -172,6 +173,20 @@ optional arguments:
                         specific configuration (such as authentication
                         settings, and TLS/SSL certificates) from.
                         (default: /home/<username>/.codechecker)
+  --machine-id MACHINE_ID
+                        A unique identifier to be used to identify the machine
+                        running subsequent instances of the "same" server
+                        process. This value is only used internally to
+                        maintain normal function and bookkeeping of executed
+                        tasks following an unclean server shutdown, e.g.,
+                        after a crash or system-level interference. If
+                        unspecified, defaults to a reasonable default value
+                        that is generated from the computer's hostname, as
+                        reported by the operating system. In most scenarios,
+                        there is no need to fine-tune this, except if
+                        subsequent executions of the "same" server is achieved
+                        in distinct environments, e.g., if the server
+                        otherwise is running in a container.
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
                         should listen for connections. For IPv6 listening,
@@ -250,7 +265,7 @@ To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
 
 
 CodeChecker server can use PostgreSQL or SQLite databases to store the analysis
-results. SQlite is only recommended high volume production usage,
+results. SQLite is not recommended for high volume production usage,
 only for small test installations.
 
 

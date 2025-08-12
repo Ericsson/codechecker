@@ -23,10 +23,10 @@ from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
-        import is_compiler_warning, ClangTidyConfigHandler
-from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig, \
+    import ClangTidyConfigHandler
+from codechecker_analyzer.arg import AnalyzerConfigArg, CheckerConfigArg, \
     analyzer_config
-from codechecker_analyzer.cmd.analyze import \
+from codechecker_analyzer.cli.analyze import \
     is_analyzer_config_valid, is_checker_config_valid
 
 from codechecker_analyzer import analyzer_context
@@ -398,7 +398,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
 
 class MockClangTidyCheckerLabels:
-    def checkers_by_labels(self, labels):
+    def checkers_by_labels(self, labels, _=None):
         if labels[0] == 'profile:default':
             return [
                 'bugprone-assert-side-effect',
@@ -538,18 +538,18 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
         cfg_handler = ClangTidyConfigHandler()
 
-        # Check the ambigous option handling.
+        # Check the ambiguous option handling.
         with self.assertLogs(level='ERROR') as log:
             with self.assertRaises(SystemExit) as e:
                 cfg_handler.initialize_checkers(checkers,
                                                 [("clang-diagnostic-format",
                                                   True)])
 
-        err_ambigous_checker = re.compile(r"ERROR:.*?is ambigous\. Please "
-                                          r"select one of these options to "
-                                          r"clarify the checker list:.*$")
+        err_ambiguous_checker = re.compile(
+            r"ERROR:.*?is ambiguous\. Please select one of these options to "
+            r"clarify the checker list:.*$")
 
-        match = err_ambigous_checker.search(log.output[0])
+        match = err_ambiguous_checker.search(log.output[0])
 
         self.assertIsNotNone(match)
         self.assertEqual(e.exception.code, 1)
@@ -644,9 +644,6 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
             'clang-analyzer',
             analyzer.construct_analyzer_cmd(result_handler)))
 
-        self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
-        self.assertFalse(is_compiler_warning('hicpp'))
-
         analyzer = create_analyzer_tidy(['--enable', 'Wreserved-id-macro'])
         result_handler = create_result_handler(analyzer)
 
@@ -666,26 +663,26 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         --analyzer-config or --checker-config parameter is specified.
         """
 
-        analyzer_cfg_valid = [AnalyzerConfig(
+        analyzer_cfg_valid = [AnalyzerConfigArg(
             'clangsa', 'faux-bodies', 'false')]
-        checker_cfg_valid = [CheckerConfig(
+        checker_cfg_valid = [CheckerConfigArg(
             'clang-tidy', 'performance-unnecessary-value-param',
             'IncludeStyle', 'false')]
 
         self.assertTrue(is_analyzer_config_valid(analyzer_cfg_valid))
         self.assertTrue(is_checker_config_valid(checker_cfg_valid))
 
-        analyzer_cfg_invalid_analyzer = [AnalyzerConfig(
+        analyzer_cfg_invalid_analyzer = [AnalyzerConfigArg(
             'asd', 'faux-bodies', 'false')]
-        analyzer_cfg_invalid_conf = [AnalyzerConfig(
+        analyzer_cfg_invalid_conf = [AnalyzerConfigArg(
             'clangsa', 'asd', 'false')]
-        checker_cfg_invalid_analyzer = [CheckerConfig(
+        checker_cfg_invalid_analyzer = [CheckerConfigArg(
             'asd', 'performance-unnecessary-value-param',
             'IncludeStyle', 'false')]
-        checker_cfg_invalid_checker = [CheckerConfig(
+        checker_cfg_invalid_checker = [CheckerConfigArg(
             'clang-tidy', 'asd',
             'IncludeStyle', 'false')]
-        checker_cfg_invalid_checker_option = [CheckerConfig(
+        checker_cfg_invalid_checker_option = [CheckerConfigArg(
             'clang-tidy', 'performance-unnecessary-value-param',
             'asd', 'false')]
 

@@ -13,16 +13,16 @@ import shlex
 import shutil
 import signal
 import sys
-import time
 import traceback
 import zipfile
 
+from functools import lru_cache
 from threading import Timer
 
 import multiprocess
-import psutil
 
 from codechecker_common.logger import get_logger
+from codechecker_common.process import kill_process_tree
 from codechecker_common.review_status_handler import ReviewStatusHandler
 
 from codechecker_statistics_collector.collectors.special_return_value import \
@@ -339,42 +339,6 @@ def handle_failure(
     plist_file = result_base + ".plist"
     if os.path.exists(plist_file):
         os.remove(plist_file)
-
-
-def kill_process_tree(parent_pid, recursive=False):
-    """Stop the process tree try it gracefully first.
-
-    Try to stop the parent and child processes gracefuly
-    first if they do not stop in time send a kill signal
-    to every member of the process tree.
-
-    There is a similar function in the web part please
-    consider to update that in case of changing this.
-    """
-    proc = psutil.Process(parent_pid)
-    children = proc.children(recursive)
-
-    # Send a SIGTERM (Ctrl-C) to the main process
-    proc.terminate()
-
-    # If children processes don't stop gracefully in time,
-    # slaughter them by force.
-    _, still_alive = psutil.wait_procs(children, timeout=5)
-    for p in still_alive:
-        p.kill()
-
-    # Wait until this process is running.
-    n = 0
-    timeout = 10
-    while proc.is_running():
-        if n > timeout:
-            LOG.warning("Waiting for process %s to stop has been timed out"
-                        "(timeout = %s)! Process is still running!",
-                        parent_pid, timeout)
-            break
-
-        time.sleep(1)
-        n += 1
 
 
 def setup_process_timeout(proc, timeout,
@@ -781,9 +745,17 @@ def start_workers(actions_map, actions, analyzer_config_map,
                    'reproducer': reproducer_dir,
                    'ctu_connections': ctu_connections_dir}
 
+    @lru_cache
+    def __analyzer_config_map_get(analyzer_type):
+        """
+        analyzer_config_map is not a Dict, but multiprocess.managers.DictProxy,
+        so caching is necessary.
+        """
+        return analyzer_config_map.get(analyzer_type)
+
     analyzed_actions = [(actions_map,
                          build_action,
-                         analyzer_config_map.get(build_action.analyzer_type),
+                         __analyzer_config_map_get(build_action.analyzer_type),
                          output_path,
                          skip_handlers,
                          filter_handlers,

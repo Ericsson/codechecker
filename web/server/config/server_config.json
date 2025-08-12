@@ -1,4 +1,6 @@
 {
+  "background_worker_processes": null,
+  "worker_processes": null,
   "max_run_count": null,
   "store": {
     "analysis_statistics_dir": null,
@@ -17,9 +19,11 @@
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
     "realm_error" : "Access requires valid credentials.",
+    "failed_auth_message": "",
     "session_lifetime" : 300,
     "refresh_time" : 60,
     "logins_until_cleanup" : 30,
+    "max_pers_auth_token_expiration_length": 365,
     "method_dictionary": {
       "enabled" : false,
       "auths" : [],
@@ -53,6 +57,35 @@
       "groups": [
         "adm", "cc-users"
       ]
+    },
+    "method_oauth": {
+      "enabled": false,
+      "shared_variables" : {
+        "host": "https://<server_host>"
+      },
+      "providers" : {
+        "github" : {
+          "enabled" : false,
+          "client_id" : "<ExampleClientID>",
+          "client_secret": "<ExampleClientSecret>",
+          "template": "github/v1"
+        },
+        "google": {
+          "enabled" : false,
+          "client_id" : "<ExampleClientID>",
+          "client_secret" : "<ExampleClientSecret>",
+          "template": "google/v1"
+        },
+        "microsoft": {
+          "enabled": false,
+          "client_id": "<ExampleClientID>",
+          "client_secret": "<ExampleClientSecret>",
+          "template": "ms_entra/v2.0",
+          "variables": {
+            "tenant_id": "common"
+          }
+        }
+      }
     },
     "regex_groups": {
       "enabled" : false,

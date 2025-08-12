@@ -33,6 +33,15 @@ struct SessionTokenData {
 }
 typedef list<SessionTokenData> SessionTokenDataList
 
+struct PersonalAccessToken {
+  1: string token,
+  2: string name,
+  3: string description,
+  4: string lastAccess,
+  5: string expiration,
+}
+typedef list<PersonalAccessToken> PersonalAccessTokenList
+
 struct Permissions {
   1: map<string, list<string>> user,
   2: map<string, list<string>> group,
@@ -68,6 +77,13 @@ service codeCheckerAuthentication {
   string performLogin(1: string authMethod,
                       2: string authString)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Returns a list of providers for OAuth for respective appearance of buttons.
+  list<string> getOauthProviders(),
+
+  // Create a link for the user to log in with an OAuth provider.
+  string createLink(1: string provider)
+                    throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Performs logout action for the user. Must be called from the
   // corresponding valid session which is to be destroyed.
@@ -138,13 +154,27 @@ service codeCheckerAuthentication {
                      2: string            extraParams)
                      throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  SessionTokenDataList getTokens()
+  SessionTokenDataList getTokens() // !Deprecated!
                                  throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  SessionTokenData newToken(1: string description)
+  SessionTokenData newToken(1: string description) // !Deprecated!
                             throws (1: codechecker_api_shared.RequestFailed requestError)
 
-  bool removeToken(1: string token)
+  bool removeToken(1: string token) // !Deprecated!
                    throws (1: codechecker_api_shared.RequestFailed requestError)
 
+  PersonalAccessTokenList getPersonalAccessTokens()
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
+  i16 getMaxTokenExpiration()
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
+  PersonalAccessToken newPersonalAccessToken(
+    1: string name,
+    2: optional string description,
+    3: optional i64 expiration)
+    throws (1: codechecker_api_shared.RequestFailed requestError)
+
+  bool removePersonalAccessToken(1: string name)
+    throws (1: codechecker_api_shared.RequestFailed requestError)
 }

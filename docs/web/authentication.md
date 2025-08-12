@@ -15,7 +15,10 @@ Table of Contents
         * [<i>PAM</i> authentication](#pam-authentication)
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
-    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+      * [Membership in custom groups with <i>regex_groups</i>](#regex_groups-authentication)
+      * [<i>OAuth</i> authentication](#oauth-authentication)
+        * [<i>OAuth</i> Configuration options](#oauth-configuration-options)
+        * [<i>OAuth</i> details per each provider](#oauth-details-per-each-provider)
 * [Client-side configuration](#client-side-configuration)
     * [Web-browser client](#web-browser-client)
     * [Command-line client](#command-line-client)
@@ -39,23 +42,27 @@ is handled.
  * `enabled`
 
     Setting this to `false` disables privileged access
-    
+
  * `realm_name`
 
     The name to show for web-browser viewers' pop-up login window via
     *HTTP Authenticate*
-    
+
  * `realm_error`
 
     The error message shown in the browser when the user fails to authenticate
-    
+
+  * `failed_auth_message`
+
+    The message shown upon failed authentication in the CodeChecker CLI
+
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
@@ -63,7 +70,7 @@ is handled.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
-    
+
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
@@ -95,9 +102,27 @@ option of `CodeChecker server` command.
 
 ## <i>Dictionary</i> authentication <a name="dictionary-authentication"></a>
 
-The `authentication.method_dictionary` contains a plaintext `username:password`
-credentials for authentication. If the user's login matches any of the
-credentials listed, the user will be authenticated.
+> *Note*: Storing passwords in a plain text file is *strongly discouraged* due to security risks.
+If no other option is available, ensure that the file permissions are restricted to 0600
+to limit access *only* to the file owner.
+
+The `authentication.method_dictionary` may contain several formats of user credentials:
+
+- `username:password`
+  - legacy user credential format, **not recommended**
+- `username:password_hash:hash_algorithm`
+  - recommended user credential format
+- `username:password_hash:hash_algorithm:salt`
+  - highest security user credential format, `password_hash`
+    is calculated by appending `salt` to the provided password
+
+Supported `hash_algorithm` string values depend on hash algorithms supported by
+the [hashlib](https://docs.python.org/3/library/hashlib.html#hash-algorithms)
+Python module. Examples of supported `hash_algorithm` values:
+- `sha224`, `sha256`, `sha384`, `sha512`
+- added in Python 3.6: `sha3_224`, `sha3_256`, `sha3_384`, `sha3_512`
+
+If the user's login matches any of the credentials listed, the user will be authenticated.
 
 Groups are configured in a map which maps to each username the list of groups
 the user belongs to.
@@ -243,12 +268,12 @@ servers as it can elongate the authentication process.
  * `groupPattern`
 
    Group query pattern used LDAP query expression to find the group objects
-   a user is a member of. It must contain a `$USERDN$` pattern. 
+   a user is a member of. It must contain a `$USERDN$` pattern.
    `$USERDN$` will be automatically replaced by the queried user account DN.
 
  * `groupNameAttr`
 
-   The attribute of the group object which contains the name of the group. 
+   The attribute of the group object which contains the name of the group.
 
  * `groupScope`
 
@@ -319,6 +344,212 @@ When we manage permissions on the GUI we can give permission to these
 groups. For more information [see](permissions.md#managing-permissions).
 
 ----
+
+### <i>OAuth</i> authentication <a name="oauth-authentication"></a>
+
+CodeChecker also supports OAuth-based authentication. The `authentication.method_oauth` section contains the configuration for OAuth authentication for different OAuth providers. The server can be configured for different Oauth `providers`.
+Specific behavior related to each provider is configured by a provider `template`. In addition to default values, the template supplies the parsing logic for the individual OAuth responses.
+
+#### OAuth Configuration options <a name="oauth-configuration-options"></a>
+  * `enabled`
+
+    Indicates if OAuth authentication is enabled (required for any methods below)
+
+  * `shared_variables`
+
+    A key-value table that is used to set variables across all providers, for convenience.
+
+    Any variable can be specified. If using the `host` variable, it should be in the format `https://example.com`, including the protocol.
+    
+    The `callback_url`'s default value uses the `host` and `provider` variables.
+    Template `ms_entra/v2.0` uses the `tenant_id` variable.
+
+ * `providers`
+
+    The provider field contains configuration details for OAuth providers. Each provider's configuration includes but may vary depending on provider:
+
+  * `provider_name` as an object containing following properties:
+
+      * `enabled`
+
+          Indicates if current provider is enabled (github, google, etc.)
+
+      * `client_id`
+
+           Contains client ID provided by the OAuth provider.
+
+      * `client_secret`
+
+          The client secret must be provided by the OAuth provider.
+
+      * `template`
+
+          A configuration preset that applies default values and special handling for each available OAuth provider.
+          Available values are `github/v1` (for Github's OAuth apps), `google/v1` (for Google Workspace SSO), and `ms_entra/v2.0` (for Microsoft Entra SSO).
+
+          If a template is specified, you most likely do not need to specify any other `url` option.
+          Some templates rely on variables for their values. See `variables` for more information.
+
+          **Note**: Specifying no template is currently not supported.
+
+      * `variables`
+
+          A key-value table that is used to set variables used inside parameters.  
+          To use a variable, specify it using `{variable}`.
+          The `{provider}` variable is automatically set.
+
+          Any variable can be specified. If a shared variable exists with the same name, it will be overridden.
+
+          The `callback_url`'s default value uses the `host` and `provider` variables.
+          Template `ms_entra/v2.0` uses the `tenant_id` variable.
+
+      * `user_info_mapping`
+
+          A mapping of user info fields from the provider to local fields.
+
+          * `username`
+
+              Field for the username.
+
+        The `username` field defines what value will be used as the user's unique identifier (i.e. their "username") depending on the OAuth provider.
+
+        Currently there are only 2 options for this:
+         * `username`
+         * `email` (*default*)
+
+        Expected output for each available template:
+
+        `github/v1`
+          * `username` - user's GitHub `login` will be user's identifier
+          * `email` - a request will be sent to fetch the primary email of account to be used as the user's identifier.
+            If it is hidden, an error will be thrown.
+
+        `google/v1`
+          * Only supports `email`, and user's Gmail email will be considered his username.
+
+        `ms_entra/v2.0`
+          * `username` - Company's signum will be the user's identifier.
+          * `email` - an email associated with this Microsoft account will be used as user's identifier.
+
+      The properties below are automatically set by templates, but can be overridden for testing purposes, and when using a custom OAuth provider.
+
+      * `callback_url`
+
+          User will be redirected back to the provided link after login with returned data.
+          It should be constructed in that format `{host}/login/OAuthLogin/{provider}` where the `host` variable includes the protocol used by the website. The `callback_url` should also match the callback url specified in the provider's configuration.
+          You can use the variables `{host}` and `{provider}` for convenience.
+
+          *Default*: `{host}/login/OAuthLogin/{provider}`
+
+          Examples of specifying the correct link
+          * `http://localhost:8080/login/OAuthLogin/{provider}`
+          * `https://example.com/login/OAuthLogin/google`
+          * `{host}/login/OAuthLogin/{provider}` (where `host` is set as `https://example.com`)
+
+      * `authorization_url`
+
+          This link is used for redirecting user for provider's authentication page.
+
+          *Default*: Set by template.
+
+      * `token_url`
+
+          The URL to exchange the authorization code for an access token.
+
+          *Default*: Set by template.
+
+      * `user_info_url`
+
+          The URL to fetch the authenticated user's information.
+
+          *Default*: Set by template.
+
+      * `user_emails_url`
+
+          `GitHub` specific field to make requests for emails associated with github account.
+
+          *Default*: Set by template.
+
+      * `user_groups_url`
+
+          `Microsoft`-specific field used to request security groups that the user is member of.
+
+          *Default*: Set by template.
+
+      * `jwks_url`
+
+          `Microsoft`-specific field used to request public signing keys for decoding JWT tokens.
+
+          *Default*: Set by template.
+
+      * `scope`
+
+          The scope of access requested from the OAuth provider.
+
+          *Default*: Set by template.
+
+    ### 🔧 Example: OAuth Configuration using templates
+    
+    ```jsonc
+    "github": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "template": "github/v1",
+      "user_info_mapping": { // optional
+        "username": "username"
+      }
+    }
+    ```
+
+    ### 🔧 Example: OAuth Configuration for Microsoft Entra
+
+    ```jsonc
+    "microsoft": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "template": "ms_entra/v2.0",
+      "variables": {
+        "tenant_id": "common" // replace with your own tenant ID, if not using multi-tenant mode
+      },
+      "user_info_mapping": { // optional
+        "username": "email"
+      }
+    }
+    ```
+
+    ### 🔧 Example: OAuth Configuration without templates
+
+    ```jsonc
+    "google": {
+      "enabled": false,
+      "client_id": "<ExampleClientID>",
+      "client_secret": "<ExampleClientSecret>",
+      "template": "google/v1", // still needed for the response handling logic, but all properties can be overridden
+      "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+      "callback_url": "{host}/login/OAuthLogin/{provider}", // variables can be freely used in properties
+      "token_url": "https://accounts.google.com/o/oauth2/token",
+      "user_info_url": "https://www.googleapis.com/oauth2/v1/userinfo",
+      "scope": "openid email profile",
+      "user_info_mapping": {
+        "username": "email"
+      }
+    }
+    ```
+
+    For more information about the default values in templates, see [oauth_templates.py](../../web/codechecker_web/server/oauth_templates.py)
+
+
+
+#### OAuth Details per each provider <a name ="oauth-details-per-each-provider"></a>
+
+* Important: `callback_url` must always match with the link specified in the
+providers' settings when issuing an OAuth application.
+
+* Important: At the time this code was written, GitHub doesn't support PKCE (Proof Key for Code Exchange).
+Therefore PKCE is not used when users log in using GitHub.
+
 
 # Client-side configuration <a name="client-side-configuration"></a>
 
@@ -475,14 +706,24 @@ Personal tokens can be written instead of the user's password in the
 usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
                                  [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
+                                 NAME
 
 Creating a new personal access token.
 
-optional arguments:
+positional arguments:
+  NAME                  A unique name that identifies the access token.
+
+options:
   -h, --help            show this help message and exit
   --description DESCRIPTION
                         A custom textual description to be shown alongside the
                         token.
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>
 
@@ -495,13 +736,22 @@ optional arguments:
 ```
 usage: CodeChecker cmd token list [-h] [--url SERVER_URL]
                                   [-o {plaintext,html,rows,table,csv,json}]
-                                  [-e EXPORT_DIR] [-c]
                                   [--verbose {info,debug,debug_analyzer}]
 
 List the available personal access tokens.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
+  -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
+                        The output format(s) to use in showing the data. Mind
+                        that some output formats are (like 'json') more verbose
+                        than others (like 'plaintext'). (default: plaintext)
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>
 
@@ -514,11 +764,20 @@ optional arguments:
 ```
 usage: CodeChecker cmd token del [-h] [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
-                                 TOKEN
+                                 NAME
 
 Removes the specified access token.
 
 positional arguments:
-  TOKEN                 Personal access token which will be deleted.
+  NAME                  Name of the personal access token that will be deleted.
+
+options:
+  -h, --help            show this help message and exit
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
 ```
 </details>

@@ -121,11 +121,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
     __ctu_autodetection = None
 
-    __additional_analyzer_config = {
-        'cc-verbatim-args-file':
+    __additional_analyzer_config = [
+        analyzer_base.AnalyzerConfig(
+            'cc-verbatim-args-file',
             'A file path containing flags that are forwarded verbatim to the '
-            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>'
-    }
+            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>',
+            util.ExistingPath)
+    ]
 
     def __init__(self, cfg_handler, buildaction):
         super().__init__(cfg_handler, buildaction)
@@ -180,11 +182,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_binary_version(cls, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
+        if not cls.analyzer_binary():
+            return None
 
         environ = analyzer_context.get_context().get_env_for_bin(
             cls.analyzer_binary())
-        if not cls.analyzer_binary():
-            return None
 
         if details:
             ver = [cls.analyzer_binary(), '--version']
@@ -290,7 +292,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return parse_clang_help_page(command, 'CHECKERS:')
 
     @classmethod
-    def get_checker_config(cls) -> List[str]:
+    def get_checker_config(cls) -> List[analyzer_base.CheckerConfig]:
         """
         Return the list of checker config options.
 
@@ -311,10 +313,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if version_info.major_version >= 9:
                 command.append("-analyzer-checker-option-help-developer")
 
-        return parse_clang_help_page(command, 'OPTIONS:')
+        result = []
+        for cfg, doc in parse_clang_help_page(command, 'OPTIONS:'):
+            result.append(analyzer_base.CheckerConfig(*cfg.split(':', 1), doc))
+
+        return result
 
     @classmethod
-    def get_analyzer_config(cls) -> List[Tuple[str, str]]:
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """Return the list of analyzer config options."""
         command = [cls.analyzer_binary(), "-cc1"]
 
@@ -323,8 +329,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         command.append("-analyzer-config-help")
 
         native_config = parse_clang_help_page(command, 'OPTIONS:')
+        native_config = map(
+            lambda cfg: analyzer_base.AnalyzerConfig(cfg[0], cfg[1], str),
+            native_config)
 
-        return native_config + list(cls.__additional_analyzer_config.items())
+        return list(native_config) + list(cls.__additional_analyzer_config)
 
     def post_analyze(self, result_handler):
         """

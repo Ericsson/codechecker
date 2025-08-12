@@ -32,7 +32,7 @@ macOS (OS X) development environment.
 
 ![Web interface showing list of analysed projects and bugs](images/demo.gif)
 
-**:bulb: Check out our [DEMO](https://codechecker-demo.eastus.cloudapp.azure.com) showing some analysis results of open-source projects!**
+**Check out our [DEMO](https://codechecker-demo.eastus.cloudapp.azure.com) showing some analysis results of open-source projects!**
 
 # Main features
 ## Command line C/C++ Analysis
@@ -231,7 +231,7 @@ For this reason, you need to use `codechecker` command instead of `CodeChecker`
 everywhere. For a full list of available commands in the _codechecker_ snap
 package, run `snap info codechecker`.
 
-## Linux
+## Linux: Build from source
 
 For a detailed dependency list, and for instructions on how to install newer
 Clang and Clang-Tidy versions, please see [Requirements](deps.md).
@@ -244,7 +244,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 #       In case of Cppcheck, the minimal supported version is 1.80.
 #       In case of gcc, the minimal supported version is 13.0.0.
 #       Infer: https://fbinfer.com/docs/getting-started
-sudo apt-get install clang clang-tidy cppcheck g++ build-essential curl
+sudo apt-get install clang clang-tidy cppcheck g++ build-essential curl \
       gcc-multilib git python3-dev python3-venv python3-setuptools
 
 # In case of venv_dev target and Ubuntu 23 Linux, install an additional library:

@@ -14,28 +14,28 @@ jobs:
   lint:
     name: Linters (pylint, pycodestyle)
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Install dependencies
         run: |
           pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
-      - name: Run tests
-        run: make pylint pycodestyle
+      - name: Run pycodestyle & pylint
+        run: make -k pycodestyle pylint
 
   tools:
     name: Tools (report-converter, etc.)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: Setup Bazel
         uses: abhinavsingh/setup-bazel@v3
         with:
@@ -85,13 +85,13 @@ jobs:
 
   analyzer:
     name: Analyzer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: sh .github/workflows/install-deps.sh
@@ -111,13 +111,13 @@ jobs:
 
   common:
     name: Common libraries
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install requirements
         working-directory: codechecker_common
@@ -130,7 +130,7 @@ jobs:
 
   web:
     name: Web
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -153,7 +153,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: sh .github/workflows/install-deps.sh
@@ -185,7 +185,7 @@ jobs:
 
   gui:
     name: GUI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
@@ -198,7 +198,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - uses: actions/setup-node@v1
         with:
           node-version: '16.x'
@@ -214,6 +214,7 @@ jobs:
       - name: Build the package
         run: |
           make pip_dev_deps
+          pip3 install -r web/requirements_py/auth/requirements.txt
           make package
 
       - name: Run tests

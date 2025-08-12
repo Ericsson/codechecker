@@ -5,8 +5,7 @@
       :run-ids="runIds"
       :report-filter="reportFilter"
     />
-
-    <v-row>
+    <v-row class="mt-8">
       <v-col>
         <single-line-widget
           icon="mdi-close"
@@ -54,7 +53,7 @@
       <v-col>
         <v-card flat>
           <v-card-title class="justify-center">
-            Number of outstanding reports
+            Outstanding reports
 
             <tooltip-help-icon>
               Shows the number of reports which were active in the last
@@ -115,15 +114,6 @@
         </v-card>
       </v-col>
     </v-row>
-
-    <v-row>
-      <v-col>
-        <component-severity-statistics
-          :bus="bus"
-          :namespace="namespace"
-        />
-      </v-col>
-    </v-row>
   </v-container>
 </template>
 
@@ -135,7 +125,6 @@ import { BaseStatistics } from "@/components/Statistics";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
 import Reports from "./Reports";
-import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
 import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
 import SingleLineWidget from "./SingleLineWidget";
@@ -143,7 +132,6 @@ import SingleLineWidget from "./SingleLineWidget";
 export default {
   name: "Overview",
   components: {
-    ComponentSeverityStatistics,
     FailedFilesDialog,
     OutstandingReportsChart,
     Reports,
@@ -268,7 +256,6 @@ export default {
 
   .interval {
     width: 250px;
-    border: 1px dashed grey;
     padding: 6px;
   }
   .resolution {

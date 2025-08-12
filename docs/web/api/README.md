@@ -9,6 +9,9 @@ Any new client should only interact with the database through these APIs.
     * [Report server](#report-server-api)
     * [Authentication system](#authentication-system-api)
     * [Product management system](#product-management-system-api)
+    * [Configuration](#configuration-api)
+    * [Server information](#server-information-api)
+    * [Other endpoints](#other-endpoints)
 * [API versioning](#api-versioning)
     * [How to add new API versions](#how-to-add-new-api-versions)
         * [Minor API improvements](#minor-api-improvements)
@@ -21,13 +24,40 @@ Any new client should only interact with the database through these APIs.
 The report server API should be used by any client to view or store analysis
 results.
 
+API Endpoint: `/<product-name>/<API-version>/CodeCheckerService`  
+API description can be found in [report_server.thrift](/web/api/report_server.thrift).
+
 ## Authentication system API <a name="authentication-system-api"></a>
 The authentication layer is used for supporting privileged-access only access
 and permission management.
 
+API Endpoint: `/<API-version>/Authentication`  
+API description can be found in [authentication.thrift](/web/api/authentication.thrift).
+
 ## Product management system API <a name="product-management-system-api"></a>
 The product management layer is responsible for handling requests about the
 different products and their configuration.
+
+API Endpoint: `/<API-version>/Products`  
+API description can be found in [products.thrift](/web/api/products.thrift).
+
+## Configuration API <a name="configuration-api"></a>
+The configuration layer is used to set notifications displayed on the server.
+
+API Endpoint: `/<API-version>/Configuration`  
+API description can be found in [configuration.thrift](/web/api/configuration.thrift).
+
+## Server information API <a name="server-information-api"></a>
+The server information layer is used to get the running CodeChecker version,
+for API compatibility purposes.
+
+API Endpoint: `/<API-version>/ServerInfo`  
+API description can be found in [server_info.thrift](/web/api/server_info.thrift).
+
+## Other endpoints <a name="other-endpoints"></a>
+
+GET requests made to endpoints `/live` and `/ready` can be used to check the
+health of the running server.
 
 # API versioning <a name="api-versioning"></a>
 

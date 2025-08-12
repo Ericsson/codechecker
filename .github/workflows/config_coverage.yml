@@ -26,12 +26,12 @@ permissions: read-all
 jobs:
   checker-config-coverage:
     name: "Config coverage of checkers"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.9'
       - name: "Install dependencies"
         run: |
           # Some packages, e.g. build-essential and curl are available

@@ -45,6 +45,14 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def createLink(self, provider):
+        pass
+
+    @thrift_client_call
+    def getOauthProviders(self):
+        pass
+
+    @thrift_client_call
     def destroySession(self):
         pass
 
@@ -86,4 +94,20 @@ class ThriftAuthHelper(BaseClientHelper):
 
     @thrift_client_call
     def getTokens(self):
+        pass
+
+    @thrift_client_call
+    def newPersonalAccessToken(self, name, description, expiration):
+        pass
+
+    @thrift_client_call
+    def removePersonalAccessToken(self, name):
+        pass
+
+    @thrift_client_call
+    def getPersonalAccessTokens(self):
+        pass
+
+    @thrift_client_call
+    def getMaxTokenExpiration(self):
         pass

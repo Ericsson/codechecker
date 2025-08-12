@@ -28,6 +28,7 @@ import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, union_all, select, bindparam, literal_column, case, cast
 from sqlalchemy.orm import contains_eager
+from sqlalchemy.types import ARRAY, String
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -44,7 +45,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     ReviewStatusRuleSortType, Rule, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
     ReviewStatus as API_ReviewStatus, \
-    SourceComponentData, SourceFileData, SortMode, SortType
+    SourceComponentData, SourceFileData, SortMode, SortType, \
+    SubmittedRunOptions
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -69,6 +71,7 @@ from ..database.run_db_model import \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent
 
+from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -140,39 +143,6 @@ def slugify(text):
     norm_text = re.sub(r'([\s]+|[/]+)', '_', norm_text)
 
     return norm_text
-
-
-def exc_to_thrift_reqfail(function):
-    """
-    Convert internal exceptions to RequestFailed exception
-    which can be sent back on the thrift connections.
-    """
-    func_name = function.__name__
-
-    def wrapper(*args, **kwargs):
-        try:
-            res = function(*args, **kwargs)
-            return res
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            # Convert SQLAlchemy exceptions.
-            msg = str(alchemy_ex)
-            import traceback
-            traceback.print_exc()
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
-        except codechecker_api_shared.ttypes.RequestFailed as rf:
-            LOG.warning("%s:\n%s", func_name, rf.message)
-            raise
-        except Exception as ex:
-            import traceback
-            traceback.print_exc()
-            msg = str(ex)
-            LOG.warning("%s:\n%s", func_name, msg)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
-
-    return wrapper
 
 
 def get_component_values(
@@ -1162,8 +1132,7 @@ def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
             .outerjoin(
                 RunHistory,
                 RunHistory.id == AnalyzerStatistic.run_history_id) \
-            .group_by(RunHistory.run_id) \
-            .subquery()
+            .group_by(RunHistory.run_id)
 
         query = query.filter(
             AnalyzerStatistic.run_history_id.in_(history_ids_subq))
@@ -1468,7 +1437,10 @@ class ThriftRequestHandler:
         self.__require_permission([permissions.PRODUCT_STORE])
 
     def __require_view(self):
-        self.__require_permission([permissions.PRODUCT_VIEW])
+        self.__require_permission([
+            permissions.PRODUCT_VIEW,
+            permissions.PERMISSION_VIEW
+        ])
 
     def __add_comment(self, bug_id, message, kind=CommentKindValue.USER,
                       date=None):
@@ -1830,8 +1802,9 @@ class ThriftRequestHandler:
                         base_hashes, run_ids, tag_ids)
 
                 if self._product.driver_name == 'postgresql':
-                    new_hashes = select([func.unnest(report_hashes)
-                                         .label('bug_id')]) \
+                    new_hashes = select([
+                        func.unnest(cast(report_hashes, ARRAY(String)))
+                            .label('bug_id')]) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -1847,8 +1820,10 @@ class ThriftRequestHandler:
                             select([bindparam('bug_id' + str(i), h)
                                     .label('bug_id')])
                             for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query]).except_(base_hashes)
-                        new_hashes.extend([res[0] for res in session.query(q)])
+                        q = select([new_hashes_query.subquery()]) \
+                            .except_(base_hashes)
+                        new_hashes.extend([
+                            res[0] for res in session.query(q.subquery())])
 
                     return new_hashes
             elif diff_type == DiffType.RESOLVED:
@@ -3981,6 +3956,18 @@ class ThriftRequestHandler:
         m = MassStoreRun(self, name, tag, version, b64zip, force,
                          trim_path_prefixes, description)
         return m.store()
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def massStoreRunAsynchronous(self, zipfile_blob: str,
+                                 store_opts: SubmittedRunOptions) -> str:
+        import pprint
+        LOG.info("massStoreRunAsynchronous() called with:\n\t - %d bytes "
+                 "input\n\t - Options:\n\n%s", len(zipfile_blob),
+                 pprint.pformat(store_opts.__dict__, indent=2, depth=8))
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+            "massStoreRunAsynchronous() not implemented in this server build!")
 
     @exc_to_thrift_reqfail
     @timeit

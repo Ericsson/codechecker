@@ -29,8 +29,7 @@ from codechecker_analyzer import analyzer_context, env
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from .. import analyzer_base
-from ..config_handler import CheckerState, CheckerType, \
-    get_compiler_warning_name_and_type
+from ..config_handler import CheckerState
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -155,6 +154,12 @@ def get_diagtool_bin():
     if diagtool_bin.exists():
         return diagtool_bin
 
+    # Sometimes diagtool binary has a version number in its name: diagtool-14.
+    diagtool_bin = diagtool_bin.with_name(
+        f'diagtool-{str(ClangSA.version_info().major_version)}')
+    if diagtool_bin.exists():
+        return diagtool_bin
+
     LOG.warning(
         "'diagtool' can not be found next to the clang binary (%s)!",
         clang_bin)
@@ -251,11 +256,19 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     # Cache object for get_analyzer_checkers().
     __analyzer_checkers = None
 
-    __additional_analyzer_config = {
-        'cc-verbatim-args-file':
+    __additional_analyzer_config = [
+        analyzer_base.AnalyzerConfig(
+            'cc-verbatim-args-file',
             'A file path containing flags that are forwarded verbatim to the '
-            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>'
-    }
+            'analyzer tool. E.g.: cc-verbatim-args-file=<filepath>',
+            util.ExistingPath),
+        analyzer_base.AnalyzerConfig(
+            'take-config-from-directory',
+            'The .clang-tidy config file should be taken into account when '
+            'analysis is executed through CodeChecker. Possible values: true, '
+            'false. Default: false',
+            str)
+    ]
 
     @classmethod
     def analyzer_binary(cls):
@@ -299,8 +312,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             if cls.__analyzer_checkers:
                 return cls.__analyzer_checkers
 
-            environ = analyzer_context\
-                .get_context().get_env_for_bin(cls.analyzer_binary())
+            context = analyzer_context.get_context()
+
+            blacklisted_checkers = context.checker_labels.checkers_by_labels(
+                ["blacklist:true"], cls.ANALYZER_NAME)
+
+            environ = context.get_env_for_bin(cls.analyzer_binary())
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-list-checks", "-checks=*"],
                 env=environ,
@@ -310,8 +327,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             checker_description = parse_checkers(result)
 
             checker_description.extend(
-                ("clang-diagnostic-" + warning, "")
-                for warning in get_warnings())
+                (checker, "")
+                for checker in map(lambda x: f"clang-diagnostic-{x}",
+                                   get_warnings())
+                if checker not in blacklisted_checkers)
 
             checker_description.append(("clang-diagnostic-error",
                                         "Indicates compiler errors."))
@@ -323,24 +342,29 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_checker_config(cls):
+    def get_checker_config(cls) -> List[analyzer_base.CheckerConfig]:
         """
         Return the checker configuration of the all of the supported checkers.
         """
         try:
-            result = subprocess.check_output(
+            help_page = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
                 .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
-            return parse_checker_config(result)
         except (subprocess.CalledProcessError, OSError):
             return []
 
+        result = []
+        for cfg, doc in parse_checker_config(help_page):
+            result.append(analyzer_base.CheckerConfig(*cfg.split(':', 1), doc))
+
+        return result
+
     @classmethod
-    def get_analyzer_config(cls):
+    def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """
         Return the analyzer configuration with all checkers enabled.
         """
@@ -359,7 +383,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         except (subprocess.CalledProcessError, OSError):
             native_config = []
 
-        return native_config + list(cls.__additional_analyzer_config.items())
+        native_config = map(
+            lambda cfg: analyzer_base.AnalyzerConfig(cfg[0], cfg[1], str),
+            native_config)
+
+        return list(native_config) + list(cls.__additional_analyzer_config)
 
     def get_checker_list(self, config) -> Tuple[List[str], List[str]]:
         """
@@ -402,48 +430,24 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         for checker_name, value in config.checks().items():
             state, _ = value
 
-            warning_name, warning_type = \
-                get_compiler_warning_name_and_type(checker_name)
-
-            # This warning must be given a parameter separated by either '=' or
-            # space. This warning is not supported as a checker name so its
-            # special usage is avoided.
-            if warning_name and warning_name.startswith('frame-larger-than'):
-                continue
-
-            if warning_name is not None:
-                # -W and clang-diagnostic- are added as compiler warnings.
-                if warning_type == CheckerType.COMPILER:
-                    LOG.warning("As of CodeChecker v6.22, the following usage"
-                                f"of '{checker_name}' compiler warning as a "
-                                "checker name is deprecated, please use "
-                                f"'clang-diagnostic-{checker_name[1:]}' "
-                                "instead.")
-                    if state == CheckerState.ENABLED:
-                        compiler_warnings.append('-W' + warning_name)
-                        enabled_checkers.append(checker_name)
-                    elif state == CheckerState.DISABLED:
-                        if config.enable_all:
-                            LOG.warning("Disabling compiler warning with "
-                                        f"compiler flag '-d W{warning_name}' "
-                                        "is not supported.")
+            if checker_name.startswith('clang-diagnostic-'):
                 # If a clang-diagnostic-... is enabled add it as a compiler
                 # warning as -W..., if it is disabled, tidy can suppress when
                 # specified in the -checks parameter list, so we add it there
                 # as -clang-diagnostic-... .
-                elif warning_type == CheckerType.ANALYZER:
-                    if state == CheckerState.ENABLED:
-                        if checker_name == "clang-diagnostic-error":
-                            # Disable warning of clang-diagnostic-error to
-                            # avoid generated compiler errors.
-                            compiler_warnings.append('-Wno-' + warning_name)
-                        else:
-                            compiler_warnings.append('-W' + warning_name)
-                        enabled_checkers.append(checker_name)
-                    else:
-                        compiler_warnings.append('-Wno-' + warning_name)
 
-                continue
+                # TODO: str.removeprefix() available in Python 3.9
+                warning_name = checker_name[len('clang-diagnostic-'):]
+
+                if state == CheckerState.ENABLED:
+                    if checker_name == 'clang-diagnostic-error':
+                        # Disable warning of clang-diagnostic-error to
+                        # avoid generated compiler errors.
+                        compiler_warnings.append('-Wno-' + warning_name)
+                    else:
+                        compiler_warnings.append('-W' + warning_name)
+                else:
+                    compiler_warnings.append('-Wno-' + warning_name)
 
             if state == CheckerState.ENABLED:
                 enabled_checkers.append(checker_name)

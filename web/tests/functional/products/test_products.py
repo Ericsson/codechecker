@@ -122,6 +122,10 @@ class TestProducts(unittest.TestCase):
             product_cfg.endpoint = "CodeCheckerService"
             self._root_client.addProduct(product_cfg)
 
+        with self.assertRaises(RequestFailed):
+            product_cfg.endpoint = "config.sqlite"
+            self._root_client.addProduct(product_cfg)
+
     def test_get_product_data(self):
         """
         Test getting product configuration from server.

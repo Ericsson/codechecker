@@ -278,7 +278,7 @@ export default {
         },
         {
           text: "Chronological order",
-          value: "chronological-order",
+          value: "chronological_order",
           align: "center",
           sortable: true
         },
@@ -337,15 +337,18 @@ export default {
         }
 
         if (header.value === "timestamp") {
-          return this.hasTimeStamp;
+          return this.hasTimeStamp &&
+            !this.reportFilter.isUnique;
         }
 
         if (header.value === "testcase") {
-          return this.hasTestCase;
+          return this.hasTestCase &&
+            !this.reportFilter.isUnique;
         }
 
-        if (header.value === "chronological-order") {
-          return this.hasChronologicalOrder;
+        if (header.value === "chronological_order") {
+          return this.hasChronologicalOrder &&
+            !this.reportFilter.isUnique;
         }
 
         return true;
@@ -377,7 +380,7 @@ export default {
           "sameReports": report.sameReports,
           "timestamp": report.annotations["timestamp"],
           "testcase": report.annotations["testcase"],
-          "chronological-order": report.annotations["chronological-order"]
+          "chronological_order": report.annotations["chronological_order"]
         };
       });
     }
@@ -402,7 +405,7 @@ export default {
           this.formattedReports.some(report => report.testcase);
 
         this.hasChronologicalOrder =
-          this.formattedReports.some(report => report["chronological-order"]);
+          this.formattedReports.some(report => report["chronological_order"]);
       }
     }
   },
@@ -441,7 +444,7 @@ export default {
       case "testcase":
         type = SortType.TESTCASE;
         break;
-      case "chronological-order":
+      case "chronological_order":
         type = SortType.CHRONOLOGICAL_ORDER;
         break;
       default:

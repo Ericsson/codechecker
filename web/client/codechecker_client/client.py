@@ -12,8 +12,8 @@ Thrift client setup and configuration.
 
 import getpass
 import sys
-
 from thrift.Thrift import TApplicationException
+
 
 import codechecker_api_shared
 from codechecker_api.Authentication_v6 import ttypes as AuthTypes
@@ -24,6 +24,7 @@ from codechecker_web.shared import env
 from codechecker_web.shared.version import CLIENT_API
 
 from codechecker_client.helpers.authentication import ThriftAuthHelper
+from codechecker_client.helpers.configuration import ThriftConfigHelper
 from codechecker_client.helpers.product import ThriftProductHelper
 from codechecker_client.helpers.results import ThriftResultsHelper
 from .credential_manager import UserCredentials
@@ -71,21 +72,29 @@ def setup_auth_client(protocol, host, port, session_token=None):
     return client
 
 
+def init_config_client(protocol, host, port):
+    """ Setup a new config client. """
+    config_client = ThriftConfigHelper(protocol, host, port, '/v' +
+                                       CLIENT_API + '/Configuration')
+    return config_client
+
+
 def login_user(protocol, host, port, username, login=False):
     """ Login with the given user name.
 
     If login is False the user will be logged out.
     """
     session = UserCredentials()
-    auth_client = ThriftAuthHelper(protocol, host, port,
-                                   '/v' + CLIENT_API + '/Authentication')
 
     if not login:
+        auth_client = init_auth_client(protocol, host, port)
         logout_done = auth_client.destroySession()
         if logout_done:
             session.save_token(host, port, None, True)
             LOG.info("Successfully logged out.")
         return
+
+    auth_client = setup_auth_client(protocol, host, port)
 
     try:
         handshake = auth_client.getAuthParameters()
@@ -205,7 +214,7 @@ def setup_product_client(protocol, host, port, auth_client=None,
         # Attach to the server-wide product service.
         product_client = ThriftProductHelper(
             protocol, host, port,
-            '/v' + CLIENT_API + '/Products',
+            f"/v{CLIENT_API}/Products",
             session_token,
             lambda: get_new_token(protocol, host, port, cred_manager))
     else:
@@ -260,6 +269,6 @@ def setup_client(product_url) -> ThriftResultsHelper:
 
     return ThriftResultsHelper(
         protocol, host, port,
-        '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
+        f"/{product_name}/v{CLIENT_API}/CodeCheckerService",
         session_token,
         lambda: get_new_token(protocol, host, port, cred_manager))

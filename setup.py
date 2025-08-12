@@ -142,7 +142,7 @@ with open(os.path.join("docs", "README.md"), "r",
 
 setuptools.setup(
     name="codechecker",
-    version="6.25.0",
+    version="6.27.0",
     author='CodeChecker Team (Ericsson)',
     author_email='codechecker-tool@googlegroups.com',
     description="CodeChecker is an analyzer tooling, defect database and "
@@ -182,7 +182,7 @@ setuptools.setup(
         'install': Install,
         'build_ext': BuildExt,
     },
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     scripts=[
         'scripts/gerrit_changed_files_to_skipfile.py'
     ],

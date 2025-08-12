@@ -77,6 +77,7 @@ class HTMLReport(TypedDict):
     severity: Optional[str]
     testcase: Optional[str]
     timestamp: Optional[str]
+    chronologicalOrder: Optional[str]
 
 
 HTMLReports = List[HTMLReport]
@@ -258,6 +259,9 @@ class HtmlBuilder:
                 'testcase': report.annotations.get('testcase')
                 if report.annotations else None,
                 'timestamp': report.annotations.get('timestamp')
+                if report.annotations else None,
+                'chronologicalOrder':
+                    report.annotations.get('chronological_order')
                 if report.annotations else None
             })
 
@@ -321,7 +325,8 @@ class HtmlBuilder:
             'severity': data['report']['severity'],
             'bug-path-length': len(data['report']['events']),
             'testcase': data['report']['testcase'],
-            'timestamp': data['report']['timestamp']
+            'timestamp': data['report']['timestamp'],
+            'chronological-order': data['report']['chronologicalOrder']
         }, html_report_links)
 
         self._tag_contents['table_reports'] = json.dumps(list(table_reports))

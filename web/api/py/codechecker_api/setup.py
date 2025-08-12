@@ -8,7 +8,7 @@ from io import open
 with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
-api_version = '6.61.0'
+api_version = '6.66.0'
 
 setup(
     name='codechecker_api',
@@ -38,7 +38,7 @@ setup(
     packages=find_packages(where='.'),  # Required
 
     python_requires='>=2.7,',
-    install_requires=['thrift==0.13.0'],
+    install_requires=['thrift==0.22.0'],
 
     project_urls={
         'Bug Reports': 'https://github.com/Ericsson/codechecker/issues',

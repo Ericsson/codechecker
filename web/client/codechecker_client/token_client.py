@@ -38,10 +38,13 @@ def handle_add_token(args):
     client = init_auth_client(protocol, host, port)
 
     description = args.description if 'description' in args else None
-    session = client.newToken(description)
+    expiration = args.expiration if 'expiration' in args else None
+    personal_access_token = \
+        client.newPersonalAccessToken(args.name, description, expiration)
 
     print("The following access token has been generated for your account: " +
-          session.token)
+          personal_access_token.token)
+    print("The token is valid until: " + personal_access_token.expiration)
 
 
 def handle_list_tokens(args):
@@ -58,17 +61,18 @@ def handle_list_tokens(args):
 
     protocol, host, port = split_server_url(args.server_url)
     client = init_auth_client(protocol, host, port)
-    tokens = client.getTokens()
+    tokens = client.getPersonalAccessTokens()
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(tokens))
     else:  # plaintext, csv
-        header = ['Token', 'Description', 'Last access']
+        header = ['Name', 'Description', 'Last access', 'Expiration']
         rows = []
         for res in tokens:
-            rows.append((res.token,
+            rows.append((res.name,
                          res.description if res.description else '',
-                         res.lastAccess))
+                         res.lastAccess,
+                         res.expiration))
 
         print(twodim.to_str(args.output_format, header, rows))
 
@@ -82,14 +86,14 @@ def handle_del_token(args):
     protocol, host, port = split_server_url(args.server_url)
     client = init_auth_client(protocol, host, port)
 
-    token = args.token
+    name = args.name
     try:
-        success = client.removeToken(token)
+        success = client.removePersonalAccessToken(name)
 
         if success:
-            print("'" + token + "' has been successfully removed.")
+            print(f"'{name}' has been successfully removed.")
         else:
-            print("Error: '" + token + "' can not be removed.")
+            print(f"Error: '{name}' can not be removed.")
     except Exception as ex:
         LOG.error("Failed to remove the token!")
         LOG.error(ex)

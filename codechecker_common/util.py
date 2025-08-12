@@ -8,12 +8,16 @@
 """
 Util module.
 """
+import datetime
+import hashlib
 import itertools
 import json
 import re
 import shlex
 import yaml
 import os
+import pathlib
+import random
 from typing import List, TextIO
 
 import portalocker
@@ -135,7 +139,7 @@ def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
     """Normalize and sanitize full_path, then make it relative to root_path."""
     relative_path = os.path.relpath(full_path, '/')
     fake_root_path = os.path.join(root_path, relative_path)
-    return os.path.realpath(fake_root_path)
+    return os.path.abspath(fake_root_path)
 
 
 def strtobool(value: str) -> bool:
@@ -183,3 +187,32 @@ def load_args_from_file(filepath: str) -> List[str]:
             replace_env_var(filepath),
             f.read().strip())
         return shlex.split(content)
+
+
+# TODO: This class is used for checking if a path exists. This class should
+# inherit from pathlib.Path, however it is not possible before Python 3.12 due
+# to a bug:
+# https://stackoverflow.com/questions/61689391/error-with-simple-subclassing-
+# of-pathlib-path-no-flavour-attribute
+class ExistingPath:
+    def __init__(self, *pathsegments):
+        path = pathlib.Path(*pathsegments)
+
+        if not path.exists():
+            raise FileNotFoundError(f"File does not exist: {path.absolute()}")
+
+
+def generate_random_token(num_bytes: int = 32) -> str:
+    """
+    Returns a random-generated string usable as a token with `num_bytes`
+    hexadecimal characters in the output.
+    """
+    prefix = str(os.getpid()).encode()
+    suffix = str(datetime.datetime.now()).encode()
+
+    hash_value = ''.join(
+        [hashlib.sha256(prefix + os.urandom(num_bytes * 2) + suffix)
+         .hexdigest()
+         for _ in range(0, -(num_bytes // -64))])
+    idx = random.randrange(0, len(hash_value) - num_bytes + 1)
+    return hash_value[idx:(idx + num_bytes)]

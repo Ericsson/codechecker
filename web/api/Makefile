@@ -1,5 +1,6 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_VERSION = "0.11.0"
+THRIFT_DOCKER_IMAGE = "codechecker/thrift"
+THRIFT_DOCKER_TAG = "0.22.0"
 TARGET_PY = --gen py
 TARGET_JS = --gen js:node
 PYTHON_BIN ?= python3
@@ -34,13 +35,14 @@ build: clean target_dirs
 	  --rm \
 	  -u "$(uid):$(guid)" \
 	  -v $(API_DIR):/data \
-	  thrift:$(THRIFT_VERSION) \
+	  ${THRIFT_DOCKER_IMAGE}:$(THRIFT_DOCKER_TAG) \
 	  /bin/bash -c " \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/authentication.thrift && \
-		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/products.thrift && \
-		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/report_server.thrift && \
-		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/configuration.thrift && \
-		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/server_info.thrift"
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/configuration.thrift  && \
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/products.thrift       && \
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/report_server.thrift  && \
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/server_info.thrift    && \
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/tasks.thrift"
 
 	# Create tarball from the API JavaScript part which will be commited in the
 	# repository and installed as a dependency.

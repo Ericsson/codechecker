@@ -1,4 +1,3 @@
-
 import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
@@ -38,8 +37,6 @@ const getters = {
 
 const actions = {
   [GET_AUTH_PARAMS]({ commit }) {
-    if (state.authParams) return state.authParams;
-
     return new Promise(resolve => {
       authService.getClient().getAuthParameters(
         handleThriftError(params => {
@@ -66,17 +63,35 @@ const actions = {
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
-      authService.getClient().performLogin("Username:Password",
-        `${credentials.username}:${credentials.password}`,
-        handleThriftError(token => {
-          context.commit(SET_AUTH, {
-            userName: credentials.username,
-            token: token
-          });
-          resolve(token);
-        }, err => {
-          reject(err);
-        }));
+      if (credentials.type === "oauth") {
+        authService.getClient().performLogin(
+          "oauth", credentials.provider + "@" + credentials.url,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: "OAuth @" + credentials.provider,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+      }
+      else if (credentials.type === "password"){
+        authService.getClient().performLogin("Username:Password",
+          `${credentials.username}:${credentials.password}`,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: credentials.username,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+      }
+      else {
+        reject("Unknown option provided");
+      }
     });
   },
 

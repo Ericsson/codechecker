@@ -14,10 +14,10 @@ import os
 import re
 
 
-AnalyzerConfig = collections.namedtuple(
-    'AnalyzerConfig', ["analyzer", "option", "value"])
-CheckerConfig = collections.namedtuple(
-    "CheckerConfig", ["analyzer", "checker", "option", "value"])
+AnalyzerConfigArg = collections.namedtuple(
+    "AnalyzerConfigArg", ["analyzer", "option", "value"])
+CheckerConfigArg = collections.namedtuple(
+    "CheckerConfigArg", ["analyzer", "checker", "option", "value"])
 AnalyzerBinary = collections.namedtuple(
     "AnalyzerBinary", ["analyzer", "path"])
 
@@ -106,7 +106,7 @@ def existing_abspath(path: str) -> str:
     return path
 
 
-def analyzer_config(arg: str) -> AnalyzerConfig:
+def analyzer_config(arg: str) -> AnalyzerConfigArg:
     """
     This function can be used at "type" argument of argparse.add_argument().
     It checks the format of --analyzer-config flag:
@@ -120,11 +120,11 @@ def analyzer_config(arg: str) -> AnalyzerConfig:
             f"Analyzer option in wrong format: {arg}, should be "
             "<analyzer>:<option>=<value>")
 
-    return AnalyzerConfig(
+    return AnalyzerConfigArg(
         m.group("analyzer"), m.group("option"), m.group("value"))
 
 
-def checker_config(arg: str) -> CheckerConfig:
+def checker_config(arg: str) -> CheckerConfigArg:
     """
     This function can be used at "type" argument of argparse.add_argument().
     It checks the format of --checker-config flag:
@@ -139,7 +139,7 @@ def checker_config(arg: str) -> CheckerConfig:
             f"Checker option in wrong format: {arg}, should be "
             "<analyzer>:<checker>:<option>=<value>")
 
-    return CheckerConfig(
+    return CheckerConfigArg(
         m.group("analyzer"), m.group("checker"),
         m.group("option"), m.group("value"))
 

@@ -1,0 +1,35 @@
+name: codechecker-pr-analysis
+
+# Triggers the workflow on push or pull request events.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  codechecker-pr-analyis:
+    name: CodeChecker analyze PR
+
+    runs-on: ubuntu-24.04
+    env:
+      PR_NUMBER: ${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
+          pip install codechecker==6.25.1
+          sh .github/workflows/install-deps.sh
+      - name: Build the CodeChecker package
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+      - name: Run CodeChecker analysis
+        env:
+          CODECHECKER_TOKEN: ${{ secrets.CODECHECKER_STORE_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo "{\"client_autologin\" : true,\"credentials\": {\"https://codechecker-demo.eastus.cloudapp.azure.com\": \"demo:demo\"}}" > ~/.codechecker.passwords.json
+          bash ./ci/github_analysis/codechecker_gate_pr.sh $GITHUB_REF

@@ -20,7 +20,7 @@ import time
 
 from multiprocess.managers import SyncManager
 
-from codechecker_common.logger import get_logger
+from codechecker_common.logger import get_logger, DEBUG
 from codechecker_common.review_status_handler import ReviewStatusHandler
 
 from . import analyzer_context, analysis_manager, pre_analysis_manager, \
@@ -55,16 +55,17 @@ def create_actions_map(actions, manager):
     Value: BuildAction
     """
 
-    result = manager.dict()
+    result = {}
 
+    check_for_unique_actions = LOG.isEnabledFor(DEBUG)
     for act in actions:
         key = act.source, act.target
-        if key in result:
+        if check_for_unique_actions and (key in result):
             LOG.debug("Multiple entires in compile database "
                       "with the same (source, target) pair: (%s, %s)",
                       act.source, act.target)
         result[key] = act
-    return result
+    return manager.dict(result)
 
 
 def __mgr_init():
