@@ -4,12 +4,11 @@
     v-model="valid"
   >
     <v-text-field
-      v-if="isSuperUser"
       v-model="productConfig.endpoint"
       :rules="rules.endpoint"
       label="URL endpoint*"
       name="endpoint"
-      prepend-icon="mdi-card-account-details-outline"
+      prepend-inner-icon="mdi-card-account-details-outline"
       required
     />
 
@@ -17,40 +16,38 @@
       v-model="displayName"
       label="Display name"
       name="display-name"
-      prepend-icon="mdi-television"
+      prepend-inner-icon="mdi-television"
     />
 
     <v-textarea
       v-model="description"
       label="Description"
       name="description"
-      prepend-icon="mdi-text"
+      prepend-inner-icon="mdi-text"
       rows="1"
     />
 
     <v-text-field
-      v-if="isSuperUser"
-      :value="productConfig.runLimit"
+      :model-value="productConfig.runLimit"
       type="number"
       label="Run limit"
       name="run-limit"
-      prepend-icon="mdi-speedometer"
+      prepend-inner-icon="mdi-speedometer"
       :rules="rules.runLimit"
-      @input="productConfig.runLimit = $event || null"
+      @update:modelValue="v => productConfig.runLimit = v || null"
     />
 
     <v-row
       class="ma-0"
     >
       <v-text-field
-        v-if="isSuperUser"
-        :value="productConfig.reportLimit"
+        :model-value="productConfig.reportLimit"
         type="number"
         label="Report limit"
         name="report-limit"
-        prepend-icon="mdi-close-octagon"
+        prepend-inner-icon="mdi-close-octagon"
         :rules="rules.runLimit"
-        @input="productConfig.reportLimit = $event || null"
+        @update:modelValue="v => productConfig.reportLimit = v || null"
       />
 
       <tooltip-help-icon>
@@ -67,15 +64,17 @@
         v-model="confidentialityString"
         label="Information Classification"
         class="select-confidentiality"
-        prepend-icon="mdi-file-eye-outline"
+        prepend-inner-icon="mdi-file-eye-outline"
         name="confidentiality"
         :items="confidentialityItems"
+        item-title="title"
+        item-value="value"
       >
         <template v-slot:selection="{ item }">
-          <select-confidentiality-item :value="item" />
+          <select-confidentiality-item :value="item.raw || item" />
         </template>
         <template v-slot:item="{ item }">
-          <select-confidentiality-item :value="item" />
+          <select-confidentiality-item :value="item.raw || item" />
         </template>
       </v-select>
 
@@ -91,7 +90,6 @@
     />
 
     <div
-      v-if="isSuperUser"
     >
       <v-divider />
 
@@ -117,7 +115,7 @@
           v-model="dbConnection.database"
           label="Database file*"
           name="db-file"
-          prepend-icon="mdi-database"
+          prepend-inner-icon="mdi-database"
           :rules="rules.dbFile"
         />
       </div>
@@ -129,7 +127,7 @@
           v-model="dbConnection.host"
           label="Server address*"
           name="db-host"
-          prepend-icon="mdi-protocol"
+          prepend-inner-icon="mdi-protocol"
           :rules="rules.dbHost"
           required
         />
@@ -138,7 +136,7 @@
           v-model="dbConnection.port"
           label="Port*"
           name="db-port"
-          prepend-icon="mdi-map-marker"
+          prepend-inner-icon="mdi-map-marker"
           :rules="rules.dbPort"
           required
         />
@@ -147,7 +145,7 @@
           v-model="dbUserName"
           label="User name*"
           name="db-username"
-          prepend-icon="mdi-account-outline"
+          prepend-inner-icon="mdi-account-outline"
           autocomplete="new-password"
           :rules="rules.dbUserName"
           required
@@ -158,7 +156,7 @@
           type="password"
           label="Password"
           name="db-password"
-          prepend-icon="mdi-lock-outline"
+          prepend-inner-icon="mdi-lock-outline"
           autocomplete="new-password"
         />
 
@@ -166,7 +164,7 @@
           v-model="dbConnection.database"
           label="Database name*"
           name="db-name"
-          prepend-icon="mdi-database"
+          prepend-inner-icon="mdi-database"
           :rules="rules.dbName"
         />
       </div>
@@ -209,7 +207,7 @@ export default {
         dbPort: [
           v => !!v || "Database port is required"
         ],
-        dbUser: [
+        dbUserName: [
           v => !!v || "Database user name is required"
         ],
         engine: [

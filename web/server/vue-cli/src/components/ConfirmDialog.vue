@@ -6,8 +6,8 @@
     :max-width="maxWidth"
     :scrollable="scrollable"
   >
-    <template v-slot:activator="{ on }">
-      <slot name="activator" :on="on" />
+    <template v-slot:activator="{ props }">
+      <slot name="activator" :props="props" :on="props" />
     </template>
 
     <v-card
@@ -79,6 +79,7 @@ export default {
   name: "ConfirmDialog",
   props: {
     value: { type: Boolean, default: false },
+    modelValue: { type: Boolean, default: undefined },
     cancelBtnLabel: { type: String, default: "Cancel" },
     cancelBtnColor: { type: String, default: "error" },
     confirmBtnLabel: { type: String, default: "Save" },
@@ -92,9 +93,10 @@ export default {
   computed: {
     dialog: {
       get() {
-        return this.value;
+        return this.modelValue !== undefined ? this.modelValue : this.value;
       },
       set(value) {
+        this.$emit("update:modelValue", value);
         this.$emit("input", value);
       }
     }
