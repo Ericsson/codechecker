@@ -9,9 +9,9 @@
     v-on="$listeners"
   >
     <template v-slot:header.component="{ header }">
-      <v-icon size="16">
-        mdi-puzzle-outline
-      </v-icon>
+      <v-icon size="16"
+        icon="mdi-puzzle-outline"
+      />
       {{ header.text }}
     </template>
 

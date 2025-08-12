@@ -4,15 +4,15 @@
     max-width="50%"
     @confirm="save"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props }">
       <v-btn
         id="new-product-btn"
         color="primary"
-        v-on="on"
+        v-bind="props"
       >
-        <v-icon left>
-          mdi-plus
-        </v-icon>
+        <v-icon left
+          icon="mdi-plus"
+        />
         New product
       </v-btn>
     </template>
@@ -55,7 +55,7 @@ export default {
     return {
       dialog: false,
       productConfig: new ProductConfiguration({
-        connection: new DatabaseConnection()
+        connection: new DatabaseConnection({ engine: "sqlite" })
       }),
       isValid: false
     };
@@ -71,7 +71,7 @@ export default {
 
           this.dialog = false;
           this.productConfig = new ProductConfiguration({
-            connection: new DatabaseConnection()
+            connection: new DatabaseConnection({ engine: "sqlite" })
           });
         }));
     }

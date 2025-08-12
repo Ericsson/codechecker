@@ -15,7 +15,7 @@
               {{ label }}
             </th>
             <th
-              v-for="permission in permissions"
+              v-for="permission in computedPermissions"
               :key="permission"
               class="text-center"
             >
@@ -25,7 +25,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="(authRight, userName) in authRights"
+            v-for="(authRight, userName) in localAuthRights"
             :key="userName"
           >
             <td>
@@ -35,7 +35,7 @@
               {{ userName }}
             </td>
             <td
-              v-for="permission in permissions"
+              v-for="permission in computedPermissions"
               :key="permission"
               class="pa-1 text-center"
               width="1%"
@@ -45,7 +45,7 @@
                   :input-value="authRight.includes(permission)"
                   :hide-details="true"
                   class="ma-1"
-                  @change="changeAuthPermission(userName, permission)"
+                  @change="() => toggle(userName, permission)"
                 />
               </span>
             </td>
@@ -63,7 +63,7 @@
       flat
       outlined
       class="mt-4"
-      @keyup.native.enter="addNewAuthRight"
+      @keyup.enter="addNewAuthRight"
     >
       <template v-slot:append>
         <v-btn
@@ -98,12 +98,35 @@ export default {
     return {
       Permission,
       name: "",
-      changedAuthRights: {}
+      changedAuthRights: {},
+      localAuthRights: {}
     };
   },
 
+  computed: {
+    computedPermissions() {
+      return this.permissions && this.permissions.length
+        ? this.permissions
+        : [ Permission.SUPERUSER, Permission.PERMISSION_VIEW ];
+    }
+  },
+
+  watch: {
+    authRights: {
+      deep: true,
+      immediate: true,
+      handler(v) {
+        this.localAuthRights = JSON.parse(JSON.stringify(v || {}));
+      }
+    }
+  },
+
   mounted() {
-    this.bus.$on("save", this.saveAll);
+    if (this.bus && this.bus.on) this.bus.on("save", this.saveAll);
+  },
+
+  beforeUnmount() {
+    if (this.bus && this.bus.off) this.bus.off("save", this.saveAll);
   },
 
   methods: {
@@ -111,84 +134,95 @@ export default {
       return Object.keys(Permission).find(key => Permission[key] === value);
     },
 
-    changeAuthPermission(userName, permission) {
-      if (this.changedAuthRights[userName] &&
-          this.changedAuthRights[userName].indexOf(permission) !== -1
-      ) {
-        // Removing a permission to the user.
-        const ind = this.changedAuthRights[userName].indexOf(permission);
-        this.changedAuthRights[userName].splice(ind, 1);
+    toggle(userName, permission) {
+      const cur = this.localAuthRights[userName] ? [ ...this.localAuthRights[userName] ] : [];
+      const idx = cur.indexOf(permission);
+      if (idx === -1) cur.push(permission); else cur.splice(idx, 1);
+      this.localAuthRights = { ...this.localAuthRights, [userName]: cur };
 
-        // Remove the user from the changes if there is no more permissions.
-        if (!this.changedAuthRights[userName].length) {
-          delete this.changedAuthRights[userName];
+      const orig = this.authRights[userName] || [];
+      const nowHas = cur.includes(permission);
+      const origHad = orig.includes(permission);
+
+      if (nowHas === origHad) {
+        const arr = this.changedAuthRights[userName] ? [ ...this.changedAuthRights[userName] ] : [];
+        const i = arr.indexOf(permission);
+        if (i !== -1) {
+          arr.splice(i, 1);
+          if (arr.length) {
+            this.changedAuthRights = { ...this.changedAuthRights, [userName]: arr };
+          } else {
+            const { [userName]: _, ...rest } = this.changedAuthRights;
+            this.changedAuthRights = rest;
+          }
         }
       } else {
-        // Add new permission to the user.
-        if (!(userName in this.changedAuthRights)) {
-          this.changedAuthRights[userName] = [];
-        }
-        this.changedAuthRights[userName].push(permission);
+        const arr = this.changedAuthRights[userName] ? [ ...this.changedAuthRights[userName] ] : [];
+        if (!arr.includes(permission)) arr.push(permission);
+        this.changedAuthRights = { ...this.changedAuthRights, [userName]: arr };
       }
     },
 
-    saveAll() {
+    async saveAll() {
+      const client = authService.getClient();
+      const tasks = [];
+
       for (const userName of Object.keys(this.changedAuthRights)) {
         this.changedAuthRights[userName].forEach(permission => {
-          if (this.authRights[userName] &&
-              this.authRights[userName].indexOf(permission) !== -1
-          ) {
-            authService.getClient().removePermission(permission, userName,
-              this.isGroup, this.extraParamsJson,
-              handleThriftError(success => {
-                if (!success) {
-                  this.$emit("update:error", true);
-                  return;
-                }
+          tasks.push(new Promise(resolve => {
+            const wantHas = (this.localAuthRights[userName] || []).includes(permission);
+            const origHad = (this.authRights[userName] || []).includes(permission);
 
-                const ind = this.authRights[userName].indexOf(permission);
-                this.authRights[userName].splice(ind, 1);
-                if (!this.authRights[userName].length) {
-                  delete this.authRights[userName];
-                }
-              }, () => {
-                this.$emit("update:error", true);
-              }));
-          } else {
-            authService.getClient().addPermission(permission, userName,
-              this.isGroup, this.extraParamsJson,
-              handleThriftError(success => {
-                if (!success) {
-                  this.$emit("update:error", true);
-                  return;
-                }
+            if (wantHas === origHad) return resolve(true);
 
-                if (!(userName in this.authRights)) {
-                  this.authRights[userName] = [];
+            const onDone = handleThriftError(success => {
+              if (success) {
+                if (wantHas) {
+                  const list = this.localAuthRights[userName]
+                    ? [ ...this.localAuthRights[userName] ] : [];
+                  if (!list.includes(permission)) list.push(permission);
+                  this.localAuthRights = { ...this.localAuthRights, [userName]: list };
+                } else {
+                  const list = [ ...(this.localAuthRights[userName] || []) ];
+                  const idx = list.indexOf(permission);
+                  if (idx !== -1) list.splice(idx, 1);
+                  if (list.length) {
+                    this.localAuthRights = { ...this.localAuthRights, [userName]: list };
+                  } else {
+                    const { [userName]: _, ...rest } = this.localAuthRights;
+                    this.localAuthRights = rest;
+                  }
                 }
-                this.authRights[userName].push(permission);
-              }, () => {
-                this.$emit("update:error", true);
-              }));
-          }
+              }
+              resolve(!!success);
+            }, () => resolve(false));
+
+            if (wantHas) {
+              client.addPermission(permission, userName, this.isGroup, this.extraParamsJson, onDone);
+            } else {
+              client.removePermission(permission, userName, this.isGroup, this.extraParamsJson, onDone);
+            }
+          }));
         });
       }
 
-      this.$emit("update:success", true);
-
-      // Reset the store of changes.
+      const results = await Promise.all(tasks);
+      const ok = results.every(Boolean);
+      this.$emit("update:success", ok);
+      this.$emit("update:error", !ok);
       this.changedAuthRights = {};
     },
+
 
     addNewAuthRight() {
       if (!this.name.length) return;
 
       const searchKey = this.name.toLowerCase();
-      const foundKey = Object.keys(this.authRights).find(
+      const foundKey = Object.keys(this.localAuthRights).find(
         objectKey => objectKey.toLowerCase() === searchKey);
 
       if (!foundKey) {
-        this.$set(this.authRights, this.name, []);
+        this.localAuthRights = { ...this.localAuthRights, [this.name]: [] };
       }
 
       this.name = "";
@@ -202,3 +236,4 @@ export default {
   margin: 0;
 }
 </style>
+ы

@@ -13,52 +13,47 @@
       item-key="endpoint"
     >
       <template v-slot:top>
-        <v-toolbar flat class="mb-4">
-          <v-row>
-            <v-col>
-              <v-text-field
-                v-model="productNameSearch"
-                prepend-inner-icon="mdi-magnify"
-                label="Search for products..."
-                single-line
-                hide-details
-                outlined
-                solo
-                flat
-                dense
-              />
-            </v-col>
+      <v-toolbar flat class="mb-4" :style="announcement ? 'margin-top: 48px' : null">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="productNameSearch"
+              prepend-inner-icon="mdi-magnify"
+              label="Search for products..."
+              single-line
+              hide-details
+              outlined
+              solo
+              flat
+              dense
+            />
+          </v-col>
 
+          <v-spacer />
+
+          <v-col cols="auto" align="right">
             <v-spacer />
 
-            <v-col cols="auto" align="right">
-              <v-spacer />
+            <edit-announcement-btn class="mr-2" />
+            <edit-global-permission-btn class="mr-2" />
+            <new-product-btn
+              class="mr-2"
+              :is-super-user="isSuperUser"
+              @on-complete="onCompleteNewProduct"
+            />
 
-              <span
-                v-if="isSuperUser"
-              >
-                <edit-announcement-btn />
-
-                <edit-global-permission-btn />
-
-                <new-product-btn
-                  :is-super-user="isSuperUser"
-                  @on-complete="onCompleteNewProduct"
-                />
-              </span>
-
-              <v-btn
-                icon
-                title="Reload products"
-                color="primary"
-                @click="fetchProducts"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-toolbar>
-      </template>
+            <v-btn
+              icon
+              title="Reload products"
+              color="primary"
+              @click="fetchProducts"
+            >
+              <v-icon>mdi-refresh</v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-toolbar>
+    </template>
 
       <template #item.displayedName="{ item }">
         <product-name-column :product="item" />
@@ -116,8 +111,8 @@
             @on-complete="onCompleteEditProduct"
           />
 
+          <!-- v-if="isSuperUser" -->
           <delete-product-btn
-            v-if="isSuperUser"
             :product="item"
             @on-complete="deleteProduct"
           />
@@ -129,6 +124,7 @@
 
 <script>
 import _ from "lodash";
+import { mapGetters } from "vuex";
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { DBStatus, Permission } from "@cc/shared-types";
@@ -153,6 +149,12 @@ export default {
     ProductNameColumn
   },
 
+  computed: {
+    ...mapGetters([
+      "announcement"
+    ])
+  },
+
   data() {
     const itemsPerPageOptions = [ 25 ];
     const sortBy = this.$route.query["sort-by"];
@@ -173,28 +175,28 @@ export default {
       page,
       headers: [
         {
-          text: "Name",
+          title: "Name",
           value: "displayedName",
           sortable: true
         },
         {
-          text: "Admins",
+          title: "Admins",
           value: "admins",
           sortable: false
         },
         {
-          text: "Number of runs",
+          title: "Number of runs",
           value: "runCount",
           align: "center",
           sortable: true
         },
         {
-          text: "Latest store to product",
+          title: "Latest store to product",
           value: "latestStoreToProduct",
           sortable: true
         },
         {
-          text: "Actions",
+          title: "Actions",
           value: "action",
           sortable: false
         },
@@ -261,7 +263,6 @@ export default {
             handleThriftError(isAdminOfAnyProduct => {
               this.isAdminOfAnyProduct = isAdminOfAnyProduct;
 
-              // Remove action column from headers.
               if (!isAdminOfAnyProduct) {
                 this.headers = this.headers.filter(header => {
                   return header.value !== "action";
@@ -278,16 +279,13 @@ export default {
 
   methods: {
     fetchProducts() {
-
       this.loading = true;
 
       const productNameFilter = this.productNameSearch
         ? `*${this.productNameSearch}*` : null;
 
-
       prodService.getClient().getProducts(null, productNameFilter,
         handleThriftError(products => {
-
           this.products = products.map(product => {
             const description = product.description_b64 ?
               window.atob(product.description_b64) : null;
@@ -316,8 +314,6 @@ export default {
       let p2Value = null;
 
       if (sortBy === undefined) {
-        // By default sort runs by displayed name and put products to the end
-        // of list which are not accessible by the current user.
         if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
 
         p1Value = p1.displayedName.toLowerCase();
@@ -366,7 +362,7 @@ export default {
         return "orange";
       } else {
         return "green";
-      }
+    }
     }
   }
 };

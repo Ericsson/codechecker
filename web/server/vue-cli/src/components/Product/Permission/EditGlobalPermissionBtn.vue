@@ -4,12 +4,13 @@
     max-width="1000px"
     @confirm="confirmPermissionChange"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props }">
       <v-btn
         id="edit-global-permissions-btn"
         color="primary"
         class="mr-2"
-        v-on="on"
+        v-bind="props"
+        @click="dialog = true"
       >
         <v-icon left>
           mdi-shield-key
@@ -31,7 +32,7 @@
 </template>
 
 <script>
-import Vue from "vue";
+import mitt from "mitt";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditGlobalPermission from "./EditGlobalPermission";
@@ -46,13 +47,13 @@ export default {
   data() {
     return {
       dialog: false,
-      bus: new Vue()
+      bus: mitt()
     };
   },
 
   methods: {
     confirmPermissionChange() {
-      this.bus.$emit("save");
+      this.bus.emit("save");
     }
   }
 };

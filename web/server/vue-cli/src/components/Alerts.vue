@@ -1,25 +1,27 @@
 <template>
   <span>
     <v-alert
-      v-model="success"
+      :model-value="success"
       dismissible
       color="success"
       border="left"
       elevation="2"
       colored-border
       icon="mdi-check"
+      @update:model-value="$emit('update:success', $event)"
     >
       {{ successMsg }}
     </v-alert>
 
     <v-alert
-      v-model="error"
+      :model-value="error"
       dismissible
       color="error"
       border="left"
       elevation="2"
       colored-border
       icon="mdi-alert-outline"
+      @update:model-value="$emit('update:error', $event)"
     >
       {{ errorMsg }}
     </v-alert>
@@ -34,6 +36,10 @@ export default {
     error: { type: Boolean, default: false },
     successMsg: { type: String, default: null },
     errorMsg: { type: String, default: null }
-  }
+  },
+  emits: [
+    "update:success",
+    "update:error"
+  ]
 };
 </script>

@@ -27,24 +27,26 @@
     <v-row>
       <v-col>
         <product-user-permission
+          v-model:auth-rights="userAuthRights"
           :permissions="permissions"
           :auth-rights="userAuthRights"
           :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="false"
-          :success.sync="success"
-          :error.sync="error"
+          v-model:success="success"
+          v-model:error="error"
         />
       </v-col>
       <v-col>
         <product-group-permission
+          v-model:auth-rights="groupAuthRights"
           :permissions="permissions"
           :auth-rights="groupAuthRights"
           :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="true"
-          :success.sync="success"
-          :error.sync="error"
+          v-model:success="success"
+          v-model:error="error"
         />
       </v-col>
     </v-row>
