@@ -35,9 +35,10 @@
                 ['style', Severity.STYLE],
                 ['unspecified', Severity.UNSPECIFIED],
               ]"
-              v-slot:[`header.${item[0]}.count`]="{ header }"
+              v-slot:[headerSlot(item[0])]="{ header }"
+              :key="`header-${item[0]}`"
             >
-              <span :key="item[0]">
+              <span>
                 <severity-icon :status="item[1]" :size="16" />
                 {{ header.text }}
               </span>
@@ -52,9 +53,10 @@
                 ['style', Severity.STYLE],
                 ['unspecified', Severity.UNSPECIFIED],
               ]"
-              v-slot:[`item.${i[0]}.count`]="{ item }"
+              v-slot:[itemSlot(i[0])]="{ item }"
+              :key="`item-${i[0]}`"
             >
-              <span :key="i[0]">
+              <span>
                 <router-link
                   v-if="item[i[0]].count"
                   :to="{ name: 'reports', query: {
@@ -110,7 +112,7 @@
 
           <v-row justify="center">
             <v-overlay
-              :value="loading"
+              :model-value="loading"
               :absolute="true"
               :opacity="0.2"
             >
@@ -175,6 +177,14 @@ export default {
     };
   },
   methods: {
+    headerSlot(k) {
+      return `header.${k}.count`;
+    },
+
+    itemSlot(k) {
+      return `item.${k}.count`;
+    },
+
     getComponentStatistics(component, runIds, reportFilter, cmpData) {
       const filter = new ReportFilter(reportFilter);
       filter["severity"] = null;

@@ -4,9 +4,11 @@ import {
   createXHRClient,
   createXHRConnection
 } from "thrift";
+
 import router from "@/router";
 import store from "@/store";
 import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
+
 import authService from "./auth.service";
 import { eventHub } from "./eventHub";
 
