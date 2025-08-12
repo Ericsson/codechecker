@@ -12,6 +12,7 @@ and browser requests.
 
 
 import atexit
+from collections import Counter
 import datetime
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -21,9 +22,9 @@ import signal
 import socket
 import ssl
 import sys
-from typing import List, Optional, Tuple
+import time
+from typing import Dict, List, Optional, Tuple, cast
 
-import multiprocess
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql.expression import func
@@ -43,11 +44,13 @@ from codechecker_api.ProductManagement_v6 import \
     codeCheckerProductService as ProductAPI_v6
 from codechecker_api.ServerInfo_v6 import \
     serverInfoService as ServerInfoAPI_v6
+from codechecker_api.codeCheckerServersideTasks_v6 import \
+    codeCheckerServersideTaskService as TaskAPI_v6
 
 from codechecker_common import util
-from codechecker_common.logger import get_logger
 from codechecker_common.compatibility.multiprocessing import \
-    Pool, cpu_count
+    Pool, Process, Queue, Value, cpu_count
+from codechecker_common.logger import get_logger, signal_log
 
 from codechecker_web.shared import database_status
 from codechecker_web.shared.version import get_version_str
@@ -59,11 +62,16 @@ from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
 from .api.server_info_handler import \
     ThriftServerInfoHandler as ServerInfoHandler_v6
+from .api.tasks import ThriftTaskHandler as TaskHandler_v6
 from .database import database, db_cleanup
 from .database.config_db_model import Product as ORMProduct, \
     Configuration as ORMConfiguration
 from .database.database import DBSession
 from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
+from .task_executors.main import executor as background_task_executor
+from .task_executors.task_manager import \
+    TaskManager as BackgroundTaskManager, drop_all_incomplete_tasks
+
 
 LOG = get_logger('server')
 
@@ -83,8 +91,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.path = None
         super().__init__(request, client_address, server)
 
-    def log_message(self, *args):
-        """ Silencing http server. """
+    def log_message(self, *_args):
+        """Silencing HTTP server."""
         return
 
     def send_thrift_exception(self, error_msg, iprot, oprot, otrans):
@@ -102,7 +110,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         result = otrans.getvalue()
         self.send_response(200)
         self.send_header("content-type", "application/x-thrift")
-        self.send_header("Content-Length", len(result))
+        self.send_header("Content-Length", str(len(result)))
         self.end_headers()
         self.wfile.write(result)
 
@@ -432,23 +440,23 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 major_version, _ = version_supported
 
                 if major_version == 6:
-                    if request_endpoint == 'Authentication':
+                    if request_endpoint == "Authentication":
                         auth_handler = AuthHandler_v6(
                             self.server.manager,
                             self.auth_session,
                             self.server.config_session)
                         processor = AuthAPI_v6.Processor(auth_handler)
-                    elif request_endpoint == 'Configuration':
+                    elif request_endpoint == "Configuration":
                         conf_handler = ConfigHandler_v6(
                             self.auth_session,
                             self.server.config_session,
                             self.server.manager)
                         processor = ConfigAPI_v6.Processor(conf_handler)
-                    elif request_endpoint == 'ServerInfo':
+                    elif request_endpoint == "ServerInfo":
                         server_info_handler = ServerInfoHandler_v6(version)
                         processor = ServerInfoAPI_v6.Processor(
                             server_info_handler)
-                    elif request_endpoint == 'Products':
+                    elif request_endpoint == "Products":
                         prod_handler = ProductHandler_v6(
                             self.server,
                             self.auth_session,
@@ -456,7 +464,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             product,
                             version)
                         processor = ProductAPI_v6.Processor(prod_handler)
-                    elif request_endpoint == 'CodeCheckerService':
+                    elif request_endpoint == "Tasks":
+                        task_handler = TaskHandler_v6(
+                            self.server.config_session,
+                            self.server.task_manager,
+                            self.auth_session)
+                        processor = TaskAPI_v6.Processor(task_handler)
+                    elif request_endpoint == "CodeCheckerService":
                         # This endpoint is a product's report_server.
                         if not product:
                             error_msg = \
@@ -792,7 +806,10 @@ class CCSimpleHttpServer(HTTPServer):
                  pckg_data,
                  context,
                  check_env,
-                 manager):
+                 manager: session_manager.SessionManager,
+                 machine_id: str,
+                 task_queue: Queue,
+                 server_shutdown_flag: Value):
 
         LOG.debug("Initializing HTTP server...")
 
@@ -803,6 +820,7 @@ class CCSimpleHttpServer(HTTPServer):
         self.context = context
         self.check_env = check_env
         self.manager = manager
+        self.address, self.port = server_address
         self.__products = {}
 
         # Create a database engine for the configuration database.
@@ -810,6 +828,12 @@ class CCSimpleHttpServer(HTTPServer):
         self.__engine = product_db_sql_server.create_engine()
         self.config_session = sessionmaker(bind=self.__engine)
         self.manager.set_database_connection(self.config_session)
+
+        self.__task_queue = task_queue
+        self.task_manager = BackgroundTaskManager(task_queue,
+                                                  self.config_session,
+                                                  server_shutdown_flag,
+                                                  machine_id)
 
         # Load the initial list of products and set up the server.
         cfg_sess = self.config_session()
@@ -830,7 +854,7 @@ class CCSimpleHttpServer(HTTPServer):
         cfg_sess.close()
 
         try:
-            HTTPServer.__init__(self, server_address,
+            HTTPServer.__init__(self, (self.address, self.port),
                                 RequestHandlerClass,
                                 bind_and_activate=True)
             ssl_key_file = os.path.join(config_directory, "key.pem")
@@ -858,12 +882,22 @@ class CCSimpleHttpServer(HTTPServer):
                                                       server_side=True)
             else:
                 LOG.info("Searching for SSL key at %s, cert at %s, "
-                         "not found...", ssl_key_file, ssl_cert_file)
+                         "not found!", ssl_key_file, ssl_cert_file)
                 LOG.info("Falling back to simple, insecure HTTP.")
 
         except Exception as e:
             LOG.error("Couldn't start the server: %s", e.__str__())
             raise
+
+        # If the server was started with the port 0, the OS will pick an
+        # available port.
+        # For this reason, we will update the port variable after server
+        # ininitialisation.
+        self.port = self.socket.getsockname()[1]
+
+    @property
+    def formatted_address(self) -> str:
+        return f"{str(self.address)}:{self.port}"
 
     def configure_keepalive(self):
         """
@@ -907,16 +941,39 @@ class CCSimpleHttpServer(HTTPServer):
                 LOG.error('Failed to set TCP max keepalive probe: %s', ret)
 
     def terminate(self):
-        """
-        Terminating the server.
-        """
+        """Terminates the server and releases associated resources."""
         try:
             self.server_close()
+            self.__task_queue.close()
+            self.__task_queue.join_thread()
             self.__engine.dispose()
+
+            sys.exit(128 + signal.SIGINT)
         except Exception as ex:
             LOG.error("Failed to shut down the WEB server!")
             LOG.error(str(ex))
             sys.exit(1)
+
+    def serve_forever_with_shutdown_handler(self):
+        """
+        Calls `HTTPServer.serve_forever` but handles SIGINT (2) signals
+        gracefully such that the open resources are properly cleaned up.
+        """
+        def _handler(signum: int, _frame):
+            if signum not in [signal.SIGINT]:
+                signal_log(LOG, "ERROR", "Signal "
+                           f"<{signal.Signals(signum).name} ({signum})> "
+                           "handling attempted by "
+                           "'serve_forever_with_shutdown_handler'!")
+                return
+
+            signal_log(LOG, "DEBUG", f"{os.getpid()}: Received "
+                       f"{signal.Signals(signum).name} ({signum}), "
+                       "performing shutdown ...")
+            self.terminate()
+
+        signal.signal(signal.SIGINT, _handler)
+        return self.serve_forever()
 
     def add_product(self, orm_product, init_db=False):
         """
@@ -1085,16 +1142,20 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
 
     address_family = socket.AF_INET6
 
+    @property
+    def formatted_address(self) -> str:
+        return f"[{str(self.address)}]:{self.port}"
 
-def start_server(config_directory, package_data, port, config_sql_server,
-                 listen_address, force_auth, skip_db_cleanup: bool,
-                 context, check_env):
+
+def start_server(config_directory: str, package_data, port: int,
+                 config_sql_server, listen_address: str,
+                 force_auth: bool, skip_db_cleanup: bool,
+                 context, check_env, machine_id: str) -> int:
     """
-    Start http server to handle web client and thrift requests.
+    Starts the HTTP server to handle Web client and Thrift requests, execute
+    background jobs.
     """
     LOG.debug("Starting CodeChecker server...")
-
-    server_addr = (listen_address, port)
 
     # The root user file is DEPRECATED AND IGNORED
     root_file = os.path.join(config_directory, 'root.user')
@@ -1158,50 +1219,55 @@ def start_server(config_directory, package_data, port, config_sql_server,
     else:
         LOG.debug("Skipping db_cleanup, as requested.")
 
+    def _cleanup_incomplete_tasks(action: str) -> int:
+        config_session_factory = config_sql_server.create_engine()
+        try:
+            return drop_all_incomplete_tasks(
+                sessionmaker(bind=config_session_factory),
+                machine_id, action)
+        finally:
+            config_session_factory.dispose()
+
+    dropped_tasks = _cleanup_incomplete_tasks(
+        "New server started with the same machine_id, assuming the old "
+        "server is dead and won't be able to finish the task.")
+    if dropped_tasks:
+        LOG.info("At server startup, dropped %d background tasks left behind "
+                 "by a previous server instance matching machine ID '%s'.",
+                 dropped_tasks, machine_id)
+
+    api_processes: Dict[int, Process] = {}
+    requested_api_threads = cast(int, manager.worker_processes) \
+        or cpu_count()
+
+    bg_processes: Dict[int, Process] = {}
+    requested_bg_threads = cast(int,
+                                manager.background_worker_processes) \
+        or requested_api_threads
+    # Note that Queue under the hood uses OS-level primitives such as a socket
+    # or a pipe, where the read-write buffers have a **LIMITED** capacity, and
+    # are usually **NOT** backed by the full amount of available system memory.
+    bg_task_queue: Queue = Queue()
+    is_server_shutting_down = Value('B', False)
+
     server_clazz = CCSimpleHttpServer
-    if ':' in server_addr[0]:
+    if ':' in listen_address:
         # IPv6 address specified for listening.
         # FIXME: Python>=3.8 automatically handles IPv6 if ':' is in the bind
         # address, see https://bugs.python.org/issue24209.
         server_clazz = CCSimpleHttpServerIPv6
 
-    http_server = server_clazz(server_addr,
+    http_server = server_clazz((listen_address, port),
                                RequestHandler,
                                config_directory,
                                config_sql_server,
                                package_data,
                                context,
                                check_env,
-                               manager)
-
-    # If the server was started with the port 0, the OS will pick an available
-    # port. For this reason we will update the port variable after server
-    # initialization.
-    port = http_server.socket.getsockname()[1]
-
-    processes = []
-
-    def signal_handler(signum, _):
-        """
-        Handle SIGTERM to stop the server running.
-        """
-        LOG.info("Shutting down the WEB server on [%s:%d]",
-                 '[' + listen_address + ']'
-                 if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
-                 port)
-        http_server.terminate()
-
-        # Terminate child processes.
-        for pp in processes:
-            pp.terminate()
-
-        sys.exit(128 + signum)
-
-    def reload_signal_handler(*_args, **_kwargs):
-        """
-        Reloads server configuration file.
-        """
-        manager.reload_config()
+                               manager,
+                               machine_id,
+                               bg_task_queue,
+                               is_server_shutting_down)
 
     try:
         instance_manager.register(os.getpid(),
@@ -1211,17 +1277,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
     except IOError as ex:
         LOG.debug(ex.strerror)
 
-    LOG.info("Server waiting for client requests on [%s:%d]",
-             '[' + listen_address + ']'
-             if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
-             port)
-
     def unregister_handler(pid):
-        """
-        Handle errors during instance unregistration.
-        The workspace might be removed so updating the
-        config content might fail.
-        """
+        # Handle errors during instance unregistration.
+        # The workspace might be removed so updating the config content might
+        # fail.
         try:
             instance_manager.unregister(pid)
         except IOError as ex:
@@ -1229,21 +1288,376 @@ def start_server(config_directory, package_data, port, config_sql_server,
 
     atexit.register(unregister_handler, os.getpid())
 
-    for _ in range(manager.worker_processes - 1):
-        p = multiprocess.Process(target=http_server.serve_forever)
-        processes.append(p)
+    def _start_process_with_no_signal_handling(**kwargs):
+        """
+        Starts a `multiprocessing.Process` in a context where the signal
+        handling is temporarily disabled, such that the child process does not
+        inherit any signal handling from the parent.
+
+        Child processes spawned after the main process set up its signals
+        MUST NOT inherit the signal handling because that would result in
+        multiple children firing on the SIGTERM handler, for example.
+
+        For this reason, we temporarily disable the signal handling here by
+        returning to the initial defaults, and then restore the main process's
+        signal handling to be the usual one.
+        """
+        signals_to_disable = [signal.SIGINT, signal.SIGTERM]
+        if sys.platform != "win32":
+            signals_to_disable += [signal.SIGCHLD, signal.SIGHUP]
+
+        existing_signal_handlers = {}
+        for signum in signals_to_disable:
+            existing_signal_handlers[signum] = signal.signal(
+                signum, signal.SIG_DFL)
+
+        p = Process(**kwargs)
         p.start()
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+        for signum in signals_to_disable:
+            signal.signal(signum, existing_signal_handlers[signum])
 
+        return p
+
+    # Save a process-wide but not shared counter in the main process for how
+    # many subprocesses of each kind had been spawned, as this will be used in
+    # the internal naming of the workers.
+    spawned_api_proc_count: int = 0
+    spawned_bg_proc_count: int = 0
+
+    def spawn_api_process():
+        """Starts a single HTTP API worker process for CodeChecker server."""
+        nonlocal spawned_api_proc_count
+        spawned_api_proc_count += 1
+
+        p = _start_process_with_no_signal_handling(
+            target=http_server.serve_forever_with_shutdown_handler,
+            name=f"CodeChecker-API-{spawned_api_proc_count}")
+        api_processes[cast(int, p.pid)] = p
+        signal_log(LOG, "DEBUG", f"API handler child process {p.pid} started!")
+        return p
+
+    LOG.info("Using %d API request handler processes ...",
+             requested_api_threads)
+    for _ in range(requested_api_threads):
+        spawn_api_process()
+
+    def spawn_bg_process():
+        """Starts a single Task worker process for CodeChecker server."""
+        nonlocal spawned_bg_proc_count
+        spawned_bg_proc_count += 1
+
+        p = _start_process_with_no_signal_handling(
+            target=background_task_executor,
+            args=(bg_task_queue,
+                  config_sql_server,
+                  is_server_shutting_down,
+                  machine_id,
+                  ),
+            name=f"CodeChecker-Task-{spawned_bg_proc_count}")
+        bg_processes[cast(int, p.pid)] = p
+        signal_log(LOG, "DEBUG", f"Task child process {p.pid} started!")
+        return p
+
+    LOG.info("Using %d Task handler processes ...", requested_bg_threads)
+    for _ in range(requested_bg_threads):
+        spawn_bg_process()
+
+    termination_signal_timestamp = Value('d', 0)
+
+    def forced_termination_signal_handler(signum: int, _frame):
+        """
+        Handle SIGINT (2) and SIGTERM (15) received a second time to stop the
+        server ungracefully.
+        """
+        if signum not in [signal.SIGINT, signal.SIGTERM]:
+            signal_log(LOG, "ERROR", "Signal "
+                       f"<{signal.Signals(signum).name} ({signum})> "
+                       "handling attempted by "
+                       "'forced_termination_signal_handler'!")
+            return
+        if not is_server_shutting_down.value or \
+                abs(termination_signal_timestamp.value) <= \
+                sys.float_info.epsilon:
+            return
+        if time.time() - termination_signal_timestamp.value <= 2.0:
+            # Allow some time to pass between the handling of the normal
+            # termination vs. doing something in the "forced" handler, because
+            # a human's ^C keypress in a terminal can generate multiple SIGINTs
+            # in a quick succession.
+            return
+
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+        signal_log(LOG, "WARNING", "Termination signal "
+                   f"<{signal.Signals(signum).name} ({signum})> "
+                   "received a second time, **FORCE** killing the WEB server "
+                   f"on [{http_server.formatted_address}] ...")
+
+        for p in list(api_processes.values()) + list(bg_processes.values()):
+            try:
+                p.kill()
+            except (OSError, ValueError):
+                pass
+
+        # No mercy this time.
+        sys.exit(128 + signum)
+
+    exit_code = Value('B', 0)
+
+    def termination_signal_handler(signum: int, _frame):
+        """
+        Handle SIGINT (2) and SIGTERM (15) to stop the server gracefully.
+        """
+        # Debounce termination signals at this point.
+        signal.signal(signal.SIGINT, forced_termination_signal_handler)
+        signal.signal(signal.SIGTERM, forced_termination_signal_handler)
+
+        if is_server_shutting_down.value:
+            return
+        if signum not in [signal.SIGINT, signal.SIGTERM]:
+            signal_log(LOG, "ERROR", "Signal "
+                       f"<{signal.Signals(signum).name} ({signum})> "
+                       "handling attempted by 'termination_signal_handler'!")
+            return
+
+        is_server_shutting_down.value = True
+        termination_signal_timestamp.value = time.time()
+
+        exit_code.value = 128 + signum
+        signal_log(LOG, "INFO", "Shutting down the WEB server on "
+                   f"[{http_server.formatted_address}] ... "
+                   "Please allow some time for graceful clean-up!")
+
+        # Terminate child processes.
+        # For these subprocesses, let the processes properly clean up after
+        # themselves in a graceful shutdown scenario.
+        # For this reason, we fire a bunch of SIGHUPs first, indicating
+        # that the main server process wants to exit, and then wait for
+        # the children to die once all of them got the signal.
+        for pid in api_processes:
+            try:
+                signal_log(LOG, "DEBUG", f"SIGINT! API child PID: {pid} ...")
+                os.kill(pid, signal.SIGINT)
+            except (OSError, ValueError):
+                pass
+        for pid in list(api_processes.keys()):
+            p = api_processes[pid]
+            try:
+                signal_log(LOG, "DEBUG", f"join() API child PID: {pid} ...")
+                p.join()
+                p.close()
+            except (OSError, ValueError):
+                pass
+            finally:
+                del api_processes[pid]
+
+        bg_task_queue.close()
+        bg_task_queue.join_thread()
+        for pid in bg_processes:
+            try:
+                signal_log(LOG, "DEBUG", f"SIGHUP! Task child PID: {pid} ...")
+                os.kill(pid, signal.SIGHUP)
+            except (OSError, ValueError):
+                pass
+        for pid in list(bg_processes.keys()):
+            p = bg_processes[pid]
+            try:
+                signal_log(LOG, "DEBUG", f"join() Task child PID: {pid} ...")
+                p.join()
+                p.close()
+            except (OSError, ValueError):
+                pass
+            finally:
+                del bg_processes[pid]
+
+    def reload_signal_handler(signum: int, _frame):
+        """
+        Handle SIGHUP (1) to reload the server's configuration file to memory.
+        """
+        if signum not in [signal.SIGHUP]:
+            signal_log(LOG, "ERROR", "Signal "
+                       f"<{signal.Signals(signum).name} ({signum})> "
+                       "handling attempted by 'reload_signal_handler'!")
+            return
+
+        signal_log(LOG, "INFO",
+                   "Received signal to reload server configuration ...")
+
+        manager.reload_config()
+
+        signal_log(LOG, "INFO", "Server configuration reload: Done.")
+
+    sigchild_event_counter = Value('I', 0)
+    is_already_handling_sigchild = Value('B', False)
+
+    def child_signal_handler(signum: int, _frame):
+        """
+        Handle SIGCHLD (17) that signals a child process's interruption or
+        death by creating a new child to ensure that the requested number of
+        workers are always alive.
+        """
+        if is_already_handling_sigchild.value:
+            # Do not perform this handler recursively to prevent spawning too
+            # many children.
+            return
+        if is_server_shutting_down.value:
+            # Do not handle SIGCHLD events during normal shutdown, because
+            # our own subprocess termination calls would fire this handler.
+            return
+        if signum not in [signal.SIGCHLD]:
+            signal_log(LOG, "ERROR", "Signal "
+                       f"<{signal.Signals(signum).name} ({signum})> "
+                       "handling attempted by 'child_signal_handler'!")
+            return
+
+        is_already_handling_sigchild.value = True
+
+        force_slow_path: bool = False
+        event_counter: int = sigchild_event_counter.value
+        if event_counter >= \
+                min(requested_api_threads, requested_bg_threads) // 2:
+            force_slow_path = True
+        else:
+            sigchild_event_counter.value = event_counter + 1
+
+        # How many new processes need to be spawned for each type of worker
+        # process?
+        spawn_needs: Counter = Counter()
+
+        def _check_process_one(kind: str, proclist: Dict[int, Process],
+                               pid: int):
+            try:
+                p = proclist[pid]
+            except KeyError:
+                return
+
+            # Unfortunately, "Process.is_alive()" cannot be used here, because
+            # during the handling of SIGCHLD during a child's death, according
+            # to the state of Python's data structures, the child is still
+            # alive.
+            # We run a low-level non-blocking wait again, which will
+            # immediately return, but properly reap the child process if it has
+            # terminated.
+            try:
+                _, status_signal = os.waitpid(pid, os.WNOHANG)
+                if status_signal == 0:
+                    # The process is still alive.
+                    return
+            except ChildProcessError:
+                pass
+
+            signal_log(LOG, "WARNING",
+                       f"'{kind}' child process (PID {pid}, \"{p.name}\") "
+                       "is not alive anymore!")
+            spawn_needs[kind] += 1
+
+            try:
+                del proclist[pid]
+            except KeyError:
+                # Due to the bunching up of signals and that Python runs the
+                # C-level signals with a custom logic inside the interpreter,
+                # coupled with the fact that PIDs can be reused, the same PID
+                # can be reported dead in a quick succession of signals,
+                # resulting in a KeyError here.
+                pass
+
+        def _check_processes_many(kind: str, proclist: Dict[int, Process]):
+            for pid in sorted(proclist.keys()):
+                _check_process_one(kind, proclist, pid)
+
+        # Try to find the type of the interrupted/dead process based on signal
+        # information first.
+        # This should be quicker and more deterministic.
+        try:
+            child_pid, child_signal = os.waitpid(-1, os.WNOHANG)
+            if child_signal == 0:
+                # Go to the slow path and check the children manually, we did
+                # not receive a reply from waitpid() with an actual dead child.
+                raise ChildProcessError()
+
+            _check_process_one("api", api_processes, child_pid)
+            _check_process_one("background", bg_processes, child_pid)
+        except ChildProcessError:
+            # We have not gotten a PID, or it was not found, so we do not know
+            # who died; in this case, it is better to go on the slow path and
+            # query all our children individually.
+            spawn_needs.clear()  # Forces the Counter to be empty.
+
+        if force_slow_path:
+            # A clever sequence of child killings in variously sized batches
+            # can easily result in missing a few signals here and there, and
+            # missing a few dead children because 'os.waitpid()' allows us to
+            # fall into a false "fast path" situation.
+            # To remedy this, we every so often force a slow path to ensure
+            # the number of worker processes is as close to the requested
+            # amount of possible.
+
+            # Forces the Counter to be empty, even if the fast path put an
+            # entry in there.
+            spawn_needs.clear()
+
+        if not spawn_needs:
+            _check_processes_many("api", api_processes)
+            _check_processes_many("background", bg_processes)
+
+        if force_slow_path:
+            sigchild_event_counter.value = 0
+            signal_log(LOG, "WARNING",
+                       "Too many children died since last full status "
+                       "check, performing one ...")
+
+            # If we came into the handler with a "forced slow path" situation,
+            # ensure that we spawn enough new processes to backfill the
+            # missing amount, even if due to the flakyness of signal handling,
+            # we might not have actually gotten "N" times SIGCHLD firings for
+            # the death of N children, if they happened in a bundle situation,
+            # e.g., kill N/4, then kill N/2, then kill 1 or 2, then kill the
+            # remaining.
+            spawn_needs["api"] = \
+                util.clamp(0, requested_api_threads - len(api_processes),
+                           requested_api_threads)
+            spawn_needs["background"] = \
+                util.clamp(0, requested_bg_threads - len(bg_processes),
+                           requested_bg_threads)
+
+        for kind, num in spawn_needs.items():
+            signal_log(LOG, "INFO",
+                       f"(Re-)starting {num} '{kind}' child process(es) ...")
+
+            if kind == "api":
+                for _ in range(num):
+                    spawn_api_process()
+            elif kind == "background":
+                for _ in range(num):
+                    spawn_bg_process()
+
+        is_already_handling_sigchild.value = False
+
+    signal.signal(signal.SIGINT, termination_signal_handler)
+    signal.signal(signal.SIGTERM, termination_signal_handler)
     if sys.platform != "win32":
+        signal.signal(signal.SIGCHLD, child_signal_handler)
         signal.signal(signal.SIGHUP, reload_signal_handler)
 
-    # Main process also acts as a worker.
-    http_server.serve_forever()
+    LOG.info("Server waiting for client requests on [%s]",
+             http_server.formatted_address)
 
-    LOG.info("Webserver quit.")
+    # We can not use a multiprocessing.Event here because that would result in
+    # a deadlock, as the process waiting on the event is the one receiving the
+    # shutdown signal.
+    while not is_server_shutting_down.value:
+        time.sleep(5)
+
+    dropped_tasks = _cleanup_incomplete_tasks("Server shut down, task will "
+                                              "be never be completed.")
+    if dropped_tasks:
+        LOG.info("At server shutdown, dropped %d background tasks that will "
+                 "never be completed.", dropped_tasks)
+
+    LOG.info("CodeChecker server quit (main process).")
+    return exit_code.value
 
 
 def add_initial_run_database(config_sql_server, product_connection):

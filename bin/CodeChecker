@@ -6,10 +6,10 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-
 """
 Used to kickstart CodeChecker.
-Save original environment without modifications.
+
+Saves original environment without modifications.
 Used to run the logging in the same env.
 """
 # This is for enabling CodeChecker as a filename (i.e. module name).
@@ -25,9 +25,10 @@ import sys
 import tempfile
 
 PROC_PID = None
+EXIT_CODE = None
 
 
-def run_codechecker(checker_env, subcommand=None):
+def run_codechecker(checker_env, subcommand=None) -> int:
     """
     Run the CodeChecker.
         * checker_env - CodeChecker will be run in the checker env.
@@ -62,11 +63,13 @@ def run_codechecker(checker_env, subcommand=None):
     global PROC_PID
     PROC_PID = proc.pid
 
-    proc.wait()
-    sys.exit(proc.returncode)
+    global EXIT_CODE
+    EXIT_CODE = proc.wait()
+
+    return EXIT_CODE
 
 
-def main(subcommand=None):
+def main(subcommand=None) -> int:
     original_env = os.environ.copy()
     checker_env = original_env
 
@@ -93,30 +96,32 @@ def main(subcommand=None):
         print('Saving original build environment failed.')
         print(ex)
 
-    def signal_term_handler(signum, _frame):
+    def signal_handler(signum, _frame):
+        """
+        Forwards the received signal to the CodeChecker subprocess started by
+        this `main` script.
+        """
         global PROC_PID
         if PROC_PID and sys.platform != "win32":
-            os.kill(PROC_PID, signal.SIGINT)
+            try:
+                os.kill(PROC_PID, signum)
+            except ProcessLookupError:
+                pass
 
-        _remove_tmp()
-        sys.exit(128 + signum)
-
-    signal.signal(signal.SIGTERM, signal_term_handler)
-    signal.signal(signal.SIGINT, signal_term_handler)
-
-    def signal_reload_handler(_sig, _frame):
-        global PROC_PID
-        if PROC_PID:
-            os.kill(PROC_PID, signal.SIGHUP)
-
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     if sys.platform != "win32":
-        signal.signal(signal.SIGHUP, signal_reload_handler)
+        signal.signal(signal.SIGHUP, signal_handler)
+        signal.signal(signal.SIGCHLD, signal_handler)
 
     try:
-        run_codechecker(checker_env, subcommand)
+        global EXIT_CODE
+        EXIT_CODE = run_codechecker(checker_env, subcommand)
     finally:
         _remove_tmp()
 
+    return EXIT_CODE
+
 
 if __name__ == "__main__":
-    main(None)
+    sys.exit(main(None) or 0)

@@ -18,13 +18,11 @@ import os
 import signal
 import socket
 import sys
-import time
 from typing import List, Optional, Tuple, cast
 
 from alembic import config
 from alembic import script
 from alembic.util import CommandError
-import psutil
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
@@ -32,7 +30,7 @@ from codechecker_api_shared.ttypes import DBStatus
 
 from codechecker_report_converter import twodim
 
-from codechecker_common import arg, cmd_config, logger, util
+from codechecker_common import arg, cmd_config, logger, process, util
 from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 
 from codechecker_server import instance_manager, server
@@ -100,6 +98,25 @@ def add_arguments_to_parser(parser):
                              "server-specific configuration (such as "
                              "authentication settings, TLS certificate"
                              " (cert.pem) and key (key.pem)) from.")
+
+    parser.add_argument("--machine-id",
+                        type=str,
+                        dest="machine_id",
+                        default=argparse.SUPPRESS,
+                        required=False,
+                        help="""
+A unique identifier to be used to identify the machine running subsequent
+instances of the "same" server process.
+This value is only used internally to maintain normal function and bookkeeping
+of executed tasks following an unclean server shutdown, e.g., after a crash or
+system-level interference.
+
+If unspecified, defaults to a reasonable default value that is generated from
+the computer's hostname, as reported by the operating system.
+In most scenarios, there is no need to fine-tune this, except if subsequent
+executions of the "same" server is achieved in distinct environments, e.g.,
+if the server otherwise is running in a container.
+""")
 
     parser.add_argument('--host',
                         type=str,
@@ -413,7 +430,7 @@ databases.
             setattr(args, "instance_manager", True)
 
         # If everything is fine, do call the handler for the subcommand.
-        main(args)
+        return main(args)
 
     parser.set_defaults(
         func=__handle, func_process_config_file=cmd_config.process_config_file)
@@ -751,42 +768,6 @@ def __db_migration_multiple(
     return 0
 
 
-def kill_process_tree(parent_pid, recursive=False):
-    """Stop the process tree try it gracefully first.
-
-    Try to stop the parent and child processes gracefuly
-    first if they do not stop in time send a kill signal
-    to every member of the process tree.
-
-    There is a similar function in the analyzer part please
-    consider to update that in case of changing this.
-    """
-    proc = psutil.Process(parent_pid)
-    children = proc.children(recursive)
-
-    # Send a SIGTERM (Ctrl-C) to the main process
-    proc.terminate()
-
-    # If children processes don't stop gracefully in time,
-    # slaughter them by force.
-    _, still_alive = psutil.wait_procs(children, timeout=5)
-    for p in still_alive:
-        p.kill()
-
-    # Wait until this process is running.
-    n = 0
-    timeout = 10
-    while proc.is_running():
-        if n > timeout:
-            LOG.warning("Waiting for process %s to stop has been timed out"
-                        "(timeout = %s)! Process is still running!",
-                        parent_pid, timeout)
-            break
-
-        time.sleep(1)
-        n += 1
-
-
 def __instance_management(args):
     """Handles the instance-manager commands --list/--stop/--stop-all."""
 
@@ -831,7 +812,7 @@ def __instance_management(args):
                 continue
 
             try:
-                kill_process_tree(i['pid'])
+                process.kill_process_tree(i['pid'])
                 LOG.info("Stopped CodeChecker server running on port %s "
                          "in workspace %s (PID: %s)",
                          i['port'], i['workspace'], i['pid'])
@@ -1086,16 +1067,21 @@ def server_init_start(args):
                     'doc_root': context.doc_root,
                     'version': context.package_git_tag}
 
+    # Create a machine ID if the user did not specify one.
+    machine_id = getattr(args, "machine_id",
+                         f"{socket.gethostname()}:{args.view_port}")
+
     try:
-        server.start_server(args.config_directory,
-                            package_data,
-                            args.view_port,
-                            cfg_sql_server,
-                            args.listen_address,
-                            'force_auth' in args,
-                            args.skip_db_cleanup,
-                            context,
-                            environ)
+        return server.start_server(args.config_directory,
+                                   package_data,
+                                   args.view_port,
+                                   cfg_sql_server,
+                                   args.listen_address,
+                                   'force_auth' in args,
+                                   args.skip_db_cleanup,
+                                   context,
+                                   environ,
+                                   machine_id)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe port number (%s) is "
@@ -1132,4 +1118,4 @@ def main(args):
         except FileNotFoundError as fnerr:
             LOG.error(fnerr)
             sys.exit(1)
-        server_init_start(args)
+        return server_init_start(args)
