@@ -4,6 +4,7 @@
     :items="items"
     :loading="loading"
     :mobile-breakpoint="1000"
+    :item-class="getRowClass"
     loading-text="Loading guideline statistics..."
     no-data-text="No guideline statistics available"
     item-key="guidelineRule"
@@ -89,12 +90,18 @@ export default {
   methods: {
     enabledClick(type, checker_name) {
       this.$emit("enabled-click", type, checker_name);
+    },
+
+    getRowClass(item) {
+      const hasOutstanding = item.checkers.some(
+        checker => checker.outstanding > 0);
+      return hasOutstanding ? "highlight-row" : "";
     }
   }
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 $class-name: ".checker-statistics > ::v-deep .v-data-table__wrapper";
 @import "@/components/Statistics/style.scss";
 </style>

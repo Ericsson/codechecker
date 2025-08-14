@@ -538,18 +538,18 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
         cfg_handler = ClangTidyConfigHandler()
 
-        # Check the ambigous option handling.
+        # Check the ambiguous option handling.
         with self.assertLogs(level='ERROR') as log:
             with self.assertRaises(SystemExit) as e:
                 cfg_handler.initialize_checkers(checkers,
                                                 [("clang-diagnostic-format",
                                                   True)])
 
-        err_ambigous_checker = re.compile(r"ERROR:.*?is ambigous\. Please "
-                                          r"select one of these options to "
-                                          r"clarify the checker list:.*$")
+        err_ambiguous_checker = re.compile(
+            r"ERROR:.*?is ambiguous\. Please select one of these options to "
+            r"clarify the checker list:.*$")
 
-        match = err_ambigous_checker.search(log.output[0])
+        match = err_ambiguous_checker.search(log.output[0])
 
         self.assertIsNotNone(match)
         self.assertEqual(e.exception.code, 1)

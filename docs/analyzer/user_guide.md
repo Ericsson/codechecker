@@ -678,7 +678,7 @@ one can write `CodeChecker store --config client_config.json`.
   ],
 }
 ```
-For details see [Client Configuration File](config_file.md)
+For details see [Client Configuration File](/docs/config_file.md)
 
 ## CodeChecker analyzer subcommands
 

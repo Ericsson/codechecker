@@ -16,16 +16,18 @@ import tempfile
 import shutil
 import socket
 import subprocess
+from typing import cast
 
 from codechecker_common.util import load_json
 
-from .thrift_client_to_db import get_auth_client
-from .thrift_client_to_db import get_config_client
-from .thrift_client_to_db import get_product_client
-from .thrift_client_to_db import get_viewer_client
+from .thrift_client_to_db import \
+    get_auth_client, \
+    get_config_client, \
+    get_product_client, \
+    get_task_client, \
+    get_viewer_client
 
-from functional import PKG_ROOT
-from functional import REPO_ROOT
+from functional import PKG_ROOT, REPO_ROOT
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -243,6 +245,30 @@ def setup_config_client(workspace,
                              session_token=session_token, protocol=proto)
 
 
+def setup_task_client(workspace,
+                      host=None, port=None,
+                      uri="/Tasks",
+                      auto_handle_connection=True,
+                      session_token=None,
+                      protocol="http"):
+    if not host and not port:
+        codechecker_cfg = import_test_cfg(workspace)["codechecker_cfg"]
+        port = codechecker_cfg["viewer_port"]
+        host = codechecker_cfg["viewer_host"]
+
+    if session_token is None:
+        session_token = get_session_token(workspace, host, port)
+    if session_token == "_PROHIBIT":
+        session_token = None
+
+    return get_task_client(port=port,
+                           host=cast(str, host),
+                           uri=uri,
+                           auto_handle_connection=auto_handle_connection,
+                           session_token=session_token,
+                           protocol=protocol)
+
+
 def repository_root():
     return os.path.abspath(os.environ['REPO_ROOT'])
 
@@ -362,9 +388,20 @@ def enable_auth(workspace):
     scfg_dict["authentication"]["super_user"] = "root"
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \
-        ["cc:test", "john:doe", "admin:admin123", "colon:my:password",
-         "admin_group_user:admin123", "regex_admin:blah",
-         "permission_view_user:pvu", "root:root"]
+        ["cc:test", "john:doe", "admin:admin123", "colon123:my:password",
+         "colon:my:password", "admin_group_user:admin123",
+         "regex_admin:blah", "permission_view_user:pvu", "root:root",
+         "hashtest1:hashtest1:this_will_fail",
+         "hashtest2:this_will_fail_too:sha512",
+         ("hashtest3:9d49be0aa9430dc908e6f6ecd1eff1c253e3aefd6df7ea"
+          "daeb2a66b797d9bba842f16963d4cc7a8dbb1b61c0f75cabb52f48a9"
+          "0d6b57b453ae4f85c4352e269f:sha512"),
+         ("hashtest4:8b440a15aba9665761a279b7cd12659bf1b6527bdbe6e4"
+          "3c2ef97026a05d1efe9321b6aa6fec32c2f00aaebc2baa6aab5dc54b"
+          "bd4c9f9adc0d7d3744f5b7f3df:sha3_512"),
+         ("hashtest5:33a3060019fb2bb16b4eb9eb9ec59bee4ccc658a9e3186"
+          "68e6ff0b142d523a0de571adf979428872eb2eb3fd34821687e09b92"
+          "f765ebc5ddbf9ea3cae76d292f:sha3_512:with:salt")]
     scfg_dict["authentication"]["method_dictionary"]["groups"] = \
         {"admin_group_user": ["admin_GROUP"]}
     scfg_dict["authentication"]["regex_groups"]["enabled"] = True

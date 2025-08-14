@@ -15,11 +15,12 @@ import re
 import uuid
 
 from datetime import datetime
+import hashlib
 from typing import Optional
 
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json
+from codechecker_common.util import generate_random_token, load_json
 
 from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
@@ -60,18 +61,25 @@ def get_worker_processes(scfg_dict):
     """
     Return number of worker processes from the config dictionary.
 
-    Return 'worker_processes' field from the config dictionary or returns the
-    default value if this field is not set or the value is negative.
+    Return 'worker_processes' and 'background_worker_processes' fields from
+    the config dictionary or returns the default value if this field is not
+    set or the value is negative.
     """
     default = cpu_count()
-    worker_processes = scfg_dict.get('worker_processes', default)
+    worker_processes = scfg_dict.get("worker_processes", default)
+    background_worker_processes = scfg_dict.get("background_worker_processes",
+                                                default)
 
-    if worker_processes < 0:
+    if not worker_processes or worker_processes < 0:
         LOG.warning("Number of worker processes can not be negative! Default "
                     "value will be used: %s", default)
         worker_processes = default
+    if not background_worker_processes or background_worker_processes < 0:
+        LOG.warning("Number of task worker processes can not be negative! "
+                    "Default value will be used: %s", worker_processes)
+        background_worker_processes = worker_processes
 
-    return worker_processes
+    return worker_processes, background_worker_processes
 
 
 class _Session:
@@ -163,7 +171,7 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, force_auth=False):
+    def __init__(self, configuration_file, secrets_file, force_auth=False):
         """
         Initialise a new Session Manager on the server.
 
@@ -176,6 +184,7 @@ class SessionManager:
         self.__logins_since_prune = 0
         self.__sessions = []
         self.__configuration_file = configuration_file
+        self.__secrets_file = secrets_file
 
         self.scfg_dict = self.__get_config_dict()
 
@@ -183,7 +192,8 @@ class SessionManager:
         # so it should NOT be handled by session_manager. A separate config
         # handler for the server's stuff should be created, that can properly
         # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(self.scfg_dict)
+        self.__worker_processes, self.__background_worker_processes = \
+            get_worker_processes(self.scfg_dict)
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
@@ -409,6 +419,46 @@ class SessionManager:
             # have been parsed from it.
             raise ValueError("Server configuration file was invalid, or "
                              "empty.")
+
+        LOG.debug(self.__secrets_file)
+        if os.path.exists(self.__secrets_file):
+            secrets_dict = load_json(self.__secrets_file, {})
+            check_file_owner_rw(self.__secrets_file)
+        else:
+            secrets_dict = {}
+
+        secret_re = re.compile(r'^\$SECRET:[a-zA-Z0-9_-]+\$$')
+        env_re = re.compile(r'^\$ENV:[a-zA-Z0-9_-]+\$$')
+
+        def resolve_variables_failed(var):
+            if (secret_re.search(var) and
+                    not os.path.exists(self.__secrets_file)):
+                LOG.error("Secrets were used in server configuration file, "
+                          f"but {self.__secrets_file} does not exist!")
+
+            raise ValueError(f"Variable '{var}' could not "
+                             "be resolved in server configuration file.")
+
+        def resolve_variables(d):
+            items = d.items() if isinstance(d, dict) else enumerate(d)
+
+            for k, v in items:
+                if isinstance(v, (dict, list)):
+                    resolve_variables(v)
+                elif isinstance(v, str):
+                    secret_matched = secret_re.search(v)
+                    env_matched = env_re.search(v)
+
+                    if secret_matched or env_matched:
+                        var_name = v.split(':')[1][:-1]
+                        if secret_matched and var_name in secrets_dict:
+                            d[k] = secrets_dict[var_name]
+                        elif env_matched and var_name in os.environ:
+                            d[k] = os.environ[var_name]
+                        else:
+                            resolve_variables_failed(v)
+
+        resolve_variables(cfg_dict)
         return cfg_dict
 
     def reload_config(self):
@@ -466,6 +516,10 @@ class SessionManager:
     @property
     def worker_processes(self):
         return self.__worker_processes
+
+    @property
+    def background_worker_processes(self) -> int:
+        return self.__background_worker_processes
 
     def get_realm(self):
         return {
@@ -606,12 +660,41 @@ class SessionManager:
         if not method_config:
             return False
 
-        valid = self.__is_method_enabled('dictionary') and \
-            auth_string in method_config.get('auths')
-        if not valid:
+        if not self.__is_method_enabled('dictionary'):
             return False
 
-        username = SessionManager.get_user_name(auth_string)
+        auth_string_split = auth_string.split(':', 1)
+        username = auth_string_split[0]
+
+        saved_auth_string = [auth for auth in method_config.get('auths')
+                             if auth.split(':', 1)[0] == username]
+        if len(saved_auth_string) == 0:
+            return False
+
+        saved_auth_string = saved_auth_string[0]
+        if saved_auth_string != auth_string:
+            saved_auth_string_split = saved_auth_string.split(':', 3)
+            try:
+                hash_algorithm = saved_auth_string_split[2]
+            except IndexError:
+                return False
+
+            if not hasattr(hashlib, hash_algorithm):
+                return False
+
+            password = auth_string_split[1]
+            try:
+                salt = saved_auth_string_split[3]
+                password += salt
+            except IndexError:
+                pass
+
+            password = password.encode("utf-8")
+            saved_password_hash = saved_auth_string_split[1]
+            if not saved_password_hash == \
+                    getattr(hashlib, hash_algorithm)(password).hexdigest():
+                return False
+
         group_list = method_config['groups'][username] if \
             'groups' in method_config and \
             username in method_config['groups'] else []
@@ -792,7 +875,7 @@ class SessionManager:
             return False
 
         # Generate a new token and create a local session.
-        token = generate_session_token()
+        token = generate_random_token(32)
         user_name = validation.get('username')
         groups = validation.get('groups', [])
         is_root = validation.get('root', False)

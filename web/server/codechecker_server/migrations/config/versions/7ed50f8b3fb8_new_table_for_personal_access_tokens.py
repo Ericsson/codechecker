@@ -46,22 +46,30 @@ def upgrade():
 
     dialect = op.get_context().dialect.name
     if dialect == "sqlite":
-        random_string = "hex(randomblob(4))"
-        with op.batch_alter_table("auth_sessions", recreate="never") as ba:
-            ba.alter_column("can_expire", new_column_name="can_expire_UNUSED")
+        token_name = "hex(randomblob(4))"
     else:
-        random_string = "substr(md5(random()::text), 1, 8)"
-        op.drop_column('auth_sessions', 'can_expire')
+        token_name = "concat('token', row_number() over ())"
 
     one_year_later = datetime.now() + timedelta(days=365)
     op.execute(
         f"""
         INSERT INTO personal_access_tokens (user_name, token_name, token,
             description, last_access, expiration)
-        SELECT user_name, {random_string}, token, description, last_access,
+        SELECT user_name, {token_name}, token, description, last_access,
             '{one_year_later}'
         FROM auth_sessions
+        WHERE can_expire = false
         """)
+    op.execute("""
+        DELETE FROM auth_sessions
+        WHERE can_expire = false
+        """)
+
+    if dialect == "sqlite":
+        with op.batch_alter_table("auth_sessions", recreate="never") as ba:
+            ba.alter_column("can_expire", new_column_name="can_expire_UNUSED")
+    else:
+        op.drop_column('auth_sessions', 'can_expire')
     # ### end Alembic commands ###
 
 
