@@ -294,7 +294,7 @@ class ThriftProductHandler:
                 # Strip the config directory from the path, to allow for
                 # easier editing
                 config_dir = \
-                    os.path.normpath(self.__server.config_directory) + "/"
+                    os.path.normpath(self.__server.workspace_directory) + "/"
                 if args['sqlite'].startswith(config_dir):
                     db_name = args['sqlite'][len(config_dir):]
                 else:
@@ -428,8 +428,8 @@ class ThriftProductHandler:
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     "SQLite database must be given by relative path!")
 
-            dbc.database = path_for_fake_root(os.path.join("/", dbc.database),
-                                              self.__server.config_directory)
+            dbc.database = path_for_fake_root(os.path.join(
+                "/", dbc.database), self.__server.workspace_directory)
 
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
@@ -610,7 +610,7 @@ class ThriftProductHandler:
                         "SQLite database must be given by relative path!")
                 dbc.database = path_for_fake_root(
                     os.path.join("/", dbc.database),
-                    self.__server.config_directory)
+                    self.__server.workspace_directory)
 
             # Some values come encoded as Base64, decode these.
             displayed_name = convert.from_b64(new_config.displayedName_b64) \

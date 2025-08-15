@@ -554,10 +554,10 @@ def store(codechecker_cfg, test_project_name):
         return oserr.errno
 
 
-def serv_cmd(config_dir, port, pg_config=None, serv_args=None):
+def serv_cmd(workspace_dir, port, pg_config=None, serv_args=None):
 
     server_cmd = ['CodeChecker', 'server',
-                  '--config-directory', config_dir]
+                  '--workspace', workspace_dir]
 
     server_cmd.extend(['--host', 'localhost',
                        '--port', str(port)])
@@ -570,7 +570,8 @@ def serv_cmd(config_dir, port, pg_config=None, serv_args=None):
         server_cmd.append('--postgresql')
         server_cmd += _pg_db_config_to_cmdline_params(pg_config)
     else:
-        server_cmd += ['--sqlite', os.path.join(config_dir, 'config.sqlite')]
+        server_cmd += ['--sqlite', os.path.join(workspace_dir,
+                                                'config.sqlite')]
 
     print(' '.join(server_cmd))
 
@@ -586,11 +587,11 @@ def start_or_get_server(auth_required=False):
     server_type = 'global_auth_server' if auth_required else \
         'global_simple_server'
 
-    config_dir = os.path.join(workspace_root, server_type)
-    if not os.path.exists(config_dir):
-        os.makedirs(config_dir)
+    workspace_dir = os.path.join(workspace_root, server_type)
+    if not os.path.exists(workspace_dir):
+        os.makedirs(workspace_dir)
 
-    portfile = os.path.join(config_dir, 'serverport')
+    portfile = os.path.join(workspace_dir, 'serverport')
 
     if os.path.exists(portfile):
         print("A server appears to be already running...")
@@ -599,10 +600,10 @@ def start_or_get_server(auth_required=False):
     else:
         if auth_required:
             # Set up the root user and the authentication for the server.
-            env.enable_auth(config_dir)
+            env.enable_auth(workspace_dir)
 
         port = env.get_free_port()
-        print("Setting up CodeChecker server in " + config_dir + " :" +
+        print("Setting up CodeChecker server in " + workspace_dir + " :" +
               str(port))
 
         with open(portfile, 'w', encoding="utf-8", errors="ignore") as f:
@@ -610,10 +611,10 @@ def start_or_get_server(auth_required=False):
 
         pg_config = env.get_postgresql_cfg()
 
-        server_cmd = serv_cmd(config_dir, port, pg_config)
+        server_cmd = serv_cmd(workspace_dir, port, pg_config)
 
         print("Starting server...")
-        server_stdout = os.path.join(config_dir,
+        server_stdout = os.path.join(workspace_dir,
                                      str(os.getpid()) + ".out")
 
         with open(server_stdout, "w",
@@ -622,7 +623,7 @@ def start_or_get_server(auth_required=False):
                 server_cmd,
                 stdout=server_out,
                 stderr=server_out,
-                env=env.test_env(config_dir),
+                env=env.test_env(workspace_dir),
                 encoding="utf-8",
                 errors="ignore")
 
