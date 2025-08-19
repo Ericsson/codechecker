@@ -38,7 +38,7 @@ int predictEscapedSize(const char* str_);
  * the documentation of predictEscapedSize() for some examples.
  *
  * The '\\', '\r' and '\v' characters are also escaped correctly.
- * 
+ *
  * @param str_ a string to escape (non null).
  * @param buff_ an output buffer (non null).
  * @return anways returns buff_.
@@ -85,7 +85,7 @@ typedef int (*LoggerPredFuc)(const void*);
 /**
  * A very simple vector.
  */
-typedef struct _LoggerVector 
+typedef struct _LoggerVector
 {
   /**
    * The actual size of the vector.
@@ -257,7 +257,7 @@ char* loggerGetFilePathWithoutExt(const char* absPath_);
 
 /**
  * Return the file`s name with or without it`s extension.
- * 
+ *
  * @param absPath_ the absolute file path.
  * @param withoutExt_ with or without extension.
  * @return file name or NULL on error..
@@ -296,5 +296,29 @@ void freeLock(int lockFile_);
  *  subsequent additional arguments and formatted as requested.
  */
 void logPrint(char* logLevel_, char* fileName_, int line_, char* fmt_, ...);
+
+/**
+ * Safe version of strcpy that checks buffer size and exits
+ * if string truncation would occur.
+ *
+ * @param dest destination buffer pointer.
+ * @param src source buffer pointer.
+ * @param buf_size size of the destination buffer.
+ *
+ * @return returns destination pointer dest.
+ */
+char* safe_strcpy(char* dest, const char* src, size_t buf_size);
+
+/**
+ * Safe version of strcat that checks buffer size and exits
+ * if string truncation would occur.
+ *
+ * @param dest destination buffer pointer.
+ * @param src source buffer pointer.
+ * @param buf_size size of the destination buffer.
+ *
+ * @return returns destination pointer dest.
+ */
+char* safe_strcat(char* dest, const char* src, size_t buf_size);
 
 #endif /* __LOGGER_UTIL_H__ */

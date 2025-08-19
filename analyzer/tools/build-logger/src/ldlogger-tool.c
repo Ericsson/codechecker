@@ -129,7 +129,7 @@ LoggerFile* loggerFileInitFromPath(LoggerFile* file_, const char* path_)
   if (!loggerMakePathAbs(path_, file_->path, 0))
   {
     /* fallback to the given path */
-    strcpy(file_->path, path_);
+    safe_strcpy(file_->path, path_, PATH_MAX);
   }
 
   return file_;
