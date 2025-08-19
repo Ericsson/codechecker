@@ -83,11 +83,12 @@ static void getDefaultArguments(const char* prog_, LoggerVector* args_)
   ssize_t readSize;
   int incStarted = 0;
 
-  strcpy(command, prog_);
+  safe_strcpy(command, prog_, PATH_MAX);
+
   /* WARNING: this always gets the C++ compiler include
    * dirs even if we are compiling C file.
    * */
-  strcat(command, " -xc++ -E -v - < /dev/null 2>&1");
+  safe_strcat(command, " -xc++ -E -v - < /dev/null 2>&1", PATH_MAX);
 
   cmdOut = popen(command, "r");
   if (!cmdOut)
@@ -215,9 +216,9 @@ char* findFullPath(const char* executable, char* fullpath) {
   char* dir;
   path = strdup(getenv("PATH"));
   for (dir = strtok(path, ":"); dir; dir = strtok(NULL, ":")) {
-    strcpy(fullpath, dir);
-    strcpy(fullpath + strlen(dir), "/");
-    strcpy(fullpath + strlen(dir) + 1, executable);
+    safe_strcpy(fullpath, dir, PATH_MAX);
+    safe_strcat(fullpath, "/", PATH_MAX);
+    safe_strcat(fullpath, executable, PATH_MAX);
     if (access(fullpath, F_OK ) != -1 ) {
         free(path);
         return fullpath;
@@ -300,17 +301,18 @@ void transformSomePathsAbsolute(LoggerVector* args_)
       const char* path = (const char*)args_->data[i] + strlen(*flag);
       if (*path)
       {
-        char newPath[PATH_MAX];
-        strcpy(newPath, *flag);
+        // Increased buffer size for flags
+        char newPath[PATH_MAX + 256];
+        safe_strcpy(newPath, *flag, 256);
 
         int hasEqual = *path == '=';
         if (hasEqual)
         {
-          strcat(newPath, "=");
+          safe_strcat(newPath, "=", 256);
           ++path;
         }
 
-        loggerMakePathAbs(path, newPath + strlen(*flag) + hasEqual, 0);
+        loggerMakePathAbs(path, newPath + strlen(newPath), 0);
         loggerVectorReplace(args_, i, loggerStrDup(newPath));
       }
       else
@@ -441,7 +443,7 @@ int loggerGccParserCollectActions(
             }
             else
             {
-              strcpy(newPath, current);
+              safe_strcpy(newPath, current, PATH_MAX);
             }
             loggerVectorAddUnique(&action->sources, loggerStrDup(newPath),
               (LoggerCmpFuc) &strcmp);

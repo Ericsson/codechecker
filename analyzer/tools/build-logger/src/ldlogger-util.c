@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -29,12 +30,12 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
 
   if (realpath(path_, pathBuff))
   {
-    pathBuff[PATH_MAX - 1] = 0;
-    return strcpy(resolved_, pathBuff);
+    safe_strcpy(resolved_, pathBuff, PATH_MAX);
+    return resolved_;
   }
   else
   {
-    strcpy(pathBuff, path_);
+    safe_strcpy(pathBuff, path_, PATH_MAX);
   }
 
   /* cut off the last part */
@@ -54,8 +55,8 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
   *slashPos = 0;
   if (makePathAbsRec(pathBuff, resolved_))
   {
-    strcat(resolved_, "/");
-    strcat(resolved_, child);
+    safe_strcat(resolved_, "/", PATH_MAX);
+    safe_strcat(resolved_, child, PATH_MAX);
     return resolved_;
   }
 
@@ -248,8 +249,8 @@ char* loggerMakePathAbs(const char* path_, char* resolved_, int mustExist_)
       return NULL;
     }
 
-    strcat(newPath, "/");
-    strcat(newPath, path_);
+    safe_strcat(newPath, "/", PATH_MAX);
+    safe_strcat(newPath, path_, PATH_MAX);
     return makePathAbsRec(newPath, resolved_);
   }
 
@@ -590,7 +591,7 @@ int aquireLock(char const* logFile_)
     return -1;
   }
 
-  strcat(lockFilePath, ".lock");
+  safe_strcat(lockFilePath, ".lock", PATH_MAX);
   lockFile = open(lockFilePath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
   if (lockFile == -1)
   {
@@ -705,4 +706,44 @@ void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
 
   fclose(stream);
   freeLock(lockFd);
+}
+
+char* safe_strcpy(char* dest, const char* src, size_t buf_size)
+{
+  if (buf_size == 0)
+  {
+    fprintf(stderr, "ERROR: safe_strcpy failed, buffer size invalid\n");
+    exit(1);
+  }
+
+  strncpy(dest, src, buf_size);
+
+  if (dest[buf_size - 1] != '\0')
+  {
+    fprintf(stderr, "ERROR: safe_strcpy failed, string too long\n");
+    exit(1);
+  }
+
+  return dest;
+}
+
+char* safe_strcat(char* dest, const char* src, size_t buf_size)
+{
+  if (buf_size == 0)
+  {
+    fprintf(stderr, "ERROR: safe_strcat failed, buffer size invalid\n");
+    exit(1);
+  }
+
+  size_t n = buf_size - strlen(dest) - 1;
+
+  if (strlen(src) > n)
+  {
+    fprintf(stderr, "ERROR: safe_strcat failed, string too long\n");
+    exit(1);
+  }
+
+  strncat(dest, src, n);
+
+  return dest;
 }
