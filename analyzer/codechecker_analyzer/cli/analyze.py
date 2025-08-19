@@ -1329,6 +1329,7 @@ def main(args):
         compiler_info_file,
         args.keep_gcc_include_fixed,
         args.keep_gcc_intrin,
+        args.jobs,
         skip_handlers,
         pre_analysis_skip_handlers,
         ctu_or_stats_enabled,
