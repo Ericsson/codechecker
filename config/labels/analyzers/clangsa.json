@@ -334,12 +334,14 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nulldereference-c-c-objc",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
+      "memory-safety:cwe-476",
       "severity:HIGH"
     ],
     "core.StackAddrEscapeBase": [
@@ -357,6 +359,7 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-stackaddressescape-c",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -364,6 +367,8 @@
       "sei-cert-c:dcl30-c",
       "sei-cert-cpp:exp54-cpp",
       "sei-cert-cpp:exp61-cpp",
+      "memory-safety:cwe-123",
+      "memory-safety:cwe-562",
       "severity:HIGH"
     ],
     "core.UndefinedBinaryOperatorResult": [
@@ -504,6 +509,7 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-newdelete-c",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -513,16 +519,21 @@
       "sei-cert-cpp:mem50-cpp",
       "sei-cert-cpp:mem51-cpp",
       "sei-cert-cpp:oop54-cpp",
+      "memory-safety:cwe-415",
+      "memory-safety:cwe-416",
+      "memory-safety:cwe-590",
       "severity:HIGH"
     ],
     "cplusplus.NewDeleteLeaks": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-newdeleteleaks-c",
       "guideline:sei-cert-cpp",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-cpp:mem51-cpp",
+      "memory-safety:cwe-401",
       "severity:HIGH"
     ],
     "cplusplus.PlacementNew": [
@@ -767,9 +778,11 @@
     "optin.taint.TaintedAlloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
       "guideline:owasp-top-10-2021",
+      "guideline:memory-safety",
       "profile:extreme",
       "profile:sensitive",
       "owasp-top-10-2021:owasp-A03-2021",
+      "memory-safety:cwe-789",
       "severity:HIGH"
     ],
     "optin.taint.TaintedDiv": [
@@ -868,12 +881,18 @@
     "security.ArrayBound": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-arraybound-c-c",
       "guideline:cwe-top-25-2024",
+      "guideline:memory-safety",
       "profile:default",
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
+      "memory-safety:cwe-121",
+      "memory-safety:cwe-122",
+      "memory-safety:cwe-124",
+      "memory-safety:cwe-126",
+      "memory-safety:cwe-127",
       "severity:HIGH"
     ],
     "security.FloatLoopCounter": [
@@ -1082,6 +1101,7 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1094,7 +1114,11 @@
       "sei-cert-c:mem34-c",
       "sei-cert-c:mem35-c",
       "sei-cert-c:mem36-c",
-      "severity:MEDIUM"
+      "memory-safety:cwe-401",
+      "memory-safety:cwe-415",
+      "memory-safety:cwe-416",
+      "memory-safety:cwe-590",
+      "severity:HIGH"
     ],
     "unix.MallocSizeof": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mallocsizeof-c",
@@ -1111,12 +1135,14 @@
     "unix.MismatchedDeallocator": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mismatcheddeallocator-c-c",
       "guideline:sei-cert-cpp",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-cpp:mem51-cpp",
-      "severity:MEDIUM"
+      "memory-safety:cwe-762",
+      "severity:HIGH"
     ],
     "unix.StdCLibraryFunctions": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stdclibraryfunctions-c",
