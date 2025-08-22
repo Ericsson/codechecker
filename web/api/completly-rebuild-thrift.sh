@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# CodeChecker Automatic Rebuild Script
+# This script rebuilds the CodeChecker package with API build first
+
 set -e  # Exit on any error
 
 echo "Starting CodeChecker Thrift rebuild process..."
@@ -24,12 +27,12 @@ echo "Resetting package-lock.json..."
 git checkout master -- "$HOME/codechecker/web/server/vue-cli/package-lock.json"
 git reset HEAD "$HOME/codechecker/web/server/vue-cli/package-lock.json"
 
-# Cleaning.
+# cleaning.
 echo "Cleaning previous builds..."
 make clean
 make clean_venv_dev
 
-# Creating new virtual enviroment.
+#Creating new virtual enviroment.
 echo "Creating new virtual environment..."
 make venv_dev
 
@@ -42,4 +45,5 @@ source "$HOME/codechecker/venv_dev/bin/activate"
 export PATH="$HOME/codechecker/build/CodeChecker/bin:$PATH"
 
 echo "CodeChecker rebuild completed successfully!"
+echo "Virtual environment is activated and PATH is set."
 echo "You can now use CodeChecker commands."
