@@ -106,6 +106,13 @@ class AbstractTask:
         injected `task_manager`) and logging failures accordingly.
         """
         if task_manager.should_cancel(self):
+            def _log_cancel_and_abandon(db_task: DBTask):
+                db_task.add_comment("CANCEL!\nTask cancelled before "
+                                    "execution began!",
+                                    "SYSTEM[AbstractTask::execute()]")
+                db_task.set_abandoned(force_dropped_status=False)
+
+            task_manager._mutate_task_record(self, _log_cancel_and_abandon)
             return
 
         try:
