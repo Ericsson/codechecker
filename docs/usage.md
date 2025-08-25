@@ -261,7 +261,7 @@ analyze only the changed files and all the files that are depending on the
 source code changes (in case of the update of a header file).
 
 b) If you only want to re-analyze changed source files, without re-building
-your project, you can use [skip](analyzer/user_guide.md#skip) list to tell
+your project, you can use [skip](analyzer/user_guide.md#skip-file) list to tell
 CodeChecker which files to analyze.
 
 ### Automatic fixing
