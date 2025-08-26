@@ -1118,7 +1118,7 @@
       "memory-safety:cwe-415",
       "memory-safety:cwe-416",
       "memory-safety:cwe-590",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "unix.MallocSizeof": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mallocsizeof-c",
@@ -1142,7 +1142,7 @@
       "profile:sensitive",
       "sei-cert-cpp:mem51-cpp",
       "memory-safety:cwe-762",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "unix.StdCLibraryFunctions": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stdclibraryfunctions-c",

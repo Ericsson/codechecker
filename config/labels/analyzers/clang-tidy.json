@@ -4943,6 +4943,7 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-stack-address",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -4950,6 +4951,7 @@
       "sei-cert-c:dcl30-c",
       "sei-cert-cpp:exp54-cpp",
       "sei-cert-cpp:exp61-cpp",
+      "memory-safety:cwe-562",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-return-std-move": [
@@ -5727,12 +5729,14 @@
     "clang-diagnostic-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized",
       "guideline:sei-cert-c",
+      "guideline:memory-safety",
       "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:exp33-c",
+      "memory-safety:cwe-457",
       "severity:HIGH"
     ],
     "clang-diagnostic-uninitialized-const-reference": [

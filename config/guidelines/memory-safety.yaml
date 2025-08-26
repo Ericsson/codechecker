@@ -1,5 +1,5 @@
 guideline: memory-safety
-guideline_title: Memory-safety related CWEs based on Juliet test suite
+guideline_title: Memory-safety related CWEs
 rules:
 - rule_id: cwe-121
   title: Stack-Based Buffer Overflow
