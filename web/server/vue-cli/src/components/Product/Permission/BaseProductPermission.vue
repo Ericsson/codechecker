@@ -146,7 +146,7 @@ export default {
       }
     },
 
-    async saveAll() {
+    saveAll() {
       for (const userName of Object.keys(this.changedAuthRights)) {
         this.changedAuthRights[userName].forEach(permission => {
           if (this.authRights[userName] &&

@@ -111,8 +111,8 @@
             @on-complete="onCompleteEditProduct"
           />
 
-          <!-- v-if="isSuperUser" -->
           <delete-product-btn
+            v-if="isSuperUser"
             :product="item"
             @on-complete="deleteProduct"
           />
