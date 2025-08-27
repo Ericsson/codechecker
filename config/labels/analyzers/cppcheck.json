@@ -51,9 +51,13 @@
       "severity:LOW"
     ],
     "cppcheck-arrayIndexOutOfBounds": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-121",
+      "memory-safety:cwe-122",
+      "memory-safety:cwe-126",
       "severity:HIGH"
     ],
     "cppcheck-arrayIndexOutOfBoundsCond": [
@@ -99,9 +103,11 @@
       "severity:HIGH"
     ],
     "cppcheck-autovarInvalidDeallocation": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-590",
       "severity:HIGH"
     ],
     "cppcheck-badBitmaskCheck": [
@@ -120,9 +126,12 @@
       "severity:HIGH"
     ],
     "cppcheck-bufferAccessOutOfBounds": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-121",
+      "memory-safety:cwe-122",
       "severity:HIGH"
     ],
     "cppcheck-catchExceptionByValue": [
@@ -305,9 +314,11 @@
       "severity:HIGH"
     ],
     "cppcheck-deallocuse": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "cppcheck-derefInvalidIterator": [
@@ -323,9 +334,11 @@
       "severity:MEDIUM"
     ],
     "cppcheck-doubleFree": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-415",
       "severity:HIGH"
     ],
     "cppcheck-duplInheritedMember": [
@@ -758,9 +771,11 @@
       "severity:MEDIUM"
     ],
     "cppcheck-mismatchAllocDealloc": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-762",
       "severity:HIGH"
     ],
     "cppcheck-mismatchSize": [
@@ -842,9 +857,12 @@
       "severity:MEDIUM"
     ],
     "cppcheck-negativeIndex": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-124",
+      "memory-safety:cwe-127",
       "severity:HIGH"
     ],
     "cppcheck-negativeMemoryAllocationSize": [
@@ -1117,9 +1135,11 @@
       "severity:LOW"
     ],
     "cppcheck-returnDanglingLifetime": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-562",
       "severity:HIGH"
     ],
     "cppcheck-returnLocalVariable": [
@@ -1417,9 +1437,11 @@
       "severity:HIGH"
     ],
     "cppcheck-uninitvar": [
+      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "memory-safety:cwe-457",
       "severity:HIGH"
     ],
     "cppcheck-unknownEvaluationOrder": [

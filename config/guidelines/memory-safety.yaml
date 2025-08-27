@@ -1,0 +1,60 @@
+guideline: memory-safety
+guideline_title: Memory-safety related CWEs
+rules:
+- rule_id: cwe-121
+  title: Stack-Based Buffer Overflow
+  rule_url: https://cwe.mitre.org/data/definitions/121.html
+- rule_id: cwe-122
+  title: Heap-based Buffer Overflow
+  rule_url: https://cwe.mitre.org/data/definitions/122.html
+- rule_id: cwe-123
+  title: Write-what-where Condition
+  rule_url: https://cwe.mitre.org/data/definitions/123.html
+- rule_id: cwe-124
+  title: Buffer Underwrite ('Buffer Underflow')
+  rule_url: https://cwe.mitre.org/data/definitions/124.html
+- rule_id: cwe-126
+  title: Buffer Over-read
+  rule_url: https://cwe.mitre.org/data/definitions/126.html
+- rule_id: cwe-127
+  title: Buffer Under-read
+  rule_url: https://cwe.mitre.org/data/definitions/127.html
+- rule_id: cwe-244
+  title: Improper Clearing of Heap Memory Before Release ('Heap Inspection')
+  rule_url: https://cwe.mitre.org/data/definitions/244.html
+- rule_id: cwe-401
+  title: Missing Release of Memory after Effective Lifetime ('Memory Leak')
+  rule_url: https://cwe.mitre.org/data/definitions/401.html
+- rule_id: cwe-415
+  title: Double Free
+  rule_url: https://cwe.mitre.org/data/definitions/415.html
+- rule_id: cwe-416
+  title: Use After Free
+  rule_url: https://cwe.mitre.org/data/definitions/416.html
+- rule_id: cwe-457
+  title: Use of Uninitialized Variable
+  rule_url: https://cwe.mitre.org/data/definitions/457.html
+- rule_id: cwe-476
+  title: Nullptr Dereference
+  rule_url: https://cwe.mitre.org/data/definitions/476.html
+- rule_id: cwe-562
+  title: Return of Stack Variable Address
+  rule_url: https://cwe.mitre.org/data/definitions/562.html
+- rule_id: cwe-590
+  title: Free of Memory not on the Heap
+  rule_url: https://cwe.mitre.org/data/definitions/590.html
+- rule_id: cwe-761
+  title: Free of Pointer not at Start of Buffer
+  rule_url: https://cwe.mitre.org/data/definitions/761.html
+- rule_id: cwe-762
+  title: Mismatched Memory Management Routines
+  rule_url: https://cwe.mitre.org/data/definitions/762.html
+- rule_id: cwe-785
+  title: Use of Path Manipulation Function without Maximum Sized Buffer
+  rule_url: https://cwe.mitre.org/data/definitions/785.html
+- rule_id: cwe-789
+  title: Uncontrolled Memory Allocation
+  rule_url: https://cwe.mitre.org/data/definitions/789.html
+- rule_id: cwe-843
+  title: Access of Resource Using Incompatible Type ('Type Confusion')
+  rule_url: https://cwe.mitre.org/data/definitions/843.html
