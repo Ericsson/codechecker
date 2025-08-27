@@ -194,6 +194,11 @@ export default {
         id: "owasp-top-10-2021",
         name: "OWASP Top 10 Web Application Security Risks 2021",
         value: 3
+      },
+      {
+        id: "memory-safety",
+        name: "Memory-safety related CWEs",
+        value: 4
       }
     ];
 
@@ -208,7 +213,7 @@ export default {
       runs: null,
       runData: [],
       selectedCheckerName: null,
-      selectedGuidelineIndexes: [ 0, 1, 2, 3 ],
+      selectedGuidelineIndexes: [ 0, 1, 2, 3, 4 ],
       showRuns: {
         enabled: false,
         disabled: false,

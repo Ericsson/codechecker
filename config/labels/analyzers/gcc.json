@@ -18,7 +18,9 @@
     ],
     "gcc-double-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-415",
       "severity:HIGH"
     ],
     "gcc-exposure-through-output-file": [
@@ -73,7 +75,9 @@
     ],
     "gcc-free-of-non-heap": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-free-of-non-heap",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-590",
       "severity:HIGH"
     ],
     "gcc-imprecise-fp-arithmetic": [
@@ -93,12 +97,17 @@
     ],
     "gcc-malloc-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-malloc-leak",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-401",
+      "memory-safety:cwe-761",
       "severity:HIGH"
     ],
     "gcc-mismatching-deallocation": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-762",
       "severity:HIGH"
     ],
     "gcc-null-argument": [
@@ -108,12 +117,21 @@
     ],
     "gcc-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-476",
       "severity:HIGH"
     ],
     "gcc-out-of-bounds": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-121",
+      "memory-safety:cwe-122",
+      "memory-safety:cwe-124",
+      "memory-safety:cwe-126",
+      "memory-safety:cwe-127",
+      "memory-safety:cwe-843",
       "severity:HIGH"
     ],
     "gcc-possible-null-argument": [
@@ -183,7 +201,9 @@
     ],
     "gcc-use-after-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-after-free",
+      "guideline:memory-safety",
       "profile:extreme",
+      "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "gcc-use-of-pointer-in-stale-stack-frame": [
