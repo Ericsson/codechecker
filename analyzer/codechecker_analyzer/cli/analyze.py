@@ -17,6 +17,7 @@ import shutil
 import sys
 from typing import List
 from pathlib import Path
+from functools import partial
 
 from tu_collector import tu_collector
 
@@ -862,6 +863,7 @@ LLVM/Clang community, and thus discouraged.
 
 
 def is_analyzer_config_valid(
+    args,
     analyzer_config_args: List[AnalyzerConfigArg]
 ) -> bool:
     """
@@ -871,10 +873,17 @@ def is_analyzer_config_valid(
     wrong_config_messages = []
     supported_analyzers = analyzer_types.supported_analyzers
 
+    enabled_analyzer_names = \
+        set(args.analyzers).intersection(supported_analyzers)
+    enabled_analyzers = {
+        analyzer_name: supported_analyzers[analyzer_name]
+        for analyzer_name in enabled_analyzer_names
+    }
+
     analyzer_configs = {
         analyzer_name: analyzer_class.get_analyzer_config()
         for analyzer_name, analyzer_class
-        in supported_analyzers.items()
+        in enabled_analyzers.items()
     }
 
     for cfg_arg in analyzer_config_args:
@@ -883,6 +892,9 @@ def is_analyzer_config_valid(
                 f"Invalid argument to --analyzer-config: '{cfg_arg.analyzer}' "
                 f"is not a supported analyzer. Supported analyzers are: "
                 f"{', '.join(a for a in supported_analyzers)}.")
+            continue
+
+        if cfg_arg.analyzer not in enabled_analyzers:
             continue
 
         analyzer_cfg = next(
@@ -1180,7 +1192,7 @@ def main(args):
 
     # Validate analyzer and checker config (if any)
     config_validator = {
-        'analyzer_config': is_analyzer_config_valid,
+        'analyzer_config': partial(is_analyzer_config_valid, args),
         'checker_config': is_checker_config_valid
     }
 

@@ -663,13 +663,16 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         --analyzer-config or --checker-config parameter is specified.
         """
 
+        args = create_analyze_argparse()
+        args.analyzers = ["clangsa", "clang-tidy"]
+
         analyzer_cfg_valid = [AnalyzerConfigArg(
             'clangsa', 'faux-bodies', 'false')]
         checker_cfg_valid = [CheckerConfigArg(
             'clang-tidy', 'performance-unnecessary-value-param',
             'IncludeStyle', 'false')]
 
-        self.assertTrue(is_analyzer_config_valid(analyzer_cfg_valid))
+        self.assertTrue(is_analyzer_config_valid(args, analyzer_cfg_valid))
         self.assertTrue(is_checker_config_valid(checker_cfg_valid))
 
         analyzer_cfg_invalid_analyzer = [AnalyzerConfigArg(
@@ -687,9 +690,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
             'asd', 'false')]
 
         self.assertFalse(is_analyzer_config_valid(
+            args,
             analyzer_cfg_invalid_analyzer))
         self.assertFalse(
-            is_analyzer_config_valid(analyzer_cfg_invalid_conf))
+            is_analyzer_config_valid(args, analyzer_cfg_invalid_conf))
 
         self.assertFalse(is_checker_config_valid(checker_cfg_invalid_analyzer))
         self.assertFalse(is_checker_config_valid(checker_cfg_invalid_checker))
