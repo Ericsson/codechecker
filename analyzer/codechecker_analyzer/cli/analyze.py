@@ -873,17 +873,23 @@ def is_analyzer_config_valid(
     wrong_config_messages = []
     supported_analyzers = analyzer_types.supported_analyzers
 
-    enabled_analyzer_names = \
-        set(args.analyzers).intersection(supported_analyzers)
-    enabled_analyzers = {
-        analyzer_name: supported_analyzers[analyzer_name]
-        for analyzer_name in enabled_analyzer_names
-    }
+    enabled_analyzers = {}
+    if args.analyzers:
+        enabled_analyzer_names = \
+            set(args.analyzers).intersection(supported_analyzers)
+        enabled_analyzers = {
+            analyzer_name: supported_analyzers[analyzer_name]
+            for analyzer_name in enabled_analyzer_names
+        }
+
+    analyzers = supported_analyzers
+    if enabled_analyzers:
+        analyzers = enabled_analyzers
 
     analyzer_configs = {
         analyzer_name: analyzer_class.get_analyzer_config()
         for analyzer_name, analyzer_class
-        in enabled_analyzers.items()
+        in analyzers.items()
     }
 
     for cfg_arg in analyzer_config_args:
@@ -894,7 +900,7 @@ def is_analyzer_config_valid(
                 f"{', '.join(a for a in supported_analyzers)}.")
             continue
 
-        if cfg_arg.analyzer not in enabled_analyzers:
+        if enabled_analyzers and cfg_arg.analyzer not in enabled_analyzers:
             continue
 
         analyzer_cfg = next(
