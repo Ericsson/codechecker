@@ -89,7 +89,7 @@ class CacheDB:
         placeholders = ','.join('?' for _ in source_files)
         res = self.__cur.execute("SELECT plist FROM plist_lookup WHERE source"
                                  f" IN ({placeholders})", source_files)
-        return list(map(lambda e: e[0], res))
+        return list(set(map(lambda e: e[0], res)))
 
     def get_indexed_plist_files(self) -> List[str]:
         """
