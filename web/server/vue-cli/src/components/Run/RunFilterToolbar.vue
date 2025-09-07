@@ -1,36 +1,32 @@
 <template>
   <v-toolbar flat class="run-filter-toolbar mb-4">
     <v-row>
-      <v-col align-self="center">
+      <v-col cols="12" md="2" align-self="center">
         <v-text-field
-          :value="runName"
+          :model-value="runName"
           class="run-name"
           prepend-inner-icon="mdi-magnify"
           label="Search for runs..."
           single-line
           hide-details
-          outlined
-          solo
-          flat
-          dense
-          @input="setRunName"
+          variant="outlined"
+          density="compact"
+          @update:model-value="setRunName"
         />
       </v-col>
 
-      <v-col align-self="center">
+      <v-col cols="12" md="3" align-self="center">
         <v-text-field
-          :value="runTag"
+          :model-value="runTag"
           class="run-tag"
           prepend-inner-icon="mdi-tag"
           label="Filter events by tag name..."
           clearable
           single-line
           hide-details
-          outlined
-          solo
-          flat
-          dense
-          @input="setRunTag"
+          variant="outlined"
+          density="compact"
+          @update:model-value="setRunTag"
         >
           <template #append>
             <tooltip-help-icon>
@@ -41,15 +37,15 @@
         </v-text-field>
       </v-col>
 
-      <v-col align-self="center" width="50px">
+      <v-col cols="12" md="2" align-self="center">
         <date-time-picker
           :value="storedAfter"
           input-class="stored-after"
           dialog-class="stored-after"
           label="History stored after..."
           prepend-inner-icon="mdi-calendar-arrow-right"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
           @input="setStoredAfter"
         >
           <template #append>
@@ -62,15 +58,15 @@
         </date-time-picker>
       </v-col>
 
-      <v-col align-self="center" cols="2">
+      <v-col cols="12" md="2" align-self="center">
         <date-time-picker
           :value="storedBefore"
           input-class="stored-before"
           dialog-class="stored-before"
           label="History stored before..."
           prepend-inner-icon="mdi-calendar-arrow-left"
-          outlined
-          dense
+          variant="outlined"
+          density="compact"
           @input="setStoredBefore"
         >
           <template #append>
@@ -92,13 +88,13 @@
         />
 
         <v-btn
-          outlined
+          variant="outlined"
           color="primary"
           class="diff-runs-btn mr-2"
           :to="diffTargetRoute"
           :disabled="isDiffBtnDisabled"
         >
-          <v-icon left>
+          <v-icon start>
             mdi-select-compare
           </v-icon>
           Diff
@@ -135,6 +131,7 @@
 <script>
 import _ from "lodash";
 import { mapGetters, mapMutations } from "vuex";
+import { useRoute } from "vue-router"; 
 import {
   SET_RUN_HISTORY_RUN_TAG,
   SET_RUN_HISTORY_STORED_AFTER,
@@ -162,7 +159,7 @@ export default {
     selectedComparedToRuns: { type: Array, required: true },
     selectedComparedToTags: { type: Array, required: true }
   },
-
+  
   computed: {
     ...mapGetters("run", [
       "runName",
@@ -182,7 +179,7 @@ export default {
       return {
         name: "reports",
         query: {
-          ...this.$router.currentRoute.query,
+          ...this.$route.query,
           "run": this.selectedBaselineRuns.length
             ? this.selectedBaselineRuns : undefined,
           "run-tag": this.selectedBaselineTags.length
@@ -243,19 +240,19 @@ export default {
     ]),
 
     initByUrl() {
-      const runName = this.$router.currentRoute.query["run"];
+      const runName = this.$route.query["run"];
       if (runName)
         this.setRunName(runName);
 
-      const runTag = this.$router.currentRoute.query["run-tag"];
+      const runTag = this.$route.query["run-tag"];
       if (runTag)
         this.setRunTag(runTag);
 
-      const storedAfter = this.$router.currentRoute.query["stored-after"];
+      const storedAfter = this.$route.query["stored-after"];
       if (storedAfter)
         this.setStoredAfter(new Date(storedAfter));
 
-      const storedBefore = this.$router.currentRoute.query["stored-before"];
+      const storedBefore = this.$route.query["stored-before"];
       if (storedBefore)
         this.setStoredBefore(new Date(storedBefore));
     },
