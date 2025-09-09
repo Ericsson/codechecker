@@ -995,34 +995,76 @@ class MassStoreRun:
             for db_report, report in self.__added_reports:
                 LOG.debug("Storing bug path positions.")
                 for i, p in enumerate(report.bug_path_positions):
-                    session.add(BugReportPoint(
-                        p.range.start_line, p.range.start_col,
-                        p.range.end_line, p.range.end_col,
-                        i, file_path_to_id[p.file.path], db_report.id))
+                    if not p:
+                        LOG.error("Missing range at index: %s", i)
+                        continue
+                    if p.range:
+                        session.add(BugReportPoint(
+                            p.range.start_line, p.range.start_col,
+                            p.range.end_line, p.range.end_col,
+                            i, file_path_to_id[p.file.path], db_report.id))
+                    elif hasattr(p, "line") and hasattr(p, "column"):
+                        session.add(BugReportPoint(
+                            p.line, p.column,
+                            p.line, p.column,
+                            i, file_path_to_id[p.file.path], db_report.id))
+                    else:
+                        LOG.error("Missing position info from range: %s", p)
+                        continue
 
                 LOG.debug("Storing bug path events.")
                 for i, event in enumerate(report.bug_path_events):
-                    session.add(BugPathEvent(
-                        event.range.start_line, event.range.start_col,
-                        event.range.end_line, event.range.end_col,
-                        i, event.message, file_path_to_id[event.file.path],
-                        db_report.id))
+                    if not event:
+                        LOG.error("Missing range at index: %s", i)
+                        continue
+                    if event.range:
+                        session.add(BugPathEvent(
+                            event.range.start_line, event.range.start_col,
+                            event.range.end_line, event.range.end_col,
+                            i, event.message, file_path_to_id[event.file.path],
+                            db_report.id))
+                    elif hasattr(event, "line") and hasattr(event, "column"):
+                        session.add(BugPathEvent(
+                            event.line, event.column,
+                            event.line, event.column,
+                            i, event.message, file_path_to_id[event.file.path],
+                            db_report.id))
+                    else:
+                        LOG.error(
+                            "Missing position info from range: %s", event
+                        )
+                        continue
 
                 LOG.debug("Storing notes.")
                 for note in report.notes:
                     data_type = report_extended_data_type_str(
                         ttypes.ExtendedReportDataType.NOTE)
-
-                    session.add(ExtendedReportData(
-                        note.range.start_line, note.range.start_col,
-                        note.range.end_line, note.range.end_col,
-                        note.message, file_path_to_id[note.file.path],
-                        db_report.id, data_type))
+                    if not note:
+                        LOG.error("Missing range at index: %s", i)
+                        continue
+                    if note.range:
+                        session.add(ExtendedReportData(
+                            note.range.start_line, note.range.start_col,
+                            note.range.end_line, note.range.end_col,
+                            note.message, file_path_to_id[note.file.path],
+                            db_report.id, data_type))
+                    elif hasattr(note, "line") and hasattr(note, "column"):
+                        session.add(ExtendedReportData(
+                            note.line, note.column,
+                            note.line, note.column,
+                            note.message, file_path_to_id[note.file.path],
+                            db_report.id, data_type))
+                    else:
+                        LOG.error("Missing position info from: %s", note)
+                        continue
 
                 LOG.debug("Storing macro expansions.")
                 for macro in report.macro_expansions:
                     data_type = report_extended_data_type_str(
                         ttypes.ExtendedReportDataType.MACRO)
+                    if macro and not macro.range:
+                        LOG.error("Missing range from: %s", macro)
+                        continue
 
                     session.add(ExtendedReportData(
                         macro.range.start_line, macro.range.start_col,
