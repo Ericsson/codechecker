@@ -424,6 +424,15 @@ def parse_analyzer_result_files(
     return analyzer_result_file_reports
 
 
+class ReportLimitExceedError(Exception):
+    """
+    Custom exception type thrown by 'assemble_zip'. This is used when the
+    unique reports count is greater then the set limit in the product config.
+    """
+    def __init__(self, message):
+        super().__init__(self, message)
+
+
 def assemble_zip(inputs,
                  zip_file,
                  client,
@@ -619,7 +628,7 @@ def assemble_zip(inputs,
 
     # Fail store early if too many reports.
     p = prod_client.getCurrentProduct()
-    if len(unique_reports) > p.reportLimit:
+    if len(unique_report_hashes) > p.reportLimit:
         LOG.error(f"""Report Limit Exceeded
 
 This report folder cannot be stored because the number of reports in the
@@ -635,7 +644,7 @@ rerun the analysis to be able to store the results on the server.
 Configured report limit for this product: {p.reportLimit}
         """)
         shutil.rmtree(temp_dir)
-        sys.exit(1)
+        raise ReportLimitExceedError("Maximum report limit reached.")
 
     zip_size = os.stat(zip_file).st_size
 
@@ -922,6 +931,8 @@ def main(args):
                          client,
                          prod_client,
                          context.checker_labels)
+        except ReportLimitExceedError:
+            sys.exit(1)
         except Exception as ex:
             print(ex)
             import traceback
