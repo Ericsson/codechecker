@@ -470,8 +470,19 @@ class DictAuth(unittest.TestCase):
         The callback URL should be in the format:
         <host>/login/OAuthLogin/<provider>
         """
-        # Check a correct callback URL format.
+
         valid_callback_url = "https://example.com/login/OAuthLogin/github"
+        self.assertTrue(SessMgr.check_callback_url_format("github",
+                                                          valid_callback_url),
+                        "Valid callback URL was rejected.")
+
+        valid_callback_url = \
+            "https://example-url.com:8002/login/OAuthLogin/github"
+        self.assertTrue(SessMgr.check_callback_url_format("github",
+                                                          valid_callback_url),
+                        "Valid callback URL was rejected.")
+
+        valid_callback_url = "https://example-url.com/login/OAuthLogin/github"
         self.assertTrue(SessMgr.check_callback_url_format("github",
                                                           valid_callback_url),
                         "Valid callback URL was rejected.")
@@ -484,9 +495,9 @@ class DictAuth(unittest.TestCase):
         <host>/login/OAuthLogin/<provider>
         """
 
-        valid_callback_url = "https://example.com/login/OAuthLogin/banana"
+        invalid_callback_url = "https://example.com/login/OAuthLogin/banana"
         self.assertFalse(
-            SessMgr.check_callback_url_format("github", valid_callback_url),
+            SessMgr.check_callback_url_format("github", invalid_callback_url),
             "Invalid callback URL was accepted.")
 
         invalid_callback_url = "https://example.com/login/OAuthLogin/github/"
