@@ -478,7 +478,8 @@ disable=raw-checker-failed,
         protected-access,  # TODO: Used in test code, but not elegant
         global-statement,
         consider-using-get,  # Unnecessary style checker
-        attribute-defined-outside-init  # Too many reports from test codes
+        attribute-defined-outside-init,  # Too many reports from test codes
+        no-name-in-module  # TODO: Could be fixed
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
