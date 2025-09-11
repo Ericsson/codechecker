@@ -431,6 +431,11 @@ Specific behavior related to each provider is configured by a provider `template
           * `username` - Company's signum will be the user's identifier.
           * `email` - an email associated with this Microsoft account will be used as user's identifier.
 
+        `gitlab/v1`
+          * `username` - the username the user prefers to be referred to as, usually their login or the login from the authentication provider.
+          * `email` - an email associated with this Gitlab account will be used as user's identifier.
+          * `name` - user's full name.
+
       The properties below are automatically set by templates, but can be overridden for testing purposes, and when using a custom OAuth provider.
 
       * `callback_url`
