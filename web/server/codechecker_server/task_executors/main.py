@@ -30,7 +30,9 @@ LOG = get_logger("server")
 
 
 def executor(queue: Queue,
+             task_pipes,
              config_db_sql_server,
+             server_environment,
              server_shutdown_flag: "Value",
              machine_id: str):
     """
@@ -66,8 +68,8 @@ def executor(queue: Queue,
     signal.signal(signal.SIGHUP, executor_hangup_handler)
 
     config_db_engine = config_db_sql_server.create_engine()
-    tm = TaskManager(queue, sessionmaker(bind=config_db_engine), kill_flag,
-                     machine_id)
+    tm = TaskManager(queue, task_pipes, sessionmaker(bind=config_db_engine),
+                     server_environment, kill_flag, machine_id)
 
     while not kill_flag.value:
         try:
@@ -77,9 +79,8 @@ def executor(queue: Queue,
         except Empty:
             continue
 
-        import pprint
-        LOG.info("Executor #%d received task object:\n\n%s:\n%s\n\n",
-                 os.getpid(), t, pprint.pformat(t.__dict__))
+        LOG.debug("Executor PID %d popped task '%s' (%s) ...",
+                  os.getpid(), t.token, str(t))
 
         t.execute(tm)
 
@@ -135,7 +136,8 @@ def executor(queue: Queue,
     try:
         config_db_engine.dispose()
     except Exception as ex:
-        LOG.error("Failed to shut down task executor!\n%s", str(ex))
+        LOG.error("Failed to shut down task executor %d!\n%s",
+                  os.getpid(), str(ex))
         return
 
     LOG.debug("Task executor subprocess PID %d exited main loop.",

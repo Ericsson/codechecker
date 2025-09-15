@@ -9,6 +9,7 @@
 Contains the base class to be inherited and implemented by all background task
 types.
 """
+import logging
 import os
 import pathlib
 import shutil
@@ -82,6 +83,8 @@ class AbstractTask:
 
         try:
             shutil.rmtree(self._data_path)
+            LOG.debug("Wiping temporary data of task '%s' at '%s' ...",
+                      self._token, self._data_path)
         except Exception as ex:
             LOG.warning("Failed to remove background task's data_dir at "
                         "'%s':\n%s", self.data_path, str(ex))
@@ -94,7 +97,7 @@ class AbstractTask:
         context of the executed subprocess, to query and mutate service-level
         information about the current task.
         """
-        raise NotImplementedError()
+        raise NotImplementedError(f"No implementation for task class {self}!")
 
     def execute(self, task_manager: "TaskManager") -> None:
         """
@@ -106,6 +109,14 @@ class AbstractTask:
         injected `task_manager`) and logging failures accordingly.
         """
         if task_manager.should_cancel(self):
+            def _log_cancel_and_abandon(db_task: DBTask):
+                db_task.add_comment("CANCEL!\nTask cancelled before "
+                                    "execution began!",
+                                    "SYSTEM[AbstractTask::execute()]")
+                db_task.set_abandoned(force_dropped_status=False)
+
+            task_manager._mutate_task_record(self, _log_cancel_and_abandon)
+            task_manager._send_done_message(self.token)
             return
 
         try:
@@ -127,6 +138,7 @@ class AbstractTask:
                     self, lambda dbt:
                     dbt.set_abandoned(force_dropped_status=True))
             except Exception:
+                task_manager._send_done_message(self.token)
                 return
 
         LOG.debug("Task '%s' running on machine '%s' executor #%d",
@@ -164,6 +176,11 @@ class AbstractTask:
                 task_manager._mutate_task_record(self, _log_cancel_and_abandon)
             else:
                 task_manager._mutate_task_record(self, _log_drop_and_abandon)
+
+            import traceback
+            LOG.debug("Task '%s' honoured the administrator's cancel request "
+                      "at:\n%s",
+                      self.token, traceback.format_exc())
         except Exception as ex:
             LOG.error("Failed to execute task '%s' on machine '%s' "
                       "executor #%d: %s",
@@ -176,8 +193,13 @@ class AbstractTask:
                 db_task.add_comment(
                     f"FAILED!\nException during execution:\n{str(ex)}",
                     "SYSTEM[AbstractTask::execute()]")
+                if LOG.isEnabledFor(logging.DEBUG):
+                    db_task.add_comment("Debug exception information:\n"
+                                        f"{traceback.format_exc()}",
+                                        "SYSTEM[AbstractTask::execute()]")
                 db_task.set_finished(successfully=False)
 
             task_manager._mutate_task_record(self, _log_exception_and_fail)
         finally:
             self.destroy_data()
+            task_manager._send_done_message(self.token)
