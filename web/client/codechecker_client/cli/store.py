@@ -58,7 +58,7 @@ from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_common.util import format_size, load_json
+from codechecker_common.util import format_size, load_json, strtobool
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -964,51 +964,111 @@ def main(args):
         description = args.description if 'description' in args else None
 
         LOG.info("Storing results to the server ...")
-        task_token: str = client.massStoreRunAsynchronous(
-            b64zip,
-            SubmittedRunOptions(
-                runName=args.name,
-                tag=args.tag if "tag" in args else None,
-                version=str(context.version),
-                force="force" in args,
-                trimPathPrefixes=trim_path_prefixes,
-                description=description)
-            )
-        LOG.info("Reports submitted to the server for processing.")
 
-        if client.allowsStoringAnalysisStatistics():
-            store_analysis_statistics(client, args.input, args.name)
+        if strtobool(os.environ.get('CC_FORCE_SYNC_STORE', 'no')):
+            try:
+                with _timeout_watchdog(timedelta(hours=1),
+                                       signal.SIGUSR1):
+                    client.massStoreRun(args.name,
+                                        args.tag if 'tag' in args else None,
+                                        str(context.version),
+                                        b64zip,
+                                        'force' in args,
+                                        trim_path_prefixes,
+                                        description)
+            except WatchdogError as we:
+                LOG.warning("%s", str(we))
 
-        if "detach" in args:
-            LOG.warning("Exiting the 'store' subcommand as '--detach' was "
-                        "specified: not waiting for the result of the store "
-                        "operation.\n"
-                        "The server might not have finished processing "
-                        "everything at this point, so do NOT rely on querying "
-                        "the results just yet!\n"
-                        "To await the completion of the processing later, "
-                        "you can execute:\n\n"
-                        "\tCodeChecker cmd serverside-tasks --token %s "
-                        "--await",
-                        task_token)
-            # Print the token to stdout as well, so scripts can use "--detach"
-            # meaningfully.
-            print(task_token)
-            return
+                # Showing parts of the exception stack is important here.
+                # We **WANT** to see that the timeout happened during a wait on
+                # Thrift reading from the TCP connection (something deep in the
+                # Python library code at "sock.recv_into").
+                import traceback
+                _, _, tb = sys.exc_info()
+                frames = traceback.extract_tb(tb)
+                first, last = frames[0], frames[-2]
+                formatted_frames = traceback.format_list([first, last])
+                fmt_first, fmt_last = formatted_frames[0], formatted_frames[1]
+                LOG.info("Timeout was triggered during:\n%s", fmt_first)
+                LOG.info("Timeout interrupted this low-level operation:\n%s",
+                         fmt_last)
 
-        task_client = libclient.setup_task_client(protocol, host, port)
-        task_status: str = await_task_termination(LOG, task_token,
-                                                  task_api_client=task_client)
+                LOG.error(
+                    "Timeout!"
+                    "\n\tThe server's reply did not arrive after "
+                    "%d seconds (%s) elapsed since the server-side "
+                    "processing began."
+                    "\n\n\tThis does *NOT* mean that there was an issue "
+                    "with the run you were storing!"
+                    "\n\tThe server might still be processing the results..."
+                    "\n\tHowever, it is more likely that the "
+                    "server had already finished, but the client did not "
+                    "receive a response."
+                    "\n\tUsually, this is caused by the underlying TCP "
+                    "connection failing to signal a low-level disconnect."
+                    "\n\tClients potentially hanging indefinitely in these "
+                    "scenarios is an unfortunate and known issue."
+                    "\n\t\tSee http://github.com/Ericsson/codechecker/"
+                    "issues/3672 for details!"
+                    "\n\n\tThis error here is a temporary measure to ensure "
+                    "an infinite hang is replaced with a well-explained "
+                    "timeout."
+                    "\n\tA more proper solution will be implemented in a "
+                    "subsequent version of CodeChecker.",
+                    we.timeout.total_seconds(), str(we.timeout))
+                sys.exit(1)
 
-        if task_status == "COMPLETED":
-            LOG.info("Storing the reports finished successfully.")
+            if client.allowsStoringAnalysisStatistics():
+                store_analysis_statistics(client, args.input, args.name)
         else:
-            LOG.error("Storing the reports failed! "
-                      "The job terminated in status '%s'. "
-                      "The comments associated with the failure are:\n\n%s",
-                      task_status,
-                      task_client.getTaskInfo(task_token).comments)
-            sys.exit(1)
+            task_token: str = client.massStoreRunAsynchronous(
+                b64zip,
+                SubmittedRunOptions(
+                    runName=args.name,
+                    tag=args.tag if "tag" in args else None,
+                    version=str(context.version),
+                    force="force" in args,
+                    trimPathPrefixes=trim_path_prefixes,
+                    description=description)
+                )
+            LOG.info("Reports submitted to the server for processing.")
+
+            if client.allowsStoringAnalysisStatistics():
+                store_analysis_statistics(client, args.input, args.name)
+
+            if "detach" in args:
+                LOG.warning(
+                    "Exiting the 'store' subcommand as '--detach' was "
+                    "specified: not waiting for the result of the store "
+                    "operation.\n"
+                    "The server might not have finished processing "
+                    "everything at this point, so do NOT rely on querying "
+                    "the results just yet!\n"
+                    "To await the completion of the processing later, "
+                    "you can execute:\n\n"
+                    "\tCodeChecker cmd serverside-tasks --token %s "
+                    "--await",
+                    task_token)
+                # Print the token to stdout as well, so scripts can use
+                # "--detach" meaningfully.
+                print(task_token)
+                return
+
+            task_client = libclient.setup_task_client(protocol, host, port)
+            task_status: str = await_task_termination(
+                LOG, task_token, task_api_client=task_client)
+
+            if task_status == "COMPLETED":
+                LOG.info("Storing the reports finished successfully.")
+            else:
+                LOG.error(
+                    "Storing the reports failed! "
+                    "The job terminated in status '%s'. "
+                    "The comments associated with the failure are:\n\n%s",
+                    task_status,
+                    task_client.getTaskInfo(task_token).comments)
+                sys.exit(1)
+
     except Exception as ex:
         import traceback
         traceback.print_exc()

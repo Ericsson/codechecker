@@ -18,7 +18,7 @@ from typing import Callable, Optional
 
 import sqlalchemy
 
-from codechecker_common.compatibility.multiprocessing import Queue, Value
+from codechecker_common.compatibility.multiprocessing import Pipe, Queue, Value
 from codechecker_common.logger import get_logger, signal_log
 from codechecker_common.util import generate_random_token
 
@@ -49,7 +49,10 @@ class TaskManager:
     shared resource!
     """
 
-    def __init__(self, q: Queue, config_db_session_factory,
+    def __init__(self,
+                 q: Queue,
+                 task_pipes,
+                 config_db_session_factory,
                  server_environment,
                  executor_kill_flag: Value,
                  machine_id: str,
@@ -62,6 +65,7 @@ class TaskManager:
         self._temp_dir_root = (temp_dir or Path(tempfile.gettempdir())) \
             / "codechecker_tasks" \
             / CHARS_INVALID_IN_PATH.sub('_', machine_id)
+        self.__task_pipes = task_pipes
 
         os.makedirs(self._temp_dir_root, exist_ok=True)
 
@@ -231,6 +235,7 @@ class TaskManager:
         # way to make this more atomic.
         try:
             self._mutate_task_record(task_obj, lambda dbt: dbt.set_enqueued())
+            self.__task_pipes[task_obj.token] = Pipe(duplex=False)
             self._queue.put(task_obj)
         except SystemExit as sex:
             try:
@@ -246,8 +251,23 @@ class TaskManager:
                     db_task.set_abandoned(force_dropped_status=True)
 
                 self._mutate_task_record(task_obj, _log_and_abandon)
+                self._send_done_message(task_obj.token)
             finally:
                 raise sex
+
+    def get_task_receiver_pipe(self, task_token: str):
+        """
+        Returns the pipe to the task receiver process.
+        """
+        return self.__task_pipes[task_token][0]
+
+    def _send_done_message(self, task_token: str):
+        """
+        Sends a message to the task receiver process to indicate that the task
+        has been completed.
+        """
+        self.__task_pipes[task_token][1].send(None)
+        del self.__task_pipes[task_token]
 
     @property
     def is_shutting_down(self) -> bool:
