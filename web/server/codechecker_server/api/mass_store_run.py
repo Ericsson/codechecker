@@ -1405,12 +1405,6 @@ class MassStoreRun:
                     f"'{value}' has wrong format. '{key}' annotations must be "
                     f"'{report_annotation_types[key]['display']}'.")
 
-    def __get_report_limit_for_product(self):
-        with DBSession(self.__config_database) as session:
-            product = session.query(Product).get(self.__product.id)
-            if product.report_limit:
-                self.__report_limit = product.report_limit
-
     def __check_report_count(self):
         """
         This method comparest the already added report count to the report
