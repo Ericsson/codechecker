@@ -657,6 +657,20 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertNotIn("Wreserved-id-macro",
                          analyzer.config_handler.checks().keys())
 
+    def test_analyze_correct_analyzer_not_enabled(self):
+        """
+        This test checks if an analyzer is not enabled but a config
+        for it is getting set.
+        """
+
+        args = create_analyze_argparse()
+        args.analyzers = ["gcc"]
+
+        analyzer_cfg = [AnalyzerConfigArg(
+            'clangsa', 'faux-bodies', 'false')]
+
+        self.assertFalse(is_analyzer_config_valid(args, analyzer_cfg))
+
     def test_analyze_wrong_parameters(self):
         """
         This test checks whether the analyze command detects if a wrong
@@ -837,6 +851,7 @@ class CheckerHandlingCppcheckTest(unittest.TestCase):
                 f.write('--max-ctu-depth=42')
 
             args = Namespace()
+            args.analyzers = ["clang-tidy"]
             args.analyzer_config = [analyzer_config(
                 f"cppcheck:cc-verbatim-args-file={cppcheckargs}")]
 

@@ -1139,7 +1139,10 @@ class TestAnalyze(unittest.TestCase):
             cppcheck_args.write("--std=c++11")
             cppcheck_args.flush()
 
-            analyze_cmd.extend(['--cppcheckargs', cppcheck_args.name])
+            analyze_cmd.extend([
+                '--analyzer-config',
+                f'cppcheck:cc-verbatim-args-file={cppcheck_args.name}'
+            ])
 
             out = subprocess.run(analyze_cmd,
                                  cwd=self.test_dir,

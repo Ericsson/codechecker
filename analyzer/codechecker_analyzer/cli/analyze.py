@@ -902,14 +902,18 @@ def is_analyzer_config_valid(
             continue
 
     for cfg_arg in analyzer_config_args:
+        if enabled_analyzers and cfg_arg.analyzer not in enabled_analyzers:
+            wrong_config_messages.append(
+                f"The analyzer '{cfg_arg.analyzer}' is not enabled. Enable it "
+                "first using --analyzers to set the config "
+                f"'{cfg_arg.option}'.")
+            continue
+
         if cfg_arg.analyzer not in available_analyzers:
             wrong_config_messages.append(
                 f"Invalid argument to --analyzer-config: '{cfg_arg.analyzer}' "
                 f"is not an available analyzer. Available analyzers are: "
                 f"{', '.join(a for a in available_analyzers)}.")
-            continue
-
-        if enabled_analyzers and cfg_arg.analyzer not in enabled_analyzers:
             continue
 
         try:
