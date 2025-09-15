@@ -3947,6 +3947,12 @@ class ThriftRequestHandler:
         m: MassStoreRunTask = ih.create_mass_store_task(is_async)
         self._task_manager.push_task(m)
 
+        if not is_async:
+            LOG.info("massStoreRun(): Blocking until task '%s' terminates ...",
+                     m.token)
+            pipe = self._task_manager.get_task_receiver_pipe(m.token)
+            pipe.recv()
+
         return m.token
 
     @exc_to_thrift_reqfail
@@ -3968,27 +3974,21 @@ class ThriftRequestHandler:
                                          )
         token = self.__massStoreRun_common(False, b64zip, store_opts)
 
-        LOG.info("massStoreRun(): Blocking until task '%s' terminates ...",
-                 token)
-
         # To be compatible with older (<= 6.24, API <= 6.58) clients which
         # may keep using the old API endpoint, simulate awaiting the
         # background task in the API handler.
-        while True:
-            time.sleep(5)
-            t = self._task_manager.get_task_record(token)
-            if t.is_in_terminated_state:
-                if t.status == "failed":
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                        "massStoreRun()'s processing failed. Here follow "
-                        f"the details:\n\n{t.comments}")
-                if t.status == "cancelled":
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                        "Server administrators cancelled the processing of "
-                        "the massStoreRun() request!")
-                break
+        task = self._task_manager.get_task_record(token)
+        if task.is_in_terminated_state:
+            if task.status == "failed":
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                    "massStoreRun()'s processing failed. Here follow "
+                    f"the details:\n\n{task.comments}")
+            if task.status == "cancelled":
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                    "Server administrators cancelled the processing of "
+                    "the massStoreRun() request!")
 
         # Prior to CodeChecker 6.25.0 (API v6.59), massStoreRun() was
         # completely synchronous and blocking, and the implementation of the

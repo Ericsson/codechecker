@@ -49,7 +49,7 @@ from codechecker_api.codeCheckerServersideTasks_v6 import \
 
 from codechecker_common import util
 from codechecker_common.compatibility.multiprocessing import \
-    Pool, Process, Queue, Value, cpu_count
+    Pool, Process, Queue, Value, cpu_count, SyncManager
 from codechecker_common.logger import get_logger, signal_log
 
 from codechecker_web.shared import database_status
@@ -635,6 +635,7 @@ class CCSimpleHttpServer(HTTPServer):
                  manager: session_manager.SessionManager,
                  machine_id: str,
                  task_queue: Queue,
+                 task_pipes,
                  server_shutdown_flag: Value):
 
         LOG.debug("Initializing HTTP server...")
@@ -658,7 +659,7 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__task_queue = task_queue
         self.task_manager = BackgroundTaskManager(
-            task_queue, self.config_session, self.check_env,
+            task_queue, task_pipes, self.config_session, self.check_env,
             server_shutdown_flag, machine_id,
             pathlib.Path(self.context.codechecker_workspace))
 
@@ -1061,23 +1062,27 @@ def start_server(config_directory: str, workspace_directory: str,
     bg_task_queue: Queue = Queue()
     is_server_shutting_down = Value('B', False)
 
+    sync_manager = SyncManager()
+    sync_manager.start()
+    task_pipes = sync_manager.dict()
+
     def _cleanup_incomplete_tasks(action: str) -> int:
         config_db = config_sql_server.create_engine()
         config_session_factory = sessionmaker(bind=config_db)
-        tm = BackgroundTaskManager(
-            bg_task_queue, config_session_factory, check_env,
+        task_manager = BackgroundTaskManager(
+            bg_task_queue, task_pipes, config_session_factory, check_env,
             is_server_shutting_down, machine_id,
             pathlib.Path(context.codechecker_workspace))
 
         try:
-            tm.destroy_all_temporary_data()
+            task_manager.destroy_all_temporary_data()
         except OSError:
             LOG.warning("Clearing task-temporary storage space failed!")
             import traceback
             traceback.print_exc()
 
         try:
-            return tm.drop_all_incomplete_tasks(action)
+            return task_manager.drop_all_incomplete_tasks(action)
         finally:
             config_db.dispose()
 
@@ -1107,6 +1112,7 @@ def start_server(config_directory: str, workspace_directory: str,
                                manager,
                                machine_id,
                                bg_task_queue,
+                               task_pipes,
                                is_server_shutting_down)
 
     try:
@@ -1190,6 +1196,7 @@ def start_server(config_directory: str, workspace_directory: str,
         p = _start_process_with_no_signal_handling(
             target=background_task_executor,
             args=(bg_task_queue,
+                  task_pipes,
                   config_sql_server,
                   check_env,
                   is_server_shutting_down,

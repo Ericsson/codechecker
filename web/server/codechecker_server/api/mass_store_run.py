@@ -1209,8 +1209,8 @@ class MassStoreRun:
             checker: Tuple[str, str] = checker_name_for_report(report)
             grouped_by_checker[checker].append(cast(int, db_id))
 
-        for chk, report_ids in grouped_by_checker.items():
-            analyzer_name, checker_name = chk
+        for checker, report_ids in grouped_by_checker.items():
+            analyzer_name, checker_name = checker
             chk_obj = cast(Checker, self.__get_checker(session,
                                                        analyzer_name,
                                                        checker_name))
@@ -1222,18 +1222,18 @@ class MassStoreRun:
     def __add_report_context(self, session, file_path_to_id):
         for db_report, report in self.__added_reports:
             LOG.debug("Storing bug path positions.")
-            for i, p in enumerate(report.bug_path_positions):
+            for idx, path_pos in enumerate(report.bug_path_positions):
                 session.add(BugReportPoint(
-                    p.range.start_line, p.range.start_col,
-                    p.range.end_line, p.range.end_col,
-                    i, file_path_to_id[p.file.path], db_report.id))
+                    path_pos.range.start_line, path_pos.range.start_col,
+                    path_pos.range.end_line, path_pos.range.end_col,
+                    idx, file_path_to_id[path_pos.file.path], db_report.id))
 
             LOG.debug("Storing bug path events.")
-            for i, event in enumerate(report.bug_path_events):
+            for idx, event in enumerate(report.bug_path_events):
                 session.add(BugPathEvent(
                     event.range.start_line, event.range.start_col,
                     event.range.end_line, event.range.end_col,
-                    i, event.message, file_path_to_id[event.file.path],
+                    idx, event.message, file_path_to_id[event.file.path],
                     db_report.id))
 
             LOG.debug("Storing notes.")
@@ -1404,12 +1404,6 @@ class MassStoreRun:
                     ErrorCode.REPORT_FORMAT,
                     f"'{value}' has wrong format. '{key}' annotations must be "
                     f"'{report_annotation_types[key]['display']}'.")
-
-    def __get_report_limit_for_product(self):
-        with DBSession(self.__config_database) as session:
-            product = session.query(Product).get(self.__product.id)
-            if product.report_limit:
-                self.__report_limit = product.report_limit
 
     def __check_report_count(self):
         """

@@ -116,6 +116,7 @@ class AbstractTask:
                 db_task.set_abandoned(force_dropped_status=False)
 
             task_manager._mutate_task_record(self, _log_cancel_and_abandon)
+            task_manager._send_done_message(self.token)
             return
 
         try:
@@ -137,6 +138,7 @@ class AbstractTask:
                     self, lambda dbt:
                     dbt.set_abandoned(force_dropped_status=True))
             except Exception:
+                task_manager._send_done_message(self.token)
                 return
 
         LOG.debug("Task '%s' running on machine '%s' executor #%d",
@@ -200,3 +202,4 @@ class AbstractTask:
             task_manager._mutate_task_record(self, _log_exception_and_fail)
         finally:
             self.destroy_data()
+            task_manager._send_done_message(self.token)
