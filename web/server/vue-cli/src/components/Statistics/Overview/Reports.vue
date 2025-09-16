@@ -15,25 +15,40 @@
             {{ reportType.label }}
 
             <tooltip-help-icon color="white">
-              <div v-if="reportType.id === 'new'">
-                Shows the number of reports which were active in the last
-                <i>x</i> days.<br><br>
-
-                <b>False positive</b> and <b>Intentional</b> reports are not
-                considered outstanding.
+              <div v-if="reportType.id === 'new'" class="mb-2">
+                <p class="mb-2">
+                  Shows the number of new outstanding reports since the last
+                  <i>x</i> days. Clicking on each item will display
+                  the corresponding reports in a list.
+                </p>
+                <p class="mb-2">
+                  Closed reports: No longer detected by the analyzer or
+                  identified as <b>false positive</b> or <b>intentional</b>
+                  findings.
+                </p>
+                <p>
+                  <b>Note: Clicking on any item will reset the filters to
+                    reflect the displayed figures.</b>
+                </p>
               </div>
-              <div v-else>
-                Shows the number of reports which were solved in the last
-                <i>x</i> days.<br><br>
-
-                For now reports marked as <b>False positive</b> or
-                <b>Intentional</b> are not considered to be resolved by these
-                numbers. A report is marked as resolved only when it disspeared
-                from a storage.<br><br>
+              <div v-else class="mb-2">
+                <p class="mb-2">
+                  Shows the number of reports which were closed in the last
+                  <i>x</i> days. Clicking on each item will display the
+                  corresponding reports in a list.
+                </p>
+                <p class="mb-2">
+                  Closed reports: No longer detected by the analyzer or
+                  identified as <b>false positive</b> or <b>intentional</b>
+                  findings.
+                </p>
+                <p>
+                  <b>Note: Clicking on any item will reset the filters to
+                    reflect the displayed figures.</b>
+                </p>
               </div>
-
               <div>
-                The following filters don't affect these values:
+                The following filters does not affect these values:
                 <ul>
                   <li><b>Outstanding reports on a given date</b> filter.</li>
                   <li>All filters in the <b>COMPARE TO</b> section.</li>
@@ -45,28 +60,27 @@
           </v-card-title>
           <v-row>
             <v-col
-              v-for="c in reportType.cols"
-              :key="c.label"
+              v-for="columnData in reportType.cols"
+              :key="columnData.label"
               :cols="12 / reportType.cols.length"
             >
               <router-link
                 :to="{
                   name: 'reports',
                   query: {
-                    ...$router.currentRoute.query,
                     ...{
-                      'newcheck': undefined,
-                      'compared-to-open-reports-date': undefined,
+                      'detection-status': undefined,
+                      'run': runName,
                     },
                     ...(reportType.id === 'new' ? {
-                      'open-reports-date': dateTimeToStr(c.date[0]),
-                      'compared-to-open-reports-date':
-                        dateTimeToStr(c.date[1]),
                       'diff-type': 'New',
-                      'review-status': ['Confirmed bug', 'Unreviewed']
+                      'newcheck': runName,
+                      'open-reports-date': dateTimeToStr(columnData.date[0]),
+                      'compared-to-open-reports-date':
+                        dateTimeToStr(columnData.date[1]),
                     } : {
-                      'fixed-after': dateTimeToStr(c.date[0]),
-                      'fixed-before': dateTimeToStr(c.date[1])
+                      'fixed-after': dateTimeToStr(columnData.date[0]),
+                      'fixed-before': dateTimeToStr(columnData.date[1])
                     })
                   }
                 }"
@@ -75,14 +89,14 @@
                 <v-card
                   class="day-col text-center"
                   color="transparent"
-                  :loading="c.loading"
+                  :loading="columnData.loading"
                   flat
                 >
                   <div class="text-h2">
-                    {{ c.value }}
+                    {{ columnData.value }}
                   </div>
                   <v-card-title class="justify-center">
-                    {{ c.label }}
+                    {{ columnData.label }}
                   </v-card-title>
                 </v-card>
               </router-link>
@@ -97,7 +111,6 @@
 <script>
 import {
   endOfToday,
-  endOfYesterday,
   startOfToday,
   startOfYesterday,
   subDays
@@ -128,22 +141,22 @@ export default {
     reportFilter: { type: Object, required: true },
   },
   data() {
-    const now = endOfToday();
-    const last7Days = subDays(now, 7);
-    const last31Days = subDays(now, 31);
+    const last7Days = subDays(endOfToday(), 7);
+    const last31Days = subDays(endOfToday(), 31);
+    const runName = this.$router.currentRoute.query["run"];
 
     const cols = [
-      { label: "Today",  date: [ startOfToday(), now ] },
-      { label: "Yesterday", date: [ startOfYesterday(), endOfYesterday() ] },
-      { label: "Last 7 days", date: [ last7Days, now ] },
-      { label: "Last 31 days", date: [ last31Days, now ] }
+      { label: "Today",  date: [ startOfToday(), endOfToday() ] },
+      { label: "Yesterday", date: [ startOfYesterday(), endOfToday() ] },
+      { label: "Last 7 days", date: [ last7Days, endOfToday() ] },
+      { label: "Last 31 days", date: [ last31Days, endOfToday() ] }
     ];
 
     return {
       reportTypes: [
         {
           id: "new",
-          label: "Number of outstanding reports",
+          label: "Number of new outstanding reports since",
           color: "red",
           icon: "mdi-arrow-up",
           getValue: this.getNewReports,
@@ -151,7 +164,7 @@ export default {
         },
         {
           id: "resolved",
-          label: "Number of resolved reports",
+          label: "Number of resolved reports since",
           color: "green",
           icon: "mdi-arrow-down",
           getValue: this.getResolvedReports,
@@ -162,6 +175,7 @@ export default {
         [ ReviewStatus.UNREVIEWED, ReviewStatus.CONFIRMED ],
       resolvedReviewStatuses:
         [ ReviewStatus.FALSE_POSITIVE, ReviewStatus.INTENTIONAL ],
+      runName,
     };
   },
   activated() {
@@ -169,8 +183,8 @@ export default {
   },
   methods: {
     fetchValues() {
-      this.reportTypes.forEach(t =>
-        t.cols.forEach(c =>  t.getValue(c, c.date)));
+      this.reportTypes.forEach(type =>
+        type.cols.forEach(column =>  type.getValue(column, column.date)));
     },
 
     getReportCount(column, runIds, reportFilter, cmpData) {

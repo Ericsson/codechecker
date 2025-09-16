@@ -85,8 +85,6 @@ export default {
 }
 
 .selected-item {
-  border: 1px solid var(--v-grey-lighten2);
-
   &:before {
     content: "";
     display: block;
