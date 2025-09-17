@@ -10,8 +10,6 @@ jobs:
     name: CodeChecker analyze PR
 
     runs-on: ubuntu-24.04
-    env:
-      PR_NUMBER: ${{ github.event.number }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
@@ -29,7 +27,6 @@ jobs:
       - name: Run CodeChecker analysis
         env:
           CODECHECKER_TOKEN: ${{ secrets.CODECHECKER_STORE_TOKEN }}
-          PR_NUMBER: ${{ github.event.number }}
         run: |
           echo "{\"client_autologin\" : true,\"credentials\": {\"https://codechecker-demo.eastus.cloudapp.azure.com\": \"demo:demo\"}}" > ~/.codechecker.passwords.json
           bash ./ci/github_analysis/codechecker_gate_pr.sh
