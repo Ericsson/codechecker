@@ -322,6 +322,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
         """Return the list of analyzer config options."""
+        if not cls.analyzer_binary():
+            return []
+
         command = [cls.analyzer_binary(), "-cc1"]
 
         cls.__add_plugin_load_flags(command)
