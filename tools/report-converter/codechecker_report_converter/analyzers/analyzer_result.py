@@ -121,12 +121,19 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         By default it will add report hashes and metada information.
         """
         for report in reports:
-            self._add_report_hash(report)
             self._add_metadata(report)
+            self._add_report_hash(report)
 
     def _add_report_hash(self, report: Report):
         """ Generate report hash for the given plist data. """
-        report.report_hash = get_report_hash(report, HashType.CONTEXT_FREE)
+        hash_type = HashType.CONTEXT_FREE
+
+        # Due to backward compatibility, the CodeChecker analyzer
+        # uses hash type PATH_SENSITIVE for ClangTidy by default.
+        if report.analyzer_name == "clang-tidy":
+            hash_type = HashType.PATH_SENSITIVE
+
+        report.report_hash = get_report_hash(report, hash_type)
 
     def _add_metadata(self, report: Report):
         """ Add metada information to the given plist data. """

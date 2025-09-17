@@ -58,6 +58,9 @@ class ClangTidyResultHandler(ResultHandler):
         # automatically when using this option we introduced a new choice for
         # --report-hash option ('context-free-v2') and we still do not use
         # context free hash for 'context-free' choice.
+
+        # When changing the default hash_type for ClangTidy, ensure
+        # it is updated in codechecker_report_converter as well!
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
             hash_type = HashType.CONTEXT_FREE
