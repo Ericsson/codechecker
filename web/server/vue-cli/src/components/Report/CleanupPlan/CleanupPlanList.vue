@@ -1,8 +1,7 @@
 <template>
   <v-list v-if="value && value.length">
-    <template v-for="(cleanupPlan, idx) in value">
+    <template v-for="(cleanupPlan, idx) in value" :key="cleanupPlan.id.toNumber()">
       <v-list-item
-        :key="cleanupPlan.id.toNumber()"
         :value="cleanupPlan.id.toNumber()"
       >
         <template v-slot:default="{ active }">
@@ -46,7 +45,7 @@
 
       <v-divider
         v-if="idx < value.length - 1"
-        :key="idx"
+        :key="`divider-${idx}`"
       />
     </template>
   </v-list>

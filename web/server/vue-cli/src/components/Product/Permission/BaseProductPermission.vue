@@ -25,7 +25,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="(authRight, userName) in authRights"
+            v-for="(authRight, userName) in localAuthRights"
             :key="userName"
           >
             <td>
@@ -45,7 +45,7 @@
                   :input-value="authRight.includes(permission)"
                   :hide-details="true"
                   class="ma-1"
-                  @change="changeAuthPermission(userName, permission)"
+                  @change="() => changeAuthPermission(userName, permission)"
                 />
               </span>
             </td>
@@ -63,7 +63,7 @@
       flat
       outlined
       class="mt-4"
-      @keyup.native.enter="addNewAuthRight"
+      @keyup.enter="addNewAuthRight"
     >
       <template v-slot:append>
         <v-btn
@@ -98,19 +98,33 @@ export default {
     return {
       Permission,
       name: "",
-      changedAuthRights: {}
+      changedAuthRights: {},
+      localAuthRights: {}
     };
   },
 
+  watch: {
+    authRights: {
+      deep: true,
+      immediate: true,
+      handler(v) {
+        this.localAuthRights = JSON.parse(JSON.stringify(v || {}));
+      }
+    }
+  },
+
   mounted() {
-    this.bus.$on("save", this.saveAll);
+    if (this.bus && this.bus.on) this.bus.on("save", this.saveAll);
+  },
+
+  beforeUnmount() {
+    if (this.bus && this.bus.off) this.bus.off("save", this.saveAll);
   },
 
   methods: {
     permissionToString(value) {
       return Object.keys(Permission).find(key => Permission[key] === value);
     },
-
     changeAuthPermission(userName, permission) {
       if (this.changedAuthRights[userName] &&
           this.changedAuthRights[userName].indexOf(permission) !== -1
@@ -180,6 +194,7 @@ export default {
       this.changedAuthRights = {};
     },
 
+
     addNewAuthRight() {
       if (!this.name.length) return;
 
@@ -188,7 +203,7 @@ export default {
         objectKey => objectKey.toLowerCase() === searchKey);
 
       if (!foundKey) {
-        this.$set(this.authRights, this.name, []);
+        this.authRights[this.name] = [];
       }
 
       this.name = "";

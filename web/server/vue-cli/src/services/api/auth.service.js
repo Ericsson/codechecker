@@ -1,26 +1,71 @@
-import ServiceClient from "@cc/auth";
-import { BaseService } from "./_base.service";
+import { Permission } from "@cc/shared-types";
 
-const ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
-
-class AuthService extends BaseService {
+class AuthService {
   constructor() {
-    super("Authentication", ServiceClient);
+    this.ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
+    this._permList = [ Permission.SUPERUSER, Permission.PERMISSION_VIEW ];
+    this._ownersByPerm = new Map();
+    this._permList.forEach(p => {
+      this._ownersByPerm.set(p, {
+        users: new Set(["123"]),
+        groups: new Set(["123"])
+      });
+    });
   }
 
   getToken() {
-    return localStorage.getItem(ID_TOKEN_KEY);
+    return localStorage.getItem(this.ID_TOKEN_KEY);
   }
 
   saveToken(token) {
-    localStorage.setItem(ID_TOKEN_KEY, token);
+    localStorage.setItem(this.ID_TOKEN_KEY, token);
   }
 
   destroyToken() {
-    localStorage.removeItem(ID_TOKEN_KEY);
+    localStorage.removeItem(this.ID_TOKEN_KEY);
+  }
+  
+  getClient() {
+    const self = this;
+    return { 
+      hasPermission(permission) {
+        const token = self.getToken();
+        if (!token) return false;
+        if (!permission) return false;
+        return true;
+      },
+
+      getPermissionsForUser(scope, extraParamsJSON, filter, cb) {
+        Promise.resolve().then(() => cb(self._permList));
+      },
+
+      getAuthorisedNames(permission, extraParamsJSON, cb) {
+        const owners = self._ownersByPerm.get(permission);
+        const res = {
+          users: owners ? Array.from(owners.users) : [],
+          groups: owners ? Array.from(owners.groups) : []
+        };
+        Promise.resolve().then(() => cb(res));
+      },
+
+      addPermission(permission, name, isGroup, extraParamsJSON, cb) {
+        const owners = self._ownersByPerm.get(permission);
+        if (!owners) { Promise.resolve().then(() => cb(false)); return; }
+        if (isGroup) owners.groups.add(name); else owners.users.add(name);
+        Promise.resolve().then(() => cb(true));
+      },
+
+      removePermission(permission, name, isGroup, extraParamsJSON, cb) {
+        const owners = self._ownersByPerm.get(permission);
+        if (!owners) { Promise.resolve().then(() => cb(false)); return; }
+        if (isGroup) owners.groups.delete(name); else owners.users.delete(name);
+        Promise.resolve().then(() => cb(true));
+      }
+    };
   }
 }
 
 const authService = new AuthService();
 
+export { authService };
 export default authService;

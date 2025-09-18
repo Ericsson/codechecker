@@ -22,25 +22,27 @@
 
     <template v-slot:content>
       <v-alert
-        v-model="success"
+        :model-value="success"
         dismissible
         color="success"
         border="left"
         elevation="2"
         colored-border
         icon="mdi-check"
+        @update:model-value="success = $event"
       >
         Successfully saved.
       </v-alert>
 
       <v-alert
-        v-model="error"
+        :model-value="error"
         dismissible
         color="error"
         border="left"
         elevation="2"
         colored-border
         icon="mdi-alert-outline"
+        @update:model-value="error = $event"
       >
         Failed to save product changes.
       </v-alert>
@@ -60,8 +62,8 @@
       </v-tabs>
 
       <v-tabs-items
-        v-model="tab"
-      >
+       v-model="tab"
+       >
         <v-tab-item>
           <v-container fluid>
             <product-config-form
@@ -71,12 +73,15 @@
             />
           </v-container>
         </v-tab-item>
+
         <v-tab-item>
           <edit-product-permission
             :product="product"
             :bus="bus"
-            :success.sync="success"
-            :error.sync="error"
+            :success="success"
+            :error="error"
+            @update:success="success = $event"
+            @update:error="error = $event"
           />
         </v-tab-item>
       </v-tabs-items>
@@ -85,7 +90,7 @@
 </template>
 
 <script>
-import Vue from "vue";
+import mitt from "mitt";
 
 import { handleThriftError, prodService } from "@cc-api";
 import {
@@ -96,6 +101,8 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditProductPermission from "./Permission/EditProductPermission";
 import ProductConfigForm from "./ProductConfigForm";
+
+const bus = mitt();
 
 export default {
   name: "EditProductBtn",
@@ -119,38 +126,45 @@ export default {
       isValid: false,
       success: false,
       error: false,
-      bus: new Vue()
+      bus
     };
   },
   watch: {
     dialog() {
       if (!this.dialog) return;
-
       this.loading = true;
-      prodService.getClient().getProductConfiguration(this.product.id,
+      prodService.getClient().getProductConfiguration(
+        this.product.id,
         handleThriftError(config => {
           this.productConfig = config;
           this.loading = false;
-        }));
+        })
+      );
     }
   },
-
   methods: {
     save() {
-      prodService.getClient().editProduct(this.product.id, this.productConfig,
-        handleThriftError(success => {
-          if (!success) {
+      prodService.getClient().editProduct(
+        this.product.id,
+        this.productConfig,
+        handleThriftError(
+          success => {
+            if (!success) {
+              this.error = true;
+              return;
+            }
+            this.success = true;
+            this.$emit(
+              "on-complete",
+              new ProductConfiguration(this.productConfig)
+            );
+          },
+          () => {
             this.error = true;
-            return;
           }
-
-          this.success = true;
-          this.$emit("on-complete",
-            new ProductConfiguration(this.productConfig));
-        }));
-
-      // Save permissions.
-      this.bus.$emit("save");
+        )
+      );
+      this.bus.emit("save");
     }
   }
 };

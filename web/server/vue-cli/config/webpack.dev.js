@@ -7,11 +7,11 @@ const CC_SERVICE_ENDPOINTS = [
   'Authentication',
   'Configuration',
   'CodeCheckerService',
+  'Default',
   'Products',
   'ServerInfo'
 ];
 
-// Location of the Thrift API server.
 const CC_THRIFT_API_HOST =
   process.env.CC_THRIFT_API_HOST || 'http://localhost';
 const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8002;
@@ -27,15 +27,15 @@ module.exports = merge(common, {
     port: 8080,
     hot: true,
     historyApiFallback: {
-      // If the URL contains a product endpoint and we server a static file
-      // we will remove the rewrite the URL and remove the product endpoint
-      // from it.
       rewrites: [
         {
-          from: /^\/[^\/]+(\/.*\.(js|css|png|jpe?g|gif|ico|woff2?|eot|ttf|otf))$/i,
+          from: new RegExp(
+            "^\\/[^/]+(\\/.*\\." +
+            "(js|css|png|jpe?g|gif|ico|woff2?|eot|ttf|otf))$",
+            "i"
+          ),
           to: function (ctx) {
             if (ctx.match) return ctx.match[1];
-
             return "/index.html";
           }
         },
@@ -57,9 +57,10 @@ module.exports = merge(common, {
   },
   plugins: [
     new DefinePlugin({
-      'process.env': {
-        'CC_SERVER_HOST': process.env.CC_SERVER_HOST || null,
-        'CC_SERVER_PORT': process.env.CC_SERVER_PORT || null
+      "process.env": {
+        "CC_SERVER_HOST": JSON.stringify("localhost"),
+        "CC_SERVER_PORT": JSON.stringify("8001"),
+        "CC_API_VERSION": JSON.stringify("6.62")
       }
     })
   ]

@@ -1,7 +1,6 @@
 const CopyPlugin = require('copy-webpack-plugin');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
-const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
 const { DefinePlugin, ProvidePlugin } = require('webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
 
@@ -17,13 +16,13 @@ function sassLoaderOptions(indentedSyntax=false) {
     implementation: require('sass'),
     additionalData: `@import "~@/variables.scss"` + (indentedSyntax ? '' : ';'),
     sassOptions: { indentedSyntax },
-  }
+  };
 }
 
 function cssLoaderOptions() {
   return {
     esModule: false
-  }
+  };
 }
 
 module.exports = {
@@ -74,15 +73,16 @@ module.exports = {
         options: {
           presets: [
             ["@babel/preset-env", {
-              useBuiltIns: "usage",
-              corejs: 3,
-            }]
-          ]
-        }
+                useBuiltIns: "usage",
+                corejs: 3,
+              },
+            ],
+          ],
+        },
       },
       {
         test: /\.vue$/,
-        loader: 'vue-loader'
+        loader: 'vue-loader',
       },
       {
         test: /\.css$/,
@@ -90,9 +90,9 @@ module.exports = {
           'vue-style-loader',
           {
             loader: 'css-loader',
-            options: cssLoaderOptions()
+            options: cssLoaderOptions(),
           },
-        ]
+        ],
       },
       {
         test:/\.sass$/,
@@ -100,27 +100,27 @@ module.exports = {
           'vue-style-loader',
           {
             loader: 'css-loader',
-            options: cssLoaderOptions()
+            options: cssLoaderOptions(),
           },
           {
             loader: 'sass-loader',
-            options: sassLoaderOptions(true)
-          }
-        ]
+            options: sassLoaderOptions(true),
+          },
+        ],
       },
       {
-        test:/\.scss$/,
+        test: /\.scss$/,
         use: [
           'vue-style-loader',
           {
             loader: 'css-loader',
-            options: cssLoaderOptions()
+            options: cssLoaderOptions(),
           },
           {
             loader: 'sass-loader',
-            options: sassLoaderOptions(false)
-          }
-        ]
+            options: sassLoaderOptions(false),
+          },
+        ],
       },
       {
         test: /\.(png|jpe?g|gif)$/i,
@@ -129,16 +129,14 @@ module.exports = {
             loader: 'file-loader',
             options: {
               esModule: false,
-              name(file) {
-                if (process.env.NODE_ENV === 'development') {
-                  return '[path][name].[ext]';
-                }
-
-                return '[contenthash].[ext]';
+              name() {
+                return process.env.NODE_ENV === 'development'
+                  ? "[path][name].[ext]"
+                  : "[contenthash].[ext]";
               },
-            }
-          }
-        ]
+            },
+          },
+        ],
       },
       {
         test: /\.(woff2?|eot|ttf|otf)$/,
@@ -147,34 +145,33 @@ module.exports = {
             loader: 'file-loader',
             options: {
               limit: 10000,
-              name: '[name].[contenthash:7].[ext]'
-            }
-          }
-        ]
+              name: '[name].[contenthash:7].[ext]',
+            },
+          },
+        ],
       },
       {
         test: /\.(md)$/,
         use: [
           {
-            loader: 'raw-loader'
-          }
-        ]
-      }
-    ]
+            loader: 'raw-loader',
+          },
+        ],
+      },
+    ],
   },
   plugins: [
     new DefinePlugin({
-      'process.env.CC_API_VERSION': JSON.stringify(apiVersion)
+      'process.env.CC_API_VERSION': JSON.stringify(apiVersion),
     }),
     new ProvidePlugin({
-      Buffer: ['buffer', 'Buffer'],
+      Buffer: [ 'buffer', 'Buffer' ],
     }),
-    new ESLintPlugin({
-      extensions: ['js', 'vue'],
-      overrideConfigFile: './.eslintrc.js'
-    }),
+    // new ESLintPlugin({
+    //   extensions: [ "js", "vue" ],
+    //   overrideConfigFile: "./.eslintrc.js",
+    // }),
     new VueLoaderPlugin(),
-    new VuetifyLoaderPlugin(),
     new HTMLWebpackPlugin({
       showErrors: true,
       cache: true,
@@ -195,8 +192,8 @@ module.exports = {
         {
           from: helpers.root('src', 'static.js'),
           to: helpers.root('dist')
-        }
-      ]
+        },
+      ],
     }),
-  ]
-}
+  ],
+};

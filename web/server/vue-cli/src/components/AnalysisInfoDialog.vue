@@ -103,7 +103,7 @@
                       />
                       <checker-rows
                         v-else
-                        :key="group"
+                        :key="`else-${group}`"
                         :checkers="checkers"
                       />
                     </template>

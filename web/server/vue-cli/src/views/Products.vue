@@ -13,52 +13,47 @@
       item-key="endpoint"
     >
       <template v-slot:top>
-        <v-toolbar flat class="mb-4">
-          <v-row>
-            <v-col>
-              <v-text-field
-                v-model="productNameSearch"
-                prepend-inner-icon="mdi-magnify"
-                label="Search for products..."
-                single-line
-                hide-details
-                outlined
-                solo
-                flat
-                dense
-              />
-            </v-col>
+      <v-toolbar flat class="mb-4" :style="announcement ? 'margin-top: 48px' : null">
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="productNameSearch"
+              prepend-inner-icon="mdi-magnify"
+              label="Search for products..."
+              single-line
+              hide-details
+              outlined
+              solo
+              flat
+              dense
+            />
+          </v-col>
 
+          <v-spacer />
+
+          <v-col cols="auto" align="right">
             <v-spacer />
 
-            <v-col cols="auto" align="right">
-              <v-spacer />
+            <edit-announcement-btn class="mr-2" />
+            <edit-global-permission-btn class="mr-2" />
+            <new-product-btn
+              class="mr-2"
+              :is-super-user="isSuperUser"
+              @on-complete="onCompleteNewProduct"
+            />
 
-              <span
-                v-if="isSuperUser"
-              >
-                <edit-announcement-btn />
-
-                <edit-global-permission-btn />
-
-                <new-product-btn
-                  :is-super-user="isSuperUser"
-                  @on-complete="onCompleteNewProduct"
-                />
-              </span>
-
-              <v-btn
-                icon
-                title="Reload products"
-                color="primary"
-                @click="fetchProducts"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-toolbar>
-      </template>
+            <v-btn
+              icon
+              title="Reload products"
+              color="primary"
+              @click="fetchProducts"
+            >
+              <v-icon>mdi-refresh</v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-toolbar>
+    </template>
 
       <template #item.displayedName="{ item }">
         <product-name-column :product="item" />
@@ -86,7 +81,7 @@
 
       <template #item.runCount="{ item }">
         <v-chip
-          :color="getRunCountColor(item.runCount)"
+          :color="getRunDataColor(item.runCount)"
           dark
         >
           {{ item.runCount }}
@@ -129,6 +124,7 @@
 
 <script>
 import _ from "lodash";
+import { mapGetters } from "vuex";
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { DBStatus, Permission } from "@cc/shared-types";
@@ -153,11 +149,17 @@ export default {
     ProductNameColumn
   },
 
+  computed: {
+    ...mapGetters([
+      "announcement"
+    ])
+  },
+
   data() {
     const itemsPerPageOptions = [ 25 ];
-    const sortBy = this.$router.currentRoute.query["sort-by"];
-    const sortDesc = this.$router.currentRoute.query["sort-desc"];
-    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
+    const sortBy = this.$route.query["sort-by"];
+    const sortDesc = this.$route.query["sort-desc"];
+    const page = parseInt(this.$route.query["page"]) || 1;
 
     return {
       DBStatus,
@@ -173,28 +175,28 @@ export default {
       page,
       headers: [
         {
-          text: "Name",
+          title: "Name",
           value: "displayedName",
           sortable: true
         },
         {
-          text: "Admins",
+          title: "Admins",
           value: "admins",
           sortable: false
         },
         {
-          text: "Number of runs",
+          title: "Number of runs",
           value: "runCount",
           align: "center",
           sortable: true
         },
         {
-          text: "Latest store to product",
+          title: "Latest store to product",
           value: "latestStoreToProduct",
           sortable: true
         },
         {
-          text: "Actions",
+          title: "Actions",
           value: "action",
           sortable: false
         },
@@ -250,7 +252,7 @@ export default {
   },
 
   created() {
-    this.productNameSearch = this.$router.currentRoute.query["name"] || null;
+    this.productNameSearch = this.$route.query["name"] || null;
 
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
       handleThriftError(isSuperUser => {
@@ -261,7 +263,6 @@ export default {
             handleThriftError(isAdminOfAnyProduct => {
               this.isAdminOfAnyProduct = isAdminOfAnyProduct;
 
-              // Remove action column from headers.
               if (!isAdminOfAnyProduct) {
                 this.headers = this.headers.filter(header => {
                   return header.value !== "action";
@@ -299,7 +300,6 @@ export default {
           }).sort(this.sortProducts);
 
           this.pagination.page = this.page;
-
           this.loading = false;
         }));
     },
@@ -314,8 +314,6 @@ export default {
       let p2Value = null;
 
       if (sortBy === undefined) {
-        // By default sort runs by displayed name and put products to the end
-        // of list which are not accessible by the current user.
         if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
 
         p1Value = p1.displayedName.toLowerCase();
@@ -357,14 +355,14 @@ export default {
       this.products = this.products.filter(p => p.id !== product.id);
     },
 
-    getRunCountColor(runCount) {
+    getRunDataColor(runCount) {
       if (runCount > 500) {
         return "red";
       } else if (runCount > 200) {
         return "orange";
       } else {
         return "green";
-      }
+    }
     }
   }
 };
@@ -375,17 +373,17 @@ export default {
   white-space: normal;
 }
 
+:deep(.v-chip-max-width-wrapper .v-chip__content) {
+  line-height: 32px;
+  display: inline-block !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
 .v-chip-max-width-wrapper {
   display: inline-block;
   max-width: 150px;
-
-  ::v-deep .v-chip__content {
-    line-height: 32px;
-    display: inline-block !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    position: relative;
-  }
 }
 </style>

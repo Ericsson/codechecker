@@ -4,14 +4,15 @@
     confirm-btn-label="Change"
     @confirm="confirmAnnouncementChange"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-btn
         id="edit-announcement-btn"
         color="primary"
         class="mr-2"
-        v-on="on"
+        v-bind="activatorProps"
+        @click="dialog = true"
       >
-        <v-icon left>
+        <v-icon start>
           mdi-bullhorn-outline
         </v-icon>
         Edit announcement
@@ -25,15 +26,13 @@
     <template v-slot:content>
       <v-text-field
         v-model="value"
-        append-icon="mdi-bullhorn-outline"
+        append-inner-icon="mdi-bullhorn-outline"
         label="Write your alert here..."
         single-line
         hide-details
-        outlined
-        solo
+        variant="outlined"
         clearable
-        flat
-        dense
+        density="comfortable"
       />
     </template>
   </confirm-dialog>
@@ -43,7 +42,6 @@
 import { mapActions, mapGetters, mapMutations } from "vuex";
 
 import { confService, handleThriftError } from "@cc-api";
-
 import { GET_ANNOUNCEMENT } from "@/store/actions.type";
 import { SET_ANNOUNCEMENT } from "@/store/mutations.type";
 
@@ -82,16 +80,18 @@ export default {
       SET_ANNOUNCEMENT
     ]),
 
-    // TODO: set announcement back to the original value on cancel.
     confirmAnnouncementChange() {
       const announcementB64 = this.value
-        ? window.btoa(this.value) : window.btoa("");
+        ? window.btoa(this.value)
+        : window.btoa("");
 
-      confService.getClient().setNotificationBannerText(announcementB64,
+      confService.getClient().setNotificationBannerText(
+        announcementB64,
         handleThriftError(() => {
           this.dialog = false;
           this.setAnnouncement(this.value);
-        }));
+        })
+      );
     }
   }
 };
