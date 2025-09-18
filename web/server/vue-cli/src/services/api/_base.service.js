@@ -33,7 +33,7 @@ class BaseService {
 
   createClient(endpoint) {
     const product = endpoint || window.__cc_endpoint || "Default";
-    const path = `/${product}/v${this.version}/${this._serviceName}`;
+    const path = `/${product}/${this.version}/${this._serviceName}`;
     const connection = createXHRConnection(host, port, {
       transport: TBufferedTransport,
       protocol: TJSONProtocol,

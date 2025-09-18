@@ -7,6 +7,7 @@ const CC_SERVICE_ENDPOINTS = [
   'Authentication',
   'Configuration',
   'CodeCheckerService',
+  'Default',
   'Products',
   'ServerInfo'
 ];
@@ -44,48 +45,15 @@ module.exports = merge(common, {
         }
       ]
     },
-    proxy: {
-      "/v6": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/Default": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/v6.61": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/v6.62": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/docs": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/Configuration": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/ServerInfo": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      },
-      "/CodeCheckerService": {
-        target: "http://localhost:8001",
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    proxy: [{
+      context: [
+        ...CC_SERVICE_ENDPOINTS.map(endpoint => `**/${endpoint}`),
+        "/docs/**"
+      ],
+      target: CC_THRIFT_API_HOST + ':' + CC_THRIFT_API_PORT,
+      changeOrigin: true,
+      secure: false
+    }]
   },
   plugins: [
     new DefinePlugin({
