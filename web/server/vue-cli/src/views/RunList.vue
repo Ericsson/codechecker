@@ -157,6 +157,8 @@ import {
   RunSortType
 } from "@cc/report-server-types";
 
+import { eventHub } from "@/services/api/eventHub";
+
 import { AnalysisInfoDialog } from "@/components";
 import {
   AnalyzerStatisticsBtn,
@@ -181,88 +183,96 @@ export default {
   mixins: [ VersionMixin ],
 
   data() {
-    const itemsPerPageOptions = [ 25, 50, 100 ];
+  const itemsPerPageOptions = [ 25, 50, 100 ];
 
-    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
-    const itemsPerPage =
-      parseInt(this.$router.currentRoute.query["items-per-page"]) ||
-      itemsPerPageOptions[0];
-    const sortBy = this.$router.currentRoute.query["sort-by"];
-    const sortDesc = this.$router.currentRoute.query["sort-desc"];
+  const page = parseInt(this.$route.query["page"]) || 1;
+  const itemsPerPage =
+    parseInt(this.$route.query["items-per-page"]) ||
+    itemsPerPageOptions[0];
+  const sortBy = this.$route.query["sort-by"];
+  const sortDesc = this.$route.query["sort-desc"];
 
-    return {
-      initialized: false,
-      analysisInfoDialog: false,
-      pagination: {
-        page: page,
-        itemsPerPage: itemsPerPage,
-        sortBy: sortBy ? [ sortBy ] : [],
-        sortDesc: sortDesc !== undefined ? [ sortDesc === "true" ] : []
+  return {
+    initialized: false,
+    analysisInfoDialog: false,
+    pagination: {
+      page: page,
+      itemsPerPage: itemsPerPage,
+      sortBy: sortBy ? [ sortBy ] : [],
+      sortDesc: sortDesc !== undefined ? [ sortDesc === "true" ] : []
+    },
+    footerProps: {
+      itemsPerPageOptions: itemsPerPageOptions
+    },
+    totalItems: 0,
+    loading: false,
+    selected: [],
+    selectedBaselineRuns: [],
+    selectedBaselineTags: [],
+    selectedComparedToRuns: [],
+    selectedComparedToTags: [],
+    analyzerStatisticsDialog: false,
+    selectedRunId: null,
+    selectedRunHistoryId: null,
+    expanded: [],
+    loadingMoreRunHistories: false,
+    headers: [
+      {
+        title: "",
+        value: "data-table-expand"
       },
-      footerProps: {
-        itemsPerPageOptions: itemsPerPageOptions
+      {
+        title: "Name",
+        value: "name",
+        sortable: true
       },
-      totalItems: 0,
-      loading: false,
-      selected: [],
-      selectedBaselineRuns: [],
-      selectedBaselineTags: [],
-      selectedComparedToRuns: [],
-      selectedComparedToTags: [],
-      analyzerStatisticsDialog: false,
-      selectedRunId: null,
-      selectedRunHistoryId: null,
-      expanded: [],
-      loadingMoreRunHistories: false,
-      headers: [
-        {
-          text: "",
-          value: "data-table-expand"
-        },
-        {
-          text: "Name",
-          value: "name",
-          sortable: true
-        },
-        {
-          text: "Number of unresolved reports",
-          value: "resultCount",
-          align: "center",
-          sortable: true
-        },
-        {
-          text: "Analyzer statistics",
-          value: "analyzerStatistics",
-          sortable: false
-        },
-        {
-          text: "Latest storage date",
-          value: "runDate",
-          align: "center",
-          sortable: true
-        },
-        {
-          text: "Analysis duration",
-          value: "duration",
-          align: "center",
-          sortable: true
-        },
-        {
-          text: "CodeChecker version",
-          value: "codeCheckerVersion",
-          align: "center",
-          sortable: true
-        },
-        {
-          text: "Diff",
-          value: "diff",
-          align: "center",
-          sortable: false,
-          width: "100px"
-        }
-      ],
-      runs: []
-    };
+      {
+        title: "Number of unresolved reports",
+        value: "resultCount",
+        align: "center",
+        sortable: true
+      },
+      {
+        title: "Analyzer statistics",
+        value: "analyzerStatistics",
+        sortable: false
+      },
+      {
+        title: "Latest storage date",
+        value: "runDate",
+        align: "center",
+        sortable: true
+      },
+      {
+        title: "Analysis duration",
+        value: "duration",
+        align: "center",
+        sortable: true
+      },
+      {
+        title: "CodeChecker version",
+        value: "codeCheckerVersion",
+        align: "center",
+        sortable: true
+      },
+      {
+        title: "Diff",
+        value: "diff",
+        align: "center",
+        sortable: false,
+        width: "100px"
+      }
+    ],
+    runs: [],
+    endpoint: window.__cc_endpoint || "Default"
+  };
+},
+
+
+  beforeCreate() {
+  const endpoint = this.$route.params.endpoint;
+  console.log("[RunList] using endpoint:", endpoint);
+  eventHub.emit("update", endpoint);
   },
 
   computed: {
@@ -336,7 +346,7 @@ export default {
     },
 
     async initExpandedItems() {
-      const expanded = this.$router.currentRoute.query["expanded"];
+      const expanded = this.$route.query["expanded"];
       if (!expanded)
         return;
 
@@ -406,7 +416,6 @@ export default {
 
     async runExpanded(run, limit=10, offset=0) {
       if (run.item.$history) {
-        // Use nextTick to wait while expanded array is updated.
         return this.$nextTick(this.updateExpandedUrlParam);
       }
 
@@ -471,41 +480,37 @@ export default {
     fetchRuns() {
       this.loading = true;
 
-      // Get total item count.
-      ccService.getClient().getRunCount(this.runFilter,
-        handleThriftError(totalItems => {
-          this.totalItems = totalItems.toNumber();
-        }));
+    ccService.getClient().getRunCount(this.runFilter,
+      handleThriftError(totalItems => {
+        this.totalItems = totalItems.toNumber();
+      }));
 
-      // Get the runs.
-      const limit = this.pagination.itemsPerPage;
-      const offset = limit * (this.pagination.page - 1);
-      const sortMode = this.getSortMode();
+    const limit = this.pagination.itemsPerPage;
+    const offset = limit * (this.pagination.page - 1);
+    const sortMode = this.getSortMode();
 
-      return new Promise(resolve => {
-        ccService.getClient().getRunData(this.runFilter, limit, offset,
-          sortMode, handleThriftError(runs => {
-            this.runs = runs.map(r => {
-              const version = this.prettifyCCVersion(r.codeCheckerVersion);
+    return new Promise(resolve => {
+      ccService.getClient().getRunData(this.runFilter,
+        limit, offset, sortMode, handleThriftError(runs => {
+          this.runs = runs.map(r => {
+            const version = this.prettifyCCVersion(r.codeCheckerVersion);
 
-              // Init run history by the expanded array.
-              const oldRun = this.expanded.find(e =>
-                e.runId.toNumber() === r.runId.toNumber());
+            const oldRun = this.expanded.find(e =>
+              e.runId.toNumber() === r.runId.toNumber());
 
-              return {
-                ...r,
-                $history: oldRun ? oldRun.$history : null,
-                $duration: this.prettifyDuration(r.duration),
-                $codeCheckerVersion: version
-              };
-            });
+            return {
+              ...r,
+              $history: oldRun ? oldRun.$history : null,
+              $duration: this.prettifyDuration(r.duration),
+              $codeCheckerVersion: version
+            };
+          });
 
-            this.loading = false;
-
-            resolve(this.runs);
-          }));
-      });
-    },
+          this.loading = false;
+          resolve(this.runs);
+      }));
+    });
+  },
 
     openAnalysisInfoDialog(runId, runHistoryId=null) {
       this.selectedRunId = runId;
@@ -551,7 +556,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.v-data-table ::v-deep tbody tr.v-data-table__expanded__content {
+:deep(.v-data-table tbody tr.v-data-table__expanded__content) {
   box-shadow: none;
 }
 </style>
