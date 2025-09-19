@@ -17,6 +17,7 @@ import shutil
 import sys
 from typing import List
 from pathlib import Path
+from functools import partial
 
 from tu_collector import tu_collector
 
@@ -862,6 +863,7 @@ LLVM/Clang community, and thus discouraged.
 
 
 def is_analyzer_config_valid(
+    args,
     analyzer_config_args: List[AnalyzerConfigArg]
 ) -> bool:
     """
@@ -869,26 +871,63 @@ def is_analyzer_config_valid(
     by verifying if it belongs to the set of allowed values.
     """
     wrong_config_messages = []
-    supported_analyzers = analyzer_types.supported_analyzers
+    available_analyzers = {}
 
-    analyzer_configs = {
-        analyzer_name: analyzer_class.get_analyzer_config()
-        for analyzer_name, analyzer_class
-        in supported_analyzers.items()
-    }
+    for analyzer_name, analyzer_class in \
+            analyzer_types.supported_analyzers.items():
+        if analyzer_class.get_binary_version() is not None:
+            available_analyzers[analyzer_name] = analyzer_class
 
-    for cfg_arg in analyzer_config_args:
-        if cfg_arg.analyzer not in supported_analyzers:
+    enabled_analyzers = {}
+    if args.analyzers:
+        enabled_analyzer_names = \
+            set(args.analyzers).intersection(available_analyzers)
+        enabled_analyzers = {
+            analyzer_name: available_analyzers[analyzer_name]
+            for analyzer_name in enabled_analyzer_names
+        }
+
+    if enabled_analyzers:
+        available_analyzers = enabled_analyzers
+
+    analyzer_configs = {}
+    for analyzer_name, analyzer_class in available_analyzers.items():
+        try:
+            analyzer_configs[analyzer_name] = \
+                analyzer_class.get_analyzer_config()
+        except Exception as e:
             wrong_config_messages.append(
-                f"Invalid argument to --analyzer-config: '{cfg_arg.analyzer}' "
-                f"is not a supported analyzer. Supported analyzers are: "
-                f"{', '.join(a for a in supported_analyzers)}.")
+                f"Could not get config for analyzer '{analyzer_name}'. "
+                f"Error: {e}")
             continue
 
-        analyzer_cfg = next(
-            (x for x in analyzer_configs[cfg_arg.analyzer]
-             if x.option == cfg_arg.option),
-            None)
+    for cfg_arg in analyzer_config_args:
+        if enabled_analyzers and cfg_arg.analyzer not in enabled_analyzers:
+            wrong_config_messages.append(
+                f"The analyzer '{cfg_arg.analyzer}' is not enabled. Enable it "
+                "first using --analyzers to set the config "
+                f"'{cfg_arg.option}'.")
+            continue
+
+        if cfg_arg.analyzer not in available_analyzers:
+            wrong_config_messages.append(
+                f"Invalid argument to --analyzer-config: '{cfg_arg.analyzer}' "
+                f"is not an available analyzer. Available analyzers are: "
+                f"{', '.join(a for a in available_analyzers)}.")
+            continue
+
+        try:
+            analyzer_cfg = next(
+                (x for x in analyzer_configs[cfg_arg.analyzer]
+                 if x.option == cfg_arg.option),
+                None)
+        except Exception:
+            wrong_config_messages.append(
+                f"The analyzer '{cfg_arg.analyzer}' is not found! Make sure "
+                "it is loaded or exists with the command "
+                "'CodeChecker analyzers'"
+            )
+            continue
 
         if analyzer_cfg is None:
             wrong_config_messages.append(
@@ -1180,7 +1219,7 @@ def main(args):
 
     # Validate analyzer and checker config (if any)
     config_validator = {
-        'analyzer_config': is_analyzer_config_valid,
+        'analyzer_config': partial(is_analyzer_config_valid, args),
         'checker_config': is_checker_config_valid
     }
 
