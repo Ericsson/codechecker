@@ -26,7 +26,6 @@ from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
-from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from .. import analyzer_base
 from ..config_handler import CheckerState
@@ -125,44 +124,48 @@ def get_diagtool_bin():
     clang binary and return full path of this binary if it exists.
     """
     context = analyzer_context.get_context()
-    clang_bin = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
+    clang_tidy_bin = context.analyzer_binaries.get(ClangTidy.ANALYZER_NAME)
 
-    if not clang_bin:
+    if not clang_tidy_bin:
         return None
 
     path_env = os.environ.get('PATH', '').split(os.pathsep)
-    clang_path = Path(clang_bin)
+    clang_tidy_path = Path(clang_tidy_bin)
 
-    if clang_path.resolve().name == 'ccache':
+    if clang_tidy_path.resolve().name == 'ccache':
         for i, path in enumerate(path_env):
-            if Path(path) == clang_path.parent:
+            if Path(path) == clang_tidy_path.parent:
                 pos = i
                 break
 
-        clang_bin = shutil.which(
-            clang_path.name,
+        clang_tidy_bin = shutil.which(
+            clang_tidy_path.name,
             path=os.pathsep.join(path_env[pos + 1:]))
 
-        if not clang_bin:
+        if not clang_tidy_bin:
             return None
 
     # Resolve symlink.
-    clang_bin = Path(clang_bin).resolve()
+    clang_tidy_bin = Path(clang_tidy_bin).resolve()
 
     # Find diagtool next to the clang binary.
-    diagtool_bin = clang_bin.parent / 'diagtool'
+    diagtool_bin = clang_tidy_bin.parent / 'diagtool'
     if diagtool_bin.exists():
         return diagtool_bin
 
     # Sometimes diagtool binary has a version number in its name: diagtool-14.
-    diagtool_bin = diagtool_bin.with_name(
-        f'diagtool-{str(ClangSA.version_info().major_version)}')
+    version = ClangTidy.get_binary_version()
+    if version:
+        version = version.split('.')[0]
+
+    diagtool_bin = diagtool_bin.with_name(f'diagtool-{version}')
+
     if diagtool_bin.exists():
         return diagtool_bin
 
     LOG.warning(
         "'diagtool' can not be found next to the clang binary (%s)!",
-        clang_bin)
+        clang_tidy_bin)
 
     return None
 
