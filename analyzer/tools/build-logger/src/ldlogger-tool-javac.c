@@ -47,7 +47,7 @@ static void readArgumentsFromFile(const char* file_, LoggerVector* args_)
   char* line = NULL;
   size_t lineSize = 0;
   ssize_t readSize;
-  
+
   FILE* file = fopen(file_, "r");
   if (!file)
   {
@@ -121,18 +121,18 @@ static int handleClassPath(
 
   **resCp_ = 0;
   classPath = (char*) malloc((strlen(cp_) + 1) * sizeof(char));
-  strcpy(classPath, cp_);
+  safe_strcpy(classPath, cp_, strlen(cp_) + 1);
 
   for (cpPart = strtok(classPath, ":"); cpPart; cpPart = strtok(NULL, ":"))
   {
     size_t i;
     char** words;
     wordexp_t we;
-   
+
     memset(&we, 0, sizeof(wordexp_t));
     if (wordexp(cpPart, &we, WRDE_NOCMD | WRDE_UNDEF) != 0)
     {
-      strcpy(*resCp_, cp_);
+      safe_strcpy(*resCp_, cp_, PATH_MAX);
       free(classPath);
       return 0;
     }
@@ -155,7 +155,7 @@ static int handleClassPath(
         if (!newMem)
         {
           /* Out of memory */
-          strcpy(*resCp_, cp_);
+          safe_strcpy(*resCp_, cp_, PATH_MAX);
           free(classPath);
           wordfree(&we);
           return 0;
@@ -165,8 +165,8 @@ static int handleClassPath(
         *resCpSize_ = currSize * 2;
       }
 
-      strcat(*resCp_, path);
-      strcat(*resCp_, ":");
+      safe_strcat(*resCp_, path, PATH_MAX);
+      safe_strcat(*resCp_, ":", PATH_MAX);
     }
 
     wordfree(&we);
@@ -202,16 +202,16 @@ static void processArg(const char* arg_, ParserData* data_)
     return;
   }
 
-  strcpy(argToAdd, arg_);
+  safe_strcpy(argToAdd, arg_, PATH_MAX);
 
   if (data_->state == InClassDir)
   {
     if (!loggerMakePathAbs(arg_, data_->classdir, 0))
     {
-      strcpy(data_->classdir, arg_);
+      safe_strcpy(data_->classdir, arg_, PATH_MAX);
     }
 
-    strcpy(argToAdd, data_->classdir);
+    safe_strcpy(argToAdd, data_->classdir, PATH_MAX);
     data_->state = Normal;
   }
   else if (data_->state == InClassPath)
@@ -287,7 +287,7 @@ int loggerJavacParserCollectActions(
       LoggerVector fargs;
 
       loggerVectorInit(&fargs);
-      
+
       readArgumentsFromFile(argv_[i] + 1, &fargs);
       for (j = 0; j < fargs.size; ++j)
       {
@@ -330,17 +330,17 @@ int loggerJavacParserCollectActions(
     if (data.classdir[0] != 0)
     {
       char* fname = loggerGetFileName(src, 1);
-      strcpy(outputFile, data.classdir);
-      strcat(outputFile, "/");
-      strcat(outputFile, fname);
-      strcat(outputFile, ".class");
+      safe_strcpy(outputFile, data.classdir, PATH_MAX);
+      safe_strcat(outputFile, "/", PATH_MAX);
+      safe_strcat(outputFile, fname, PATH_MAX);
+      safe_strcat(outputFile, ".class", PATH_MAX);
       free(fname);
     }
     else
     {
       char* path = loggerGetFilePathWithoutExt(src);
-      strcpy(outputFile, path);
-      strcat(outputFile, ".class");
+      safe_strcpy(outputFile, path, PATH_MAX);
+      safe_strcat(outputFile, ".class", PATH_MAX);
       free(path);
     }
 
