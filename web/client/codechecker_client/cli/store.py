@@ -276,9 +276,10 @@ def add_arguments_to_parser(parser):
                         required=False,
                         default=None,
                         dest="temp_dir",
-                        help="Specify a path to use as temporary folder "
-                        "useful when the folder containing the result folder "
-                        "is read only.")
+                        help="Specify the location to write the compressed "
+                        "file used for storage. Useful if the results "
+                        "directory is read only. "
+                        "Defaults to the results directory.")
 
     cmd_config.add_option(parser)
 
