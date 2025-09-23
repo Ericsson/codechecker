@@ -257,6 +257,16 @@ def add_arguments_to_parser(parser):
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
 
+    parser.add_argument('--temp_dir',
+                        type=str,
+                        metavar='PATH',
+                        required=False,
+                        default=None,
+                        dest="temp_dir",
+                        help="Specify a path to use as temporary folder "
+                        "useful when the folder containing the result folder "
+                        "is read only.")
+
     parser.add_argument("--detach",
                         dest="detach",
                         default=argparse.SUPPRESS,
@@ -442,7 +452,8 @@ def assemble_zip(inputs,
                  zip_file,
                  client,
                  prod_client,
-                 checker_labels: CheckerLabels):
+                 checker_labels: CheckerLabels,
+                 tmp_dir: str):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
@@ -512,7 +523,7 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    temp_dir = tempfile.mkdtemp('-unique-plists', dir=inputs[0])
+    temp_dir = tempfile.mkdtemp('-unique-plists', dir=tmp_dir)
     for dirname, analyzer_reports in unique_reports.items():
         for analyzer_name, reports in analyzer_reports.items():
             if not analyzer_name:
@@ -914,8 +925,9 @@ def main(args):
                                                  port,
                                                  product_name=product_name)
 
+    temp_dir_path: str = args.temp_dir if args.temp_dir else args.input[0]
     try:
-        temp_dir = tempfile.mkdtemp(suffix="-store", dir=args.input[0])
+        temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
     except PermissionError:
         LOG.error(f"Permission denied! You do not have sufficient "
@@ -935,7 +947,8 @@ def main(args):
                          zip_file,
                          client,
                          prod_client,
-                         context.checker_labels)
+                         context.checker_labels,
+                         temp_dir_path)
         except ReportLimitExceedError:
             sys.exit(1)
         except Exception as ex:
