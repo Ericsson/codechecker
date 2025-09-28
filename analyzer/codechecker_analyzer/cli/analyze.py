@@ -1176,7 +1176,7 @@ def check_satisfied_capabilities(args):
             has_error = True
             break
         if attr.startswith("ctu") and not \
-                analyzer_types.is_ctu_capable():
+                clangsa.analyzer.ClangSA.is_ctu_capable():
             LOG.error("CrossTranslation Unit options can only be enabled if "
                       "clang itself supports it!")
             LOG.info("hint: Clang 8.0.0 is the earliest version to support it")
@@ -1184,7 +1184,7 @@ def check_satisfied_capabilities(args):
             break
 
     if 'ctu_ast_mode' in args and not \
-            analyzer_types.is_ctu_on_demand_available():
+            clangsa.analyzer.ClangSA.is_on_demand_ctu_available():
         LOG.error("Clang does not support on-demand Cross Translation Unit"
                   "analysis!")
         LOG.info("hint: Clang 11.0.0 is the earliest version to support it")

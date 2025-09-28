@@ -116,11 +116,12 @@ def __get_statistics_data(args):
 
 def __get_ctu_data(ctu_dir):
     """ Get CTU data. """
-    ctu_capability = ClangSA.ctu_capability()
-    return {'ctu_dir': ctu_dir,
-            'ctu_func_map_cmd': ctu_capability.mapping_tool_path,
-            'ctu_func_map_file': ctu_capability.mapping_file_name,
-            'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
+    tool_path, mapping_file = ClangSA.ctu_mapping()
+    return {
+        'ctu_dir': ctu_dir,
+        'ctu_func_map_cmd': tool_path,
+        'ctu_func_map_file': mapping_file,
+        'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
 def __has_enabled_checker(ch: AnalyzerConfigHandler):

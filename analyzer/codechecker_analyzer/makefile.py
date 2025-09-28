@@ -61,7 +61,7 @@ class MakeFileCreator:
         self.__func_map_cmd = None
         if ClangSA.ANALYZER_NAME in config_map:
             self.__config = config_map[ClangSA.ANALYZER_NAME]
-            self.__func_map_cmd = ClangSA.ctu_capability().mapping_tool_path
+            self.__func_map_cmd, _ = ClangSA.ctu_mapping()
 
     def __format_analyzer_type(self, analyzer_type):
         """ Format the given analyzer type. """
