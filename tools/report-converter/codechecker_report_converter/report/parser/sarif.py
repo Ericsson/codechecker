@@ -134,7 +134,8 @@ class Parser(BaseParser):
     def _get_analyzer_name(self, data: Dict) -> str:
         """ Get analyzer name from SARIF report. """
         try:
-            return data.get("tool", {}).get("driver", {}).get("name") or "unknown"
+            driver = data.get("tool", {}).get("driver", {})
+            return driver.get("name") or "unknown"
         except (AttributeError, TypeError):
             return "unknown"
 
