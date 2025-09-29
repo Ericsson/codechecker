@@ -63,6 +63,7 @@ class Parser(BaseParser):
 
         for run in data.runs:
             rules = self._get_rules(run.run_data)
+            analyzer_name = self._get_analyzer_name(run.run_data)
             # $3.14.14
             self.original_uri_base_ids = None
             if "originalUriBaseIds" in run.run_data:
@@ -92,6 +93,7 @@ class Parser(BaseParser):
                     report = Report(
                         file, rng.start_line, rng.start_col,
                         message, rule_id,  # TODO: Add severity.
+                        analyzer_name=analyzer_name,
                         analyzer_result_file_path=analyzer_result_file_path,
                         bug_path_events=bug_path_events,
                         bug_path_positions=thread_flow_info.bug_path_positions,
@@ -128,6 +130,10 @@ class Parser(BaseParser):
             rules[rule["id"]] = rule
 
         return rules
+
+    def _get_analyzer_name(self, data: Dict) -> str:
+        """ Get analyzer name from SARIF report. """
+        return data.get("tool", {}).get("driver", {}).get("name", "unknown")
 
     def _process_code_flows(
         self,
