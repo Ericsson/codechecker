@@ -12,7 +12,7 @@
 			<key>description</key>
 			<string>use nullptr</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>5385d8fae5f3551df1dcb8e0456b204f</string>
+			<string>eddcf362e7943111bd32bc42374dbdd8</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
@@ -69,7 +69,7 @@
 			<key>description</key>
 			<string>array index 10 is past the end of the array (that has type 'int[5]')</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>f5dfd26909c583aeeeb8f0920b5c0366</string>
+			<string>1ebc38c3c566592b0a5ee568c7d1d29b</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
@@ -174,7 +174,7 @@
 			<key>description</key>
 			<string>expected ';' at end of declaration</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>d1e2722d18925ba9b4f6c1f9bbec1a22</string>
+			<string>aae82361e0407349e455ca1bd831ff86</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
