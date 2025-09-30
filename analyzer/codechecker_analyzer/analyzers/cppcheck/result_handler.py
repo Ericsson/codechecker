@@ -14,7 +14,7 @@ from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
     AnalyzerResult
 from codechecker_report_converter.report import BugPathEvent, \
-        Range, report_file
+        Range, report_file, error_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
@@ -95,3 +95,8 @@ class CppcheckResultHandler(ResultHandler):
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
+
+        error_file.create(
+            self.analyzer_result_file, self.analyzer_returncode,
+            self.analyzer_info, self.analyzer_cmd,
+            self.analyzer_stdout, self.analyzer_stderr)

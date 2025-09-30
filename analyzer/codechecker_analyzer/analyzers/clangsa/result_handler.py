@@ -14,7 +14,7 @@ import os
 from typing import Optional
 
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
-from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report import report_file, error_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
@@ -43,6 +43,11 @@ class ClangSAResultHandler(ResultHandler):
         Generate analyzer result output file which can be parsed and stored
         into the database.
         """
+        error_file.create(
+            self.analyzer_result_file, self.analyzer_returncode,
+            self.analyzer_info, self.analyzer_cmd,
+            self.analyzer_stdout, self.analyzer_stderr)
+
         if os.path.exists(self.analyzer_result_file):
             reports = report_file.get_reports(
                 self.analyzer_result_file, self.checker_labels,

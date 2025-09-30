@@ -14,6 +14,7 @@ human-readable format.
 import argparse
 import os
 import sys
+import re
 from typing import Dict, Optional, Set
 import fnmatch
 
@@ -28,6 +29,7 @@ from codechecker_report_converter.report.statistics import Statistics
 
 
 from codechecker_analyzer import analyzer_context, suppress_handler
+from codechecker_analyzer.analyzers.analyzer_types import supported_analyzers
 
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.review_status_handler import ReviewStatusHandler
@@ -208,6 +210,14 @@ def add_arguments_to_parser(parser):
                         help="Filter results by review statuses. Valid "
                              f"values are: {', '.join(REVIEW_STATUS_VALUES)}")
 
+    parser.add_argument('--status',
+                        dest="status",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Print the number of successful and failed "
+                             "analysis actions.")
+
     group = parser.add_argument_group("file filter arguments")
 
     group.add_argument('-i', '--ignore', '--skip',
@@ -263,6 +273,52 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
     return None
 
 
+def print_status(inputs):
+    if len(inputs) != 1:
+        LOG.error("Parse status can only be printed "
+                  "for one directory.")
+        sys.exit(1)
+
+    report_dir = inputs[0]
+
+    if not os.path.isdir(report_dir):
+        LOG.error("Input path '%s' is not a directory.",
+                  report_dir)
+        sys.exit(1)
+
+    successful = {}
+    failed = {}
+
+    report_dir_files = {os.fsdecode(e) for e in
+                        os.listdir(os.fsencode(report_dir))}
+
+    for analyzer in supported_analyzers:
+        plist_re = re.compile(fr'.*_{analyzer}_[0-9a-f]+\.plist$')
+        plist_err_re = re.compile(fr'.*_{analyzer}_[0-9a-f]+\.plist\.err$')
+        successful[analyzer] = 0
+        failed[analyzer] = 0
+
+        for file in report_dir_files:
+            if (plist_re.match(file) and
+                    f"{file}.err" not in report_dir_files):
+                successful[analyzer] += 1
+
+            if plist_err_re.match(file):
+                failed[analyzer] += 1
+
+    LOG.info("----==== Summary ====----")
+    LOG.info("Successfully analyzed")
+    for analyzer in supported_analyzers:
+        if successful[analyzer] > 0:
+            LOG.info("  %s: %s", analyzer, successful[analyzer])
+
+    LOG.info("Failed to analyze")
+    for analyzer in supported_analyzers:
+        if failed[analyzer] > 0:
+            LOG.info("  %s: %s", analyzer, failed[analyzer])
+    LOG.info("----=================----")
+
+
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -310,6 +366,10 @@ def main(args):
     # But we need lists for the foreach here to work.
     if isinstance(args.input, str):
         args.input = [args.input]
+
+    if 'status' in args:
+        print_status(args.input)
+        return
 
     src_comment_status_filter = args.review_status
 
