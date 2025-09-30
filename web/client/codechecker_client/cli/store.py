@@ -927,6 +927,10 @@ def main(args):
                                                  product_name=product_name)
 
     temp_dir_path: str = args.temp_dir if args.temp_dir else args.input[0]
+    if not os.access(temp_dir_path, os.W_OK):
+        # Folder not writeable fallback to /tmp/
+        LOG.debug("'%s' is readonly, falling back to /tmp", temp_dir_path)
+        temp_dir_path = "/tmp"
     try:
         temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
