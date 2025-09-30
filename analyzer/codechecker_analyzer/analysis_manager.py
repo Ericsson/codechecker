@@ -154,17 +154,6 @@ def save_metadata(result_file, analyzer_result_file, analyzed_source_file):
         os.rename(analyzer_result_file, result_file)
 
 
-def is_ctu_active(source_analyzer):
-    """
-    Check if CTU analysis is active for Clang Static Analyzer.
-    """
-    if not isinstance(source_analyzer, ClangSA):
-        return False
-
-    return source_analyzer.is_ctu_available() and \
-        source_analyzer.is_ctu_enabled()
-
-
 def prepare_check(action, analyzer_config, output_dir,
                   skip_handlers, statistics_data, disable_ctu=False):
     """ Construct the source analyzer and result handler. """
@@ -530,7 +519,9 @@ def check(check_data):
         result_file = rh.analyzer_result_file.replace(r'\ ', ' ')
         result_base = os.path.basename(result_file)
 
-        ctu_active = is_ctu_active(source_analyzer)
+        ctu_active = isinstance(source_analyzer, ClangSA) and \
+            source_analyzer.is_ctu_available() and \
+            source_analyzer.is_ctu_enabled()
 
         zip_suffix = '_CTU' if ctu_active else ''
 

@@ -10,6 +10,7 @@ Clang Static Analyzer related functions.
 """
 
 import os
+from pathlib import Path
 import plistlib
 import re
 import subprocess
@@ -19,7 +20,7 @@ from typing import List, Tuple
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import analyzer_context, env
+from codechecker_analyzer import analyzer_context, env, host_check
 from codechecker_statistics_collector.collectors.special_return_value import \
     SpecialReturnValueCollector
 from codechecker_statistics_collector.collectors.return_value import \
@@ -33,10 +34,24 @@ from ..flag import prepend_all
 from . import config_handler
 from . import ctu_triple_arch
 from . import version
-from .ctu_autodetection import CTUAutodetection
 from .result_handler import ClangSAResultHandler
 
 LOG = get_logger('analyzer')
+
+
+def clang_command_output(command: List[str]) -> str:
+    """
+    Runs the given Clang command in its proper environment and returns its
+    output as a string.
+    Throws an exception if the command cannot be executed as a subprocess.
+    """
+    return subprocess.check_output(
+        command,
+        stderr=subprocess.STDOUT,
+        env=analyzer_context.get_context().get_env_for_bin(command[0]),
+        universal_newlines=True,
+        encoding="utf-8",
+        errors="ignore")
 
 
 def parse_clang_help_page(
@@ -48,14 +63,7 @@ def parse_clang_help_page(
     Returns a list of (flag, description) tuples.
     """
     try:
-        help_page = subprocess.check_output(
-            command,
-            stderr=subprocess.STDOUT,
-            env=analyzer_context.get_context()
-            .get_env_for_bin(command[0]),
-            universal_newlines=True,
-            encoding="utf-8",
-            errors="ignore")
+        help_page = clang_command_output(command)
     except (subprocess.CalledProcessError, OSError):
         LOG.debug("Failed to run '%s' command!", command)
         return []
@@ -118,8 +126,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     Constructs clang static analyzer commands.
     """
     ANALYZER_NAME = 'clangsa'
-
-    __ctu_autodetection = None
 
     __additional_analyzer_config = [
         analyzer_base.AnalyzerConfig(
@@ -211,18 +217,109 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return version.get(cls.analyzer_binary())
 
     @classmethod
-    def ctu_capability(cls):
-        """
-        Return a CTUAutodetection object which describes the availability of
-        CTU feature with some additional CTU-related info.
-        """
-        if not cls.__ctu_autodetection:
-            cls.__ctu_autodetection = CTUAutodetection(
-                cls.analyzer_binary(),
-                analyzer_context.get_context()
-                .get_env_for_bin(cls.analyzer_binary()))
+    def ctu_mapping(cls):
+        """Clang version dependent ctu mapping tool path and mapping file name.
 
-        return cls.__ctu_autodetection
+        The path of the mapping tool, which is assumed to be located
+        inside the installed directory of the analyzer. Certain binary
+        distributions can postfix the tool name with the major version
+        number, the number and the tool name being separated by a dash. By
+        default the shorter name is looked up, then if it is not found the
+        postfixed.
+        """
+        clang_version_info = cls.version_info()
+        if not clang_version_info:
+            LOG.debug(
+                "No clang version information. "
+                "Can not detect ctu mapping tool.")
+            return None, None
+
+        old_mapping_tool_name = 'clang-func-mapping'
+        old_mapping_file_name = 'externalFnMap.txt'
+
+        new_mapping_tool_name = 'clang-extdef-mapping'
+        new_mapping_file_name = 'externalDefMap.txt'
+
+        major_version = clang_version_info.major_version
+
+        if major_version > 7:
+            tool_name = new_mapping_tool_name
+            mapping_file = new_mapping_file_name
+        else:
+            tool_name = old_mapping_tool_name
+            mapping_file = old_mapping_file_name
+
+        tool_path = Path(cls.analyzer_binary()).with_name(tool_name)
+        installed_dir = tool_path.parent
+
+        if os.path.isfile(tool_path):
+            return str(tool_path), mapping_file
+
+        LOG.debug(
+            "Mapping tool '%s' suggested by autodetection is not found in "
+            "directory reported by Clang '%s'. Trying with version-postfixed "
+            "filename...", tool_path, installed_dir)
+
+        postfixed_tool_path = ''.join(
+            [str(tool_path), '-', str(major_version)])
+
+        if os.path.isfile(postfixed_tool_path):
+            return postfixed_tool_path, mapping_file
+
+        LOG.debug(
+            "Postfixed mapping tool '%s' suggested by autodetection is not "
+            "found in directory reported by Clang '%s'.",
+            postfixed_tool_path, installed_dir)
+
+        return None, None
+
+    @classmethod
+    def is_ctu_capable(cls) -> bool:
+        """
+        Detects if the current clang is CTU compatible. Tries to autodetect
+        the correct one based on clang version.
+        """
+        tool_path, _ = cls.ctu_mapping()
+
+        if not tool_path:
+            return False
+
+        try:
+            clang_command_output([tool_path, '-version'])
+            return True
+        except (subprocess.CalledProcessError, OSError):
+            return False
+
+    @classmethod
+    def is_on_demand_ctu_available(cls) -> bool:
+        """
+        Detects if the current Clang supports on-demand parsing of ASTs for
+        CTU analysis.
+        """
+        try:
+            analyzer_options = clang_command_output([
+                cls.analyzer_binary(), '-cc1', '-analyzer-config-help'])
+
+            return 'ctu-invocation-list' in analyzer_options
+        except (subprocess.CalledProcessError, OSError):
+            return False
+
+    @classmethod
+    def display_progress(cls):
+        """
+        Return analyzer args if it is capable to display ctu progress.
+
+        Returns None if the analyzer can not display ctu progress.
+        The ctu display progress arguments depend on
+        the clang analyzer version.
+        """
+        if not host_check.has_analyzer_config_option(
+                cls.analyzer_binary(), "display-ctu-progress"):
+            return None
+
+        return [
+            '-Xclang', '-analyzer-config',
+            '-Xclang', 'display-ctu-progress=true']
 
     def is_ctu_available(self):
         """
@@ -461,8 +558,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                      'experimental-enable-naive-ctu-analysis=true',
                      '-Xclang', '-analyzer-config', '-Xclang',
                      'ctu-dir=' + self.get_ctu_dir()])
-                ctu_display_progress = \
-                    ClangSA.ctu_capability().display_progress
+                ctu_display_progress = ClangSA.display_progress()
                 if ctu_display_progress:
                     analyzer_cmd.extend(ctu_display_progress)
 

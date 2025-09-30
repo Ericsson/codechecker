@@ -37,24 +37,6 @@ supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        }
 
 
-def is_ctu_capable():
-    """ Detects if the current clang is CTU compatible. """
-    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
-    if not enabled_analyzers:
-        return False
-
-    return ClangSA.ctu_capability().is_ctu_capable
-
-
-def is_ctu_on_demand_available():
-    """ Detects if the current clang is capable of on-demand AST loading. """
-    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
-    if not enabled_analyzers:
-        return False
-
-    return ClangSA.ctu_capability().is_on_demand_ctu_available
-
-
 def is_statistics_capable():
     """ Detects if the current clang is Statistics compatible. """
     # Resolve potentially missing binaries.
