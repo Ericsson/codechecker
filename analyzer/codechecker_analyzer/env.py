@@ -72,10 +72,9 @@ def get_log_env(logfile, original_env, use_absolute_ldpreload_path=False):
         preload_value = context.logger_lib_name
 
         try:
-            original_ld_library_path = new_env["LD_LIBRARY_PATH"]
-            new_env["LD_LIBRARY_PATH"] = (
-                context.path_logger_lib + ":" + original_ld_library_path
-            )
+            if context.path_logger_lib:
+                new_env["LD_LIBRARY_PATH"] = \
+                    f'{context.path_logger_lib}:{new_env["LD_LIBRARY_PATH"]}'
         except KeyError:
             new_env["LD_LIBRARY_PATH"] = context.path_logger_lib
         LOG.debug(

@@ -87,9 +87,12 @@ class Context(metaclass=Singleton):
         # Add all children (architecture) paths to be later used in the
         # LD_LIBRARY_PATH environment variable during logging of compiler
         # invocations.
-        self.logger_lib_dir_path = ":".join(
-            [str(arch) for arch in ld_logger_path.iterdir() if arch.is_dir()]
-        )
+        if ld_logger_path.is_dir():
+            self.logger_lib_dir_path = ":".join(
+                str(arch) for arch in ld_logger_path.iterdir() if arch.is_dir()
+            )
+        else:
+            self.logger_lib_dir_path = ""
 
         self.logger_bin = None
         self.logger_file = None
