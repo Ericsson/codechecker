@@ -51,8 +51,6 @@ class SkipListHandler:
         the regular expressions.
         """
         for skip_line in skip_lines:
-            if skip_line[-1] == '/':
-                skip_line += '*'
             norm_skip_path = os.path.normpath(skip_line[1:].strip())
             rexpr = re.compile(
                 fnmatch.translate(norm_skip_path))
