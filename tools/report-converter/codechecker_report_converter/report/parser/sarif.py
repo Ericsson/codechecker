@@ -149,25 +149,29 @@ class Parser(BaseParser):
 
         thread_flow_info = ThreadFlowInfo()
 
-        # TODO: Currently, we only collect bug path events.
-
         for code_flow in result.get("codeFlows", []):
             for thread_flow in code_flow.get("threadFlows", []):
                 for location_data in thread_flow["locations"]:
-                    # There are a lot data stored alongside the location worth
-                    # parsing, but we only need the actual location now.
-                    location = location_data["location"]
-
-                    if "message" not in location:
-                        # TODO: This might be a bug path position (for arrows).
+                    if "location" not in location_data:
                         continue
 
-                    message = self._process_message(
-                        location["message"], rule_id, rules)
+                    # There is a lot data stored alongside the location worth
+                    # parsing, but we only need the actual location now.
+                    location = location_data["location"]
 
                     file, rng = self._process_location(location)
                     if not (file and rng):
                         continue
+
+                    thread_flow_info.bug_path_positions.append(
+                        BugPathPosition(file, rng)
+                    )
+
+                    if "message" not in location:
+                        continue
+
+                    message = self._process_message(
+                        location["message"], rule_id, rules)
 
                     thread_flow_info.bug_path_events.append(BugPathEvent(
                         message, file, rng.start_line, rng.start_col, rng))
