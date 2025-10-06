@@ -1,13 +1,13 @@
 <template>
   <base-statistics-table
     :headers="tableHeaders"
-    :items="items"
+    :items="itemsWithUuid"
     :loading="loading"
     :mobile-breakpoint="1000"
     :item-class="getRowClass"
     loading-text="Loading guideline statistics..."
     no-data-text="No guideline statistics available"
-    item-key="guidelineRule"
+    item-key="uuid"
     sort-by="checkers.severity"
     sort-desc
     @enabled-click="enabledClick"
@@ -16,6 +16,7 @@
 
 <script>
 import { BaseStatisticsTable } from "@/components/Statistics";
+import { v4 as uuidv4 } from "uuid";
 
 export default {
   name: "GuidelineStatisticsTable",
@@ -84,6 +85,13 @@ export default {
 
         return true;
       });
+    },
+
+    itemsWithUuid() {
+      return this.items.map(item => ({
+        ...item,
+        uuid: item.uuid || uuidv4()
+      }));
     }
   },
 
