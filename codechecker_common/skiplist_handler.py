@@ -66,7 +66,7 @@ class SkipListHandler:
             elif translated_glob.endswith(r"\Z"):
                 translated_glob = translated_glob[:-2]
             rexpr = re.compile(
-                translated_glob + r"(?:/.*)?$")
+                translated_glob + r"(?:" + os.path.normpath("/") + r".*)?$")
             self.__skip.append((skip_line, rexpr))
 
     def __check_line_format(self, skip_lines):
