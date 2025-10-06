@@ -10,7 +10,6 @@
 import fnmatch
 import re
 import os
-import sys
 
 from codechecker_common.logger import get_logger
 
