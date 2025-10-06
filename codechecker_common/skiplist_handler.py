@@ -61,9 +61,7 @@ class SkipListHandler:
             # Note: normalization removes '/' from the end, see:
             # https://docs.python.org/3/library/os.path.html#os.path.normpath
             translated_glob = fnmatch.translate(norm_skip_path)
-            if sys.version_info.minor >= 9:
-                translated_glob = translated_glob.removesuffix(r"\Z")
-            elif translated_glob.endswith(r"\Z"):
+            if translated_glob.endswith(r"\Z"):
                 translated_glob = translated_glob[:-2]
             rexpr = re.compile(
                 translated_glob + fr"(?:\{os.path.sep}.*)?$")
