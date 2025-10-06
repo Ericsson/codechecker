@@ -200,7 +200,7 @@ export default {
     getNewReports(column, date) {
       const rFilter = new ReportFilter(this.reportFilter);
       rFilter.detectionStatus = null;
-      rFilter.reviewStatus = this.activeReviewStatuses;
+      rFilter.reviewStatus = null;
       rFilter.openReportsDate = this.getUnixTime(date[0]);
 
       const cmpData = new CompareData({
@@ -214,6 +214,7 @@ export default {
 
     getResolvedReports(column, date) {
       const rFilter = new ReportFilter(this.reportFilter);
+      rFilter.reviewStatus = null;
       rFilter.detectionStatus = null;
       rFilter.date = new ReportDate({
         fixed: new DateInterval({
