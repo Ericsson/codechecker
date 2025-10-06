@@ -25,6 +25,7 @@
               ...$router.currentRoute.query
             }}"
             exact
+            :class="t.class"
           >
             <v-icon class="mr-2">
               {{ t.icon }}
@@ -69,36 +70,42 @@ export default {
     const tabs = [
       {
         name: "Product Overview",
+        class: "product-overview-tab",
         icon: "mdi-briefcase-outline",
         to: { name: "product-overview" },
         showCompareTo: true
       },
       {
         name: "Checker Statistics",
+        class: "checker-statistics-tab",
         icon: "mdi-card-account-details",
         to: { name: "checker-statistics" },
         showCompareTo: true
       },
       {
         name: "Severity Statistics",
+        class: "severity-statistics-tab",
         icon: "mdi-speedometer",
         to: { name: "severity-statistics" },
         showCompareTo: true
       },
       {
         name: "Component Statistics",
+        class: "component-statistics-tab",
         icon: "mdi-puzzle-outline",
         to: { name: "component-statistics" },
         showCompareTo: true
       },
       {
         name: "Checker Coverage",
+        class: "checker-coverage-tab",
         icon: "mdi-clipboard-check-outline",
         to: { name: "checker-coverage-statistics" },
         showCompareTo: false
       },
       {
         name: "Guideline Statistics",
+        class: "guideline-statistics-tab",
         icon: "mdi-clipboard-text-outline",
         to: { name: "guideline-statistics" },
         showCompareTo: false

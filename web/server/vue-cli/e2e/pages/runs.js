@@ -1,5 +1,5 @@
 const commands = {
-  backToRunsPage() {
+  pageBack() {
     this.api.back();
 
     return this
@@ -22,8 +22,8 @@ const commands = {
 };
 
 module.exports = {
-  url: function() { 
-    return this.api.launchUrl + '/e2e/runs'; 
+  url: function() {
+    return this.api.launchUrl + '/e2e/runs';
   },
   commands: [ commands ],
   elements: {
@@ -34,6 +34,7 @@ module.exports = {
     showDescriptionBtn: "button.description",
     showHistoryBtn: "a.show-history",
     showStatisticsBtn: "a.show-statistics",
+    showComponentStatisticsBtn: "a.component-statistics-tab",
     showAnalysisInfoBtn: "button.show-analysis-info",
     openDetectionStatus: "a.detection-status-count",
     descriptionMenu:
