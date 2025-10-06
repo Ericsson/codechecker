@@ -10,6 +10,7 @@
 import fnmatch
 import re
 import os
+import sys
 
 from codechecker_common.logger import get_logger
 
@@ -52,15 +53,20 @@ class SkipListHandler:
         """
         for skip_line in skip_lines:
             norm_skip_path = os.path.normpath(skip_line[1:].strip())
-            # fnmatch places a '\Z' at the end, this  is equivalent to '$'
-            # (end of input) so it must be removed.
+            # fnmatch places a '\Z' (end of input) at the end, in this case,
+            # this is equivalent to '$' (end of line). This must be removed.
             # Optionally we match the user given path with a '/.*' ending.
             # This, if the given input is a folder will
             # resolve all files contained within.
             # Note: normalization removes '/' from the end, see:
             # https://docs.python.org/3/library/os.path.html#os.path.normpath
+            translated_glob = fnmatch.translate(norm_skip_path)
+            if sys.version_info.minor >= 9:
+                translated_glob = translated_glob.removesuffix(r"\Z")
+            elif translated_glob.endswith(r"\Z"):
+                translated_glob = translated_glob[:-2]
             rexpr = re.compile(
-                fnmatch.translate(norm_skip_path)[:-2] + r"(?:/.*)?\Z")
+                translated_glob + r"(?:/.*)?$")
             self.__skip.append((skip_line, rexpr))
 
     def __check_line_format(self, skip_lines):
