@@ -66,10 +66,10 @@ class TestSkip(unittest.TestCase):
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
     def __analyze(self,
-                         target,
-                         build_json,
-                         analyzer_extra_options=None,
-                         cwd=None):
+                  target,
+                  build_json,
+                  analyzer_extra_options=None,
+                  cwd=None):
         """ Analyze the target project. """
         if not cwd:
             cwd = os.path.join(self.test_dir, target)
@@ -174,9 +174,8 @@ class TestSkip(unittest.TestCase):
     def test_skip_directory(self):
         """Test wether directories in skipfile entries works correctly"""
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix="skipfile",
-            encoding='utf-8') as skip_file:
+            mode="w", suffix="skipfile", encoding="utf-8"
+        ) as skip_file:
 
             # Skip the `skipme` folder, the way its in the documentation
             skip_file.write('\n'.join([
@@ -192,9 +191,8 @@ class TestSkip(unittest.TestCase):
                 self.assertFalse("skipme.cpp" in f)
 
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix="skipfile",
-            encoding='utf-8') as skip_file:
+            mode="w", suffix="skipfile", encoding="utf-8"
+        ) as skip_file:
 
             # Skip the `skipme` folder, leaving out the '*'
             skip_file.write('\n'.join([
@@ -210,11 +208,10 @@ class TestSkip(unittest.TestCase):
                 self.assertFalse("skipme.cpp" in f)
 
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix="skipfile",
-            encoding='utf-8') as skip_file:
+            mode="w", suffix="skipfile", encoding="utf-8"
+        ) as skip_file:
 
-            # Skip the `skipme` folder, without any indication that its a folder
+            # Skip the skipme folder, without any indication that its a folder
             skip_file.write('\n'.join([
                 '-*skipme',
             ]))
@@ -233,7 +230,7 @@ class TestSkip(unittest.TestCase):
         # we should not see a report from file_to_be_skipped.cpp
 
         self.__log_and_analyze("simple", ["--ignore", "skipfile",
-                                       "--drop-reports-from-skipped-files"])
+                                          "--drop-reports-from-skipped-files"])
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
@@ -354,7 +351,7 @@ class TestSkip(unittest.TestCase):
             skip_file.flush()
 
             self.__log_and_analyze("simple",
-                ["--ignore", skip_file.name])
+                                   ["--ignore", skip_file.name])
             self.assertFalse(
                 glob.glob(os.path.join(self.report_dir, '*.plist')))
 
@@ -440,15 +437,18 @@ class TestSkip(unittest.TestCase):
 
         # Do the CodeChecker Analyze with --file
         # We also need to set cwd to test_workspace
-        out, _ = self.__analyze("simple",
-                                        build_json,
-                                       ["--clean",
-                                        "--file",
-                                           Path(
-                                               self.test_workspace,
-                                               "rel_simple",
-                                               "skip_header.cpp").absolute()],
-                                       cwd=self.test_workspace)
+        out, _ = self.__analyze(
+            "simple",
+            build_json,
+            [
+                "--clean",
+                "--file",
+                Path(
+                    self.test_workspace, "rel_simple", "skip_header.cpp"
+                ).absolute(),
+            ],
+            cwd=self.test_workspace,
+        )
         check_analyze_out(out)
 
         out = self.__run_parse()
