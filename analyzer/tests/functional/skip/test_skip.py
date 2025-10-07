@@ -195,7 +195,7 @@ class TestSkip(unittest.TestCase):
             mode='w',
             suffix="skipfile",
             encoding='utf-8') as skip_file:
-            
+
             # Skip the `skipme` folder, leaving out the '*'
             skip_file.write('\n'.join([
                 '-*skipme/',
@@ -213,7 +213,7 @@ class TestSkip(unittest.TestCase):
             mode='w',
             suffix="skipfile",
             encoding='utf-8') as skip_file:
-            
+
             # Skip the `skipme` folder, without any indication that its a folder
             skip_file.write('\n'.join([
                 '-*skipme',
@@ -440,7 +440,7 @@ class TestSkip(unittest.TestCase):
 
         # Do the CodeChecker Analyze with --file
         # We also need to set cwd to test_workspace
-        out, _ = self.__analyze("simple", 
+        out, _ = self.__analyze("simple",
                                         build_json,
                                        ["--clean",
                                         "--file",
