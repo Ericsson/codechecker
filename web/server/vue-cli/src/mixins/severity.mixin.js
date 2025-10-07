@@ -22,6 +22,9 @@ export default {
     },
 
     severityFromStringToCode(severity) {
+      if (!severity) {
+        return -1;
+      }
       switch (severity.toLowerCase()) {
       case "unspecified":
         return Severity.UNSPECIFIED;

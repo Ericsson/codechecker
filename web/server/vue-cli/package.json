@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@mdi/font": "^6.5.95",
-    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.66.0.tgz",
     "chart.js": "^2.9.4",
     "chartjs-plugin-datalabels": "^0.7.0",
+    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.66.0.tgz",
     "codemirror": "^5.65.0",
     "date-fns": "^2.28.0",
     "js-cookie": "^3.0.1",
@@ -38,10 +38,11 @@
     "marked": "^4.0.10",
     "semver": "^5.7.1",
     "splitpanes": "^2.3.8",
+    "uuid": "^13.0.0",
     "vue": "^2.6.14",
     "vue-chartjs": "^3.5.1",
     "vue-router": "^3.5.3",
-    "vuetify": "^2.6.10",
+    "vuetify": "^2.7.2",
     "vuex": "^3.6.2"
   },
   "devDependencies": {
