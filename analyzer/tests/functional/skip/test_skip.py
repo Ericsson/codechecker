@@ -171,6 +171,62 @@ class TestSkip(unittest.TestCase):
                             "Reports from headers should be kept"
                             " if the header is not on the skiplist")
 
+    def test_skip_directory(self):
+        """Test wether directories in skipfile entries works correctly"""
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix="skipfile",
+            encoding='utf-8') as skip_file:
+
+            # Skip the `skipme` folder, the way its in the documentation
+            skip_file.write('\n'.join([
+                '-*skipme/*',
+            ]))
+            skip_file.flush()
+            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
+
+            # Check if the folder is skipped
+            # There shouldn't be any report generated
+            report_dir_files = os.listdir(self.report_dir)
+            for f in report_dir_files:
+                self.assertFalse("skipme.cpp" in f)
+
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix="skipfile",
+            encoding='utf-8') as skip_file:
+            
+            # Skip the `skipme` folder, leaving out the '*'
+            skip_file.write('\n'.join([
+                '-*skipme/',
+            ]))
+            skip_file.flush()
+            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
+
+            # Check if the folder is skipped
+            # There shouldn't be any report generated
+            report_dir_files = os.listdir(self.report_dir)
+            for f in report_dir_files:
+                self.assertFalse("skipme.cpp" in f)
+
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix="skipfile",
+            encoding='utf-8') as skip_file:
+            
+            # Skip the `skipme` folder, without any indication that its a folder
+            skip_file.write('\n'.join([
+                '-*skipme',
+            ]))
+            skip_file.flush()
+            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
+
+            # Check if the folder is skipped
+            # There shouldn't be any report generated
+            report_dir_files = os.listdir(self.report_dir)
+            for f in report_dir_files:
+                self.assertFalse("skipme.cpp" in f)
+
     def test_drop_reports(self):
         """Analyze a project with a skip file."""
         # we should not see a report from skip.h
