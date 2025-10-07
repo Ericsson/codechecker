@@ -930,7 +930,7 @@ def main(args):
     # else use the analyze result folder
     temp_dir_path: str = args.temp_dir if args.temp_dir else args.input[0]
     if not os.access(temp_dir_path, os.W_OK):
-        # If the specified folder isn't writeable fallback to /tmp/
+        # If the specified folder isn't writeable; fallback to /tmp/
         LOG.debug("'%s' is readonly, falling back to /tmp", temp_dir_path)
         temp_dir_path = "/tmp"
     try:
