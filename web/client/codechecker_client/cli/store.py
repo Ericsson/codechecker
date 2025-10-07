@@ -929,18 +929,21 @@ def main(args):
     # If the --temp_dir argument is specified set use that,
     # else use the analyze result folder
     temp_dir_path: str = args.temp_dir if args.temp_dir else args.input[0]
-    if not os.access(temp_dir_path, os.W_OK):
-        # If the specified folder isn't writeable; fallback to /tmp/
-        LOG.debug("'%s' is readonly, falling back to /tmp", temp_dir_path)
-        temp_dir_path = "/tmp"
     try:
         temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
     except PermissionError:
-        LOG.error(f"Permission denied! You do not have sufficient "
-                  f"permissions to create the {temp_dir} "
-                  "temporary directory.")
-        sys.exit(1)
+        try:
+            # If the specified folder isn't writeable; fallback to /tmp/
+            LOG.debug("'%s' is readonly, falling back to /tmp", temp_dir_path)
+            temp_dir_path = "/tmp"
+            temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
+            LOG.debug(f"{temp_dir} directory created successfully!")
+        except PermissionError:
+            LOG.error(f"Permission denied! You do not have sufficient "
+                      f"permissions to create the {temp_dir} "
+                      "temporary directory.")
+            sys.exit(1)
 
     zip_file_handle, zip_file = tempfile.mkstemp(suffix=".zip", dir=temp_dir)
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
