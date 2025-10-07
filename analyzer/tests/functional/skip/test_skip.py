@@ -493,6 +493,18 @@ class TestSkip(unittest.TestCase):
                 any('skip_header.cpp' not in f for f in glob.glob(
                     os.path.join(self.report_dir, '*.plist'))))
 
+    def test_analyze_similar_file_option(self):
+        """
+        Test analyze command --file option for edge case,
+        where one filename is a prefix of an other.
+        """
+        self.__log_and_analyze("similar", ["--file", "*/simple.c"])
+        print(glob.glob(
+            os.path.join(self.report_dir, '*.plist')))
+        self.assertFalse(
+            any('simple.cc' not in f for f in glob.glob(
+                os.path.join(self.report_dir, '*.plist'))))
+
     def test_analyze_only_file_option(self):
         """
         Test analyze command --file option without a skip file.
