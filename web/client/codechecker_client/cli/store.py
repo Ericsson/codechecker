@@ -257,12 +257,12 @@ def add_arguments_to_parser(parser):
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
 
-    parser.add_argument('--temp_dir',
+    parser.add_argument('--zip_loc',
                         type=str,
                         metavar='PATH',
                         required=False,
                         default=None,
-                        dest="temp_dir",
+                        dest="zip_loc",
                         help="Specify the location to write the compressed "
                         "file used for storage. Useful if the results "
                         "directory is read only. "
@@ -928,7 +928,7 @@ def main(args):
 
     # If the --temp_dir argument is specified set use that,
     # else use the analyze result folder
-    temp_dir_path: str = args.temp_dir if args.temp_dir else args.input[0]
+    temp_dir_path: str = args.zip_loc if args.zip_loc else args.input[0]
     try:
         temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
