@@ -14,14 +14,35 @@ enum Ternary {
 }
 
 enum ErrorCode {
-  DATABASE,
-  IOERROR,
-  GENERAL,
-  AUTH_DENIED,   // Authentication denied. We do not allow access to the service.
-  UNAUTHORIZED,  // Authorization denied. User does not have right to perform an action.
-  API_MISMATCH,  // The client attempted to query an API version that is not supported by the server.
-  SOURCE_FILE,   // The client sent a source code which contains errors (e.g., source code comment errors).
-  REPORT_FORMAT, // The client sent a report with wrong format (e.g., report annotation has bad type in a .plist).
+  // Any other sort of error encountered during RPC execution.
+  GENERAL  = 2,
+
+  // Executing the request triggered a database-level fault, constraint violation.
+  DATABASE = 0,
+
+  // The request is malformed or an internal I/O operation failed.
+  IOERROR  = 1,
+
+  // Authentication denied. We do not allow access to the service.
+  AUTH_DENIED = 3,
+
+  // User does not have the necessary rights to perform an action.
+  UNAUTHORIZED = 4,
+
+  // The client attempted to query an API version that is not supported by the
+  // server.
+  API_MISMATCH = 5,
+
+  // REMOVED IN API v6.59 (CodeChecker v6.25.0)!
+  // Previously sent by report_server.thrift/codeCheckerDBAccess::massStoreRun()
+  // when the client uploaded a source file which contained errors, such as
+  // review status source-code-comment errors.
+  /* SOURCE_FILE = 6, */ // Never reuse the value of the enum constant!
+
+  // REMOVED IN API v6.59 (CodeChecker v6.25.0)!
+  // Previously sent by report_server.thrift/codeCheckerDBAccess::massStoreRun()
+  // when the client uploaded a report with annotations that had invalid types.
+  /* REPORT_FORMAT = 7, */ // Never reuse the value of the enum constant!
 }
 
 exception RequestFailed {

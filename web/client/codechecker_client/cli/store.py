@@ -31,8 +31,8 @@ from datetime import timedelta
 from threading import Timer
 from typing import Dict, Iterable, List, Set, Tuple
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
-from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+    StoreLimitKind, SubmittedRunOptions
 
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
@@ -51,14 +51,14 @@ except ImportError:
         """
         raise NotImplementedError()
 
-from codechecker_client import client as libclient
-from codechecker_client import product
+from codechecker_client import client as libclient, product
+from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_common.util import load_json
+from codechecker_common.util import format_size, load_json, strtobool
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -66,7 +66,7 @@ from codechecker_web.shared.env import get_default_workspace
 
 LOG = logger.get_logger('system')
 
-MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+MAX_UPLOAD_SIZE = 1024 ** 3  # 1024^3 = 1 GiB.
 
 
 AnalyzerResultFileReports = Dict[str, List[Report]]
@@ -87,7 +87,7 @@ ReportLineInfo = namedtuple('ReportLineInfo',
 
 """Contains information about the report file after parsing.
 
-store_it: True if every information is availabe and the
+store_it: True if every information is available and the
             report can be stored
 main_report_positions: list of ReportLineInfo containing
                         the main report positions
@@ -133,19 +133,6 @@ class StorageZipStatistics(report_statistics.Statistics):
              str(self.num_of_blame_information)]]
         out.write(twodim.to_table(statistics_rows, False))
         out.write("\n----=================----\n")
-
-
-def sizeof_fmt(num, suffix='B'):
-    """
-    Pretty print storage units.
-    Source: https://stackoverflow.com/questions/1094841/
-        reusable-library-to-get-human-readable-version-of-file-size
-    """
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return f"{num:3.1f}{unit}{suffix}"
-        num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
 
 
 def get_file_content_hash(file_path):
@@ -269,6 +256,24 @@ def add_arguments_to_parser(parser):
                              "If multiple prefixes are given, the longest "
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
+
+    parser.add_argument("--detach",
+                        dest="detach",
+                        default=argparse.SUPPRESS,
+                        action="store_true",
+                        required=False,
+                        help="""
+Runs `store` in fire-and-forget mode: exit immediately once the server accepted
+the analysis reports for storing, without waiting for the server-side data
+processing to conclude.
+Doing this is generally not recommended, as the client will never be notified
+of potential processing failures, and there is no easy way to wait for the
+successfully stored results to become available server-side for potential
+further processing (e.g., `CodeChecker cmd diff`).
+However, using '--detach' can significantly speed up large-scale monitoring
+analyses where access to the results by a tool is not a goal, such as in the
+case of non-gating CI systems.
+""")
 
     cmd_config.add_option(parser)
 
@@ -658,7 +663,7 @@ Configured report limit for this product: {p.reportLimit}
     compressed_zip_size = os.stat(zip_file).st_size
 
     LOG.info("Compressing report zip file done (%s / %s).",
-             sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
+             format_size(zip_size), format_size(compressed_zip_size))
 
     # We are responsible for deleting these.
     shutil.rmtree(temp_dir)
@@ -707,7 +712,7 @@ def get_analysis_statistics(inputs, limits):
 
                 if os.stat(compilation_db).st_size > compilation_db_size:
                     LOG.debug("Compilation database is too big (max: %s).",
-                              sizeof_fmt(compilation_db_size))
+                              format_size(compilation_db_size))
                 else:
                     LOG.debug("Copying file '%s' to analyzer statistics "
                               "ZIP...", compilation_db)
@@ -730,7 +735,7 @@ def get_analysis_statistics(inputs, limits):
                     if failed_files_size > failure_zip_limit:
                         LOG.debug("We reached the limit of maximum uploadable "
                                   "failure zip size (max: %s).",
-                                  sizeof_fmt(failure_zip_limit))
+                                  format_size(failure_zip_limit))
                         break
                     else:
                         LOG.debug("Copying failure zip file '%s' to analyzer "
@@ -741,7 +746,7 @@ def get_analysis_statistics(inputs, limits):
         return statistics_files if has_failed_zip else []
 
 
-def storing_analysis_statistics(client, inputs, run_name):
+def store_analysis_statistics(client, inputs, run_name):
     """
     Collects and stores analysis statistics information on the server.
     """
@@ -943,7 +948,7 @@ def main(args):
         zip_size = os.stat(zip_file).st_size
         if zip_size > MAX_UPLOAD_SIZE:
             LOG.error("The result list to upload is too big (max: %s): %s.",
-                      sizeof_fmt(MAX_UPLOAD_SIZE), sizeof_fmt(zip_size))
+                      format_size(MAX_UPLOAD_SIZE), format_size(zip_size))
             sys.exit(1)
 
         b64zip = ""
@@ -958,77 +963,116 @@ def main(args):
 
         description = args.description if 'description' in args else None
 
-        LOG.info("Storing results to the server...")
+        LOG.info("Storing results to the server ...")
 
-        try:
-            with _timeout_watchdog(timedelta(hours=1),
-                                   signal.SIGUSR1):
-                client.massStoreRun(args.name,
-                                    args.tag if 'tag' in args else None,
-                                    str(context.version),
-                                    b64zip,
-                                    'force' in args,
-                                    trim_path_prefixes,
-                                    description)
-        except WatchdogError as we:
-            LOG.warning("%s", str(we))
+        if strtobool(os.environ.get('CC_FORCE_SYNC_STORE', 'no')):
+            try:
+                with _timeout_watchdog(timedelta(hours=1),
+                                       signal.SIGUSR1):
+                    client.massStoreRun(args.name,
+                                        args.tag if 'tag' in args else None,
+                                        str(context.version),
+                                        b64zip,
+                                        'force' in args,
+                                        trim_path_prefixes,
+                                        description)
+            except WatchdogError as we:
+                LOG.warning("%s", str(we))
 
-            # Showing parts of the exception stack is important here.
-            # We **WANT** to see that the timeout happened during a wait on
-            # Thrift reading from the TCP connection (something deep in the
-            # Python library code at "sock.recv_into").
-            import traceback
-            _, _, tb = sys.exc_info()
-            frames = traceback.extract_tb(tb)
-            first, last = frames[0], frames[-2]
-            formatted_frames = traceback.format_list([first, last])
-            fmt_first, fmt_last = formatted_frames[0], formatted_frames[1]
-            LOG.info("Timeout was triggered during:\n%s", fmt_first)
-            LOG.info("Timeout interrupted this low-level operation:\n%s",
-                     fmt_last)
+                # Showing parts of the exception stack is important here.
+                # We **WANT** to see that the timeout happened during a wait on
+                # Thrift reading from the TCP connection (something deep in the
+                # Python library code at "sock.recv_into").
+                import traceback
+                _, _, tb = sys.exc_info()
+                frames = traceback.extract_tb(tb)
+                first, last = frames[0], frames[-2]
+                formatted_frames = traceback.format_list([first, last])
+                fmt_first, fmt_last = formatted_frames[0], formatted_frames[1]
+                LOG.info("Timeout was triggered during:\n%s", fmt_first)
+                LOG.info("Timeout interrupted this low-level operation:\n%s",
+                         fmt_last)
 
-            LOG.error("Timeout!"
-                      "\n\tThe server's reply did not arrive after "
-                      "%d seconds (%s) elapsed since the server-side "
-                      "processing began."
-                      "\n\n\tThis does *NOT* mean that there was an issue "
-                      "with the run you were storing!"
-                      "\n\tThe server might still be processing the results..."
-                      "\n\tHowever, it is more likely that the "
-                      "server had already finished, but the client did not "
-                      "receive a response."
-                      "\n\tUsually, this is caused by the underlying TCP "
-                      "connection failing to signal a low-level disconnect."
-                      "\n\tClients potentially hanging indefinitely in these "
-                      "scenarios is an unfortunate and known issue."
-                      "\n\t\tSee http://github.com/Ericsson/codechecker/"
-                      "issues/3672 for details!"
-                      "\n\n\tThis error here is a temporary measure to ensure "
-                      "an infinite hang is replaced with a well-explained "
-                      "timeout."
-                      "\n\tA more proper solution will be implemented in a "
-                      "subsequent version of CodeChecker.",
-                      we.timeout.total_seconds(), str(we.timeout))
-            sys.exit(1)
+                LOG.error(
+                    "Timeout!"
+                    "\n\tThe server's reply did not arrive after "
+                    "%d seconds (%s) elapsed since the server-side "
+                    "processing began."
+                    "\n\n\tThis does *NOT* mean that there was an issue "
+                    "with the run you were storing!"
+                    "\n\tThe server might still be processing the results..."
+                    "\n\tHowever, it is more likely that the "
+                    "server had already finished, but the client did not "
+                    "receive a response."
+                    "\n\tUsually, this is caused by the underlying TCP "
+                    "connection failing to signal a low-level disconnect."
+                    "\n\tClients potentially hanging indefinitely in these "
+                    "scenarios is an unfortunate and known issue."
+                    "\n\t\tSee http://github.com/Ericsson/codechecker/"
+                    "issues/3672 for details!"
+                    "\n\n\tThis error here is a temporary measure to ensure "
+                    "an infinite hang is replaced with a well-explained "
+                    "timeout."
+                    "\n\tA more proper solution will be implemented in a "
+                    "subsequent version of CodeChecker.",
+                    we.timeout.total_seconds(), str(we.timeout))
+                sys.exit(1)
 
-        # Storing analysis statistics if the server allows them.
-        if client.allowsStoringAnalysisStatistics():
-            storing_analysis_statistics(client, args.input, args.name)
+            if client.allowsStoringAnalysisStatistics():
+                store_analysis_statistics(client, args.input, args.name)
+        else:
+            task_token: str = client.massStoreRunAsynchronous(
+                b64zip,
+                SubmittedRunOptions(
+                    runName=args.name,
+                    tag=args.tag if "tag" in args else None,
+                    version=str(context.version),
+                    force="force" in args,
+                    trimPathPrefixes=trim_path_prefixes,
+                    description=description)
+                )
+            LOG.info("Reports submitted to the server for processing.")
 
-        LOG.info("Storage finished successfully.")
-    except RequestFailed as reqfail:
-        if reqfail.errorCode == ErrorCode.SOURCE_FILE:
-            header = ['File', 'Line', 'Checker name']
-            table = twodim.to_str(
-                'table', header, [c.split('|') for c in reqfail.extraInfo])
-            LOG.warning("Setting the review statuses for some reports failed "
-                        "because of non valid source code comments: "
-                        "%s\n %s", reqfail.message, table)
-        sys.exit(1)
+            if client.allowsStoringAnalysisStatistics():
+                store_analysis_statistics(client, args.input, args.name)
+
+            if "detach" in args:
+                LOG.warning(
+                    "Exiting the 'store' subcommand as '--detach' was "
+                    "specified: not waiting for the result of the store "
+                    "operation.\n"
+                    "The server might not have finished processing "
+                    "everything at this point, so do NOT rely on querying "
+                    "the results just yet!\n"
+                    "To await the completion of the processing later, "
+                    "you can execute:\n\n"
+                    "\tCodeChecker cmd serverside-tasks --token %s "
+                    "--await",
+                    task_token)
+                # Print the token to stdout as well, so scripts can use
+                # "--detach" meaningfully.
+                print(task_token)
+                return
+
+            task_client = libclient.setup_task_client(protocol, host, port)
+            task_status: str = await_task_termination(
+                LOG, task_token, task_api_client=task_client)
+
+            if task_status == "COMPLETED":
+                LOG.info("Storing the reports finished successfully.")
+            else:
+                LOG.error(
+                    "Storing the reports failed! "
+                    "The job terminated in status '%s'. "
+                    "The comments associated with the failure are:\n\n%s",
+                    task_status,
+                    task_client.getTaskInfo(task_token).comments)
+                sys.exit(1)
+
     except Exception as ex:
         import traceback
         traceback.print_exc()
-        LOG.info("Storage failed: %s", str(ex))
+        LOG.error("Storing the reports failed: %s", str(ex))
         sys.exit(1)
     finally:
         os.close(zip_file_handle)

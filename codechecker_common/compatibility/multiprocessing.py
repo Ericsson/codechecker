@@ -14,14 +14,17 @@ import sys
 # pylint: disable=unused-import
 if sys.platform in ["darwin", "win32"]:
     from multiprocess import \
-        Pool, Process, \
+        Pipe, Pool, Process, \
         Queue, \
         Value, \
         cpu_count
+    from multiprocess.managers import SyncManager
 else:
     from concurrent.futures import ProcessPoolExecutor as Pool
     from multiprocessing import \
+        Pipe, \
         Process, \
         Queue, \
         Value, \
         cpu_count
+    from multiprocessing.managers import SyncManager
