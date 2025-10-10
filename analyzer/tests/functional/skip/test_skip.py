@@ -173,56 +173,26 @@ class TestSkip(unittest.TestCase):
 
     def test_skip_directory(self):
         """Test whether directories in skipfile entries works correctly"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix="skipfile", encoding="utf-8"
-        ) as skip_file:
+        skip_file_contents: list[list[str]] = [
+            ["-*skipme/*"],
+            ["-*skipme/"],
+            ["-*skipme"],
+        ]
+        for skip_file_content in skip_file_contents:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix="skipfile", encoding="utf-8"
+            ) as skip_file:
 
-            # Skip the `skipme` folder, the way its in the documentation
-            skip_file.write('\n'.join([
-                '-*skipme/*',
-            ]))
-            skip_file.flush()
-            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
+                # Skip the `skipme` folder, the way its in the documentation
+                skip_file.write('\n'.join(skip_file_content))
+                skip_file.flush()
+                self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
 
-            # Check if the folder is skipped
-            # There shouldn't be any report generated
-            report_dir_files = os.listdir(self.report_dir)
-            for f in report_dir_files:
-                self.assertFalse("skipme.cpp" in f)
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix="skipfile", encoding="utf-8"
-        ) as skip_file:
-
-            # Skip the `skipme` folder, leaving out the '*'
-            skip_file.write('\n'.join([
-                '-*skipme/',
-            ]))
-            skip_file.flush()
-            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
-
-            # Check if the folder is skipped
-            # There shouldn't be any report generated
-            report_dir_files = os.listdir(self.report_dir)
-            for f in report_dir_files:
-                self.assertFalse("skipme.cpp" in f)
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix="skipfile", encoding="utf-8"
-        ) as skip_file:
-
-            # Skip the skipme folder, without any indication that it's a folder
-            skip_file.write('\n'.join([
-                '-*skipme',
-            ]))
-            skip_file.flush()
-            self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
-
-            # Check if the folder is skipped
-            # There shouldn't be any report generated
-            report_dir_files = os.listdir(self.report_dir)
-            for f in report_dir_files:
-                self.assertFalse("skipme.cpp" in f)
+                # Check if the folder is skipped
+                # There shouldn't be any report generated
+                report_dir_files = os.listdir(self.report_dir)
+                for f in report_dir_files:
+                    self.assertFalse("skipme.cpp" in f)
 
     def test_drop_reports(self):
         """Analyze a project with a skip file."""
