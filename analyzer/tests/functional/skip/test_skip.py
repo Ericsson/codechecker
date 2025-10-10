@@ -174,9 +174,9 @@ class TestSkip(unittest.TestCase):
     def test_skip_directory(self):
         """Test whether directories in skipfile entries works correctly"""
         skip_file_contents: list[list[str]] = [
-            ["-*skipme/*"], # The way its in the docs
-            ["-*skipme/"], # If the user specified that this is a directory
-            ["-*skipme"], # If we can't even be sure that this is a directory
+            ["-*skipme/*"],  # The way its in the docs
+            ["-*skipme/"],  # If the user specified that this is a directory
+            ["-*skipme"],  # If we can't even be sure that this is a directory
         ]
         for skip_file_content in skip_file_contents:
             with tempfile.NamedTemporaryFile(
@@ -186,7 +186,9 @@ class TestSkip(unittest.TestCase):
                 # Skip the `skipme` folder, the way its in the documentation
                 skip_file.write('\n'.join(skip_file_content))
                 skip_file.flush()
-                self.__log_and_analyze("skip_folder", ["--ignore", skip_file.name])
+                self.__log_and_analyze(
+                    "skip_folder", ["--ignore", skip_file.name]
+                )
 
                 # Check if the folder is skipped
                 # There shouldn't be any report generated
