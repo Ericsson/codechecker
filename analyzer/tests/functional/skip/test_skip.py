@@ -530,7 +530,7 @@ class TestSkip(unittest.TestCase):
         print(glob.glob(
             os.path.join(self.report_dir, '*.plist')))
         self.assertFalse(
-            any('simple.cpp' not in f for f in glob.glob(
+            any('simple.cpp' in f for f in glob.glob(
                 os.path.join(self.report_dir, '*.plist'))))
 
     def test_analyze_only_file_option(self):
