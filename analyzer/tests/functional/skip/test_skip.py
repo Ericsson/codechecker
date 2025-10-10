@@ -172,7 +172,7 @@ class TestSkip(unittest.TestCase):
                             " if the header is not on the skiplist")
 
     def test_skip_directory(self):
-        """Test wether directories in skipfile entries works correctly"""
+        """Test whether directories in skipfile entries works correctly"""
         with tempfile.NamedTemporaryFile(
             mode="w", suffix="skipfile", encoding="utf-8"
         ) as skip_file:
@@ -211,7 +211,7 @@ class TestSkip(unittest.TestCase):
             mode="w", suffix="skipfile", encoding="utf-8"
         ) as skip_file:
 
-            # Skip the skipme folder, without any indication that its a folder
+            # Skip the skipme folder, without any indication that it's a folder
             skip_file.write('\n'.join([
                 '-*skipme',
             ]))
@@ -552,13 +552,13 @@ class TestSkip(unittest.TestCase):
     def test_analyze_similar_file_option(self):
         """
         Test analyze command --file option for edge case,
-        where one filename is a prefix of an other.
+        where one filename is a prefix of another.
         """
         self.__log_and_analyze("similar", ["--file", "*/simple.c"])
         print(glob.glob(
             os.path.join(self.report_dir, '*.plist')))
         self.assertFalse(
-            any('simple.cc' not in f for f in glob.glob(
+            any('simple.cpp' not in f for f in glob.glob(
                 os.path.join(self.report_dir, '*.plist'))))
 
     def test_analyze_only_file_option(self):
