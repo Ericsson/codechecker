@@ -174,9 +174,9 @@ class TestSkip(unittest.TestCase):
     def test_skip_directory(self):
         """Test whether directories in skipfile entries works correctly"""
         skip_file_contents: list[list[str]] = [
-            ["-*skipme/*"],
-            ["-*skipme/"],
-            ["-*skipme"],
+            ["-*skipme/*"], # The way its in the docs
+            ["-*skipme/"], # If the user specified that this is a directory
+            ["-*skipme"], # If we can't even be sure that this is a directory
         ]
         for skip_file_content in skip_file_contents:
             with tempfile.NamedTemporaryFile(
