@@ -10,12 +10,11 @@
 Main CodeChecker script.
 """
 
-
 import argparse
-from importlib import machinery
+import importlib
 import io
-import json
 import os
+import pkgutil
 import signal
 import sys
 
@@ -32,7 +31,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.exit(1, f"{self.prog}: error: {message}\n")
 
 
-def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
+def add_subcommand(subparsers, sub_cmd, module_name):
     """
     Load the subcommand module and then add the subcommand to the available
     subcommands in the given subparsers collection.
@@ -40,22 +39,57 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     subparsers has to be the return value of the add_parsers() method on an
     argparse.ArgumentParser.
     """
-    m_path, m_name = os.path.split(cmd_module_path)
-
-    module_name = os.path.splitext(m_name)[0]
-    target = [os.path.join(lib_dir_path, m_path)]
-
-    # Load the module named as the argument.
-    cmd_spec = machinery.PathFinder().find_spec(module_name,
-                                                target)
-    command_module = cmd_spec.loader.load_module(module_name)
+    try:
+        # Import the module directly using importlib
+        command_module = importlib.import_module(module_name)
+    except ImportError as e:
+        raise ImportError(
+            f"Subcommand module '{module_name}' not found: {e}") from e
 
     # Now that the module is loaded, construct an ArgumentParser for it.
     sc_parser = subparsers.add_parser(
-        sub_cmd, **command_module.get_argparser_ctor_args())
+        sub_cmd, **command_module.get_argparser_ctor_args()
+    )
 
     # Run the method which adds the arguments to the subcommand's handler.
     command_module.add_arguments_to_parser(sc_parser)
+
+
+def discover_subcommands():
+    """Discover available subcommands based on the modules in the project."""
+    subcmds = {}
+
+    # Define the packages to search for subcommands
+    packages_to_search = [
+        "codechecker_common.cli_commands",
+        "codechecker_analyzer.cli",
+        "codechecker_web.cli",
+        "codechecker_server.cli",
+        "codechecker_client.cli",
+    ]
+
+    for package_name in packages_to_search:
+        try:
+            package = importlib.import_module(package_name)
+
+            # Use pkgutil to find all modules in the package
+            for _, modname, _ in pkgutil.iter_modules(
+                package.__path__, package.__name__ + "."
+            ):
+                if "__" in modname:
+                    continue
+
+                # Convert module name to command name
+                # (e.g., "analyze" -> "analyze"
+                cmd_name = modname.split(".")[-1].replace("_", "-")
+                subcmds[cmd_name] = modname
+
+        except ImportError as e:
+            # logger is not available yet, so use print to stderr
+            print(f"Package {package_name} not found: {e}", file=sys.stderr)
+            continue
+
+    return subcmds
 
 
 def get_data_files_dir_path():
@@ -122,13 +156,7 @@ def main():
     data_files_dir_path = get_data_files_dir_path()
     os.environ['CC_DATA_FILES_DIR'] = data_files_dir_path
 
-    # Load the available CodeChecker subcommands.
-    # This list is generated dynamically by scripts/build_package.py, and is
-    # always meant to be available alongside the CodeChecker.py.
-    commands_cfg = os.path.join(data_files_dir_path, "config", "commands.json")
-
-    with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
-        subcommands = json.load(cfg_file)
+    subcommands = discover_subcommands()
 
     def signal_handler(signum, _):
         """
@@ -183,11 +211,9 @@ output.
                     # Consider only the given command as an available one.
                     subcommands = {first_command: subcommands[first_command]}
 
-            lib_dir_path = os.environ.get('CC_LIB_DIR')
-            for subcommand in subcommands:
+            for subcommand, module_name in subcommands.items():
                 try:
-                    add_subcommand(subparsers, subcommand,
-                                   subcommands[subcommand], lib_dir_path)
+                    add_subcommand(subparsers, subcommand, module_name)
                 except (IOError, ImportError):
                     print("Couldn't import module for subcommand '" +
                           subcommand + "'... ignoring.")
