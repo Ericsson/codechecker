@@ -80,7 +80,7 @@ def discover_subcommands():
                     continue
 
                 # Convert module name to command name
-                # (e.g., "analyze" -> "analyze"
+                # (e.g., "analyzer_version.py" -> "analyzer-version"
                 cmd_name = modname.split(".")[-1].replace("_", "-")
                 subcmds[cmd_name] = modname
 
