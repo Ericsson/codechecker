@@ -26,6 +26,19 @@
 
       <v-divider />
 
+      <v-list-item class="pl-1">
+        <v-list-item-content>
+          <save-report-filter
+            ref="filters"
+            :namespace="namespace"
+            @save_preset="getFilterPreset"
+            @update:url="updateUrl"
+          />
+          {{ tt }}
+          {{ tt2 }}
+        </v-list-item-content>
+      </v-list-item>
+
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
           <unique-filter
@@ -326,6 +339,7 @@
 </template>
 
 <script>
+/* eslint-disable */
 import { mapState } from "vuex";
 
 import {
@@ -355,11 +369,18 @@ import {
 import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
+import SaveReportFilter from "./SaveReportFilter.vue";
+// import PresetMenu from "./Filters/PresetMenu.vue";
+// import { ReportFilter } from "@cc/report-server-types";
+import { ccService, handleThriftError } from "@cc-api";
+import BaseSelectOptionFilterMixin from
+  "./Filters/BaseSelectOptionFilter.mixin";
 
 export default {
   name: "ReportFilter",
   components: {
     AnalyzerNameFilter,
+    SaveReportFilter,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
@@ -384,6 +405,7 @@ export default {
     TestcaseFilter,
     ReportStatusFilter
   },
+  mixins: [ BaseSelectOptionFilterMixin ],
   props: {
     namespace: { type: String, required: true },
     showCompareTo: { type: Boolean, default: true },
@@ -398,7 +420,10 @@ export default {
     return {
       activeBaselinePanelId: 0,
       activeCompareToPanelId: 0,
-      activeDatePanelId: 0
+      activeDatePanelId: 0,
+      tester: 0,
+      tt: this.ReportFilter,
+      tt2: JSON.parse(JSON.stringify(this.reportFilter))
     };
   },
 
@@ -409,8 +434,10 @@ export default {
       },
       cmpData(state) {
         return state[this.namespace].cmpData;
-      }
+      },
+      console: () => console
     }),
+
   },
 
   watch: {
@@ -515,6 +542,143 @@ export default {
         this.activeDatePanelId = -1;
       }
     },
+
+    saveCurrentFilter() {
+      // const preset = reportFilter;
+      // const preset = this.reportFilter;
+      const preset = {
+        id: 1,
+        name: "BANANABREAD",
+        reportFilter: this.reportFilter
+      };
+
+      this.tester = 1;
+
+      new Promise(resolve => {
+        ccService.getClient().storeFilterPreset(preset,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      })
+        .then(result => {
+          handleThriftError("OK", result);
+        }).catch(err => {
+          handleThriftError("FAILURE", err);
+        });
+    },
+
+    deletePreset(preset_id){
+      new Promise(resolve => {
+        this.tt = "promise";
+        ccService.getClient().deleteFilterPreset(preset_id,
+          handleThriftError(deleted_pr_id => {
+            resolve(deleted_pr_id);
+          })
+        );
+      })
+        .then(deleted_pr_id => {
+          this.tt = "OK" + deleted_pr_id;
+          handleThriftError("OK", deleted_pr_id);
+        }).catch(err => {
+          this.tt = "FAILURE" + err;
+          handleThriftError("FAILURE", err);
+        });
+    },
+
+    //
+
+    // getFilterPreset(){
+      // this.unregisterWatchers();
+      // localStorage.__tmp1 = JSON.stringify(this.$route.query);
+      // console.log(new URLSearchParams(JSON.parse(localStorage.__tmp1)).toString());
+
+      // this.$router.replace({ query: { run: 'tinyxml', severity: 'Medium'} })
+
+      // this.$router.replace({ query: JSON.parse(localStorage.__tmp1) })
+        // .then(() => {
+        //   this.initByUrl();
+        // })
+        // .finally(() => {
+          // this.registerWatchers();
+        // });
+      // console.log();
+
+      // const preset_id = 1;
+      // // console.log(this.ReportFilter);
+      // new Promise(resolve => {
+      //   ccService.getClient().getFilterPreset(preset_id,
+      //     handleThriftError(Filter_Preset => {
+      //       resolve(Filter_Preset);
+      //     })
+      //   );
+      // })
+        // .then(Filter_Preset => {
+        //   console.log(Filter_Preset.reportFilter);
+        //   this.setReportFilter(
+        //     new ReportFilter(Filter_Preset.reportFilter));
+      //     // this.updateReportFilter();
+      //     // this.unregisterWatchers();
+      //     // this.registerWatchers();
+      //     // this.$emit("refresh");
+      //     // this.update();
+
+    //     }).catch(err => {
+    //       handleThriftError("FAILURE", err);
+    //     });
+    // },
+    getFilterPreset() {
+      const preset_id = 1;
+      // console.log(this.ReportFilter);
+      new Promise(resolve => {
+        ccService.getClient().getFilterPreset(preset_id,
+          handleThriftError(Filter_Preset => {
+            resolve(Filter_Preset);
+          })
+        );
+      })
+        .then(Filter_Preset => {
+          // this.unregisterWatchers();
+          // this.setReportFilter(JSON.parse(
+          //   JSON.stringify(Filter_Preset.reportFilter)), { replace: true });
+          this.console.log(" Before this.reportFilter,", this.reportFilter)
+          this.setReportFilter(Filter_Preset.reportFilter);
+
+          // 2) Pull store -> UI in children
+          //(do NOT call updateAllFilters here)
+          // (this.$refs.filters || [])
+          //   .forEach(f => f.syncFromFilter?.(this.reportFilter));
+
+          // 3) URL + data refresh
+          // this.updateUrl();
+          // this.registerWatchers();
+          // this.$emit("refresh");
+          this.console.log("After this.reportFilter,", this.reportFilter)
+
+        }).catch(err => {
+          handleThriftError("FAILURE", err);
+        });
+    },
+
+
+    listFilterPreset(){
+      new Promise(resolve => {
+        this.tt = "promise";
+        ccService.getClient().listFilterPreset(
+          handleThriftError(preset_list => {
+            resolve(preset_list);
+          })
+        );
+      })
+        .then(preset_list => {
+          this.tt = "OK" + preset_list;
+          handleThriftError("OK", preset_list);
+        }).catch(err => {
+          this.tt = "FAILURE" + err;
+          handleThriftError("FAILURE", err);
+        });
+    },
+
 
     async clearAllFilters() {
       const filters = this.$refs.filters;

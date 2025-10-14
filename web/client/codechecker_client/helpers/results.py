@@ -34,6 +34,22 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def storeFilterPreset(self, preset):
+        pass
+
+    @thrift_client_call
+    def getFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def deleteFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def listFilterPreset(self):
+        pass
+
+    @thrift_client_call
     def getRunHistory(self, run_ids, limit, offset, run_history_filter):
         pass
 
