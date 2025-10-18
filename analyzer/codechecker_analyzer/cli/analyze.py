@@ -1353,14 +1353,6 @@ def main(args):
     LOG.debug("args: %s", str(args))
     LOG.debug("Output will be stored to: '%s'", args.output_path)
 
-    analyzer_clang_binary = \
-        context.analyzer_binaries.get(
-            clangsa.analyzer.ClangSA.ANALYZER_NAME)
-
-    analyzer_clang_version = None
-    if analyzer_clang_binary:
-        analyzer_clang_version = clangsa.version.get(analyzer_clang_binary)
-
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
         args.output_path,
@@ -1371,8 +1363,7 @@ def main(args):
         args.jobs,
         skip_handlers,
         pre_analysis_skip_handlers,
-        ctu_or_stats_enabled,
-        analyzer_clang_version)
+        ctu_or_stats_enabled)
 
     if not actions:
         LOG.warning("No analysis is required.")

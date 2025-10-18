@@ -24,7 +24,7 @@ import tempfile
 import traceback
 from typing import Dict, List, Optional
 
-from codechecker_analyzer.analyzers import clangsa
+from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from codechecker_common.compatibility import multiprocessing
 from codechecker_common.logger import get_logger
@@ -698,6 +698,20 @@ def __contains_no_intrinsic_headers(dirname):
     return True
 
 
+@lru_cache(32)
+def __get_installed_dir(clang_binary) -> Optional[str]:
+    """
+    Return the directory path where the given clang binary is installed. This
+    function returns None if it doesn't belong to a clang compiler.
+    """
+    clang_path = Path(clang_binary).resolve()
+
+    if 'clang' not in clang_path.name:
+        return None
+
+    return clang_path.parent
+
+
 def __collect_clang_compile_opts(flag_iterator, details):
     """Collect all the options for clang do not filter anything."""
     if CLANG_OPTIONS.match(flag_iterator.item):
@@ -925,9 +939,7 @@ def __skip_gcc(flag_iterator, _):
 def parse_options(compilation_db_entry,
                   compiler_info_file=None,
                   keep_gcc_include_fixed=False,
-                  keep_gcc_intrin=False,
-                  get_clangsa_version_func=None,
-                  analyzer_clang_version=None):
+                  keep_gcc_intrin=False):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -947,13 +959,6 @@ def parse_options(compilation_db_entry,
                        kept among the implicit include paths. Use this flag if
                        Clang analysis fails with error message related to
                        __builtin symbols.
-    get_clangsa_version_func -- Is a function which should return the
-                            version information for a clang compiler.
-                            It requires the compiler binary and an env.
-                            get_clangsa_version_func(compiler_binary, env)
-                            Should return false for a non clang compiler.
-    analyzer_clang_version -- version information about the clang which is
-                              used to execute the analysis
     """
     details = {
         'analyzer_options': [],
@@ -1017,35 +1022,15 @@ def parse_options(compilation_db_entry,
 
     flag_processors = gcc_flag_transformers
 
-    compiler_version_info = \
-        ImplicitCompilerInfo.compiler_versions.get(
-            details['compiler'], False)
-
-    if not compiler_version_info and get_clangsa_version_func:
-
-        # did not find in the cache yet
-        try:
-            compiler_version_info = \
-                get_clangsa_version_func(details['compiler'])
-        except (subprocess.CalledProcessError, OSError) as cerr:
-            LOG.error('Failed to get and parse version of: %s',
-                      details['compiler'])
-            LOG.error(cerr)
-            compiler_version_info = False
-
-        ImplicitCompilerInfo.compiler_versions[details['compiler']] \
-            = compiler_version_info
+    compiler_installed_dir = __get_installed_dir(details['compiler'])
 
     using_same_clang_to_compile_and_analyze = False
-    compiler_clang = compiler_version_info
 
-    if compiler_clang:
+    if compiler_installed_dir:
         # Based on the version information the compiler is clang.
         flag_processors = clang_flag_collectors
 
-        if analyzer_clang_version and \
-            compiler_clang.installed_dir == \
-                analyzer_clang_version.installed_dir:
+        if compiler_installed_dir == Path(ClangSA.analyzer_binary()).parent:
             LOG.debug("Same clang is used for compilation and analysis.")
             using_same_clang_to_compile_and_analyze = True
 
@@ -1224,15 +1209,13 @@ def _process_entry_worker(args):
             keep_gcc_include_fixed, keep_gcc_intrin, analyzer_clang_version)
     """
     (entry, compiler_info_file, keep_gcc_include_fixed,
-     keep_gcc_intrin, analyzer_clang_version) = args
+     keep_gcc_intrin) = args
 
     try:
         action = parse_options(entry,
                                compiler_info_file,
                                keep_gcc_include_fixed,
-                               keep_gcc_intrin,
-                               clangsa.version.get,
-                               analyzer_clang_version)
+                               keep_gcc_intrin)
         return action
     except Exception as e:
         LOG.error("Error processing entry: %s", e)
@@ -1248,8 +1231,7 @@ def parse_unique_log(compilation_database,
                      jobs=None,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
-                     ctu_or_stats_enabled=False,
-                     analyzer_clang_version=None):
+                     ctu_or_stats_enabled=False):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is
@@ -1299,8 +1281,6 @@ def parse_unique_log(compilation_database,
                                  skipped during pre analysis
     ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
                             influences the behavior which files are skipped.
-    analyzer_clang_version -- version information about the clang which is
-                              used to execute the analysis
     """
     try:
         uniqued_build_actions = {}
@@ -1329,7 +1309,7 @@ def parse_unique_log(compilation_database,
 
         # Create arguments for worker function as generator
         worker_args = ((entry, compiler_info_file, keep_gcc_include_fixed,
-                       keep_gcc_intrin, analyzer_clang_version)
+                       keep_gcc_intrin)
                        for entry in entries)
 
         # Process entries in parallel using imap_unordered with chunk size 1024
