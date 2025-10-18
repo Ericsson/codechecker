@@ -282,7 +282,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
 
         version = analyzer_types.supported_analyzers[analyzer] \
             .get_binary_version()
-        metadata_info['analyzer_statistics']['version'] = version
+        metadata_info['analyzer_statistics']['version'] = str(version)
 
         metadata_tool['analyzers'][analyzer] = metadata_info
     LOG.info("Enabled checker list can be found in %s",

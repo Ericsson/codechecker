@@ -12,6 +12,7 @@ Base class for various source analyzers.
 
 from abc import ABCMeta, abstractmethod
 import os
+from semver.version import Version
 import signal
 import subprocess
 import sys
@@ -72,12 +73,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         """
         Return the version number of the binary that CodeChecker found, even
-        if its incompatible. If details is true, additional version information
-        is provided. If details is false, the return value should be
-        convertible to a distutils.version.StrictVersion type.
+        if it's incompatible.
         """
         raise NotImplementedError("Subclasses should implement this!")
 

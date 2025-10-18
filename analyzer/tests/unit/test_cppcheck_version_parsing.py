@@ -9,6 +9,7 @@
 """ Test Cppcheck version parsing. """
 
 
+from semver.version import Version
 import unittest
 
 from codechecker_analyzer.analyzers.cppcheck.analyzer import parse_version
@@ -21,5 +22,9 @@ class CppcheckVersionTest(unittest.TestCase):
     """
 
     def test_cppcheck_version(self):
-        self.assertEqual(parse_version('Cppcheck 1.2.3'), '1.2.3')
-        self.assertEqual(parse_version('Cppcheck Premium 1.2.3'), '1.2.3')
+        self.assertEqual(
+            parse_version('Cppcheck 1.2.3'),
+            Version(1, 2, 3))
+        self.assertEqual(
+            parse_version('Cppcheck Premium 1.2.3'),
+            Version(1, 2, 3))

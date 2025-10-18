@@ -11,11 +11,11 @@ Cppcheck related functions.
 
 from collections import defaultdict
 import sys
-from typing import List
-from packaging.version import Version
+from typing import List, Optional
 from pathlib import Path
 import os
 import re
+from semver.version import Version
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
@@ -60,14 +60,14 @@ def parse_checkers(cppcheck_output):
     return checkers
 
 
-def parse_version(cppcheck_output):
+def parse_version(cppcheck_output) -> Optional[Version]:
     """
     Parse cppcheck version output and return the version number.
     """
     version_re = re.compile(r'^Cppcheck(.*?)(?P<version>[\d\.]+)')
     match = version_re.match(cppcheck_output)
     if match:
-        return match.group('version')
+        return Version.parse(match.group('version'))
     return None
 
 
@@ -84,7 +84,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
@@ -98,8 +98,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            if details:
-                return output.strip()
             return parse_version(output)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
@@ -390,7 +388,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
-        if Version(analyzer_version) >= Version("1.80"):
+        if analyzer_version and analyzer_version >= Version(1, 80):
             return None
 
         return "CppCheck binary found is too old at " \

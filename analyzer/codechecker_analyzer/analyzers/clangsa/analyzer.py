@@ -15,7 +15,9 @@ import plistlib
 import re
 import subprocess
 import sys
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+
+from semver.version import Version
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -33,7 +35,6 @@ from ..flag import prepend_all
 
 from . import config_handler
 from . import ctu_triple_arch
-from . import version
 from .result_handler import ClangSAResultHandler
 
 LOG = get_logger('analyzer')
@@ -186,7 +187,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None
@@ -194,27 +195,21 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         environ = analyzer_context.get_context().get_env_for_bin(
             cls.analyzer_binary())
 
-        if details:
-            ver = [cls.analyzer_binary(), '--version']
-        else:
-            ver = [cls.analyzer_binary(), '-dumpversion']
+        version = [cls.analyzer_binary(), '-dumpversion']
+
         try:
-            output = subprocess.check_output(ver,
+            output = subprocess.check_output(version,
                                              env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output.strip()
+            return Version.parse(output.strip())
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(ver))
+                        ' '.join(version))
             LOG.warning(oerr)
 
         return None
-
-    @classmethod
-    def version_info(cls):
-        return version.get(cls.analyzer_binary())
 
     @classmethod
     def ctu_mapping(cls):
@@ -227,8 +222,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         default the shorter name is looked up, then if it is not found the
         postfixed.
         """
-        clang_version_info = cls.version_info()
-        if not clang_version_info:
+        clang_version = cls.get_binary_version()
+        if not clang_version:
             LOG.debug(
                 "No clang version information. "
                 "Can not detect ctu mapping tool.")
@@ -240,9 +235,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         new_mapping_tool_name = 'clang-extdef-mapping'
         new_mapping_file_name = 'externalDefMap.txt'
 
-        major_version = clang_version_info.major_version
-
-        if major_version > 7:
+        if clang_version.major > 7:
             tool_name = new_mapping_tool_name
             mapping_file = new_mapping_file_name
         else:
@@ -261,7 +254,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             "filename...", tool_path, installed_dir)
 
         postfixed_tool_path = ''.join(
-            [str(tool_path), '-', str(major_version)])
+            [str(tool_path), '-', str(clang_version.major)])
 
         if os.path.isfile(postfixed_tool_path):
             return postfixed_tool_path, mapping_file
@@ -378,12 +371,18 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         # The new checker help printig flags are not available there yet.
         # If the OSX clang will be updated to based on clang v8
         # this early return can be removed.
-        version_info = cls.version_info()
-        if version_info and version_info.vendor == "clang":
-            if alpha and version_info.major_version >= 9:
+        version_info = cls.get_binary_version()
+        if version_info:
+            try:
+                help_page = clang_command_output([
+                    cls.analyzer_binary(), "-cc1", "--help"])
+            except (subprocess.CalledProcessError, OSError):
+                help_page = ""
+
+            if alpha and "-analyzer-checker-help-alpha" in help_page:
                 command.append("-analyzer-checker-help-alpha")
 
-            if debug and version_info.major_version >= 9:
+            if debug and "-analyzer-checker-help-developer" in help_page:
                 command.append("-analyzer-checker-help-developer")
 
         return parse_clang_help_page(command, 'CHECKERS:')
@@ -402,12 +401,18 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         command.append("-analyzer-checker-option-help")
 
-        version_info = ClangSA.version_info()
-        if version_info.vendor == "clang":
-            if version_info.major_version >= 9:
+        version_info = cls.get_binary_version()
+        if version_info:
+            try:
+                help_page = clang_command_output([
+                    cls.analyzer_binary(), "-cc1", "--help"])
+            except (subprocess.CalledProcessError, OSError):
+                help_page = ""
+
+            if "-analyzer-checker-option-help-alpha" in help_page:
                 command.append("-analyzer-checker-option-help-alpha")
 
-            if version_info.major_version >= 9:
+            if "-analyzer-checker-option-help-developer" in help_page:
                 command.append("-analyzer-checker-option-help-developer")
 
         result = []
@@ -534,8 +539,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                      '-analyzer-checker=' +
                                      ','.join(enabled_checkers)])
             # Enable aggressive-binary-operation-simplification option.
-            version_info = ClangSA.version_info()
-            if version_info and version_info.major_version >= 8:
+            version_info = ClangSA.get_binary_version()
+            if version_info and version_info.major >= 8:
                 analyzer_cmd.extend([
                     '-Xclang',
                     '-analyzer-config',

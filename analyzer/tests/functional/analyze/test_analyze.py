@@ -14,6 +14,7 @@ Test case for the CodeChecker analyze command's direct functionality.
 import glob
 import json
 import os
+import pathlib
 import re
 import shutil
 import subprocess
@@ -25,7 +26,6 @@ import zipfile
 from libtest import env
 
 from codechecker_report_converter.report import report_file
-from codechecker_analyzer.analyzers.clangsa import version
 
 
 class TestAnalyze(unittest.TestCase):
@@ -135,7 +135,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(failed_file_count, failed_count)
 
     @unittest.skipUnless(
-        version.get("gcc"),
+        'clang' in pathlib.Path(shutil.which('gcc')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
