@@ -15,7 +15,8 @@ import subprocess
 import json
 from pathlib import Path
 import sys
-from typing import List
+from typing import List, Optional
+from semver.version import Version
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -178,7 +179,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
 
     @classmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         """
         Return the analyzer version.
         """
@@ -195,7 +196,7 @@ class Infer(analyzer_base.SourceAnalyzer):
                                              encoding="utf-8",
                                              errors="ignore")
             output = output.split('\n', maxsplit=1)[0]
-            return output.strip().split(" ")[-1][1:]
+            return Version.parse(output.strip().split(" ")[-1][1:])
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
