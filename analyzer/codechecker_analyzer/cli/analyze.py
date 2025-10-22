@@ -1152,7 +1152,7 @@ def __transform_deprecated_flags(args):
             'clang-tidy:cc-verbatim-args-file=<filepath>" instead.')
     if hasattr(args, 'cppcheck_args_cfg_file'):
         args.analyzer_config.append(analyzer_config(
-            f'clang-tidy:cc-verbatim-args-file={args.cppcheck_args_cfg_file}'))
+            f'cppcheck:cc-verbatim-args-file={args.cppcheck_args_cfg_file}'))
         delattr(args, 'cppcheck_args_cfg_file')
         LOG.warning(
             '"--cppcheckargs" is deprecated. Use "--analyzer-config '
