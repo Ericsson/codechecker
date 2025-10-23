@@ -405,6 +405,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                                             self.config_handler.report_hash)
 
         res_handler.skiplist_handler = skiplist_handler
+        res_handler.analyzer = self
 
         return res_handler
 

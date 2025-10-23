@@ -47,24 +47,33 @@ class CppcheckResultHandler(ResultHandler):
         """
         LOG.debug_analyzer(self.analyzer_stdout)
 
-        reports = report_file.get_reports(
-            self.analyzer_result_file, self.checker_labels,
-            source_dir_path=self.source_dir_path)
-
-        reports = [r for r in reports if not r.skip(skip_handlers)]
-
-        for report in reports:
-            # TODO check if prefix cascading still occurs.
-            if not report.checker_name.startswith("cppcheck-"):
-                report.checker_name = "cppcheck-" + report.checker_name
-
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
             hash_type = HashType.CONTEXT_FREE
         elif self.report_hash_type == 'diagnostic-message':
             hash_type = HashType.DIAGNOSTIC_MESSAGE
 
-        for report in reports:
+        checkers = list(map(
+            lambda x: x[0], self.analyzer.get_analyzer_checkers()))
+
+        all_reports = report_file.get_reports(
+            self.analyzer_result_file, self.checker_labels,
+            source_dir_path=self.source_dir_path)
+
+        reports = []
+
+        for report in all_reports:
+            # TODO check if prefix cascading still occurs.
+            if not report.checker_name.startswith("cppcheck-"):
+                report.checker_name = "cppcheck-" + report.checker_name
+
+            # Cppcheck generates informative diagnostics that are not related
+            # to defects, e.g. normalCheckLevelMaxBranches. Reports that are
+            # not coming from a checker are filtered here.
+            if report.skip(skip_handlers) or \
+                    report.checker_name not in checkers:
+                continue
+
             report.report_hash = get_report_hash(report, hash_type)
             bpe = BugPathEvent(
                     report.message,
@@ -77,6 +86,8 @@ class CppcheckResultHandler(ResultHandler):
                           report.column))
             if bpe != report.bug_path_events[-1]:
                 report.bug_path_events.append(bpe)
+
+            reports.append(report)
 
         if rs_handler:
             reports = [r for r in reports if not rs_handler.should_ignore(r)]
