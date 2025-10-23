@@ -292,8 +292,21 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         environ = analyzer_context.get_context().get_env_for_bin(
             command[0])
         try:
-            result = subprocess.check_output(command, env=environ)
-            return parse_checkers(result)
+            errorlist_output = subprocess.check_output(command, env=environ)
+            checkers = parse_checkers(errorlist_output)
+
+            # Cppcheck can and will report with checks that have a different
+            # name than marked in the --errorlist xml. To be able to suppress
+            # these reports, the checkerlist needs to be extended by those
+            # found in the label file.
+            checkers_from_label = analyzer_context \
+                .get_context().checker_labels.checkers("cppcheck")
+            parsed_checker_names = set(checker[0] for checker in checkers)
+            for checker in set(checkers_from_label):
+                if checker not in parsed_checker_names:
+                    checkers.append((checker, ""))
+
+            return checkers
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
         except (OSError) as e:
@@ -405,12 +418,12 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                                             self.config_handler.report_hash)
 
         res_handler.skiplist_handler = skiplist_handler
+        res_handler.analyzer = self
 
         return res_handler
 
     @classmethod
     def construct_config_handler(cls, args):
-        context = analyzer_context.get_context()
         handler = CppcheckConfigHandler()
 
         analyzer_config = defaultdict(list)
@@ -436,17 +449,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                         sys.exit(1)
 
         checkers = cls.get_analyzer_checkers()
-
-        # Cppcheck can and will report with checks that have a different
-        # name than marked in the --errorlist xml. To be able to suppress
-        # these reports, the checkerlist needs to be extended by those found
-        # in the label file.
-        checker_labels = context.checker_labels
-        checkers_from_label = checker_labels.checkers("cppcheck")
-        parsed_set = set(data[0] for data in checkers)
-        for checker in set(checkers_from_label):
-            if checker not in parsed_set:
-                checkers.append((checker, ""))
 
         try:
             cmdline_checkers = args.ordered_checkers
