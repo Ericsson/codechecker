@@ -172,7 +172,6 @@ output.
     CodeChecker check -b "cd ~/myproject && make\" """)
 
         subparsers = parser.add_subparsers(help='commands')
-        argcomplete.autocomplete(parser)
 
         if subcommands:
             # Try to check if the user has already given us a subcommand to
@@ -196,6 +195,7 @@ output.
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 
+        argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
         # Call handler function to process configuration files. If there are
