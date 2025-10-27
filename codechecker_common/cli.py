@@ -18,6 +18,7 @@ import json
 import os
 import signal
 import sys
+import argcomplete
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -171,6 +172,7 @@ output.
     CodeChecker check -b "cd ~/myproject && make\" """)
 
         subparsers = parser.add_subparsers(help='commands')
+        argcomplete.autocomplete(parser)
 
         if subcommands:
             # Try to check if the user has already given us a subcommand to
