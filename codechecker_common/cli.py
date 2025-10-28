@@ -59,6 +59,26 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     command_module.add_arguments_to_parser(sc_parser)
 
 
+def ensure_argcomplete_py312_compatibility():
+    if sys.version_info < (3, 12):
+        return
+
+    try:
+        from argcomplete.packages import _argparse as ac_argparse
+    except Exception:
+        return
+
+    original = ac_argparse.IntrospectiveArgumentParser._parse_known_args
+    if getattr(original, "_cc_wrapped_for_py312", False):
+        return
+
+    def parse_known_args_compat(self, arg_strings, namespace, *args, **kwargs):
+        return original(self, arg_strings, namespace)
+
+    parse_known_args_compat._cc_wrapped_for_py312 = True
+    ac_argparse.IntrospectiveArgumentParser._parse_known_args = parse_known_args_compat
+
+
 def get_data_files_dir_path():
     """ Get data files directory path """
     bin_dir = os.environ.get('CC_BIN_DIR')
@@ -195,6 +215,7 @@ output.
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 
+        ensure_argcomplete_py312_compatibility()
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
