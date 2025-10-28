@@ -15,10 +15,11 @@ import json
 import os
 from pathlib import Path
 import re
+from semver.version import Version
 import shutil
 import subprocess
 import sys
-from typing import Iterable, List, Set, Tuple
+from typing import Iterable, List, Optional, Set, Tuple
 
 import yaml
 
@@ -155,12 +156,9 @@ def get_diagtool_bin():
 
     # Sometimes diagtool binary has a version number in its name: diagtool-14.
     version = ClangTidy.get_binary_version()
-    if version:
-        version = version.split('.')[0]
 
-    diagtool_bin = diagtool_bin.with_name(f'diagtool-{version}')
-
-    if diagtool_bin.exists():
+    if version and \
+            diagtool_bin.with_name(f'diagtool-{version.major}').exists():
         return diagtool_bin
 
     LOG.warning(
@@ -238,17 +236,6 @@ def _add_asterisk_for_group(
     return result
 
 
-def parse_version(tidy_output):
-    """
-    Parse clang-tidy version output and return the version number.
-    """
-    version_re = re.compile(r'.*version (?P<version>[\d\.]+)', re.S)
-    match = version_re.match(tidy_output)
-    if match:
-        return match.group('version')
-    return None
-
-
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -279,7 +266,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         if not cls.analyzer_binary():
             return None
         # No need to LOG here, we will emit a warning later anyway.
@@ -293,9 +280,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            if details:
-                return output.strip()
-            return parse_version(output)
+            version_re = re.compile(r'.*version (?P<version>[\d\.]+)', re.S)
+            match = version_re.match(output)
+            if match:
+                return Version.parse(match.group('version'))
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))

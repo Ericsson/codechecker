@@ -5,8 +5,8 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-from typing import List
-from packaging.version import Version
+from typing import List, Optional
+from semver.version import Version
 import shlex
 import subprocess
 import sys
@@ -157,7 +157,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
 
     @classmethod
-    def get_binary_version(cls, details=False) -> str:
+    def get_binary_version(cls) -> Optional[Version]:
         """
         Return the analyzer version.
         """
@@ -166,16 +166,13 @@ class Gcc(analyzer_base.SourceAnalyzer):
             return None
         environ = analyzer_context.get_context().get_env_for_bin(
             cls.analyzer_binary())
-        if details:
-            version = [cls.analyzer_binary(), '--version']
-        else:
-            version = [cls.analyzer_binary(), '-dumpfullversion']
+        version = [cls.analyzer_binary(), '-dumpfullversion']
         try:
             output = subprocess.check_output(version,
                                              env=environ,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output.strip()
+            return Version.parse(output.strip())
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -196,7 +193,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this
         # release.
-        if Version(analyzer_version) >= Version("13.0.0"):
+        if analyzer_version and analyzer_version >= Version(13, 0, 0):
             return None
 
         return f"GCC binary found is too old at v{analyzer_version.strip()}; "\

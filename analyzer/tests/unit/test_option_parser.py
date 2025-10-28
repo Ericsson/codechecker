@@ -10,13 +10,14 @@
 
 
 import os
+import pathlib
 import shlex
+import shutil
 import tempfile
 import unittest
 
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.buildlog.build_action import BuildAction
-from codechecker_analyzer.analyzers import clangsa
 
 
 class OptionParserTest(unittest.TestCase):
@@ -26,7 +27,7 @@ class OptionParserTest(unittest.TestCase):
     """
 
     @unittest.skipUnless(
-        clangsa.version.get("gcc"),
+        'clang' in pathlib.Path(shutil.which('gcc')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -47,7 +48,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(0, len(res.analyzer_options))
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -173,7 +174,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -226,7 +227,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(BuildAction.LINK, res.action_type)
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -288,7 +289,7 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -348,9 +349,6 @@ class OptionParserTest(unittest.TestCase):
     def test_ignore_xclang_flags_clang(self):
         """Skip some specific xclang constructs"""
 
-        def fake_clang_version(_a):
-            return True
-
         clang_flags = ["-std=gnu++14",
                        "-Xclang", "-module-file-info",
                        "-Xclang", "-S",
@@ -367,8 +365,7 @@ class OptionParserTest(unittest.TestCase):
             f"clang++ {' '.join(clang_flags)} -c /tmp/a.cpp",
             "file": "/tmp/a.cpp"}
 
-        res = log_parser.parse_options(
-            xclang_skip, get_clangsa_version_func=fake_clang_version)
+        res = log_parser.parse_options(xclang_skip)
 
         self.assertEqual(["-std=gnu++14", "-Xclang", "-disable-O0-optnone"],
                          res.analyzer_options)
@@ -392,12 +389,7 @@ class OptionParserTest(unittest.TestCase):
         log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
             fake_clang_version
 
-        def fake_clangsa_version_func(_compiler, _env):
-            """Return always the fake compiler version"""
-            return fake_clang_version
-
-        res = log_parser.parse_options(
-            action, get_clangsa_version_func=fake_clangsa_version_func)
+        res = log_parser.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
         self.assertEqual(res.source, '/tmp/main.cpp')
@@ -429,12 +421,7 @@ class OptionParserTest(unittest.TestCase):
         log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
             fake_clang_version
 
-        def fake_clangsa_version_func(_compiler, _env):
-            """Return always the fake compiler version"""
-            return fake_clang_version
-
-        res = log_parser.parse_options(
-            action, get_clangsa_version_func=fake_clangsa_version_func)
+        res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, keep)
 
     def test_preserve_flags(self):
@@ -500,7 +487,7 @@ class OptionParserTest(unittest.TestCase):
                          '/usr/lib/ccache/g++')
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")
@@ -547,7 +534,7 @@ class OptionParserTest(unittest.TestCase):
             self.assertEqual(include_dirs, res.analyzer_options)
 
     @unittest.skipUnless(
-        clangsa.version.get("g++"),
+        'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
         "If gcc or g++ is a symlink to clang this test should be "
         "skipped. Option filtering is different for the two "
         "compilers. This test is gcc/g++ specific.")

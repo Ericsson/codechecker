@@ -199,7 +199,7 @@ def main(args):
             version = 'NOT FOUND'
 
         binary = context.analyzer_binaries.get(analyzer_name)
-        rows.append([analyzer_name, binary, version])
+        rows.append([analyzer_name, binary, str(version)])
 
     assert rows
     print(twodim.to_str(args.output_format, header, rows))
