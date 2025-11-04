@@ -263,7 +263,7 @@ module.exports = {
     expandedSection.waitForElementVisible("@loadMoreBtn");
 
     timelineSection.api.elements("@historyEvent", ({result}) => {
-      browser.assert.ok(result.value.length === 10);
+      browser.assert.ok(result.length === 10);
     });
 
     expandedSection.click("@loadMoreBtn");
@@ -272,7 +272,7 @@ module.exports = {
       .waitForElementNotPresent("@loadMoreBtn");
 
     timelineSection.api.elements("@historyEvent", ({result}) => {
-      browser.assert.ok(result.value.length > 10);
+      browser.assert.ok(result.length > 10);
     });
   },
 
@@ -295,7 +295,7 @@ module.exports = {
 
     runsPage.perform(() => {
       timelineSection.api.elements("@historyEvent", ({result}) => {
-        browser.assert.ok(result.value.length === 1);
+        browser.assert.ok(result.length === 1);
       });
     });
 
