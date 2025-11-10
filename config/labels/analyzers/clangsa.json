@@ -60,6 +60,10 @@
     "alpha.core.StdVariant": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c"
     ],
+    "alpha.core.StoreToImmutable": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-storetoimmutable",
+      "severity:LOW"
+    ],
     "alpha.core.TestAfterDivZero": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-testafterdivzero-c",
       "severity:MEDIUM"
@@ -946,6 +950,13 @@
       "sei-cert-c:pos36-c",
       "owasp-top-10-2021:owasp-A04-2021",
       "severity:MEDIUM"
+    ],
+    "security.VAList": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-valist",
+      "profile:default",
+      "profile:security",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "security.cert.env.InvalidPtr": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-cert-env-invalidptr",
