@@ -623,6 +623,17 @@ class CCSimpleHttpServer(HTTPServer):
     daemon_threads = False
     address_family = socket.AF_INET  # IPv4
 
+    # The size of the request queue. If it takes a long time to process
+    # a single request, any requests that arrive while the server is busy are
+    # placed into a queue, up to request_queue_size requests [1].
+    # The default value of 5 is not sufficient for production grade servers,
+    # so we increase it to 511.
+    # Apache [2] and Nginx webservers use 511 as the default backlog size
+    # for historical and practical reasons.
+    # [1] https://docs.python.org/3/library/socketserver.html
+    # [2] https://httpd.apache.org/docs/2.4/mod/mpm_common.html#listenbacklog
+    request_queue_size = 511
+
     def __init__(self,
                  server_address,
                  RequestHandlerClass,
