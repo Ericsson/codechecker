@@ -67,7 +67,12 @@ def parse_version(cppcheck_output) -> Optional[Version]:
     version_re = re.compile(r'^Cppcheck(.*?)(?P<version>[\d\.]+)')
     match = version_re.match(cppcheck_output)
     if match:
-        return Version.parse(match.group('version'))
+        version = match.group('version')
+        # semver.Version handles only version numbers with 3 sections.
+        # For example: 2.7.0
+        if version.count('.') < 2:  # Cppcheck 2.7
+            version += '.0'
+        return Version.parse(version)
     return None
 
 

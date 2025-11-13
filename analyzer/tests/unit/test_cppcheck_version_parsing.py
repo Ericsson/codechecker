@@ -28,3 +28,6 @@ class CppcheckVersionTest(unittest.TestCase):
         self.assertEqual(
             parse_version('Cppcheck Premium 1.2.3'),
             Version(1, 2, 3))
+        self.assertEqual(
+            parse_version('Cppcheck 2.7'),
+            Version(2, 7, 0))
