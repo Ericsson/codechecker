@@ -6,5 +6,5 @@ types-PyYAML==6.0.12.12
 sarif-tools==3.0.4
 multiprocess==0.70.15
 setuptools==70.2.0
-argcomplete==3.5.1
 semver==3.0.4
+argcomplete==3.5.1

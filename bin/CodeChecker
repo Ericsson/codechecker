@@ -11,6 +11,7 @@ Used to kickstart CodeChecker.
 
 Saves original environment without modifications.
 Used to run the logging in the same env.
+PYTHON_ARGCOMPLETE_OK
 """
 # This is for enabling CodeChecker as a filename (i.e. module name).
 # pylint: disable=invalid-name
@@ -27,6 +28,23 @@ import tempfile
 PROC_PID = None
 EXIT_CODE = None
 
+def run_codechecker_in_process(subcommand=None) -> int:
+    package_bin = os.path.dirname(os.path.realpath(__file__))
+    package_root = os.path.dirname(package_bin)
+    for path in (os.path.join(package_root, 'lib', 'python3'), package_root):
+        if os.path.isdir(path) and path not in sys.path:
+            sys.path.insert(0, path)
+
+    os.environ.setdefault('CC_BIN_DIR', package_bin)
+
+    forwarded_argv = [sys.argv[0]]
+    if subcommand:
+        forwarded_argv.append(subcommand)
+    forwarded_argv.extend(sys.argv[1:])
+    sys.argv = forwarded_argv
+
+    from codechecker_common import cli
+    return cli.main() or 0
 
 def run_codechecker_in_process(subcommand=None) -> int:
     package_bin = os.path.dirname(os.path.realpath(__file__))

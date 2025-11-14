@@ -70,7 +70,8 @@ def patch_argcomplete_parser():
     def parse_known_args_compat(self, arg_strings, namespace, *args, **kwargs):
         return original(self, arg_strings, namespace)
 
-    ac_argparse.IntrospectiveArgumentParser._parse_known_args = parse_known_args_compat
+    ac_argparse.IntrospectiveArgumentParser._parse_known_args = \
+        parse_known_args_compat
 
 
 def get_data_files_dir_path():
@@ -208,7 +209,11 @@ output.
                           subcommand + "'... ignoring.")
                     import traceback
                     traceback.print_exc(file=sys.stdout)
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> b526b75a (Improve argcomplete support)
         patch_argcomplete_parser()
         argcomplete.autocomplete(parser)
         args = parser.parse_args()
