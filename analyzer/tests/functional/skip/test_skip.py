@@ -191,7 +191,7 @@ class TestSkip(unittest.TestCase):
                 )
 
                 # Check if the folder `skipme` is skipped
-                # There shouldn't be any report generated
+                # There shouldn't be any report generated for `skipme/skipme.cpp`
                 report_dir_files = os.listdir(self.report_dir)
                 for f in report_dir_files:
                     self.assertFalse("skipme.cpp" in f)
