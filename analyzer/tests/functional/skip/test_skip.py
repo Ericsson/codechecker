@@ -190,7 +190,7 @@ class TestSkip(unittest.TestCase):
                     "skip_folder", ["--ignore", skip_file.name]
                 )
 
-                # Check if the folder is skipped
+                # Check if the folder `skipme` is skipped
                 # There shouldn't be any report generated
                 report_dir_files = os.listdir(self.report_dir)
                 for f in report_dir_files:
