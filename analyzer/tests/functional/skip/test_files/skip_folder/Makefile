@@ -10,4 +10,4 @@ SRCS = skipme/skipme.cpp
 all: $(OBJS)
 
 clean:
-	rm -rf skipme/*.o
+	rm -rf $(OBJS)
