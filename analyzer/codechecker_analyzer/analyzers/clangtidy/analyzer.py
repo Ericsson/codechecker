@@ -173,10 +173,11 @@ def get_warnings():
     Returns list of warning flags by using diagtool.
     """
     diagtool_bin = get_diagtool_bin()
-    environment = analyzer_context.get_context().get_env_for_bin(diagtool_bin)
 
     if not diagtool_bin:
         return []
+
+    environment = analyzer_context.get_context().get_env_for_bin(diagtool_bin)
 
     try:
         result = subprocess.check_output(
