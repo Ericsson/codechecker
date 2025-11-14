@@ -440,16 +440,22 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 else:
                     compiler_warnings.append('-Wno-' + warning_name)
 
-            if state == CheckerState.ENABLED:
+            # checker_name starting with 'clang-diagnostic-' should not
+            # be added to the enabled_checkers list since it is not a valid
+            # clang-tidy checker but a warning flag (-W).
+            elif state == CheckerState.ENABLED:
                 enabled_checkers.append(checker_name)
 
-        # By default all checkers are disabled and the enabled ones are added
-        # explicitly.
-        checkers = ['-*']
+        if enabled_checkers:
+            # By default all checkers are disabled and the enabled ones
+            # are added explicitly.
+            checkers = ['-*']
 
-        checkers += _add_asterisk_for_group(
-            enabled_checkers,
-            set(x[0] for x in ClangTidy.get_analyzer_checkers()))
+            checkers += _add_asterisk_for_group(
+                enabled_checkers,
+                set(x[0] for x in ClangTidy.get_analyzer_checkers()))
+        else:
+            checkers = []
 
         # -checks=-clang-analyzer-* option is added to the analyzer command by
         # default except when all analyzer config options come from .clang-tidy
