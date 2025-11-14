@@ -17,4 +17,4 @@ $(C_OBJS): %_c.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf *.o
+	rm -rf $(OBJS)
