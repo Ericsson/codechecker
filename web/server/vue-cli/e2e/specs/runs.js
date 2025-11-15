@@ -1,6 +1,6 @@
 module.exports = {
   before(browser) {
-    browser.resizeWindow(1600, 1000);
+    browser.maximizeWindow();
 
     const login = browser.page.login();
 
@@ -179,7 +179,7 @@ module.exports = {
       .assert.urlContains("detection-status=Reopened")
       .assert.urlContains("detection-status=Unresolved")
       .waitForElementVisible("@page")
-      .backToRunsPage();
+      .pageBack();
   },
 
   "open run statistics"(browser) {
@@ -188,6 +188,8 @@ module.exports = {
 
     runsPage
       .click("@showStatisticsBtn")
+      .pause(100)
+      .click("@showComponentStatisticsBtn")
       .assert.urlContains("/statistics")
       .assert.urlContains(`run=${runName}`)
       .assert.urlContains("is-unique=on")
@@ -195,7 +197,8 @@ module.exports = {
       .assert.urlContains("detection-status=Reopened")
       .assert.urlContains("detection-status=Unresolved")
       .waitForElementVisible("@page")
-      .backToRunsPage();
+      .pageBack()
+      .pageBack();
   },
 
   "open run detection status"(browser) {
@@ -208,7 +211,7 @@ module.exports = {
       .assert.urlContains(`run=${runName}`)
       .assert.urlContains("detection-status=")
       .waitForElementVisible("@page")
-      .backToRunsPage();
+      .pageBack();
   },
 
   "diff two runs" (browser) {
@@ -234,7 +237,7 @@ module.exports = {
       .assert.urlContains("/reports")
       .assert.urlContains("run=")
       .assert.urlContains("newcheck=")
-      .backToRunsPage();
+      .pageBack();
   },
 
   "show run history" (browser) {
@@ -317,7 +320,7 @@ module.exports = {
       runsPage
         .assert.urlContains("/reports")
         .assert.urlContains("run-tag=")
-        .backToRunsPage();
+        .pageBack();
   },
 
   "open statistics of a run history event" (browser) {
@@ -328,6 +331,7 @@ module.exports = {
     timelineSection.click("@showStatisticsBtn");
 
     runsPage
+      .click("@showComponentStatisticsBtn")
       .assert.urlContains("/statistics")
       .assert.urlContains("run=")
       .assert.urlContains("run-tag=")
@@ -336,7 +340,8 @@ module.exports = {
       .assert.urlContains("detection-status=Reopened")
       .assert.urlContains("detection-status=Unresolved")
       .waitForElementVisible("@page")
-      .backToRunsPage();
+      .pageBack()
+      .pageBack();
   },
 
   "show check command of a run history event" (browser) {
@@ -382,7 +387,7 @@ module.exports = {
         .assert.urlContains("/reports")
         .assert.urlContains("run-tag=")
         .assert.urlContains("run-tag-newcheck=")
-        .backToRunsPage();
+        .pageBack();
   },
 
   "diff a run and a run history event" (browser) {
@@ -405,7 +410,7 @@ module.exports = {
       .assert.urlContains("run=")
       .assert.not.urlContains("run-tag=")
       .assert.urlContains("run-tag-newcheck=")
-      .backToRunsPage();
+      .pageBack();
   },
 
   "remove a run" (browser) {
