@@ -8,6 +8,7 @@
 
 """
 Main CodeChecker script.
+PYTHON_ARGCOMPLETE_OK
 """
 
 
@@ -18,6 +19,7 @@ import json
 import os
 import signal
 import sys
+import argcomplete
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -194,6 +196,7 @@ output.
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 
+        argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
         # Call handler function to process configuration files. If there are

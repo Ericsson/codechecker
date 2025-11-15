@@ -11,6 +11,7 @@ Used to kickstart CodeChecker.
 
 Saves original environment without modifications.
 Used to run the logging in the same env.
+PYTHON_ARGCOMPLETE_OK
 """
 # This is for enabling CodeChecker as a filename (i.e. module name).
 # pylint: disable=invalid-name
