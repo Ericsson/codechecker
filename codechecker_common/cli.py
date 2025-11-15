@@ -8,6 +8,7 @@
 
 """
 Main CodeChecker script.
+PYTHON_ARGCOMPLETE_OK
 """
 
 
@@ -18,6 +19,7 @@ import json
 import os
 import signal
 import sys
+import argcomplete
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -56,6 +58,21 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
 
     # Run the method which adds the arguments to the subcommand's handler.
     command_module.add_arguments_to_parser(sc_parser)
+
+
+def patch_argcomplete_parser():
+    try:
+        from argcomplete.packages import _argparse as ac_argparse
+    except Exception:
+        return
+
+    original = ac_argparse.IntrospectiveArgumentParser._parse_known_args
+
+    def parse_known_args_compat(self, arg_strings, namespace, *args, **kwargs):
+        return original(self, arg_strings, namespace)
+
+    ac_argparse.IntrospectiveArgumentParser._parse_known_args =  \
+        parse_known_args_compat
 
 
 def get_data_files_dir_path():
@@ -194,6 +211,8 @@ output.
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 
+        patch_argcomplete_parser()
+        argcomplete.autocomplete(parser)
         args = parser.parse_args()
 
         # Call handler function to process configuration files. If there are
