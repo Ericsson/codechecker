@@ -28,6 +28,7 @@ import tempfile
 PROC_PID = None
 EXIT_CODE = None
 
+
 def run_codechecker(checker_env, subcommand=None) -> int:
     """
     Run the CodeChecker.
