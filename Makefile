@@ -62,13 +62,8 @@ package: package_dir_structure set_git_commit_template package_gerrit_skiplist
 	$(CC_BUILD_DIR)/config/analyzer_version.json \
 	$(CC_BUILD_DIR)/config/web_version.json
 
-	${PYTHON_BIN} ./scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir $(ROOT)/codechecker_common/cli_commands \
-	    $(CC_WEB)/codechecker_web/cli \
-	    $(CC_SERVER)/codechecker_server/cli \
-	    $(CC_CLIENT)/codechecker_client/cli \
-	    $(CC_ANALYZER)/codechecker_analyzer/cli \
-	  --bin-file $(ROOT)/bin/CodeChecker
+	#	Copy CodeChecker binary.
+	cp $(ROOT)/bin/CodeChecker $(CC_BUILD_BIN_DIR)
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
