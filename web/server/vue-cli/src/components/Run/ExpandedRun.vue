@@ -34,7 +34,6 @@
             <router-link
               :to="{ name: 'reports',
                      query: {
-                       ...defaultReportFilterValues,
                        run: history.runName,
                        'run-tag': history.id
                      }
@@ -139,7 +138,6 @@
 
 <script>
 import { format, parse } from "date-fns";
-import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
@@ -160,11 +158,6 @@ export default {
     openAnalyzerStatisticsDialog: { type: Function, default: () => {} },
     selectedBaselineTags: { type: Array, required: true },
     selectedComparedToTags: { type: Array, required: true }
-  },
-  data() {
-    return {
-      defaultReportFilterValues
-    };
   },
   computed: {
     baselineTags: {
