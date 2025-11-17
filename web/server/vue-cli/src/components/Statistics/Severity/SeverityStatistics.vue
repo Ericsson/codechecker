@@ -61,13 +61,17 @@ import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
 import {
   getSeverityStatistics
 } from "@/components/Statistics/StatisticsHelper";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
 import SeverityStatisticsTable from "./SeverityStatisticsTable";
 
 export default {
   name: "SeverityStatistics",
   components: {
-    SeverityStatisticsTable, UniqueStatWarning, ComponentSeverityStatistics
+    SeverityStatisticsTable,
+    UniqueStatWarning,
+    ComponentSeverityStatistics,
+    TooltipHelpIcon
   },
   mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
 
