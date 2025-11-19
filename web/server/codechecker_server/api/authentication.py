@@ -485,11 +485,9 @@ class ThriftAuthHandler:
                     else:
                         username = user_info.get("mail")
                 elif template == "gitlab/v1":
-                    print(user_info)
                     if username_key == "username":
                         username = user_info.get("preferred_username")
                     elif username_key == "email":
-                        print(user_info)
                         username = user_info.get("email")
                     elif username_key == "name":
                         username = user_info.get("name")
