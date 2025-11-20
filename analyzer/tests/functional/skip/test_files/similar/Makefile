@@ -3,12 +3,13 @@ CPP_OBJS = $(CPP_SRCS:.cpp=_cpp.o)
 
 OBJS =  $(C_OBJS) $(CPP_OBJS)
 
-CXXFLAGS = -Wno-all -Wno-extra -Wno-division-by-zero
+CXXFLAGS += -Wno-all -Wno-extra -Wno-division-by-zero
+CFLAGS += -Wno-division-by-zero
 
 C_SRCS = simple.c
 CPP_SRCS = simple.cpp
 
-all: $(C_OBJS) $(CPP_OBJS)
+all: $(OBJS)
 
 $(CPP_OBJS): %_cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
