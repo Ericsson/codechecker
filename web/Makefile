@@ -114,13 +114,8 @@ package: package_dir_structure package_web
 	${PYTHON_BIN} $(ROOT)/scripts/build/extend_version_file.py -r $(ROOT) \
 	  $(CC_BUILD_DIR)/config/web_version.json
 
-	# Copy CodeChecker entry point sub-commands.
-	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir $(ROOT)/codechecker_common/cli_commands \
-	    $(CC_WEB)/codechecker_web/cli \
-	    $(CC_SERVER)/codechecker_server/cli \
-	    $(CC_CLIENT)/codechecker_client/cli \
-	  --bin-file $(ROOT)/bin/CodeChecker
+	# Copy CodeChecker binary.
+	cp $(ROOT)/bin/CodeChecker $(CC_BUILD_BIN_DIR)
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
