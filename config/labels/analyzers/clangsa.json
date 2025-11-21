@@ -887,6 +887,7 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
+      "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-119",
@@ -954,6 +955,7 @@
     "security.VAList": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-valist",
       "profile:default",
+      "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "severity:HIGH"
