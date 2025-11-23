@@ -55,3 +55,5 @@ gcc_simple:
 	$(CXX) -w gcc_simple.cpp -o /dev/null -c
 infer_simple:
 	$(CXX) -w infer_simple.cpp -o /dev/null -c
+all_checkers_off_except_return_stack_address:
+	$(CC) -w all_checkers_off_except_return_stack_address.c -o /dev/null
