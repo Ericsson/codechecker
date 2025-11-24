@@ -183,7 +183,7 @@ class TestSkip(unittest.TestCase):
                 mode="w", suffix="skipfile", encoding="utf-8"
             ) as skip_file:
 
-                # Skip the `skipme` folder, the way it is in the documentation
+                # Skip the `skipme` folder
                 skip_file.write('\n'.join(skip_file_content))
                 skip_file.flush()
                 self.__log_and_analyze(
