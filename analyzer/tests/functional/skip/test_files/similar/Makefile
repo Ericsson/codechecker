@@ -1,7 +1,7 @@
 C_OBJS = $(C_SRCS:.c=_c.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=_cpp.o)
 
-OBJS =  $(C_OBJS) $(CPP_OBJS)
+OBJS = $(C_OBJS) $(CPP_OBJS)
 
 CXXFLAGS += -Wno-all -Wno-extra -Wno-division-by-zero
 CFLAGS += -Wno-division-by-zero
