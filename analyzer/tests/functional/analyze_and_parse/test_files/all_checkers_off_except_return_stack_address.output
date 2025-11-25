@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make all_checkers_off_except_return_stack_address" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --analyzers clang-tidy -d default -e clang-diagnostic-return-stack-address --output $OUTPUT$
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make all_checkers_off_except_return_stack_address" --output $OUTPUT$ --quiet --analyzers clang-tidy -d default -e clang-diagnostic-return-stack-address
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed all_checkers_off_except_return_stack_address.c successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[MEDIUM] all_checkers_off_except_return_stack_address.c:7:11: address of stack memory associated with local variable 'a' returned [clang-diagnostic-return-stack-address]
+  return &a;
+          ^
+
+Found 1 defect(s) in all_checkers_off_except_return_stack_address.c
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+MEDIUM   |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+--------------------------------------------------------------------
+Checker name                          | Severity | Number of reports
+--------------------------------------------------------------------
+clang-diagnostic-return-stack-address | MEDIUM   |                 1
+--------------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+------------------------------------------------------------------
+File name                                      | Number of reports
+------------------------------------------------------------------
+all_checkers_off_except_return_stack_address.c |                 1
+------------------------------------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

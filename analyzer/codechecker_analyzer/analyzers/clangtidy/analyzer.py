@@ -418,18 +418,20 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         has_checker_config = \
             config.checker_config and config.checker_config != '{}'
 
+        clang_diagnostic_prefix = 'clang-diagnostic-'
+
         # Config handler stores which checkers are enabled or disabled.
         for checker_name, value in config.checks().items():
             state, _ = value
 
-            if checker_name.startswith('clang-diagnostic-'):
+            if checker_name.startswith(clang_diagnostic_prefix):
                 # If a clang-diagnostic-... is enabled add it as a compiler
                 # warning as -W..., if it is disabled, tidy can suppress when
                 # specified in the -checks parameter list, so we add it there
                 # as -clang-diagnostic-... .
 
                 # TODO: str.removeprefix() available in Python 3.9
-                warning_name = checker_name[len('clang-diagnostic-'):]
+                warning_name = checker_name[len(clang_diagnostic_prefix):]
 
                 if state == CheckerState.ENABLED:
                     if checker_name == 'clang-diagnostic-error':
@@ -444,9 +446,17 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             if state == CheckerState.ENABLED:
                 enabled_checkers.append(checker_name)
 
-        # By default all checkers are disabled and the enabled ones are added
-        # explicitly.
+        # By default all checkers are disabled and the enabled ones
+        # are added explicitly.
         checkers = ['-*']
+
+        # If only clang-diagnostic-* checkers are enabled,
+        # we need to add a dummy checker otherwise clang-tidy
+        # will fail with the following error: "no checks enabled"
+        if all(c.startswith(clang_diagnostic_prefix) for c
+                in enabled_checkers):
+            dummy_checker_name = "darwin-dispatch-once-nonstatic"
+            checkers.append(dummy_checker_name)
 
         checkers += _add_asterisk_for_group(
             enabled_checkers,
