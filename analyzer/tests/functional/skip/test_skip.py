@@ -65,13 +65,14 @@ class TestSkip(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-    def __analyze_simple(self,
-                         build_json,
-                         analyzer_extra_options=None,
-                         cwd=None):
-        """ Analyze the 'simple' project. """
+    def __analyze(self,
+                  target,
+                  build_json,
+                  analyzer_extra_options=None,
+                  cwd=None):
+        """ Analyze the target project. """
         if not cwd:
-            cwd = os.path.join(self.test_dir, "simple")
+            cwd = os.path.join(self.test_dir, target)
 
         analyze_cmd = [
             self._codechecker_cmd, "analyze", "-c", build_json,
@@ -94,9 +95,9 @@ class TestSkip(unittest.TestCase):
         self.assertEqual(process.returncode, 0)
         return out, err
 
-    def __log_and_analyze_simple(self, analyzer_extra_options=None):
-        """ Log and analyze the 'simple' project. """
-        test_dir = os.path.join(self.test_dir, "simple")
+    def __log_and_analyze(self, target, analyzer_extra_options=None):
+        """ Log and analyze the target project. """
+        test_dir = os.path.join(self.test_dir, target)
         build_json = os.path.join(self.test_workspace, "build.json")
 
         clean_cmd = ["make", "clean"]
@@ -113,7 +114,7 @@ class TestSkip(unittest.TestCase):
                                       encoding="utf-8", errors="ignore")
         print(out)
         # Create and run analyze command.
-        return self.__analyze_simple(build_json, analyzer_extra_options)
+        return self.__analyze(target, build_json, analyzer_extra_options)
 
     def __run_parse(self, extra_options=None):
         """ Run parse command with the given extra options. """
@@ -138,7 +139,7 @@ class TestSkip(unittest.TestCase):
         """Analyze a project with a skip file."""
         # we should see a report from skip.h
         # we should not see a report from file_to_be_skipped.cpp
-        self.__log_and_analyze_simple(["--ignore", "skipfile_drop"])
+        self.__log_and_analyze("simple", ["--ignore", "skipfile_drop"])
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
@@ -170,13 +171,39 @@ class TestSkip(unittest.TestCase):
                             "Reports from headers should be kept"
                             " if the header is not on the skiplist")
 
+    def test_skip_directory(self):
+        """Test whether directories in skipfile entries works correctly"""
+        skip_file_contents: list[list[str]] = [
+            ["-*skipme/*"],  # The way it is in the documentation
+            ["-*skipme/"],  # If the user specified that this is a directory
+            ["-*skipme"],  # If we can't even be sure that this is a directory
+        ]
+        for skip_file_content in skip_file_contents:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix="skipfile", encoding="utf-8"
+            ) as skip_file:
+
+                # Skip the `skipme` folder
+                skip_file.write('\n'.join(skip_file_content))
+                skip_file.flush()
+                self.__log_and_analyze(
+                    "skip_folder", ["--ignore", skip_file.name]
+                )
+
+                # Check if the folder `skipme` is skipped
+                # There shouldn't be any report
+                # generated for `skipme/skipme.cpp`
+                report_dir_files = os.listdir(self.report_dir)
+                for f in report_dir_files:
+                    self.assertFalse("skipme.cpp" in f)
+
     def test_drop_reports(self):
         """Analyze a project with a skip file."""
         # we should not see a report from skip.h
         # we should not see a report from file_to_be_skipped.cpp
 
-        self.__log_and_analyze_simple(["--ignore", "skipfile",
-                                       "--drop-reports-from-skipped-files"])
+        self.__log_and_analyze("simple", ["--ignore", "skipfile",
+                                          "--drop-reports-from-skipped-files"])
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
@@ -296,15 +323,15 @@ class TestSkip(unittest.TestCase):
             skip_file.write('-*')
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
-                "--ignore", skip_file.name])
+            self.__log_and_analyze("simple",
+                                   ["--ignore", skip_file.name])
             self.assertFalse(
                 glob.glob(os.path.join(self.report_dir, '*.plist')))
 
     def test_analyze_header_with_file_option(self):
         """ Analyze a header file with the --file option. """
         header_file = os.path.join(self.test_dir, "simple", "skip.h")
-        out, _ = self.__log_and_analyze_simple(["--file", header_file])
+        out, _ = self.__log_and_analyze("simple", ["--file", header_file])
         self.assertIn(
             f"Get dependent source files for '{header_file}'...", out)
         self.assertIn(
@@ -342,7 +369,7 @@ class TestSkip(unittest.TestCase):
         shutil.copytree(Path(self.test_dir, "simple"),
                         Path(self.test_workspace, "rel_simple"))
         # Obtain a compilation database, copy it to the prepared test workspace
-        self.__log_and_analyze_simple()
+        self.__log_and_analyze("simple")
         build_json = Path(self.test_workspace, "rel_simple", "build.json")
         shutil.copy(Path(self.test_workspace, "build.json"), build_json)
 
@@ -358,8 +385,17 @@ class TestSkip(unittest.TestCase):
             json.dump(compilation_commands, f)
 
         # Do the CodeChecker Analyze with --file
-        out, _ = self.__analyze_simple(build_json, ["--clean", "--file", Path(
-            self.test_workspace, "rel_simple", "skip_header.cpp").absolute()])
+        out, _ = self.__analyze(
+            "simple",
+            build_json,
+            [
+                "--clean",
+                "--file",
+                Path(
+                    self.test_workspace, "rel_simple", "skip_header.cpp"
+                ).absolute(),
+            ],
+        )
         check_analyze_out(out)
 
         out = self.__run_parse()
@@ -374,14 +410,18 @@ class TestSkip(unittest.TestCase):
 
         # Do the CodeChecker Analyze with --file
         # We also need to set cwd to test_workspace
-        out, _ = self.__analyze_simple(build_json,
-                                       ["--clean",
-                                        "--file",
-                                           Path(
-                                               self.test_workspace,
-                                               "rel_simple",
-                                               "skip_header.cpp").absolute()],
-                                       cwd=self.test_workspace)
+        out, _ = self.__analyze(
+            "simple",
+            build_json,
+            [
+                "--clean",
+                "--file",
+                Path(
+                    self.test_workspace, "rel_simple", "skip_header.cpp"
+                ).absolute(),
+            ],
+            cwd=self.test_workspace,
+        )
         check_analyze_out(out)
 
         out = self.__run_parse()
@@ -409,7 +449,7 @@ class TestSkip(unittest.TestCase):
             json.dump(build_actions, f)
 
         header_file = os.path.join(self.test_dir, "simple", "skip.h")
-        out, _ = self.__analyze_simple(build_json, ["--file", header_file])
+        out, _ = self.__analyze("simple", build_json, ["--file", header_file])
         self.assertIn(
             f"Get dependent source files for '{header_file}'...", out)
         self.assertIn(
@@ -432,7 +472,7 @@ class TestSkip(unittest.TestCase):
             skip_file.write('-*')
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
+            self.__log_and_analyze("simple", [
                 "--ignore", skip_file.name,
                 "--file", "*/file_to_be_skipped.cpp"])
             self.assertFalse(
@@ -456,7 +496,7 @@ class TestSkip(unittest.TestCase):
             ]))
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
+            self.__log_and_analyze("simple", [
                 "--ignore", skip_file.name,
                 "--file", "*/skip_header.cpp"])
             print(glob.glob(
@@ -473,7 +513,7 @@ class TestSkip(unittest.TestCase):
             ]))
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
+            self.__log_and_analyze("simple", [
                 "--ignore", skip_file.name,
                 "--file", "*/skip_header.cpp"])
             print(glob.glob(
@@ -482,11 +522,23 @@ class TestSkip(unittest.TestCase):
                 any('skip_header.cpp' not in f for f in glob.glob(
                     os.path.join(self.report_dir, '*.plist'))))
 
+    def test_analyze_similar_file_option(self):
+        """
+        Test analyze command --file option for edge case,
+        where one filename is a prefix of another.
+        """
+        self.__log_and_analyze("similar", ["--file", "*/simple.c"])
+        print(glob.glob(
+            os.path.join(self.report_dir, '*.plist')))
+        self.assertFalse(
+            any('simple.cpp' in f for f in glob.glob(
+                os.path.join(self.report_dir, '*.plist'))))
+
     def test_analyze_only_file_option(self):
         """
         Test analyze command --file option without a skip file.
         """
-        self.__log_and_analyze_simple([
+        self.__log_and_analyze("simple", [
             "--file", "*/skip_header.cpp"])
         self.assertFalse(
             any('skip_header.cpp' not in f for f in glob.glob(
@@ -496,7 +548,7 @@ class TestSkip(unittest.TestCase):
         """ Test parse command --file option. """
         skipfile = os.path.join(self.test_dir, "simple", "skipfile")
 
-        self.__log_and_analyze_simple()
+        self.__log_and_analyze("simple")
 
         # Only reports from the given files are returned.
         out, _, returncode = self.__run_parse(

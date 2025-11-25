@@ -52,8 +52,18 @@ class SkipListHandler:
         """
         for skip_line in skip_lines:
             norm_skip_path = os.path.normpath(skip_line[1:].strip())
+            # fnmatch places a '\Z' (end of input) at the end, in this case,
+            # this is equivalent to '$' (end of line). This must be removed.
+            # Optionally we match the user given path with a '/.*' ending.
+            # This, if the given input is a folder will
+            # resolve all files contained within.
+            # Note: normalization removes '/' from the end, see:
+            # https://docs.python.org/3/library/os.path.html#os.path.normpath
+            translated_glob = fnmatch.translate(norm_skip_path)
+            if translated_glob.endswith(r"\Z"):
+                translated_glob = translated_glob[:-2]
             rexpr = re.compile(
-                fnmatch.translate(norm_skip_path + '*'))
+                translated_glob + fr"(?:\{os.path.sep}.*)?$")
             self.__skip.append((skip_line, rexpr))
 
     def __check_line_format(self, skip_lines):
