@@ -484,9 +484,15 @@ class ThriftAuthHandler:
                         username = claims.get("Signum")
                     else:
                         username = user_info.get("mail")
+                elif template == "gitlab/v1":
+                    if username_key == "username":
+                        username = user_info.get("preferred_username")
+                    elif username_key == "email":
+                        username = user_info.get("email")
+                    elif username_key == "name":
+                        username = user_info.get("name")
 
                 LOG.debug(f"groups fetched for {username}, are: {groups}")
-
                 LOG.info("Username fetched, for username: %s", username)
             except Exception as ex:
                 LOG.error("Username fetch failed: %s", str(ex))

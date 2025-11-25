@@ -84,6 +84,17 @@
           "variables": {
             "tenant_id": "common"
           }
+        },
+        "gitlab": {
+          "enabled": false,
+          "client_id": "<ExampleClientID>",
+          "client_secret": "<ExampleClientSecret>",
+          "template": "gitlab/v1",
+          "variables": {
+            "authorization_url": "https://gitlab.custom.com/oauth/authorize",
+            "token_url": "https://gitlab.custom.com/oauth/token",
+            "user_info_url": "https://gitlab.custom.com/oauth/userinfo"
+          }
         }
       }
     },

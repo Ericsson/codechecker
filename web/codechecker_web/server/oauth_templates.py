@@ -46,5 +46,15 @@ OAUTH_TEMPLATES = {
         "user_info_mapping": {
             "username": "email"
         }
+    },
+    "gitlab/v1": {
+        "authorization_url": "https://gitlab.com/oauth/authorize",
+        "callback_url": "{host}/login/OAuthLogin/{provider}",
+        "token_url": "https://gitlab.com/oauth/token",
+        "user_info_url": "https://gitlab.com/oauth/userinfo",
+        "scope": "openid email profile",
+        "user_info_mapping": {
+            "username": "email"
+        }
     }
 }
