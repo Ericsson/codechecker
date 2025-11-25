@@ -583,3 +583,45 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(len(component_results), 1)
         self.assertTrue(
             component_results[0].checkedFile.endswith('path_end.h'))
+
+    def test_full_report_path_in_component(self):
+        """
+        Check "full report path in component" feature. With this flag one can
+        query all reports where the bug path not only ends in the component,
+        but every point of the bug path is inside the component.
+        """
+        components = [
+            {
+                'name': 'main',
+                'value': '+*/same_origin.cpp'
+            },
+            {
+                'name': 'calculate',
+                'value': '+*/calculate.h'
+            }
+        ]
+
+        for c in components:
+            self.__add_new_component(c)
+
+        self.assertEqual(len(components), 2)
+
+        r_filter = ReportFilter(
+            componentNames=['calculate'],
+            fullReportPathInComponent=False
+        )
+        component_results = self._cc_client.getRunResults(
+            None, 500, 0, None, r_filter, None, False)
+        self.assertEqual(len(component_results), 2)
+        self.assertEqual(component_results[0].checkerId, 'core.DivideZero')
+        self.assertEqual(component_results[1].checkerId,
+                         'misc-definitions-in-headers')
+
+        r_filter = ReportFilter(
+            componentNames=['calculate'],
+            fullReportPathInComponent=True)
+        component_results = self._cc_client.getRunResults(
+            None, 500, 0, None, r_filter, None, False)
+        self.assertEqual(len(component_results), 1)
+        self.assertEqual(component_results[0].checkerId,
+                         'misc-definitions-in-headers')

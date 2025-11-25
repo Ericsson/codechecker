@@ -224,7 +224,7 @@ class TestReportFilter(unittest.TestCase):
                                                              ReportFilter(),
                                                              None)
 
-        self.assertEqual(run_result_count, 79)
+        self.assertEqual(run_result_count, 85)
 
         run_results = self._cc_client.getRunResults(self._runids,
                                                     run_result_count,
@@ -382,7 +382,7 @@ class TestReportFilter(unittest.TestCase):
         run_results = self._cc_client.getRunResults(self._runids, None, 0,
                                                     None, report_filter, None,
                                                     False)
-        self.assertEqual(len(run_results), 44)
+        self.assertEqual(len(run_results), 47)
 
     def test_fix_date_filters(self):
         """ Filter by fix dates. """

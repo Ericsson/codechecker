@@ -34,7 +34,8 @@ DEFAULT_FILTER_VALUES = {
     'review_status': ['unreviewed', 'confirmed'],
     'detection_status': ['new', 'reopened', 'unresolved'],
     'uniqueing': 'off',
-    'anywhere_on_report_path': False
+    'anywhere_on_report_path': False,
+    'single_origin_report': False
 }
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
@@ -437,6 +438,15 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter reports where the report path not only "
                               "ends in the files given by --file or "
                               "--component, but goes through them.")
+
+    f_group.add_argument('--single-origin-report',
+                         dest='single_origin_report',
+                         required=False,
+                         default=init_default('single_origin_report'),
+                         action="store_true",
+                         help="Filter reports where the report path is "
+                              "entirely in the files specified by the "
+                              "given --component.")
 
 
 def __register_results(parser):

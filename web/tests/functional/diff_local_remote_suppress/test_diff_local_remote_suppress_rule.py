@@ -143,9 +143,9 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 24)
+            len(results), 25)
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.DivideZero')), 9)
+            len(self.filter_by_checker(results, 'core.DivideZero')), 10)
         self.assertEqual(
             len(self.filter_by_checker(results, 'deadcode.DeadStores')), 5)
         self.assertEqual(
@@ -200,9 +200,9 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 24)
+            len(results), 25)
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.DivideZero')), 9)
+            len(self.filter_by_checker(results, 'core.DivideZero')), 10)
         self.assertEqual(
             len(self.filter_by_checker(results, 'deadcode.DeadStores')), 5)
         self.assertEqual(

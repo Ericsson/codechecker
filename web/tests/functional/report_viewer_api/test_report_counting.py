@@ -69,39 +69,39 @@ class TestReportFilter(unittest.TestCase):
         self._runids = [r.runId for r in self._test_runs]
 
         self.run1_checkers = \
-            {'clang-diagnostic-division-by-zero': 3,
+            {'clang-diagnostic-division-by-zero': 4,
              'clang-diagnostic-return-type': 5,
              'core.CallAndMessage': 5,
-             'core.DivideZero': 10,
+             'core.DivideZero': 11,
              'core.NullDereference': 4,
              'core.StackAddressEscape': 3,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
-             'misc-definitions-in-headers': 2,
+             'misc-definitions-in-headers': 3,
              'unix.Malloc': 1}
 
         self.run2_checkers = \
-            {'clang-diagnostic-division-by-zero': 3,
+            {'clang-diagnostic-division-by-zero': 4,
              'core.CallAndMessage': 5,
-             'core.DivideZero': 10,
+             'core.DivideZero': 11,
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
-             'misc-definitions-in-headers': 2}
+             'misc-definitions-in-headers': 3}
 
-        self.run1_sev_counts = {Severity.MEDIUM: 11,
+        self.run1_sev_counts = {Severity.MEDIUM: 13,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 27}
+                                Severity.HIGH: 28}
 
-        self.run2_sev_counts = {Severity.MEDIUM: 5,
+        self.run2_sev_counts = {Severity.MEDIUM: 7,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 24}
+                                Severity.HIGH: 25}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 44}
+            {DetectionStatus.NEW: 47}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 35}
+            {DetectionStatus.NEW: 38}
 
         self.run1_files = \
             {'new_delete.cpp': 6,
@@ -118,7 +118,8 @@ class TestReportFilter(unittest.TestCase):
              'has a space.cpp': 1,
              'path_begin1.cpp': 1,
              'path_begin2.cpp': 1,
-             'statistical_checkers.cpp': 1
+             'statistical_checkers.cpp': 1,
+             'calculate.h': 3
              }
 
         self.run2_files = \
@@ -132,7 +133,8 @@ class TestReportFilter(unittest.TestCase):
              'skip_header.cpp': 2,
              'skip.h': 3,
              'path_begin.cpp': 2,
-             'path_end.h': 3
+             'path_end.h': 3,
+             'calculate.h': 3,
              }
 
     def test_run1_all_checkers(self):
@@ -566,15 +568,15 @@ class TestReportFilter(unittest.TestCase):
                                                        0)
         checkers_dict = dict((res.name, res.count) for res in new_reports)
 
-        new = {'clang-diagnostic-division-by-zero': 3,
+        new = {'clang-diagnostic-division-by-zero': 4,
                'clang-diagnostic-return-type': 5,
                'core.CallAndMessage': 5,
                'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
-               'core.DivideZero': 10,
+               'core.DivideZero': 11,
                'deadcode.DeadStores': 6,
-               'misc-definitions-in-headers': 2,
+               'misc-definitions-in-headers': 3,
                'unix.Malloc': 1}
         self.assertDictEqual(new, checkers_dict)
 

@@ -352,7 +352,13 @@ def process_report_filter(
         if report_filter.componentMatchesAnyPoint:
             AND.append(Report.id.in_(get_reports_by_components(
                 session,
-                report_filter.componentNames)))
+                report_filter.componentNames,
+                False)))
+        elif report_filter.fullReportPathInComponent:
+            AND.append(Report.id.in_(get_reports_by_components(
+                session,
+                report_filter.componentNames,
+                True)))
         else:
             AND.append(process_source_component_filter(
                 session, report_filter.componentNames))
@@ -503,6 +509,57 @@ def get_source_component_file_query(
     return None
 
 
+def get_reports_by_bugpath_filter_for_single_origin(
+    session,
+    file_filter_q
+) -> Set[int]:
+    """
+    This function returns a query for report IDs that are fully contained
+    within the files specified by the file_filter_q query."""
+
+    LOG.info("get_reports_by_bugpath_filter file_filter_q: %s", file_filter_q)
+    q_report = session.query(Report.id) \
+        .join(File, File.id == Report.file_id) \
+        .filter(file_filter_q)
+
+    q_bugpathevent = session.query(BugPathEvent.report_id) \
+        .join(File, File.id == BugPathEvent.file_id) \
+        .filter(file_filter_q)
+
+    q_bugreportpoint = session.query(BugReportPoint.report_id) \
+        .join(File, File.id == BugReportPoint.file_id) \
+        .filter(file_filter_q)
+
+    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
+        .join(File, File.id == ExtendedReportData.file_id) \
+        .filter(file_filter_q)
+
+    neg_q_report = session.query(Report.id) \
+        .join(File, File.id != Report.file_id) \
+        .filter(file_filter_q)
+
+    neg_q_bugpathevent = session.query(BugPathEvent.report_id) \
+        .join(File, File.id != BugPathEvent.file_id) \
+        .filter(file_filter_q)
+
+    neg_q_bugreportpoint = session.query(BugReportPoint.report_id) \
+        .join(File, File.id != BugReportPoint.file_id) \
+        .filter(file_filter_q)
+
+    neg_q_extendedreportdata = session.query(ExtendedReportData.report_id) \
+        .join(File, File.id != ExtendedReportData.file_id) \
+        .filter(file_filter_q)
+
+    return q_report.union(
+        q_bugpathevent,
+        q_bugreportpoint,
+        q_extendedreportdata).except_(
+        neg_q_report,
+        neg_q_bugpathevent,
+        neg_q_bugreportpoint,
+        neg_q_extendedreportdata)
+
+
 def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
     """
     This function returns a query for report IDs that are related to any file
@@ -532,7 +589,9 @@ def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
         q_bugreportpoint)
 
 
-def get_reports_by_components(session, component_names: List[str]) -> Set[int]:
+def get_reports_by_components(session,
+                              component_names: List[str],
+                              single_origin: bool) -> Set[int]:
     """
     This function returns a set of report IDs that are related to any component
     in the second parameter, either because their bug path goes through these
@@ -540,6 +599,9 @@ def get_reports_by_components(session, component_names: List[str]) -> Set[int]:
     """
     source_component_filter = \
         process_source_component_filter(session, component_names)
+    if single_origin:
+        return get_reports_by_bugpath_filter_for_single_origin(
+            session, source_component_filter)
     return get_reports_by_bugpath_filter(session, source_component_filter)
 
 
