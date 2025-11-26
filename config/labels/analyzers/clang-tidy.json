@@ -7204,11 +7204,7 @@
       "severity:MEDIUM"
     ],
     "misc-no-recursion": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/no-recursion.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
-      "sei-cert-cpp:dcl56-cpp",
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/no-recursion.html",            
       "severity:LOW"
     ],
     "misc-noexcept-move-constructor": [
