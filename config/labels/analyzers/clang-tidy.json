@@ -2178,8 +2178,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-var": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var",
-      "profile:default",
+      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var",      
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
