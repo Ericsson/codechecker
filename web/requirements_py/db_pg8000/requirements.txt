@@ -1,7 +1,7 @@
 lxml==5.3.0
 sqlalchemy==1.4.54
 alembic==1.5.5
-pg8000==1.31.4
+pg8000==1.31.5
 psutil==5.9.8
 portalocker==3.1.1
 
