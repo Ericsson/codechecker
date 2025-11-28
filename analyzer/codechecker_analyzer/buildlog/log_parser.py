@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 
 
-from collections import namedtuple
+from dataclasses import dataclass
 from shutil import which
 from enum import Enum
 from functools import lru_cache
@@ -322,9 +322,25 @@ class ImplicitCompilerInfo:
     # attributes to the implicit settings. In the future we may find that some
     # other attributes are also dependencies of implicit compiler info in which
     # case this tuple should be extended.
-    ImplicitInfoSpecifierKey = namedtuple(
-        'ImplicitInfoSpecifierKey',
-        ['compiler', 'language', 'compiler_flags'])
+    @dataclass
+    class ImplicitInfoSpecifierKey:
+        compiler: str
+        language: str
+        compiler_flags: list[str]
+
+        def __str__(self):
+            return json.dumps([
+                self.compiler,
+                self.language,
+                self.compiler_flags])
+
+        def __eq__(self, other):
+            return (self.compiler, self.language, self.compiler_flags) == \
+                   (other.compiler, other.language, other.compiler_flags)
+
+        def __hash__(self):
+            return hash(
+                (self.compiler, self.language, tuple(self.compiler_flags)))
 
     compiler_info: Dict[ImplicitInfoSpecifierKey, dict] = {}
     compiler_isexecutable = {}
@@ -332,14 +348,6 @@ class ImplicitCompilerInfo:
     # If the value is False the compiler is not clang otherwise the value
     # should be a clang version information object.
     compiler_versions = {}
-
-    @staticmethod
-    def c():
-        return "c"
-
-    @staticmethod
-    def cpp():
-        return "c++"
 
     @staticmethod
     def is_executable_compiler(compiler):
@@ -378,11 +386,9 @@ class ImplicitCompilerInfo:
             _, err = proc.communicate("")
             return err
         except OSError as oerr:
-            # TODO: shlex.join(cmd) would be more elegant after upgrading to
-            # Python 3.8.
             LOG.error(
                 "Error during process execution: %s\n%s\n",
-                ' '.join(map(shlex.quote, cmd)), oerr.strerror)
+                shlex.join(cmd), oerr.strerror)
             return None
 
     @staticmethod
@@ -437,11 +443,7 @@ class ImplicitCompilerInfo:
         """
         cmd = [compiler, *compiler_flags, '-E', '-x', language, '-', '-v']
 
-        # TODO: shlex.join(cmd) would be more elegant after upgrading to
-        # Python 3.8.
-        LOG.debug(
-            "Retrieving default includes via %s",
-            ' '.join(map(shlex.quote, cmd)))
+        LOG.debug("Retrieving default includes via %s", shlex.join(cmd))
         include_dirs = ImplicitCompilerInfo.__parse_compiler_includes(cmd)
 
         return list(map(os.path.normpath, include_dirs))
@@ -551,7 +553,7 @@ class ImplicitCompilerInfo:
     @staticmethod
     def dump_compiler_info(file_path: str):
         dumpable = {
-            json.dumps(k): v for k, v
+            str(k): v for k, v
             in ImplicitCompilerInfo.compiler_info.items()}
 
         with open(file_path, 'w', encoding="utf-8", errors="ignore") as f:
@@ -976,8 +978,7 @@ def parse_options(compilation_db_entry,
 
     if 'arguments' in compilation_db_entry:
         gcc_command = compilation_db_entry['arguments']
-        details['original_command'] = \
-            ' '.join([shlex.quote(x) for x in gcc_command])
+        details['original_command'] = shlex.join(gcc_command)
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
         gcc_command = shlex.split(compilation_db_entry['command'])
@@ -1223,7 +1224,6 @@ def _process_entry_worker(args):
 
 
 def parse_unique_log(compilation_database,
-                     report_dir,
                      compile_uniqueing="none",
                      compiler_info_file=None,
                      keep_gcc_include_fixed=False,
@@ -1251,8 +1251,6 @@ def parse_unique_log(compilation_database,
                             by "arguments" which is a split command. Older
                             versions of intercept-build provide the build
                             command this way.
-    report_dir  -- The output report directory. The compiler infos
-                   will be written to <report_dir>/compiler.info.json.
     compile_uniqueing -- Compilation database uniqueing mode.
                          If there are more than one compile commands for a
                          target file, only a single one is kept.
@@ -1311,6 +1309,13 @@ def parse_unique_log(compilation_database,
         worker_args = ((entry, compiler_info_file, keep_gcc_include_fixed,
                        keep_gcc_intrin)
                        for entry in entries)
+
+        # Here we overwrite ImplicitCompilerInfo.compiker_info with a dict type
+        # that can be used in multiprocess environment, since the next section
+        # is executed in a process pool.
+        manager = multiprocessing.SyncManager()
+        manager.start()
+        ImplicitCompilerInfo.compiler_info = manager.dict()
 
         # Process entries in parallel using imap_unordered with chunk size 1024
         with multiprocessing.Pool(jobs) as pool:
@@ -1389,9 +1394,6 @@ def parse_unique_log(compilation_database,
                                   action.original_command,
                                   compile_uniqueing)
                         sys.exit(1)
-
-        ImplicitCompilerInfo.dump_compiler_info(
-            os.path.join(report_dir, "compiler_info.json"))
 
         LOG.debug('Parsing log file done.')
         return list(uniqued_build_actions.values()), skipped_cmp_cmd_count

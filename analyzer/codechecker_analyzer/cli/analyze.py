@@ -229,6 +229,17 @@ def add_arguments_to_parser(parser):
                              "specified file rather than invoke the compiler "
                              "executable.")
 
+    parser.add_argument('--dump-compiler-info-file',
+                        dest="dump_compiler_info_file",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="Dump implicit gcc compiler info to a json file "
+                             "that can be used for fine-tuning analysis later."
+                             "These are information like the implicit include "
+                             "paths of standard headers, the default language "
+                             "version and the default target architecture.")
+
     parser.add_argument('--keep-gcc-include-fixed',
                         dest="keep_gcc_include_fixed",
                         required=False,
@@ -1254,7 +1265,8 @@ def main(args):
 
     args.output_path = os.path.abspath(args.output_path)
     if os.path.exists(args.output_path) and \
-            not os.path.isdir(args.output_path):
+            not os.path.isdir(args.output_path) and \
+            not args.dump_compiler_info_file:
         LOG.error("The given output path is not a directory: " +
                   args.output_path)
         sys.exit(1)
@@ -1342,20 +1354,15 @@ def main(args):
                  "overwriting with current result", args.output_path)
         shutil.rmtree(args.output_path)
 
-    if not os.path.exists(args.output_path):
+    if not os.path.exists(args.output_path) and \
+            not args.dump_compiler_info_file:
         os.makedirs(args.output_path)
-
-    # TODO: I'm not sure that this directory should be created here.
-    fixit_dir = os.path.join(args.output_path, 'fixit')
-    if not os.path.exists(fixit_dir):
-        os.makedirs(fixit_dir)
 
     LOG.debug("args: %s", str(args))
     LOG.debug("Output will be stored to: '%s'", args.output_path)
 
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
-        args.output_path,
         args.compile_uniqueing,
         compiler_info_file,
         args.keep_gcc_include_fixed,
@@ -1370,6 +1377,19 @@ def main(args):
         LOG.warning("There were no compilation commands in the provided "
                     "compilation database or all of them were skipped.")
         sys.exit(0)
+
+    if args.dump_compiler_info_file:
+        log_parser.ImplicitCompilerInfo.dump_compiler_info(
+            args.output_path)
+        sys.exit(0)
+    else:
+        log_parser.ImplicitCompilerInfo.dump_compiler_info(
+            Path(args.output_path) / "compiler_info.json")
+
+    # TODO: I'm not sure that this directory should be created here.
+    fixit_dir = os.path.join(args.output_path, 'fixit')
+    if not os.path.exists(fixit_dir):
+        os.makedirs(fixit_dir)
 
     uniqued_compilation_db_file = os.path.join(
         args.output_path, "unique_compile_commands.json")

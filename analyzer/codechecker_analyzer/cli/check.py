@@ -129,6 +129,25 @@ def add_arguments_to_parser(parser):
                              "analyzers' output will not be printed to the "
                              "standard output.")
 
+    parser.add_argument('--compiler-info-file',
+                        dest="compiler_info_file",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Read the compiler includes and target from the "
+                             "specified file rather than invoke the compiler "
+                             "executable.")
+
+    parser.add_argument('--dump-compiler-info-file',
+                        dest="dump_compiler_info_file",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="Dump implicit gcc compiler info to a json file "
+                             "that can be used for fine-tuning analysis later."
+                             "These are information like the implicit include "
+                             "paths of standard headers, the default language "
+                             "version and the default target architecture.")
+
     parser.add_argument('--keep-gcc-include-fixed',
                         dest="keep_gcc_include_fixed",
                         required=False,
@@ -980,6 +999,8 @@ def main(args):
                           'compile_uniqueing',
                           'report_hash',
                           'add_gcc_include_dirs_with_isystem',
+                          'compiler_info_file',
+                          'dump_compiler_info_file',
                           'enable_z3',
                           'enable_z3_refutation']
         for key in args_to_update:
