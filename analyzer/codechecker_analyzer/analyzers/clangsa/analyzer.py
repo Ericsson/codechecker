@@ -203,7 +203,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return Version.parse(output.strip())
+            version_txt=output.strip().removesuffix("git")
+            return Version.parse(version_txt)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
