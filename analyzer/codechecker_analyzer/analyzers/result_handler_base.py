@@ -98,9 +98,10 @@ class ResultHandler(metaclass=ABCMeta):
         """
         analyzed_file_name = os.path.basename(self.analyzed_source_file)
 
-        self.buildaction_hash = analyzer_action_hash(self.analyzed_source_file,
-                                                     self.buildaction.directory,
-                                                     self.buildaction.original_command)
+        self.buildaction_hash = \
+            analyzer_action_hash(self.analyzed_source_file,
+                                 self.buildaction.directory,
+                                 self.buildaction.original_command)
 
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \

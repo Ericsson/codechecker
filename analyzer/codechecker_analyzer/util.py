@@ -13,6 +13,7 @@ import os
 import shlex
 import hashlib
 
+
 def analyzer_action_hash(analyzed_source_file, build_dir, build_command):
     source_file = os.path.normpath(
         os.path.join(build_dir,

@@ -14,7 +14,7 @@ human-readable format.
 import argparse
 import os
 import sys
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 import json
 import fnmatch
 
@@ -144,6 +144,7 @@ def add_arguments_to_parser(parser):
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
+                             default=argparse.SUPPRESS,
                              help="Store the output in the given file/folder. "
                                   "Note: baseline files must have extension "
                                   "'.baseline'.")
@@ -214,6 +215,7 @@ def add_arguments_to_parser(parser):
                         dest="status",
                         action="store_true",
                         required=False,
+                        default=argparse.SUPPRESS,
                         help="Print the number of successful and failed "
                              "analysis actions.")
 
@@ -221,6 +223,7 @@ def add_arguments_to_parser(parser):
                         dest="detailed",
                         action="store_true",
                         required=False,
+                        default=argparse.SUPPRESS,
                         help="Enables detailed view for the status command.")
 
     group = parser.add_argument_group("file filter arguments")
@@ -239,6 +242,7 @@ def add_arguments_to_parser(parser):
                        dest="files",
                        metavar='FILE',
                        required=False,
+                       default=argparse.SUPPRESS,
                        help="Filter results by file path. "
                             "The file path can contain multiple * "
                             "quantifiers which matches any number of "
@@ -277,7 +281,7 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
     return None
 
 
-def get_report_dir_status(compile_commands: list[dict[str, str]],
+def get_report_dir_status(compile_commands: List[dict[str, str]],
                           report_dir: str,
                           detailed_flag: bool):
 
@@ -294,10 +298,10 @@ def get_report_dir_status(compile_commands: list[dict[str, str]],
 
     for c in compile_commands:
         for analyzer in supported_analyzers:
-            file, dir, cmd = c["file"], c["directory"], c["command"]
+            file, directory, cmd = c["file"], c["directory"], c["command"]
 
             filename = os.path.basename(file)
-            action_hash = analyzer_action_hash(file, dir, cmd)
+            action_hash = analyzer_action_hash(file, directory, cmd)
 
             plist_file = f"{filename}_{analyzer}_{action_hash}.plist"
             plist_err_file = plist_file + ".err"
@@ -340,35 +344,33 @@ def get_report_dir_status(compile_commands: list[dict[str, str]],
         if detailed_flag:
             out_analyzers[analyzer].update(detailed)
 
-    """
-    Expected output format example
-
-    {
-      "analyzers": {
-        "clangsa": {
-          "summary": {
-            "up-to-date": 2,
-            "outdated": 0,
-            "missing": 1,
-            "failed": 0,
-            "successful": 2
-          },
-          "up-to-date": [
-            "/workspace/tmp/foo.cpp",
-            "/workspace/tmp/bar.cpp",
-          ],
-          "outdated": [],
-          "missing": [
-            "/workspace/tmp/test.c"
-          ],
-          "failed": []
-        },
-        "clang-tidy": { ... },
-      },
-      "total_analyzed_compilation_commands": 2,
-      "total_available_compilation_commands": 3
-    }
-    """
+    # Expected output format example
+    #
+    # {
+    #   "analyzers": {
+    #     "clangsa": {
+    #       "summary": {
+    #         "up-to-date": 2,
+    #         "outdated": 0,
+    #         "missing": 1,
+    #         "failed": 0,
+    #         "successful": 2
+    #       },
+    #       "up-to-date": [
+    #         "/workspace/tmp/foo.cpp",
+    #         "/workspace/tmp/bar.cpp",
+    #       ],
+    #       "outdated": [],
+    #       "missing": [
+    #         "/workspace/tmp/test.c"
+    #       ],
+    #       "failed": []
+    #     },
+    #     "clang-tidy": { ... },
+    #   },
+    #   "total_analyzed_compilation_commands": 2,
+    #   "total_available_compilation_commands": 3
+    # }
 
     return {
         "analyzers": out_analyzers,
@@ -377,11 +379,11 @@ def get_report_dir_status(compile_commands: list[dict[str, str]],
     }
 
 
-def print_status(inputs: list[str],
+def print_status(inputs: List[str],
                  detailed_flag: bool,
-                 files: list[str],
-                 export: str,
-                 output_path: str):
+                 files: Optional[List[str]],
+                 export: Optional[str],
+                 output_path: Optional[str]):
     if len(inputs) != 1:
         LOG.error("Parse status can only be printed "
                   "for one directory.")
@@ -392,7 +394,7 @@ def print_status(inputs: list[str],
         sys.exit(1)
 
     if output_path and not export:
-        LOG.error("Export format (--export) was not specified.")
+        LOG.error("Export format (--export/-e) was not specified.")
         sys.exit(1)
 
     report_dir = inputs[0]
@@ -412,8 +414,8 @@ def print_status(inputs: list[str],
 
     if files:
         files_filter = [os.path.abspath(fp) for fp in files]
-        compile_commands = list(filter(lambda c :
-            c["file"] in files_filter, compile_commands))
+        compile_commands = list(
+            filter(lambda c: c["file"] in files_filter, compile_commands))
 
     status = get_report_dir_status(compile_commands, report_dir, detailed_flag)
 
@@ -442,7 +444,7 @@ def print_status(inputs: list[str],
         json.dump(status, sys.stdout, indent=2)
     elif export and output_path:
         output_path = os.path.abspath(output_path)
-        with open(output_path, "w") as file:
+        with open(output_path, "w", encoding="utf-8") as file:
             json.dump(status, file, indent=2)
             LOG.info("Status info was dumped to '%s'.", output_path)
 
@@ -495,9 +497,12 @@ def main(args):
     if isinstance(args.input, str):
         args.input = [args.input]
 
-    if args.status:
-        print_status(args.input, args.detailed,
-                     args.files, args.export, args.output_path)
+    if 'status' in args:
+        print_status(args.input,
+                     getattr(args, 'detailed', False),
+                     getattr(args, 'files', None),
+                     getattr(args, 'export', None),
+                     getattr(args, 'output_path', None))
         return
 
     src_comment_status_filter = args.review_status
@@ -531,7 +536,7 @@ def main(args):
 
     output_dir_path = None
     output_file_path = None
-    if args.output_path:
+    if 'output_path' in args:
         output_path = os.path.abspath(args.output_path)
 
         if export == 'html':
@@ -565,7 +570,7 @@ def main(args):
         return None
 
     skip_handlers = SkipListHandlers()
-    if args.files:
+    if 'files' in args:
         items = [f"+{file_path}" for file_path in args.files]
         items.append("-*")
         skip_handlers.append(SkipListHandler("\n".join(items)))
@@ -603,7 +608,7 @@ def main(args):
 
         metadata = get_metadata(dir_path)
 
-        if metadata and args.files:
+        if metadata and 'files' in args:
             # Mapping plists when files are specified to speed up parsing
             # The specifed_file_paths variable would be an empty list
             # if metadata.json did not contain the specified file or
