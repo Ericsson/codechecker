@@ -335,8 +335,6 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
             detailed[k] = list(v[analyzer].keys())
             summary[k] = len(detailed[k])
 
-        summary["successful"] = summary["up-to-date"] + summary["outdated"]
-
         out_analyzers[analyzer] = {
             "summary": summary
         }
@@ -353,8 +351,7 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
     #         "up-to-date": 2,
     #         "outdated": 0,
     #         "missing": 1,
-    #         "failed": 0,
-    #         "successful": 2
+    #         "failed": 0
     #       },
     #       "up-to-date": [
     #         "/workspace/tmp/foo.cpp",
@@ -425,10 +422,9 @@ def print_status(inputs: List[str],
 
     if not export and not output_path:
         summary_map = {
-            "successful": "Successfully analyzed",
-            "failed": "Failed to analyze",
             "up-to-date": "Up-to-date analysis results",
             "outdated": "Outdated analysis results",
+            "failed": "Failed to analyze",
             "missing": "Missing analysis results"
         }
 
@@ -438,7 +434,11 @@ def print_status(inputs: List[str],
             for analyzer in supported_analyzers:
                 count = status["analyzers"][analyzer]["summary"][k]
                 if count > 0:
-                    LOG.info("  %s: %s", analyzer, count)
+                    if detailed_flag:
+                        files = status["analyzers"][analyzer][k]
+                        LOG.info("  %s: %s (%s)", analyzer, files, count)
+                    else:
+                        LOG.info("  %s: %s", analyzer, count)
 
         LOG.info("Total analyzed compilation commands: %s",
                  status["total_analyzed_compilation_commands"])
