@@ -313,10 +313,14 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
                 analyzed_actions[cmd] = 1
                 plist_path = os.path.join(report_dir, plist_file)
 
-                if os.path.getmtime(plist_path) > os.path.getmtime(file):
+                try:
+                    if os.path.getmtime(plist_path) > os.path.getmtime(file):
+                        recent[analyzer][file] = 1
+                    else:
+                        old[analyzer][file] = 1
+                except Exception:
                     recent[analyzer][file] = 1
-                else:
-                    old[analyzer][file] = 1
+
             else:
                 missing[analyzer][file] = 1
 
@@ -379,8 +383,8 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
 def print_status(inputs: List[str],
                  detailed_flag: bool,
                  files: Optional[List[str]],
-                 export: Optional[str],
-                 output_path: Optional[str]):
+                 export: Optional[str] = None,
+                 output_path: Optional[str] = None):
     if len(inputs) != 1:
         LOG.error("Parse status can only be printed "
                   "for one directory.")
@@ -701,6 +705,10 @@ def main(args):
             baseline.write(output_path, data)
 
     reports_helper.dump_changed_files(changed_files)
+
+    print_status(args.input,
+                 False,
+                 getattr(args, 'files', None))
 
     if statistics.num_of_reports:
         sys.exit(2)
