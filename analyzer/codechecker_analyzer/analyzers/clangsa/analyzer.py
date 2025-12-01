@@ -186,6 +186,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         for plugin in ClangSA.analyzer_plugins():
             analyzer_cmd.extend(["-load", plugin])
 
+    @staticmethod
+    def parse_version(version_txt) -> Optional[Version]:
+        """
+        Parse the version string of the analyzer.
+        """
+        version_txt = version_txt.strip().removesuffix("git")
+        return Version.parse(version_txt)
+
     @classmethod
     def get_binary_version(cls) -> Optional[Version]:
         # No need to LOG here, we will emit a warning later anyway.
@@ -203,8 +211,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            version_txt=output.strip().removesuffix("git")
-            return Version.parse(version_txt)
+            return ClangSA.parse_version(output)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
