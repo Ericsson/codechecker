@@ -417,24 +417,29 @@ def print_status(inputs: List[str],
         compile_commands = list(
             filter(lambda c: c["file"] in files_filter, compile_commands))
 
+        if not compile_commands:
+            LOG.error("File not found in the compilation database!")
+            sys.exit(1)
+
     status = get_report_dir_status(compile_commands, report_dir, detailed_flag)
 
-    def get_summary(analyzer):
-        return status["analyzers"][analyzer]["summary"]
-
     if not export and not output_path:
-        LOG.info("----==== Summary ====----")
-        LOG.info("Successfully analyzed")
-        for analyzer in supported_analyzers:
-            successful_count = get_summary(analyzer)["successful"]
-            if successful_count > 0:
-                LOG.info("  %s: %s", analyzer, successful_count)
+        summary_map = {
+            "successful": "Successfully analyzed",
+            "failed": "Failed to analyze",
+            "up-to-date": "Up-to-date analysis results",
+            "outdated": "Outdated analysis results",
+            "missing": "Missing analysis results"
+        }
 
-        LOG.info("Failed to analyze")
-        for analyzer in supported_analyzers:
-            failed_count = get_summary(analyzer)["failed"]
-            if failed_count > 0:
-                LOG.info("  %s: %s", analyzer, failed_count)
+        LOG.info("----==== Summary ====----")
+        for k, v in summary_map.items():
+            LOG.info(v)
+            for analyzer in supported_analyzers:
+                count = status["analyzers"][analyzer]["summary"][k]
+                if count > 0:
+                    LOG.info("  %s: %s", analyzer, count)
+
         LOG.info("Total analyzed compilation commands: %s",
                  status["total_analyzed_compilation_commands"])
         LOG.info("Total available compilation commands: %s",
