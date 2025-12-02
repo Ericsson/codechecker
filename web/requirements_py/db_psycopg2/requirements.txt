@@ -1,5 +1,5 @@
 lxml<6
-sqlalchemy<=1.4.54
+sqlalchemy<2
 alembic<2
 psycopg2-binary<=2.9.10
 psutil<8
