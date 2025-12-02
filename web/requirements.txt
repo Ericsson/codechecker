@@ -5,7 +5,7 @@ sqlalchemy<=1.4.54
 alembic<2
 portalocker<4
 psutil<8
-multiprocess<=0.70.15
+multiprocess<0.71
 thrift<=0.22.0
 gitpython<4
 PyYAML<=6.0.1
