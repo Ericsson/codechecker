@@ -1,3 +1,9 @@
+# These requirements are exported via setup.py and become the install
+# dependencies of the published pip package.
+# Avoid pinning exact versions!
+# Use version ranges or upper bounds instead (e.g. limited to a major release)
+# to let users select a specific compatible version.
+
 lxml<6
 portalocker<4
 psutil<8
