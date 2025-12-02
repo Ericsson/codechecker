@@ -2,5 +2,5 @@ portalocker<4
 coverage<=5.5.0
 mypy<=1.7.1
 PyYAML<7
-types-PyYAML<=6.0.12.12
+types-PyYAML<7
 setuptools<81

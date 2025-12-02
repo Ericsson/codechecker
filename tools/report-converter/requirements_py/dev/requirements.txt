@@ -6,4 +6,4 @@ portalocker<4
 mypy<=1.7.1
 setuptools<81
 PyYAML<7
-types-PyYAML<=6.0.12
+types-PyYAML<7
