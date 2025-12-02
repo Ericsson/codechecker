@@ -5,5 +5,5 @@ pylint<3.3
 portalocker<4
 mypy<=1.7.1
 setuptools<=70.2.0
-PyYAML<=6.0.1
+PyYAML<7
 types-PyYAML<=6.0.12
