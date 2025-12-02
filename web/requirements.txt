@@ -1,3 +1,9 @@
+# These requirements are exported via setup.py and become the install
+# dependencies of the published pip package.
+# Avoid pinning exact versions!
+# Use version ranges or upper bounds instead (e.g. limited to a major release)
+# to let users select a specific compatible version.
+
 Authlib<2
 requests<3  # Required by Authlib. Not installed automatically for some reason.
 lxml<6
