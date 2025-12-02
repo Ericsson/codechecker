@@ -1,5 +1,5 @@
 Authlib<2
-requests<=2.32.4  # Required by Authlib. Not installed automatically for some reason.
+requests<3  # Required by Authlib. Not installed automatically for some reason.
 lxml<6
 sqlalchemy<=1.4.54
 alembic<2
