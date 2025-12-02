@@ -11,7 +11,7 @@ gitpython<4
 PyYAML<7
 types-PyYAML<=6.0.12.12
 sarif-tools<4
-argcomplete<=3.5.1
+argcomplete<4
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz
 ./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
