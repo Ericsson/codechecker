@@ -6,5 +6,5 @@ types-PyYAML<7
 sarif-tools<4
 multiprocess<0.71
 setuptools<81
-semver<=3.0.4
+semver<4
 argcomplete<4
