@@ -6,7 +6,7 @@ alembic<2
 portalocker<4
 psutil<8
 multiprocess<0.71
-thrift<=0.22.0
+thrift<0.23
 gitpython<4
 PyYAML<7
 types-PyYAML<=6.0.12.12
