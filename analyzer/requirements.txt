@@ -4,7 +4,7 @@ psutil<8
 PyYAML<=6.0.1
 types-PyYAML<=6.0.12.12
 sarif-tools<=3.0.4
-multiprocess<=0.70.15
+multiprocess<0.71
 setuptools<=70.2.0
 semver<=3.0.4
 argcomplete<=3.5.1
