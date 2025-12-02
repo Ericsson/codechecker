@@ -1,4 +1,4 @@
-portalocker<=3.1.1
+portalocker<4
 coverage<=5.5.0
 mypy<=1.7.1
 PyYAML<=6.0.1
