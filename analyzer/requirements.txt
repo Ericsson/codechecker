@@ -2,7 +2,7 @@ lxml<6
 portalocker<4
 psutil<8
 PyYAML<7
-types-PyYAML<=6.0.12.12
+types-PyYAML<7
 sarif-tools<4
 multiprocess<0.71
 setuptools<81

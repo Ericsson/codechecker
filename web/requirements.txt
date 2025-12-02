@@ -9,7 +9,7 @@ multiprocess<0.71
 thrift<0.23
 gitpython<4
 PyYAML<7
-types-PyYAML<=6.0.12.12
+types-PyYAML<7
 sarif-tools<4
 argcomplete<4
 
