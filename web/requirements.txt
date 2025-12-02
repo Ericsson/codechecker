@@ -3,7 +3,7 @@ requests<=2.32.4  # Required by Authlib. Not installed automatically for some re
 lxml<=5.3.0
 sqlalchemy<=1.4.54
 alembic<=1.5.5
-portalocker<=3.1.1
+portalocker<4
 psutil<8
 multiprocess<=0.70.15
 thrift<=0.22.0
