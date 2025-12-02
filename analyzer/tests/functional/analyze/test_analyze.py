@@ -266,6 +266,45 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("--target=FAKE_TARGET" in out)
         self.assertTrue("-idirafter /FAKE_INCLUDE_DIR" in out)
 
+    def test_compiler_info_file_is_dumped(self):
+        """
+        Test if the compiler info file is dumped properly.
+        """
+        build_json = os.path.join(self.test_workspace, "build_simple.json")
+        source_file = os.path.join(self.test_workspace, "simple.cpp")
+
+        build_log = [{
+            "directory": self.test_workspace,
+            "command": f"g++ -c {source_file}",
+            "file": source_file
+        }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        with tempfile.NamedTemporaryFile() as f:
+            analyze_cmd = [
+                self._codechecker_cmd, "analyze", build_json, "-o", f.name,
+                "--dump-compiler-info-file"]
+
+            process = subprocess.Popen(
+                analyze_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self.test_dir,
+                encoding="utf-8",
+                errors="ignore")
+            out, _ = process.communicate()
+            print(out)
+
+            f.flush()
+            f.seek(0)
+
+            compiler_info = json.loads(f.read())
+
+        self.assertIn('["g++", "c++", []]', compiler_info)
+
     def test_capture_analysis_output(self):
         """
         Test if reports/success/<output_file>.[stdout,stderr].txt

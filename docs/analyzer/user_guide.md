@@ -1058,6 +1058,12 @@ optional arguments:
                         Read the compiler includes and target from the
                         specified file rather than invoke the compiler
                         executable.
+  --dump-compiler-info-file
+                        Dump implicit gcc compiler info to a json file that can
+                        be used for fine-tuning analysis later.These are
+                        information like the implicit include paths of standard
+                        headers, the default language version and the default
+                        target architecture. (default: False)
   --keep-gcc-include-fixed
                         There are some implicit include paths which
                         are only used by GCC (include-fixed). This flag

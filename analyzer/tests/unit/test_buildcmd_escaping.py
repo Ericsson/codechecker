@@ -88,7 +88,7 @@ class BuildCmdTest(unittest.TestCase):
             ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
         comp_actions, _ = log_parser.\
-            parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
+            parse_unique_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
             cmd = [self.compiler]
@@ -114,7 +114,7 @@ class BuildCmdTest(unittest.TestCase):
         """
         compile_cmd = self.compiler + ''' '-DMYPATH=\"/some/other/path\"' '''
         comp_actions, _ = log_parser.\
-            parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
+            parse_unique_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
             cmd = [self.compiler]

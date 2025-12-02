@@ -75,8 +75,7 @@ class LogParserTest(unittest.TestCase):
         # option_parser, so here we aim for a non-failing stalemate of the
         # define being considered a file and ignored, for now.
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -95,8 +94,7 @@ class LogParserTest(unittest.TestCase):
         # Logfile contains -DVARIABLE="some value"
         # and --target=x86_64-linux-gnu.
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -108,8 +106,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a b.cpp')
@@ -118,8 +115,7 @@ class LogParserTest(unittest.TestCase):
         # Test @ sign in variable definition.
         logfile = os.path.join(self.__test_files, "ldlogger-new-at.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -132,8 +128,7 @@ class LogParserTest(unittest.TestCase):
         # Make it relative to the response file.
         logjson[0]['directory'] = self.__test_files
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(logjson, self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(logjson)
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 2)
@@ -152,8 +147,7 @@ class LogParserTest(unittest.TestCase):
         # -DVARIABLE=\"some value\" and --target=x86_64-linux-gnu
         logfile = os.path.join(self.__test_files, "intercept-old.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -167,8 +161,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
@@ -189,8 +182,7 @@ class LogParserTest(unittest.TestCase):
         #
         # The define is passed to the analyzer properly.
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -202,8 +194,7 @@ class LogParserTest(unittest.TestCase):
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
@@ -234,8 +225,7 @@ class LogParserTest(unittest.TestCase):
              "file": "/tmp/a.cpp"}]
 
         build_actions, _ = \
-            log_parser.parse_unique_log(preprocessor_actions,
-                                        self.__this_dir)
+            log_parser.parse_unique_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-M' not in build_actions[0].original_command)
         self.assertTrue('-E' not in build_actions[0].original_command)
@@ -250,8 +240,7 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions, _ = log_parser.parse_unique_log(preprocessor_actions,
-                                                       self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 1)
         self.assertTrue('-MD' in build_actions[0].original_command)
 
@@ -266,8 +255,7 @@ class LogParserTest(unittest.TestCase):
              "command": "g++ /tmp/a.cpp -E -MD /tmp/a.cpp",
              "file": "/tmp/a.cpp"}]
 
-        build_actions, _ = log_parser.parse_unique_log(preprocessor_actions,
-                                                       self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(preprocessor_actions)
         self.assertEqual(len(build_actions), 0)
 
     def test_include_rel_to_abs(self):
@@ -276,8 +264,7 @@ class LogParserTest(unittest.TestCase):
         """
         logfile = os.path.join(self.__test_files, "include.json")
 
-        build_actions, _ = log_parser.\
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 4)
@@ -328,7 +315,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
@@ -359,7 +346,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
@@ -394,7 +381,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
@@ -426,7 +413,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler(pre_skip_list)])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
@@ -456,7 +443,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler("")])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              ctu_or_stats_enabled=True,
                              pre_analysis_skip_handlers=pre_analysis_skip)
@@ -483,7 +470,7 @@ class LogParserTest(unittest.TestCase):
         pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
-            parse_unique_log(cmp_cmd_json, self.__this_dir,
+            parse_unique_log(cmp_cmd_json,
                              analysis_skip_handlers=analysis_skip,
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
@@ -508,8 +495,7 @@ class LogParserTest(unittest.TestCase):
 
         logfile = os.path.join(self.compile_command_file_path)
 
-        build_actions, _ = log_parser. \
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertEqual(build_action.analyzer_options[0],
@@ -533,8 +519,7 @@ class LogParserTest(unittest.TestCase):
 
         logfile = os.path.join(self.compile_command_file_path)
 
-        build_actions, _ = log_parser. \
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -572,8 +557,7 @@ class LogParserTest(unittest.TestCase):
 
         logfile = os.path.join(self.compile_command_file_path)
 
-        build_actions, _ = log_parser. \
-            parse_unique_log(load_json(logfile), self.__this_dir)
+        build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
 
         self.assertEqual(len(build_actions), 2)
 
@@ -608,7 +592,7 @@ class LogParserTest(unittest.TestCase):
                 }]))
 
         build_actions, _ = log_parser.parse_unique_log(load_json(
-            self.compile_command_file_path), self.__this_dir)
+            self.compile_command_file_path))
 
         self.assertEqual(len(build_actions), 1)
 
@@ -656,7 +640,6 @@ class LogParserTest(unittest.TestCase):
              "file": file_b_sym}]
 
         build_actions, _ = log_parser.parse_unique_log(compilation_cmd,
-                                                       self.__this_dir,
                                                        "symlink")
         build_action = build_actions[2]
 

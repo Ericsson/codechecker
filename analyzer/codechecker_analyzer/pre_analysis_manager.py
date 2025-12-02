@@ -43,8 +43,7 @@ def collect_statistics(action, source, clangsa_config, statistics_data):
         LOG.debug('Can not collect statistical data.')
         return None
 
-    # TODO: shlex.join() will be more convenient in Python 3.8.
-    LOG.debug_analyzer(' '.join(map(shlex.quote, cmd)))
+    LOG.debug_analyzer(shlex.join(cmd))
 
     ret_code, analyzer_out, analyzer_err = \
         analyzer_base.SourceAnalyzer.run_proc(cmd)
