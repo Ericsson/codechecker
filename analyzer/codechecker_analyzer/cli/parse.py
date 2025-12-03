@@ -299,6 +299,7 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
     for c in compile_commands:
         for analyzer in supported_analyzers:
             file, directory, cmd = c["file"], c["directory"], c["command"]
+            file = os.path.abspath(file)
 
             filename = os.path.basename(file)
             action_hash = analyzer_action_hash(file, directory, cmd)
@@ -411,7 +412,7 @@ def print_status(report_dir: str,
         compile_commands = list(
             filter(lambda c: c["file"] in files_filter, compile_commands))
 
-        if not compile_commands:
+        if not compile_commands and not export:
             LOG.warning("File not found in the compilation database!")
 
     status = get_report_dir_status(compile_commands, report_dir, detailed_flag)
