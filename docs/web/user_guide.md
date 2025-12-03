@@ -799,6 +799,9 @@ filter arguments:
                         Filter reports where the report path not only ends in
                         the files given by --file or --component, but goes
                         through them. (default: False)
+  --single-origin-report
+                        Filter reports where the report path is entirely in
+                        the files specified by the given --component.
 ```
 
 #### Source components (`components`)

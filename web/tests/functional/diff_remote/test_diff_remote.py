@@ -471,7 +471,7 @@ class DiffRemote(unittest.TestCase):
                                                  ReportFilter(),
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 25)
+        self.assertEqual(len(diff_res), 26)
 
     def test_get_diff_checker_counts_core_unresolved(self):
         """
@@ -491,7 +491,7 @@ class DiffRemote(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Unresolved core checkers.
-        test_res = {'core.StackAddressEscape': 3, 'core.DivideZero': 10}
+        test_res = {'core.StackAddressEscape': 3, 'core.DivideZero': 11}
         self.assertLessEqual(test_res.items(), diff_dict.items())
 
     def test_get_diff_res_count_unresolved(self):
@@ -528,14 +528,14 @@ class DiffRemote(unittest.TestCase):
                                                      ReportFilter(),
                                                      cmp_data)
 
-        self.assertEqual(diff_res, 25)
+        self.assertEqual(diff_res, 26)
 
     def test_get_diff_res_count_unresolved_filter(self):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
         filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 6},
-                                  {"HIGH": 18}, {"STYLE": 0},
+                                  {"HIGH": 19}, {"STYLE": 0},
                                   {"CRITICAL": 0}]
 
         cmp_data = CompareData(runIds=[new_run_id],
@@ -573,7 +573,7 @@ class DiffRemote(unittest.TestCase):
                     'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 6,
                     'core.StackAddressEscape': 3,
-                    'core.DivideZero': 10}
+                    'core.DivideZero': 11}
         self.assertLessEqual(diff_dict.items(), test_res.items())
 
     def test_get_diff_severity_counts_all_unresolved(self):
@@ -589,7 +589,7 @@ class DiffRemote(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     ReportFilter(),
                                                     cmp_data)
-        test_res = {Severity.HIGH: 18,
+        test_res = {Severity.HIGH: 19,
                     Severity.LOW: 6,
                     Severity.MEDIUM: 1}
         self.assertDictEqual(sev_res, test_res)
@@ -641,7 +641,7 @@ class DiffRemote(unittest.TestCase):
                                                     ReportFilter(),
                                                     cmp_data)
 
-        test_res = {ReviewStatus.UNREVIEWED: 25}
+        test_res = {ReviewStatus.UNREVIEWED: 26}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_review_status_counts(self):
@@ -705,7 +705,7 @@ class DiffRemote(unittest.TestCase):
                     'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 6,
                     'core.StackAddressEscape': 3,
-                    'core.DivideZero': 10}
+                    'core.DivideZero': 11}
         self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_res_types_unresolved_filter(self):
@@ -767,11 +767,11 @@ class DiffRemote(unittest.TestCase):
 
         out = get_diff_results([f'{run_name}:t1'], [report_dir],
                                '--unresolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out[0]), 26)
+        self.assertEqual(len(out[0]), 27)
 
         out = get_diff_results([f'{run_name}:t2'], [report_dir],
                                '--unresolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out[0]), 31)
+        self.assertEqual(len(out[0]), 32)
 
         out = get_diff_results([f'{run_name}:t1'], [report_dir],
                                '--resolved', 'json', ["--url", self._url])
@@ -870,7 +870,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 26)
+        self.assertEqual(len(diff_res), 27)
 
     def test_only_open_report_date_filter_is_set(self):
         """ Test if only the open reports date filter is set for the baseline,
@@ -943,7 +943,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 26)
+        self.assertEqual(len(diff_res), 27)
 
     def test_multiple_runs(self):
         """ Count the unresolved results in multiple runs without filter. """

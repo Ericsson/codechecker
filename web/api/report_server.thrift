@@ -402,6 +402,8 @@ struct ReportFilter {
   // have "value1" OR "value2" for "key1" AND have "value3" for "key2".
   22: optional list<Pair> annotations,
   23: optional list<ReportStatus>  reportStatus, // Specifying the status of the filtered reports.
+  // If set, report filter filters only the components where the whole report path is inside.
+  24: optional bool fullReportPathInComponent,
 }
 
 struct RunReportCount {

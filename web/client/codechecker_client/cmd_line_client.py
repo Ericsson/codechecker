@@ -583,12 +583,18 @@ def parse_report_filter_offline(args):
 
     report_filter.fileMatchesAnyPoint = args.anywhere_on_report_path
     report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
+    report_filter.fullReportPathInComponent = args.single_origin_report
 
     if args.anywhere_on_report_path and \
             'file_path' not in args and 'component' not in args:
         LOG.warning(
             'The flag --anywhere-on-report-path is meaningful only if --file '
             'or --component is used.')
+
+    if args.single_origin_report and 'component' not in args:
+        LOG.warning(
+            'The flag --single-origin-report is meaningful only if '
+            '--component is used.')
 
     return report_filter
 

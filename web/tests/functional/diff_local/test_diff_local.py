@@ -253,7 +253,7 @@ class DiffLocal(unittest.TestCase):
         out, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--unresolved', None,
             ['--severity', 'high', 'low'])
-        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 18)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 19)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 6)
 
     @unittest.skip("fix test if severity will be"

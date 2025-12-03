@@ -36,7 +36,7 @@ def _generate_skip_list_file(skip_list_file):
     skip_list_content = ["-*randtable.c", "-*blocksort.c", "-*huffman.c",
                          "-*decompress.c", "-*crctable.c",
                          "-*file_to_be_skipped.cpp", "-*path_end.h",
-                         "-*skip.h"]
+                         "-*skip.h", "-*calculate.h"]
     print('Skip list file content: ' + skip_list_file)
     print('\n'.join(skip_list_content))
 
@@ -195,7 +195,12 @@ class TestSkip(unittest.TestCase):
         run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
 
-        skipped_files = ["file_to_be_skipped.cpp", "skip.h", "path_end.h"]
+        skipped_files = [
+            "file_to_be_skipped.cpp",
+            "skip.h",
+            "path_end.h",
+            "calculate.h"
+        ]
 
         # IMPORTANT: This test is checking whether some reports are really not
         # stored because they were skipped during analysis with --skip flag.

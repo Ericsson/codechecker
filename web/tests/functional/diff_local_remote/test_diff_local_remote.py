@@ -261,7 +261,7 @@ class LocalRemote(unittest.TestCase):
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
         self.assertEqual(count, 0)
         count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 10)
+        self.assertEqual(count, 11)
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
         self.assertEqual(count, 6)
         count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
@@ -279,7 +279,7 @@ class LocalRemote(unittest.TestCase):
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
         self.assertEqual(count, 0)
         count = len(re.findall(r'\[core\.DivideZero\]', out))
-        self.assertEqual(count, 10)
+        self.assertEqual(count, 11)
         count = len(re.findall(r'\[deadcode\.DeadStores\]', out))
         self.assertEqual(count, 6)
         count = len(re.findall(r'\[cplusplus\.NewDelete\]', out))
@@ -295,15 +295,15 @@ class LocalRemote(unittest.TestCase):
 
         res = self.get_local_remote_diff(['--severity', 'high'])
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 0)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
 
         res = self.get_local_remote_diff(['--severity', 'high', 'low'])
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
 
         res = self.get_local_remote_diff()
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 19)
 
     def test_local_cmp_filter_unres_filepath(self):
         """Filter unresolved results by file path."""
@@ -331,11 +331,11 @@ class LocalRemote(unittest.TestCase):
         self.assertEqual(len(re.findall(r'core.NullDereference', res)), 0)
 
         res = self.get_local_remote_diff(['--checker-name', 'core.*'])
-        self.assertEqual(len(re.findall(r'core.*', res)), 15)
+        self.assertEqual(len(re.findall(r'core.*', res)), 16)
 
         # Filter by checker message (case insensitive).
         res = self.get_local_remote_diff(['--checker-msg', 'division by*'])
-        self.assertEqual(len(re.findall(r'Division by.*', res)), 10)
+        self.assertEqual(len(re.findall(r'Division by.*', res)), 11)
 
     def test_local_cmp_filter_unres_filter_mix(self):
         """Filter by multiple filters file and severity."""
@@ -391,7 +391,7 @@ class LocalRemote(unittest.TestCase):
         # Check reports in the index.html file.
         index_html = os.path.join(html_reports, 'index.html')
         with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
-            self.assertEqual(len(re.findall('core.DivideZero', f.read())), 10)
+            self.assertEqual(len(re.findall('core.DivideZero', f.read())), 11)
 
     def test_different_basename_types(self):
         """ Test different basename types.
@@ -580,7 +580,7 @@ class LocalRemote(unittest.TestCase):
         self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertIn(
-            "CodeChecker found 25 issue(s) in the code.",
+            "CodeChecker found 26 issue(s) in the code.",
             review_data["message"])
         self.assertIn(f"See: {report_url}", review_data["message"])
         self.assertEqual(review_data["tag"], "jenkins")

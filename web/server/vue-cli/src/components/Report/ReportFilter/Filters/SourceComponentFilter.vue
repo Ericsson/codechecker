@@ -15,7 +15,7 @@
       @input="setSelectedItems"
     >
       <template v-slot:append-toolbar>
-        <AnywhereOnReportPath v-model="isAnywhere" />
+        <ReportFilterModeSelector v-model="reportFilterMode" />
       </template>
       <template v-slot:prepend-toolbar-items>
         <v-btn
@@ -63,12 +63,13 @@ import {
 
 import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
-import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
+import ReportFilterModeSelector
+  from "./SelectOption/ReportFilterModeSelector.vue";
 
 export default {
   name: "SourceComponentFilter",
   components: {
-    AnywhereOnReportPath,
+    ReportFilterModeSelector,
     ManageSourceComponentDialog,
     SelectOption,
     SourceComponentTooltip
@@ -79,12 +80,15 @@ export default {
     return {
       id: "source-component",
       anywhereId: "anywhere-sourcecomponent",
+      sameOriginId: "sameorigin-sourcecomponent",
       search: {
         placeHolder : "Search for source components...",
         filterItems: this.filterItems
       },
       dialog: false,
-      isAnywhere: false
+      reportFilterMode: null,
+      isAnywhere: false,
+      isSameOrigin: false
     };
   },
 
@@ -107,7 +111,18 @@ export default {
       this.bus.$emit("update");
     },
 
-    isAnywhere() {
+    reportFilterMode() {
+      if (this.reportFilterMode == "anywhere") {
+        this.isAnywhere = true;
+        this.isSameOrigin = false;
+      } else if (this.reportFilterMode == "single-origin") {
+        this.isAnywhere = false;
+        this.isSameOrigin = true;
+      } else {
+        this.isAnywhere = false;
+        this.isSameOrigin = false;
+      }
+
       this.updateReportFilter();
       this.$emit("update:url");
       this.update();
@@ -118,7 +133,8 @@ export default {
     updateReportFilter() {
       this.setReportFilter({
         componentNames: this.selectedItems.map(item => item.id),
-        componentMatchesAnyPoint: this.isAnywhere
+        componentMatchesAnyPoint: this.isAnywhere,
+        fullReportPathInComponent: this.isSameOrigin
       });
     },
 
@@ -133,12 +149,25 @@ export default {
 
       return {
         [this.id]: state.length ? state : undefined,
-        [this.anywhereId]: this.isAnywhere || undefined
+        [this.anywhereId]: this.isAnywhere || undefined,
+        [this.sameOriginId]: this.isSameOrigin || undefined
       };
+    },
+
+    setReportFilterMode() {
+      if (this.isAnywhere && !this.isSameOrigin) {
+        this.reportFilterMode = "anywhere";
+      } else if (!this.isAnywhere && this.isSameOrigin) {
+        this.reportFilterMode = "single-origin";
+      } else {
+        this.reportFilterMode = "end";
+      }
     },
 
     initByUrl() {
       this.isAnywhere = !!this.$route.query[this.anywhereId];
+      this.isSameOrigin = !!this.$route.query[this.sameOriginId];
+      this.setReportFilterMode();
       this.initCheckOptionsByUrl();
     },
 
