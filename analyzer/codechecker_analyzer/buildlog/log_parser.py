@@ -646,7 +646,7 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def determine_compiler(gcc_command, is_executable_compiler_fun):
+def determine_compiler(gcc_command, cwd, is_executable_compiler_fun):
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
@@ -672,12 +672,39 @@ def determine_compiler(gcc_command, is_executable_compiler_fun):
     TODO: The second case could be handled if there was a way for querying the
     used compiler from ccache. This can be configured for ccache in config
     files or environment variables.
+
+    In a compilation database the relative paths in "command" section are
+    relative to the "directory" section. This is supposed to apply to the
+    compiler itself, too:
+
+    {
+        "directory": "/my/path",
+        "command": "../compiler/gcc main.c",
+        "file": "main.c"
+    }
+
+    However, if the compiler name is provided only, then the intuition is that
+    it should be searched in PATH instead of /my/path/gcc:
+
+    {
+        "directory": "/my/path",
+        "command": "gcc main.c",
+        "file": "main.c"
+    }
+
+    If in the future we decide to consider this relative path applied to
+    "directory" section, then it can be fixed here.
     """
+    compiler = gcc_command[0]
+
     if gcc_command[0].endswith('ccache'):
         if is_executable_compiler_fun(gcc_command[1]):
-            return gcc_command[1]
+            compiler = gcc_command[1]
 
-    return gcc_command[0]
+    if not Path(compiler).is_absolute() and os.sep in compiler:
+        compiler = str((Path(cwd) / compiler).resolve())
+
+    return compiler
 
 
 def __is_not_include_fixed(dirname):
@@ -989,6 +1016,7 @@ def parse_options(compilation_db_entry,
     details['action_type'] = None
     details['compiler'] =\
         determine_compiler(gcc_command,
+                           details['directory'],
                            ImplicitCompilerInfo.is_executable_compiler)
     if '++' in os.path.basename(details['compiler']):
         details['lang'] = 'c++'

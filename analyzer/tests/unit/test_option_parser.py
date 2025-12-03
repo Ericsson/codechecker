@@ -464,27 +464,58 @@ class OptionParserTest(unittest.TestCase):
     def test_ccache_compiler(self):
         compiler_action = shlex.split('ccache g++ main.cpp')
         res = log_parser.determine_compiler(compiler_action,
+                                            "",
                                             self.is_compiler_executable_fun)
         self.assertEqual(res, 'g++')
 
         compiler_action = shlex.split('ccache main.cpp')
         res = log_parser.determine_compiler(
             compiler_action,
+            "",
             self.is_compiler_executable_fun_false)
         self.assertEqual(res, 'ccache')
 
         compiler_action = shlex.split('ccache -Ihello main.cpp')
         res = log_parser.determine_compiler(
             compiler_action,
+            "",
             self.is_compiler_executable_fun_false)
         self.assertEqual(res, 'ccache')
 
         compiler_action = shlex.split('/usr/lib/ccache/g++ -Ihello main.cpp')
         res = log_parser.determine_compiler(
             compiler_action,
+            "",
             self.is_compiler_executable_fun_false)
         self.assertEqual(res,
                          '/usr/lib/ccache/g++')
+
+    def test_relative_compiler_path(self):
+        # When the compiler is provided by absolute path, it should be used
+        # directly.
+        compiler_action = shlex.split('/absolute/path/gcc main.c')
+        res = log_parser.determine_compiler(compiler_action,
+                                            '/path/to/project',
+                                            self.is_compiler_executable_fun)
+        self.assertEqual(res, '/absolute/path/gcc')
+
+        # When the compiler is provided by relative path, it should be relative
+        # to the directory section.
+        compiler_action = shlex.split('../gcc main.c')
+        res = log_parser.determine_compiler(compiler_action,
+                                            '/path/to/project',
+                                            self.is_compiler_executable_fun)
+        self.assertEqual(res, '/path/to/gcc')
+
+        # When the compiler is relative, but only the compiler name is provided
+        # then we searh it in the PATH.
+        # !!!WARNING!!! Probably this is not the official interpretation of
+        # the compilation database format.
+        compiler_action = shlex.split('gcc main.c')
+        res = log_parser.determine_compiler(compiler_action,
+                                            '/path/to/project',
+                                            self.is_compiler_executable_fun)
+        self.assertEqual(res, 'gcc')
 
     @unittest.skipUnless(
         'clang' in pathlib.Path(shutil.which('g++')).resolve().name,
