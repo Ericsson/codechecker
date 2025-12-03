@@ -49,6 +49,11 @@ class AnalyzerResult(AnalyzerResultBase):
         file_cache: Dict[str, File] = {}
         for bug in bugs:
             fp = bug.get('filename')
+            # Ruff uses absolute file names per default.
+            # However, for the tests, we also try relative filenames!
+            relative_fp = os.path.join(os.path.dirname(file_path), fp)
+            if os.path.exists(relative_fp):
+                fp = relative_fp
             if not os.path.exists(fp):
                 LOG.warning("Source file does not exists: %s", fp)
                 continue

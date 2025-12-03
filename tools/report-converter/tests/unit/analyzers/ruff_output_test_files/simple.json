@@ -6,7 +6,7 @@
       "column": 12,
       "row": 3
     },
-    "filename": "/localdata1/zoel_ml/codechecker/tools/report-converter/tests/unit/analyzers/ruff_output_test_files/files/simple.py",
+    "filename": "files/simple.py",
     "fix": {
       "applicability": "safe",
       "edits": [
