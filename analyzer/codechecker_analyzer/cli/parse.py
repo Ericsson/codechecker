@@ -380,16 +380,11 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
     }
 
 
-def print_status(inputs: List[str],
+def print_status(report_dir: str,
                  detailed_flag: bool,
                  files: Optional[List[str]],
                  export: Optional[str] = None,
                  output_path: Optional[str] = None):
-    if len(inputs) != 1:
-        LOG.error("Parse status can only be printed "
-                  "for one directory.")
-        sys.exit(1)
-
     if export and export != "json":
         LOG.error("Only JSON export format is supported.")
         sys.exit(1)
@@ -397,8 +392,6 @@ def print_status(inputs: List[str],
     if output_path and not export:
         LOG.error("Export format (--export/-e) was not specified.")
         sys.exit(1)
-
-    report_dir = inputs[0]
 
     if not os.path.isdir(report_dir):
         LOG.error("Input path '%s' is not a directory.",
@@ -419,8 +412,7 @@ def print_status(inputs: List[str],
             filter(lambda c: c["file"] in files_filter, compile_commands))
 
         if not compile_commands:
-            LOG.error("File not found in the compilation database!")
-            sys.exit(1)
+            LOG.warning("File not found in the compilation database!")
 
     status = get_report_dir_status(compile_commands, report_dir, detailed_flag)
 
@@ -507,7 +499,7 @@ def main(args):
         args.input = [args.input]
 
     if 'status' in args:
-        print_status(args.input,
+        print_status(args.input[0],
                      getattr(args, 'detailed', False),
                      getattr(args, 'files', None),
                      getattr(args, 'export', None),
@@ -706,9 +698,12 @@ def main(args):
 
     reports_helper.dump_changed_files(changed_files)
 
-    print_status(args.input,
-                 False,
-                 getattr(args, 'files', None))
+    input_dir = args.input[0]
+    compile_cmd_json = os.path.join(input_dir, "compile_cmd.json")
+    if os.path.isdir(input_dir) and os.path.isfile(compile_cmd_json):
+        print_status(input_dir,
+                     False,
+                     getattr(args, 'files', None))
 
     if statistics.num_of_reports:
         sys.exit(2)

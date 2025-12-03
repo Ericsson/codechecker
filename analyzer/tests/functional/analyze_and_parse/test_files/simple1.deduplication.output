@@ -56,3 +56,16 @@ Number of processed analyzer result files | 2
 Number of analyzer reports                | 1
 ---------------------------------------------
 ----=================----
+[] - ----==== Summary ====----
+[] - Up-to-date analysis results
+[] -   clangsa: 1
+[] - Outdated analysis results
+[] - Failed to analyze
+[] - Missing analysis results
+[] -   clang-tidy: 1
+[] -   cppcheck: 1
+[] -   gcc: 1
+[] -   infer: 1
+[] - Total analyzed compilation commands: 2
+[] - Total available compilation commands: 2
+[] - ----=================----
