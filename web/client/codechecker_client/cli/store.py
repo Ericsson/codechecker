@@ -257,7 +257,7 @@ def add_arguments_to_parser(parser):
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
 
-    parser.add_argument('--zip_loc',
+    parser.add_argument('--zip-loc',
                         type=str,
                         metavar='PATH',
                         required=False,
