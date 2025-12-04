@@ -14,7 +14,8 @@ human-readable format.
 import argparse
 import os
 import sys
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
+import json
 import fnmatch
 
 from codechecker_report_converter.util import dump_json_output
@@ -28,6 +29,8 @@ from codechecker_report_converter.report.statistics import Statistics
 
 
 from codechecker_analyzer import analyzer_context, suppress_handler
+from codechecker_analyzer.util import analyzer_action_hash
+from codechecker_analyzer.analyzers.analyzer_types import supported_analyzers
 
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.review_status_handler import ReviewStatusHandler
@@ -208,6 +211,21 @@ def add_arguments_to_parser(parser):
                         help="Filter results by review statuses. Valid "
                              f"values are: {', '.join(REVIEW_STATUS_VALUES)}")
 
+    parser.add_argument('--status',
+                        dest="status",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Print the number of successful and failed "
+                             "analysis actions.")
+
+    parser.add_argument('--detailed',
+                        dest="detailed",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Enables detailed view for the status command.")
+
     group = parser.add_argument_group("file filter arguments")
 
     group.add_argument('-i', '--ignore', '--skip',
@@ -263,6 +281,176 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
     return None
 
 
+def get_report_dir_status(compile_commands: List[dict[str, str]],
+                          report_dir: str,
+                          detailed_flag: bool):
+
+    recent, old, failed, missing, analyzed_actions = {}, {}, {}, {}, {}
+
+    for analyzer in supported_analyzers:
+        recent[analyzer] = {}
+        old[analyzer] = {}
+        failed[analyzer] = {}
+        missing[analyzer] = {}
+
+    report_dir_files = {os.fsdecode(e) for e in
+                        os.listdir(os.fsencode(report_dir))}
+
+    for c in compile_commands:
+        for analyzer in supported_analyzers:
+            file, directory, cmd = c["file"], c["directory"], c["command"]
+            file = os.path.abspath(file)
+
+            filename = os.path.basename(file)
+            action_hash = analyzer_action_hash(file, directory, cmd)
+
+            plist_file = f"{filename}_{analyzer}_{action_hash}.plist"
+            plist_err_file = plist_file + ".err"
+
+            if plist_err_file in report_dir_files:
+                analyzed_actions[cmd] = 1
+                failed[analyzer][file] = 1
+            elif plist_file in report_dir_files:
+                analyzed_actions[cmd] = 1
+                plist_path = os.path.join(report_dir, plist_file)
+
+                try:
+                    if os.path.getmtime(plist_path) > os.path.getmtime(file):
+                        recent[analyzer][file] = 1
+                    else:
+                        old[analyzer][file] = 1
+                except Exception:
+                    recent[analyzer][file] = 1
+
+            else:
+                missing[analyzer][file] = 1
+
+    var_map = {
+        "up-to-date": recent,
+        "outdated": old,
+        "missing": missing,
+        "failed": failed
+    }
+
+    out_analyzers = {}
+    for analyzer in supported_analyzers:
+        detailed, summary = {}, {}
+
+        for k, v in var_map.items():
+            detailed[k] = list(v[analyzer].keys())
+            summary[k] = len(detailed[k])
+
+        out_analyzers[analyzer] = {
+            "summary": summary
+        }
+
+        if detailed_flag:
+            out_analyzers[analyzer].update(detailed)
+
+    # Expected output format example
+    #
+    # {
+    #   "analyzers": {
+    #     "clangsa": {
+    #       "summary": {
+    #         "up-to-date": 2,
+    #         "outdated": 0,
+    #         "missing": 1,
+    #         "failed": 0
+    #       },
+    #       "up-to-date": [
+    #         "/workspace/tmp/foo.cpp",
+    #         "/workspace/tmp/bar.cpp",
+    #       ],
+    #       "outdated": [],
+    #       "missing": [
+    #         "/workspace/tmp/test.c"
+    #       ],
+    #       "failed": []
+    #     },
+    #     "clang-tidy": { ... },
+    #   },
+    #   "total_analyzed_compilation_commands": 2,
+    #   "total_available_compilation_commands": 3
+    # }
+
+    return {
+        "analyzers": out_analyzers,
+        "total_analyzed_compilation_commands": len(analyzed_actions.keys()),
+        "total_available_compilation_commands": len(compile_commands)
+    }
+
+
+def print_status(report_dir: str,
+                 detailed_flag: bool,
+                 files: Optional[List[str]],
+                 export: Optional[str] = None,
+                 output_path: Optional[str] = None):
+    if export and export != "json":
+        LOG.error("Only JSON export format is supported.")
+        sys.exit(1)
+
+    if output_path and not export:
+        LOG.error("Export format (--export/-e) was not specified.")
+        sys.exit(1)
+
+    if not os.path.isdir(report_dir):
+        LOG.error("Input path '%s' is not a directory.",
+                  report_dir)
+        sys.exit(1)
+
+    compile_cmd_path = os.path.join(report_dir, "compile_cmd.json")
+    compile_commands = load_json(compile_cmd_path, [])
+
+    if not compile_commands:
+        LOG.error("Failed to load compile commands JSON '%s'.",
+                  compile_cmd_path)
+        sys.exit(1)
+
+    if files:
+        files_filter = [os.path.abspath(fp) for fp in files]
+        compile_commands = list(
+            filter(lambda c: c["file"] in files_filter, compile_commands))
+
+        if not compile_commands and not export:
+            LOG.warning("File not found in the compilation database!")
+
+    status = get_report_dir_status(compile_commands, report_dir, detailed_flag)
+
+    if not export and not output_path:
+        summary_map = {
+            "up-to-date": "Up-to-date analysis results",
+            "outdated": "Outdated analysis results",
+            "failed": "Failed to analyze",
+            "missing": "Missing analysis results"
+        }
+
+        LOG.info("----==== Summary ====----")
+        for k, v in summary_map.items():
+            LOG.info(v)
+            for analyzer in supported_analyzers:
+                count = status["analyzers"][analyzer]["summary"][k]
+                if count > 0:
+                    if detailed_flag:
+                        files = status["analyzers"][analyzer][k]
+                        LOG.info("  %s: %s (%s)", analyzer, files, count)
+                    else:
+                        LOG.info("  %s: %s", analyzer, count)
+
+        LOG.info("Total analyzed compilation commands: %s",
+                 status["total_analyzed_compilation_commands"])
+        LOG.info("Total available compilation commands: %s",
+                 status["total_available_compilation_commands"])
+        LOG.info("----=================----")
+    elif export and not output_path:
+        json.dump(status, sys.stdout, indent=2)
+    elif export and output_path:
+        output_path = os.path.abspath(output_path)
+        with open(output_path, "w", encoding="utf-8") as file:
+            json.dump(status, file, indent=2)
+            LOG.info("Status info was dumped to '%s'.", output_path)
+
+
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -310,6 +498,14 @@ def main(args):
     # But we need lists for the foreach here to work.
     if isinstance(args.input, str):
         args.input = [args.input]
+
+    if 'status' in args:
+        print_status(args.input[0],
+                     getattr(args, 'detailed', False),
+                     getattr(args, 'files', None),
+                     getattr(args, 'export', None),
+                     getattr(args, 'output_path', None))
+        return
 
     src_comment_status_filter = args.review_status
 
@@ -502,6 +698,13 @@ def main(args):
             baseline.write(output_path, data)
 
     reports_helper.dump_changed_files(changed_files)
+
+    input_dir = args.input[0]
+    compile_cmd_json = os.path.join(input_dir, "compile_cmd.json")
+    if os.path.isdir(input_dir) and os.path.isfile(compile_cmd_json):
+        print_status(input_dir,
+                     False,
+                     getattr(args, 'files', None))
 
     if statistics.num_of_reports:
         sys.exit(2)
