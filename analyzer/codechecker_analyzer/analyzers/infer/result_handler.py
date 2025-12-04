@@ -74,7 +74,7 @@ class InferResultHandler(ResultHandler):
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
 
-        error_file.create(
+        error_file.update(
             self.analyzer_result_file, self.analyzer_returncode,
             self.analyzer_info, self.analyzer_cmd,
             self.analyzer_stdout, self.analyzer_stderr)

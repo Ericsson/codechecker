@@ -43,7 +43,7 @@ class ClangSAResultHandler(ResultHandler):
         Generate analyzer result output file which can be parsed and stored
         into the database.
         """
-        error_file.create(
+        error_file.update(
             self.analyzer_result_file, self.analyzer_returncode,
             self.analyzer_info, self.analyzer_cmd,
             self.analyzer_stdout, self.analyzer_stderr)

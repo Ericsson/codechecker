@@ -6,11 +6,22 @@
 #
 # -------------------------------------------------------------------------
 
+import os
+
 from codechecker_report_converter.report.parser import plist
 
 
-def create(output_path, return_code, analyzer_info,
+def update(output_path, return_code, analyzer_info,
            analyzer_cmd, stdout, stderr):
+
+    plist_err_path = output_path + ".err"
+
+    # Remove existing plist.err file
+    try:
+        os.remove(plist_err_path)
+    except OSError:
+        pass
+
     if return_code == 0:
         return
 
@@ -24,4 +35,4 @@ def create(output_path, return_code, analyzer_info,
         'stderr': stderr
     }
 
-    parser.write(data, output_path + ".err")
+    parser.write(data, plist_err_path)
