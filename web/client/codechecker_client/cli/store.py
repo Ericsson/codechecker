@@ -942,9 +942,8 @@ def main(args):
             temp_dir = tempfile.mkdtemp(suffix="-store")
             LOG.debug(f"{temp_dir} directory created successfully!")
         except PermissionError:
-            LOG.error(f"Permission denied! You do not have sufficient "
-                      f"permissions to create the {temp_dir} "
-                      "temporary directory.")
+            LOG.error("Permission denied! You do not have sufficient "
+                      "permissions to create the system temporary directory.")
             sys.exit(1)
 
     zip_file_handle, zip_file = tempfile.mkstemp(suffix=".zip", dir=temp_dir)
