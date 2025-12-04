@@ -61,7 +61,7 @@ def create_actions_map(actions, manager):
     for act in actions:
         key = act.source, act.target
         if check_for_unique_actions and (key in result):
-            LOG.debug("Multiple entires in compile database "
+            LOG.debug("Multiple entries in compile database "
                       "with the same (source, target) pair: (%s, %s)",
                       act.source, act.target)
         result[key] = act
