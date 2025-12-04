@@ -934,10 +934,12 @@ def main(args):
         LOG.debug(f"{temp_dir} directory created successfully!")
     except PermissionError:
         try:
-            # If the specified folder isn't writeable; fallback to /tmp/
-            LOG.debug("'%s' is readonly, falling back to /tmp", temp_dir_path)
-            temp_dir_path = "/tmp"
-            temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
+            # If the specified folder isn't writeable; fallback to temporary dir
+            LOG.debug(
+                "'%s' is readonly, falling back to temporary folder",
+                temp_dir_path,
+            )
+            temp_dir = tempfile.mkdtemp(suffix="-store")
             LOG.debug(f"{temp_dir} directory created successfully!")
         except PermissionError:
             LOG.error(f"Permission denied! You do not have sufficient "
