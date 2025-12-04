@@ -934,7 +934,7 @@ def main(args):
         LOG.debug(f"{temp_dir} directory created successfully!")
     except PermissionError:
         try:
-            # If the specified folder isn't writeable; fallback to temporary dir
+            # If the specified folder isn't writeable; fallback to temp dir
             LOG.debug(
                 "'%s' is readonly, falling back to temporary folder",
                 temp_dir_path,
