@@ -926,7 +926,7 @@ def main(args):
                                                  port,
                                                  product_name=product_name)
 
-    # If the --temp_dir argument is specified set use that,
+    # If the --zip-loc argument is specified, use that folder as temporary,
     # else use the analyze result folder
     temp_dir_path: str = args.zip_loc or args.input[0]
     try:
