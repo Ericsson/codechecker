@@ -928,7 +928,7 @@ def main(args):
 
     # If the --temp_dir argument is specified set use that,
     # else use the analyze result folder
-    temp_dir_path: str = args.zip_loc if args.zip_loc else args.input[0]
+    temp_dir_path: str = args.zip_loc or args.input[0]
     try:
         temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
