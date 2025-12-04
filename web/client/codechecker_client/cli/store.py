@@ -257,6 +257,17 @@ def add_arguments_to_parser(parser):
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
 
+    parser.add_argument('--zip-loc',
+                        type=str,
+                        metavar='PATH',
+                        required=False,
+                        default=None,
+                        dest="zip_loc",
+                        help="Specify the location to write the compressed "
+                        "file used for storage. Useful if the results "
+                        "directory is read only. "
+                        "Defaults to the results directory.")
+
     parser.add_argument("--detach",
                         dest="detach",
                         default=argparse.SUPPRESS,
@@ -442,7 +453,8 @@ def assemble_zip(inputs,
                  zip_file,
                  client,
                  prod_client,
-                 checker_labels: CheckerLabels):
+                 checker_labels: CheckerLabels,
+                 tmp_dir: str):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
@@ -512,7 +524,7 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    temp_dir = tempfile.mkdtemp('-unique-plists', dir=inputs[0])
+    temp_dir = tempfile.mkdtemp('-unique-plists', dir=tmp_dir)
     for dirname, analyzer_reports in unique_reports.items():
         for analyzer_name, reports in analyzer_reports.items():
             if not analyzer_name:
@@ -914,14 +926,25 @@ def main(args):
                                                  port,
                                                  product_name=product_name)
 
+    # If the --zip-loc argument is specified, use that folder as temporary,
+    # else use the analyze result folder
+    temp_dir_path: str = args.zip_loc or args.input[0]
     try:
-        temp_dir = tempfile.mkdtemp(suffix="-store", dir=args.input[0])
+        temp_dir = tempfile.mkdtemp(suffix="-store", dir=temp_dir_path)
         LOG.debug(f"{temp_dir} directory created successfully!")
     except PermissionError:
-        LOG.error(f"Permission denied! You do not have sufficient "
-                  f"permissions to create the {temp_dir} "
-                  "temporary directory.")
-        sys.exit(1)
+        try:
+            # If the specified folder isn't writeable; fallback to temp dir
+            LOG.debug(
+                "'%s' is readonly, falling back to temporary folder",
+                temp_dir_path,
+            )
+            temp_dir = tempfile.mkdtemp(suffix="-store")
+            LOG.debug(f"{temp_dir} directory created successfully!")
+        except PermissionError:
+            LOG.error("Permission denied! You do not have sufficient "
+                      "permissions to create the system temporary directory.")
+            sys.exit(1)
 
     zip_file_handle, zip_file = tempfile.mkstemp(suffix=".zip", dir=temp_dir)
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
@@ -935,7 +958,8 @@ def main(args):
                          zip_file,
                          client,
                          prod_client,
-                         context.checker_labels)
+                         context.checker_labels,
+                         temp_dir_path)
         except ReportLimitExceedError:
             sys.exit(1)
         except Exception as ex:

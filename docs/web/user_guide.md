@@ -435,6 +435,7 @@ usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
                          [--description DESCRIPTION]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
                          [--config CONFIG_FILE] [-f] [--url PRODUCT_URL]
+                         [--zip-loc TEMPORARY_DIRECTORY]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
@@ -501,6 +502,11 @@ optional arguments:
                         files not affected by the analysis, and only
                         incrementally update defect reports for source files
                         that were analysed.)
+  --zip-loc             Specify a directory for CodeChecker to store
+                        temporary files. This option is useful if the
+                        results directory is readonly and `/tmp` is small.
+                        Defaults to the results directory 
+                        (falls back to /tmp if read-only).
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
