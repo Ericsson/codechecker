@@ -14,9 +14,11 @@
 
         <v-spacer />
 
-        <v-btn class="close-btn" icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          class="close-btn"
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text>
@@ -70,82 +72,72 @@
   </v-dialog>
 </template>
 
-<script>
-
+<script setup>
+import { computed } from "vue";
 import {
   CheckerInfoAvailability,
-  setCheckerStatusUnavailableDueToVersion
-} from "@/mixins/api/analysis-info-handling.mixin";
+  setCheckerStatusUnavailableDueToVersion,
+} from "@/composables/useAnalysisInfo";
 
-export default {
-  name: "StatisticsDialog",
+const props = defineProps({
+  value: { type: Boolean, required: true },
+  checkerName: { type: String, default: null },
+  type: { type: String, required: true },
+  runData: { type: Array, default: () => [] }
+});
 
-  props: {
-    value: { type: Boolean, required: true },
-    checkerName: { type: String, default: null },
-    type: { type: String, required: true },
-    runData: { type: Array, default: () => [] }
+const emit = defineEmits([ "update:value" ]);
+
+const dialog = computed({
+  get() {
+    return props.value;
   },
-
-  data() {
-    return {
-      runsWithAnalysisInfo: [],
-    };
-  },
-
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    },
-
-    title() {
-      let title = `${this.type.charAt(0).toUpperCase() 
-        + this.type.slice(1)} run list`;
-      if ( this.checkerName ) {
-        title += ` for the "${this.checkerName}" checker`;
-      }
-      return title;
-    },
-
-    runs() {
-      if (this.runData.length && this.runData[0].analysisInfo !== undefined) {
-        const alertTypes = {
-          [CheckerInfoAvailability.RunHistoryStoredWithOldVersionPre_v6_24]: {
-            runNames: [],
-            message: "analysed by an older version of CodeChecker. \
-            The list of statistics are only available from CodeChecker 6.24:"
-          },
-          [CheckerInfoAvailability.UnknownReason]: {
-            runNames: [],
-            message: "likely stored from a report directory \
-            which was not created natively by CodeChecker analyze:"
-          }
-        };
-        
-        this.runData.map(run => {
-          setCheckerStatusUnavailableDueToVersion(
-            run.analysisInfo, run.codeCheckerVersion);
-          
-          alertTypes[run.analysisInfo.checkerInfoAvailability].runNames.push(
-            run.runName);
-        });
-
-        return Object.values(alertTypes);
-      }
-      else {
-        return [ { 
-          runNames: this.runData.map(run => run.runName),
-          message: null 
-        } ];
-      }
-    }
+  set(val) {
+    emit("update:value", val);
   }
-};
+});
+
+const title = computed(function() {
+  let _title = `${props.type.charAt(0).toUpperCase() 
+    + props.type.slice(1)} run list`;
+  if ( props.checkerName ) {
+    _title += ` for the "${props.checkerName}" checker`;
+  }
+  return _title;
+});
+
+const runs = computed(function() {
+  if (props.runData.length && props.runData[0].analysisInfo !== undefined) {
+    const _alertTypes = {
+      [CheckerInfoAvailability.RunHistoryStoredWithOldVersionPre_v6_24]: {
+        runNames: [],
+        message: "analysed by an older version of CodeChecker. \
+        The list of statistics are only available from CodeChecker 6.24:"
+      },
+      [CheckerInfoAvailability.UnknownReason]: {
+        runNames: [],
+        message: "likely stored from a report directory \
+        which was not created natively by CodeChecker analyze:"
+      }
+    };
+    
+    props.runData.map(_run => {
+      setCheckerStatusUnavailableDueToVersion(
+        _run.analysisInfo, _run.codeCheckerVersion);
+      
+      _alertTypes[_run.analysisInfo.checkerInfoAvailability].runNames.push(
+        _run.runName);
+    });
+
+    return Object.values(_alertTypes);
+  }
+  else {
+    return [ { 
+      runNames: props.runData.map(_run => _run.runName),
+      message: null 
+    } ];
+  }
+});
 </script>
 
 <style lang="scss" scoped>

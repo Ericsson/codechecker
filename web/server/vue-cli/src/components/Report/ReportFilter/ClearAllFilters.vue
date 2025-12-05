@@ -1,29 +1,19 @@
 <template>
   <v-btn
     id="clear-all-filter-btn"
-    outlined
-    text
     color="primary"
+    variant="outlined"
+    prepend-icon="mdi-delete"
     @click="clearAllFilters"
   >
-    <v-icon left>
-      mdi-delete
-    </v-icon>
     Clear All Filters
   </v-btn>
 </template>
 
-<script>
-import { BaseFilterMixin } from "./Filters";
+<script setup>
+const emit = defineEmits([ "clear" ]);
 
-export default {
-  name: "ClearAllFilters",
-  mixins: [ BaseFilterMixin ],
-
-  methods: {
-    clearAllFilters() {
-      this.$emit("clear");
-    }
-  }
-};
+function clearAllFilters() {
+  emit("clear");
+}
 </script>

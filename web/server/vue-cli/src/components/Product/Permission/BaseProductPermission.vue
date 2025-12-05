@@ -1,12 +1,12 @@
 <template>
   <v-container>
-    <h3 class="mb-4 text-center primary--text">
+    <h3 class="mb-4 text-center text-primary">
       {{ title }}
     </h3>
-    <v-simple-table
+    <v-table
       height="200px"
       fixed-header
-      dense
+      density="compact"
     >
       <template v-slot:default>
         <thead>
@@ -42,7 +42,7 @@
             >
               <span class="d-inline-block">
                 <v-checkbox
-                  :input-value="authRight.includes(permission)"
+                  :model-value="authRight.includes(permission)"
                   :hide-details="true"
                   class="ma-1"
                   @change="changeAuthPermission(userName, permission)"
@@ -52,20 +52,17 @@
           </tr>
         </tbody>
       </template>
-    </v-simple-table>
+    </v-table>
 
     <v-text-field
       v-model="name"
       :label="label"
-      single-line
       hide-details
-      solo
-      flat
-      outlined
+      variant="outlined"
       class="mt-4"
-      @keyup.native.enter="addNewAuthRight"
+      @keyup.enter="addNewAuthRight"
     >
-      <template v-slot:append>
+      <template v-slot:append-inner>
         <v-btn
           color="primary"
           class="ma-0"
@@ -78,127 +75,128 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
+import { ref } from "vue";
+
 import { authService, handleThriftError } from "@cc-api";
 import { Permission } from "@cc/shared-types";
 
-export default {
-  name: "BaseProductPermission",
-  props: {
-    permissions: { type: Array, default: () => [] },
-    authRights: { type: Object, default: () => {} },
-    title: { type: String, default: "" },
-    label: { type: String, default: "" },
-    icon: { type: String, default: "mdi-account-outline" },
-    bus: { type: Object, required: true },
-    extraParamsJson: { type: String, required: true },
-    isGroup: { type: Boolean, required: true }
-  },
-  data() {
-    return {
-      Permission,
-      name: "",
-      changedAuthRights: {}
-    };
-  },
+const props = defineProps({
+  permissions: { type: Array, default: () => [] },
+  authRights: { type: Object, default: () => {} },
+  title: { type: String, default: "" },
+  label: { type: String, default: "" },
+  icon: { type: String, default: "mdi-account-outline" },
+  extraParamsJson: { type: String, required: true },
+  isGroup: { type: Boolean, required: true }
+});
+const emit = defineEmits([
+  "update:error",
+  "update:success",
+  "update:authRights"
+]);
+const name = ref("");
+const changedAuthRights = ref({});
 
-  mounted() {
-    this.bus.$on("save", this.saveAll);
-  },
+function permissionToString(value) {
+  return Object.keys(Permission).find(key => Permission[key] === value);
+}
 
-  methods: {
-    permissionToString(value) {
-      return Object.keys(Permission).find(key => Permission[key] === value);
-    },
+function changeAuthPermission(userName, permission) {
+  if (changedAuthRights.value[userName] &&
+      changedAuthRights.value[userName].indexOf(permission) !== -1
+  ) {
+    // Removing a permission to the user.
+    const ind = changedAuthRights.value[userName].indexOf(permission);
+    changedAuthRights.value[userName].splice(ind, 1);
 
-    changeAuthPermission(userName, permission) {
-      if (this.changedAuthRights[userName] &&
-          this.changedAuthRights[userName].indexOf(permission) !== -1
-      ) {
-        // Removing a permission to the user.
-        const ind = this.changedAuthRights[userName].indexOf(permission);
-        this.changedAuthRights[userName].splice(ind, 1);
-
-        // Remove the user from the changes if there is no more permissions.
-        if (!this.changedAuthRights[userName].length) {
-          delete this.changedAuthRights[userName];
-        }
-      } else {
-        // Add new permission to the user.
-        if (!(userName in this.changedAuthRights)) {
-          this.changedAuthRights[userName] = [];
-        }
-        this.changedAuthRights[userName].push(permission);
-      }
-    },
-
-    saveAll() {
-      for (const userName of Object.keys(this.changedAuthRights)) {
-        this.changedAuthRights[userName].forEach(permission => {
-          if (this.authRights[userName] &&
-              this.authRights[userName].indexOf(permission) !== -1
-          ) {
-            authService.getClient().removePermission(permission, userName,
-              this.isGroup, this.extraParamsJson,
-              handleThriftError(success => {
-                if (!success) {
-                  this.$emit("update:error", true);
-                  return;
-                }
-
-                const ind = this.authRights[userName].indexOf(permission);
-                this.authRights[userName].splice(ind, 1);
-                if (!this.authRights[userName].length) {
-                  delete this.authRights[userName];
-                }
-              }, () => {
-                this.$emit("update:error", true);
-              }));
-          } else {
-            authService.getClient().addPermission(permission, userName,
-              this.isGroup, this.extraParamsJson,
-              handleThriftError(success => {
-                if (!success) {
-                  this.$emit("update:error", true);
-                  return;
-                }
-
-                if (!(userName in this.authRights)) {
-                  this.authRights[userName] = [];
-                }
-                this.authRights[userName].push(permission);
-              }, () => {
-                this.$emit("update:error", true);
-              }));
-          }
-        });
-      }
-
-      this.$emit("update:success", true);
-
-      // Reset the store of changes.
-      this.changedAuthRights = {};
-    },
-
-    addNewAuthRight() {
-      if (!this.name.length) return;
-
-      const searchKey = this.name.toLowerCase();
-      const foundKey = Object.keys(this.authRights).find(
-        objectKey => objectKey.toLowerCase() === searchKey);
-
-      if (!foundKey) {
-        this.$set(this.authRights, this.name, []);
-      }
-
-      this.name = "";
+    // Remove the user from the changes if there is no more permissions.
+    if (!changedAuthRights.value[userName].length) {
+      delete changedAuthRights.value[userName];
     }
+  } else {
+    // Add new permission to the user.
+    if (!(userName in changedAuthRights.value)) {
+      changedAuthRights.value[userName] = [];
+    }
+    changedAuthRights.value[userName].push(permission);
   }
-};
+}
+
+function saveAll() {
+  for (const userName of Object.keys(changedAuthRights.value)) {
+    changedAuthRights.value[userName].forEach(permission => {
+      if (props.authRights[userName] &&
+          props.authRights[userName].indexOf(permission) !== -1
+      ) {
+        authService.getClient().removePermission(permission, userName,
+          props.isGroup, props.extraParamsJson,
+          handleThriftError(success => {
+            if (!success) {
+              emit("update:error", true);
+              return;
+            }
+
+            const updatedAuthRights = { ...props.authRights };
+            const ind = updatedAuthRights[userName].indexOf(permission);
+            updatedAuthRights[userName].splice(ind, 1);
+            if (!updatedAuthRights[userName].length) {
+              delete updatedAuthRights[userName];
+            }
+            emit("update:authRights", updatedAuthRights);
+          }, () => {
+            emit("update:error", true);
+          }));
+      } else {
+        authService.getClient().addPermission(permission, userName,
+          props.isGroup, props.extraParamsJson,
+          handleThriftError(success => {
+            if (!success) {
+              emit("update:error", true);
+              return;
+            }
+
+            const updatedAuthRights = { ...props.authRights };
+            if (!(userName in updatedAuthRights)) {
+              updatedAuthRights[userName] = [];
+            }
+            updatedAuthRights[userName].push(permission);
+            emit("update:authRights", updatedAuthRights);
+          }, () => {
+            emit("update:error", true);
+          }));
+      }
+    });
+  }
+
+  emit("update:success", true);
+
+  changedAuthRights.value = {};
+}
+
+function addNewAuthRight() {
+  if (!name.value.length) return;
+
+  const searchKey = name.value.toLowerCase();
+  const foundKey = Object.keys(props.authRights).find(
+    objectKey => objectKey.toLowerCase() === searchKey);
+
+  if (!foundKey) {
+    const updatedAuthRights = { ...props.authRights };
+    updatedAuthRights[name.value] = [];
+    emit("update:authRights", updatedAuthRights);
+  }
+
+  name.value = "";
+}
+
+defineExpose({
+  saveAll
+});
 </script>
 
 <style lang="scss" scoped>
-::v-deep .v-input--selection-controls__input {
+:deep(.v-input--selection-controls__input) {
   margin: 0;
 }
 </style>

@@ -14,9 +14,10 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text class="pa-0">
@@ -58,37 +59,32 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed } from "vue";
 
-export default {
-  name: "RemoveCommentDialog",
-  props: {
-    value: { type: Boolean, default: false },
-    comment: { type: Object, default: () => null }
-  },
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    },
-    message() {
-      return this.comment ? this.comment.message : null;
-    }
-  },
+const props = defineProps({
+  value: { type: Boolean, default: false },
+  comment: { type: Object, default: () => null }
+});
 
-  methods: {
-    confirmCommentRemove() {
-      ccService.getClient().removeComment(this.comment.id,
-        handleThriftError(() => {
-          this.$emit("on-confirm");
-          this.dialog = false;
-        }));
-    }
-  }
-};
+const emit = defineEmits([
+  "update:value",
+  "on-confirm"
+]);
+
+const dialog = computed({
+  get: () => props.value,
+  set: val => emit("update:value", val)
+});
+
+const message = computed(() => props.comment ? props.comment.message : null);
+
+function confirmCommentRemove() {
+  ccService.getClient().removeComment(props.comment.id,
+    handleThriftError(() => {
+      emit("on-confirm");
+      dialog.value = false;
+    }));
+}
 </script>

@@ -1,48 +1,45 @@
 import AnalyzerNameFilter from "./AnalyzerNameFilter";
-import UniqueFilter from "./UniqueFilter";
-import ReportHashFilter from "./ReportHashFilter";
-import BaselineOpenReportsDateFilter from  "./BaselineOpenReportsDateFilter";
+import BaselineOpenReportsDateFilter from "./BaselineOpenReportsDateFilter";
 import BaselineRunFilter from "./BaselineRunFilter";
+import BugPathLengthFilter from "./BugPathLengthFilter";
+import CheckerMessageFilter from "./CheckerMessageFilter";
+import CheckerNameFilter from "./CheckerNameFilter";
 import CleanupPlanFilter from "./CleanupPlanFilter";
 import ComparedToDiffTypeFilter from "./ComparedToDiffTypeFilter";
-import ComparedToOpenReportsDateFilter from
-  "./ComparedToOpenReportsDateFilter";
+import ComparedToOpenReportsDateFilter from "./ComparedToOpenReportsDateFilter";
 import ComparedToRunFilter from "./ComparedToRunFilter";
-import ReviewStatusFilter from "./ReviewStatusFilter";
-import DetectionStatusFilter from "./DetectionStatusFilter";
-import FixDateFilter from "./FixDateFilter";
-import SeverityFilter from "./SeverityFilter";
 import DetectionDateFilter from "./DetectionDateFilter";
+import DetectionStatusFilter from "./DetectionStatusFilter";
 import FilePathFilter from "./FilePathFilter";
-import SourceComponentFilter from "./SourceComponentFilter";
-import CheckerNameFilter from "./CheckerNameFilter";
-import CheckerMessageFilter from "./CheckerMessageFilter";
-import BaseFilterMixin from "./BaseFilter.mixin";
-import BugPathLengthFilter from "./BugPathLengthFilter";
-import TestcaseFilter from "./TestcaseFilter";
+import FixDateFilter from "./FixDateFilter";
+import ReportHashFilter from "./ReportHashFilter";
 import ReportStatusFilter from "./ReportStatusFilter";
+import ReviewStatusFilter from "./ReviewStatusFilter";
+import SeverityFilter from "./SeverityFilter";
+import SourceComponentFilter from "./SourceComponentFilter";
+import TestcaseFilter from "./TestcaseFilter";
+import UniqueFilter from "./UniqueFilter";
 
 export {
   AnalyzerNameFilter,
-  UniqueFilter,
-  ReportHashFilter,
   BaselineOpenReportsDateFilter,
   BaselineRunFilter,
+  BugPathLengthFilter,
+  CheckerMessageFilter,
+  CheckerNameFilter,
   CleanupPlanFilter,
   ComparedToDiffTypeFilter,
   ComparedToOpenReportsDateFilter,
   ComparedToRunFilter,
-  ReviewStatusFilter,
-  DetectionStatusFilter,
-  FixDateFilter,
-  SeverityFilter,
   DetectionDateFilter,
+  DetectionStatusFilter,
   FilePathFilter,
+  FixDateFilter,
+  ReportHashFilter,
+  ReportStatusFilter,
+  ReviewStatusFilter,
+  SeverityFilter,
   SourceComponentFilter,
-  CheckerNameFilter,
-  CheckerMessageFilter,
-  BaseFilterMixin,
-  BugPathLengthFilter,
   TestcaseFilter,
-  ReportStatusFilter
+  UniqueFilter
 };

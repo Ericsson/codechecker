@@ -2,7 +2,7 @@
   <v-container
     class="analysis-info-checker-rows-in-columns"
   >
-    <checker
+    <Checker
       v-for="(checker, idx) in checkers"
       :key="idx"
       :name="checker[0]"
@@ -11,18 +11,12 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
 import Checker from "./Checker";
 
-export default {
-  name: "CheckerRows",
-  components: {
-    Checker
-  },
-  props: {
-    checkers: { type: Array, required: true }
-  }
-};
+defineProps({
+  checkers: { type: Array, required: true }
+});
 </script>
 
 <style lang="scss" scoped>

@@ -1,28 +1,18 @@
 <template>
   <div>
-    <v-avatar
-      left
+    <review-status-icon
+      :status="item.id"
       :size="16"
-    >
-      <review-status-icon
-        :status="item.id"
-        :size="16"
-      />
-    </v-avatar>
+      class="mx-2"
+    />
     {{ item.label }}
   </div>
 </template>
 
-<script>
+<script setup>
 import { ReviewStatusIcon } from "@/components/Icons";
 
-export default {
-  name: "SelectSameReportItem",
-  components: {
-    ReviewStatusIcon
-  },
-  props: {
-    item: { type: Object, required: true }
-  }
-};
+defineProps({
+  item: { type: Object, required: true }
+});
 </script>

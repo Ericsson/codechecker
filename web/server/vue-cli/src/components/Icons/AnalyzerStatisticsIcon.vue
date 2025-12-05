@@ -14,13 +14,10 @@
   </v-icon>
 </template>
 
-<script>
-export default {
-  name: "AnalyzerStatisticsIcon",
-  props: {
-    value: { type: String, required: true }
-  }
-};
+<script setup>
+defineProps({
+  value: { type: String, required: true }
+});
 </script>
 <style lang="scss">
 .analyzer-statistics-icon-successful {

@@ -4,16 +4,12 @@ import AnalyzerStatisticsDialog from "./AnalyzerStatisticsDialog";
 import DeleteRunBtn from "./DeleteRunBtn";
 import ExpandedRun from "./ExpandedRun";
 import RunDescription from "./RunDescription";
-import RunNameColumn from "./RunNameColumn";
 import RunFilterToolbar from "./RunFilterToolbar";
+import RunNameColumn from "./RunNameColumn";
 
 export {
-  AnalyzerStatisticsBtn,
-  AnalyzerStatisticsDialog,
-  AnalysisInfoBtn,
-  DeleteRunBtn,
+  AnalysisInfoBtn, AnalyzerStatisticsBtn,
+  AnalyzerStatisticsDialog, DeleteRunBtn,
   ExpandedRun,
-  RunDescription,
-  RunNameColumn,
-  RunFilterToolbar
+  RunDescription, RunFilterToolbar, RunNameColumn
 };

@@ -1,21 +1,23 @@
 <template>
   <select-option
-    :id="id"
+    :id="id.value"
     title="Latest Detection Status"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :loading="loading"
-    :selected-items="selectedItems"
-    :panel="panel"
-    @clear="clear(true)"
-    @input="setSelectedItems"
+    :loading="baseSelectOptionFilter.loading.value"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :panel="baseSelectOptionFilter.panel.value"
+    @clear="baseSelectOptionFilter.clear(true)"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon="{ item }">
       <detection-status-icon :status="item.id" />
     </template>
 
     <template v-slot:append-toolbar-title>
-      <tooltip-help-icon>
+      <tooltip-help-icon
+        class="mr-2"
+      >
         Filter reports by the <b>latest</b> detection status.<br><br>
 
         The detection status is the latest state of a bug report in a run. When
@@ -46,12 +48,13 @@
       </tooltip-help-icon>
 
       <tooltip-help-icon
-        v-if="reportFilter.isUnique"
+        v-if="reportFilter?.isUnique"
+        class="mr-2"
       >
-        <template v-slot:activator="{ on }">
+        <template v-slot:activator="{ props: activatorProps }">
           <v-icon
+            v-bind="activatorProps"
             color="error"
-            v-on="on"
           >
             mdi-alert
           </v-icon>
@@ -61,82 +64,120 @@
         belong to the same bug!
       </tooltip-help-icon>
 
-      <selected-toolbar-title-items
-        v-if="selectedItems"
-        :value="selectedItems"
+      <SelectedToolbarTitleItems
+        v-if="baseSelectOptionFilter.selectedItems.value"
+        :value="baseSelectOptionFilter.selectedItems.value"
       />
     </template>
   </select-option>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed, ref, toRef } from "vue";
 
-import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { DetectionStatusIcon } from "@/components/Icons";
-import { DetectionStatusMixin } from "@/mixins";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 
+import {
+  useBaseSelectOptionFilter
+} from "@/composables/useBaseSelectOptionFilter";
+import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-export default {
-  name: "DetectionStatusFilter",
-  components: {
-    SelectOption,
-    DetectionStatusIcon,
-    SelectedToolbarTitleItems,
-    TooltipHelpIcon
-  },
-  mixins: [ BaseSelectOptionFilterMixin, DetectionStatusMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "detection-status"
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  methods: {
-    encodeValue(detectionStatusId) {
-      return this.detectionStatusFromCodeToString(detectionStatusId);
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+baseSelectOptionFilter.encodeValue.value = encodeValue;
+baseSelectOptionFilter.decodeValue.value = decodeValue;
 
-    decodeValue(detectionStatusName) {
-      return this.detectionStatusFromStringToCode(detectionStatusName);
-    },
+const id = ref("detection-status");
+// eslint-disable-next-line vue/no-ref-object-reactivity-loss
+baseSelectOptionFilter.id.value = id.value;
 
-    updateReportFilter() {
-      this.setReportFilter({
-        detectionStatus: this.selectedItems.map(item => item.id)
-      });
-    },
+const reportFilter = computed(
+  () => baseSelectOptionFilter.baseFilter?.reportFilter?.value
+);
 
-    onReportFilterChange(key) {
-      if (key === "detectionStatus") return;
-      this.update();
-    },
+const {
+  detectionStatusFromStringToCode,
+  detectionStatusFromCodeToString
+} = useDetectionStatus();
 
-    fetchItems() {
-      this.loading = true;
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
 
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.detectionStatus = null;
+function encodeValue(detectionStatusId) {
+  return detectionStatusFromCodeToString(detectionStatusId);
+}
 
-      return new Promise(resolve => {
-        ccService.getClient().getDetectionStatusCounts(this.runIds,
-          reportFilter, this.cmpData, handleThriftError(res => {
-            resolve(Object.keys(DetectionStatus).map(status => {
-              const id = DetectionStatus[status];
-              return {
-                id: id,
-                title: this.encodeValue(id),
-                count: res[id] !== undefined ? res[id].toNumber() : 0
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
-  }
-};
+function decodeValue(detectionStatusName) {
+  return detectionStatusFromStringToCode(detectionStatusName);
+}
+
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    detectionStatus: 
+      baseSelectOptionFilter.selectedItems.value.map(item => item.id)
+  });
+}
+
+function onReportFilterChange(key) {
+  if (key === "detectionStatus") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems() {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
+  _reportFilter.detectionStatus = null;
+
+  return new Promise(resolve => {
+    ccService.getClient().getDetectionStatusCounts(
+      baseSelectOptionFilter.runIds.value,
+      _reportFilter,
+      baseSelectOptionFilter.cmpData.value,
+      handleThriftError(res => {
+        resolve(Object.keys(DetectionStatus).map(status => {
+          const _id = DetectionStatus[status];
+          return {
+            id: _id,
+            title: encodeValue(_id),
+            count: res[_id] !== undefined ? res[_id].toNumber() : 0
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  initByUrl: baseSelectOptionFilter.initByUrl,
+  getUrlState: baseSelectOptionFilter.getUrlState,
+
+  id,
+  encodeValue,
+  decodeValue,
+  updateReportFilter,
+  onReportFilterChange,
+  fetchItems
+});
 </script>

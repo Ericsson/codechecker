@@ -9,19 +9,16 @@
       <slot />
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        Remove source component
-
-        <v-spacer />
-
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
+    <v-card
+      title="Remove source component"
+    >
+      <template v-slot:append>
+        <v-btn
+          class="close-btn"
+          icon="mdi-close"
+          @click="dialog = false"
+        />
+      </template>
 
       <v-card-text class="pa-0">
         <v-container
@@ -58,38 +55,33 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed } from "vue";
 
-export default {
-  name: "RemoveSourceComponentDialog",
-  props: {
-    value: { type: Boolean, default: false },
-    sourceComponent: { type: Object, default: () => null }
+const props = defineProps({
+  value: { type: Boolean, default: false },
+  sourceComponent: { type: Object, default: () => null }
+});
+
+const emit = defineEmits([ "update:value", "on:confirm" ]);
+
+const dialog = computed({
+  get() {
+    return props.value;
   },
-
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  },
-
-  methods: {
-    removeSourceComponent() {
-      ccService.getClient().removeSourceComponent(this.sourceComponent.name,
-        handleThriftError(success => {
-          if (success) {
-            this.$emit("on:confirm");
-            this.dialog = false;
-          }
-          // TODO: handle cases when success is false.
-        }));
-    }
+  set(val) {
+    emit("update:value", val);
   }
-};
+});
+
+function removeSourceComponent() {
+  ccService.getClient().removeSourceComponent(props.sourceComponent.name,
+    handleThriftError(success => {
+      if (success) {
+        emit("on:confirm");
+        dialog.value = false;
+      }
+    }));
+}
 </script>

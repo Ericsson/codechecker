@@ -1,10 +1,7 @@
-import Vue from "vue";
-import Router from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 
-Vue.use(Router);
-
-export default new Router({
-  mode: "history",
+const router = createRouter({
+  history: createWebHistory(),
   routes: [
     {
       path: "/",
@@ -29,7 +26,7 @@ export default new Router({
     {
       path: "/userguide",
       name: "userguide",
-      component: () => import("@/views/Userguide")
+      component: () => import("@/views/Userguide"),
     },
     {
       path: "/new-features",
@@ -44,7 +41,7 @@ export default new Router({
     {
       // Should be kept in sync with the regex from is_valid_product_endpoint
       // on the backend.
-      path: "/:endpoint([A-Za-z0-9_-]+)",
+      path: "/:endpoint([A-Za-z0-9_-]+)?",
       meta: {
         requiresAuth: true
       },
@@ -62,49 +59,48 @@ export default new Router({
         },
         {
           path: "statistics",
+          name: "statistics",
+          redirect: { name: "product-overview" },
           component: () => import("@/views/Statistics"),
           children: [
-            {
-              path: "",
-              name: "statistics",
-              redirect: "overview"
-            },
             {
               path: "overview",
               name: "product-overview",
               component: () =>
-                import("@/components/Statistics/Overview/Overview"),
+                import("@statistics/Overview/Overview"),
             },
             {
               path: "checker",
               name: "checker-statistics",
               component: () =>
-                import("@/components/Statistics/Checker/CheckerStatistics"),
+                import("@statistics/Checker/CheckerStatistics"),
             },
             {
               path: "severity",
               name: "severity-statistics",
               component: () =>
-                import("@/components/Statistics/Severity/SeverityStatistics"),
+                import("@statistics/Severity/SeverityStatistics"),
             },
             {
               path: "component",
               name: "component-statistics",
               component: () => import(
-                "@/components/Statistics/Component/ComponentStatistics"),
+                "@statistics/Component/ComponentStatistics"),
             },
             {
               path: "coverage",
               name: "checker-coverage-statistics",
               component: () =>
-                import("@/components/Statistics/CheckerCoverage/\
-CheckerCoverageStatistics"),
+                import(
+                  "@statistics/CheckerCoverage/CheckerCoverageStatistics"
+                ),
             },
             {
               path: "guideline",
               name: "guideline-statistics",
               component: () => import(
-                "@/components/Statistics/Guideline/GuidelineStatistics"),
+                "@/components/Statistics/Guideline/GuidelineStatistics"
+              ),
             },
           ]
         },
@@ -141,3 +137,5 @@ CheckerCoverageStatistics"),
     }
   ]
 });
+
+export default router;

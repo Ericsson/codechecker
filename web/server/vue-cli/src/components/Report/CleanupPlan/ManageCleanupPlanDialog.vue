@@ -19,19 +19,22 @@
       >
         <v-container>
           <v-row>
-            Manage cleanup plans
-          </v-row>
-
-          <v-row>
-            <cleanup-plan-subtitle />
+            <h1>Manage Cleanup Plans</h1>
+            <span
+              class="subtitle-1"
+            >
+              Use cleanup plans to track progress of reports in your product.
+            </span>
           </v-row>
         </v-container>
 
         <v-spacer />
 
-        <v-btn class="close-btn" icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          class="close-btn"
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text class="pa-0">
@@ -57,28 +60,18 @@
   </v-dialog>
 </template>
 
-<script>
-import CleanupPlanSubtitle from "./CleanupPlanSubtitle";
+<script setup>
+import { computed } from "vue";
 import ListCleanupPlans from "./ListCleanupPlans";
 
-export default {
-  name: "ManageCleanupPlanDialog",
-  components: {
-    CleanupPlanSubtitle,
-    ListCleanupPlans
-  },
-  props: {
-    value: { type: Boolean, default: false },
-  },
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  }
-};
+const props = defineProps({
+  value: { type: Boolean, default: false },
+});
+
+const emit = defineEmits([ "update:value" ]);
+
+const dialog = computed({
+  get: () => props.value,
+  set: val => emit("update:value", val)
+});
 </script>

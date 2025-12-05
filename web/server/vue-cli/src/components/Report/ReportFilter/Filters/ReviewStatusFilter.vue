@@ -1,21 +1,23 @@
 <template>
   <select-option
-    :id="id"
+    :id="id.value"
     title="Latest Review Status"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :loading="loading"
-    :selected-items="selectedItems"
-    :panel="panel"
-    @clear="clear(true)"
-    @input="setSelectedItems"
+    :loading="baseSelectOptionFilter.loading.value"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :panel="baseSelectOptionFilter.panel.value"
+    @clear="baseSelectOptionFilter.clear(true)"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon="{ item }">
       <review-status-icon :status="item.id" />
     </template>
 
     <template v-slot:append-toolbar-title>
-      <tooltip-help-icon>
+      <tooltip-help-icon
+        class="mr-2"
+      >
         Filter reports by the <b>latest</b> review status.<br><br>
 
         Reports can be assigned a review status of the following values:
@@ -37,81 +39,111 @@
       </tooltip-help-icon>
 
       <selected-toolbar-title-items
-        v-if="selectedItems"
-        :value="selectedItems"
+        v-if="baseSelectOptionFilter.selectedItems.value"
+        :value="baseSelectOptionFilter.selectedItems.value"
       />
     </template>
   </select-option>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { ref, toRef } from "vue";
 
-import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { ReviewStatusIcon } from "@/components/Icons";
-import { ReviewStatusMixin } from "@/mixins";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
 
+import { useBaseSelectOptionFilter }
+  from "@/composables/useBaseSelectOptionFilter";
+import { useReviewStatus } from "@/composables/useReviewStatus";
 import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-export default {
-  name: "ReviewStatusFilter",
-  components: {
-    SelectOption,
-    ReviewStatusIcon,
-    SelectedToolbarTitleItems,
-    TooltipHelpIcon
-  },
-  mixins: [ BaseSelectOptionFilterMixin, ReviewStatusMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "review-status"
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  methods: {
-    encodeValue(reviewStatusId) {
-      return this.reviewStatusFromCodeToString(reviewStatusId);
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+baseSelectOptionFilter.encodeValue.value = encodeValue;
+baseSelectOptionFilter.decodeValue.value = decodeValue;
 
-    decodeValue(reviewStatusName) {
-      return this.reviewStatusFromStringToCode(reviewStatusName);
-    },
+const id = ref("review-status");
+// eslint-disable-next-line vue/no-ref-object-reactivity-loss
+baseSelectOptionFilter.id.value = id.value;
 
-    updateReportFilter() {
-      this.setReportFilter({
-        reviewStatus: this.selectedItems.map(item => item.id)
-      });
-    },
+const reviewStatus = useReviewStatus();
 
-    onReportFilterChange(key) {
-      if (key === "reviewStatus") return;
-      this.update();
-    },
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
 
-    fetchItems() {
-      this.loading = true;
+function encodeValue(reviewStatusId) {
+  return reviewStatus.reviewStatusFromCodeToString(reviewStatusId);
+}
 
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.reviewStatus = null;
+function decodeValue(reviewStatusName) {
+  return reviewStatus.reviewStatusFromStringToCode(reviewStatusName);
+}
 
-      return new Promise(resolve => {
-        ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
-          this.cmpData, handleThriftError(res => {
-            resolve(Object.keys(ReviewStatus).map(status => {
-              const id = ReviewStatus[status];
-              return {
-                id: id,
-                title: this.encodeValue(id),
-                count: res[id] !== undefined ? res[id].toNumber() : 0
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
-  }
-};
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    reviewStatus:
+      baseSelectOptionFilter.selectedItems.value.map(item => item.id)
+  });
+}
+
+function onReportFilterChange(key) {
+  if (key === "reviewStatus") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems() {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
+  _reportFilter.reviewStatus = null;
+
+  return new Promise(resolve => {
+    ccService.getClient().getReviewStatusCounts(
+      baseSelectOptionFilter.runIds.value,
+      _reportFilter,
+      baseSelectOptionFilter.cmpData.value,
+      handleThriftError(res => {
+        resolve(Object.keys(ReviewStatus).map(status => {
+          const _id = ReviewStatus[status];
+          return {
+            id: _id,
+            title: encodeValue(_id),
+            count: res[_id] !== undefined ? res[_id].toNumber() : 0
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  initByUrl: baseSelectOptionFilter.initByUrl,
+  getUrlState: baseSelectOptionFilter.getUrlState,
+
+  id,
+  encodeValue,
+  decodeValue,
+  updateReportFilter,
+  onReportFilterChange,
+  fetchItems
+});
 </script>

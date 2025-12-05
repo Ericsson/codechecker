@@ -13,9 +13,11 @@
 
         <v-spacer />
 
-        <v-btn class="close-btn" icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          class="close-btn"
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text>
@@ -54,92 +56,75 @@
   </v-dialog>
 </template>
 
-<script>
-
+<script setup>
+import { SeverityIcon } from "@/components/Icons";
 import { ccService, handleThriftError } from "@cc-api";
 import { Checker, Severity } from "@cc/report-server-types";
-import { SeverityIcon } from "@/components/Icons";
+import { computed, ref, watch } from "vue";
 
-export default {
-  name: "CheckerDocumentationDialog",
-  components: {
-    SeverityIcon
-  },
-  props: {
-    value: { type: Boolean, required: true },
-    checker: { type: Checker, default: null }
-  },
-  data() {
-    return {
-      labels: []
-    };
-  },
+const props = defineProps({
+  modelValue: { type: Boolean, required: true },
+  checker: { type: Checker, default: null }
+});
 
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    },
+const emit = defineEmits([ "update:modelValue" ]);
 
-    formattedLabels() {
-      const labels = {};
+const labels = ref([]);
 
-      for (const label of this.labels) {
-        const pos = label.indexOf(":");
-        const key = label.substring(0, pos);
-        const value = label.substring(pos + 1);
+const dialog = computed({
+  get: () => props.modelValue,
+  set: val => emit("update:modelValue", val)
+});
 
-        if (key in labels)
-          labels[key].push(value);
-        else
-          labels[key] = [ value ];
-      }
+const formattedLabels = computed(() => {
+  const result = {};
 
-      if ("severity" in labels)
-        labels["severity"] = Severity[labels["severity"][0]];
+  for (const label of labels.value) {
+    const pos = label.indexOf(":");
+    const key = label.substring(0, pos);
+    const value = label.substring(pos + 1);
 
-      labels["doc_url"] =
-        "doc_url" in labels ? labels["doc_url"][0] : "Not available";
-
-      for (const key in labels) {
-        if (Array.isArray(labels[key]))
-          labels[key] = labels[key].join(", ");
-      }
-
-      return Object.entries(labels).sort();
-    }
-  },
-
-  watch: {
-    value() {
-      this.getCheckerDoc();
-    }
-  },
-
-  methods: {
-    getCheckerDoc() {
-      ccService.getClient().getCheckerLabels([ this.checker ],
-        handleThriftError(labels => this.labels = labels[0]));
-    },
-
-    formatLabel(key) {
-      switch (key) {
-      case "profile":
-        return "Profile";
-      case "severity":
-        return "Severity";
-      case "doc_url":
-        return "Documentation URL";
-      case "guideline":
-        return "Covered guideline";
-      default:
-        return key;
-      }
-    }
+    if (key in result)
+      result[key].push(value);
+    else
+      result[key] = [ value ];
   }
-};
+
+  if ("severity" in result)
+    result["severity"] = Severity[result["severity"][0]];
+
+  result["doc_url"] =
+    "doc_url" in result ? result["doc_url"][0] : "Not available";
+
+  for (const key in result) {
+    if (Array.isArray(result[key]))
+      result[key] = result[key].join(", ");
+  }
+
+  return Object.entries(result).sort();
+});
+
+watch(() => props.modelValue, () => {
+  getCheckerDoc();
+});
+
+function getCheckerDoc() {
+  ccService.getClient().getCheckerLabels([ props.checker ],
+    handleThriftError(labels => labels.value = labels[0]));
+}
+
+function formatLabel(key) {
+  switch (key) {
+  case "profile":
+    return "Profile";
+  case "severity":
+    return "Severity";
+  case "doc_url":
+    return "Documentation URL";
+  case "guideline":
+    return "Covered guideline";
+  default:
+    return key;
+  }
+}
 </script>

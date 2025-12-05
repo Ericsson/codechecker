@@ -1,16 +1,16 @@
 <template>
   <v-container class="pa-0" fluid>
     <v-progress-linear
-      v-if="loading"
+      v-if="baseFilter.loading"
       indeterminate
       size="64"
     />
 
     <items
-      :items.sync="tags"
-      :selected-items="selectedItems"
+      v-model:items="tags"
+      :selected-items="selectedItems.value"
       :search="search"
-      :limit="defaultLimit"
+      :limit="baseFilter.defaultLimit"
       @apply="apply"
       @cancel="cancel"
       @select="select"
@@ -57,136 +57,143 @@
   </v-container>
 </template>
 
-<script>
-import { mapState } from "vuex";
+<script setup>
 import { endOfDay, parse } from "date-fns";
+import {
+  onMounted,
+  ref,
+  toRef,
+  watch
+} from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
 import { DateInterval, ReportFilter } from "@cc/report-server-types";
 
 import BulbMessage from "@/components/BulbMessage";
-import DateMixin from "@/mixins/date.mixin";
-import BaseFilterMixin from "./BaseFilter.mixin";
+import { useBaseFilter } from "@/composables/useBaseFilter";
+import { useDateUtils } from "@/composables/useDateUtils";
 import Items from "./SelectOption/Items";
 
-export default {
-  name: "BaselineTagItems",
-  components: { BulbMessage, Items },
-  mixins: [ BaseFilterMixin, DateMixin ],
-  props: {
-    runId: { type: Number, required: true },
-    selectedItems: { type: Array, default: null },
-    limit: { type: Number, required: true }
-  },
-  data() {
-    return {
-      loading: false,
-      search: {
-        placeHolder : "Search by tag name...",
-        filterItems: this.filterItems
-      },
-      tags: [],
-      dateFilter: null,
-      filterOpt: {}
-    };
-  },
-  computed: {
-    ...mapState({
-      reportFilter(state) {
-        return state[this.namespace].reportFilter;
-      }
-    })
-  },
-  watch: {
-    async runId() {
-      this.tags = await this.fetchTags(this.filterOpt);
-    },
+const props = defineProps({
+  namespace: { type: String, required: true },
+  runId: { type: Number, required: true },
+  selectedItems: { type: Array, default: null },
+  limit: { type: Number, required: true }
+});
+const emit = defineEmits([
+  "apply",
+  "select",
+  "cancel"
+]);
+const search = ref({
+  placeHolder : "Search by tag name...",
+  filterItems: filterItems
+});
+const tags = ref([]);
+const dateFilter = ref(null);
+const filterOpt = ref({});
 
-    async dateFilter() {
-      this.tags = await this.fetchTags(this.filterOpt);
-    }
-  },
+const { getUnixTime, prettifyDate } = useDateUtils();
 
-  async mounted() {
-    this.tags = await this.fetchTags(this.filterOpt);
-  },
+const baseFilter = useBaseFilter(toRef(props, "namespace"));
 
-  methods: {
-    async getRunTagFilter() {
-      const query = this.filterOpt.query;
+watch(() => props.runId, async () => {
+  tags.value = await fetchTags(filterOpt.value);
+});
 
-      if (!query && !this.dateFilter)
-        return null;
+watch(dateFilter, async () => {
+  tags.value = await fetchTags(filterOpt.value);
+});
 
-      let stored = null;
-      if (this.dateFilter) {
-        const date = parse(this.dateFilter, "yyyy-MM-dd", new Date());
-        const midnight = endOfDay(date);
+onMounted(async () => {
+  tags.value = await fetchTags(filterOpt.value);
+});
 
-        stored = new DateInterval({
-          before: this.getUnixTime(midnight)
-        });
-      }
+async function getRunTagFilter() {
+  const _query = filterOpt.value.query;
 
-      const tags =
-        await ccService.getTags([ this.runId ], null, query, stored);
+  if (!_query && !dateFilter.value)
+    return null;
 
-      return tags.map(t => t.id.toNumber());
-    },
+  let _stored = null;
+  if (dateFilter.value) {
+    const _date = parse(dateFilter.value, "yyyy-MM-dd", new Date());
+    const _midnight = endOfDay(_date);
 
-    async fetchTags(opt={}) {
-      this.loading = true;
-      this.filterOpt = opt;
-
-      const reportFilter = new ReportFilter(this.reportFilter);
-      const limit = opt.limit || this.limit;
-      const offset = 0;
-
-      reportFilter.runTag = await this.getRunTagFilter();
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunHistoryTagCounts([ this.runId ],
-          reportFilter, null, limit, offset, handleThriftError(res => {
-            resolve(res.map(tag => {
-              const id = tag.id.toNumber();
-              const time = this.$options.filters.prettifyDate(tag.time);
-              return {
-                id,
-                runName: tag.runName,
-                runId: tag.runId.toNumber(),
-                tagName: tag.name || time,
-                time: time,
-                title: tag.name,
-                count: tag.count.toNumber()
-              };
-            }));
-
-            this.loading = false;
-          }));
-      });
-    },
-
-    filterItems(value) {
-      return this.fetchTags({ query: value ? [ `${value}*` ] : null });
-    },
-
-    apply() {
-      this.$emit("apply");
-    },
-
-    select(selectedItems) {
-      this.$emit("select", selectedItems);
-    },
-
-    cancel() {
-      this.$emit("cancel");
-    }
+    _stored = new DateInterval({
+      before: getUnixTime(_midnight)
+    });
   }
-};
+
+  const _tags =
+    await ccService.getTags([ props.runId ], null, _query, _stored);
+
+  return _tags.map(_t => _t.id.toNumber());
+}
+
+async function fetchTags(opt={}) {
+  baseFilter.loading.value = true;
+  filterOpt.value = opt;
+
+  const _reportFilter = new ReportFilter(baseFilter.reportFilter.value);
+  const _limit = opt.limit || props.limit;
+  const _offset = 0;
+
+  _reportFilter.runTag = await getRunTagFilter();
+
+  return new Promise(_resolve => {
+    ccService.getClient().getRunHistoryTagCounts(
+      [ props.runId ],
+      baseFilter.reportFilter.value,
+      null,
+      _limit,
+      _offset,
+      handleThriftError(res => {
+        _resolve(res.map(_tag => {
+          const _id = _tag.id.toNumber();
+          const _time = prettifyDate(_tag.time);
+          return {
+            _id,
+            runName: _tag.runName,
+            runId: _tag.runId.toNumber(),
+            tagName: _tag.name || _time,
+            time: _time,
+            title: _tag.name,
+            count: _tag.count.toNumber()
+          };
+        }));
+
+        baseFilter.loading.value = false;
+      }));
+  });
+}
+
+function filterItems(value) {
+  return fetchTags({ query: value ? [ `${value}*` ] : null });
+}
+
+function apply() {
+  emit("apply");
+}
+
+function select(selectedItems) {
+  emit("select", selectedItems);
+}
+
+function cancel() {
+  emit("cancel");
+}
+
+defineExpose({
+  filterItems,
+  apply,
+  select,
+  cancel
+});
 </script>
 
 <style lang="scss" scoped>
-::v-deep .v-date-picker-table {
+:deep(.v-date-picker-table) {
   height: 210px;
 }
 </style>

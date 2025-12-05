@@ -23,7 +23,7 @@ module.exports = {
     const col = 3;
     const runsPage = browser.page.runs();
 
-    runsPage.sortRuns(col, (data) => {
+    runsPage.sortRuns(col, data => {
       return data.every((e, ind, a) =>
         !ind || a[ind - 1][col - 1] <= e[col - 1]);
     });
@@ -33,12 +33,12 @@ module.exports = {
     const col = 4;
     const runsPage = browser.page.runs();
 
-    runsPage.sortRuns(col, (data) => {
+    runsPage.sortRuns(col, data => {
       return data.every((e, ind, a) =>
         !ind || a[ind - 1][col - 1] <= e[col - 1]);
     });
 
-    runsPage.sortRuns(col, (data) => {
+    runsPage.sortRuns(col, data => {
       return data.every((e, ind, a) =>
         !ind || a[ind - 1][col - 1] >= e[col - 1]);
     });
@@ -57,7 +57,7 @@ module.exports = {
       .waitForElementNotPresent("@progressBar")
       .assert.urlContains(`run=${runName}`)
 
-    runsPage.getTableRows("@tableRows", (runs) => {
+    runsPage.getTableRows("@tableRows", runs => {
       browser.assert.ok(runs.length === 1);
       browser.assert.ok(runs[0][2].includes(tag));
     });

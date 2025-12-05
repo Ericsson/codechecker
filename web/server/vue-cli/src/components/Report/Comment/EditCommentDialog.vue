@@ -14,9 +14,10 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text class="pa-0">
@@ -25,9 +26,7 @@
             v-model="message"
             label="Leave a message..."
             hide-details
-            solo
-            flat
-            outlined
+            variant="outlined"
           />
         </v-container>
       </v-card-text>
@@ -59,47 +58,39 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed, ref, watch } from "vue";
 
-export default {
-  name: "EditCommentDialog",
-  props: {
-    value: { type: Boolean, default: false },
-    comment: { type: Object, default: () => null }
-  },
-  data() {
-    return {
-      message: null
-    };
-  },
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  },
-  watch: {
-    dialog(val) {
-      if (val) {
-        this.message = this.comment.message;
-      }
-    }
-  },
+const props = defineProps({
+  value: { type: Boolean, default: false },
+  comment: { type: Object, default: () => null }
+});
 
-  methods: {
-    confirmCommentChange() {
-      // TODO: validate the message.
-      ccService.getClient().updateComment(this.comment.id, this.message,
-        handleThriftError(() => {
-          this.$emit("on-confirm");
-          this.dialog = false;
-        }));
-    }
+const emit = defineEmits([
+  "update:value",
+  "on-confirm"
+]);
+
+const message = ref(null);
+
+const dialog = computed({
+  get: () => props.value,
+  set: val => emit("update:value", val)
+});
+
+watch(dialog, val => {
+  if (val) {
+    message.value = props.comment.message;
   }
-};
+});
+
+function confirmCommentChange() {
+  // TODO: validate the message.
+  ccService.getClient().updateComment(props.comment.id, message.value,
+    handleThriftError(() => {
+      emit("on-confirm");
+      dialog.value = false;
+    }));
+}
 </script>

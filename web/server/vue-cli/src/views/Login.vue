@@ -3,17 +3,37 @@
     class="fill-height"
     fluid
   >
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="3">
-        <v-card class="elevation-1 pa-8" outlined>
+    <v-row
+      align="center"
+      justify="center"
+    >
+      <v-col
+        cols="12"
+        sm="8"
+        md="3"
+      >
+        <v-card
+          class="elevation-1 pa-8"
+          variant="flat"
+        >
           <v-card-title>
-            <v-container class="text-center pt-4">
-              <v-avatar id="avatar" color="primary" :size="120">
-                <v-icon :size="100" dark>
+            <v-container
+              class="text-center mt-6 mb-4"
+            >
+              <v-avatar
+                id="avatar"
+                color="primary"
+                :size="120"
+              >
+                <v-icon
+                  :size="100"
+                >
                   mdi-account
                 </v-icon>
               </v-avatar>
-              <div class="display-1 grey--text">
+              <div
+                class="text-h4 text-grey"
+              >
                 Login
               </div>
             </v-container>
@@ -25,7 +45,7 @@
           >
             <v-btn
               block
-              x-large
+              size="x-large"
               color="primary"
               @click="ssoButtonHandleClickEvent"
             >
@@ -50,16 +70,16 @@
                   :error="error"
                   :error-msg="errorMsg"
                 />
-                <v-form v-model="valid">
+                <v-form v-model="isDataValid">
                   <v-text-field
                     v-model="username"
                     autocomplete="username"
                     label="Username"
                     name="username"
-                    append-icon="mdi-account"
+                    append-inner-icon="mdi-account"
                     type="text"
                     required
-                    outlined
+                    variant="outlined"
                     :rules="[() => !!username || 'This field is required']"
                     :placeholder="placeholder"
                     @keyup.enter="login"
@@ -71,10 +91,10 @@
                     autocomplete="current-password"
                     label="Password"
                     name="password"
-                    append-icon="mdi-lock"
+                    append-inner-icon="mdi-lock"
                     type="password"
                     required
-                    outlined
+                    variant="outlined"
                     :rules="[() => !!password || 'This field is required']"
                     :placeholder="placeholder"
                     @keyup.enter="login"
@@ -88,9 +108,10 @@
                 <v-btn
                   id="login-btn"
                   block
-                  x-large
+                  size="x-large"
                   color="primary"
-                  @click="login"
+                  variant="flat"
+                  @click="login()"
                 >
                   Login
                 </v-btn>
@@ -107,24 +128,25 @@
     >
       <v-card>
         <v-card-title
-          class="headline primary white--text"
-          primary-title
+          class="headline primary text-white"
         >
           Login Methods
 
           <v-spacer />
 
-          <v-btn icon dark @click="dialog = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
+          <v-btn
+            variant="text"
+            icon="mdi-close"
+            @click="dialog = false"
+          />
         </v-card-title>
         <v-card-text>
           <v-btn
             v-for="provider in providers"
-            :id="login-btn-{provider}"
+            :id="`login-btn-${provider}`"
             :key="provider"
             block
-            x-large
+            size="x-large"
             color="primary"
             style="margin-top: 10px"
             @click="oauth(provider)"
@@ -137,174 +159,168 @@
   </v-container>
 </template>
 
-<script>
-import { mapGetters } from "vuex";
+<script setup>
+import { computed, onMounted, ref, watch } from "vue";
+import { useStore } from "vuex";
+import { useRoute, useRouter } from "vue-router";
 import { LOGIN } from "@/store/actions.type";
 import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
 
-export default {
-  name: "Login",
-  components: {
-    Alerts
-  },
+const store = useStore();
+const route = useRoute();
+const router = useRouter();
 
-  data() {
-    return {
-      placeholder: null,
-      username: null,
-      password: null,
-      success: false,
-      error: false,
-      errorMsg: null,
-      valid: false,
-      providers: [],
-      dialog: false,
-      on: false,
-      optionsShow: false
-    };
-  },
+const placeholder = ref("");
+const username = ref("");
+const password = ref("");
+const success = ref(false);
+const error = ref(false);
+const errorMsg = ref(null);
+const isDataValid = ref(false);
+const providers = ref([]);
+const dialog = ref(false);
+const on = ref(false);
+const optionsShow = ref(false);
 
-  computed: {
-    ...mapGetters([
-      "authParams",
-      "isAuthenticated"
-    ]),
-    ssoButtonText() {
-      return this.providers.length === 1 ?
-        `Login with ${this.providers[0]}` : "SSO Login";
-    }
-  },
+const authParams = computed(() => store.getters.authParams);
+const isAuthenticated = computed(() => store.getters.isAuthenticated);
 
-  watch: {
-    username() {
-      this.resetPlaceholder();
-    },
-    password() {
-      this.resetPlaceholder();
-    }
-  },
+const ssoButtonText = computed(() => {
+  return providers.value.length === 1 ?
+    `Login with ${providers.value[0]}` : "SSO Login";
+});
 
-  created() {
-    if (this.isAuthenticated && this.authParams.sessionStillActive) {
-      const returnTo = this.$router.currentRoute.query["return_to"];
-      this.$router.replace(returnTo || { name: "products" });
-    }
-  },
+watch(username, () => {
+  resetPlaceholder();
+});
 
-  mounted() {
-    this.fixAutocomplete();
-    this.getProviders();
-  },
+watch(password, () => {
+  resetPlaceholder();
+});
 
-  methods: {
-    openModal() {
-      this.dialog = true;
-      this.on = true;
-    },
-    toggleOtherLoginOptions() {
-      this.optionsShow = !this.optionsShow;
-    },
-    ssoButtonHandleClickEvent() {
-      return this.providers.length === 1 ?
-        this.oauth(this.providers[0]) : this.openModal();
-    },
-    login() {
-      if (!this.valid) return;
-
-      this.$store
-        .dispatch(LOGIN, { username: this.username, password: this.password,
-          type: "password"
-        })
-        .then(() => {
-          this.success = true;
-          this.error = false;
-
-          const returnTo = this.$router.currentRoute.query["return_to"];
-          this.$router.replace(returnTo || { name: "products" });
-        }).catch(err => {
-          this.errorMsg = `Failed to log in! ${err.message}`;
-          this.error = true;
-        });
-    },
-    getProviders() {
-      new Promise(resolve => {
-        authService.getClient().getOauthProviders(
-          handleThriftError(providers => {
-            resolve(providers);
-          }));
-      }).then(providers => {
-        if (providers) {
-          this.providers = providers;
-        }
-        this.optionsShow = this.providers.length === 0;
-      }).catch(err => {
-        this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
-        this.error = true;
-      });
-    },
-    oauth(provider) {
-      new Promise(resolve => {
-        localStorage.setItem("oauth_provider", provider);
-        authService.getClient().createLink(provider,
-          handleThriftError(url => {
-            resolve(url);
-          }));
-      }).then(url => {
-        if (url) {
-          this.success = false;
-          this.error = false;
-
-          window.location.href = url;
-        } else {
-          this.errorMsg = `Server returned an invalid URL: ${url}`;
-          this.error = true;
-        }
-      }).catch(err => {
-        this.errorMsg = `Failed to access link. ${err.message}`;
-        this.error = true;
-      });
-    },
-
-    /**
-     * Set placeholder when browser autocompletes username or password to raise
-     * v-text-field labels.
-     * See: https://github.com/vuetifyjs/vuetify/issues/3679
-     */
-    fixAutocomplete() {
-      let times = 0;
-      const interval = setInterval(() => {
-        times += 1;
-        if (this.placeholder || times === 20) {
-          clearInterval(interval);
-        }
-
-        const username =
-          this.$el.querySelector("input[name=\"username\"]:-webkit-autofill");
-        const password =
-          this.$el.querySelector("input[name=\"password\"]:-webkit-autofill");
-
-        if (username || password) {
-          this.$nextTick(() => {
-            this.placeholder = "`\u0020`";
-          });
-        }
-      }, 100);
-    },
-
-    /**
-     * We set the placeholder back to null if the user edited this field.
-     * This way the label of the text field will be moved properly.
-     * See the fixAutocomplete function for more information.
-     */
-    resetPlaceholder() {
-      this.placeholder = null;
-    }
+onMounted(() => {
+  fixAutocomplete();
+  getProviders();
+  if (isAuthenticated.value && authParams.value?.sessionStillActive) {
+    const returnTo = route.query["return_to"];
+    router.replace(returnTo || { name: "products" });
   }
-};
+});
+
+function openModal() {
+  dialog.value = true;
+  on.value = true;
+}
+
+function toggleOtherLoginOptions() {
+  optionsShow.value = !optionsShow.value;
+}
+
+function ssoButtonHandleClickEvent() {
+  return providers.value.length === 1 ?
+    oauth(providers.value[0]) : openModal();
+}
+
+function login() {
+  if (!username.value || !password.value) {
+    return;
+  }
+
+  store.dispatch(LOGIN,
+    { username: username.value, password: password.value, type: "password" }
+  ).then(() => {
+    success.value = true;
+    error.value = false;
+
+    const returnTo = route.query["return_to"];
+    router.replace(returnTo || { name: "products" });
+  }).catch(err => {
+    errorMsg.value = `Failed to log in! ${err.message}`;
+    error.value = true;
+  });
+}
+
+function getProviders() {
+  new Promise(
+    resolve => {
+      authService.getClient().getOauthProviders(
+        handleThriftError(providers => {
+          resolve(providers);
+        }));
+    }
+  ).then(_providers => {
+    if (_providers) {
+      providers.value = _providers;
+    }
+    optionsShow.value = providers.value.length === 0;
+  }).catch(err => {
+    errorMsg.value = `Providers list was passed incorrectly. ${err.message}`;
+    error.value = true;
+  });
+}
+
+function oauth(provider) {
+  new Promise(resolve => {
+    localStorage.setItem("oauth_provider", provider);
+    authService.getClient().createLink(provider,
+      handleThriftError(url => {
+        resolve(url);
+      }));
+  }).then(url => {
+    if (url) {
+      success.value = false;
+      error.value = false;
+
+      router.push({ path: url });
+    } else {
+      errorMsg.value = `Server returned an invalid URL: ${url}`;
+      error.value = true;
+    }
+  }).catch(err => {
+    errorMsg.value = `Failed to access link. ${err.message}`;
+    error.value = true;
+  });
+}
+
+/**
+ * Set placeholder when browser autocompletes username or password to raise
+ * v-text-field labels.
+ * See: https://github.com/vuetifyjs/vuetify/issues/3679
+ */
+function fixAutocomplete() {
+  let times = 0;
+  const interval = setInterval(() => {
+    times += 1;
+    if (placeholder.value || times === 20) {
+      clearInterval(interval);
+    }
+
+    const username_query =
+        document.querySelector("input[name=\"username\"]:-webkit-autofill");
+    const password_query =
+        document.querySelector("input[name=\"password\"]:-webkit-autofill");
+
+    if (username_query || password_query) {
+      placeholder.value = "`\u0020`";
+    }
+  }, 100);
+}
+
+/**
+ * We set the placeholder back to null if the user edited this field.
+ * This way the label of the text field will be moved properly.
+ * See the fixAutocomplete function for more information.
+ */
+function resetPlaceholder() {
+  placeholder.value = null;
+}
 </script>
 
 <style lang="scss" scoped>
+.v-card {
+  overflow: visible;
+}
 #btn-container > button {
   margin: 0 !important;
   margin-top: 10px !important;

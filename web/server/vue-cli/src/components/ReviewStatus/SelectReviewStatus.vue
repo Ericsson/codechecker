@@ -1,73 +1,73 @@
 <template>
   <v-select
-    v-model="reviewStatus"
+    v-model="reviewStatusValue"
     :items="items"
     :hide-details="true"
-    :menu-props="{ contentClass: 'select-review-status-menu' }"
     :label="label"
     :clearable="clearable"
     :rules="rules"
-    item-text="label"
+    item-title="label"
     item-value="id"
     class="select-review-status small"
-    height="0"
-    flat
-    dense
-    outlined
-    @change="onChange"
+    density="compact"
+    variant="outlined"
   >
     <template v-slot:selection="{ item }">
-      <select-review-status-item :item="item" />
+      <div class="d-flex align-center">
+        <review-status-icon
+          :status="item.value"
+          :size="16"
+          class="mx-2"
+        />
+        <span>{{ item.title }}</span>
+      </div>
     </template>
 
-    <template v-slot:item="{ item }">
-      <select-review-status-item :item="item" />
+    <template v-slot:item="{ item, props: itemProps }">
+      <v-list-item
+        v-bind="itemProps"
+      >
+        <template v-slot:prepend>
+          <review-status-icon
+            :status="item.raw.id"
+            :size="16"
+            class="mx-2"
+          />
+        </template>
+      </v-list-item>
     </template>
   </v-select>
 </template>
 
-<script>
+<script setup>
+import { useReviewStatus } from "@/composables/useReviewStatus";
 import { ReviewStatus } from "@cc/report-server-types";
-import { ReviewStatusMixin } from "@/mixins";
-import { SelectReviewStatusItem } from "@/components/Report";
+import { computed, ref } from "vue";
+import { ReviewStatusIcon } from "@/components/Icons";
 
-export default {
-  name: "SelectReviewStatus",
-  components: { SelectReviewStatusItem },
-  mixins: [ ReviewStatusMixin ],
-  props: {
-    value: { type: Number, default: null },
-    label: { type: String, default: "Select review status" },
-    clearable: { type: Boolean, default: true },
-    rules: { type: Array, default: () => [] }
+const props = defineProps({
+  modelValue: { type: Number, default: null },
+  label: { type: String, default: "Select review status" },
+  clearable: { type: Boolean, default: true },
+  rules: { type: Array, default: () => [] }
+});
+
+const emit = defineEmits([ "update:modelValue", "change" ]);
+
+const reviewStatus = useReviewStatus();
+const items = ref(Object.values(ReviewStatus)
+  .map(id => ({
+    id: id,
+    label: reviewStatus.reviewStatusFromCodeToString(parseInt(id))
+  }))
+);
+
+const reviewStatusValue = computed({
+  get() {
+    return props.modelValue;
   },
-  data() {
-    return {
-      items: []
-    };
-  },
-  computed: {
-    reviewStatus: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("input", val);
-      }
-    }
-  },
-  created() {
-    this.items = Object.values(ReviewStatus).map(id => {
-      return {
-        id: id,
-        label: this.reviewStatusFromCodeToString(parseInt(id))
-      };
-    });
-  },
-  methods: {
-    onChange() {
-      this.$emit("change", this.value);
-    }
+  set(val) {
+    emit("update:modelValue", val);
   }
-};
+});
 </script>

@@ -5,12 +5,12 @@
     :nudge-width="200"
     offset-y
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props }">
       <v-btn
+        v-bind="props"
         id="user-info-menu-btn"
         text
         class="text-none"
-        v-on="on"
       >
         <user-icon
           v-if="currentUser"
@@ -26,17 +26,15 @@
     <v-card>
       <v-list>
         <v-list-item>
-          <v-list-item-avatar>
+          <template v-slot:prepend>
             <user-icon
               :value="currentUser"
             />
-          </v-list-item-avatar>
+          </template>
 
-          <v-list-item-content>
-            <v-list-item-title class="headline">
-              {{ currentUser }}
-            </v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-title class="headline">
+            {{ currentUser }}
+          </v-list-item-title>
         </v-list-item>
       </v-list>
 
@@ -51,7 +49,7 @@
               :key="permission"
               class="ma-2"
               color="success"
-              outlined
+              variant="outlined"
             >
               {{ permissionFromCodeToString(permission) }}
             </v-chip>
@@ -84,95 +82,76 @@
   </v-menu>
 </template>
 
-<script>
-import { mapActions, mapGetters } from "vuex";
+<script setup>
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 import { authService, handleThriftError } from "@cc-api";
 import { PermissionFilter } from "@cc/auth-types";
 import { Permission } from "@cc/shared-types";
 
 import { UserIcon } from "@/components/Icons";
+import PersonalAccessTokenBtn from "@/components/Layout/PersonalAccessTokenBtn";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
-import PersonalAccessTokenBtn from
-  "@/components/Layout/PersonalAccessTokenBtn";
 
-export default {
-  name: "UserInfoMenu",
-  components: {
-    PersonalAccessTokenBtn,
-    UserIcon
-  },
-  data() {
-    return {
-      menu: false,
-      systemPermissions: [],
-      productPermissions: [],
-      permissionFilter: new PermissionFilter({ given: true })
-    };
-  },
+const menu = ref(false);
+const systemPermissions = ref([]);
+const productPermissions = ref([]);
+const permissionFilter = ref(new PermissionFilter({ given: true }));
+const store = useStore();
+const router = useRouter();
 
-  computed: {
-    ...mapGetters([
-      "currentUser",
-      "currentProduct"
-    ]),
-    permissions() {
-      return this.systemPermissions.concat(this.productPermissions);
-    }
-  },
+const permissions = computed(() => {
+  return systemPermissions.value.concat(productPermissions.value);
+});
 
-  watch: {
-    currentProduct() {
-      if (!this.currentProduct) {
-        this.productPermissions = [];
-        return;
-      }
+const currentUser = computed(() => store.getters.currentUser);
+const currentProduct = computed(() => store.getters.currentProduct);
 
-      const extraParams = JSON.stringify({
-        productID: this.currentProduct.id.toNumber()
-      });
-
-      authService.getClient().getPermissionsForUser("PRODUCT", extraParams,
-        this.permissionFilter, handleThriftError(permissions => {
-          this.productPermissions = permissions;
-        }));
-    }
-  },
-
-
-  mounted() {
-    this.getLoggedInUser();
-    this.fetchPermissions();
-  },
-
-  methods: {
-    ...mapActions([
-      GET_LOGGED_IN_USER
-    ]),
-
-    fetchPermissions() {
-      authService.getClient().getPermissionsForUser("SYSTEM",
-        JSON.stringify({}), this.permissionFilter,
-        handleThriftError(permissions => {
-          this.systemPermissions = permissions;
-        }));
-    },
-
-    permissionFromCodeToString(permission) {
-      for (const key in Permission)
-        if (Permission[key] === permission)
-          return key;
-    },
-
-    logOut() {
-      this.$store
-        .dispatch(LOGOUT)
-        .then(
-          () => {
-            this.$router.push({ name: "login" });
-            this.menu = false;
-          });
-    }
+watch(currentProduct, () => {
+  if (!currentProduct.value) {
+    productPermissions.value = [];
+    return;
   }
-};
+
+  const extraParams = JSON.stringify({
+    productID: currentProduct.value.id.toNumber()
+  });
+
+  authService.getClient().getPermissionsForUser("PRODUCT", extraParams,
+    permissionFilter.value, handleThriftError(permissions => {
+      productPermissions.value = permissions;
+    }));
+});
+
+onMounted(() => {
+  getLoggedInUser();
+  fetchPermissions();
+});
+
+function fetchPermissions() {
+  authService.getClient().getPermissionsForUser("SYSTEM",
+    JSON.stringify({}), permissionFilter.value,
+    handleThriftError(permissions => {
+      systemPermissions.value = permissions;
+    }));
+}
+
+function permissionFromCodeToString(permission) {
+  for (const key in Permission)
+    if (Permission[key] === permission)
+      return key;
+}
+
+function logOut() {
+  store.dispatch(LOGOUT).then(() => {
+    router.push({ name: "login" });
+    menu.value = false;
+  });
+}
+
+function getLoggedInUser() {
+  store.dispatch(GET_LOGGED_IN_USER);
+}
 </script>

@@ -1,9 +1,9 @@
 <template>
-  <v-expansion-panel
+  <div
     class="analyzer-checker-group-panel"
     :data-group-name="group"
   >
-    <v-expansion-panel-header
+    <div
       class="pa-0 px-1"
     >
       <v-row
@@ -20,9 +20,8 @@
                 (groupEnabled ? '' : ' not')
               ) +
               ' enabled in this analysis'"
-            outlined
-            dark
-            small
+            variant="outlined"
+            size="small"
           >
             <v-icon
               v-if="!needDetailedCounts && groupEnabled"
@@ -51,7 +50,7 @@
           {{ group }}
         </v-col>
         <v-col cols="auto">
-          <count-chips
+          <CountChips
             v-if="needDetailedCounts"
             :num-good="counts[CountKeys.Enabled]"
             :num-bad="counts[CountKeys.Disabled]"
@@ -67,56 +66,48 @@
           />
         </v-col>
       </v-row>
-    </v-expansion-panel-header>
-    <v-expansion-panel-content>
-      <checker-rows
+    </div>
+    <div>
+      <CheckerRows
         :checkers="checkers"
       />
-    </v-expansion-panel-content>
-  </v-expansion-panel>
+    </div>
+  </div>
 </template>
 
-<script>
+<script setup>
 import CountChips from "@/components/CountChips";
+import { CountKeys } from "@/composables/useAnalysisInfo";
+import { computed } from "vue";
 import CheckerRows from "./CheckerRows";
-import { CountKeys } from "@/mixins/api/analysis-info-handling.mixin";
 
-export default {
-  name: "CheckerGroup",
-  components: {
-    CheckerRows,
-    CountChips,
-  },
-  props: {
-    group: { type: String, required: true },
-    checkers: { type: Array, required: true },
-    counts: { type: Array, required: true }
-  },
-  computed: {
-    numEnabled() {
-      return this.counts[this.CountKeys.Enabled];
-    },
-    numDisabled() {
-      return this.counts[this.CountKeys.Disabled];
-    },
-    needDetailedCounts() {
-      return this.numEnabled > 0 && this.numDisabled > 0;
-    },
-    groupWideStatus() {
-      if (this.numEnabled > 0 && this.numDisabled === 0)
-        return "success";
-      if (this.numEnabled === 0 && this.numDisabled > 0)
-        return "error";
-      return "grey darken-1";
-    },
-    groupEnabled() {
-      return this.groupWideStatus === "success";
-    },
-    CountKeys() {
-      return CountKeys;
-    }
-  }
-};
+const props = defineProps({
+  group: { type: String, required: true },
+  checkers: { type: Array, required: true },
+  counts: { type: Array, required: true }
+});
+
+const numEnabled = computed(
+  () => props.counts[CountKeys.Enabled]
+);
+
+const numDisabled = computed(
+  () => props.counts[CountKeys.Disabled]
+);
+
+const needDetailedCounts = computed(() => 
+  numEnabled.value > 0 && numDisabled.value > 0
+);
+
+const groupWideStatus = computed(() => {
+  if (numEnabled.value > 0 && numDisabled.value === 0)
+    return "success";
+  if (numEnabled.value === 0 && numDisabled.value > 0)
+    return "error";
+  return "grey darken-1";
+});
+
+const groupEnabled = computed(() => groupWideStatus.value === "success");
 </script>
 
 <style lang="scss" scoped>

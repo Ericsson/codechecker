@@ -1,13 +1,12 @@
 <template>
-  <filter-toolbar
+  <FilterToolbar
     :title="title"
     :panel="panel"
-    @clear="clear"
+    @clear="emit('clear')"
   >
     <template v-slot:append-toolbar-title>
       <slot name="append-toolbar-title">
-        <selected-toolbar-title-items
-          v-if="selectedItems"
+        <SelectedToolbarTitleItems
           :value="selectedItems"
         />
       </slot>
@@ -36,36 +35,33 @@
           size="64"
         />
 
-        <template v-slot:activator="{ on }">
+        <template v-slot:activator="{ props: activatorProps }">
           <v-btn
-            icon
-            small
+            icon="mdi-cog"
+            v-bind="activatorProps"
+            variant="plain"
+            size="small"
             class="settings-btn"
-            v-on="on"
-          >
-            <v-icon>mdi-cog</v-icon>
-          </v-btn>
+          />
         </template>
 
         <slot
           name="menu-content"
           :items="items"
-          :prev-selected-items="prevSelectedItems"
+          :prev-selected-items="props.selectedItems"
           :apply="applyFilters"
-          :on-apply-finished="onApplyFinished"
+          :on-apply-finished="closeMenu"
           :cancel="cancel"
-          :select="select"
         >
-          <items
-            :items.sync="items"
-            :selected-items="prevSelectedItems"
+          <Items
+            v-model:items="items"
+            :selected-items="props.selectedItems"
             :search="search"
             :multiple="multiple"
             :limit="limit"
             @apply="applyFilters"
-            @apply:finished="onApplyFinished"
+            @apply:finished="closeMenu"
             @cancel="cancel"
-            @select="select"
           >
             <template v-slot:append-toolbar>
               <slot name="append-toolbar" />
@@ -84,11 +80,11 @@
       </v-menu>
     </template>
 
-    <slot :update-selected-items="updateSelectedItems">
+    <slot :update-selected-items="emitInput">
       <items-selected
         :selected-items="selectedItems"
         :multiple="multiple"
-        @update:select="updateSelectedItems"
+        @update:select="emitInput"
       >
         <template v-slot:icon="{ item }">
           <slot name="icon" :item="item" />
@@ -99,140 +95,121 @@
         </template>
       </items-selected>
     </slot>
-  </filter-toolbar>
+  </FilterToolbar>
 </template>
 
-<script>
-import FilterToolbar from "../Layout/FilterToolbar";
+<script setup>
+import { onMounted, onUnmounted, ref, watch } from "vue";
+import _ from "lodash";
 import {
   Items,
   ItemsSelected,
-  SelectedToolbarTitleItems,
-  filterIsChanged,
+  SelectedToolbarTitleItems
 } from ".";
+import FilterToolbar from "../Layout/FilterToolbar";
 
-export default {
-  name: "SelectOption",
-  components: {
-    FilterToolbar,
-    Items,
-    ItemsSelected,
-    SelectedToolbarTitleItems
-  },
-  props: {
-    title: { type: String, required: true },
-    bus: { type: Object, required: true },
-    fetchItems: { type: Function, required: true },
-    selectedItems: { type: Array, default: () => [] },
-    multiple: { type: Boolean, default: true },
-    search: { type: Object, default: null },
-    loading: { type: Boolean, default: false },
-    panel: { type: Boolean, default: false },
-    limit: { type: Number, default: null },
-    apply: {
-      type: Function,
-      default: function (selectedItems) {
-        if (!filterIsChanged(this.selectedItems, selectedItems))
-          return;
+const props = defineProps({
+  title: { type: String, required: true },
+  bus: { type: Object, required: true },
+  fetchItems: { type: Function, required: true },
+  selectedItems: { type: Array, default: () => [] },
+  multiple: { type: Boolean, default: true },
+  search: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
+  panel: { type: Boolean, default: false },
+  limit: { type: Number, default: null },
+  apply: { type: Function, default: null }
+});
 
-        this.updateSelectedItems(selectedItems);
-      }
-    }
-  },
-  data() {
-    return {
-      items: [],
-      reloadItems: true,
-      menu: false,
-      prevSelectedItems: [],
-      preventApply: false
-    };
-  },
+const emit = defineEmits([
+  "onMenuShow",
+  "cancel",
+  "select",
+  "input",
+  "clear"
+]);
 
-  computed: {
-    // Vue doesn't automatically bind functions passed to props property with
-    // any Vue instance. For this reason we need to use this computed property
-    // instead of apply function where we bind this to its parent Vue instance.
-    applyFilters() {
-      return this.apply.bind(this);
-    }
-  },
+const items = ref([]);
+const reloadItems = ref(true);
+const menu = ref(false);
+const allSelectedItems = ref([]);
+const preventApply = ref(false);
 
-  watch: {
-    async menu(show) {
-      if (show) {
-        this.$emit("on-menu-show");
-
-        this.preventApply = false;
-
-        if (this.reloadItems) {
-          this.items = await this.fetchItems();
-          this.reloadItems = false;
-        }
-
-        this.select(JSON.parse(JSON.stringify(this.selectedItems)));
-      } else if (!this.preventApply) {
-        this.applyFilters(this.prevSelectedItems);
-      }
-    }
-  },
-
-  mounted() {
-    this.bus.$on("update", () => this.reloadItems = true);
-
-    this.bus.$on("select", predicate => {
-      const item = this.items.find(predicate);
-      if (item &&
-          this.prevSelectedItems.findIndex(i => i.id === item.id) === -1
-      ) {
-        // The item is not selected yet.
-        this.prevSelectedItems.push(item);
-      }
-    });
-  },
-
-  methods: {
-    onApplyFinished() {
-      this.preventApply = true;
-      this.menu = false;
-    },
-
-    /**
-     * Returns true if the filter is changed, else false.
-     */
-    filterIsChanged() {
-      if (this.selectedItems.length !== this.prevSelectedItems.length) {
-        return true;
-      }
-
-      const curr = this.selectedItems.map(item => item.title).sort();
-      const prev = this.prevSelectedItems.map(item => item.title).sort();
-
-      for (let i = 0; i < curr.length; ++i) {
-        if (curr[i] !== prev[i]) return true;
-      }
-
-      return false;
-    },
-
-    cancel() {
-      this.preventApply = true;
-      this.menu = false;
-      this.$emit("cancel");
-    },
-
-    select(selectedItems) {
-      this.prevSelectedItems = selectedItems;
-      this.$emit("select", this.prevSelectedItems);
-    },
-
-    updateSelectedItems(selectedItems) {
-      this.$emit("input", selectedItems);
-    },
-
-    clear() {
-      this.$emit("clear");
-    }
+function applyFilters(_selectedItems) {
+  // Check if the given filter has a specific apply function to use and call it.
+  // E.g. BaselineRunFilter
+  if (props.apply) {
+    props.apply(_selectedItems);
+  } else {
+    if (!filterIsChanged(_selectedItems)) return;
+    emitInput(_selectedItems);
   }
-};
+}
+
+watch(menu, async show => {
+  if (show) {
+    emit("onMenuShow");
+
+    preventApply.value = false;
+
+    if (reloadItems.value) {
+      items.value = await props.fetchItems();
+      reloadItems.value = false;
+    }
+  } else if (!preventApply.value) {
+    applyFilters(allSelectedItems.value);
+  }
+});
+
+onMounted(() => {
+  props.bus.on("update", () => {
+    reloadItems.value = true;
+  });
+
+  props.bus.on("select", predicate => {
+    const item = items.value.find(predicate);
+    if (item && !allSelectedItems.value.some(i => i.id === item.id)) {
+      allSelectedItems.value.push(item);
+    }
+  });
+});
+
+onUnmounted(() => {
+  props.bus.off("update", () => {});
+  props.bus.off("select", () => {});
+});
+
+function closeMenu() {
+  preventApply.value = true;
+  menu.value = false;
+}
+
+/**
+ * Returns true if the filter is changed, else false.
+ */
+function filterIsChanged(_selectedItems) {
+  if (allSelectedItems.value.length !== _selectedItems.length) {
+    return true;
+  }
+
+  const newSelection = _selectedItems.map(item => item.title).sort();
+  const baseSelection = allSelectedItems.value.map(item => item.title).sort();
+
+  if (_.xor(newSelection, baseSelection)) {
+    return true;
+  }
+
+  return false;
+}
+
+function cancel() {
+  preventApply.value = true;
+  menu.value = false;
+  emit("cancel");
+}
+
+function emitInput(items) {
+  allSelectedItems.value = items;
+  emit("input", items);
+}
 </script>
