@@ -1,9 +1,9 @@
-lxml==5.3.0
-sqlalchemy==1.4.54
-alembic==1.5.5
-psycopg2-binary==2.9.10
-psutil==5.9.8
-portalocker==3.1.1
+lxml<6
+sqlalchemy<2
+alembic<2
+psycopg2-binary<=2.9.10
+psutil<8
+portalocker<4
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz
 ./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
