@@ -1,4 +1,4 @@
-import ServiceClient from "@cc/db-access";
+import { Client as ServiceClient } from "@cc/db-access";
 import {
   MAX_QUERY_SIZE,
   Order,

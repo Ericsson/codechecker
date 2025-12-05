@@ -1,20 +1,17 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     content-class="remove-filtered-rules-dialog"
     confirm-btn-label="Remove"
+    title="Remove filtered review status rules"
     @confirm="removeReviewStatusRule"
   >
-    <template v-slot:title>
-      Remove filtered review status rules
-    </template>
-
     <template v-slot:content>
       <v-container>
         <v-alert
           class="mt-2"
           color="error"
-          border="left"
+          border="start"
           elevation="2"
           colored-border
           icon="mdi-alert-outline"
@@ -27,42 +24,39 @@
         </v-alert>
       </v-container>
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed } from "vue";
 
 import { ConfirmDialog } from "@/components";
 
-export default {
-  name: "RemoveFilteredRulesDialog",
-  components: { ConfirmDialog },
-  props: {
-    value: { type: Boolean, default: false },
-    filter: { type: Object, default: null },
-    total: { type: Number, default: null },
+const props = defineProps({
+  value: { type: Boolean, default: false },
+  filter: { type: Object, default: null },
+  total: { type: Number, default: null },
+});
+
+const emit = defineEmits([ "update:value", "on:confirm" ]);
+
+const dialog = computed({
+  get() {
+    return props.value;
   },
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    },
-  },
-  methods: {
-    removeReviewStatusRule() {
-      ccService.getClient().removeReviewStatusRules(this.filter,
-        handleThriftError(success => {
-          if (success) {
-            this.$emit("on:confirm", this.rule);
-            this.dialog = false;
-          }
-        }));
-    }
+  set(val) {
+    emit("update:value", val);
   }
-};
+});
+
+function removeReviewStatusRule() {
+  ccService.getClient().removeReviewStatusRules(props.filter,
+    handleThriftError(success => {
+      if (success) {
+        emit("on:confirm", props.rule);
+        dialog.value = false;
+      }
+    }));
+}
 </script>

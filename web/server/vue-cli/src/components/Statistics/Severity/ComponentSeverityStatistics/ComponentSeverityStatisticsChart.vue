@@ -1,81 +1,106 @@
-<script>
-import { Pie, mixins } from "vue-chartjs";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+<template>
+  <Pie
+    ref="chart"
+    :data="chartData"
+    :options="options"
+  />
+</template>
+
+<script setup>
+import { ref, watch } from "vue";
+
+import { useSeverity } from "@/composables/useSeverity";
 import { Severity } from "@cc/report-server-types";
-import { SeverityMixin } from "@/mixins";
+import {
+  ArcElement,
+  Chart as ChartJS,
+  Legend,
+  Tooltip
+} from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Pie } from "vue-chartjs";
 
-const { reactiveData } = mixins;
+const props = defineProps({
+  statistics: { type: Array, required: true },
+  loading: { type: Boolean, required: true }
+});
 
-export default {
-  name: "ComponentSeverityStatisticsChart",
-  extends: Pie,
-  mixins: [ reactiveData, SeverityMixin ],
-  props: {
-    statistics: { type: Array, required: true },
-    loading: { type: Boolean, required: true }
-  },
-  data() {
-    const severities = [
-      Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW,
-      Severity.STYLE, Severity.UNSPECIFIED
-    ];
+ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
-    const labels = severities.map(s => this.severityFromCodeToString(s));
-    const colors = severities.map(s => this.severityFromCodeToColor(s));
+const severity = useSeverity();
 
-    return {
-      severities,
-      options: {
-        legend: {
-          display: true,
-          position: "bottom"
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          datalabels: {
-            backgroundColor: colors
-          }
-        }
-      },
-      chartData: {
-        labels: labels,
-        datasets: [
-          {
-            data: [],
-            backgroundColor: colors,
-            datalabels: {
-              color: "white",
-              borderColor: "white",
-              borderRadius: 25,
-              borderWidth: 2,
-              font: {
-                weight: "bold"
-              },
-            }
-          }
-        ]
-      }
-    };
-  },
-  watch: {
-    loading() {
-      if (this.loading) return;
+const chart = ref();
 
-      this.chartData.datasets[0].data = this.statistics.reduce((acc, curr) => {
-        this.chartData.labels.forEach((s, idx) => {
-          acc[idx] += curr[s.toLowerCase()].count;
-        });
+const severities = [
+  Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW,
+  Severity.STYLE, Severity.UNSPECIFIED
+];
 
-        return acc;
-      }, new Array(this.chartData.labels.length).fill(0));
-      this.renderChart(this.chartData, this.options);
+const labels = severities.map(_s => severity.severityFromCodeToString(_s));
+const colors = severities.map(_s => severity.severityFromCodeToColor(_s));
+
+const options = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: "bottom"
+    },
+    datalabels: {
+      backgroundColor: colors
     }
-  },
-  mounted() {
-    this.addPlugin(ChartDataLabels);
-
-    this.renderChart(this.chartData, this.options);
   }
 };
+
+const chartData = ref({
+  labels: labels,
+  datasets: [
+    {
+      data: [],
+      backgroundColor: colors,
+      datalabels: {
+        color: "white",
+        borderColor: "white",
+        borderRadius: 25,
+        borderWidth: 2,
+        font: {
+          weight: "bold"
+        },
+      }
+    }
+  ]
+});
+
+watch(
+  () => props.statistics,
+  () => {
+    if (props.loading) return;
+
+    chartData.value = {
+      labels: labels,
+      datasets: [
+        {
+          data: props.statistics.reduce((_acc, _curr) => {
+            labels.forEach((_s, _idx) => {
+              _acc[_idx] += _curr[_s.toLowerCase()].count;
+            });
+            return _acc;
+          }, new Array(labels.length).fill(0)),
+          backgroundColor: colors,
+          datalabels: {
+            color: "white",
+            borderColor: "white",
+            borderRadius: 25,
+            borderWidth: 2,
+            font: {
+              weight: "bold"
+            },
+          }
+        }
+      ]
+    };
+  },
+  { immediate: true }
+);
 </script>

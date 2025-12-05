@@ -8,26 +8,16 @@
     class="show-statistics"
     title="Show statistics"
     color="green"
-    small
-    text
-    icon
-  >
-    <v-icon>mdi-chart-line</v-icon>
-  </v-btn>
+    size="small"
+    variant="text"
+    icon="mdi-chart-line"
+  />
 </template>
 
-<script>
+<script setup>
 import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
-export default {
-  name: "ShowStatisticsBtn",
-  props: {
-    extraQueries: { type: Object, default: () => {} }
-  },
-  data() {
-    return {
-      defaultStatisticsFilterValues
-    };
-  }
-};
+defineProps({
+  extraQueries: { type: Object, default: () => {} }
+});
 </script>

@@ -1,33 +1,68 @@
 <template>
   <v-timeline-item
     class="system-comment"
-    color="primary"
+    dot-color="primary"
     icon="mdi-cogs"
-    small
+    size="small"
     fill-dot
   >
-    <v-card class="elevation-2">
-      <!-- eslint-disable vue/no-v-html -->
+    <v-card
+      class="elevation-2"
+    >
       <v-card-text
         class="caption"
-        v-html="message"
-      />
+      >
+        <template v-for="(part, index) in messageParts" :key="index">
+          <strong v-if="part.bold">{{ part.text }}</strong>
+          <span v-else>{{ part.text }}</span>
+        </template>
+      </v-card-text>
     </v-card>
   </v-timeline-item>
 </template>
 
-<script>
-export default {
-  name: "SystemComment",
-  props: {
-    comment: { type: Object, required: true },
-  },
-  computed: {
-    message() {
-      return this.comment.message
-        .replace("%author%", `<b>${ this.comment.author }</b>`)
-        .replace("%date%", this.comment.createdAt);
-    }
+<script setup>
+import { computed } from "vue";
+
+const props = defineProps({
+  comment: { type: Object, required: true },
+});
+
+const messageParts = computed(() => {
+  const msg = props.comment.message;
+  const parts = [];
+  const authorIndex = msg.indexOf("%author%");
+  const dateIndex = msg.indexOf("%date%");
+  
+  if (authorIndex === -1 && dateIndex === -1) {
+    return [ { text: msg, bold: false } ];
   }
-};
+  
+  let currentIndex = 0;
+  
+  // Handle author replacement
+  if (authorIndex !== -1) {
+    if (authorIndex > currentIndex) {
+      parts.push({ text: msg.slice(currentIndex, authorIndex), bold: false });
+    }
+    parts.push({ text: props.comment.author, bold: true });
+    currentIndex = authorIndex + "%author%".length;
+  }
+  
+  // Handle date replacement
+  if (dateIndex !== -1 && dateIndex >= currentIndex) {
+    if (dateIndex > currentIndex) {
+      parts.push({ text: msg.slice(currentIndex, dateIndex), bold: false });
+    }
+    parts.push({ text: props.comment.createdAt, bold: false });
+    currentIndex = dateIndex + "%date%".length;
+  }
+  
+  // Add remaining text
+  if (currentIndex < msg.length) {
+    parts.push({ text: msg.slice(currentIndex), bold: false });
+  }
+  
+  return parts;
+});
 </script>

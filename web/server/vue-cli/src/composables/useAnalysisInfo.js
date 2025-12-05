@@ -1,10 +1,10 @@
+import { useVersion } from "@/composables/useVersion";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   AnalysisInfoFilter,
   RunFilter,
   RunHistoryFilter
 } from "@cc/report-server-types";
-import VersionMixin from "../version.mixin";
 
 const GroupKeys = Object.freeze({
   NoGroup: "__N",
@@ -67,11 +67,12 @@ function decideNegativeCheckerStatusAvailability(
 }
 
 function setCheckerStatusUnavailableDueToVersion(analysisInfo, ccVersion) {
-  ccVersion = VersionMixin.methods.prettifyCCVersion(ccVersion);
+  const { prettifyCCVersion, isNewerOrEqualCCVersion } = useVersion();
+  ccVersion = prettifyCCVersion(ccVersion);
   if (!ccVersion) return false;
   analysisInfo.codeCheckerVersion = ccVersion;
 
-  if (VersionMixin.methods.isNewerOrEqualCCVersion(ccVersion, "6.24")) {
+  if (isNewerOrEqualCCVersion(ccVersion, "6.24")) {
     return false;
   }
   analysisInfo.checkerInfoAvailability =
@@ -84,7 +85,6 @@ function getTopLevelCheckGroup(analyzerName, checkerName) {
   if (
     clangTidyClangDiagnostic.length > 1 && clangTidyClangDiagnostic[0] === ""
   ) {
-    // Unfortunately, this is historically special...
     return "clang-diagnostic";
   }
 
@@ -96,11 +96,8 @@ function getTopLevelCheckGroup(analyzerName, checkerName) {
   const splitHyphen = checkerName.split("-");
   if (splitHyphen.length > 1) {
     if (splitHyphen[0] === analyzerName) {
-      // cppcheck-PointerSize -> <NoGroup>
-      // gcc-fd-leak          -> "fd"
       return splitHyphen.length >= 3 ? splitHyphen[1] : GroupKeys.NoGroup;
     }
-    // bugprone-easily-swappable-parameters -> "bugprone"
     return splitHyphen[0];
   }
 
@@ -187,14 +184,12 @@ class AnalysisInfo {
         Object.fromEntries(
           Object.keys(this.checkersGroupedAndSorted[analyzer]).map(
             group => [ group, [
-              // [CountKeys.Enabled]:
               Object.keys(this.checkersGroupedAndSorted[analyzer][group])
                 .map(checker =>
                   this.checkersGroupedAndSorted[analyzer][group][checker][1]
                     .enabled ? 1 : 0)
                 .reduce((a, b) => a + b, 0),
-              /* [CountKeys.Disabled]: */ -1, // Will be updated later!
-              // [CountKeys.Total]:
+              -1,
               Object.keys(
                 this.checkersGroupedAndSorted[analyzer][group]
               ).length
@@ -221,51 +216,51 @@ class AnalysisInfo {
   }
 }
 
-const AnalysisInfoHandlingAPIMixin = {
-  methods: {
-    loadAnalysisInfo(runId, runHistoryId, reportId) {
-      const analysisInfoFilter = new AnalysisInfoFilter({
-        // Query a run's analysis info only if a run history ID is not explicit.
-        runId: (!runHistoryId ? runId : null),
+export function useAnalysisInfo() {
+  function loadAnalysisInfo(runId, runHistoryId, reportId) {
+    const analysisInfoFilter = new AnalysisInfoFilter({
+      runId: (!runHistoryId ? runId : null),
+      runHistoryId: runHistoryId,
+      reportId: reportId
+    });
+    const limit = null;
+    const offset = 0;
 
-        runHistoryId: runHistoryId,
-        reportId: reportId
-      });
-      const limit = null;
-      const offset = 0;
+    return new Promise(resolve => {
+      ccService.getClient()
+        .getAnalysisInfo(analysisInfoFilter, limit, offset,
+          handleThriftError(aiResult => {
+            var analysisInfo = new AnalysisInfo();
+            analysisInfo.cmds = aiResult.map(r => r.analyzerCommand);
+            analysisInfo.checkers = aiResult.map(r => r.checkers)
+              .reduce(mergeReduceCheckerStatuses, {});
 
-      return new Promise(resolve => {
-        ccService.getClient()
-          .getAnalysisInfo(analysisInfoFilter, limit, offset,
-            handleThriftError(aiResult => {
-              var analysisInfo = new AnalysisInfo();
-              analysisInfo.cmds = aiResult.map(r => r.analyzerCommand);
-              analysisInfo.checkers = aiResult.map(r => r.checkers)
-                .reduce(mergeReduceCheckerStatuses, {});
+            if (Object.keys(analysisInfo.checkers).length) {
+              analysisInfo.checkerInfoAvailability =
+                CheckerInfoAvailability.Available;
+            } else {
+              analysisInfo.checkerInfoAvailability =
+                CheckerInfoAvailability.UnknownReason;
+            }
 
-              if (Object.keys(analysisInfo.checkers).length) {
-                analysisInfo.checkerInfoAvailability =
-                  CheckerInfoAvailability.Available;
-              } else {
-                analysisInfo.checkerInfoAvailability =
-                  CheckerInfoAvailability.UnknownReason;
-              }
+            analysisInfo.populateAnalyzers();
 
-              analysisInfo.populateAnalyzers();
+            resolve(analysisInfo);
+          }));
+    });
+  }
 
-              resolve(analysisInfo);
-            }));
-      });
-    },
-  },
-};
+  return {
+    loadAnalysisInfo
+  };
+}
 
 export {
   AnalysisInfo,
-  AnalysisInfoHandlingAPIMixin as default,
   CheckerInfoAvailability,
   CountKeys,
-  GroupKeys,
   decideNegativeCheckerStatusAvailability,
+  GroupKeys,
   setCheckerStatusUnavailableDueToVersion
 };
+

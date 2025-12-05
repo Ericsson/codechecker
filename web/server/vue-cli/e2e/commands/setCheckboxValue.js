@@ -6,7 +6,7 @@ module.exports.command = function (selector, newVal, section) {
     selector = selector.selector;
 
   return section
-    .getAttribute(`${selector} input`, "aria-checked", (res) => {
+    .getAttribute(`${selector} input`, "aria-checked", res => {
       const oldVal = true ? res.value === "true" : false;
 
       if (oldVal !== newVal)

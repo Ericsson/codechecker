@@ -14,11 +14,11 @@
       open-on-hover
       offset-x
     >
-      <template v-slot:activator="{ on }">
+      <template v-slot:activator="{ props: bindProps }">
         <component
+          v-bind="bindProps"
           :is="'span'"
           class="blame-commit-info"
-          v-on="on"
         >
           <span class="git-avatar mx-1">
             <v-avatar
@@ -44,7 +44,7 @@
       <v-card>
         <v-list>
           <v-list-item three-line>
-            <v-list-item-avatar>
+            <template v-slot:prepend>
               <v-avatar
                 :color="strToColor(commit.author.name)"
               >
@@ -52,33 +52,31 @@
                   {{ avatarLabel }}
                 </span>
               </v-avatar>
-            </v-list-item-avatar>
+            </template>
 
-            <v-list-item-content>
-              <v-list-item-title class="font-weight-bold">
-                {{ commit.summary }}
-              </v-list-item-title>
+            <v-list-item-title class="font-weight-bold">
+              {{ commit.summary }}
+            </v-list-item-title>
 
-              <v-list-item-subtitle
-                :title="commit.hexsha"
-              >
-                <a :href="remoteCommitUrl" target="_blank">
-                  <span class="text--blue font-weight-bold">
-                    #{{ hexsha }}
-                  </span>
-                </a>
-                <span :title="`Tracking branch: ${trackingBranch}`">
-                  ({{ trackingBranch | truncate(20) }})
+            <v-list-item-subtitle
+              :title="commit.hexsha"
+            >
+              <a :href="remoteCommitUrl" target="_blank">
+                <span class="text--blue font-weight-bold">
+                  #{{ hexsha }}
                 </span>
-              </v-list-item-subtitle>
+              </a>
+              <span :title="`Tracking branch: ${trackingBranch}`">
+                ({{ truncate(trackingBranch, 20) }})
+              </span>
+            </v-list-item-subtitle>
 
-              <v-list-item-subtitle>
-                <span class="text--primary">
-                  {{ commit.author.name }}
-                </span>
-                ({{ commit.author.email }})
-              </v-list-item-subtitle>
-            </v-list-item-content>
+            <v-list-item-subtitle>
+              <span class="text--primary">
+                {{ commit.author.name }}
+              </span>
+              ({{ commit.author.email }})
+            </v-list-item-subtitle>
           </v-list-item>
         </v-list>
 
@@ -105,38 +103,46 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { useStrToColor } from "@/composables/useStrToColor";
 import { format } from "date-fns";
-import { StrToColorMixin } from "@/mixins";
+import { computed } from "vue";
 
-export default {
-  name: "BlameLine",
-  mixins: [ StrToColorMixin ],
-  props: {
-    commit: { type: Object, default: null },
-    number: { type: Number, required: true },
-    color: { type: String, required: true },
-    remoteUrl: { type: String, default: null },
-    trackingBranch: { type: String, default: null }
-  },
-  computed: {
-    remoteCommitUrl() {
-      return this.remoteUrl?.replace("$commit", this.commit.hexsha);
-    },
-    avatarLabel() {
-      return this.commit.author.name.charAt(0).toUpperCase();
-    },
-    date() {
-      return format(this.commit.committedDateTime, "yyyy-MM-dd");
-    },
-    message() {
-      return this.commit.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
-    },
-    hexsha() {
-      return this.commit.hexsha.substring(0, 8);
-    }
-  }
-};
+const props = defineProps({
+  commit: { type: Object, default: null },
+  number: { type: Number, required: true },
+  color: { type: String, required: true },
+  remoteUrl: { type: String, default: null },
+  trackingBranch: { type: String, default: null }
+});
+
+const { strToColor } = useStrToColor();
+
+const remoteCommitUrl = computed(() => {
+  return props.remoteUrl?.replace("$commit", props.commit.hexsha);
+});
+
+const avatarLabel = computed(() => {
+  return props.commit.author.name.charAt(0).toUpperCase();
+});
+
+const date = computed(() => {
+  return format(props.commit.committedDateTime, "yyyy-MM-dd");
+});
+
+const message = computed(() => {
+  return props.commit.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
+});
+
+const hexsha = computed(() => {
+  return props.commit.hexsha.substring(0, 8);
+});
+
+function truncate(text, length) {
+  if (!text) return "";
+  if (text.length <= length) return text;
+  return text.substring(0, length) + "...";
+}
 </script>
 
 <style lang="scss" scoped>

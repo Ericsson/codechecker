@@ -2,20 +2,20 @@
   <select-option
     :id="id"
     title="Run / Tag Filter"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :selected-items="selectedItems"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
     :search="search"
-    :loading="loading"
+    :loading="baseSelectOptionFilter.loading.value"
     :apply="apply"
-    :panel="panel"
+    :panel="baseSelectOptionFilter.panel.value"
     @cancel="cancelRunSelection"
     @select="prevSelectedRuns = $event"
     @clear="clear(true)"
     @on-menu-show="selectTagForRun = null"
   >
     <template v-slot:append-toolbar-title>
-      <selected-toolbar-title-items
+      <SelectedToolbarTitleItems
         v-if="selectedToolbarTitleItems.length"
         :value="selectedToolbarTitleItems"
       />
@@ -38,7 +38,7 @@
         :max-width="550"
         offset-x
       >
-        <template v-slot:activator="{ on: menu }">
+        <template v-slot:activator="{ props: menuProps }">
           <items
             :items="items"
             :selected-items="prevSelectedItems"
@@ -62,13 +62,13 @@
               <v-tooltip
                 v-if="hover || selectTagForRun === item"
                 max-width="200"
-                right
+                location="right"
               >
-                <template v-slot:activator="{ on: tooltip }">
+                <template v-slot:activator="{ props: tooltipProps }">
                   <v-btn
+                    v-bind="{ ...tooltipProps, ...menuProps }"
                     icon
-                    small
-                    v-on="{ ...tooltip, ...menu }"
+                    size="small"
                     @click.stop="specifyTag(item)"
                   >
                     <v-icon>mdi-cog</v-icon>
@@ -119,7 +119,7 @@
 
     <template v-slot:default>
       <items-selected
-        :selected-items="selectedItems"
+        :selected-items="baseSelectOptionFilter.selectedItems.value"
         @update:select="updateSelectedItems"
       >
         <template v-slot:icon>
@@ -138,13 +138,21 @@
   </select-option>
 </template>
 
-<script>
+<script setup>
 import _ from "lodash";
+import { computed, ref, toRef } from "vue";
+import { useRoute } from "vue-router";
 
 import { ccService, extractTagWithRunName, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
 import BulbMessage from "@/components/BulbMessage";
+import {
+  useBaseSelectOptionFilter
+} from "@/composables/useBaseSelectOptionFilter";
+import { useDateUtils } from "@/composables/useDateUtils";
+import { useRunFilter } from "@/composables/useRunFilter";
+import BaselineTagItems from "./BaselineTagItems";
 import {
   Items,
   ItemsSelected,
@@ -152,291 +160,311 @@ import {
   SelectedToolbarTitleItems,
   filterIsChanged
 } from "./SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
-import BaselineTagItems from "./BaselineTagItems";
 
-export default {
-  name: "BaselineRunFilter",
-  components: {
-    BaselineTagItems,
-    BulbMessage,
-    Items,
-    ItemsSelected,
-    SelectOption,
-    SelectedToolbarTitleItems
-  },
-  mixins: [ BaseSelectOptionFilterMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "run",
-      runTagId: "run-tag",
-      selectTagMenu: false,
-      selectTagForRun: null,
-      prevSelectedRuns: [],
-      selectedTagItems: [],
-      prevSelectedTagItems: [],
-      search: {
-        placeHolder: "Search for run names (e.g.: myrun*)...",
-        regexLabel: "Filter by wildcard pattern (e.g.: myrun*)",
-        filterItems: this.filterItems
-      }
-    };
-  },
+const emit = defineEmits([
+  "update:url",
+  "select"
+]);
 
-  computed: {
-    titles() {
-      return this.selectedItems.reduce((acc, curr) => ({
-        ...acc,
-        [curr.id]: this.getSelectedRunTitle(curr).title
-      }), {});
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
-    selectedToolbarTitleItems() {
-      return this.selectedItems.map(item => ({
-        title: this.titles[item.id]
-      }));
+const id = ref("run");
+baseSelectOptionFilter.id.value = id;
+
+const runTagId = ref("run-tag");
+const selectTagMenu = ref(false);
+const selectTagForRun = ref(null);
+const prevSelectedRuns = ref([]);
+const prevSelectedTagItems = ref([]);
+const search = ref({
+  placeHolder: "Search for run names (e.g.: myrun*)...",
+  regexLabel: "Filter by wildcard pattern (e.g.: myrun*)",
+  filterItems: []
+});
+
+const route = useRoute();
+const runFilter = useRunFilter();
+const { prettifyDate } = useDateUtils();
+
+const titles = computed(() => {
+  return baseSelectOptionFilter.selectedItems.value.reduce((acc, curr) => ({
+    ...acc,
+    [curr.id]: getSelectedRunTitle(curr).title
+  }), {});
+});
+
+const selectedToolbarTitleItems = computed(() => {
+  return (baseSelectOptionFilter.selectedItems.value || []).map(item => ({
+    title: titles.value[item.id]
+  }));
+});
+
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
+
+function formatRunItemWithTags(run, tags) {
+  const _tagNames = tags
+    .filter(s => run.runIds.includes(s.runId))
+    .map(s => s.tagName);
+
+  run.title = _tagNames.length
+    ? `${run.id}:${_tagNames.join(", ")}`
+    : run.id;
+
+  return run;
+}
+
+function formatRunTitle(run) {
+  return formatRunItemWithTags(run, prevSelectedTagItems.value);
+}
+
+function getSelectedRunTitle(run) {
+  return formatRunItemWithTags(run, runFilter.selectedTagItems.value);
+}
+
+function runFilterIsChanged() {
+  return filterIsChanged(
+    prevSelectedRuns.value,
+    baseSelectOptionFilter.selectedItems.value
+  );
+}
+
+function tagFilterIsChanged() {
+  return filterIsChanged(
+    prevSelectedTagItems.value,
+    runFilter.selectedTagItems.value
+  );
+}
+
+function updateSelectedItems(selectedRunItems) {
+  setSelectedItems(selectedRunItems, runFilter.selectedTagItems.value);
+}
+
+function getSelectedRunItems(runNames) {
+  return Promise.all(runNames.map(async s => ({
+    id: s,
+    runIds: await ccService.getRunIds(s),
+    title: s,
+    count: "N/A"
+  })));
+}
+
+async function getSelectedTagItems(tags) {
+  const _tagIds = [];
+  const _tagWithRunNames = [];
+  tags.forEach(t => {
+    const _id = +t;
+    if (isNaN(_id)) {
+      _tagWithRunNames.push(t);
+    } else {
+      _tagIds.push(_id);
     }
-  },
+  });
 
-  methods: {
-    formatRunItemWithTags(run, tags) {
-      const tagNames = tags
-        .filter(s => run.runIds.includes(s.runId))
-        .map(s => s.tagName);
+  // Get tags by tag ids.
+  const _tags1 = _tagIds.length
+    ? (await ccService.getTags(null, _tagIds)).map(t => {
+      const time = prettifyDate(t.time);
+      return {
+        id: t.id.toNumber(),
+        runName: t.runName,
+        runId: t.runId.toNumber(),
+        tagName : t.versionTag || time,
+        time: time,
+        title: t.versionTag,
+        count: "N/A"
+      };
+    })
+    : [];
 
-      run.title = tagNames.length
-        ? `${run.id}:${tagNames.join(", ")}`
-        : run.id;
-
-      return run;
-    },
-
-    formatRunTitle(run) {
-      return this.formatRunItemWithTags(run, this.prevSelectedTagItems);
-    },
-
-    getSelectedRunTitle(run) {
-      return this.formatRunItemWithTags(run, this.selectedTagItems);
-    },
-
-    runFilterIsChanged() {
-      return filterIsChanged(this.prevSelectedRuns, this.selectedItems);
-    },
-
-    tagFilterIsChanged() {
-      return filterIsChanged(this.prevSelectedTagItems, this.selectedTagItems);
-    },
-
-    updateSelectedItems(selectedRunItems) {
-      this.setSelectedItems(selectedRunItems, this.selectedTagItems);
-    },
-
-    getSelectedRunItems(runNames) {
-      return Promise.all(runNames.map(async s => ({
-        id: s,
-        runIds: await ccService.getRunIds(s),
+  // Get tags by tag names (backward compatibility).
+  const _tags2 = _tagWithRunNames.length
+    ? (await Promise.all(_tagWithRunNames.map(async s => {
+      const { runName, tagName } = extractTagWithRunName(s);
+      const runIds = runName ? await ccService.getRunIds(runName) : null;
+      const tags = await ccService.getTags(runIds, null, [ tagName ]);
+      return {
+        id: tags[0].id,
+        runName: runName ? runName : tags[0].runName,
+        runId: tags[0].runId.toNumber(),
+        time: tags[0].time,
+        tagName,
         title: s,
         count: "N/A"
-      })));
-    },
-
-    async getSelectedTagItems(tags) {
-      const tagIds = [];
-      const tagWithRunNames = [];
-      tags.forEach(t => {
-        const id = +t;
-        if (isNaN(id)) {
-          tagWithRunNames.push(t);
-        } else {
-          tagIds.push(id);
-        }
-      });
-
-      // Get tags by tag ids.
-      const tags1 = tagIds.length
-        ? (await ccService.getTags(null, tagIds)).map(t => {
-          const time = this.$options.filters.prettifyDate(t.time);
-          return {
-            id: t.id.toNumber(),
-            runName: t.runName,
-            runId: t.runId.toNumber(),
-            tagName : t.versionTag || time,
-            time: time,
-            title: t.versionTag,
-            count: "N/A"
-          };
-        })
-        : [];
-
-      // Get tags by tag names (backward compatibility).
-      const tags2 = tagWithRunNames.length
-        ? (await Promise.all(tagWithRunNames.map(async s => {
-          const { runName, tagName } = extractTagWithRunName(s);
-          const runIds = runName ? await ccService.getRunIds(runName) : null;
-          const tags = await ccService.getTags(runIds, null, [ tagName ]);
-          return {
-            id: tags[0].id,
-            runName: runName ? runName : tags[0].runName,
-            runId: tags[0].runId.toNumber(),
-            time: tags[0].time,
-            tagName,
-            title: s,
-            count: "N/A"
-          };
-        })))
-        : [];
-
-      return tags1.concat(tags2);
-    },
-
-    async initByUrl() {
-      let runs = [].concat(this.$route.query[this.id] || []);
-      const tags = [].concat(this.$route.query[this.runTagId] || []);
-
-      if (runs.length || tags.length) {
-        let selectedTags = [];
-        if (tags.length) {
-          selectedTags = await this.getSelectedTagItems(tags);
-
-          // Add runs related to tags.
-          runs.push(...selectedTags.map(t => t.runName));
-
-          // Filter out duplicates.
-          runs = [ ...new Set(runs) ];
-        }
-
-        const selectedRuns = await this.getSelectedRunItems(runs);
-
-        await this.setSelectedItems(selectedRuns, selectedTags, false);
-      }
-    },
-
-    cancelTagSelection() {
-      this.prevSelectedTagItems = _.cloneDeep(this.selectedTagItems);
-      this.selectTagMenu = false;
-      this.selectTagForRun = null;
-    },
-
-    cancelRunSelection() {
-      this.prevSelectedRuns = _.cloneDeep(this.selectedItems);
-      this.cancelTagSelection();
-    },
-
-    apply(selectedRunItems) {
-      if (!this.runFilterIsChanged() && !this.tagFilterIsChanged()) return;
-
-      this.setSelectedItems(selectedRunItems, this.prevSelectedTagItems);
-    },
-
-    applyTagSelection() {
-      this.selectTagMenu = false;
-      this.prevSelectedTagItems.forEach(t => {
-        this.bus.$emit("select", item => item.runIds.includes(t.runId));
-      });
-    },
-
-    async clear(updateUrl) {
-      await this.setSelectedItems([], [], updateUrl);
-    },
-
-    selectRunTags(selectedItems) {
-      this.prevSelectedTagItems = _.cloneDeep(selectedItems);
-    },
-
-    getUrlState() {
-      const runState =
-        this.selectedItems.map(item => this.encodeValue(item.id));
-
-      const tagState =
-        this.selectedTagItems.map(item => item.id);
-
-      return {
-        [this.id]: runState.length ? runState : undefined,
-        [this.runTagId]: tagState.length ? tagState : undefined
       };
-    },
+    })))
+    : [];
 
-    async setSelectedItems(runItems, tagItems, updateUrl=true) {
-      this.selectedItems = runItems;
+  return _tags1.concat(_tags2);
+}
 
-      // When removing a run with tag item from the selected filter list
-      // we need to remove the tags too.
-      this.selectedTagItems = tagItems.filter(t =>
-        runItems.findIndex(s => s.runIds.includes(t.runId)) > -1);
-      this.prevSelectedTagItems = _.cloneDeep(this.selectedTagItems);
+async function initByUrl() {
+  let _runs = [].concat(route.query[id.value] || []);
+  const _tags = [].concat(route.query[runTagId.value] || []);
 
-      await this.updateReportFilter();
+  if (_runs.length || _tags.length) {
+    let _selectedTags = [];
+    if (_tags.length) {
+      _selectedTags = await getSelectedTagItems(_tags);
 
-      if (updateUrl) {
-        this.$emit("update:url");
-      }
-    },
+      // Add runs related to tags.
+      _runs.push(..._selectedTags.map(t => t.runName));
 
-    async getSelectedRunIds() {
-      return [].concat(...await Promise.all(
-        this.selectedItems.map(async item => {
-          if (!item.runIds) {
-            item.runIds = await ccService.getRunIds(item.title);
-          }
-
-          return Promise.resolve(item.runIds);
-        })));
-    },
-
-    async updateReportFilter() {
-      const selectedRunIds = await this.getSelectedRunIds();
-      this.setRunIds(selectedRunIds.length ? selectedRunIds : null);
-
-      const selectedTagIds = this.selectedTagItems.map(t => t.id);
-      this.reportFilter.runTag = selectedTagIds.length ? selectedTagIds : null;
-    },
-
-    onRunIdsChange() {},
-
-    onReportFilterChange(key) {
-      if (key === "runName" || key === "runTag") return;
-      this.update();
-    },
-
-    fetchItems(opt={}) {
-      this.loading = true;
-
-      const runIds = null;
-      const limit = opt.limit || this.defaultLimit;
-      const offset = 0;
-
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.runName = opt.query;
-      reportFilter.runTag = null;
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
-          offset, handleThriftError(res => {
-            resolve(res.map(run => {
-              return {
-                id: run.name,
-                runIds: [ run.runId.toNumber() ],
-                title: run.name,
-                count: run.reportCount.toNumber()
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    },
-
-    specifyTag(run) {
-      if (this.selectTagForRun === run) {
-        this.selectTagForRun = null;
-        return;
-      }
-
-      this.selectTagForRun = run;
-      setTimeout(() => this.selectTagMenu = true, 0);
+      // Filter out duplicates.
+      _runs = [ ...new Set(_runs) ];
     }
+
+    const _selectedRuns = await getSelectedRunItems(_runs);
+
+    await setSelectedItems(_selectedRuns, _selectedTags, false);
   }
-};
+}
+
+function cancelTagSelection() {
+  prevSelectedTagItems.value = _.cloneDeep(runFilter.selectedTagItems.value);
+  selectTagMenu.value = false;
+  selectTagForRun.value = null;
+}
+
+function cancelRunSelection() {
+  prevSelectedRuns.value = _.cloneDeep(
+    baseSelectOptionFilter.selectedItems.value
+  );
+  cancelTagSelection();
+}
+
+function apply(selectedRunItems) {
+  if (!runFilterIsChanged() && !tagFilterIsChanged()) return;
+
+  setSelectedItems(selectedRunItems, prevSelectedTagItems.value);
+}
+
+function applyTagSelection() {
+  selectTagMenu.value = false;
+  prevSelectedTagItems.value.forEach(t => {
+    emit("select", item => item.runIds.includes(t.runId));
+  });
+}
+
+async function clear(updateUrl) {
+  await setSelectedItems([], [], updateUrl);
+}
+
+function selectRunTags(selectedItems) {
+  prevSelectedTagItems.value = _.cloneDeep(selectedItems);
+}
+
+function getUrlState() {
+  const _runState = baseSelectOptionFilter.selectedItems.value.map(
+    item => baseSelectOptionFilter.encodeValue.value(item.id)
+  );
+
+  const _tagState = runFilter.selectedTagItems.value.map(item => item.id);
+
+  return {
+    [id.value]: _runState.length ? _runState : undefined,
+    [runTagId.value]: _tagState.length ? _tagState : undefined
+  };
+}
+
+async function setSelectedItems(runItems, tagItems, updateUrl=true) {
+  baseSelectOptionFilter.selectedItems.value = runItems;
+
+  // When removing a run with tag item from the selected filter list
+  // we need to remove the tags too.
+  runFilter.selectedTagItems.value = tagItems.filter(t =>
+    runItems.findIndex(s => s.runIds.includes(t.runId)) > -1);
+  prevSelectedTagItems.value = _.cloneDeep(runFilter.selectedTagItems.value);
+
+  await updateReportFilter();
+
+  if (updateUrl) {
+    emit("update:url");
+  }
+}
+
+async function updateReportFilter() {
+  const _selectedRunIds = await runFilter.getSelectedRunIds(
+    baseSelectOptionFilter.selectedItems
+  );
+  baseSelectOptionFilter.setRunIds(
+    _selectedRunIds.length ? _selectedRunIds : null
+  );
+
+  const _selectedTagIds = runFilter.selectedTagItems.value.map(t => t.id);
+  baseSelectOptionFilter.reportFilter.value.runTag =
+    _selectedTagIds.length ? _selectedTagIds : null;
+}
+
+function onRunIdsChange() {}
+
+function onReportFilterChange(key) {
+  if (key === "runName" || key === "runTag") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems(opt={}) {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _runIds = null;
+  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit;
+  const _offset = 0;
+
+  const _reportFilter = new ReportFilter(baseSelectOptionFilter.reportFilter);
+  _reportFilter.runName = opt.query;
+  _reportFilter.runTag = null;
+
+  return new Promise(resolve => {
+    ccService.getClient().getRunReportCounts(_runIds, _reportFilter, _limit,
+      _offset, handleThriftError(res => {
+        resolve(res.map(run => {
+          return {
+            id: run.name,
+            runIds: [ run.runId.toNumber() ],
+            title: run.name,
+            count: run.reportCount.toNumber()
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+function specifyTag(run) {
+  if (selectTagForRun.value === run) {
+    selectTagForRun.value = null;
+    return;
+  }
+
+  selectTagForRun.value = run;
+  setTimeout(() => selectTagMenu.value = true, 0);
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+
+  id,
+  initByUrl,
+  getUrlState,
+  clear,
+  updateReportFilter,
+  onRunIdsChange,
+  onReportFilterChange,
+  fetchItems
+}
+);
 </script>
 
 <style lang="scss" scoped>

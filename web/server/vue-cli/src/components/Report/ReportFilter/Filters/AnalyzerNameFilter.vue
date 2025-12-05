@@ -1,17 +1,17 @@
 <template>
   <select-option
-    :id="id"
+    :id="id.value"
     title="Analyzer name"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :selected-items="selectedItems"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
     :search="search"
-    :loading="loading"
-    :panel="panel"
-    @clear="clear(true)"
-    @input="setSelectedItems"
+    :loading="baseSelectOptionFilter.loading.value"
+    :panel="baseSelectOptionFilter.panel.value"
+    @clear="baseSelectOptionFilter.clear(true)"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
-    <template v-slot:icon>
+    <template #icon>
       <v-icon color="grey">
         mdi-crosshairs
       </v-icon>
@@ -19,71 +19,103 @@
   </select-option>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
+import { ref, toRef } from "vue";
 
+import {
+  useBaseSelectOptionFilter
+} from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-export default {
-  name: "AnalyzerNameFilter",
-  components: {
-    SelectOption
-  },
-  mixins: [ BaseSelectOptionFilterMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "analyzer-name",
-      search: {
-        placeHolder: "Search for analyzer names (e.g.: clang*)...",
-        regexLabel: "Filter by wildcard pattern (e.g.: clang*)",
-        filterItems: this.filterItems
-      }
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  methods: {
-    updateReportFilter() {
-      this.setReportFilter({
-        analyzerNames: this.selectedItems.map(item => item.id)
-      });
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
-    onReportFilterChange(key) {
-      if (key === "analyzerNames") return;
-      this.update();
-    },
 
-    fetchItems(opt={}) {
-      this.loading = true;
+const id = ref("analyzer-name");
+// eslint-disable-next-line vue/no-ref-object-reactivity-loss
+baseSelectOptionFilter.id.value = id.value;
 
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.analyzerNames = opt.query;
+const search = ref({
+  placeHolder: "Search for analyzer names (e.g.: clang*)...",
+  regexLabel: "Filter by wildcard pattern (e.g.: clang*)",
+  filterItems: []
+});
 
-      const limit = opt.limit || this.defaultLimit;
-      const offset = null;
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
 
-      return new Promise(resolve => {
-        ccService.getClient().getAnalyzerNameCounts(this.runIds, reportFilter,
-          this.cmpData, limit, offset, handleThriftError(res => {
-          // Order the results alphabetically.
-            resolve(Object.keys(res).sort((a, b) => {
-              if (a < b) return -1;
-              if (a > b) return 1;
-              return 0;
-            }).map(analyzerName => {
-              return {
-                id : analyzerName,
-                title: analyzerName,
-                count : res[analyzerName]
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
-  }
-};
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    analyzerNames:
+      baseSelectOptionFilter.selectedItems.value.map(item => item.id)
+  });
+}
+
+function onReportFilterChange(key) {
+  if (key === "analyzerNames") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems(opt={}) {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
+  _reportFilter.analyzerNames = opt.query;
+
+  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
+  const _offset = 0;
+
+  return new Promise(resolve => {
+    ccService.getClient().getAnalyzerNameCounts(
+      baseSelectOptionFilter.runIds.value,
+      _reportFilter,
+      baseSelectOptionFilter.cmpData.value,
+      _limit,
+      _offset,
+      handleThriftError(res => {
+      // Order the results alphabetically.
+        resolve(Object.keys(res).sort((a, b) => {
+          if (a < b) return -1;
+          if (a > b) return 1;
+          return 0;
+        }).map(analyzerName => {
+          return {
+            id : analyzerName,
+            title: analyzerName,
+            count : res[analyzerName]
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  initByUrl: baseSelectOptionFilter.initByUrl,
+  getUrlState: baseSelectOptionFilter.getUrlState,
+
+  id,
+  updateReportFilter,
+  onReportFilterChange,
+  fetchItems
+});
 </script>
