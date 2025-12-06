@@ -54,7 +54,14 @@ run_test_in_env: venv_dev is_TEST_set
 		pytest $(PYTESTCFG) ${TEST} || exit 1
 
 UNIT_TEST_CMD = $(REPO_ROOT) pytest $(PYTESTCFG) tests/unit
-UNIT_TEST_COV_CMD = $(REPO_ROOT) coverage run -m pytest $(PYTESTCFG) tests/unit && coverage report && coverage html
+COVERAGE_CMD = $(REPO_ROOT) $(PYTHON_BIN) -m coverage
+COVERAGE_RCFILE = --rcfile=$(ROOT)/.coveragerc
+ANALYZER_COVERAGE_SOURCE = codechecker_analyzer,codechecker_common
+UNIT_TEST_COV_CMD = mkdir -p build/coverage && \
+	$(COVERAGE_CMD) erase $(COVERAGE_RCFILE) && \
+	$(COVERAGE_CMD) run $(COVERAGE_RCFILE) --source=$(ANALYZER_COVERAGE_SOURCE) -m pytest $(PYTESTCFG) tests/unit && \
+	$(COVERAGE_CMD) report $(COVERAGE_RCFILE) && \
+	$(COVERAGE_CMD) html $(COVERAGE_RCFILE)
 
 test_unit:
 	$(UNIT_TEST_CMD)

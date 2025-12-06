@@ -1,0 +1,28 @@
+[run]
+branch = True
+relative_files = True
+omit =
+    */tests/*
+    */tests.py
+    */test/*
+    */test.py
+    */venv/*
+    */.venv/*
+    */.tox/*
+    */build/*
+    */dist/*
+    */__pycache__/*
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 2
+exclude_lines =
+    pragma: no cover
+    if __name__ == "__main__":
+    if TYPE_CHECKING:
+    raise NotImplementedError
+
+[html]
+directory = build/coverage/html
+title = CodeChecker test coverage
