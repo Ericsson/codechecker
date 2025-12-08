@@ -2,6 +2,149 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.27.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.27.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Asynchronous Store
+            </template>
+            <p>
+              CodeChecker changes it's store execution model from synchronous
+              to asynchronous mode.
+            </p>
+            <p>
+              The <code>CodeChecker store</code> command will not have to wait
+              synchronously for the server to finish the storage procedure of the
+              reports, but can seamlessly continue execution after the store
+              process started. Then later, it can query the status of the storage
+              task from the server.
+            </p>
+            <p>
+              This provides more stable report storage procedures as many
+              users expereinced broken TCP connections during large analysis
+              results storage batches.
+            </p>
+            <p>
+              CodeChecker will provide a command line utility for admins to
+              query ongoing/finished/cancelled storage processes with
+              filtering option.
+            </p>
+            <pre style="overflow-x: scroll;">
+              ❯ build/CodeChecker/bin/CodeChecker cmd serverside-tasks --enqueued-after 2024:08:19 --status cancelled
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Token                                                            | Machine            | Type                   | Summary                         | Status    | Product | User | Enqueued            | Started             | Last seen           | Completed           | Cancelled?
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8b62497c7d1b7e3945445f5b9c3951d97ae07e58f97cad60a0187221e7d1e2ba | xxxxxxxxxxxxx:8001 | taskService::DummyTask | Dummy task for testing purposes | CANCELLED |         |      | 2024-08-19 15:55:34 | 2024-08-19 15:55:34 | 2024-08-19 15:55:35 | 2024-08-19 15:55:35 | Yes
+6fa0097a9bd1799572c7ccd2afc0272684ed036c11145da7eaf40cc8a07c7241 | xxxxxxxxxxxxx:8001 | taskService::DummyTask | Dummy task for testing purposes | CANCELLED |         |      | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | Yes
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Detailed analysis status command
+            </template>
+            <pre>
+              CodeChecker parse --status ./report_dir [--detailed] [-e json]
+            </pre>
+            <p>
+              This command provides a clear overview of the current state of
+              analysis results within the report directory, indicating which
+              reports are up to date, which are outdated, which analyses have
+              failed, and which files were never processed (e.g. skipped).
+            </p>
+            <p>
+              Example output:
+            </p>
+            <pre>
+              ----==== Summary ====----
+Up-to-date analysis results
+  clangsa: 311
+  clang-tidy: 311
+Outdated analysis results
+Failed to analyze
+  clangsa: 20
+  clang-tidy: 20
+Missing analysis results
+  clangsa: 18
+  clang-tidy: 18
+  cppcheck: 349
+Total analyzed compilation commands: 331
+Total available compilation commands: 349
+----=================----
+            </pre>
+            <p>
+              The <code>--detailed</code> flag shows the exact files involved
+              instead of just counts. For automated workflows, the
+              <code>-e json</code> option provides the status info in a format
+              that can be easily processed.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New Component Filter mode: single-origin-report
+            </template>
+            <p>
+              A new report filter option is introduced to CodeChecker:
+              Single Origin mode. This option makes it possible to filter only
+              those reports which are contained entirely within a source code
+              component. To use it, select the "Single Origin" mode when
+              editing the Source Component filter in the Reports view.
+            </p>
+            <p>
+              This new option is also available from the command line using
+              the <code>--single-origin-report</code> argument.
+              E.g: <code>CodeChecker cmd results --single-origin-report --component my_component ...</code>
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.27.0/single-origin.png"
+              alt="Single Origin Report Filter"
+              width="100%"
+            >
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Highlight non-compliant guideline rules
+            </template>
+            <p>
+              Non-compliant rules are highlighed in the SEI-Cert statistics
+              and compliant rules can be hidden.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.27.0/non-compliant.png"
+              alt="Non-compliant Rule Highlight"
+              width="100%"
+            >
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Navigable numbers in the product statistics page
+            </template>
+            <p>
+              The values of the outstanding reports graph are now clickable.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.27.0/navigable-numbers.png"
+              alt="Navigable Statistics Numbers"
+              width="100%"
+            >
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
@@ -90,7 +233,6 @@
           </new-feature-item>
         </new-release-item>
       </v-timeline-item>
-
 
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
