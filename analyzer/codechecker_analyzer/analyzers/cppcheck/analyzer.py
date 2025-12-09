@@ -410,7 +410,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             return None
 
         return "CppCheck binary found is too old at " \
-               f"v{str(analyzer_version).strip()}; minimum version is 1.80"
+               f"v{analyzer_version}; minimum version is 1.80"
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):

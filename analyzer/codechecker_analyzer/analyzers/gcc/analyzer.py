@@ -196,7 +196,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         if analyzer_version and analyzer_version >= Version(13, 0, 0):
             return None
 
-        return f"GCC binary found is too old at v{analyzer_version.strip()}; "\
+        return f"GCC binary found is too old at v{analyzer_version}; "\
                "minimum version is 13.0.0."
 
     def construct_result_handler(self, buildaction, report_output,
