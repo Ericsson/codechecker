@@ -63,7 +63,7 @@ def upgrade():
         # reaches LTS maturity (Ubuntu 20.04 LTS comes with 3.31.0, raising
         # a syntax error on the "FROM" in the "UPDATE" query), this
         # branching here needs to stay.
-        conn.execute("""
+        conn.execute(sa.text("""
             UPDATE reports
             SET (review_status,
                  review_status_author,
@@ -72,7 +72,7 @@ def upgrade():
                 (SELECT status, author, date, message
                     FROM review_statuses
                     WHERE bug_hash = reports.bug_id)
-        """)
+        """))
     elif dialect == 'postgresql':
         op.add_column('reports', col_rs)
         op.add_column('reports', col_rs_author)
@@ -80,7 +80,7 @@ def upgrade():
         op.add_column('reports', col_rs_is_in_source)
         op.add_column('reports', col_rs_message)
 
-        conn.execute("""
+        conn.execute(sa.text("""
             UPDATE reports
             SET review_status = rs.status,
                 review_status_author = rs.author,
@@ -88,19 +88,19 @@ def upgrade():
                 review_status_message = rs.message
             FROM review_statuses AS rs
             WHERE bug_id = rs.bug_hash
-        """)
+        """))
 
-    conn.execute("""
+    conn.execute(sa.text("""
         UPDATE reports
         SET review_status = 'unreviewed'
         WHERE review_status IS NULL
-    """)
+    """))
 
-    files_with_report = conn.execute("""
+    files_with_report = conn.execute(sa.text("""
         SELECT DISTINCT reports.file_id, files.content_hash
         FROM reports INNER JOIN files ON reports.file_id = files.id
         WHERE review_status != 'unreviewed'
-    """)
+    """))
 
     content_hashes = set()
     hash_to_content = {}
@@ -111,19 +111,19 @@ def upgrade():
         file_id_to_content_hash[f.file_id] = f.content_hash
 
     if content_hashes:
-        hash_to_content = conn.execute(f"""
+        hash_to_content = conn.execute(sa.text(f"""
             SELECT content_hash, content FROM file_contents
             WHERE content_hash IN ({','.join(content_hashes)})
-        """)
+        """))
 
     hash_to_content = {
         x.content_hash: decode_file_content(x.content)
         for x in hash_to_content}
 
-    report_id_to_line = conn.execute(f"""
+    report_id_to_line = conn.execute(sa.text(f"""
         SELECT id, file_id, bug_id, checker_id, line FROM reports
         WHERE review_status != 'unreviewed'
-    """)
+    """))
 
     scch = SourceCodeCommentHandler()
     comment_cache = {}
@@ -150,47 +150,47 @@ def upgrade():
                 review_status_to_report_ids[comment.status].add(row.id)
 
     if review_status_in_source:
-        conn.execute(f"""
+        conn.execute(sa.text(f"""
             UPDATE reports
             SET review_status_is_in_source = '1'
             WHERE id IN ({','.join(map(str, review_status_in_source))})
-        """)
+        """))
 
     # Earlier a common review status belonged to all reports sharing the same
     # bug hash even if these reports had different review status given in
     # source code comment. Now these are set individually.
     for review_status, report_ids in review_status_to_report_ids.items():
-        conn.execute(f"""
+        conn.execute(sa.text(f"""
             UPDATE reports
             SET review_status = '{review_status}'
             WHERE id IN ({','.join(map(str, report_ids))})
-        """)
+        """))
 
-    results = conn.execute("""
+    results = conn.execute(sa.text("""
         SELECT bug_hash, date
         FROM review_statuses
         WHERE status IN ('false_positive', 'intentional')
-    """)
+    """))
 
     for row in results:
         if dialect == 'sqlite':
-            conn.execute(f"""
+            conn.execute(sa.text(f"""
                 UPDATE reports
                 SET fixed_at = max('{row.date}', detected_at)
                 WHERE fixed_at IS NULL AND bug_id = '{row.bug_hash}'
-            """)
+            """))
         elif dialect == 'postgresql':
-            conn.execute(f"""
+            conn.execute(sa.text(f"""
                 UPDATE reports
                 SET fixed_at = greatest('{row.date}', detected_at)::timestamp
                 WHERE fixed_at IS NULL AND bug_id = '{row.bug_hash}'
-            """)
+            """))
 
     if bug_hashes:
-        conn.execute(f"""
+        conn.execute(sa.text(f"""
             DELETE FROM review_statuses
             WHERE bug_hash IN ({','.join(bug_hashes)})
-        """)
+        """))
 
 
 def downgrade():

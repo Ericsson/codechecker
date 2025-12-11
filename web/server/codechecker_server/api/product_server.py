@@ -13,6 +13,7 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
+from sqlalchemy import text
 from sqlalchemy.sql.expression import and_
 
 from sqlalchemy import create_engine, exc
@@ -354,7 +355,7 @@ class ThriftProductHandler:
         db_pass = convert.from_b64(product_info.password_b64)
         db_name = product_info.database
 
-        engine_url = URL(
+        engine_url = URL.create(
             drivername=db_engine,
             username=db_user,
             password=db_pass,
@@ -365,9 +366,9 @@ class ThriftProductHandler:
         engine = create_engine(engine_url)
         try:
             with engine.connect() as conn:
-                conn.execute("commit")
+                conn.execute(text("commit"))
                 LOG.info("Creating database '%s'", db_name)
-                conn.execute(f"CREATE DATABASE {db_name}")
+                conn.execute(text(f"CREATE DATABASE {db_name}"))
                 conn.close()
         except exc.ProgrammingError as e:
             LOG.error("ProgrammingError occurred: %s", str(e))
