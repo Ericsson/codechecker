@@ -13,6 +13,7 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
+from sqlalchemy import text
 from sqlalchemy.sql.expression import and_
 
 from sqlalchemy import create_engine, exc
@@ -244,7 +245,7 @@ class ThriftProductHandler:
                 msg)
 
         with DBSession(self.__session) as session:
-            prod = session.query(Product).get(self.__product.id)
+            prod = session.get(Product, self.__product.id)
 
             if not prod:
                 msg = "The product requested has been disconnected from the " \
@@ -270,7 +271,7 @@ class ThriftProductHandler:
         ], {'productID': product_id})
 
         with DBSession(self.__session) as session:
-            product = session.query(Product).get(product_id)
+            product = session.get(Product, product_id)
             if product is None:
                 msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)
@@ -354,7 +355,7 @@ class ThriftProductHandler:
         db_pass = convert.from_b64(product_info.password_b64)
         db_name = product_info.database
 
-        engine_url = URL(
+        engine_url = URL.create(
             drivername=db_engine,
             username=db_user,
             password=db_pass,
@@ -365,9 +366,9 @@ class ThriftProductHandler:
         engine = create_engine(engine_url)
         try:
             with engine.connect() as conn:
-                conn.execute("commit")
+                conn.execute(text("commit"))
                 LOG.info("Creating database '%s'", db_name)
-                conn.execute(f"CREATE DATABASE {db_name}")
+                conn.execute(text(f"CREATE DATABASE {db_name}"))
                 conn.close()
         except exc.ProgrammingError as e:
             LOG.error("ProgrammingError occurred: %s", str(e))
@@ -555,7 +556,7 @@ class ThriftProductHandler:
         new_configuration.
         """
         with DBSession(self.__session) as session:
-            product = session.query(Product).get(product_id)
+            product = session.get(Product, product_id)
             if product is None:
                 msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)
@@ -735,7 +736,7 @@ class ThriftProductHandler:
             LOG.info("Product configuration edited and saved successfully.")
 
             if product_needs_reconnect:
-                product = session.query(Product).get(product_id)
+                product = session.get(Product, product_id)
                 LOG.info("Product change requires database reconnection...")
 
                 LOG.debug("Disconnecting...")
@@ -762,7 +763,7 @@ class ThriftProductHandler:
         self.__require_permission([permissions.SUPERUSER])
 
         with DBSession(self.__session) as session:
-            product = session.query(Product).get(product_id)
+            product = session.get(Product, product_id)
             if product is None:
                 msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)

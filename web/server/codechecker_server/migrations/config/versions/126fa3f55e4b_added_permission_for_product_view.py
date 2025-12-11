@@ -34,17 +34,19 @@ def upgrade():
 
     if dialect == 'postgresql':
         # Rename the enum type what we want to change.
-        op.execute(f"ALTER TYPE {type_name} RENAME TO {tmp_type_name}")
+        op.execute(sa.text(
+            f"ALTER TYPE {type_name} RENAME TO {tmp_type_name}"))
 
         # Create the new enum.
         new_type.create(op.get_bind())
 
         # # Alter detection status column.
-        op.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} "
-                   f"TYPE {type_name} USING {column_name}::text::{type_name}")
+        op.execute(sa.text(
+            f"ALTER TABLE {table_name} ALTER COLUMN {column_name} "
+            f"TYPE {type_name} USING {column_name}::text::{type_name}"))
 
         # Drop the old enum.
-        op.execute(f"DROP TYPE {tmp_type_name}")
+        op.execute(sa.text(f"DROP TYPE {tmp_type_name}"))
     elif dialect == 'sqlite':
         with op.batch_alter_table(table_name) as batch_op:
             batch_op.alter_column(
@@ -57,17 +59,19 @@ def downgrade():
 
     if dialect == 'postgresql':
         # Rename the enum type what we want to change.
-        op.execute(f"ALTER TYPE {type_name} RENAME TO {tmp_type_name}")
+        op.execute(sa.text(
+            f"ALTER TYPE {type_name} RENAME TO {tmp_type_name}"))
 
         # Create the new enum.
         old_type.create(op.get_bind())
 
         # Alter detection status column.
-        op.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} "
-                   f"TYPE {type_name} USING {column_name}::text::{type_name}")
+        op.execute(sa.text(
+            f"ALTER TABLE {table_name} ALTER COLUMN {column_name} "
+            f"TYPE {type_name} USING {column_name}::text::{type_name}"))
 
         # Drop the old enum.
-        op.execute(f"DROP TYPE {tmp_type_name}")
+        op.execute(sa.text(f"DROP TYPE {tmp_type_name}"))
     elif dialect == 'sqlite':
         with op.batch_alter_table('table_name') as batch_op:
             batch_op.alter_column(

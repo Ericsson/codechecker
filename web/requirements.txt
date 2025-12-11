@@ -7,8 +7,8 @@
 Authlib<2
 requests<3  # Required by Authlib. Not installed automatically for some reason.
 lxml<6
-sqlalchemy<2
-alembic<2
+sqlalchemy~=2.0
+alembic~=1.5
 portalocker<4
 psutil<8
 multiprocess<0.71

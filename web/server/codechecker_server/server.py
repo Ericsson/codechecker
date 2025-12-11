@@ -874,13 +874,15 @@ class CCSimpleHttpServer(HTTPServer):
         """
 
         # get the database name from the database connection args
-        conn = make_url(conn.connection)
-        is_sqlite = conn.engine == 'sqlite'
+        driver = \
+            'pysqlite' if conn.connection.engine == 'sqlite' else 'psycopg2'
 
         # create a tuple of database that is going to be added for comparison
-        to_add = (f"{conn.engine}+pysqlite" if is_sqlite
-                  else f"{conn.engine}+psycopg2",
-                  conn.database, conn.host, conn.port)
+        to_add = (
+            f"{conn.connection.engine}+{driver}",
+            conn.connection.database,
+            conn.connection.host,
+            conn.connection.port)
 
         # create a tuple of database that is already connected for comparison
         def to_tuple(product):
