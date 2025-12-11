@@ -24,13 +24,13 @@ def upgrade():
 
     conn = op.get_bind()
 
-    conn.execute("""
+    conn.execute(sa.text("""
         UPDATE reports
         SET path_length =
         (SELECT COUNT(bug_path_events.report_id)
             FROM bug_path_events
             WHERE bug_path_events.report_id = reports.id)
-    """)
+    """))
 
 
 def downgrade():

@@ -180,8 +180,7 @@ class TaskManager:
         This class should not be mutated, only the fields queried.
         """
         with DBSession(self._database_factory) as session:
-            db_task: Optional[DBTask] = \
-                session.query(DBTask).get(token)
+            db_task: Optional[DBTask] = session.get(DBTask, token)
             if not db_task:
                 raise KeyError(f"No task record for token '{token}' "
                                "in the database")
@@ -203,8 +202,7 @@ class TaskManager:
         corresponding to the `task_obj` description available in memory.
         """
         with DBSession(self._database_factory) as session:
-            db_task: Optional[DBTask] = \
-                session.query(DBTask).get(task_obj.token)
+            db_task: Optional[DBTask] = session.get(DBTask, task_obj.token)
             if not db_task:
                 raise KeyError(f"No task record for token '{task_obj.token}' "
                                "in the database")

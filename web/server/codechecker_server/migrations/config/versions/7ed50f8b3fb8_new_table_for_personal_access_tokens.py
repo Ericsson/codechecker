@@ -52,18 +52,18 @@ def upgrade():
 
     one_year_later = datetime.now() + timedelta(days=365)
     op.execute(
-        f"""
+        sa.text(f"""
         INSERT INTO personal_access_tokens (user_name, token_name, token,
             description, last_access, expiration)
         SELECT user_name, {token_name}, token, description, last_access,
             '{one_year_later}'
         FROM auth_sessions
         WHERE can_expire = false
-        """)
-    op.execute("""
+        """))
+    op.execute(sa.text("""
         DELETE FROM auth_sessions
         WHERE can_expire = false
-        """)
+        """))
 
     if dialect == "sqlite":
         with op.batch_alter_table("auth_sessions", recreate="never") as ba:

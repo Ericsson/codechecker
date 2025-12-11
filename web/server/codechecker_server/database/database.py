@@ -396,15 +396,15 @@ class SQLServer(metaclass=ABCMeta):
             # FIXME: workaround for locking errors
             # FIXME: why is the connection used by multiple threads
             # is that a problem ??? do we need some extra locking???
-            engine = sqlalchemy.create_engine(self.get_connection_string(),
-                                              encoding='utf8',
-                                              connect_args={'timeout': 600,
-                                              'check_same_thread': False},
-                                              poolclass=NullPool)
+            engine = sqlalchemy.create_engine(
+                self.get_connection_string(),
+                connect_args={'timeout': 600, 'check_same_thread': False},
+                poolclass=NullPool)
         else:
-            engine = sqlalchemy.create_engine(self.get_connection_string(),
-                                              encoding='utf8',
-                                              poolclass=NullPool)
+            engine = sqlalchemy.create_engine(
+                self.get_connection_string(),
+                client_encoding='utf8',
+                poolclass=NullPool)
 
         self._register_engine_hooks(engine)
         return engine
@@ -556,13 +556,14 @@ class PostgreSQLServer(SQLServer):
         extra_args = {}
         if driver == "psycopg2":
             extra_args = {'client_encoding': 'utf8'}
-        return str(URL('postgresql+' + driver,
-                       username=self.user,
-                       password=password,
-                       host=self.host,
-                       port=str(self.port),
-                       database=database,
-                       query=extra_args))
+        return URL.create(
+            drivername='postgresql+' + driver,
+            username=self.user,
+            password=password,
+            host=self.host,
+            port=str(self.port),
+            database=database,
+            query=extra_args).render_as_string(hide_password=False)
 
     def connect(self, init=False):
         """
@@ -653,7 +654,9 @@ class SQLiteDatabase(SQLServer):
         return self.check_schema()
 
     def get_connection_string(self) -> str:
-        return str(URL('sqlite+pysqlite', None, None, None, None, self.dbpath))
+        return str(URL.create(
+            drivername='sqlite+pysqlite',
+            database=self.dbpath))
 
     def get_db_location(self):
         return self.dbpath

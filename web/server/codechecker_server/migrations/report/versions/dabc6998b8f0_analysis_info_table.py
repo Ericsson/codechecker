@@ -65,11 +65,11 @@ def upgrade():
     )
 
     try:
-        run_histories = conn.execute("""
+        run_histories = conn.execute(sa.text("""
             SELECT id, run_id, check_command
             FROM run_histories
             ORDER BY id DESC
-        """).fetchall()
+        """)).fetchall()
 
         uniqued_analysis_info = {}
         run_analysis_info = {}
