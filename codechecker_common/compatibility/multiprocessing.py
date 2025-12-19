@@ -69,7 +69,7 @@ if sys.platform in ["darwin", "win32"]:
             """Wait for worker processes to exit."""
             self._pool.join()
 else:
-    from concurrent.futures import ProcessPoolExecutor as Pool
+    from concurrent.futures import ProcessPoolExecutor as Pool  # type: ignore
     from multiprocessing import \
         Pipe, \
         Process, \
