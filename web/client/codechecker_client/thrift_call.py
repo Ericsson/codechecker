@@ -117,7 +117,7 @@ def thrift_client_call(function):
             sys.exit(1)
         except OSError as oserr:
             LOG.error("Connection failed.")
-            LOG.error(oserr.strerror)
+            LOG.error("OS Error: %s", str(oserr))
             LOG.error("Check if your CodeChecker server is running.")
             sys.exit(1)
         finally:
