@@ -623,6 +623,7 @@ class SessionManager:
             return None
 
         user_name, token = auth_string.split(':', 1)
+        personal_access_token = None
 
         transaction = None
         try:
