@@ -1718,6 +1718,7 @@ class ThriftRequestHandler:
     # The encoding of the name must be unicode. (whitespaces allowed?)
     # Returns: the id of the modified or created preset, -1 in case of error
     # PERMISSION: PRODUCT_ADMIN
+
     @exc_to_thrift_reqfail
     @timeit
     def storeFilterPreset(self, filterpreset):
@@ -1734,9 +1735,11 @@ class ThriftRequestHandler:
         id = filterpreset.id
         name = filterpreset.name
         report_filter = json.dumps(filterpreset.reportFilter.__dict__)
+
         # If the preset exists, it overwrites the name, and all preset values
         # if the preset does not exist yet, it creates it with
         #TODO make it so new preset with same name overrides the stored one
+
         with DBSession(self._Session) as session:
             LOG.debug(f"Preset:{name}, is being inserted in database")
             preset_entry = FilterPreset(preset_id = id,
@@ -1745,32 +1748,6 @@ class ThriftRequestHandler:
             session.add(preset_entry)
             session.commit()
         return id
-
-    # ReportFilter(filepath=None,
-    #              checkerMsg=None,
-    #              checkerName=None,
-    #              reportHash=None,
-    #              severity=None,
-    #              reviewStatus=[0, 1],
-    #              detectionStatus=[0, 3, 2],
-    #              runHistoryTag=None,
-    #              firstDetectionDate=None,
-    #              fixDate=None,
-    #              isUnique=False,
-    #              runName=None,
-    #              runTag=None,
-    #              componentNames=None,
-    #              bugPathLength=None,
-    #              date=None,
-    #              analyzerNames=None,
-    #              openReportsDate=None,
-    #              cleanupPlanNames=None,
-    #              fileMatchesAnyPoint=None,
-    #              componentMatchesAnyPoint=None,
-    #              annotations=None,
-    #              reportStatus=None)
-    #                                                            `alembic --name config_db revision --autogenerate -m "Change description"`
-    # PYTHONPATH=<codechecker_root>/build/CodeChecker/lib/python3 alembic --name config_db revision --autogenerate -m "Change description"
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1879,6 +1856,62 @@ class ThriftRequestHandler:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "CodeChecker could not list a preset :", ex)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getNameByValueForFilter(self, filter_type, value):
+        """
+        Convert enum integer value to a UI-recognizable string.
+        Returns "" when not convertible / not allowed.
+        """
+
+        self.__require_view()
+        LOG.info("Getting name by value for filter")
+
+        type_name = filter_type[0].upper() + filter_type[1:]
+
+        ALLOWED_ENUMS = {
+            "DetectionStatus",
+            "DiffType",
+            "Encoding",
+            "Order",
+            "ReportStatus",
+            "ReviewStatus",
+            "Severity",
+            "SortType",
+            "RunSortType",
+            "StoreLimitKind",
+            "ExtendedReportDataType",
+            "CommentKind",
+            "ReviewStatusRuleSortType",
+        }
+
+        if type_name not in ALLOWED_ENUMS:
+            return ""
+
+        enum_cls = getattr(ttypes, type_name, None)
+        if not enum_cls or not hasattr(enum_cls, "_VALUES_TO_NAMES"):
+            return ""
+
+        try:
+            value_int = int(value)
+            token = enum_cls._VALUES_TO_NAMES.get(value_int)  # e.g. "CONFIRMED"
+            if not token:
+                return ""
+
+            # special case for formatting confirmed bug. IN UI for some reason
+            # it is shown as "Confirmed bug" instead of just "Confirmed".
+            if type_name == "ReviewStatus" and token == "CONFIRMED":
+                return "Confirmed bug"
+
+            # # Default formatting: "FALSE_POSITIVE" → "False positive"
+            return token.replace("_", " ").lower().capitalize()
+
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f"CodeChecker could not convert {type_name} value to name: {ex}"
+            )
 
     @exc_to_thrift_reqfail
     @timeit

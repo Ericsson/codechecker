@@ -34,8 +34,6 @@
             @save_preset="getFilterPreset"
             @update:url="updateUrl"
           />
-          {{ tt }}
-          {{ tt2 }}
         </v-list-item-content>
       </v-list-item>
 
@@ -370,8 +368,6 @@ import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
 import SaveReportFilter from "./SaveReportFilter.vue";
-// import PresetMenu from "./Filters/PresetMenu.vue";
-// import { ReportFilter } from "@cc/report-server-types";
 import { ccService, handleThriftError } from "@cc-api";
 import BaseSelectOptionFilterMixin from
   "./Filters/BaseSelectOptionFilter.mixin";
@@ -421,9 +417,6 @@ export default {
       activeBaselinePanelId: 0,
       activeCompareToPanelId: 0,
       activeDatePanelId: 0,
-      tester: 0,
-      tt: this.ReportFilter,
-      tt2: JSON.parse(JSON.stringify(this.reportFilter))
     };
   },
 
@@ -544,17 +537,11 @@ export default {
     },
 
     saveCurrentFilter() {
-      // const preset = reportFilter;
-      // const preset = this.reportFilter;
       const preset = {
         id: 1,
         name: "BANANABREAD",
         reportFilter: this.reportFilter
       };
-
-      localStorage.__tmp1 = JSON.stringify(Object.assign({}, ...this.$refs.filters.map(f => f.getUrlState())));
-
-      this.tester = 1;
 
       new Promise(resolve => {
         ccService.getClient().storeFilterPreset(preset,
@@ -563,16 +550,15 @@ export default {
           })
         );
       })
-        .then(result => {
-          handleThriftError("OK", result);
-        }).catch(err => {
-          handleThriftError("FAILURE", err);
-        });
+      .then(result => {
+        handleThriftError("OK", result);
+      }).catch(err => {
+        handleThriftError("FAILURE", err);
+      });
     },
 
     deletePreset(preset_id){
       new Promise(resolve => {
-        this.tt = "promise";
         ccService.getClient().deleteFilterPreset(preset_id,
           handleThriftError(deleted_pr_id => {
             resolve(deleted_pr_id);
@@ -580,92 +566,121 @@ export default {
         );
       })
         .then(deleted_pr_id => {
-          this.tt = "OK" + deleted_pr_id;
           handleThriftError("OK", deleted_pr_id);
         }).catch(err => {
-          this.tt = "FAILURE" + err;
           handleThriftError("FAILURE", err);
         });
     },
 
-    // getFilterPreset(){
-    //   // this.unregisterWatchers();
-    //   // localStorage.__tmp1 = JSON.stringify(this.$route.query);
-    //   // console.log(new URLSearchParams(JSON.parse(localStorage.__tmp1)).toString());
+    async getFilterPreset(preset_id) {
+      if (preset_id == null) {
+        console.warn("getFilterPreset called without preset_id");
+        return;
+      }
+      // const preset_id = 1;
 
-    //   // this.$router.replace({ query: { run: 'tinyxml', severity: 'Medium'} })
+      let filterPreset;
+      try {
+        filterPreset = await new Promise((resolve, reject) => {
+          ccService.getClient().getFilterPreset(preset_id, (err, preset) => {
+            if (err) return reject(err);
+            resolve(preset);
+          });
+        });
+      } catch (err) {
+        console.error("FAILURE getFilterPreset failed:", err);
+        return;
+      }if (preset_id == null) {
+    console.warn("getFilterPreset called without preset_id");
+    return;
+  }
+      const rf = filterPreset?.reportFilter;
+      if (!rf || typeof rf !== "object") return;
 
-    //   // this.$router.replace({ query: JSON.parse(localStorage.__tmp1) })
-    //   //   .then(() => {
-    //   //     this.initByUrl();
-    //   //   })
-    //   //   .finally(() => {
-    //   //     this.registerWatchers();
-    //   //   });
-    //   // console.log();
+      const keyMap = {
+        reviewStatus: "review-status",
+        detectionStatus: "detection-status",
+        diffType: "diff-type",
+        severity: "severity",
+        isUnique: "is-unique",
+      };
 
-    //   const preset_id = 1;
-    //   // console.log(this.ReportFilter);
-    //   new Promise(resolve => {
-    //     ccService.getClient().getFilterPreset(preset_id,
-    //       handleThriftError(Filter_Preset => {
-    //         resolve(Filter_Preset);
-    //       })
-    //     );
-    //   })
-    //     .then(Filter_Preset => {
-    //       console.log(Filter_Preset.reportFilter);
-    //       this.setReportFilter(
-    //         new ReportFilter(Filter_Preset.reportFilter));
-    //       // this.updateReportFilter();
-    //       // this.unregisterWatchers();
-    //       // this.registerWatchers();
-    //       // this.$emit("refresh");
-    //       // this.update();
+      const getNameByValueForFilter = (rawKey, n) =>
+        new Promise((resolve, reject) => {
+          ccService.getClient().getNameByValueForFilter(rawKey, n, (err, name) => {
+            if (err) return reject(err);
+            resolve(name);
+          });
+        });
 
-    //     }).catch(err => {
-    //       handleThriftError("FAILURE", err);
-    //     });
-    // },
-    getFilterPreset() {
-      const preset_id = 1;
-      // console.log(this.ReportFilter);
-      new Promise(resolve => {
-        ccService.getClient().getFilterPreset(preset_id,
-          handleThriftError(Filter_Preset => {
-            resolve(Filter_Preset);
-          })
-        );
-      })
-        .then(Filter_Preset => {
-          // this.unregisterWatchers();
-          // this.setReportFilter(JSON.parse(
-          //   JSON.stringify(Filter_Preset.reportFilter)), { replace: true });
-          this.console.log(" Before this.reportFilter,", this.reportFilter)
-          this.setReportFilter(Filter_Preset.reportFilter);
-          this.updateUrl();
-          // work around 1 using saved states to combine with current and avoid updating url manually.
+      const s = {};
+
+      for (const [rawKey, rawValue] of Object.entries(rf)) {
+        if (rawValue === null || rawValue === undefined || rawValue === "") continue;
+
+        const urlKey = keyMap[rawKey] ?? rawKey;
+
+        if (Array.isArray(rawValue)) {
+          const convertedArr = await Promise.all(
+            rawValue.map(async (v) => {
+              if (v === null || v === undefined || v === "") return "";
+
+              const n = Number(v);
+              if (!Number.isInteger(n)) return String(v);
+
+              try {
+                const name = await getNameByValueForFilter(rawKey, n);
+                return name !== "" ? String(name) : String(v);
+              } catch (err) {
+                console.warn(`Conversion failed for ${rawKey}=${v}:`, err);
+                return String(v);
+              }
+            })
+          );
+
+          const cleaned = convertedArr.filter((x) => x !== "");
+          if (cleaned.length > 0) s[urlKey] = cleaned;
+          continue;
+        }
+
+        const n = Number(rawValue);
+        if (Number.isInteger(n)) {
           try {
-            console.log(" Before this.reportFilter,", this.reportFilter, Filter_Preset);
-            // this.beforeInit();
-            const s = JSON.parse(localStorage.__tmp1 ?? "{}");
-            const queryParams = Object.assign({}, this.$route.query, s);
-            console.log('queryParams', queryParams);
-            this.$router.replace({ query: queryParams }).then(() => {
-              this.initByUrl();
-            }).catch(console.error);
-          } catch (e) {
-            console.error('error in try-catch clause', e);
+            const name = await getNameByValueForFilter(rawKey, n);
+            s[urlKey] = name !== "" ? String(name) : String(rawValue);
+          } catch (err) {
+            console.warn(`Conversion failed for ${rawKey}=${rawValue}:`, err);
+            s[urlKey] = String(rawValue);
           }
-          console.log("After this.reportFilter,", this.reportFilter);
-        }).catch(err => {
-          handleThriftError("FAILURE", err);
-        });
+        } else {
+          s[urlKey] = String(rawValue);
+        }
+      }
+
+      const queryParams = { ...this.$route.query };
+      for (const k of Object.values(keyMap)) delete queryParams[k];
+      Object.assign(queryParams, s);
+
+      await this.clearToolbarSilently();
+
+      await this.$router.replace({ query: queryParams });
+      await this.$nextTick(); // double check later if this funciton actually exists.
+      await this.initByUrl();
     },
 
-  listFilterPreset(){
+    async clearToolbarSilently() {
+      const filters = this.$refs.filters;
+
+      this.unregisterWatchers();
+      filters.forEach(f => f.unregisterWatchers());
+
+      await Promise.all(filters.map(f => f.clear(false)));
+
+      this.updateAllFilters();
+    },
+
+    listFilterPreset(){
       new Promise(resolve => {
-        this.tt = "promise";
         ccService.getClient().listFilterPreset(
           handleThriftError(preset_list => {
             resolve(preset_list);
@@ -673,14 +688,11 @@ export default {
         );
       })
         .then(preset_list => {
-          this.tt = "OK" + preset_list;
           handleThriftError("OK", preset_list);
         }).catch(err => {
-          this.tt = "FAILURE" + err;
           handleThriftError("FAILURE", err);
         });
-    },
-
+      },
 
     async clearAllFilters() {
       const filters = this.$refs.filters;

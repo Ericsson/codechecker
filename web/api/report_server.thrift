@@ -1183,4 +1183,10 @@ service codeCheckerDBAccess {
   bool unsetCleanupPlan(1: i64          cleanupPlanId,
                         2: list<string> reportHashes)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // return name based on mapping based on value and classname.
+  // PERMISSION: PRODUCT_VIEW
+  string getNameByValueForFilter(1: string classname,
+                                 2: i64 value)
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 }
