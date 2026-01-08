@@ -388,7 +388,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
         LOG.info("----=================----")
 
     end_time = time.time()
-    LOG.info("Analysis length: %s sec.", end_time - start_time)
+    LOG.info("Analysis length: %s sec.", round(end_time - start_time, 2))
 
     if args.analyzers:
         analyzer_types.print_unsupported_analyzers(errored)
