@@ -41,7 +41,8 @@ class CheckerLabels:
     # default value of the label also needs to be provided here.
     UNIQUE_LABELS = {
         'severity': 'UNSPECIFIED',
-        'blacklist': 'false'}
+        'blacklist': 'false',
+        'description': ''}
 
     def __init__(self, checker_labels_dir: str):
         if not os.path.isdir(checker_labels_dir):
