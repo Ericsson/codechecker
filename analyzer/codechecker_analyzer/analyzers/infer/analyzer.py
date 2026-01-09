@@ -12,7 +12,6 @@ from collections import defaultdict
 # TODO distutils will be removed in python3.12
 import shlex
 import subprocess
-import json
 from pathlib import Path
 import sys
 from typing import List, Optional
@@ -105,14 +104,12 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
+        context = analyzer_context.get_context()
+
         command = [cls.analyzer_binary(), "help", "--list-issue-types"]
-        desc = json.load(
-            open(Path(__file__).parent / "descriptions.json",
-                 "r", encoding="utf-8"))
         checker_list = []
         try:
-            env = analyzer_context.get_context().get_env_for_bin(
-                cls.analyzer_binary())
+            env = context.get_env_for_bin(cls.analyzer_binary())
             env.update(TZ='UTC')
             output = subprocess.check_output(command,
                                              stderr=subprocess.DEVNULL,
@@ -122,16 +119,18 @@ class Infer(analyzer_base.SourceAnalyzer):
                 if len(data) < 7:
                     continue
 
-                entry_id = data[0].lower()
-                if entry_id in desc:
-                    description = desc[entry_id]
-                else:
-                    checker = data[6] if len(data) == 7 else data[5]
-                    description = f"used by '{checker}' checker"
+                checker = f'infer-{data[0].lower().replace("_", "-")}'
 
-                entry_id = entry_id.replace("_", "-")
-                checker_list.append((f"infer-{entry_id}",
-                                     description))
+                description = context.checker_labels.label_of_checker(
+                    checker,
+                    'description',
+                    cls.ANALYZER_NAME)
+
+                if not description:
+                    user = data[6] if len(data) == 7 else data[5]
+                    description = f"used by '{user}' checker"
+
+                checker_list.append((checker, description))
             return checker_list
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
