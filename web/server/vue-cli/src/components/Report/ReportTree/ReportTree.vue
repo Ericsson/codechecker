@@ -43,7 +43,6 @@
 import { ccService, handleThriftError } from "@cc-api";
 import {
   DetectionStatus,
-  MAX_QUERY_SIZE,
   ReportFilter,
   ReviewStatus
 } from "@cc/report-server-types";
@@ -55,6 +54,8 @@ import ReportTreeLabel from "./ReportTreeLabel";
 import ReportTreeKind from "./ReportTreeKind";
 import ReportTreeRootItem from "./ReportTreeRootItem";
 import formatReportDetails from "./ReportDetailFormatter";
+
+const { MAX_QUERY_SIZE } = require("@cc/report-server-type");
 
 export default {
   name: "ReportTree",
@@ -147,7 +148,7 @@ export default {
       // in the given file.
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
         reportFilter, cmpData, getDetails, handleThriftError(reports => {
-          if (reports.length === MAX_QUERY_SIZE) {
+          if (reports.length === MAX_QUERY_SIZE.toNumber()) {
             const currentReport =
               reports.find(r => r.reportId.equals(this.report.reportId));
             if (!currentReport) {
