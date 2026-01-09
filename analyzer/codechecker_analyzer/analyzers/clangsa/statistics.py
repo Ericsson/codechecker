@@ -40,8 +40,9 @@ def build_stat_coll_cmd(action, config, source):
                     "-Xclang", "-load",
                     "-Xclang", plugin])
 
-    cmd.extend(['-Xclang',
-                '-analyzer-opt-analyze-headers'])
+    if config.stats_collect_in_headers:
+        cmd.extend(['-Xclang',
+                    '-analyzer-opt-analyze-headers'])
 
     cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)

@@ -13,7 +13,8 @@ SRCS = call_and_message.cpp \
 	   path_begin1.cpp \
 	   path_begin2.cpp \
 	   same_origin.cpp \
-	   statistical_checkers.cpp
+	   statistical_checkers.cpp \
+	   statistical_checkers_header_user.cpp
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -c $<  -o $@

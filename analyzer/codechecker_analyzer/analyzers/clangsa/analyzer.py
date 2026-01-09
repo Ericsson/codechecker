@@ -755,6 +755,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             'add_gcc_include_dirs_with_isystem' in args and \
             args.add_gcc_include_dirs_with_isystem
 
+        handler.stats_collect_in_headers = \
+            'stats_collect_in_headers' in args and \
+            args.stats_collect_in_headers
+
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
                                            args.ctu_dir)

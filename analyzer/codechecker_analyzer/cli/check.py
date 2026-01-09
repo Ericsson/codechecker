@@ -33,6 +33,7 @@ from codechecker_analyzer.cli.parse import \
     EPILOG_ENV_VAR as parse_epilog_env_var
 
 from codechecker_common import arg, cmd_config, logger
+from codechecker_common.util import strtobool
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
@@ -612,6 +613,15 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                 " NOTE: If this argument is present, "
                                 "CodeChecker will NOT execute the "
                                 "analyzers!")
+
+    stat_opts.add_argument('--stats-collect-in-headers',
+                           nargs='?',
+                           const=True,
+                           type=lambda x: bool(strtobool(x)),
+                           default=True,
+                           dest='stats_collect_in_headers',
+                           help="Run the statistics collector for code in the "
+                                "header files as well. (default: True)")
 
     stat_opts.add_argument('--stats-use', '--stats-use',
                            action='store',

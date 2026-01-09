@@ -13,6 +13,8 @@
  * alpha.ericsson.statisticscollector.SpecialReturnValue
  */
 
+#include "statistical_checkers_header.h"
+
 int readFromFile(const char* fileName, char *text){
   if (!fileName) //return with error if
     return -1;
@@ -21,6 +23,9 @@ int readFromFile(const char* fileName, char *text){
 }
 
 int *getMem();
+
+// Forward declaration
+void testHeaderFunctions();
 
 void testUncheckedReturn(){
   char txt[100];
@@ -45,6 +50,9 @@ void testUncheckedReturn(){
   if (readFromFile("i.c",txt)==-1)
       return;
   readFromFile("j.c",txt); //warning: the return value of readFromFile is usually checked
+  
+  // Also call header functions to ensure they're analyzed
+  testHeaderFunctions();
 }
 
 
@@ -58,4 +66,31 @@ int testSpecialReturn(){
   return *getMem();
 
 
+}
+
+// Test functions that use header-declared functions
+void testHeaderFunctions() {
+  char txt[100];
+  // Call header function multiple times - should be counted in statistics when headers are analyzed
+  // Need at least 10 calls to meet default minimum sample count threshold
+  headerReadFromFile("header_a.c", txt);
+  headerReadFromFile("header_b.c", txt);
+  headerReadFromFile("header_c.c", txt);
+  headerReadFromFile("header_d.c", txt);
+  headerReadFromFile("header_e.c", txt);
+  headerReadFromFile("header_f.c", txt);
+  headerReadFromFile("header_g.c", txt);
+  headerReadFromFile("header_h.c", txt);
+  headerReadFromFile("header_i.c", txt);
+  headerReadFromFile("header_j.c", txt);  // 10th call to meet threshold
+  // Unchecked return - should generate warning when statistics are used
+  headerReadFromFile("header_k.c", txt);
+  
+  if (headerGetMem() != 0)
+    return;
+  if (!headerGetMem())
+    return;
+  headerGetMem(); // Unchecked - should generate warning
+  headerGetMem(); // More calls for statistics
+  headerGetMem();
 }

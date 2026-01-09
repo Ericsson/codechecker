@@ -34,7 +34,7 @@ from codechecker_common import arg, logger, cmd_config, review_status_handler
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, strtobool
 
 LOG = logger.get_logger('system')
 
@@ -645,6 +645,15 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                 " NOTE: If this argument is present, "
                                 "CodeChecker will NOT execute the "
                                 "analyzers!")
+
+    stat_opts.add_argument('--stats-collect-in-headers',
+                           nargs='?',
+                           const=True,
+                           type=lambda x: bool(strtobool(x)),
+                           default=True,
+                           dest='stats_collect_in_headers',
+                           help="Run the statistics collector for code in the "
+                                "header files as well. (default: True)")
 
     stat_opts.add_argument('--stats-use', '--stats-use',
                            action='store',

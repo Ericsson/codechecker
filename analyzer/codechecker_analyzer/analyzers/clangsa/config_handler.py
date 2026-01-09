@@ -26,4 +26,5 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.ctu_on_demand = False
         self.enable_z3 = False
         self.enable_z3_refutation = False
+        self.stats_collect_in_headers = True
         self.environ = environ
