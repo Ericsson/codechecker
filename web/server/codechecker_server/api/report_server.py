@@ -1844,6 +1844,12 @@ class ThriftRequestHandler:
         LOG.info("List back filter presets")
 
         try:
+            # with DBSession(self._Session) as session:
+            #     all_presets = (
+            #         session.query(FilterPreset.preset_id, FilterPreset.preset_name).all()
+            #     )
+
+            # return all_presets
             with DBSession(self._Session) as session:
                 all_presets = (
                     session.query(FilterPreset).all()

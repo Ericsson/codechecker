@@ -26,7 +26,7 @@
 
       <v-divider />
 
-      <v-list-item class="pl-1">
+      <!-- <v-list-item class="pl-1">
         <v-list-item-content>
           <save-report-filter
             ref="filters"
@@ -35,7 +35,29 @@
             @update:url="updateUrl"
           />
         </v-list-item-content>
+      </v-list-item> -->
+
+      <!-- PresetMenu component -->
+      <v-list-item class="pl-1">
+        <v-list-item-content>
+          <preset-menu
+            ref="FilterMenu"
+            :namespace="namespace"
+            @apply-preset="getFilterPreset"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
       </v-list-item>
+
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          @click="saveCurrentFilter"
+        >
+          Save
+        </v-btn>
+      </v-card-actions>
 
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
@@ -368,6 +390,7 @@ import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
 import SaveReportFilter from "./SaveReportFilter.vue";
+import PresetMenu from "./Filters/PresetMenu.vue";
 import { ccService, handleThriftError } from "@cc-api";
 import BaseSelectOptionFilterMixin from
   "./Filters/BaseSelectOptionFilter.mixin";
@@ -377,6 +400,7 @@ export default {
   components: {
     AnalyzerNameFilter,
     SaveReportFilter,
+    PresetMenu,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
@@ -536,10 +560,10 @@ export default {
       }
     },
 
-    saveCurrentFilter() {
+    saveCurrentFilter(id, name) {
       const preset = {
-        id: 1,
-        name: "BANANABREAD",
+        id: id,
+        name: name,
         reportFilter: this.reportFilter
       };
 
@@ -573,11 +597,11 @@ export default {
     },
 
     async getFilterPreset(preset_id) {
+      // const preset_id = 1;
       if (preset_id == null) {
         console.warn("getFilterPreset called without preset_id");
         return;
       }
-      // const preset_id = 1;
 
       let filterPreset;
       try {
@@ -658,14 +682,34 @@ export default {
       }
 
       const queryParams = { ...this.$route.query };
-      for (const k of Object.values(keyMap)) delete queryParams[k];
-      Object.assign(queryParams, s);
+      // for (const k of Object.values(keyMap)) delete queryParams[k];
+      // Object.assign(queryParams, s);
+
+      // await this.clearToolbarSilently();
+
+      // await this.$router.replace({ query: queryParams });
+      // await this.$nextTick(); // double check later if this funciton actually exists.
+      // await this.initByUrl();
+      const nextQuery = queryParams;
+      const current = this.normalizeQuery(this.$route.query);
+      const next = this.normalizeQuery(nextQuery);
 
       await this.clearToolbarSilently();
 
-      await this.$router.replace({ query: queryParams });
-      await this.$nextTick(); // double check later if this funciton actually exists.
-      await this.initByUrl();
+      if (current !== next) {
+        await this.$router.replace({ query: nextQuery });
+        await this.initByUrl();
+      }
+
+    },
+
+    normalizeQuery(q) {
+      const out = {};
+      for (const k of Object.keys(q || {}).sort()) {
+        const v = q[k];
+        out[k] = Array.isArray(v) ? v.map(String).sort() : String(v);
+      }
+      return JSON.stringify(out);
     },
 
     async clearToolbarSilently() {
