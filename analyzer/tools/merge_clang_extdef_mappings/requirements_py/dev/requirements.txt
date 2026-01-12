@@ -1,4 +1,4 @@
 pytest<=7.3.1
 pycodestyle<=2.12.0
 pylint<3.3
-setuptools<81
+setuptools~=80.0
