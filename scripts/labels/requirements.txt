@@ -1,8 +1,8 @@
 # codechecker<=local
-emoji<3
-lxml<6
-packaging<26
-selenium<5
-tabulate<1
-termcolor<4
-urllib3<3
+emoji~=2.0
+lxml~=6.0
+packaging~=25.0
+selenium~=4.30
+tabulate~=0.9
+termcolor~=3.0
+urllib3~=2.0
