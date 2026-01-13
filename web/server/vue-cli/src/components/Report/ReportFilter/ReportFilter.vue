@@ -26,6 +26,28 @@
 
       <v-divider />
 
+      <!-- PresetMenu component -->
+      <v-list-item class="pl-1">
+        <v-list-item-content>
+          <preset-menu
+            ref="FilterMenu"
+            :namespace="namespace"
+            @apply-preset="getFilterPreset"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          @click="saveCurrentFilter"
+        >
+          Save
+        </v-btn>
+      </v-card-actions>
+
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
           <unique-filter
@@ -355,11 +377,14 @@ import {
 import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
+import PresetMenu from "./Filters/PresetMenu.vue";
+import { ccService, handleThriftError } from "@cc-api";
 
 export default {
   name: "ReportFilter",
   components: {
     AnalyzerNameFilter,
+    PresetMenu,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
@@ -514,6 +539,162 @@ export default {
       if (!this.reportFilter.date) {
         this.activeDatePanelId = -1;
       }
+    },
+
+    saveCurrentFilter(id, name) {
+      const preset = {
+        id: id,
+        name: name,
+        reportFilter: this.reportFilter
+      };
+      new Promise(resolve => {
+        ccService.getClient().storeFilterPreset(preset,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      })
+        .then(result => {
+          handleThriftError("OK", result);
+        }).catch(err => {
+          handleThriftError("FAILURE", err);
+        });
+    },
+    deletePreset(preset_id) {
+      new Promise(resolve => {
+        ccService.getClient().deleteFilterPreset(preset_id,
+          handleThriftError(deleted_pr_id => {
+            resolve(deleted_pr_id);
+          })
+        );
+      })
+        .then(deleted_pr_id => {
+          handleThriftError("OK", deleted_pr_id);
+        }).catch(err => {
+          handleThriftError("FAILURE", err);
+        });
+    },
+    async getFilterPreset(preset_id) {
+      // const preset_id = 1;
+      if (preset_id == null) {
+        console.warn("getFilterPreset called without preset_id");
+        return;
+      }
+      let filterPreset;
+      try {
+        filterPreset = await new Promise((resolve, reject) => {
+          ccService.getClient().getFilterPreset(preset_id, (err, preset) => {
+            if (err) return reject(err);
+            resolve(preset);
+          });
+        });
+      } catch (err) {
+        handleThriftError("FAILURE getFilterPreset failed:", err);
+        return;
+      } if (preset_id == null) {
+        handleThriftError("getFilterPreset called without preset_id");
+        return;
+      }
+      const rf = filterPreset?.reportFilter;
+      if (!rf || typeof rf !== "object") return;
+      const keyMap = {
+        reviewStatus: "review-status",
+        detectionStatus: "detection-status",
+        diffType: "diff-type",
+        severity: "severity",
+        isUnique: "is-unique",
+      };
+      const getNameByValueForFilter = (rawKey, n) =>
+        new Promise((resolve, reject) =>
+          ccService.getClient().getNameByValueForFilter(
+            rawKey,
+            n,
+            (err, name) => (err ? reject(err) : resolve(name))
+          )
+        );
+      const s = {};
+      for (const [ rawKey, rawValue ] of Object.entries(rf)) {
+        if (rawValue === null || rawValue === undefined || rawValue === ""){
+          continue;
+        }
+        const urlKey = keyMap[rawKey] ?? rawKey;
+        if (Array.isArray(rawValue)) {
+          const convertedArr = await Promise.all(
+            rawValue.map(async v => {
+              if (v === null || v === undefined || v === "") return "";
+              const n = Number(v);
+              if (!Number.isInteger(n)) return String(v);
+              try {
+                const name = await getNameByValueForFilter(rawKey, n);
+                return name !== "" ? String(name) : String(v);
+              } catch (err) {
+                handleThriftError(`Conversion failed for ${rawKey}=${v}:`, err);
+                return String(v);
+              }
+            })
+          );
+          const cleaned = convertedArr.filter(x => x !== "");
+          if (cleaned.length > 0) s[urlKey] = cleaned;
+          continue;
+        }
+        const n = Number(rawValue);
+        if (Number.isInteger(n)) {
+          try {
+            const name = await getNameByValueForFilter(rawKey, n);
+            s[urlKey] = name !== "" ? String(name) : String(rawValue);
+          } catch (err) {
+            handleThriftError(`Conversion failed for ${rawKey}=${rawValue}:`,
+              err);
+            s[urlKey] = String(rawValue);
+          }
+        } else {
+          s[urlKey] = String(rawValue);
+        }
+      }
+      const queryParams = { ...this.$route.query };
+      // for (const k of Object.values(keyMap)) delete queryParams[k];
+      // Object.assign(queryParams, s);
+      // await this.clearToolbarSilently();
+      // await this.$router.replace({ query: queryParams });
+      // await this.$nextTick(); // double check later
+      // await this.initByUrl();
+      const nextQuery = queryParams;
+      const current = this.normalizeQuery(this.$route.query);
+      const next = this.normalizeQuery(nextQuery);
+      await this.clearToolbarSilently();
+      if (current !== next) {
+        await this.$router.replace({ query: nextQuery });
+        await this.initByUrl();
+      }
+    },
+    normalizeQuery(q) {
+      const out = {};
+      for (const k of Object.keys(q || {}).sort()) {
+        const v = q[k];
+        out[k] = Array.isArray(v) ? v.map(String).sort() : String(v);
+      }
+      return JSON.stringify(out);
+    },
+    async clearToolbarSilently() {
+      const filters = this.$refs.filters;
+      this.unregisterWatchers();
+      filters.forEach(f => f.unregisterWatchers());
+      await Promise.all(filters.map(f => f.clear(false)));
+      this.updateAllFilters();
+    },
+    listFilterPreset() {
+      new Promise(resolve => {
+        ccService.getClient().listFilterPreset(
+          handleThriftError(preset_list => {
+            resolve(preset_list);
+          })
+        );
+      })
+        .then(preset_list => {
+          handleThriftError("OK", preset_list);
+        }).catch(err => {
+          handleThriftError("FAILURE", err);
+        });
     },
 
     async clearAllFilters() {
