@@ -36,17 +36,17 @@
             @update:url="updateUrl"
           />
         </v-list-item-content>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            @click="saveCurrentFilter"
+          >
+            Save
+          </v-btn>
+        </v-card-actions>
       </v-list-item>
 
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          color="primary"
-          @click="saveCurrentFilter"
-        >
-          Save
-        </v-btn>
-      </v-card-actions>
 
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
