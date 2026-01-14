@@ -78,8 +78,9 @@ def trim_path_prefixes(path: str, prefixes: Optional[List[str]]) -> str:
             prefix += '/'
 
         regex_str = fnmatch.translate(prefix)
-        assert regex_str[-2:] == '\\Z', \
-               r'fnmatch.translate should leave \\Z at the end of the matcher!'
+        assert regex_str[-2:] in ('\\Z', '\\z'), \
+               r'fnmatch.translate should leave \\Z or \\z ' \
+               r'at the end of the matcher!'
 
         prefix_matcher = re.compile(regex_str[:-2])
 
