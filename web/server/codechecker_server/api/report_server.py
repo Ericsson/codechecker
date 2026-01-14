@@ -265,10 +265,10 @@ def process_report_filter(
     if report_filter.cleanupPlanNames:
         OR = []
         for cleanup_plan_name in report_filter.cleanupPlanNames:
-            q = select([CleanupPlanReportHash.bug_hash]) \
+            q = select(CleanupPlanReportHash.bug_hash) \
                 .where(
                     CleanupPlanReportHash.cleanup_plan_id.in_(
-                        select([CleanupPlan.id])
+                        select(CleanupPlan.id)
                         .where(CleanupPlan.name == cleanup_plan_name)
                         .distinct()
                     )) \
@@ -477,12 +477,12 @@ def get_include_skip_queries(
 
     To get the include and skip lists use the 'get_component_values' function.
     """
-    include_q = select([File.id]) \
+    include_q = select(File.id) \
         .where(or_(*[
             File.filepath.like(conv(fp)) for fp in include])) \
         .distinct()
 
-    skip_q = select([File.id]) \
+    skip_q = select(File.id) \
         .where(or_(*[
             File.filepath.like(conv(fp)) for fp in skip])) \
         .distinct()
@@ -1367,7 +1367,7 @@ def get_is_enabled_case(subquery):
     ))
 
     return case(
-        [(detection_status_filters, False)],
+        (detection_status_filters, False),
         else_=True
     )
 
@@ -1393,7 +1393,7 @@ def get_is_opened_case(subquery):
             review_status_str, review_statuses)))
     ]
     return case(
-        [(and_(*detection_and_review_status_filters), True)],
+        (and_(*detection_and_review_status_filters), True),
         else_=False
     )
 
@@ -1850,9 +1850,9 @@ class ThriftRequestHandler:
                         base_hashes, run_ids, tag_ids)
 
                 if self._product.driver_name == 'postgresql':
-                    new_hashes = select([
+                    new_hashes = select(
                         func.unnest(cast(report_hashes, ARRAY(String)))
-                            .label('bug_id')]) \
+                            .label('bug_id')) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -1865,10 +1865,10 @@ class ThriftRequestHandler:
                     for chunk in util.chunks(
                             iter(report_hashes), SQLITE_MAX_COMPOUND_SELECT):
                         new_hashes_query = union_all(*[
-                            select([bindparam('bug_id' + str(i), h)
-                                    .label('bug_id')])
+                            select(bindparam('bug_id' + str(i), h)
+                                   .label('bug_id'))
                             for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query.subquery()]) \
+                        q = select(new_hashes_query.subquery()) \
                             .except_(base_hashes)
                         new_hashes.extend([
                             res[0] for res in session.query(q.subquery())])
@@ -1983,10 +1983,10 @@ class ThriftRequestHandler:
 
             annotation_cols = OrderedDict()
             for col in annotation_keys:
-                annotation_cols[col] = func.max(sqlalchemy.case([(
+                annotation_cols[col] = func.max(sqlalchemy.case((
                     ReportAnnotations.key == col,
                     cast(ReportAnnotations.value,
-                         report_annotation_types[col]["db"]))])) \
+                         report_annotation_types[col]["db"])))) \
                             .label(f"annotation_{col}")
 
             if report_filter.isUnique:
@@ -3960,7 +3960,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
 
             q = session.query(FileContent) \
-                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .options(sqlalchemy.orm.load_only(FileContent.content_hash)) \
                 .filter(FileContent.content_hash.in_(file_hashes))
 
             return list(set(file_hashes) -
@@ -3977,7 +3977,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
 
             q = session.query(FileContent) \
-                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .options(sqlalchemy.orm.load_only(FileContent.content_hash)) \
                 .filter(FileContent.content_hash.in_(file_hashes)) \
                 .filter(FileContent.blame_info.isnot(None))
 
