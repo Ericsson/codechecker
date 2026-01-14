@@ -19,6 +19,7 @@
     "sei-cert-c": "https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard",
     "sei-cert-cpp": "https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682",
     "misra-c": "https://www.misra.org.uk/",
-    "memory-safety": "https://cwe.mitre.org/data/definitions/1399.html"
+    "memory-safety": "https://cwe.mitre.org/data/definitions/1399.html",
+    "owasp-top-10-2021": "https://owasp.org/Top10/2021/"
   }
 }
