@@ -147,7 +147,7 @@ export default {
       // in the given file.
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
         reportFilter, cmpData, getDetails, handleThriftError(reports => {
-          if (reports.length === MAX_QUERY_SIZE) {
+          if (reports.length === MAX_QUERY_SIZE.toNumber()) {
             const currentReport =
               reports.find(r => r.reportId.equals(this.report.reportId));
             if (!currentReport) {
