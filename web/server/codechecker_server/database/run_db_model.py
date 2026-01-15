@@ -15,7 +15,7 @@ from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
     LargeBinary, MetaData, String, UniqueConstraint, Table, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
