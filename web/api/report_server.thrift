@@ -406,6 +406,12 @@ struct ReportFilter {
   24: optional bool fullReportPathInComponent,
 }
 
+struct FilterPreset {
+  1: i64          id,           // Unique ID of filter preset.
+  2: string       name,         // Human readable name of preset.
+  3: ReportFilter reportFilter  // Uniquely configured ReportFilter.
+}
+
 struct RunReportCount {
   1: i64            runId,        // Unique ID of the run.
   2: string         name,         // Human readable name of the run.
@@ -582,6 +588,40 @@ service codeCheckerDBAccess {
                          3: optional i64 offset,
                          4: optional RunSortMode sortMode)
                          throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  //============================================
+  // Filter grouping api calls.
+  //============================================
+
+  // Stores the given FilterPreset with the given id
+  // If the preset exists, it overwrites the name, and all preset values
+  // if the preset does not exist yet, it creates it with
+  // if the id is -1 a new preset filter is created
+  // the filter preset name must be unique.
+  // An error must be thrown if another preset exists with the same name.
+  // The encoding of the name must be unicode. (whitespaces allowed?)
+  // Returns: the id of the modified or created preset, -1 in case of error
+  // PERMISSION: PRODUCT_ADMIN
+  i64 storeFilterPreset(1: FilterPreset preset)
+                      throws (1: codechecker_api_shared.RequestFailed requestError);
+
+  // Returns the FilterPreset identified by id
+  // Returns -1 in case there is no preset with the given id
+  // PERMISSION: PRODUCT_VIEW
+  FilterPreset getFilterPreset(1: i64 id)
+                            throws (1: codechecker_api_shared.RequestFailed requestError);
+
+  // Removes the filterpreset with the given id
+  // returns the id of the filter preset removed
+  // and -1 in case of error.
+  // PERMISSION: PRODUCT_ADMIN
+  i64 deleteFilterPreset(1: i64 id)
+                        throws (1: codechecker_api_shared.RequestFailed requestError);
+
+  // Returns all filter presets stored for the product repository
+  // PERMISSION: PRODUCT_VIEW
+  list <FilterPreset> listFilterPreset()
+                                    throws (1: codechecker_api_shared.RequestFailed requestError);
 
   // Returns the number of available runs based on the run filter parameter.
   // PERMISSION: PRODUCT_VIEW
@@ -1145,4 +1185,10 @@ service codeCheckerDBAccess {
   bool unsetCleanupPlan(1: i64          cleanupPlanId,
                         2: list<string> reportHashes)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Return name based on mapping based on value and classname.
+  // PERMISSION: PRODUCT_VIEW
+  string getNameByValueForFilter(1: string classname,
+                                 2: i64 value)
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 }
