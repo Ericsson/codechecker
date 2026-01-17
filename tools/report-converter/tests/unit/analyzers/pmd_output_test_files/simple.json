@@ -1,0 +1,70 @@
+{
+  "formatVersion": 0,
+  "pmdVersion": "7.20.0",
+  "timestamp": "2026-01-01T18:18:34.271+01:00",
+  "files": [
+    {
+      "filename": "Main.java",
+      "violations": [
+        {
+          "beginline": 1,
+          "begincolumn": 8,
+          "endline": 1,
+          "endcolumn": 13,
+          "description": "All classes, interfaces, enums and annotations must belong to a named package",
+          "rule": "NoPackage",
+          "ruleset": "Code Style",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#nopackage"
+        },
+        {
+          "beginline": 1,
+          "begincolumn": 8,
+          "endline": 1,
+          "endcolumn": 13,
+          "description": "Avoid short class names like Main",
+          "rule": "ShortClassName",
+          "ruleset": "Code Style",
+          "priority": 4,
+          "externalInfoUrl": "https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#shortclassname"
+        },
+        {
+          "beginline": 3,
+          "begincolumn": 9,
+          "endline": 3,
+          "endcolumn": 10,
+          "description": "Avoid variables with short names like j",
+          "rule": "ShortVariable",
+          "ruleset": "Code Style",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#shortvariable"
+        },
+        {
+          "beginline": 5,
+          "begincolumn": 7,
+          "endline": 5,
+          "endcolumn": 14,
+          "description": "This statement should have braces",
+          "rule": "ControlStatementBraces",
+          "ruleset": "Code Style",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#controlstatementbraces"
+        },
+        {
+          "beginline": 6,
+          "begincolumn": 9,
+          "endline": 6,
+          "endcolumn": 10,
+          "description": "Avoid variables with short names like i",
+          "rule": "ShortVariable",
+          "ruleset": "Code Style",
+          "priority": 3,
+          "externalInfoUrl": "https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#shortvariable"
+        }
+      ]
+    }
+  ],
+  "suppressedViolations": [],
+  "processingErrors": [],
+  "configurationErrors": []
+}

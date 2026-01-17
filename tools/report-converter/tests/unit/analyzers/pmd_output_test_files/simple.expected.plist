@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>category</key>
+			<string>Code Style</string>
+			<key>check_name</key>
+			<string>NoPackage</string>
+			<key>description</key>
+			<string>All classes, interfaces, enums and annotations must belong to a named package</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>8</integer>
+				<key>file</key>
+				<string>Main.java</string>
+				<key>line</key>
+				<integer>1</integer>
+			</dict>
+			<key>severity</key>
+			<string>warning</string>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>Code Style</string>
+			<key>check_name</key>
+			<string>ShortClassName</string>
+			<key>description</key>
+			<string>Avoid short class names like Main</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>8</integer>
+				<key>file</key>
+				<string>Main.java</string>
+				<key>line</key>
+				<integer>1</integer>
+			</dict>
+			<key>severity</key>
+			<string>warning</string>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>Code Style</string>
+			<key>check_name</key>
+			<string>ShortVariable</string>
+			<key>description</key>
+			<string>Avoid variables with short names like j</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>9</integer>
+				<key>file</key>
+				<string>Main.java</string>
+				<key>line</key>
+				<integer>3</integer>
+			</dict>
+			<key>severity</key>
+			<string>warning</string>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>Code Style</string>
+			<key>check_name</key>
+			<string>ControlStatementBraces</string>
+			<key>description</key>
+			<string>This statement should have braces</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>7</integer>
+				<key>file</key>
+				<string>Main.java</string>
+				<key>line</key>
+				<integer>5</integer>
+			</dict>
+			<key>severity</key>
+			<string>warning</string>
+		</dict>
+		<dict>
+			<key>category</key>
+			<string>Code Style</string>
+			<key>check_name</key>
+			<string>ShortVariable</string>
+			<key>description</key>
+			<string>Avoid variables with short names like i</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>9</integer>
+				<key>file</key>
+				<string>Main.java</string>
+				<key>line</key>
+				<integer>6</integer>
+			</dict>
+			<key>severity</key>
+			<string>warning</string>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>Main.java</string>
+	</array>
+	<key>metadata</key>
+	<dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>CodeChecker</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
