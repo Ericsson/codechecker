@@ -6,6 +6,7 @@ build
 build_dist
 venv
 venv_dev
+.coverage
 Makefile.local
 
 /web/server/vue-cli/dist
