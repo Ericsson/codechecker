@@ -507,8 +507,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_mode = 'plist-multi-file'
             analyzer_cmd.extend(['-Xclang',
-                                 '-analyzer-opt-analyze-headers',
-                                 '-Xclang',
                                  '-analyzer-output=' + analyzer_mode,
                                  '-o', analyzer_output_file])
 
