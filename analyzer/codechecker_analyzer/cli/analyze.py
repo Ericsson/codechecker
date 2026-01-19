@@ -436,6 +436,14 @@ def add_arguments_to_parser(parser):
                                     "cppcheck:cc-verbatim-args-file="
                                     "<filepath>")
 
+    analyzer_opts.add_argument('--analyze-headers',
+                               dest="analyze_headers",
+                               required=False,
+                               action='store_true',
+                               default=False,
+                               help="Enable the analysis in the header files "
+                                    "in Clang SA.")
+
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,

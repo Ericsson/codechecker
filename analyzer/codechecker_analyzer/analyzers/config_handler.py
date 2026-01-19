@@ -54,6 +54,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.analyzer_config = None
         self.report_hash = None
         self.enable_all = None
+        self.analyze_headers = None
 
         # The key is the checker name, the value is a tuple of CheckerState and
         # checker description.

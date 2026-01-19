@@ -507,10 +507,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_mode = 'plist-multi-file'
             analyzer_cmd.extend(['-Xclang',
-                                 '-analyzer-opt-analyze-headers',
-                                 '-Xclang',
                                  '-analyzer-output=' + analyzer_mode,
                                  '-o', analyzer_output_file])
+
+            if config.analyze_headers:
+                analyzer_cmd.extend(['-Xclang',
+                                     '-analyzer-opt-analyze-headers'])
 
             # Expand macros in plist output on the bug path.
             analyzer_cmd.extend(['-Xclang',
@@ -754,6 +756,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.add_gcc_include_dirs_with_isystem = \
             'add_gcc_include_dirs_with_isystem' in args and \
             args.add_gcc_include_dirs_with_isystem
+
+        handler.analyze_headers = 'analyze_headers' in args and \
+            args.analyze_headers
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
