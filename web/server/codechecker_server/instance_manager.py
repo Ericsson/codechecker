@@ -55,8 +55,11 @@ def __check_instance(hostname, pid):
     try:
         proc = psutil.Process(pid)
 
+        # When CodeChecker is installed via PyPI, then the script name is
+        # "CodeChecker" and it's "codechecker_common/cli.py" when run from
+        # local build.
         cli = os.path.join("codechecker_common", "cli.py")
-        return cli in proc.cmdline()[1] and \
+        return proc.cmdline()[1].endswith((cli, 'CodeChecker')) and \
             proc.username() == getpass.getuser()
     except psutil.NoSuchProcess:
         # If the process does not exist, it cannot be valid.
