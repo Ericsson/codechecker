@@ -69,7 +69,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent
+    SourceComponent, SourceComponentFile
 
 from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
@@ -146,41 +146,79 @@ def slugify(text):
 
 
 def get_component_values(
-    session: DBSession,
-    component_name: str
+    component: SourceComponent
 ) -> Tuple[List[str], List[str]]:
     """
-    Get component values by component names and returns a tuple where the
-    first item contains a list path which should be skipped and the second
-    item contains a list of path which should be included.
+    Returns a tuple where the first item contains a list paths that should be
+    included and the second item contains a list of paths that should be
+    skipped.
     E.g.:
       +/a/b/x.cpp
       +/a/b/y.cpp
       -/a/b
     On the above component value this function will return the following:
-      (['/a/b'], ['/a/b/x.cpp', '/a/b/y.cpp'])
+      (['/a/b/x.cpp', '/a/b/y.cpp'], ['/a/b'])
     """
-    components = session.query(SourceComponent) \
-        .filter(SourceComponent.name.like(component_name)) \
-        .all()
-
-    skip = []
     include = []
+    skip = []
 
-    for component in components:
-        values = component.value.decode('utf-8').split('\n')
-        for value in values:
-            value = value.strip()
-            if not value:
-                continue
+    values = component.value.decode('utf-8').split('\n')
+    for value in values:
+        value = value.strip()
+        if not value:
+            continue
 
-            v = value[1:]
-            if value[0] == '+':
-                include.append(v)
-            elif value[0] == '-':
-                skip.append(v)
+        v = value[1:]
+        if value[0] == '+':
+            include.append(v)
+        elif value[0] == '-':
+            skip.append(v)
 
-    return skip, include
+    return include, skip
+
+
+def update_source_component_files(
+    session: DBSession,
+    component: Optional[SourceComponent] = None
+):
+    """
+    Refreshes the SourceComponentFile table for a specific source component.
+    If `component` is None, then all source components are updated.
+    """
+    if component is None:
+        all_components = session.query(SourceComponent)
+    else:
+        all_components = [component]
+
+    # 1. Delete existing associations for this component
+    session.query(SourceComponentFile) \
+        .filter(SourceComponentFile.source_component_name.in_(
+            map(lambda component: component.name, all_components))) \
+        .delete(synchronize_session=False)
+
+    for comp in all_components:
+        # 2. Re-calculate associations
+        include, skip = get_component_values(comp)
+
+        file_ids_query = None
+        if skip and include:
+            include_q, skip_q = get_include_skip_queries(include, skip)
+            file_ids_query = include_q.except_(skip_q)
+        elif include:
+            include_q, _ = get_include_skip_queries(include, [])
+            file_ids_query = include_q
+        elif skip:
+            _, skip_q = get_include_skip_queries([], skip)
+            file_ids_query = select(File.id).where(File.id.notin_(skip_q))
+
+        if file_ids_query is not None:
+            file_ids = session.execute(file_ids_query).fetchall()
+
+            if file_ids:
+                session.bulk_insert_mappings(
+                    SourceComponentFile,
+                    [{'source_component_name': comp.name,
+                      'file_id': fid[0]} for fid in file_ids])
 
 
 def process_report_filter(
@@ -506,18 +544,10 @@ def get_source_component_file_query(
     component_name: str
 ):
     """ Get filter query for a single source component. """
-    skip, include = get_component_values(session, component_name)
-
-    if skip and include:
-        include_q, skip_q = get_include_skip_queries(include, skip)
-        return File.id.in_(include_q.except_(skip_q))
-
-    if include:
-        return or_(*[File.filepath.like(conv(fp)) for fp in include])
-    elif skip:
-        return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
-
-    return None
+    return File.id.in_(
+        session.query(SourceComponentFile.file_id)
+        .filter(SourceComponentFile.source_component_name == component_name)
+    )
 
 
 def get_reports_by_bugpath_filter_for_single_origin(
@@ -635,28 +665,12 @@ def get_other_source_component_file_query(session):
         (Files NOT IN Component_1) AND (Files NOT IN Component_2) ... AND
         (Files NOT IN Component_N)
     """
-    component_names = session.query(SourceComponent.name).all()
-
-    # If there are no user defined source components we don't have to filter.
-    if not component_names:
+    # Check if there are any source components
+    if not session.query(SourceComponent).count():
         return None
 
-    def get_query(component_name: str):
-        """ Get file filter query for auto generated Other component. """
-        skip, include = get_component_values(session, component_name)
-
-        if skip and include:
-            include_q, skip_q = get_include_skip_queries(include, skip)
-            return File.id.notin_(include_q.except_(skip_q))
-        elif include:
-            return and_(*[File.filepath.notlike(conv(fp)) for fp in include])
-        elif skip:
-            return or_(*[File.filepath.like(conv(fp)) for fp in skip])
-
-        return None
-
-    queries = [get_query(n) for (n, ) in component_names]
-    return and_(*queries)
+    files_in_components = session.query(SourceComponentFile.file_id)
+    return File.id.notin_(files_in_components)
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
@@ -3897,6 +3911,8 @@ class ThriftRequestHandler:
                                             user)
 
             session.add(component)
+            update_source_component_files(session, component)
+
             session.commit()
 
             return True
