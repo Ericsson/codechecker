@@ -26,7 +26,7 @@ import zlib
 import shutil
 
 from collections import defaultdict, namedtuple
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 from threading import Timer
 from typing import Dict, Iterable, List, Set, Tuple
@@ -55,7 +55,7 @@ from codechecker_client import client as libclient, product
 from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.compatibility.multiprocessing import Pool
+from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import format_size, load_json, strtobool
@@ -257,6 +257,16 @@ def add_arguments_to_parser(parser):
                              "match will be removed. You may also use Unix "
                              "shell-like wildcards (e.g. '/*/jsmith/').")
 
+    parser.add_argument('-j', '--jobs',
+                        type=int,
+                        dest="jobs",
+                        default=cpu_count(),
+                        help="Number of parallel jobs that process the "
+                             "input directory to upload. If the directory is "
+                             "located on NFS drive, then the storage may hang "
+                             "indefinitely in case of parallel processing. "
+                             "Choosing value 1 doesn't use sub-processes.")
+
     parser.add_argument('--zip-loc',
                         type=str,
                         metavar='PATH',
@@ -424,18 +434,23 @@ def get_reports(
 def parse_analyzer_result_files(
     analyzer_result_files: Iterable[str],
     checker_labels: CheckerLabels,
-    zip_iter=map
+    jobs: int = cpu_count()
 ) -> AnalyzerResultFileReports:
     """ Get reports from the given analyzer result files. """
     analyzer_result_file_reports: AnalyzerResultFileReports = defaultdict(list)
 
-    for idx, (file_path, reports) in enumerate(zip(
-            analyzer_result_files, zip_iter(
+    ctx = nullcontext() if jobs == 1 else Pool(max_workers=jobs)
+
+    with ctx as executor:
+        map_fn = map if jobs == 1 else executor.map
+
+        for idx, (file_path, reports) in enumerate(zip(
+            analyzer_result_files, map_fn(
                 functools.partial(get_reports, checker_labels=checker_labels),
                 analyzer_result_files))):
-        LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
-                  f"Parsed '{file_path}' ...")
-        analyzer_result_file_reports[file_path] = reports
+            LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
+                      f"Parsed '{file_path}' ...")
+            analyzer_result_file_reports[file_path] = reports
 
     return analyzer_result_file_reports
 
@@ -454,7 +469,8 @@ def assemble_zip(inputs,
                  client,
                  prod_client,
                  checker_labels: CheckerLabels,
-                 tmp_dir: str):
+                 tmp_dir: str,
+                 jobs: int):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
@@ -491,9 +507,8 @@ def assemble_zip(inputs,
 
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
-    with Pool() as executor:
-        analyzer_result_file_reports = parse_analyzer_result_files(
-             analyzer_result_file_paths, checker_labels, executor.map)
+    analyzer_result_file_reports = parse_analyzer_result_files(
+        analyzer_result_file_paths, checker_labels, jobs)
 
     LOG.info("Processing report files done.")
 
@@ -959,7 +974,8 @@ def main(args):
                          client,
                          prod_client,
                          context.checker_labels,
-                         temp_dir_path)
+                         temp_dir_path,
+                         args.jobs)
         except ReportLimitExceedError:
             sys.exit(1)
         except Exception as ex:
