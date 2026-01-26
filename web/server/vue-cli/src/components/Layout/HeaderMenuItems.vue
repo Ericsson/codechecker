@@ -161,6 +161,26 @@ export default {
           name: "Szabolcs Sipos",
           github: "labuwx",
           email: "labuwx@balfug.com"
+        },
+        {
+          name: "Gergely Gulyás",
+          github: "gulyasgergely902",
+          email: "gergely.gulyas.ext@ericsson.com"
+        },
+        {
+          name: "Barnabás Domozi",
+          github: "",
+          email:"barnabas.domozi.ext@ericsson.com"
+        },
+        {
+          name: "Kristóf Umann",
+          github: "",
+          email:"kristof.umann@ericsson.com"
+        },
+        {
+          name: "Nóra Zinaeddin",
+          github: "",
+          email:"nora.zinaeddin.ext@ericsson.com"
         }
       ]
     };
