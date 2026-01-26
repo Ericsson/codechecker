@@ -132,7 +132,7 @@ class ThriftTaskHandler:
         Returns the `TaskInfo` for the task identified by `token`.
         """
         with DBSession(self._config_db) as session:
-            db_task: Optional[DBTask] = session.query(DBTask).get(token)
+            db_task: Optional[DBTask] = session.get(DBTask, token)
             if not db_task:
                 raise RequestFailed(ErrorCode.GENERAL,
                                     f"Task '{token}' does not exist!")
@@ -145,7 +145,7 @@ class ThriftTaskHandler:
                 should_set_consumed_flag = db_task.is_in_terminated_state
             elif db_task.product_id is not None:
                 associated_product: Optional[Product] = \
-                    session.query(Product).get(db_task.product_id)
+                    session.get(Product, db_task.product_id)
                 if not associated_product:
                     LOG.error("No product with ID '%d', but a task is "
                               "associated with it.",
@@ -201,8 +201,8 @@ class ThriftTaskHandler:
                         {"config_db_session": session, "productID": prod_id},
                         self._auth_session)]
                 if no_admin_products:
-                    no_admin_products = [session.query(Product)
-                                         .get(product_id).endpoint
+                    no_admin_products = [session.get(Product, product_id)
+                                         .endpoint
                                          for product_id in no_admin_products]
                     # pylint: disable=consider-using-f-string
                     raise RequestFailed(ErrorCode.UNAUTHORIZED,
@@ -341,7 +341,7 @@ class ThriftTaskHandler:
                     ErrorCode.UNAUTHORIZED,
                     "cancelTask() requires server-level SUPERUSER rights.")
 
-            db_task: Optional[DBTask] = session.query(DBTask).get(token)
+            db_task: Optional[DBTask] = session.get(DBTask, token)
             if not db_task:
                 raise RequestFailed(ErrorCode.GENERAL,
                                     f"Task '{token}' does not exist!")

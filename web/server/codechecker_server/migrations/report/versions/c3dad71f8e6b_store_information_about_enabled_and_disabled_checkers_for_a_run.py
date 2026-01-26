@@ -45,18 +45,18 @@ def upgrade():
         # These values are normalised such that in the following, when the
         # foreign key-based look-up is added to the schema, their new
         # 'checker_id' will all point to the single "UNKNOWN/NOT FOUND" case.
-        analyzer_name_affected = conn.execute(f"""
+        analyzer_name_affected = conn.execute(sa.text(f"""
             UPDATE reports
             SET analyzer_name = '{UnknownChecker[0]}'
             WHERE analyzer_name = ''
                 OR LOWER(analyzer_name) = 'unknown'
             ;
-        """).rowcount
+        """)).rowcount
         if analyzer_name_affected:
             LOG.info("Normalising 'reports'... %d unknown 'analyzer_name'.",
                      analyzer_name_affected)
 
-        checker_id_affected = conn.execute(f"""
+        checker_id_affected = conn.execute(sa.text(f"""
             UPDATE reports
             SET checker_id = '{UnknownChecker[1]}'
             WHERE checker_id IS NULL
@@ -64,7 +64,7 @@ def upgrade():
                 OR LOWER(checker_id) = 'not found'
                 OR LOWER(checker_id) = 'unknown'
             ;
-        """).rowcount
+        """)).rowcount
         if checker_id_affected:
             LOG.info("Normalising 'reports'... %d unknown 'checker_id'.",
                      checker_id_affected)
@@ -85,8 +85,8 @@ def upgrade():
             # this while keeping the entire migration in one transaction.
             # However, these changes are not destructive because no data is
             # lost, only the representation slightly changed.
-            conn.execute("COMMIT;")
-            conn.execute("START TRANSACTION;")
+            conn.execute(sa.text("COMMIT;"))
+            conn.execute(sa.text("START TRANSACTION;"))
 
     def create_new_tables():
         op.create_table(

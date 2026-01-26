@@ -14,6 +14,7 @@ connect to.
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
 from codechecker_api_shared.ttypes import DBStatus
@@ -140,7 +141,8 @@ class Product:
 
             self.__session = sessionmaker(bind=self.__engine)
 
-            self.__engine.execute('SELECT 1')
+            with self.__engine.connect() as connection:
+                connection.execute(text('SELECT 1'))
             self.__db_status = sql_server.check_schema()
             self.__last_connect_attempt = None
 

@@ -43,14 +43,7 @@ def run_migrations_online():
     In this scenario we need to create an Engine and associate a connection
     with the context.
     """
-    connectable = config.attributes.get('connection', None)
-    if connectable is None:
-        connectable = engine_from_config(
-            config.get_section(config.config_ini_section),
-            prefix='sqlalchemy.',
-            poolclass=pool.NullPool)
-
-    with connectable.connect() as connection:
+    def migrate(connection):
         context.configure(
             connection=connection,
             target_metadata=target_metadata
@@ -60,6 +53,18 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+    connection = config.attributes.get('connection', None)
+    if connection:
+        migrate(connection)
+    else:
+        connectable = engine_from_config(
+            config.get_section(config.config_ini_section),
+            prefix='sqlalchemy.',
+            poolclass=pool.NullPool)
+
+        with connectable.connect() as connection:
+            migrate(connection)
 
 
 if context.is_offline_mode():

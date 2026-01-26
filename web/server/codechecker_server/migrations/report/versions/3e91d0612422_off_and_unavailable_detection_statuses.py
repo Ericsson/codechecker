@@ -34,24 +34,25 @@ def upgrade():
 
     if dialect == 'postgresql':
         # Rename the enum type what we want to change.
-        op.execute('ALTER TYPE ' + name + ' RENAME TO ' + tmp_name)
+        op.execute(sa.text('ALTER TYPE ' + name + ' RENAME TO ' + tmp_name))
 
         # Create the new enum.
         new_type.create(op.get_bind())
 
         # Alter detection status column.
-        op.execute('ALTER TABLE ' + table_name + ' ALTER COLUMN ' + name +
-                   ' TYPE ' + name + ' USING ' + name + '::text::' + name)
+        op.execute(sa.text(
+            'ALTER TABLE ' + table_name + ' ALTER COLUMN ' + name +
+            ' TYPE ' + name + ' USING ' + name + '::text::' + name))
 
         # Drop the old enum.
-        op.execute('DROP TYPE ' + tmp_name)
+        op.execute(sa.text('DROP TYPE ' + tmp_name))
     elif dialect == 'sqlite':
-        op.execute('PRAGMA foreign_keys=off')
+        op.execute(sa.text('PRAGMA foreign_keys=off'))
         with op.batch_alter_table('reports') as batch_op:
             batch_op.alter_column(name,
                                   existing_type=old_type,
                                   type_=new_type)
-        op.execute('PRAGMA foreign_keys=on')
+        op.execute(sa.text('PRAGMA foreign_keys=on'))
 
 
 def downgrade():
@@ -60,21 +61,22 @@ def downgrade():
 
     if dialect == 'postgresql':
         # Rename the enum type what we want to change.
-        op.execute('ALTER TYPE ' + name + ' RENAME TO ' + tmp_name)
+        op.execute(sa.text('ALTER TYPE ' + name + ' RENAME TO ' + tmp_name))
 
         # Create the new enum.
         old_type.create(op.get_bind())
 
         # Alter detection status column.
-        op.execute('ALTER TABLE ' + table_name + ' ALTER COLUMN ' + name +
-                   ' TYPE ' + name + ' USING ' + name + '::text::' + name)
+        op.execute(sa.text(
+            'ALTER TABLE ' + table_name + ' ALTER COLUMN ' + name +
+            ' TYPE ' + name + ' USING ' + name + '::text::' + name))
 
         # Drop the old enum.
-        op.execute('DROP TYPE ' + tmp_name)
+        op.execute(sa.text('DROP TYPE ' + tmp_name))
     elif dialect == 'sqlite':
-        op.execute('PRAGMA foreign_keys=off')
+        op.execute(sa.text('PRAGMA foreign_keys=off'))
         with op.batch_alter_table('reports') as batch_op:
             batch_op.alter_column(name,
                                   existing_type=new_type,
                                   type_=old_type)
-        op.execute('PRAGMA foreign_keys=on')
+        op.execute(sa.text('PRAGMA foreign_keys=on'))

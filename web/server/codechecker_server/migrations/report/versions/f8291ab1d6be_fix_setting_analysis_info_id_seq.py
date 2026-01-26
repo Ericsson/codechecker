@@ -7,6 +7,7 @@ Create Date: 2021-07-15 16:49:05.354455
 """
 
 from alembic import op
+import sqlalchemy as sa
 
 
 # Revision identifiers, used by Alembic.
@@ -21,12 +22,12 @@ def upgrade():
     dialect = ctx.dialect.name
 
     if dialect == 'postgresql':
-        op.execute("""
+        op.execute(sa.text("""
             SELECT SETVAL(
                 'analysis_info_id_seq',
                 (SELECT MAX(id) + 1 FROM analysis_info)
             )
-        """)
+        """))
 
 
 def downgrade():
