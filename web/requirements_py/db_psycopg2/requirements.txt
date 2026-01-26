@@ -1,7 +1,7 @@
 lxml<6
-sqlalchemy<2
-alembic<2
-psycopg2-binary<=2.9.10
+sqlalchemy~=2.0
+alembic~=1.5
+psycopg2-binary~=2.9
 psutil<8
 portalocker<4
 

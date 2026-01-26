@@ -26,7 +26,7 @@ from typing import Any, Collection, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column, case, cast
+    asc, desc, union_all, select, bindparam, literal_column, case, cast, true
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.types import ARRAY, String
 
@@ -69,7 +69,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent
+    SourceComponent, SourceComponentFile
 
 from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
@@ -146,41 +146,80 @@ def slugify(text):
 
 
 def get_component_values(
-    session: DBSession,
-    component_name: str
+    component: SourceComponent
 ) -> Tuple[List[str], List[str]]:
     """
-    Get component values by component names and returns a tuple where the
-    first item contains a list path which should be skipped and the second
-    item contains a list of path which should be included.
+    Returns a tuple where the first item contains a list paths that should be
+    included and the second item contains a list of paths that should be
+    skipped.
     E.g.:
       +/a/b/x.cpp
       +/a/b/y.cpp
       -/a/b
     On the above component value this function will return the following:
-      (['/a/b'], ['/a/b/x.cpp', '/a/b/y.cpp'])
+      (['/a/b/x.cpp', '/a/b/y.cpp'], ['/a/b'])
     """
-    components = session.query(SourceComponent) \
-        .filter(SourceComponent.name.like(component_name)) \
-        .all()
-
-    skip = []
     include = []
+    skip = []
 
-    for component in components:
-        values = component.value.decode('utf-8').split('\n')
-        for value in values:
-            value = value.strip()
-            if not value:
-                continue
+    values = component.value.decode('utf-8').split('\n')
+    for value in values:
+        value = value.strip()
+        if not value:
+            continue
 
-            v = value[1:]
-            if value[0] == '+':
-                include.append(v)
-            elif value[0] == '-':
-                skip.append(v)
+        v = value[1:]
+        if value[0] == '+':
+            include.append(v)
+        elif value[0] == '-':
+            skip.append(v)
 
-    return skip, include
+    return include, skip
+
+
+def update_source_component_files(
+    session,
+    component: Optional[SourceComponent] = None
+):
+    """
+    Refreshes the SourceComponentFile table for a specific source component.
+    If `component` is None, then all source components are updated.
+    """
+    if component is None:
+        all_components = session.query(SourceComponent)
+    else:
+        all_components = [component]
+
+    # 1. Delete existing associations for this component
+    session.query(SourceComponentFile) \
+        .filter(SourceComponentFile.source_component_name.in_(
+            map(lambda component: component.name, all_components))) \
+        .delete(synchronize_session=False)
+
+    for component in all_components:
+        # 2. Re-calculate associations
+        include, skip = get_component_values(component)
+
+        file_ids_query = None
+        if skip and include:
+            include_q, skip_q = get_include_skip_queries(include, skip)
+            file_ids_query = include_q.except_(skip_q)
+        elif include:
+            include_q, _ = get_include_skip_queries(include, [])
+            file_ids_query = include_q
+        elif skip:
+            _, skip_q = get_include_skip_queries([], skip)
+            file_ids_query = select([File.id]).where(File.id.notin_(skip_q))
+
+        if file_ids_query is not None:
+            file_ids = session.execute(file_ids_query).fetchall()
+
+            if file_ids:
+                session.bulk_insert_mappings(
+                    SourceComponentFile,
+                    [{'source_component_name': component.name,
+                      'file_id': fid[0]}
+                    for fid in file_ids])
 
 
 def process_report_filter(
@@ -216,25 +255,29 @@ def process_report_filter(
             OR = [File.filepath.ilike(conv(fp))
                   for fp in report_filter.filepath]
 
-            AND.append(or_(*OR))
-            join_tables.append(File)
+            if OR:
+                AND.append(or_(*OR))
+                join_tables.append(File)
 
     if report_filter.checkerMsg:
         OR = [Report.checker_message.ilike(conv(cm))
               for cm in report_filter.checkerMsg]
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.analyzerNames or report_filter.checkerName \
             or report_filter.severity:
         if report_filter.analyzerNames:
             OR = [Checker.analyzer_name.ilike(conv(an))
                   for an in report_filter.analyzerNames]
-            AND.append(or_(*OR))
+            if OR:
+                AND.append(or_(*OR))
 
         if report_filter.checkerName:
             OR = [Checker.checker_name.ilike(conv(cn))
                   for cn in report_filter.checkerName]
-            AND.append(or_(*OR))
+            if OR:
+                AND.append(or_(*OR))
 
         if report_filter.severity:
             AND.append(Checker.severity.in_(report_filter.severity))
@@ -244,8 +287,9 @@ def process_report_filter(
     if report_filter.runName:
         OR = [Run.name.ilike(conv(rn))
               for rn in report_filter.runName]
-        AND.append(or_(*OR))
-        join_tables.append(Run)
+        if OR:
+            AND.append(or_(*OR))
+            join_tables.append(Run)
 
     if report_filter.reportHash:
         OR = []
@@ -260,15 +304,16 @@ def process_report_filter(
         if no_joker:
             OR.append(Report.bug_id.in_(no_joker))
 
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.cleanupPlanNames:
         OR = []
         for cleanup_plan_name in report_filter.cleanupPlanNames:
-            q = select([CleanupPlanReportHash.bug_hash]) \
+            q = select(CleanupPlanReportHash.bug_hash) \
                 .where(
                     CleanupPlanReportHash.cleanup_plan_id.in_(
-                        select([CleanupPlan.id])
+                        select(CleanupPlan.id)
                         .where(CleanupPlan.name == cleanup_plan_name)
                         .distinct()
                     )) \
@@ -276,7 +321,8 @@ def process_report_filter(
 
             OR.append(Report.bug_id.in_(q))
 
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.reportStatus:
         dst = list(map(detection_status_str,
@@ -298,7 +344,8 @@ def process_report_filter(
         if ReportStatus.CLOSED in report_filter.reportStatus:
             OR.append(not_(filter_query))
 
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.detectionStatus:
         dst = list(map(detection_status_str,
@@ -308,7 +355,8 @@ def process_report_filter(
     if report_filter.reviewStatus:
         OR = [Report.review_status.in_(
             list(map(review_status_str, report_filter.reviewStatus)))]
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.firstDetectionDate is not None:
         date = datetime.fromtimestamp(report_filter.firstDetectionDate)
@@ -346,7 +394,8 @@ def process_report_filter(
                                      '%Y-%m-%d %H:%M:%S.%f')
             OR.append(and_(Report.detected_at <= date, or_(
                 Report.fixed_at.is_(None), Report.fixed_at >= date)))
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
     if report_filter.componentNames:
         if report_filter.componentMatchesAnyPoint:
@@ -392,9 +441,10 @@ def process_report_filter(
                           for v in values])) if values else and_(
                               ReportAnnotations.key == key))
 
-        AND.append(or_(*OR))
+        if OR:
+            AND.append(or_(*OR))
 
-    filter_expr = and_(*AND)
+    filter_expr = and_(*AND) if AND else true()
     return filter_expr, join_tables
 
 
@@ -416,7 +466,7 @@ def process_source_component_filter(session, component_names):
         if file_query is not None:
             OR.append(file_query)
 
-    return or_(*OR)
+    return or_(*OR) if OR else true()
 
 
 def filter_open_reports_in_tags(results, run_ids, tag_ids):
@@ -477,12 +527,12 @@ def get_include_skip_queries(
 
     To get the include and skip lists use the 'get_component_values' function.
     """
-    include_q = select([File.id]) \
+    include_q = select(File.id) \
         .where(or_(*[
             File.filepath.like(conv(fp)) for fp in include])) \
         .distinct()
 
-    skip_q = select([File.id]) \
+    skip_q = select(File.id) \
         .where(or_(*[
             File.filepath.like(conv(fp)) for fp in skip])) \
         .distinct()
@@ -495,18 +545,10 @@ def get_source_component_file_query(
     component_name: str
 ):
     """ Get filter query for a single source component. """
-    skip, include = get_component_values(session, component_name)
-
-    if skip and include:
-        include_q, skip_q = get_include_skip_queries(include, skip)
-        return File.id.in_(include_q.except_(skip_q))
-
-    if include:
-        return or_(*[File.filepath.like(conv(fp)) for fp in include])
-    elif skip:
-        return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
-
-    return None
+    return File.id.in_(
+        session.query(SourceComponentFile.file_id)
+        .filter(SourceComponentFile.source_component_name == component_name)
+    )
 
 
 def get_reports_by_bugpath_filter_for_single_origin(
@@ -624,28 +666,12 @@ def get_other_source_component_file_query(session):
         (Files NOT IN Component_1) AND (Files NOT IN Component_2) ... AND
         (Files NOT IN Component_N)
     """
-    component_names = session.query(SourceComponent.name).all()
-
-    # If there are no user defined source components we don't have to filter.
-    if not component_names:
+    # Check if there are any source components
+    if not session.query(SourceComponent).count():
         return None
 
-    def get_query(component_name: str):
-        """ Get file filter query for auto generated Other component. """
-        skip, include = get_component_values(session, component_name)
-
-        if skip and include:
-            include_q, skip_q = get_include_skip_queries(include, skip)
-            return File.id.notin_(include_q.except_(skip_q))
-        elif include:
-            return and_(*[File.filepath.notlike(conv(fp)) for fp in include])
-        elif skip:
-            return or_(*[File.filepath.like(conv(fp)) for fp in skip])
-
-        return None
-
-    queries = [get_query(n) for (n, ) in component_names]
-    return and_(*queries)
+    files_in_components = session.query(SourceComponentFile.file_id)
+    return File.id.notin_(files_in_components)
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
@@ -1234,7 +1260,7 @@ def get_cleanup_plan(session, cleanup_plan_id: int) -> CleanupPlan:
     Check if the given cleanup id exists in the database and returns
     the cleanup. Otherwise it will raise an exception.
     """
-    cleanup_plan = session.query(CleanupPlan).get(cleanup_plan_id)
+    cleanup_plan = session.get(CleanupPlan, cleanup_plan_id)
 
     if not cleanup_plan:
         raise codechecker_api_shared.ttypes.RequestFailed(
@@ -1298,7 +1324,7 @@ def process_rs_rule_filter(
 ):
     """ Process review status rule filter. """
     if rule_filter:
-        if rule_filter.reportHashes is not None:
+        if rule_filter.reportHashes:
             OR = [ReviewStatus.bug_hash.ilike(conv(report_hash))
                   for report_hash in rule_filter.reportHashes]
             query = query.filter(or_(*OR))
@@ -1308,7 +1334,7 @@ def process_rs_rule_filter(
                 ReviewStatus.status.in_(
                     map(review_status_str, rule_filter.reviewStatuses)))
 
-        if rule_filter.authors is not None:
+        if rule_filter.authors:
             OR = [ReviewStatus.author.ilike(conv(author))
                   for author in rule_filter.authors]
             query = query.filter(or_(*OR))
@@ -1367,7 +1393,7 @@ def get_is_enabled_case(subquery):
     ))
 
     return case(
-        [(detection_status_filters, False)],
+        (detection_status_filters, False),
         else_=True
     )
 
@@ -1393,7 +1419,7 @@ def get_is_opened_case(subquery):
             review_status_str, review_statuses)))
     ]
     return case(
-        [(and_(*detection_and_review_status_filters), True)],
+        (and_(*detection_and_review_status_filters), True),
         else_=False
     )
 
@@ -1850,9 +1876,9 @@ class ThriftRequestHandler:
                         base_hashes, run_ids, tag_ids)
 
                 if self._product.driver_name == 'postgresql':
-                    new_hashes = select([
+                    new_hashes = select(
                         func.unnest(cast(report_hashes, ARRAY(String)))
-                            .label('bug_id')]) \
+                            .label('bug_id')) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -1865,10 +1891,10 @@ class ThriftRequestHandler:
                     for chunk in util.chunks(
                             iter(report_hashes), SQLITE_MAX_COMPOUND_SELECT):
                         new_hashes_query = union_all(*[
-                            select([bindparam('bug_id' + str(i), h)
-                                    .label('bug_id')])
+                            select(bindparam('bug_id' + str(i), h)
+                                   .label('bug_id'))
                             for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query.subquery()]) \
+                        q = select(new_hashes_query.subquery()) \
                             .except_(base_hashes)
                         new_hashes.extend([
                             res[0] for res in session.query(q.subquery())])
@@ -1983,10 +2009,10 @@ class ThriftRequestHandler:
 
             annotation_cols = OrderedDict()
             for col in annotation_keys:
-                annotation_cols[col] = func.max(sqlalchemy.case([(
+                annotation_cols[col] = func.max(sqlalchemy.case((
                     ReportAnnotations.key == col,
                     cast(ReportAnnotations.value,
-                         report_annotation_types[col]["db"]))])) \
+                         report_annotation_types[col]["db"])))) \
                             .label(f"annotation_{col}")
 
             if report_filter.isUnique:
@@ -2147,7 +2173,7 @@ class ThriftRequestHandler:
                 # prevents it.
                 q = q.order_by(Report.id)
 
-                if report_filter.annotations is not None:
+                if report_filter.annotations:
                     annotations = defaultdict(list)
                     for annotation in report_filter.annotations:
                         annotations[annotation.first].append(annotation.second)
@@ -2348,7 +2374,7 @@ class ThriftRequestHandler:
         session object has to be used.
         """
 
-        review_status = session.query(ReviewStatus).get(report_hash)
+        review_status = session.get(ReviewStatus, report_hash)
         if review_status is None:
             review_status = ReviewStatus()
             review_status.bug_hash = report_hash
@@ -2452,7 +2478,7 @@ class ThriftRequestHandler:
         self.__require_view()
 
         with DBSession(self._config_database) as session:
-            product = session.query(Product).get(self._product.id)
+            product = session.get(Product, self._product.id)
             return product.is_review_status_change_disabled
 
     @exc_to_thrift_reqfail
@@ -2465,7 +2491,7 @@ class ThriftRequestHandler:
                                    permissions.PRODUCT_STORE])
 
         with DBSession(self._Session) as session:
-            report = session.query(Report).get(report_id)
+            report = session.get(Report, report_id)
             if report:
                 # False positive and intentional reports are considered closed,
                 # so their "fix date" is set. The reports are reopened when
@@ -2619,7 +2645,7 @@ class ThriftRequestHandler:
         self.__require_view()
 
         with DBSession(self._Session) as session:
-            report = session.query(Report).get(report_id)
+            report = session.get(Report, report_id)
             if report:
                 result = []
 
@@ -2651,7 +2677,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
         with DBSession(self._Session) as session:
-            report = session.query(Report).get(report_id)
+            report = session.get(Report, report_id)
             commentCount = 0
             if report:
                 commentCount = session.query(Comment) \
@@ -2672,7 +2698,7 @@ class ThriftRequestHandler:
                 'The comment message can not be empty!')
 
         with DBSession(self._Session) as session:
-            report = session.query(Report).get(report_id)
+            report = session.get(Report, report_id)
             if report:
                 comment = self.__add_comment(report.bug_id,
                                              comment_data.message)
@@ -2705,7 +2731,7 @@ class ThriftRequestHandler:
 
             user = self._get_username()
 
-            comment = session.query(Comment).get(comment_id)
+            comment = session.get(Comment, comment_id)
             if comment:
                 if comment.author not in ('Anonymous', user):
                     raise codechecker_api_shared.ttypes.RequestFailed(
@@ -2750,7 +2776,7 @@ class ThriftRequestHandler:
 
         with DBSession(self._Session) as session:
 
-            comment = session.query(Comment).get(comment_id)
+            comment = session.get(Comment, comment_id)
             if comment:
                 if comment.author not in ('Anonymous', user):
                     raise codechecker_api_shared.ttypes.RequestFailed(
@@ -2843,7 +2869,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
         with DBSession(self._Session) as session:
-            sourcefile = session.query(File).get(fileId)
+            sourcefile = session.get(File, fileId)
 
             if sourcefile is None:
                 return SourceFileData()
@@ -2880,7 +2906,7 @@ class ThriftRequestHandler:
         self.__require_view()
 
         with DBSession(self._Session) as session:
-            sourcefile = session.query(File).get(fileId)
+            sourcefile = session.get(File, fileId)
 
             if sourcefile is None:
                 return BlameInfo()
@@ -3465,8 +3491,6 @@ class ThriftRequestHandler:
                 distinct_file_path = distinct_file_path.limit(limit) \
                     .offset(offset)
 
-            distinct_file_path = distinct_file_path.subquery()
-
             count_col = Report.bug_id.distinct() if \
                 report_filter.isUnique else Report.bug_id
 
@@ -3837,7 +3861,7 @@ class ThriftRequestHandler:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
-            run_data = session.query(Run).get(run_id)
+            run_data = session.get(Run, run_id)
             if run_data:
                 old_run_name = run_data.name
                 run_data.name = new_run_name
@@ -3874,7 +3898,7 @@ class ThriftRequestHandler:
         """
         self.__require_admin()
         with DBSession(self._Session) as session:
-            component = session.query(SourceComponent).get(name)
+            component = session.get(SourceComponent, name)
             user = self._auth_session.user if self._auth_session else None
 
             if component:
@@ -3888,6 +3912,8 @@ class ThriftRequestHandler:
                                             user)
 
             session.add(component)
+            update_source_component_files(session, component)
+
             session.commit()
 
             return True
@@ -3937,7 +3963,7 @@ class ThriftRequestHandler:
         self.__require_admin()
 
         with DBSession(self._Session) as session:
-            component = session.query(SourceComponent).get(name)
+            component = session.get(SourceComponent, name)
             if component:
                 session.delete(component)
                 session.commit()
@@ -3960,7 +3986,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
 
             q = session.query(FileContent) \
-                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .options(sqlalchemy.orm.load_only(FileContent.content_hash)) \
                 .filter(FileContent.content_hash.in_(file_hashes))
 
             return list(set(file_hashes) -
@@ -3977,7 +4003,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
 
             q = session.query(FileContent) \
-                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .options(sqlalchemy.orm.load_only(FileContent.content_hash)) \
                 .filter(FileContent.content_hash.in_(file_hashes)) \
                 .filter(FileContent.blame_info.isnot(None))
 

@@ -15,7 +15,7 @@ from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
     LargeBinary, MetaData, String, UniqueConstraint, Table, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
@@ -583,6 +583,23 @@ class CleanupPlan(Base):
         self.due_date = due_date
         self.description = description
         self.closed_at = closed_at
+
+
+class SourceComponentFile(Base):
+    __tablename__ = 'source_component_files'
+
+    source_component_name = Column(String,
+                                   ForeignKey('source_components.name',
+                                              ondelete='CASCADE'),
+                                   primary_key=True)
+    file_id = Column(Integer,
+                     ForeignKey('files.id',
+                                ondelete='CASCADE'),
+                     primary_key=True)
+
+    def __init__(self, source_component_name, file_id):
+        self.source_component_name = source_component_name
+        self.file_id = file_id
 
 
 class CleanupPlanReportHash(Base):

@@ -20,7 +20,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute("DELETE FROM auth_sessions WHERE can_expire")
+    op.execute(sa.text("DELETE FROM auth_sessions WHERE can_expire"))
 
 
 def downgrade():
