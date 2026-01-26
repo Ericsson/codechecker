@@ -63,3 +63,13 @@ class AnalyzerCommandClangSATest(unittest.TestCase):
         result_handler = create_result_handler(analyzer)
         cmd = analyzer.construct_analyzer_cmd(result_handler)
         self.assertIn('-idirafter', cmd)
+
+    def test_no_analyze_headers(self):
+        """
+        Test that the -analyzer-opt-analyze-headers flag is NOT present in the
+        analyzer command.
+        """
+        analyzer = create_analyzer_sa()
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+        self.assertNotIn('-analyzer-opt-analyze-headers', cmd)
