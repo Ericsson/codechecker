@@ -178,13 +178,23 @@ def get_file_index_map(
 ) -> Dict[int, File]:
     """ Get file index map from the given plist object. """
     file_index_map: Dict[int, File] = {}
+    file_list = get_file_list(plist, source_dir_path)
 
-    for i, orig_file_path in enumerate(plist.get('files', [])):
-        file_path = os.path.normpath(os.path.join(
-            source_dir_path, orig_file_path))
+    for i, file_path in enumerate(file_list):
         file_index_map[i] = get_or_create_file(file_path, file_cache)
 
     return file_index_map
+
+
+def get_file_list(
+    plist: Any,
+    source_dir_path: str
+) -> List[str]:
+    """ Get file list section from the given plist object. """
+    return list(map(
+        lambda f: os.path.normpath(os.path.join(
+            source_dir_path, f)),
+        plist.get('files', [])))
 
 
 class Parser(BaseParser):
