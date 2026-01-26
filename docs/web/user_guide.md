@@ -474,6 +474,11 @@ optional arguments:
                         is given, the longest match will be removed. You may
                         also use Unix shell-like wildcards (e.g.
                         '/*/jsmith/').
+  -j JOBS, --jobs JOBS  Number of parallel jobs that process the input directory
+                        to upload. If the directory is located on NFS drive,
+                        then the storage may hang indefinitely in case of
+                        parallel processing. Choosing value 1 doesn't use
+                        sub-processes. (default: 8)
   --detach              Runs `store` in fire-and-forget mode: exit immediately
                         once the server accepted the analysis reports for
                         storing, without waiting for the server-side data
@@ -505,7 +510,7 @@ optional arguments:
   --zip-loc             Specify a directory for CodeChecker to store
                         temporary files. This option is useful if the
                         results directory is readonly and `/tmp` is small.
-                        Defaults to the results directory 
+                        Defaults to the results directory
                         (falls back to /tmp if read-only).
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
