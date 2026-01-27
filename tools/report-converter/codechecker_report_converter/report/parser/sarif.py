@@ -63,7 +63,7 @@ class Parser(BaseParser):
 
         for run in data.runs:
             rules = self._get_rules(run.run_data)
-            analyzer_name = self._get_analyzer_name(run.run_data).lower()
+            analyzer_name = self._get_analyzer_name(run.run_data)
             # $3.14.14
             self.original_uri_base_ids = None
             if "originalUriBaseIds" in run.run_data:
