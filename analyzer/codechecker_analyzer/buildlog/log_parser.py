@@ -76,6 +76,7 @@ IGNORED_OPTIONS_GCC = [
     '-fcse-follow-jumps',
     '-fcse-skip-blocks',
     '-fcx-limited-range$',
+    '-fdump-rtl.*',
     '-fext-.*-literals',
     '-ffixed-r2',
     '-ffp$',
