@@ -74,6 +74,7 @@ class Parser(BaseParser):
 
             for result in run.get_results():
                 rule_id = result["ruleId"]
+                severity = self.get_severity(rule_id)
                 message = self._process_message(
                     result["message"], rule_id, rules)  # §3.11
 
@@ -92,7 +93,8 @@ class Parser(BaseParser):
 
                     report = Report(
                         file, rng.start_line, rng.start_col,
-                        message, rule_id,  # TODO: Add severity.
+                        message, rule_id,
+                        severity=severity,
                         analyzer_name=analyzer_name,
                         analyzer_result_file_path=analyzer_result_file_path,
                         bug_path_events=bug_path_events,
