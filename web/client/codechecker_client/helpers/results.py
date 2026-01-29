@@ -169,6 +169,22 @@ class ThriftResultsHelper(BaseClientHelper):
     # STORAGE RELATED API CALLS
 
     @thrift_client_call
+    def storeFilterPreset(self, preset):
+        pass
+
+    @thrift_client_call
+    def getFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def deleteFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def listFilterPreset(self):
+        pass
+
+    @thrift_client_call
     def getMissingContentHashes(self, file_hashes):
         pass
 
