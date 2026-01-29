@@ -377,11 +377,15 @@ def main(args):
                   "arriving from standard input.")
         sys.exit(1)
 
-    try:
-        reports = None if sys.stdin.isatty() else json.loads(sys.stdin.read())
-    except json.decoder.JSONDecodeError as ex:
-        LOG.error("JSON format error on standard input: %s", ex)
-        sys.exit(1)
+    reports = None
+    if not sys.stdin.isatty():
+        stdin_data = sys.stdin.read().strip()
+        if stdin_data:
+            try:
+                reports = json.loads(stdin_data)
+            except json.decoder.JSONDecodeError as ex:
+                LOG.error("JSON format error on standard input: %s", ex)
+                sys.exit(1)
 
     # "CodeChecker fixit" can be applied on the output of
     # "CodeChecker cmd diff" command. Earlier this was a simple list of
