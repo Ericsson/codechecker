@@ -37,7 +37,8 @@ def upgrade():
     try:
         product_con = op.get_bind()
         products = product_con.execute(
-            "SELECT id, endpoint, connection FROM products").fetchall()
+            sa.text("SELECT id, endpoint, connection FROM products")) \
+            .fetchall()
 
         context = webserver_context.get_context()
         for id_, endpoint, connection in products:
@@ -47,18 +48,19 @@ def upgrade():
             engine = sa.create_engine(sql_server.get_connection_string())
             conn = engine.connect()
 
-            run_info = conn.execute("SELECT COUNT(*), MAX(date) FROM runs") \
+            run_info = conn.execute(
+                sa.text("SELECT COUNT(*), MAX(date) FROM runs")) \
                 .fetchone()
 
             values = [f"num_of_runs={run_info[0]}"]
             if run_info[1]:
                 values.append(f"latest_storage_date='{run_info[1]}'")
 
-            product_con.execute(f"""
+            product_con.execute(sa.text(f"""
                 UPDATE products
                 SET {', '.join(values)}
                 WHERE id={id_}
-            """)
+            """))
     except Exception as ex:
         LOG.error("Failed to fill product detail columns (num_of_runs, "
                   "latest_storage_date): %s", ex)

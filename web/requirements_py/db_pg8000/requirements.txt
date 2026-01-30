@@ -1,7 +1,7 @@
 lxml<6
-sqlalchemy<2
-alembic<2
-pg8000<=1.31.4
+sqlalchemy~=2.0
+alembic~=1.5
+pg8000~=1.31
 psutil<8
 portalocker<4
 

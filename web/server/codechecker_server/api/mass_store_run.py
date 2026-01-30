@@ -412,8 +412,7 @@ class MassStoreRunInputHandler:
         self.user_name = user_name
 
         with DBSession(self._config_db) as session:
-            product: Optional[Product] = session.query(Product) \
-                .get(product_id)
+            product: Optional[Product] = session.get(Product, product_id)
             if not product:
                 raise KeyError(f"No product with ID '{product_id}'")
 
@@ -576,8 +575,8 @@ class MassStoreRunTask(AbstractTask):
             raise
 
         with DBSession(tm.configuration_database_session_factory) as session:
-            db_product: Optional[Product] = session.query(Product) \
-                .get(self._product_id)
+            db_product: Optional[Product] = \
+                session.get(Product, self._product_id)
             if not db_product:
                 raise KeyError(f"No product with ID '{self._product_id}'")
 
@@ -668,7 +667,7 @@ class MassStoreRun:
             str, Tuple[Report, Union[DBReport, int]]] = {}
 
         with DBSession(config_db) as session:
-            product = session.query(Product).get(self.__product.id)
+            product = session.get(Product, self.__product.id)
             self.__report_limit = product.report_limit
 
     def __store_source_files(
@@ -793,7 +792,7 @@ class MassStoreRun:
             hasher.update(source_file_content)
             content_hash = hasher.hexdigest()
 
-        file_content = session.query(FileContent).get(content_hash)
+        file_content = session.get(FileContent, content_hash)
         if not file_content:
             if not source_file_content:
                 source_file_content = get_file_content(source_file_name)
@@ -1587,7 +1586,7 @@ class MassStoreRun:
         """ Finish the storage of the given run. """
         try:
             LOG.debug("Finishing checker run")
-            run = session.query(Run).get(run_id)
+            run = session.get(Run, run_id)
             if not run:
                 return False
 

@@ -1,6 +1,6 @@
 pycodestyle<=2.12.0
-psycopg2-binary<=2.9.10
-pg8000<=1.31.4
+psycopg2-binary~=2.9
+pg8000~=1.31
 pylint<3.3
 pytest<=7.3.1
 mkdocs<=1.5.3
