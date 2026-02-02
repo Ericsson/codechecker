@@ -1,3 +1,3 @@
-scan-build<=2.0.19
+scan-build~=2.0
 
 -r ../../requirements.txt

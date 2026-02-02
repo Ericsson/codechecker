@@ -1,6 +1,6 @@
-portalocker<4
+portalocker~=3.0
 coverage<=5.5.0
 mypy<=1.7.1
-PyYAML<7
-types-PyYAML<7
-setuptools<81
+PyYAML~=6.0
+types-PyYAML~=6.0
+setuptools~=80.0
