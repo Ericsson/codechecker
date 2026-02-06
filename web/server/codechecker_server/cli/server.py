@@ -115,6 +115,25 @@ executions of the "same" server is achieved in distinct environments, e.g.,
 if the server otherwise is running in a container.
 """)
 
+    parser.add_argument("--api-handler-processes",
+                        type=int,
+                        dest="api_handler_processes",
+                        required=False,
+                        help="""
+Number of API request handler processes the server should start.
+This setting overrides the server config file values.
+""")
+
+    parser.add_argument("--task-worker-processes",
+                        type=int,
+                        dest="task_worker_processes",
+                        required=False,
+                        help="""
+Number of task worker processes the server should start.
+These handle report storage tasks (massStoreRun, massStoreRunAsynchronous).
+This setting overrides the server config file values.
+""")
+
     parser.add_argument('--host',
                         type=str,
                         dest="listen_address",
@@ -1043,7 +1062,9 @@ def server_init_start(args):
                                    args.skip_db_cleanup,
                                    context,
                                    environ,
-                                   machine_id)
+                                   machine_id,
+                                   args.api_handler_processes,
+                                   args.task_worker_processes)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
             LOG.error("Server can't be started, maybe port number (%s) is "

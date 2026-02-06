@@ -171,7 +171,9 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, secrets_file, force_auth=False):
+    def __init__(self, configuration_file, secrets_file, force_auth=False,
+                 api_handler_processes: Optional[int] = None,
+                 task_worker_processes: Optional[int] = None):
         """
         Initialise a new Session Manager on the server.
 
@@ -194,6 +196,13 @@ class SessionManager:
         # instantiate SessionManager with the found configuration.
         self.__worker_processes, self.__background_worker_processes = \
             get_worker_processes(self.scfg_dict)
+
+        if api_handler_processes is not None:
+            self.__worker_processes = api_handler_processes
+
+        if task_worker_processes is not None:
+            self.__background_worker_processes = task_worker_processes
+
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
