@@ -63,7 +63,6 @@ from .thrift_enum_helper import report_extended_data_type_str
 
 
 LOG = get_logger('server')
-STORE_TIME_LOG = get_logger('store_time')
 
 
 class StepLog:
@@ -1705,24 +1704,14 @@ class MassStoreRun:
                     time_spent_on_task_preparation
                 zip_size_kib: float = original_zip_size / 1024
 
-                LOG.info("'%s' stored results (decompressed size: %.2f KiB) "
-                         "to run '%s' (ID: %d%s) in %.2f seconds.",
-                         self._user_name, zip_size_kib, self._name, run_id,
-                         f", under tag '{self._tag}'" if self._tag else "",
-                         run_time)
-
-                iso_start_time = datetime.fromtimestamp(start_time) \
-                    .isoformat()
-
-                log_msg = f"{iso_start_time}, " \
-                          f"{round(run_time, 2)}s, " \
-                          f'"{self.__product.name}", ' \
-                          f'"{self._name}", ' \
-                          f"{round(zip_size_kib)}KiB, " \
-                          f"{self.__report_count}, " \
-                          f"{run_id}"
-
-                STORE_TIME_LOG.info(log_msg)
+                LOG.info("User '%s' stored results "
+                         "to product '%s', run '%s' in %.2f seconds "
+                         "(run id: %d%s, report count: %d, "
+                         "decompressed size: %.2f KiB).",
+                         self._user_name, self.__product.name, self._name,
+                         run_time, run_id,
+                         f", under tag: '{self._tag}'" if self._tag else "",
+                         self.__report_count, zip_size_kib)
             except (sqlalchemy.exc.OperationalError,
                     sqlalchemy.exc.ProgrammingError) as ex:
                 LOG.error("Database error! Storing reports to the "
