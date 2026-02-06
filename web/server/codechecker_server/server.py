@@ -992,7 +992,9 @@ def start_server(config_directory: str, workspace_directory: str,
                  package_data, port: int, config_sql_server,
                  listen_address: str, force_auth: bool,
                  skip_db_cleanup: bool, context, check_env,
-                 machine_id: str) -> int:
+                 machine_id: str,
+                 api_handler_processes: Optional[int],
+                 task_worker_processes: Optional[int]) -> int:
     """
     Starts the HTTP server to handle Web client and Thrift requests, execute
     background jobs.
@@ -1036,7 +1038,9 @@ def start_server(config_directory: str, workspace_directory: str,
         manager = session_manager.SessionManager(
             server_cfg_file,
             server_secrets_file,
-            force_auth)
+            force_auth,
+            api_handler_processes,
+            task_worker_processes)
 
     except IOError as ioerr:
         LOG.debug(ioerr)
@@ -1067,8 +1071,7 @@ def start_server(config_directory: str, workspace_directory: str,
 
     bg_processes: Dict[int, Process] = {}
     requested_bg_threads = cast(int,
-                                manager.background_worker_processes) \
-        or requested_api_threads
+                                manager.background_worker_processes)
     # Note that Queue under the hood uses OS-level primitives such as a socket
     # or a pipe, where the read-write buffers have a **LIMITED** capacity, and
     # are usually **NOT** backed by the full amount of available system memory.
@@ -1220,7 +1223,7 @@ def start_server(config_directory: str, workspace_directory: str,
         signal_log(LOG, "DEBUG", f"Task child process {p.pid} started!")
         return p
 
-    LOG.info("Using %d Task handler processes ...", requested_bg_threads)
+    LOG.info("Using %d Task worker processes ...", requested_bg_threads)
     for _ in range(requested_bg_threads):
         spawn_bg_process()
 
