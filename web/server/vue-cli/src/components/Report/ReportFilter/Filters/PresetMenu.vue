@@ -183,6 +183,11 @@ export default {
           });
         });
 
+        if (!res) {
+          this.presets = [];
+          return;
+        }
+
         this.presets = (Array.isArray(res) ? res : []).map(p => ({
           id: p.id.toNumber(),
           name: p.name,
