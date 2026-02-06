@@ -1646,27 +1646,42 @@ class ThriftRequestHandler:
         Store a configured ReportFilter in corresponding
         product row.
         args:
-        int id : Numerical identifier.
         str name : Human readable name of preset.
         ReportFilter: ReportFilter obj itself.
         """
         self.__require_admin()
         LOG.info("got to store filter preset in backend")
 
+        def to_jsonable(obj):
+            """
+            Docstring for to_jsonable
+
+            :param obj: Description
+            """
+            if obj is None or isinstance(obj, (str, int, float, bool)):
+                return obj
+            if isinstance(obj, list):
+                return [to_jsonable(x) for x in obj]
+            if isinstance(obj, dict):
+                return {k: to_jsonable(v) for k, v in obj.items()}
+            if hasattr(obj, "__dict__"):
+                return {k: to_jsonable(v) for k, v in obj.__dict__.items()}
+            return str(obj)
+
         name = filterpreset.name
-        report_filter = json.dumps(filterpreset.reportFilter.__dict__)
+        report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
 
         # If the preset exists, it overwrites the name, and all preset values
         # if the preset does not exist yet, it creates it with
         #TODO make it so new preset with same name overrides the stored one
 
         with DBSession(self._Session) as session:
-            LOG.debug(f"Preset:{name}, is being inserted in database")
-            preset_entry = FilterPreset(preset_name = name,
-                                        report_filter=report_filter)
+            preset_entry = FilterPreset(preset_name=name, report_filter=report_filter)
             session.add(preset_entry)
             session.commit()
-        return id
+            return int(preset_entry.id)
+        return -1
+
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1679,15 +1694,12 @@ class ThriftRequestHandler:
         try:
             with DBSession(self._Session) as session:
                 session.query(FilterPreset) \
-                    .filter(FilterPreset.preset_id == preset_id) \
+                    .filter(FilterPreset.id == preset_id) \
                     .delete()
                 session.commit()
             return preset_id
         except Exception:
             return -1
-            # raise codechecker_api_shared.ttypes.RequestFailed(
-            #         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-            #         "CodeChecker could not remove a preset ")
 
 
     @exc_to_thrift_reqfail
@@ -1698,11 +1710,12 @@ class ThriftRequestHandler:
         """
         self.__require_view()
         LOG.info("Returning filter Preset by id")
+
         try:
             with DBSession(self._Session) as session:
                 preset = (
                     session.query(FilterPreset)
-                    .filter(FilterPreset.preset_id == preset_id)
+                    .filter(FilterPreset.id == preset_id)
                     .one_or_none()
                 )
 
@@ -1713,6 +1726,38 @@ class ThriftRequestHandler:
             rf = preset.report_filter
             if isinstance(rf, str):
                 rf = json.loads(rf)
+
+            # Pre creation of variables that are objects themselves.
+            recreated_bug_path_length = None
+            if "bugPathLength" in rf and isinstance(rf["bugPathLength"], dict):
+                recreated_bug_path_length = ttypes.BugPathLengthRange(
+                    min=rf["bugPathLength"].get("min"),
+                    max=rf["bugPathLength"].get("max")
+                )
+
+
+            # ReportDate
+            recreated_date = None
+            if "date" in rf and isinstance(rf["date"], dict):
+                #  as both variables of ReportDate are of types.DateInterval we need to convert them too
+
+                recreated_date = ttypes.ReportDate(
+                    detected=ttypes.DateInterval(**rf["date"]["detected"])
+                    if isinstance(rf["date"].get("detected", None), dict) else None,
+                    fixed=ttypes.DateInterval(**rf["date"]["fixed"])
+                    if isinstance(rf["date"].get("fixed", None), dict) else None
+                )
+
+            # Annotations
+            recreated_annotations = []
+            if "annotations" in rf and isinstance(rf["annotations"], list):
+                for anno in rf["annotations"]:
+                    if isinstance(anno, dict):
+                        recreated_annotation = ttypes.Pair(
+                            first=anno.get("first"),
+                            second=anno.get("second")
+                        )
+                        recreated_annotations.append(recreated_annotation)
 
             # NOTE: Update this mapping if new fields are added to the ReportFilter struct.
             report_filter = ttypes.ReportFilter(
@@ -1730,23 +1775,21 @@ class ThriftRequestHandler:
                 runName             = rf.get("runName"),
                 runTag              = rf.get("runTag"),
                 componentNames      = rf.get("componentNames"),
-                bugPathLength       = ttypes.BugPathLengthRange(**rf["bugPathLength"])
-                                    if isinstance(rf.get("bugPathLength"), dict) else None,
-                date                = ttypes.ReportDate(**rf["date"])
-                                    if isinstance(rf.get("date"), dict) else None,
+                bugPathLength       = recreated_bug_path_length,
+                date                = recreated_date,
                 analyzerNames       = rf.get("analyzerNames", None),
                 openReportsDate     = rf.get("openReportsDate"),
                 cleanupPlanNames    = rf.get("cleanupPlanNames"),
                 fileMatchesAnyPoint = rf.get("fileMatchesAnyPoint"),
                 componentMatchesAnyPoint = rf.get("componentMatchesAnyPoint"),
-                annotations         = [ttypes.Pair(**a) for a in rf.get("annotations", [])]
-                                    if isinstance(rf.get("annotations"), list) else None,
+                annotations         = recreated_annotations,
                 reportStatus        = rf.get("reportStatus"),
             )
-            result = ttypes.FilterPreset(preset.preset_id,
+            result = ttypes.FilterPreset(preset.id,
                                          preset.preset_name,
                                          report_filter
                                          )
+
             return result
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -1763,14 +1806,15 @@ class ThriftRequestHandler:
         LOG.info("List back filter presets")
 
         try:
-            # return all_presets
             with DBSession(self._Session) as session:
                 all_presets = (
                     session.query(FilterPreset).all()
                 )
-            # create a list of id's to use getFilterPreset to consturct a list of all presets
-            list_of_all_presets = [self.getFilterPreset(preset.preset_id) for preset in all_presets]
 
+            if not all_presets:
+                return []
+
+            list_of_all_presets = [self.getFilterPreset(preset.id) for preset in all_presets]
             return list_of_all_presets
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -1824,7 +1868,7 @@ class ThriftRequestHandler:
             if type_name == "ReviewStatus" and token == "CONFIRMED":
                 return "Confirmed bug"
 
-            # # Default formatting: "FALSE_POSITIVE" → "False positive"
+            # Default formatting: "FALSE_POSITIVE" -> "False positive"
             return token.replace("_", " ").lower().capitalize()
 
         except Exception as ex:

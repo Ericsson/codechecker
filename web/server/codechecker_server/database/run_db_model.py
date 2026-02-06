@@ -625,10 +625,9 @@ class FilterPreset(Base):
     __tablename__ = 'filter_presets'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    preset_name = Column(String, nullable=False, unique=True)
+    preset_name = Column(String(100), nullable=False, unique=True)
     report_filter = Column(JSON, nullable=False)
 
     def __init__(self, preset_name, report_filter):
         self.preset_name = preset_name
         self.report_filter = report_filter
-

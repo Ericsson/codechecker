@@ -36,15 +36,47 @@
             @update:url="updateUrl"
           />
         </v-list-item-content>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            @click="saveCurrentFilter"
-          >
-            Save
-          </v-btn>
-        </v-card-actions>
+
+        <v-btn
+          v-if="canSeeActions"
+          color="primary"
+          @click="open_preset_save = true"
+        >
+          Save preset
+        </v-btn>
+        <v-dialog v-model="open_preset_save" max-width="420">
+          <v-card>
+            <v-card-title>
+              Save filter preset
+            </v-card-title>
+
+            <v-card-text>
+              <v-text-field
+                v-model="presetName"
+                label="Preset name"
+                autofocus
+                outlined
+                clearable
+              />
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer />
+
+              <v-btn text @click="open_preset_save = false">
+                Cancel
+              </v-btn>
+
+              <v-btn
+                color="primary"
+                :disabled="!presetName"
+                @click="saveCurrentFilter"
+              >
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-list-item>
 
 
@@ -378,7 +410,12 @@ import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
 import PresetMenu from "./Filters/PresetMenu.vue";
-import { ccService, handleThriftError } from "@cc-api";
+import {
+  authService,
+  ccService,
+  handleThriftError,
+  prodService } from "@cc-api";
+import { Permission } from "@cc/shared-types";
 
 export default {
   name: "ReportFilter",
@@ -423,7 +460,11 @@ export default {
     return {
       activeBaselinePanelId: 0,
       activeCompareToPanelId: 0,
-      activeDatePanelId: 0
+      activeDatePanelId: 0,
+      open_preset_save: false,
+      presetName: "",
+      isSuperUser: false,
+      isAdminOfAnyProduct: false,
     };
   },
 
@@ -436,6 +477,9 @@ export default {
         return state[this.namespace].cmpData;
       }
     }),
+    canSeeActions() {
+      return this.isSuperUser || this.isAdminOfAnyProduct;
+    }
   },
 
   watch: {
@@ -446,6 +490,26 @@ export default {
       this.$emit("set-refresh-filter-state", false);
     }
   },
+
+  created() {
+    authService.getClient().hasPermission(
+      Permission.SUPERUSER,
+      "",
+      handleThriftError(isSuperUser => {
+        this.isSuperUser = isSuperUser;
+
+        if (!isSuperUser) {
+          prodService.getClient().isAdministratorOfAnyProduct(
+            handleThriftError(isAdmin => {
+              this.isAdminOfAnyProduct = isAdmin;
+            })
+          );
+        }
+      })
+    );
+  },
+
+
 
   mounted() {
     this.initByUrl();
@@ -541,10 +605,10 @@ export default {
       }
     },
 
-    saveCurrentFilter(id, name) {
+    saveCurrentFilter() {
       const preset = {
-        id: id,
-        name: name,
+        id: 1,
+        name: this.presetName,
         reportFilter: this.reportFilter
       };
       new Promise(resolve => {
@@ -553,6 +617,8 @@ export default {
             resolve(result);
           })
         );
+        this.open_preset_save = false;
+        this.presetName = "";
       })
         .then(result => {
           handleThriftError("OK", result);
@@ -574,8 +640,9 @@ export default {
           handleThriftError("FAILURE", err);
         });
     },
+
     async getFilterPreset(preset_id) {
-      // const preset_id = 1;
+      // const preset_id = 2;
       if (preset_id == null) {
         console.warn("getFilterPreset called without preset_id");
         return;
@@ -591,90 +658,238 @@ export default {
       } catch (err) {
         handleThriftError("FAILURE getFilterPreset failed:", err);
         return;
-      } if (preset_id == null) {
+      }
+
+      if (preset_id == null) {
         handleThriftError("getFilterPreset called without preset_id");
         return;
       }
-      const rf = filterPreset?.reportFilter;
-      if (!rf || typeof rf !== "object") return;
-      const keyMap = {
-        reviewStatus: "review-status",
-        detectionStatus: "detection-status",
-        diffType: "diff-type",
-        severity: "severity",
-        isUnique: "is-unique",
+
+      function toTitleCase(word) {
+        if (word == null) return "";
+        return String(word)
+          .toLowerCase()
+          .replace(/^\w/, c => c.toUpperCase());
+      }
+
+
+      // helper function
+      function toEnumNames(value, map) {
+        const normalizeOne = v => {
+          if (v === null || v === undefined || v === "") return "";
+          const n = typeof v === "string" &&
+          v.trim() !== "" ? Number(v) : v;
+          return map?.[n] ?? map?.[v] ?? String(v);
+        };
+
+        if (Array.isArray(value)){
+          return value.map(normalizeOne).filter(Boolean);
+        }
+        return normalizeOne(value);
+      }
+
+      const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
+
+      const toISO = sec => {
+        if (!sec) return "";
+        const d = new Date(sec * 1000);
+        return isNaN(d.getTime()) ? "" : d.toISOString();
       };
-      const getNameByValueForFilter = (rawKey, n) =>
-        new Promise((resolve, reject) =>
-          ccService.getClient().getNameByValueForFilter(
-            rawKey,
-            n,
-            (err, name) => (err ? reject(err) : resolve(name))
-          )
-        );
-      const s = {};
+
+      const ENUMS_FOR_STATUSES = {
+        detectionStatus: {
+          0: "NEW",
+          1: "RESOLVED",
+          2: "UNRESOLVED",
+          3: "REOPENED",
+          4: "OFF",
+          5: "UNAVAILABLE",
+        },
+        diffType: {
+          0: "NEW",
+          1: "RESOLVED",
+          2: "UNRESOLVED",
+        },
+        reviewStatus: {
+          0: "UNREVIEWED",
+          1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
+          2: "FALSE_POSITIVE",
+          3: "INTENTIONAL",
+        },
+        severity: {
+          0: "UNSPECIFIED",
+          10: "STYLE",
+          20: "LOW",
+          30: "MEDIUM",
+          40: "HIGH",
+          50: "CRITICAL",
+        },
+        order: {
+          0: "ASC",
+          1: "DESC",
+        },
+        reportStatus: {
+          0: "OUTSTANDING",
+          1: "CLOSED",
+        }
+      };
+
+      const rf = filterPreset?.reportFilter;
+
+      if (!rf || typeof rf !== "object") return;
+
+      const FilterToQuery = {
+
+        filepath: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "filepath", v ]),
+        checkerMsg: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "checker-msg", v ]),
+        checkerName: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "checker-name", v ]),
+        reportHash: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "report-hash", v ]),
+        severity: (_, rawValue) => {
+          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+          return values
+            .map(v => [
+              "severity",
+              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.severity))
+            ])
+            .filter(([ , val ]) => val !== "");
+        },
+        reviewStatus: (_, rawValue) => {
+          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+          return values
+            .map(v => [
+              "review-status",
+              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reviewStatus))
+            ])
+            .filter(([ , val ]) => val !== "");
+        },
+        detectionStatus: (_, rawValue) => {
+          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+          return values
+            .map(v => [ "detection-status",
+              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.detectionStatus)) ])
+            .filter(([ , val ]) => val !== "");
+        },
+        runHistoryTag: (_, rawValue) => [ // PTR
+          asArray(rawValue).map(v => [ "run-history-tag", v ]),
+        ],
+        firstDetectionDate: (_, rawValue) => [ //PTR
+          [ "first-detection-date", rawValue || "" ],
+        ],
+        fixDate: (_, rawValue) => [
+          [ "fixed-after", toISO(rawValue?.after) || "" ],
+          [ "fixed-before", toISO(rawValue?.before) || "" ],
+        ],
+        isUnique: (_, rawValue) => [
+          [ "is-unique", rawValue ? "true" : "false" ],
+        ],
+        runName: (_, rawValue) => [ //PTR
+          [ "run-name", rawValue || "" ],
+        ],
+        runTag: (_, rawValue) => [ //PTR
+          [ "run", rawValue || "" ],
+        ],
+        componentNames: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "source-component", v ]),
+
+        diffType: (_, rawValue) => [ //PTR
+          [ "diff-type",
+            toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
+        ],
+        bugPathLength: (_, rawValue) => [
+          [ "min-bug-path-length", rawValue?.min ?? rawValue?.from ?? "" ],
+          [ "max-bug-path-length", rawValue?.max ?? rawValue?.to ?? "" ],
+        ],
+        date: (_, rawValue) => [
+          [ "detected-after",  toISO(rawValue?.detected?.after) ],
+          [ "detected-before", toISO(rawValue?.detected?.before) ],
+          [ "fixed-after",     toISO(rawValue?.fixed?.after) ],
+          [ "fixed-before",    toISO(rawValue?.fixed?.before) ],
+        ],
+        analyzerNames: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "analyzer-name", v ]),
+        openReportsDate: (_, rawValue) => [
+          [ "open-reports-date", toISO(rawValue) || "" ],
+        ],
+        cleanupPlanNames: (_, rawValue) =>
+          asArray(rawValue).map(v => [ "cleanup-plan-name", v ]),
+        fileMatchesAnyPoint: (_, rawValue) => [
+          [ "anywhere-filepath", rawValue ? "true" : "false" ],
+        ],
+        componentMatchesAnyPoint: (_, rawValue) => [
+          [ "anywhere-sourcecomponent", rawValue ? "true" : "false" ],
+        ],
+        annotations: (_, rawValue) => {
+          const testcases = Array.isArray(rawValue)
+            ? rawValue
+              .filter(a => a.first === "testcase")
+              .map(a => a.second)
+            : rawValue.first === "testcase"
+              ? [ rawValue.second ]
+              : [];
+          return testcases.map(tc => [ "testcase", tc ]);
+        },
+        reportStatus: (_, rawValue) => {
+          const values = asArray(rawValue);
+          return values
+            .map(v => [ "report-status",
+              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reportStatus)) ])
+            .filter(([ , val ]) => val !== "");
+        },
+        fullReportPathInComponent: (_, rawValue) => [
+          [ "sameorigin-sourcecomponent", rawValue ? "true" : "false" ],
+        ],
+
+      };
+
+      const presetQueryParams = {};
+
       for (const [ rawKey, rawValue ] of Object.entries(rf)) {
         if (rawValue === null || rawValue === undefined || rawValue === ""){
           continue;
         }
-        const urlKey = keyMap[rawKey] ?? rawKey;
-        if (Array.isArray(rawValue)) {
-          const convertedArr = await Promise.all(
-            rawValue.map(async v => {
-              if (v === null || v === undefined || v === "") return "";
-              const n = Number(v);
-              if (!Number.isInteger(n)) return String(v);
-              try {
-                const name = await getNameByValueForFilter(rawKey, n);
-                return name !== "" ? String(name) : String(v);
-              } catch (err) {
-                handleThriftError(`Conversion failed for ${rawKey}=${v}:`, err);
-                return String(v);
-              }
-            })
-          );
-          const cleaned = convertedArr.filter(x => x !== "");
-          if (cleaned.length > 0) s[urlKey] = cleaned;
+
+        const mapper = FilterToQuery[rawKey];
+
+        if (typeof mapper === "string") {
+          presetQueryParams[mapper] = rawValue;
           continue;
         }
-        const n = Number(rawValue);
-        if (Number.isInteger(n)) {
-          try {
-            const name = await getNameByValueForFilter(rawKey, n);
-            s[urlKey] = name !== "" ? String(name) : String(rawValue);
-          } catch (err) {
-            handleThriftError(`Conversion failed for ${rawKey}=${rawValue}:`,
-              err);
-            s[urlKey] = String(rawValue);
+
+        if (typeof mapper === "function") {
+          const pairs = mapper(rf, rawValue);
+
+          for (const [ k, v ] of pairs) {
+            if (v === null || v === undefined || v === "") continue;
+
+            if (k in presetQueryParams) {
+              const prev = Array.isArray(presetQueryParams[ k ]) ?
+                presetQueryParams[ k ] : [ presetQueryParams[ k ] ];
+              const next = Array.isArray(v) ? v : [ v ];
+              presetQueryParams[ k ] = [ ...prev, ...next ];
+            } else {
+              presetQueryParams[ k ] = v;
+            }
           }
-        } else {
-          s[urlKey] = String(rawValue);
+          continue;
         }
+
+        presetQueryParams[ rawKey ] = rawValue;
       }
-      const queryParams = { ...this.$route.query };
-      // for (const k of Object.values(keyMap)) delete queryParams[k];
-      // Object.assign(queryParams, s);
-      // await this.clearToolbarSilently();
-      // await this.$router.replace({ query: queryParams });
-      // await this.$nextTick(); // double check later
-      // await this.initByUrl();
-      const nextQuery = queryParams;
-      const current = this.normalizeQuery(this.$route.query);
-      const next = this.normalizeQuery(nextQuery);
+
       await this.clearToolbarSilently();
-      if (current !== next) {
-        await this.$router.replace({ query: nextQuery });
-        await this.initByUrl();
-      }
+
+      const nextQuery = { ...this.$route.query, ...presetQueryParams };
+      await this.$router.replace({ query: nextQuery });
+
+      await this.initByUrl();
+      this.updateUrl();
+
     },
-    normalizeQuery(q) {
-      const out = {};
-      for (const k of Object.keys(q || {}).sort()) {
-        const v = q[k];
-        out[k] = Array.isArray(v) ? v.map(String).sort() : String(v);
-      }
-      return JSON.stringify(out);
-    },
+
     async clearToolbarSilently() {
       const filters = this.$refs.filters;
       this.unregisterWatchers();
@@ -682,6 +897,7 @@ export default {
       await Promise.all(filters.map(f => f.clear(false)));
       this.updateAllFilters();
     },
+
     listFilterPreset() {
       new Promise(resolve => {
         ccService.getClient().listFilterPreset(
