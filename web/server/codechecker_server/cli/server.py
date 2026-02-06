@@ -1077,7 +1077,7 @@ def main(args):
             os.makedirs(args.config_directory)
 
     with logger.LogCfgServer(
-        args.verbose if "verbose" in args else None, workspace=workspace
+        args.verbose if "verbose" in args else None
     ):
         try:
             cmd_config.check_config_file(args)
