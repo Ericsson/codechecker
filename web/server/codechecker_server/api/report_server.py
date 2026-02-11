@@ -48,6 +48,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     SourceComponentData, SourceFileData, SortMode, SortType, \
     SubmittedRunOptions
 
+from codechecker_api_shared.ttypes import ErrorCode, RequestFailed
+
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 
@@ -3998,6 +4000,10 @@ class ThriftRequestHandler:
         self.__require_store()
         if not store_opts.runName:
             raise ValueError("A run name is needed to know where to store!")
+
+        if self._manager.background_worker_processes == 0:
+            raise RequestFailed(ErrorCode.GENERAL,
+                                "No task worker process is available!")
 
         from .mass_store_run import MassStoreRunInputHandler, MassStoreRunTask
         ih = MassStoreRunInputHandler(self._manager,

@@ -186,6 +186,14 @@ optional arguments:
                         subsequent executions of the "same" server is achieved
                         in distinct environments, e.g., if the server
                         otherwise is running in a container.
+  --api-handler-processes API_HANDLER_PROCESSES
+                        Number of API request handler processes the server should start.
+                        This setting overrides the server config file values.
+  --task-worker-processes TASK_WORKER_PROCESSES
+                        Number of task worker processes the server should start.
+                        These handle report storage tasks (massStoreRun,
+                        massStoreRunAsynchronous).
+                        This setting overrides the server config file values.
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
                         should listen for connections. For IPv6 listening,
@@ -256,6 +264,9 @@ By default, the running server can only be accessed from the same machine
 (`localhost`) where it is running. This can be overridden by specifying
 `--host ""`, instructing the server to listen on all available interfaces.
 
+The server spawns additional Python processes to handle incoming API requests
+and to process report storing tasks. The process counts can be changed using
+the `--api-handler-processes` and `--task-worker-processes` flags, respectively.
 
 #### Run CodeChecker server in Docker
 To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
