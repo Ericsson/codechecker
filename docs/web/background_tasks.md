@@ -18,7 +18,7 @@ The most important property of a _Task_ is its **status**, which can be:
 * _`RUNNING`_: The task is currently being executed.
 * _`COMPLETED`_: The task's execution finished successfully.
 * _`FAILED`_: The task's execution "structurally" failed due to an "inside" property of the execution. An uncaught `Exception` would have escaped the executor's _"main"_ method.
-* _`CANCELLED`_: An administrator (**`SUPERUSER`**, see [the Permission system](permissions.md)) cancelled the execution of the task, and the task gracefully terminated itself.
+* _`CANCELLED`_: The task's owner or an administrator (**`PRODUCT_ADMIN`** or **`SUPERUSER`**, see [the Permission system](permissions.md)) cancelled the execution of the task, and the task gracefully terminated itself.
 * _`DROPPED`_: External influence resulted in the executing server's shutdown, and the task did not complete in a graceful way.
 
 Task lifecycle
@@ -75,8 +75,7 @@ class MyThriftEndpointHandler:
             # The task's "User": the name of the user who is the actor which
             # caused the execution of the task.
             # The status of the task may only be queried by the relevant actor,
-            # a PRODUCT_ADMIN (if the task is associated with a product) or
-            # SUPERUSERs.
+            # people with access to the product, or SUPERUSERs.
             "user",
 
             # If the task is associated with a product, pass the ORM `Product`
