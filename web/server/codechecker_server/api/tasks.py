@@ -132,18 +132,14 @@ class ThriftTaskHandler:
         Returns the `TaskInfo` for the task identified by `token`.
         """
         with DBSession(self._config_db) as session:
-            db_task: Optional[DBTask] = session.get(DBTask, token)
-            if not db_task:
-                raise RequestFailed(ErrorCode.GENERAL,
-                                    f"Task '{token}' does not exist!")
-
             has_right_to_query_status: bool = False
             should_set_consumed_flag: bool = False
+            db_task: Optional[DBTask] = session.get(DBTask, token)
 
-            if db_task.username == self._get_username():
+            if db_task and db_task.username == self._get_username():
                 has_right_to_query_status = True
                 should_set_consumed_flag = db_task.is_in_terminated_state
-            elif db_task.product_id is not None:
+            elif db_task and db_task.product_id is not None:
                 associated_product: Optional[Product] = \
                     session.get(Product, db_task.product_id)
                 if not associated_product:
@@ -153,12 +149,11 @@ class ThriftTaskHandler:
                 else:
                     has_right_to_query_status = \
                         permissions.require_permission(
-                            permissions.PRODUCT_ADMIN,
+                            permissions.PRODUCT_ACCESS,
                             {"config_db_session": session,
                              "productID": associated_product.id},
                             self._auth_session)
-
-            if not has_right_to_query_status:
+            else:
                 has_right_to_query_status = permissions.require_permission(
                     permissions.SUPERUSER,
                     {"config_db_session": session},
@@ -167,9 +162,14 @@ class ThriftTaskHandler:
             if not has_right_to_query_status:
                 raise RequestFailed(
                     ErrorCode.UNAUTHORIZED,
-                    "Only the task's submitter, a PRODUCT_ADMIN (of the "
-                    "product the task is associated with), or a SUPERUSER "
-                    "can getTaskInfo()!")
+                    "The task does not exist, or you are not authorized to "
+                    "view the task. (Only the task's submitter, people with "
+                    "access to the task's product, or a SUPERUSER can view "
+                    "the task.)")
+            if not db_task:
+                raise RequestFailed(
+                    ErrorCode.GENERAL,
+                    "The task does not exist.")
 
             info = _make_task_info(db_task)
 
@@ -194,22 +194,22 @@ class ThriftTaskHandler:
                         "Querying service tasks (not associated with a "
                         "product) requires SUPERUSER privileges!")
             if filters.productIDs:
-                no_admin_products = [
+                no_access_products = [
                     prod_id for prod_id in filters.productIDs
                     if not permissions.require_permission(
-                        permissions.PRODUCT_ADMIN,
+                        permissions.PRODUCT_ACCESS,
                         {"config_db_session": session, "productID": prod_id},
                         self._auth_session)]
-                if no_admin_products:
-                    no_admin_products = [session.get(Product, product_id)
-                                         .endpoint
-                                         for product_id in no_admin_products]
+                if no_access_products:
+                    no_access_products = [session.get(Product, product_id)
+                                          .endpoint
+                                          for product_id in no_access_products]
                     # pylint: disable=consider-using-f-string
                     raise RequestFailed(ErrorCode.UNAUTHORIZED,
                                         "Querying product tasks requires "
-                                        "PRODUCT_ADMIN rights, but it is "
+                                        "PRODUCT_ACCESS rights, but it is "
                                         "missing from product(s): '%s'!"
-                                        % ("', '".join(no_admin_products)))
+                                        % ("', '".join(no_access_products)))
 
             AND = []
             if filters.tokens:
@@ -290,7 +290,7 @@ class ThriftTaskHandler:
 
             ret: List[AdministratorTaskInfo] = []
             has_superuser: Optional[bool] = None
-            product_admin_rights: Dict[int, bool] = {}
+            product_access_rights: Dict[int, bool] = {}
             for db_task in session.query(DBTask).filter(and_(*AND)).all():
                 if not db_task.product_id:
                     # Tasks associated with the server, and not a specific
@@ -306,16 +306,16 @@ class ThriftTaskHandler:
                     # Tasks associated with a product should only be visible
                     # to PRODUCT_ADMINs of that product.
                     try:
-                        if not product_admin_rights[db_task.product_id]:
+                        if not product_access_rights[db_task.product_id]:
                             continue
                     except KeyError:
-                        product_admin_rights[db_task.product_id] = \
+                        product_access_rights[db_task.product_id] = \
                             permissions.require_permission(
-                                permissions.PRODUCT_ADMIN,
+                                permissions.PRODUCT_ACCESS,
                                 {"config_db_session": session,
                                  "productID": db_task.product_id},
                                 self._auth_session)
-                        if not product_admin_rights[db_task.product_id]:
+                        if not product_access_rights[db_task.product_id]:
                             continue
 
                 ret.append(_make_admin_task_info(db_task))
@@ -333,23 +333,47 @@ class ThriftTaskHandler:
         There are no guarantees that tasks will respect this!
         """
         with DBSession(self._config_db) as session:
-            if not permissions.require_permission(
+            has_right_to_cancel: bool = False
+            db_task: Optional[DBTask] = session.get(DBTask, token)
+
+            if db_task and db_task.username == self._get_username():
+                has_right_to_cancel = True
+            elif db_task and db_task.product_id is not None:
+                associated_product: Optional[Product] = \
+                    session.get(Product, db_task.product_id)
+                if not associated_product:
+                    LOG.error("No product with ID '%d', but a task is "
+                              "associated with it.",
+                              db_task.product_id)
+                else:
+                    has_right_to_cancel = \
+                        permissions.require_permission(
+                            permissions.PRODUCT_ADMIN,
+                            {"config_db_session": session,
+                                "productID": associated_product.id},
+                            self._auth_session)
+            else:
+                has_right_to_cancel = permissions.require_permission(
                     permissions.SUPERUSER,
                     {"config_db_session": session},
-                    self._auth_session):
+                    self._auth_session)
+
+            if not has_right_to_cancel:
                 raise RequestFailed(
                     ErrorCode.UNAUTHORIZED,
-                    "cancelTask() requires server-level SUPERUSER rights.")
-
-            db_task: Optional[DBTask] = session.get(DBTask, token)
+                    "The task does not exist, or you are not authorized to "
+                    "cancel the task. (Only the task's submitter, people with "
+                    "PRODUCT_ADMIN on the task's product, or a SUPERUSER can "
+                    "cancel the task.)")
             if not db_task:
-                raise RequestFailed(ErrorCode.GENERAL,
-                                    f"Task '{token}' does not exist!")
+                raise RequestFailed(
+                    ErrorCode.GENERAL,
+                    "The task does not exist.")
 
             if not db_task.can_be_cancelled:
                 return False
 
-            db_task.add_comment("SUPERUSER requested cancellation.",
+            db_task.add_comment("User requested cancellation.",
                                 self._get_username())
             db_task.cancel_flag = True
             session.commit()
