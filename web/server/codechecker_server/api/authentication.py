@@ -441,9 +441,7 @@ class ThriftAuthHandler:
                     morePages = True
                     while morePages:
                         for group in response["value"]:
-                            if group.get("onPremisesSyncEnabled") and \
-                                    group.get("securityEnabled"):
-                                groups.append(group["displayName"])
+                            groups.append(group["displayName"])
                         # paging of groups
                         morePages = "@odata.nextLink" in response
                         if morePages:
