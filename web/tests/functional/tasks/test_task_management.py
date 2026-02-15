@@ -196,7 +196,7 @@ class TaskManagementAPITests(unittest.TestCase):
                          TaskStatus._NAMES_TO_VALUES["CANCELLED"])
         self.assertEqual(task_info.cancelFlagSet, True)
         self.assertIn("root", task_info.comments)
-        self.assertIn("SUPERUSER requested cancellation.", task_info.comments)
+        self.assertIn("User requested cancellation.", task_info.comments)
         self.assertIn("CANCEL!\nCancel request of admin honoured by task.",
                       task_info.comments)
         self.assertIsNotNone(task_info.enqueuedAtEpoch)
