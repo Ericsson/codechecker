@@ -1570,13 +1570,6 @@ def __register_filter_presets(parser):
 
         __add_filtering_arguments(parser)
 
-
-    def __register_list(parser):
-        """
-        Add argparse subcommand parser for the "list presets" action.
-        """
-        pass
-
     def __register_delete(parser):
         """
         Add argparse subcommand parser for the "delete preset" action.
@@ -1602,7 +1595,6 @@ def __register_filter_presets(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="List all filter presets available on the server.",
         help="List all filter presets.")
-    __register_list(list_presets)
     list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
     __add_common_arguments(list_presets,
                            output_formats=DEFAULT_OUTPUT_FORMATS)
@@ -1915,8 +1907,8 @@ task, as identified by the token:
     tasks.set_defaults(func=task_client.handle_tasks)
     __add_common_arguments(tasks, needs_product_url=False)
 
-    filterPreset = subcommands.add_parser(
-        'filterPreset',
+    filter_preset = subcommands.add_parser(
+        'filter_preset',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Manage filter presets of a CodeChecker server. "
                     "Filter presets are named collections of filter "
@@ -1925,8 +1917,8 @@ task, as identified by the token:
                     "subcommands for details.",
         help="Access subcommands related to configuring filter presets of a "
              "CodeChecker server.")
-    __register_filter_presets(filterPreset)
-    __add_common_arguments(filterPreset)
+    __register_filter_presets(filter_preset)
+    __add_common_arguments(filter_preset)
     # CodeChecker cmd filterPreset new --name <name of the preset>
     #                            [--uniqueing {on,off}]
     #                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]

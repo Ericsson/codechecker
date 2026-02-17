@@ -20,7 +20,6 @@ from codechecker_web.shared.env import get_user_input
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from .client import setup_client
-from .cmd_line import CmdLineOutputEncoder
 
 LOG = None
 
@@ -244,25 +243,29 @@ def display_preset_details(preset):
             date_str = datetime.fromtimestamp(rf.openReportsDate).strftime('%Y-%m-%d %H:%M:%S')
             print(f"  Open reports date: {date_str}")
 
+        def _fmt(ts):
+            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+
         if rf.date:
             if rf.date.detected:
-                print(f"  Detected date range:")
+                print("  Detected date range:")
                 if rf.date.detected.after:
-                    print(f"    After: {datetime.fromtimestamp(rf.date.detected.after).strftime('%Y-%m-%d')}")
+                    print(f"    After: {_fmt(rf.date.detected.after)}")
                 if rf.date.detected.before:
-                    print(f"    Before: {datetime.fromtimestamp(rf.date.detected.before).strftime('%Y-%m-%d')}")
+                    print(f"    Before: {_fmt(rf.date.detected.before)}")
+
             if rf.date.fixed:
-                print(f"  Fixed date range:")
+                print("  Fixed date range:")
                 if rf.date.fixed.after:
-                    print(f"    After: {datetime.fromtimestamp(rf.date.fixed.after).strftime('%Y-%m-%d')}")
+                    print(f"    After: {_fmt(rf.date.fixed.after)}")
                 if rf.date.fixed.before:
-                    print(f"    Before: {datetime.fromtimestamp(rf.date.fixed.before).strftime('%Y-%m-%d')}")
+                    print(f"    Before: {_fmt(rf.date.fixed.before)}")
 
         if rf.fileMatchesAnyPoint:
-            print(f"  File matches any point: yes")
+            print("File matches any point: yes")
 
         if rf.componentMatchesAnyPoint:
-            print(f"  Component matches any point: yes")
+            print("Component matches any point: yes")
 
         if not any([rf.filepath, rf.checkerName, rf.checkerMsg, rf.reportHash,
                     rf.severity, rf.reviewStatus, rf.detectionStatus, rf.runHistoryTag,
@@ -320,7 +323,7 @@ def handle_new_preset(args):
 
     report_filter = build_filter_config_from_args(args)
 
-    PresetFilter = ttypes.FilterPreset(
+    preset_filter = ttypes.FilterPreset(
         None,  # ID assigned by server (or existing ID if updating)
         args.preset_name,
         report_filter
@@ -339,7 +342,7 @@ def handle_new_preset(args):
                 LOG.info("No changes made to filter preset.")
                 sys.exit(0)
 
-    preset_id = client.storeFilterPreset(PresetFilter)
+    preset_id = client.storeFilterPreset(preset_filter)
 
     if preset_id != -1:
         action = "updated" if flag_for_existing else "created"
@@ -469,11 +472,15 @@ def handle_delete_preset(args):
     preset = next((p for p in all_presets if p.id == args.preset_id), None)
 
     if not preset:
-        LOG.error("Filter preset with ID %d does not exist!", args.preset_id)
+        LOG.error("Filter preset with ID %d does not exist!",
+                  args.preset_id)
         sys.exit(1)
 
     if not args.force:
-        question = f"Are you sure you want to delete preset '{preset.name}' (ID: {args.preset_id})? Y(es)/n(o) "
+        question = (
+            f"Are you sure you want to delete preset '{preset.name}' "
+            f"(ID: {args.preset_id})? Y(es)/n(o) "
+        )
         if not get_user_input(question):
             LOG.info("Filter preset was not deleted.")
             sys.exit(0)

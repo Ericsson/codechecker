@@ -1737,7 +1737,8 @@ class ThriftRequestHandler:
             # ReportDate
             recreated_date = None
             if "date" in rf and isinstance(rf["date"], dict):
-                #  as both variables of ReportDate are of types.DateInterval we need to convert them too
+                #  as both variables of ReportDate
+                # are of types.DateInterval we need to convert them too
 
                 recreated_date = ttypes.ReportDate(
                     detected=ttypes.DateInterval(**rf["date"]["detected"])

@@ -483,7 +483,10 @@ def parse_report_filter(client, args):
 
         if not preset:
             LOG.error("Filter preset '%s' not found!", preset_name)
-            LOG.info("Use 'CodeChecker cmd filterPreset list' to see available presets.")
+            LOG.info(
+                "Use 'CodeChecker cmd filterPreset list' to see available "
+                "presets."
+            )
             sys.exit(1)
 
         LOG.info("Filter preset '%s' loaded successfully.", preset_name)
@@ -508,71 +511,58 @@ def parse_report_filter(client, args):
 
     return report_filter
 
+
 def _merge_filters(preset_filter, cli_filter, args):
     """
     Merge preset filter with CLI filter arguments.
-
-    CLI arguments take precedence over preset values. This allows users
-    to use a preset as a base and override specific filters.
-
-    Args:
-        preset_filter: ttypes.ReportFilter - The filter loaded from the preset
-        cli_filter: ttypes.ReportFilter - Filter created from CLI arguments
-        args: argparse.Namespace - The raw command-line arguments object
-                                   (used to check which args were provided)
-
-    Returns:
-        ttypes.ReportFilter - Merged filter with CLI overrides
-
-    Example:
-        User runs: CodeChecker cmd results run1 --filterPreset "Critical" --severity high
-
-        - preset_filter has: severity=[CRITICAL], checkerName=['*security*']
-        - cli_filter has: severity=[HIGH], checkerName=None
-        - args has: severity=['high'], but NOT checker_name
-
-        Result: severity=[HIGH] (overridden), checkerName=['*security*'] (from preset)
+    CLI arguments take precedence over preset values.
     """
-
     merged = ttypes.ReportFilter()
 
-    # Helper to check if a CLI argument was actually provided by the user
-    # We check if the argument exists in args namespace (not SUPPRESS)
-    def was_provided(arg_name):
-        return arg_name in args
+    field_map = {
+        'filepath': 'file_path',
+        'checkerMsg': 'checker_msg',
+        'checkerName': 'checker_name',
+        'reportHash': 'report_hash',
+        'severity': 'severity',
+        'reviewStatus': 'review_status',
+        'detectionStatus': 'detection_status',
+        'runHistoryTag': 'tag',
+        'firstDetectionDate': 'detected_at',
+        'fixDate': 'fixed_at',
+        'isUnique': 'uniqueing',
+        'runTag': 'tag',
+        'componentNames': 'component',
+        'bugPathLength': 'bug_path_length',
+        'analyzerNames': 'analyzer_name',
+        'openReportsDate': 'open_reports_date',
+        'fileMatchesAnyPoint': 'anywhere_on_report_path',
+        'componentMatchesAnyPoint': 'single_origin_report',
+        'reportStatus': 'report_status',
+    }
 
-    # Merge each field - CLI arguments override preset values
-    merged.filepath = cli_filter.filepath if was_provided('file_path') else preset_filter.filepath
-    merged.checkerMsg = cli_filter.checkerMsg if was_provided('checker_msg') else preset_filter.checkerMsg
-    merged.checkerName = cli_filter.checkerName if was_provided('checker_name') else preset_filter.checkerName
-    merged.reportHash = cli_filter.reportHash if was_provided('report_hash') else preset_filter.reportHash
-    merged.severity = cli_filter.severity if was_provided('severity') else preset_filter.severity
-    merged.reviewStatus = cli_filter.reviewStatus if was_provided('review_status') else preset_filter.reviewStatus
-    merged.detectionStatus = cli_filter.detectionStatus if was_provided('detection_status') else preset_filter.detectionStatus
-    merged.runHistoryTag = cli_filter.runHistoryTag if was_provided('tag') else preset_filter.runHistoryTag
-    merged.firstDetectionDate = cli_filter.firstDetectionDate if was_provided('detected_at') else preset_filter.firstDetectionDate
-    merged.fixDate = cli_filter.fixDate if was_provided('fixed_at') else preset_filter.fixDate
-    merged.isUnique = cli_filter.isUnique if was_provided('uniqueing') else preset_filter.isUnique
-    merged.runName = preset_filter.runName  # Not typically set from CLI
-    merged.runTag = cli_filter.runTag if was_provided('tag') else preset_filter.runTag
-    merged.componentNames = cli_filter.componentNames if was_provided('component') else preset_filter.componentNames
-    merged.bugPathLength = cli_filter.bugPathLength if was_provided('bug_path_length') else preset_filter.bugPathLength
+    for field, arg_name in field_map.items():
+        setattr(merged, field,
+                getattr(cli_filter, field) if arg_name in args
+                else getattr(preset_filter, field))
 
-    date_args_provided = any([
-        was_provided('detected_after'),
-        was_provided('detected_before'),
-        was_provided('fixed_after'),
-        was_provided('fixed_before')
-    ])
-    merged.date = cli_filter.date if date_args_provided else preset_filter.date
+    # Handle date fields
+    date_args = ['detected_after',
+                 'detected_before',
+                 'fixed_after',
+                 'fixed_before']
 
-    merged.analyzerNames = cli_filter.analyzerNames if was_provided('analyzer_name') else preset_filter.analyzerNames
-    merged.openReportsDate = cli_filter.openReportsDate if was_provided('open_reports_date') else preset_filter.openReportsDate
-    merged.fileMatchesAnyPoint = cli_filter.fileMatchesAnyPoint if was_provided('anywhere_on_report_path') else preset_filter.fileMatchesAnyPoint
-    merged.componentMatchesAnyPoint = cli_filter.componentMatchesAnyPoint if was_provided('single_origin_report') else preset_filter.componentMatchesAnyPoint
-    merged.reportStatus = cli_filter.reportStatus if was_provided('report_status') else preset_filter.reportStatus
-    merged.annotations = preset_filter.annotations  # Not set from CLI
-    merged.cleanupPlanNames = preset_filter.cleanupPlanNames  # Not set from CLI
+    merged.date = (
+        cli_filter.date
+        if any(arg in args for arg in date_args)
+        else preset_filter.date
+    )
+
+    # Fields not set from CLI MAY BE DELETED
+    # TODO CHECK LATER IF I CAN DELETE THESE
+    merged.runName = preset_filter.runName
+    merged.annotations = preset_filter.annotations
+    merged.cleanupPlanNames = preset_filter.cleanupPlanNames
 
     return merged
 
