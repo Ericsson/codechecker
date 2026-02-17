@@ -640,56 +640,29 @@ def handle_list_runs(args):
 
     runs = get_run_data(client, run_filter, sort_mode)
 
-    if hasattr(args, 'enabled_checkers') and args.enabled_checkers:
-        enabled_checkers: Dict[str, List[str]] = {}
-        for run in runs:
-            info_list: List[ttypes.AnalysisInfo] = client.getAnalysisInfo(
-                ttypes.AnalysisInfoFilter(runId=run.runId),
-                constants.MAX_QUERY_SIZE,
-                0)
-            for info in info_list:
-                for analyzer in info.checkers:
-                    if analyzer not in enabled_checkers:
-                        enabled_checkers[analyzer] = []
-
-                    checkers = info.checkers.get(analyzer, {})
-                    for checker in checkers:
-                        if checkers[checker].enabled:
-                            enabled_checkers[analyzer].append(checker)
-
-        if args.output_format == 'plaintext':
-            for analyzer, checkers in enabled_checkers.items():
-                print(analyzer + ":")
-                for checker in checkers:
-                    print("  " + checker)
-        elif args.output_format == 'csv':
-            separator = ';'
-            print("Analyzer" + separator + "Checker")
-            for analyzer, checkers in enabled_checkers.items():
-                for checker in checkers:
-                    print(analyzer + separator + checker)
-        elif args.output_format == 'json':
-            print(json.dumps(enabled_checkers, indent=4))
-        elif args.output_format == 'table':
-            header = ['Analyzer', 'Checker']
-            rows = [
-                (analyzer, checker)
-                for analyzer, checkers in enabled_checkers.items()
-                for checker in checkers]
-            print(twodim.to_str(args.output_format, header, rows))
-        else:
-            LOG.error("Unsupported output format: %s", args.output_format)
-        return
-
     if args.output_format == 'json':
         # This json is different from the json format printed by the
         # parse command. This json converts the ReportData type report
         # to a json format.
         results = []
         for run in runs:
-            if 'details' in args and args.details:
-                run.analyzerStatistics = \
-                    client.getAnalysisStatistics(run.runId, None)
+            enabled_checkers: Dict[str, Set[str]] = {}
+            info_list: List[ttypes.AnalysisInfo] = client.getAnalysisInfo(
+                ttypes.AnalysisInfoFilter(runId=run.runId),
+                constants.MAX_QUERY_SIZE,
+                0)
+            for info in info_list:
+                for analyzer, checkers in (info.checkers or {}).items():
+                    enabled_checkers.setdefault(analyzer, set())
+                    for checker_name, checker_info in (checkers or {}).items():
+                        if checker_info.enabled:
+                            enabled_checkers[analyzer].add(checker_name)
+            run.analyzerStatistics = client.getAnalysisStatistics(
+                run.runId, None) or {}
+            for analyzer in run.analyzerStatistics:
+                stat = run.analyzerStatistics[analyzer]
+                stat.enabledCheckers = sorted(
+                    list(enabled_checkers.get(analyzer, set())))
             results.append({run.name: run})
         print(CmdLineOutputEncoder().encode(results))
 
