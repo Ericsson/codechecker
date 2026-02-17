@@ -466,9 +466,39 @@ def parse_report_filter(client, args):
     Parse and check attributes of the given report filter based on
     the arguments which is provided in the command line.
     Also, check if filter values are valid values.
-    """
-    report_filter = parse_report_filter_offline(args)
 
+    If a filter preset is specified (--filterPreset), it will be loaded
+    from the server and merged with CLI arguments. CLI arguments take
+    precedence over preset values.
+    """
+
+    # Load preset filter if specified
+    preset_filter = None
+    if 'filter_preset_name' in args:
+        preset_name = args.filter_preset_name
+        LOG.info("Loading filter preset '%s'...", preset_name)
+
+        all_presets = client.listFilterPreset()
+        preset = next((p for p in all_presets if p.name == preset_name), None)
+
+        if not preset:
+            LOG.error("Filter preset '%s' not found!", preset_name)
+            LOG.info("Use 'CodeChecker cmd filterPreset list' to see available presets.")
+            sys.exit(1)
+
+        LOG.info("Filter preset '%s' loaded successfully.", preset_name)
+        preset_filter = preset.reportFilter
+
+    # Parse CLI filter arguments
+    cli_filter = parse_report_filter_offline(args)
+
+    # Merge preset with CLI args if preset was specified
+    if preset_filter:
+        report_filter = _merge_filters(preset_filter, cli_filter, args)
+    else:
+        report_filter = cli_filter
+
+    # Handle tags (requires API call to resolve tag names to IDs)
     if 'tag' in args:
         run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
         run_histories = client.getRunHistory(None, None, None,
@@ -477,6 +507,74 @@ def parse_report_filter(client, args):
             report_filter.runTag = [t.id for t in run_histories]
 
     return report_filter
+
+def _merge_filters(preset_filter, cli_filter, args):
+    """
+    Merge preset filter with CLI filter arguments.
+
+    CLI arguments take precedence over preset values. This allows users
+    to use a preset as a base and override specific filters.
+
+    Args:
+        preset_filter: ttypes.ReportFilter - The filter loaded from the preset
+        cli_filter: ttypes.ReportFilter - Filter created from CLI arguments
+        args: argparse.Namespace - The raw command-line arguments object
+                                   (used to check which args were provided)
+
+    Returns:
+        ttypes.ReportFilter - Merged filter with CLI overrides
+
+    Example:
+        User runs: CodeChecker cmd results run1 --filterPreset "Critical" --severity high
+
+        - preset_filter has: severity=[CRITICAL], checkerName=['*security*']
+        - cli_filter has: severity=[HIGH], checkerName=None
+        - args has: severity=['high'], but NOT checker_name
+
+        Result: severity=[HIGH] (overridden), checkerName=['*security*'] (from preset)
+    """
+
+    merged = ttypes.ReportFilter()
+
+    # Helper to check if a CLI argument was actually provided by the user
+    # We check if the argument exists in args namespace (not SUPPRESS)
+    def was_provided(arg_name):
+        return arg_name in args
+
+    # Merge each field - CLI arguments override preset values
+    merged.filepath = cli_filter.filepath if was_provided('file_path') else preset_filter.filepath
+    merged.checkerMsg = cli_filter.checkerMsg if was_provided('checker_msg') else preset_filter.checkerMsg
+    merged.checkerName = cli_filter.checkerName if was_provided('checker_name') else preset_filter.checkerName
+    merged.reportHash = cli_filter.reportHash if was_provided('report_hash') else preset_filter.reportHash
+    merged.severity = cli_filter.severity if was_provided('severity') else preset_filter.severity
+    merged.reviewStatus = cli_filter.reviewStatus if was_provided('review_status') else preset_filter.reviewStatus
+    merged.detectionStatus = cli_filter.detectionStatus if was_provided('detection_status') else preset_filter.detectionStatus
+    merged.runHistoryTag = cli_filter.runHistoryTag if was_provided('tag') else preset_filter.runHistoryTag
+    merged.firstDetectionDate = cli_filter.firstDetectionDate if was_provided('detected_at') else preset_filter.firstDetectionDate
+    merged.fixDate = cli_filter.fixDate if was_provided('fixed_at') else preset_filter.fixDate
+    merged.isUnique = cli_filter.isUnique if was_provided('uniqueing') else preset_filter.isUnique
+    merged.runName = preset_filter.runName  # Not typically set from CLI
+    merged.runTag = cli_filter.runTag if was_provided('tag') else preset_filter.runTag
+    merged.componentNames = cli_filter.componentNames if was_provided('component') else preset_filter.componentNames
+    merged.bugPathLength = cli_filter.bugPathLength if was_provided('bug_path_length') else preset_filter.bugPathLength
+
+    date_args_provided = any([
+        was_provided('detected_after'),
+        was_provided('detected_before'),
+        was_provided('fixed_after'),
+        was_provided('fixed_before')
+    ])
+    merged.date = cli_filter.date if date_args_provided else preset_filter.date
+
+    merged.analyzerNames = cli_filter.analyzerNames if was_provided('analyzer_name') else preset_filter.analyzerNames
+    merged.openReportsDate = cli_filter.openReportsDate if was_provided('open_reports_date') else preset_filter.openReportsDate
+    merged.fileMatchesAnyPoint = cli_filter.fileMatchesAnyPoint if was_provided('anywhere_on_report_path') else preset_filter.fileMatchesAnyPoint
+    merged.componentMatchesAnyPoint = cli_filter.componentMatchesAnyPoint if was_provided('single_origin_report') else preset_filter.componentMatchesAnyPoint
+    merged.reportStatus = cli_filter.reportStatus if was_provided('report_status') else preset_filter.reportStatus
+    merged.annotations = preset_filter.annotations  # Not set from CLI
+    merged.cleanupPlanNames = preset_filter.cleanupPlanNames  # Not set from CLI
+
+    return merged
 
 
 def parse_report_filter_offline(args):

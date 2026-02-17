@@ -1643,21 +1643,17 @@ class ThriftRequestHandler:
     @timeit
     def storeFilterPreset(self, filterpreset):
         """
-        Store a configured ReportFilter in corresponding
-        product row.
+        Store a configured FilterPreset in the backend.
+        If a preset with the same name already exists, delete it and store the new one.
         args:
-        str name : Human readable name of preset.
-        ReportFilter: ReportFilter obj itself.
+            filterpreset: object with:
+                - name (str): Human readable name of preset
+                - reportFilter: ReportFilter object itself
         """
         self.__require_admin()
-        LOG.info("got to store filter preset in backend")
+        LOG.info("storing filter preset in backend (replace-by-name)")
 
         def to_jsonable(obj):
-            """
-            Docstring for to_jsonable
-
-            :param obj: Description
-            """
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return obj
             if isinstance(obj, list):
@@ -1671,12 +1667,15 @@ class ThriftRequestHandler:
         name = filterpreset.name
         report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
 
-        # If the preset exists, it overwrites the name, and all preset values
-        # if the preset does not exist yet, it creates it with
-        #TODO make it so new preset with same name overrides the stored one
-
         with DBSession(self._Session) as session:
-            preset_entry = FilterPreset(preset_name=name, report_filter=report_filter)
+            session.query(FilterPreset).filter(FilterPreset.preset_name == name).delete(
+                synchronize_session=False
+            )
+
+            preset_entry = FilterPreset(
+                preset_name=name,
+                report_filter=report_filter)
+
             session.add(preset_entry)
             session.commit()
             return int(preset_entry.id)
@@ -1734,7 +1733,6 @@ class ThriftRequestHandler:
                     min=rf["bugPathLength"].get("min"),
                     max=rf["bugPathLength"].get("max")
                 )
-
 
             # ReportDate
             recreated_date = None

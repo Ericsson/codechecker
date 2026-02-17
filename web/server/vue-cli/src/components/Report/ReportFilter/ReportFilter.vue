@@ -642,7 +642,6 @@ export default {
     },
 
     async getFilterPreset(preset_id) {
-      // const preset_id = 2;
       if (preset_id == null) {
         console.warn("getFilterPreset called without preset_id");
         return;
@@ -656,7 +655,7 @@ export default {
           });
         });
       } catch (err) {
-        handleThriftError("FAILURE getFilterPreset failed:", err);
+        handleThriftError("getFilterPreset failed:", err);
         return;
       }
 
@@ -665,15 +664,13 @@ export default {
         return;
       }
 
+      // helper functions
       function toTitleCase(word) {
         if (word == null) return "";
         return String(word)
           .toLowerCase()
           .replace(/^\w/, c => c.toUpperCase());
       }
-
-
-      // helper function
       function toEnumNames(value, map) {
         const normalizeOne = v => {
           if (v === null || v === undefined || v === "") return "";
@@ -687,14 +684,12 @@ export default {
         }
         return normalizeOne(value);
       }
-
-      const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
-
       const toISO = sec => {
         if (!sec) return "";
         const d = new Date(sec * 1000);
         return isNaN(d.getTime()) ? "" : d.toISOString();
       };
+      const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
 
       const ENUMS_FOR_STATUSES = {
         detectionStatus: {
@@ -739,7 +734,6 @@ export default {
       if (!rf || typeof rf !== "object") return;
 
       const FilterToQuery = {
-
         filepath: (_, rawValue) =>
           asArray(rawValue).map(v => [ "filepath", v ]),
         checkerMsg: (_, rawValue) =>
@@ -887,7 +881,6 @@ export default {
 
       await this.initByUrl();
       this.updateUrl();
-
     },
 
     async clearToolbarSilently() {

@@ -25,7 +25,8 @@ from codechecker_client import \
     product_client, \
     source_component_client, \
     task_client, \
-    token_client
+    token_client, \
+    filter_preset_client
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
@@ -477,8 +478,21 @@ def __register_results(parser):
                         help="Get report details for reports such as bug path "
                              "events, bug report points etc.")
 
-    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
+    parser.add_argument('--filterPreset',
+                        type=str,
+                        dest='filter_preset_name',
+                        metavar='PRESET_NAME',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Use a pre-configured filter preset. The preset "
+                             "is loaded from the server and applied to the "
+                             "results. You can override specific filters by "
+                             "providing additional filter arguments. Use "
+                             "'CodeChecker cmd filterPreset list' to see "
+                             "available presets.")
+
+    __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
 def __register_diff(parser):
     """
@@ -1529,6 +1543,87 @@ def __register_token(parser):
     del_t.set_defaults(func=token_client.handle_del_token)
     __add_common_arguments(del_t, needs_product_url=False)
 
+def __register_filter_presets(parser):
+    """
+    Add argparse subcommand parser for the "filter preset management" action.
+    """
+
+    def __register_new(parser):
+        parser.add_argument('--name',
+                            type=str,
+                            dest='preset_name',
+                            required=True,
+                            metavar='PRESET_NAME',
+                            help="Name of the filter preset to create or edit.")
+
+        parser.add_argument('--description',
+                            type=str,
+                            dest='description',
+                            required=False,
+                            default=argparse.SUPPRESS,
+                            help="Description of the filter preset.")
+        parser.add_argument('--force',
+                    action='store_true',
+                    dest='force',
+                    required=False,
+                    help="Force deletion without confirmation.")
+
+        __add_filtering_arguments(parser)
+
+
+    def __register_list(parser):
+        """
+        Add argparse subcommand parser for the "list presets" action.
+        """
+        pass
+
+    def __register_delete(parser):
+        """
+        Add argparse subcommand parser for the "delete preset" action.
+        """
+        parser.add_argument('--id',
+                            type=int,
+                            dest='preset_id',
+                            required=True,
+                            metavar='PRESET_ID',
+                            help="ID of the filter preset to delete.")
+
+        parser.add_argument('--force',
+                            action='store_true',
+                            dest='force',
+                            required=False,
+                            help="Force deletion without confirmation.")
+
+    subcommands = parser.add_subparsers(title='available actions')
+
+    # Create handlers for individual subcommands.
+    list_presets = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List all filter presets available on the server.",
+        help="List all filter presets.")
+    __register_list(list_presets)
+    list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
+    __add_common_arguments(list_presets,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
+
+    new_preset = subcommands.add_parser(
+        'new',
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
+        description="Create a new filter preset or edit an existing one.",
+        help="Create or edit a filter preset.")
+    __register_new(new_preset)
+    new_preset.set_defaults(func=filter_preset_client.handle_new_preset)
+    __add_common_arguments(new_preset)
+
+    delete_preset = subcommands.add_parser(
+        'delete',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Delete a filter preset from the server.",
+        help="Delete a filter preset.")
+    __register_delete(delete_preset)
+    delete_preset.set_defaults(func=filter_preset_client.handle_delete_preset)
+    __add_common_arguments(delete_preset)
 
 def add_arguments_to_parser(parser):
     """
@@ -1819,6 +1914,33 @@ task, as identified by the token:
     __register_tasks(tasks)
     tasks.set_defaults(func=task_client.handle_tasks)
     __add_common_arguments(tasks, needs_product_url=False)
+
+    filterPreset = subcommands.add_parser(
+        'filterPreset',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Manage filter presets of a CodeChecker server. "
+                    "Filter presets are named collections of filter "
+                    "configurations that can be applied to the analysis "
+                    "results of a run. Please see the individual "
+                    "subcommands for details.",
+        help="Access subcommands related to configuring filter presets of a "
+             "CodeChecker server.")
+    __register_filter_presets(filterPreset)
+    __add_common_arguments(filterPreset)
+    # CodeChecker cmd filterPreset new --name <name of the preset>
+    #                            [--uniqueing {on,off}]
+    #                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
+    #                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
+    #                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
+    #                            [--severity [SEVERITY [SEVERITY ...]]]
+    #                            [--bug-path-length BUG_PATH_LENGTH]
+    #                            [--tag [TAG [TAG ...]]]
+    #                            [--file [FILE_PATH [FILE_PATH ...]]]
+    #                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
+    #                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+    #                            [--component [COMPONENT [COMPONENT ...]]]
+    #                            [--detected-at TIMESTAMP]
+    #                            [--fixed-at TIMESTAMP] [-s] [--filter FILTER]
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.
