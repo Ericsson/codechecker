@@ -484,6 +484,62 @@ class TestAnalyze(unittest.TestCase):
 
         shutil.rmtree(reproducer_dir)
 
+    def test_reproducer_postprocesses_failures(self):
+        """
+        Test that --generate-reproducer still postprocesses compiler errors.
+        This is a regression test for a bug where --generate-reproducer
+        prevented postprocessing, causing failed analyses to not appear in
+        statistics or parse output.
+        """
+        build_json = os.path.join(self.test_workspace, "build.json")
+        reproducer_dir = os.path.join(self.report_dir, "reproducer")
+        source_file = os.path.join(self.test_dir, "failure.c")
+
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        # Analyze with --generate-reproducer
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clang-tidy",
+                       "-o", self.report_dir, "--generate-reproducer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        # Verify that the failed analysis appears in statistics
+        self.assertIn("Failed to analyze", out)
+        self.assertIn("failure.c", out)
+
+        # Parse the reports and verify the file is counted
+        # Before the fix, this would show "0" processed files
+        parse_cmd = [self._codechecker_cmd, "parse", self.report_dir]
+        process = subprocess.Popen(
+            parse_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        # The key bug: with --generate-reproducer, postprocessing was skipped
+        # so parse would show 0 processed files. After the fix, it should
+        # show 1 processed file.
+        self.assertIn("Number of processed analyzer result files | 1", out)
+
+        shutil.rmtree(reproducer_dir)
+
     def test_robustness_for_dependencygen_failure(self):
         """
         Test if failure ZIP is created even if the dependency generator creates
