@@ -478,7 +478,6 @@ def __register_results(parser):
                         help="Get report details for reports such as bug path "
                              "events, bug report points etc.")
 
-
     parser.add_argument('--filterPreset',
                         type=str,
                         dest='filter_preset_name',
@@ -493,6 +492,7 @@ def __register_results(parser):
                              "available presets.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
+
 
 def __register_diff(parser):
     """
@@ -1543,6 +1543,7 @@ def __register_token(parser):
     del_t.set_defaults(func=token_client.handle_del_token)
     __add_common_arguments(del_t, needs_product_url=False)
 
+
 def __register_filter_presets(parser):
     """
     Add argparse subcommand parser for the "filter preset management" action.
@@ -1554,8 +1555,7 @@ def __register_filter_presets(parser):
                             dest='preset_name',
                             required=True,
                             metavar='PRESET_NAME',
-                            help="Name of the filter preset to create or edit.")
-
+                            help="Name of the filter preset to create/edit.")
         parser.add_argument('--description',
                             type=str,
                             dest='description',
@@ -1563,10 +1563,10 @@ def __register_filter_presets(parser):
                             default=argparse.SUPPRESS,
                             help="Description of the filter preset.")
         parser.add_argument('--force',
-                    action='store_true',
-                    dest='force',
-                    required=False,
-                    help="Force deletion without confirmation.")
+                            action='store_true',
+                            dest='force',
+                            required=False,
+                            help="Force deletion without confirmation.")
 
         __add_filtering_arguments(parser)
 
@@ -1616,6 +1616,7 @@ def __register_filter_presets(parser):
     __register_delete(delete_preset)
     delete_preset.set_defaults(func=filter_preset_client.handle_delete_preset)
     __add_common_arguments(delete_preset)
+
 
 def add_arguments_to_parser(parser):
     """
@@ -1919,20 +1920,6 @@ task, as identified by the token:
              "CodeChecker server.")
     __register_filter_presets(filter_preset)
     __add_common_arguments(filter_preset)
-    # CodeChecker cmd filterPreset new --name <name of the preset>
-    #                            [--uniqueing {on,off}]
-    #                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
-    #                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
-    #                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
-    #                            [--severity [SEVERITY [SEVERITY ...]]]
-    #                            [--bug-path-length BUG_PATH_LENGTH]
-    #                            [--tag [TAG [TAG ...]]]
-    #                            [--file [FILE_PATH [FILE_PATH ...]]]
-    #                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
-    #                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
-    #                            [--component [COMPONENT [COMPONENT ...]]]
-    #                            [--detected-at TIMESTAMP]
-    #                            [--fixed-at TIMESTAMP] [-s] [--filter FILTER]
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.

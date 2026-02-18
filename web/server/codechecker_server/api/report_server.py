@@ -1643,15 +1643,14 @@ class ThriftRequestHandler:
     @timeit
     def storeFilterPreset(self, filterpreset):
         """
-        Store a configured FilterPreset in the backend.
-        If a preset with the same name already exists, delete it and store the new one.
+        Store a configured FilterPreset.
         args:
             filterpreset: object with:
                 - name (str): Human readable name of preset
                 - reportFilter: ReportFilter object itself
         """
         self.__require_admin()
-        LOG.info("storing filter preset in backend (replace-by-name)")
+        LOG.info(f"Storing filter preset in backend: {filterpreset.name}")
 
         def to_jsonable(obj):
             if obj is None or isinstance(obj, (str, int, float, bool)):
@@ -1668,9 +1667,15 @@ class ThriftRequestHandler:
         report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
 
         with DBSession(self._Session) as session:
-            session.query(FilterPreset).filter(FilterPreset.preset_name == name).delete(
-                synchronize_session=False
-            )
+            # Check if a preset with the same name already exists
+            existing_preset = session.query(FilterPreset).filter(
+                FilterPreset.preset_name == name
+            ).one_or_none()
+
+            if existing_preset:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"A filter preset with name '{name}' already exists!")
 
             preset_entry = FilterPreset(
                 preset_name=name,
@@ -1679,7 +1684,6 @@ class ThriftRequestHandler:
             session.add(preset_entry)
             session.commit()
             return int(preset_entry.id)
-        return -1
 
 
     @exc_to_thrift_reqfail
@@ -1687,28 +1691,37 @@ class ThriftRequestHandler:
     def deleteFilterPreset(self, preset_id):
         """
         Delete preset from products list based on preset_id.
+        returns the id of the deleted preset, -1 in case of error or
+        if the preset does not exist.
         """
         self.__require_admin()
-        LOG.info("deleting filter preset by id")
+        LOG.info(f"Deleting filter preset by ID: {preset_id}")
         try:
             with DBSession(self._Session) as session:
+                preset = session.query(FilterPreset). \
+                    filter(FilterPreset.id == preset_id).one_or_none()
+                if not preset:
+                    return -1
+
                 session.query(FilterPreset) \
                     .filter(FilterPreset.id == preset_id) \
                     .delete()
                 session.commit()
             return preset_id
         except Exception:
-            return -1
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not delete a preset with id: " + str(preset_id))
 
 
     @exc_to_thrift_reqfail
     @timeit
     def getFilterPreset(self, preset_id):
         """
-        Returns the FilterPreset identified by id.
+        Returns the FilterPreset identified by preset_id.
         """
         self.__require_view()
-        LOG.info("Returning filter Preset by id")
+        LOG.info(f"Returning filter Preset by ID: {preset_id}")
 
         try:
             with DBSession(self._Session) as session:
@@ -1719,9 +1732,9 @@ class ThriftRequestHandler:
                 )
 
             if preset is None:
-                return None
+                return -1
 
-            # convert ORM to dict for ReportFilter
+            # Convert ORM to dict for ReportFilter
             rf = preset.report_filter
             if isinstance(rf, str):
                 rf = json.loads(rf)
@@ -1737,7 +1750,7 @@ class ThriftRequestHandler:
             # ReportDate
             recreated_date = None
             if "date" in rf and isinstance(rf["date"], dict):
-                #  as both variables of ReportDate
+                # as both variables of ReportDate
                 # are of types.DateInterval we need to convert them too
 
                 recreated_date = ttypes.ReportDate(
@@ -1820,6 +1833,8 @@ class ThriftRequestHandler:
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "CodeChecker could not list a preset :", ex)
 
+    # TODO remove this funciton from here and from
+    # thrift api if ultimately decide not to use that loading way.
     @exc_to_thrift_reqfail
     @timeit
     def getNameByValueForFilter(self, filter_type, value):
@@ -1862,7 +1877,7 @@ class ThriftRequestHandler:
             if not token:
                 return ""
 
-            # special case for formatting confirmed bug. IN UI for some reason
+            # Special case for formatting confirmed bug. IN UI for some reason
             # it is shown as "Confirmed bug" instead of just "Confirmed".
             if type_name == "ReviewStatus" and token == "CONFIRMED":
                 return "Confirmed bug"

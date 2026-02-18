@@ -23,6 +23,7 @@ from .client import setup_client
 
 LOG = None
 
+
 def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
     global LOG
@@ -34,6 +35,7 @@ def build_filter_config_from_args(args):
     Build a ReportFilter object from command-line arguments.
     Returns the ReportFilter object directly.
     """
+
     args_dict = vars(args)
 
     def get_arg(key, default=None):
@@ -43,7 +45,10 @@ def build_filter_config_from_args(args):
         return value
 
     def convert_severity(severity_list):
-        """Convert severity strings to integer enum values using ttypes"""
+        """
+        Convert severity strings to integer enum values using ttypes
+        """
+
         if not severity_list:
             return None
         try:
@@ -51,13 +56,17 @@ def build_filter_config_from_args(args):
                     for s in severity_list]
         except KeyError as e:
             invalid_value = str(e).strip("'")
-            valid_values = ', '.join(ttypes.Severity._NAMES_TO_VALUES.keys()).lower()
+            valid_values = \
+                ', '.join(ttypes.Severity._NAMES_TO_VALUES.keys()).lower()
             LOG.error("Invalid severity value: %s", invalid_value.lower())
             LOG.error("Valid values are: %s", valid_values)
             sys.exit(1)
 
     def convert_review_status(status_list):
-        """Convert review status strings to integer enum values using ttypes"""
+        """
+        Convert review status strings to integer enum values using ttypes
+        """
+
         if not status_list:
             return None
         try:
@@ -65,13 +74,17 @@ def build_filter_config_from_args(args):
                     for s in status_list]
         except KeyError as e:
             invalid_value = str(e).strip("'")
-            valid_values = ', '.join(ttypes.ReviewStatus._NAMES_TO_VALUES.keys()).lower()
+            valid_values = \
+                ', '.join(ttypes.ReviewStatus._NAMES_TO_VALUES.keys()).lower()
             LOG.error("Invalid review status value: %s", invalid_value.lower())
             LOG.error("Valid values are: %s", valid_values)
             sys.exit(1)
 
     def convert_detection_status(status_list):
-        """Convert detection status strings to integer enum values using ttypes"""
+        """
+        Convert detection status strings to integer enum values using ttypes
+        """
+
         if not status_list:
             return None
         try:
@@ -79,13 +92,20 @@ def build_filter_config_from_args(args):
                     for s in status_list]
         except KeyError as e:
             invalid_value = str(e).strip("'")
-            valid_values = ', '.join(ttypes.DetectionStatus._NAMES_TO_VALUES.keys()).lower()
-            LOG.error("Invalid detection status value: %s", invalid_value.lower())
-            LOG.error("Valid values are: %s", valid_values)
+            valid_values = \
+                ', '.join(ttypes.DetectionStatus._NAMES_TO_VALUES.keys()) \
+                    .lower()
+            LOG.error("Invalid detection status value: %s",
+                      invalid_value.lower())
+            LOG.error("Valid values are: %s",
+                      valid_values)
             sys.exit(1)
 
     def convert_report_status(status_list):
-        """Convert report status strings to integer enum values using ttypes"""
+        """
+        Convert report status strings to integer enum values using ttypes
+        """
+
         if not status_list:
             return None
         try:
@@ -93,12 +113,13 @@ def build_filter_config_from_args(args):
                     for s in status_list]
         except KeyError as e:
             invalid_value = str(e).strip("'")
-            valid_values = ', '.join(ttypes.ReportStatus._NAMES_TO_VALUES.keys()).lower()
+            valid_values = \
+                ', '.join(ttypes.ReportStatus._NAMES_TO_VALUES.keys()).lower()
             LOG.error("Invalid report status value: %s", invalid_value.lower())
             LOG.error("Valid values are: %s", valid_values)
             sys.exit(1)
 
-    # 1. BugPathLength - parse "min:max" format
+    # parse "min:max" format
     recreated_bug_path_length = None
     bug_path_str = get_arg('bug_path_length')
     if bug_path_str:
@@ -111,7 +132,7 @@ def build_filter_config_from_args(args):
                 max=max_val
             )
 
-    # 2. ReportDate - construct from detected_* and fixed_* arguments
+    # construct from detected_* and fixed_* arguments
     recreated_date = None
     detected_after = get_arg('detected_after')
     detected_before = get_arg('detected_before')
@@ -121,8 +142,12 @@ def build_filter_config_from_args(args):
     detected_interval = None
     if detected_after or detected_before:
         detected_interval = ttypes.DateInterval(
-            before=int(detected_before.timestamp()) if detected_before else None,
-            after=int(detected_after.timestamp()) if detected_after else None
+            before=(
+                int(detected_before.timestamp())
+                if detected_before else None),
+            after=(
+                int(detected_after.timestamp())
+                if detected_after else None)
         )
 
     fixed_interval = None
@@ -138,17 +163,22 @@ def build_filter_config_from_args(args):
             fixed=fixed_interval
         )
 
-    # 3. Timestamps - convert datetime objects to Unix timestamps
+    # Convert datetime objects to Unix timestamps
     open_reports_date = get_arg('open_reports_date')
-    open_reports_timestamp = int(open_reports_date.timestamp()) if open_reports_date else None
+    open_reports_timestamp = (
+        int(open_reports_date.timestamp())
+        if open_reports_date else None
+    )
 
     detected_at = get_arg('detected_at')
-    first_detection_timestamp = int(detected_at.timestamp()) if detected_at else None
+    first_detection_timestamp = (
+        int(detected_at.timestamp())
+        if detected_at else None
+    )
 
     fixed_at = get_arg('fixed_at')
     fix_date_timestamp = int(fixed_at.timestamp()) if fixed_at else None
 
-    # 4. Create and return the ReportFilter object
     return ttypes.ReportFilter(
         filepath=get_arg('file_path'),
         checkerMsg=get_arg('checker_msg'),
@@ -160,7 +190,11 @@ def build_filter_config_from_args(args):
         runHistoryTag=get_arg('tag'),
         firstDetectionDate=first_detection_timestamp,
         fixDate=fix_date_timestamp,
-        isUnique=get_arg('uniqueing') == 'on' if get_arg('uniqueing') else None,
+        isUnique=(
+            (get_arg('uniqueing') == 'on')
+            if get_arg('uniqueing')
+            else None
+        ),
         runName=None,
         runTag=None,
         componentNames=get_arg('component'),
@@ -175,8 +209,11 @@ def build_filter_config_from_args(args):
         reportStatus=convert_report_status(get_arg('report_status')),
     )
 
+
 def display_preset_details(preset):
-    """Display the complete preset information including ID."""
+    """
+    Display the complete preset information including ID.
+    """
 
     print("\nFilter Preset Created/Updated:")
     print("=" * 60)
@@ -200,18 +237,24 @@ def display_preset_details(preset):
             print(f"  Report hashes: {', '.join(rf.reportHash)}")
 
         if rf.severity:
-            severity_names = [ttypes.Severity._VALUES_TO_NAMES.get(s, str(s))
-                            for s in rf.severity]
+            severity_names = [
+                ttypes.Severity._VALUES_TO_NAMES.get(s, str(s))
+                for s in rf.severity
+            ]
             print(f"  Severity: {', '.join(severity_names)}")
 
         if rf.reviewStatus:
-            review_names = [ttypes.ReviewStatus._VALUES_TO_NAMES.get(s, str(s))
-                          for s in rf.reviewStatus]
+            review_names = [
+                ttypes.ReviewStatus._VALUES_TO_NAMES.get(s, str(s))
+                for s in rf.reviewStatus
+            ]
             print(f"  Review status: {', '.join(review_names)}")
 
         if rf.detectionStatus:
-            detection_names = [ttypes.DetectionStatus._VALUES_TO_NAMES.get(s, str(s))
-                             for s in rf.detectionStatus]
+            detection_names = [
+                ttypes.DetectionStatus._VALUES_TO_NAMES.get(s, str(s))
+                for s in rf.detectionStatus
+            ]
             print(f"  Detection status: {', '.join(detection_names)}")
 
         if rf.runHistoryTag:
@@ -224,23 +267,32 @@ def display_preset_details(preset):
             print(f"  Analyzer names: {', '.join(rf.analyzerNames)}")
 
         if rf.bugPathLength:
-            min_val = rf.bugPathLength.min if rf.bugPathLength.min is not None else "any"
-            max_val = rf.bugPathLength.max if rf.bugPathLength.max is not None else "any"
+            min_val = (
+                rf.bugPathLength.min
+                if rf.bugPathLength.min is not None
+                else "any")
+            max_val = (
+                rf.bugPathLength.max
+                if rf.bugPathLength.max is not None
+                else "any")
             print(f"  Bug path length: {min_val}:{max_val}")
 
         if rf.isUnique is not None:
             print(f"  Is unique: {'yes' if rf.isUnique else 'no'}")
 
         if rf.firstDetectionDate:
-            date_str = datetime.fromtimestamp(rf.firstDetectionDate).strftime('%Y-%m-%d %H:%M:%S')
+            date_str = datetime.fromtimestamp(
+                rf.firstDetectionDate).strftime('%Y-%m-%d %H:%M:%S')
             print(f"  First detection date: {date_str}")
 
         if rf.fixDate:
-            date_str = datetime.fromtimestamp(rf.fixDate).strftime('%Y-%m-%d %H:%M:%S')
+            date_str = datetime.fromtimestamp(
+                rf.fixDate).strftime('%Y-%m-%d %H:%M:%S')
             print(f"  Fix date: {date_str}")
 
         if rf.openReportsDate:
-            date_str = datetime.fromtimestamp(rf.openReportsDate).strftime('%Y-%m-%d %H:%M:%S')
+            date_str = datetime.fromtimestamp(
+                rf.openReportsDate).strftime('%Y-%m-%d %H:%M:%S')
             print(f"  Open reports date: {date_str}")
 
         def _fmt(ts):
@@ -267,10 +319,12 @@ def display_preset_details(preset):
         if rf.componentMatchesAnyPoint:
             print("Component matches any point: yes")
 
-        if not any([rf.filepath, rf.checkerName, rf.checkerMsg, rf.reportHash,
-                    rf.severity, rf.reviewStatus, rf.detectionStatus, rf.runHistoryTag,
-                    rf.componentNames, rf.analyzerNames, rf.bugPathLength,
-                    rf.firstDetectionDate, rf.fixDate, rf.openReportsDate, rf.date]):
+        if not any([rf.filepath, rf.checkerName, rf.checkerMsg,
+                    rf.reportHash, rf.severity, rf.reviewStatus,
+                    rf.detectionStatus, rf.runHistoryTag,
+                    rf.componentNames, rf.analyzerNames,
+                    rf.bugPathLength, rf.firstDetectionDate,
+                    rf.fixDate, rf.openReportsDate, rf.date]):
             print("  (no filters configured)")
     else:
         print("  (no filters configured)")
@@ -279,7 +333,10 @@ def display_preset_details(preset):
 
 
 def summarize_filters(report_filter):
-    """Create a summary string of active filters for display."""
+    """
+    Create a summary string of active filters for display.
+    """
+
     if not report_filter:
         return '(none)'
 
@@ -315,8 +372,12 @@ def summarize_filters(report_filter):
 
     return ', '.join(active) if active else '(none)'
 
+
 def handle_new_preset(args):
-    """Handler for creating or editing a filter preset."""
+    """
+    Handler for creating or editing a filter preset.
+    """
+
     init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
@@ -335,7 +396,8 @@ def handle_new_preset(args):
     flag_for_existing = args.preset_name in list_of_existing_names
 
     if flag_for_existing:
-        LOG.info("Filter preset '%s' already exists. Editing...", args.preset_name)
+        LOG.info("Filter preset '%s' already exists. Editing...",
+                 args.preset_name)
         if not args.force:
             question = 'Do you want to update the existing preset? Y(es)/n(o) '
             if not get_user_input(question):
@@ -346,7 +408,8 @@ def handle_new_preset(args):
 
     if preset_id != -1:
         action = "updated" if flag_for_existing else "created"
-        LOG.info("Filter preset '%s' %s successfully.", args.preset_name, action)
+        LOG.info(
+            f"Filter preset '{args.preset_name}' {action} successfully.")
 
         stored_preset = client.getFilterPreset(preset_id)
 
@@ -355,14 +418,19 @@ def handle_new_preset(args):
         else:
             # This should never happen, but handle gracefully
             LOG.warning("Preset was saved but could not be retrieved.")
-            LOG.info("Preset ID: %d, Name: %s", preset_id, args.preset_name)
+            LOG.info(f"Preset ID: {preset_id}, Name: {args.preset_name}")
     else:
         LOG.error("An error occurred when saving filter preset.")
         sys.exit(1)
 
+
 def handle_list_presets(args):
-    """Handler for listing all filter presets."""
-    # If the given output format is not 'table', redirect logger's output to stderr
+    """
+    Handler for listing all filter presets.
+    """
+
+    # If the given output format is not 'table',
+    # redirect logger's output to stderr
     stream = None
     if 'output_format' in args and args.output_format != 'table':
         stream = 'stderr'
@@ -395,14 +463,17 @@ def handle_list_presets(args):
             if rf.reportHash:
                 filter_dict['reportHash'] = rf.reportHash
             if rf.severity:
-                filter_dict['severity'] = [ttypes.Severity._VALUES_TO_NAMES.get(s, s)
-                                          for s in rf.severity]
+                filter_dict['severity'] = \
+                    [ttypes.Severity._VALUES_TO_NAMES.get(s, s)
+                     for s in rf.severity]
             if rf.reviewStatus:
-                filter_dict['reviewStatus'] = [ttypes.ReviewStatus._VALUES_TO_NAMES.get(s, s)
-                                              for s in rf.reviewStatus]
+                filter_dict['reviewStatus'] = \
+                    [ttypes.ReviewStatus._VALUES_TO_NAMES.get(s, s)
+                     for s in rf.reviewStatus]
             if rf.detectionStatus:
-                filter_dict['detectionStatus'] = [ttypes.DetectionStatus._VALUES_TO_NAMES.get(s, s)
-                                                 for s in rf.detectionStatus]
+                filter_dict['detectionStatus'] = \
+                    [ttypes.DetectionStatus._VALUES_TO_NAMES.get(s, s)
+                     for s in rf.detectionStatus]
             if rf.runHistoryTag:
                 filter_dict['runHistoryTag'] = rf.runHistoryTag
             if rf.componentNames:
@@ -438,7 +509,8 @@ def handle_list_presets(args):
             if rf.fileMatchesAnyPoint:
                 filter_dict['fileMatchesAnyPoint'] = rf.fileMatchesAnyPoint
             if rf.componentMatchesAnyPoint:
-                filter_dict['componentMatchesAnyPoint'] = rf.componentMatchesAnyPoint
+                filter_dict['componentMatchesAnyPoint'] = \
+                    rf.componentMatchesAnyPoint
 
             preset_dict = {
                 'id': preset.id,
@@ -462,8 +534,12 @@ def handle_list_presets(args):
 
         print(twodim.to_str(args.output_format, header, rows))
 
+
 def handle_delete_preset(args):
-    """Handler for deleting a filter preset by its ID."""
+    """
+    Handler for deleting a filter preset by its ID.
+    """
+
     init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
@@ -488,7 +564,8 @@ def handle_delete_preset(args):
     success = client.deleteFilterPreset(args.preset_id)
 
     if success:
-        LOG.info("Filter preset '%s' (ID: %d) successfully deleted.", preset.name, args.preset_id)
+        LOG.info("Filter preset '%s' (ID: %d) successfully deleted.",
+                 preset.name, args.preset_id)
     else:
         LOG.error("An error occurred when deleting the filter preset.")
         sys.exit(1)
