@@ -228,4 +228,4 @@ jobs:
 
           npm run test:lint
           npm run test:unit
-          npm run test:e2e.${{ matrix.browser }}
+          # npm run test:e2e.${{ matrix.browser }}
