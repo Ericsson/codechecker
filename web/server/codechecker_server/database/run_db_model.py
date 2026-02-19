@@ -585,6 +585,23 @@ class CleanupPlan(Base):
         self.closed_at = closed_at
 
 
+class SourceComponentFile(Base):
+    __tablename__ = 'source_component_files'
+
+    source_component_name = Column(String,
+                                   ForeignKey('source_components.name',
+                                              ondelete='CASCADE'),
+                                   primary_key=True)
+    file_id = Column(Integer,
+                     ForeignKey('files.id',
+                                ondelete='CASCADE'),
+                     primary_key=True)
+
+    def __init__(self, source_component_name, file_id):
+        self.source_component_name = source_component_name
+        self.file_id = file_id
+
+
 class CleanupPlanReportHash(Base):
     __tablename__ = 'cleanup_plan_report_hashes'
 

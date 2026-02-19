@@ -14,6 +14,7 @@ Called via `report_server`, but factored out here for readability.
 import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
+import fnmatch
 from hashlib import sha256
 import json
 import os
@@ -51,7 +52,8 @@ from ..database.run_db_model import \
     ExtendedReportData, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
-    Run, RunLock as DBRunLock, RunHistory
+    Run, RunLock as DBRunLock, RunHistory, \
+    SourceComponent, SourceComponentFile
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_annotations import report_annotation_types
@@ -271,6 +273,54 @@ def get_file_content(file_path: str) -> bytes:
         return f.read()
 
 
+def assign_file_to_source_components(
+    session: DBSession,
+    file_id: int,
+    filepath: str
+):
+    """
+    Checks all Source Components and links the file if it matches.
+    """
+    components = session.query(SourceComponent).all()
+
+    associations = []
+
+    from .report_server import get_component_values
+
+    for component in components:
+        include, skip = get_component_values(component)
+
+        # If no patterns are defined, the component matches nothing.
+        if not skip and not include:
+            continue
+
+        is_included = False
+        if include:
+            for pattern in include:
+                if fnmatch.fnmatch(filepath, pattern):
+                    is_included = True
+                    break
+        else:
+            # If only skip is defined, it matches everything except skips.
+            is_included = True
+
+        is_skipped = False
+        if skip:
+            for pattern in skip:
+                if fnmatch.fnmatch(filepath, pattern):
+                    is_skipped = True
+                    break
+
+        if is_included and not is_skipped:
+            associations.append({
+                'source_component_name': component.name,
+                'file_id': file_id
+            })
+
+    if associations:
+        session.bulk_insert_mappings(SourceComponentFile, associations)
+
+
 def add_file_record(
     session: DBSession,
     file_path: str,
@@ -319,11 +369,14 @@ def add_file_record(
                 content_hash=content_hash).on_conflict_do_nothing(
                     index_elements=['filepath', 'content_hash'])
             file_id = session.execute(insert_stmt).inserted_primary_key[0]
+            assign_file_to_source_components(session, file_id, file_path)
             session.commit()
             return file_id
 
         file_record = File(file_path, content_hash, None, None)
         session.add(file_record)
+        session.flush()
+        assign_file_to_source_components(session, file_record.id, file_path)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
         LOG.error(ex)
