@@ -234,7 +234,11 @@ class TestCmdline(unittest.TestCase):
         for run in json.loads(res):
             for data in run.values():
                 self.assertEqual(
-                    data['analyzerStatistics']['clangsa']['failedFilePaths'],[])
+                    data['analyzerStatistics']['clangsa']['failedFilePaths'],
+                    [])
+                self.assertNotEqual(
+                    data['analyzerStatistics']['clangsa']['enabledCheckers'],
+                    [])
 
     def test_proxy_settings(self):
         """ Test proxy settings validation. """

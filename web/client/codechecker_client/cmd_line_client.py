@@ -697,6 +697,7 @@ def handle_list_runs(args):
 
         print(twodim.to_str(args.output_format, header, rows))
 
+
 def handle_list_results(args):
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
