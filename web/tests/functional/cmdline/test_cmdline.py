@@ -237,8 +237,7 @@ class TestCmdline(unittest.TestCase):
                     data['analyzerStatistics']['clangsa']['failedFilePaths'])
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
-                   '-o', 'json', '--url', str(self.server_url),
-                   '--details']
+                   '-o', 'json', '--url', str(self.server_url)]
         ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
@@ -352,8 +351,7 @@ class TestCmdline(unittest.TestCase):
         check_env = self._test_config['codechecker_cfg']['check_env']
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'test_files1*',
-                   'test_files1*', '-o', 'json', '--url', str(self.server_url),
-                   '--details']
+                   'test_files1*', '-o', 'json', '--url', str(self.server_url)]
 
         ret, out, _ = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(0, ret)
