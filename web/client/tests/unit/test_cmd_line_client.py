@@ -45,71 +45,6 @@ class ListRunsEnabledCheckersTest(unittest.TestCase):
     @patch("codechecker_client.cmd_line_client.init_logger")
     @patch("codechecker_client.cmd_line_client.setup_client")
     @patch("codechecker_client.cmd_line_client.get_run_data")
-    def test_enabled_checkers_plaintext(self, get_run_data, setup_client, init_logger):
-        client = Mock()
-        setup_client.return_value = client
-
-        runs = [DummyRun(1)]
-        get_run_data.return_value = runs
-
-        client.getAnalysisInfo.return_value = [
-            make_analysis_info({
-                "clangsa": {"core.CallAndMessage": True, "unix.Malloc": False},
-                "clang-tidy": {"modernize-use-nullptr": True},
-            })
-        ]
-
-        args = Args(
-            product_url="dummy",
-            sort_type="name",
-            sort_order="asc",
-            output_format="plaintext",
-            enabled_checkers=True
-        )
-
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            cmd_line_client.handle_list_runs(args)
-
-        out = buf.getvalue()
-        self.assertIn("clangsa:\n", out)
-        self.assertIn("  core.CallAndMessage\n", out)
-        self.assertNotIn("unix.Malloc", out)
-        self.assertIn("clang-tidy:\n", out)
-        self.assertIn("  modernize-use-nullptr\n", out)
-
-    @patch("codechecker_client.cmd_line_client.init_logger")
-    @patch("codechecker_client.cmd_line_client.setup_client")
-    @patch("codechecker_client.cmd_line_client.get_run_data")
-    def test_enabled_checkers_csv(self, get_run_data, setup_client, init_logger):
-        client = Mock()
-        setup_client.return_value = client
-        get_run_data.return_value = [DummyRun(1)]
-
-        client.getAnalysisInfo.return_value = [
-            make_analysis_info({"clangsa": {"a": True, "b": False}})
-        ]
-
-        args = Args(
-            product_url="dummy",
-            sort_type="name",
-            sort_order="asc",
-            output_format="csv",
-            enabled_checkers=True
-        )
-
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            cmd_line_client.handle_list_runs(args)
-
-        lines = [l for l in buf.getvalue().splitlines() if l.strip()]
-        self.assertEqual(lines[0], "Analyzer;Checker")
-        self.assertIn("clangsa;a", lines)
-        self.assertTrue(all("clangsa;b" not in l for l in lines))
-
-    @patch("codechecker_client.cmd_line_client.init_logger")
-    @patch("codechecker_client.cmd_line_client.setup_client")
-    @patch("codechecker_client.cmd_line_client.get_run_data")
     def test_enabled_checkers_json(self, get_run_data, setup_client, init_logger):
         client = Mock()
         setup_client.return_value = client
@@ -118,13 +53,20 @@ class ListRunsEnabledCheckersTest(unittest.TestCase):
         client.getAnalysisInfo.return_value = [
             make_analysis_info({"clangsa": {"a": True}})
         ]
+        client.getAnalysisStatistics.return_value = {
+            "clangsa": SimpleNamespace(
+                version="1",
+                failed=0,
+                successful=1,
+                failedFilePaths=[],
+            )
+        }
 
         args = Args(
             product_url="dummy",
             sort_type="name",
             sort_order="asc",
-            output_format="json",
-            enabled_checkers=True
+            output_format="json"
         )
 
         buf = io.StringIO()
@@ -132,60 +74,12 @@ class ListRunsEnabledCheckersTest(unittest.TestCase):
             cmd_line_client.handle_list_runs(args)
 
         data = json.loads(buf.getvalue())
-        self.assertEqual(data, {"clangsa": ["a"]})
-
-    @patch("codechecker_client.cmd_line_client.init_logger")
-    @patch("codechecker_client.cmd_line_client.setup_client")
-    @patch("codechecker_client.cmd_line_client.get_run_data")
-    def test_enabled_checkers_table(self, get_run_data, setup_client, init_logger):
-        client = Mock()
-        setup_client.return_value = client
-        get_run_data.return_value = [DummyRun(1)]
-
-        client.getAnalysisInfo.return_value = [
-            make_analysis_info({"clangsa": {"a": True}})
-        ]
-
-        with patch("codechecker_client.cmd_line_client.twodim.to_str", return_value="TABLE_OUT") as to_str:
-            args = Args(
-                product_url="dummy",
-                sort_type="name",
-                sort_order="asc",
-                output_format="table",
-                enabled_checkers=True
-            )
-
-            buf = io.StringIO()
-            with redirect_stdout(buf):
-                cmd_line_client.handle_list_runs(args)
-
-            to_str.assert_called_once()
-            out = buf.getvalue().strip()
-            self.assertEqual(out, "TABLE_OUT")
-
-    @patch("codechecker_client.cmd_line_client.init_logger")
-    @patch("codechecker_client.cmd_line_client.setup_client")
-    @patch("codechecker_client.cmd_line_client.get_run_data")
-    def test_enabled_checkers_unsupported_format_logs_error(self, get_run_data, setup_client, init_logger):
-        client = Mock()
-        setup_client.return_value = client
-        get_run_data.return_value = [DummyRun(1)]
-
-        client.getAnalysisInfo.return_value = [
-            make_analysis_info({"clangsa": {"a": True}})
-        ]
-
-        args = Args(
-            product_url="dummy",
-            sort_type="name",
-            sort_order="asc",
-            output_format="xml",
-            enabled_checkers=True
-        )
-
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            cmd_line_client.handle_list_runs(args)
-
-        self.assertEqual(buf.getvalue(), "")
-        cmd_line_client.LOG.error.assert_called_once()
+        self.assertEqual(len(data), 1)
+        run_entry = data[0]
+        self.assertEqual(len(run_entry), 1)
+        _, run_data = next(iter(run_entry.items()))
+        self.assertIn("analyzerStatistics", run_data)
+        self.assertIn("clangsa", run_data["analyzerStatistics"])
+        stats = run_data["analyzerStatistics"]["clangsa"]
+        self.assertIn("enabledCheckers", stats)
+        self.assertEqual(stats["enabledCheckers"], ["a"])

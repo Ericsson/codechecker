@@ -739,11 +739,9 @@ def handle_list_results(args):
                                   query_report_details)
 
     if args.output_format == 'json':
-        if 'details' in args:
-            run_id2name = {run.runId: run.name for run in run_data}
-            for report in all_results:
-                report.runName = run_id2name[report.runId]
-
+        run_id2name = {run.runId: run.name for run in run_data}
+        for report in all_results:
+            report.runName = run_id2name[report.runId]
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
