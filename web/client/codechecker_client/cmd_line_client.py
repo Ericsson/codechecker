@@ -19,7 +19,6 @@ import re
 import sys
 import shutil
 import time
-import json
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -697,8 +696,6 @@ def handle_list_runs(args):
                          codechecker_version))
 
         print(twodim.to_str(args.output_format, header, rows))
-    return
-
 
 def handle_list_results(args):
     # If the given output format is not 'table', redirect logger's output to
