@@ -19,6 +19,7 @@ import re
 import sys
 import shutil
 import time
+import json
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -651,11 +652,25 @@ def handle_list_runs(args):
         # to a json format.
         results = []
         for run in runs:
-            if 'details' in args and args.details:
-                run.analyzerStatistics = \
-                    client.getAnalysisStatistics(run.runId, None)
+            enabled_checkers: Dict[str, Set[str]] = {}
+            info_list: List[ttypes.AnalysisInfo] = client.getAnalysisInfo(
+                ttypes.AnalysisInfoFilter(runId=run.runId),
+                constants.MAX_QUERY_SIZE,
+                0)
+            for info in info_list:
+                for analyzer, checkers in (info.checkers or {}).items():
+                    enabled_checkers.setdefault(analyzer, set())
+                    for checker_name, checker_info in (checkers or {}).items():
+                        if checker_info.enabled:
+                            enabled_checkers[analyzer].add(checker_name)
+            run.analyzerStatistics = client.getAnalysisStatistics(
+                run.runId, None) or {}
+            for analyzer in run.analyzerStatistics:
+                stat = run.analyzerStatistics[analyzer]
+                stat.enabledCheckers = sorted(
+                    list(enabled_checkers.get(analyzer, set())))
             results.append({run.name: run})
-        print(CmdLineOutputEncoder().encode(results))
+        print(json.dumps(results, cls=CmdLineOutputEncoder, indent=4))
 
     else:  # plaintext, csv
         header = ['Name', 'Number of unresolved reports',
@@ -729,11 +744,9 @@ def handle_list_results(args):
                                   query_report_details)
 
     if args.output_format == 'json':
-        if 'details' in args:
-            run_id2name = {run.runId: run.name for run in run_data}
-            for report in all_results:
-                report.runName = run_id2name[report.runId]
-
+        run_id2name = {run.runId: run.name for run in run_data}
+        for report in all_results:
+            report.runName = run_id2name[report.runId]
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',

@@ -1095,14 +1095,6 @@ def __register_runs(parser):
                             "run_2_c_name, run_3_d_name then \"run_2* "
                             "run_3_d_name\" shows the last three runs.")
 
-    group.add_argument('--details',
-                       default=argparse.SUPPRESS,
-                       action='store_true',
-                       required=False,
-                       help="Adds extra details to the run information in "
-                            "JSON format, such as the list of files that are "
-                            "failed to analyze.")
-
     group.add_argument('--all-before-run',
                        type=str,
                        dest="all_before_run",
@@ -1551,6 +1543,7 @@ def add_arguments_to_parser(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="List the analysis runs available on the server.",
         help="List the available analysis runs.")
+
     __register_runs(runs)
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
     __add_common_arguments(runs, output_formats=DEFAULT_OUTPUT_FORMATS)
