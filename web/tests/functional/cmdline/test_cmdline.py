@@ -239,6 +239,9 @@ class TestCmdline(unittest.TestCase):
                 self.assertNotEqual(
                     data['analyzerStatistics']['clangsa']['enabledCheckers'],
                     [])
+                self.assertIn(
+                    'core.NullDereference',
+                    data['analyzerStatistics']['clangsa']['enabledCheckers'])
 
     def test_proxy_settings(self):
         """ Test proxy settings validation. """

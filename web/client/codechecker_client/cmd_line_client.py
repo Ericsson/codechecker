@@ -19,6 +19,7 @@ import re
 import sys
 import shutil
 import time
+import json
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -663,7 +664,7 @@ def handle_list_runs(args):
                 stat.enabledCheckers = sorted(
                     list(enabled_checkers.get(analyzer, set())))
             results.append({run.name: run})
-        print(CmdLineOutputEncoder().encode(results))
+        print(json.dumps(results, cls=CmdLineOutputEncoder, indent=4))
 
     else:  # plaintext, csv
         header = ['Name', 'Number of unresolved reports',
