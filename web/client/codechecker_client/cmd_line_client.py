@@ -678,7 +678,7 @@ def handle_list_runs(args):
                   'Duration', 'Description', 'CodeChecker version']
         rows = []
         for run in runs:
-            duration = str(timedelta(seconds=run.duration)) \
+            duration = str(timedelta(milliseconds=run.duration)) \
                 if run.duration > -1 else 'Not finished'
 
             analyzer_statistics = []
