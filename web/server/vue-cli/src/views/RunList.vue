@@ -519,8 +519,9 @@ export default {
       this.analyzerStatisticsDialog = true;
     },
 
-    prettifyDuration(seconds) {
-      if (seconds >= 0) {
+    prettifyDuration(milliseconds) {
+      if (milliseconds >= 0) {
+        const seconds = Math.floor(milliseconds / 1000);
         const durHours = Math.floor(seconds / 3600);
         const durMins  = Math.floor(seconds / 60) - durHours * 60;
         const durSecs  = seconds - durMins * 60 - durHours * 3600;
