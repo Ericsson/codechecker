@@ -48,51 +48,71 @@ class CCLogger(logging.Logger):
 
 logging.setLoggerClass(CCLogger)
 
-data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
-DEFAULT_LOG_CFG_FILE = os.path.join(data_files_dir_path, 'config',
-                                    'logger.conf')
 
-
-# Default config which can be used if reading log config from a
-# file fails.
-DEFAULT_LOG_CONFIG = '''{
+# Logger configuration
+LOG_CONFIG = '''
+{
   "version": 1,
-  "disable_existing_loggers": false,
+  "disable_existing_loggers": true,
   "formatters": {
     "brief": {
-      "format": "[%(asctime)s][%(levelname)s] - %(message)s",
+      "format": "[%(levelname)s %(asctime)s] - %(message)s",
       "datefmt": "%Y-%m-%d %H:%M"
     },
     "precise": {
       "format": "[%(levelname)s] [%(asctime)s] {%(name)s} [%(process)d] \
 <%(thread)d> - %(filename)s:%(lineno)d %(funcName)s() - %(message)s",
-      "datefmt": "%Y-%m-%d %H:%M"
-    }
-  },
-  "handlers": {
-    "default": {
-      "level": "INFO",
-      "formatter": "brief",
-      "class": "logging.StreamHandler"
+      "datefmt": "%Y-%m-%d %H:%M:%S"
     }
   },
   "loggers": {
-    "": {
-      "handlers": ["default"],
+    "analyzer": {
       "level": "INFO",
-      "propagate": true
+      "handlers": ["console"]
+    },
+    "analyzer.clangsa": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "analyzer.tidy": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "buildlogger": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "profiler": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "report": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "server": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "system": {
+      "level": "INFO",
+      "handlers": ["console"]
+    },
+    "report-converter": {
+      "level": "INFO",
+      "handlers": ["console"]
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "level": "INFO",
+      "formatter": "brief",
+      "stream": "ext://sys.stdout"
     }
   }
-}'''
-
-
-try:
-    with open(DEFAULT_LOG_CFG_FILE, 'r',
-              encoding="utf-8", errors="ignore") as dlc:
-        DEFAULT_LOG_CONFIG = dlc.read()
-except IOError as ex:
-    print(ex)
-    print("Failed to load logger configuration. Using built-in config.")
+}
+'''
 
 
 def add_verbose_arguments(parser):
@@ -192,7 +212,7 @@ def setup_logger(log_level=None, stream=None):
     be given (stderr -> ext://sys.stderr, 'stdout' -> ext://sys.stdout).
     """
 
-    log_config = json.loads(DEFAULT_LOG_CONFIG)
+    log_config = json.loads(LOG_CONFIG)
     if log_level:
         log_level = validate_loglvl(log_level)
 
