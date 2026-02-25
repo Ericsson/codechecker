@@ -34,11 +34,13 @@
             :namespace="namespace"
             @apply-preset="getFilterPreset"
             @update:url="updateUrl"
+            @clear-preset="clearAllFilters"
           />
         </v-list-item-content>
 
         <v-btn
           v-if="canSeeActions"
+          class="ml-4"
           color="primary"
           @click="open_preset_save = true"
         >
@@ -463,6 +465,7 @@ export default {
       activeDatePanelId: 0,
       open_preset_save: false,
       presetName: "",
+      currentlyAppliedPreset: null,
       isSuperUser: false,
       isAdminOfAnyProduct: false,
     };
@@ -708,7 +711,7 @@ export default {
         reviewStatus: {
           0: "UNREVIEWED",
           1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
-          2: "FALSE_POSITIVE",
+          2: "FALSE POSITIVE", // False_positive -> False positive
           3: "INTENTIONAL",
         },
         severity: {
@@ -789,7 +792,7 @@ export default {
         componentNames: (_, rawValue) =>
           asArray(rawValue).map(v => [ "source-component", v ]),
 
-        diffType: (_, rawValue) => [ //PTR
+        diffType: (_, rawValue) => [
           [ "diff-type",
             toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
         ],
@@ -810,12 +813,14 @@ export default {
         ],
         cleanupPlanNames: (_, rawValue) =>
           asArray(rawValue).map(v => [ "cleanup-plan-name", v ]),
-        fileMatchesAnyPoint: (_, rawValue) => [
-          [ "anywhere-filepath", rawValue ? "true" : "false" ],
-        ],
-        componentMatchesAnyPoint: (_, rawValue) => [
-          [ "anywhere-sourcecomponent", rawValue ? "true" : "false" ],
-        ],
+        fileMatchesAnyPoint: (_, rawValue) => {
+          if (!rawValue) return [];
+          return [ [ "anywhere-filepath", "true" ] ];
+        },
+        componentMatchesAnyPoint: (_, rawValue) => {
+          if (!rawValue) return [];
+          return [ [ "anywhere-sourcecomponent", "true" ] ];
+        },
         annotations: (_, rawValue) => {
           const testcases = Array.isArray(rawValue)
             ? rawValue
@@ -876,11 +881,12 @@ export default {
 
       await this.clearToolbarSilently();
 
-      const nextQuery = { ...this.$route.query, ...presetQueryParams };
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const nextQuery = { ...presetQueryParams };
       await this.$router.replace({ query: nextQuery });
 
       await this.initByUrl();
-      this.updateUrl();
     },
 
     async clearToolbarSilently() {

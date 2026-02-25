@@ -1,107 +1,42 @@
 <template>
-  <div class="d-flex align-center">
-    <v-menu
-      v-model="menuOpen"
-      offset-y
-      :close-on-content-click="false"
-    >
-      <template v-slot:activator="{ on, attrs }">
+  <v-select
+    clearable
+    :items="presets"
+    item-text="name"
+    item-value="id"
+    label="Presets"
+    :loading="loadingList"
+    :disabled="saving || applyingId !== null || deletingId !== null"
+    @focus="fetchPresets"
+    @click:clear="handleClear"
+  >
+    <template #item="{ item }">
+      <v-list-item-content
+        @click="applyPreset(item.id)"
+      >
+        <v-list-item-title>
+          {{ item.name }}
+        </v-list-item-title>
+      </v-list-item-content>
+      <v-list-item-action v-if="canSeeActions">
         <v-btn
-          outlined
-          :loading="loadingList"
           :disabled="saving || applyingId !== null || deletingId !== null"
-          v-bind="attrs"
-          v-on="on"
+          icon
+          @click="deletePreset(item.id)"
         >
-          Presets
-          <v-icon right>
-            mdi-menu-down
+          <v-icon
+            v-if="deletingId === item.id"
+            small
+          >
+            mdi-loading
+          </v-icon>
+          <v-icon v-else small>
+            mdi-delete
           </v-icon>
         </v-btn>
-      </template>
-
-      <v-card min-width="320">
-        <v-card-title class="py-2">
-          <span class="text-subtitle-2">Presets</span>
-          <v-spacer />
-          <v-btn
-            icon
-            small
-            :disabled="loadingList"
-            @click="fetchPresets"
-          >
-            <v-icon>
-              mdi-refresh
-            </v-icon>
-          </v-btn>
-        </v-card-title>
-
-        <v-divider />
-
-        <div v-if="loadingList" class="pa-4 d-flex justify-center">
-          <v-progress-circular indeterminate />
-        </div>
-
-        <v-list v-else dense>
-          <v-list-item v-if="presets.length === 0">
-            <v-list-item-title class="text--secondary">
-              No presets yet
-            </v-list-item-title>
-          </v-list-item>
-
-          <v-list-item
-            v-for="p in presets"
-            :key="p.id"
-            @click="applyPreset(p.id)"
-          >
-            <v-list-item-content>
-              <v-list-item-title>
-                {{ p.name }}
-              </v-list-item-title>
-            </v-list-item-content>
-
-            <v-list-item-action>
-              <!-- Apply spinner -->
-              <v-progress-circular
-                v-if="applyingId === p.id"
-                indeterminate
-                size="18"
-              />
-              <!-- Delete spinner -->
-              <v-progress-circular
-                v-else-if="deletingId === p.id"
-                indeterminate
-                size="18"
-              />
-              <!-- Trash -->
-              <v-btn
-                v-if="canSeeActions"
-                icon
-                small
-                title="Delete"
-                @click.stop="deletePreset(p.id)"
-              >
-                <v-icon>
-                  mdi-delete
-                </v-icon>
-              </v-btn>
-            </v-list-item-action>
-          </v-list-item>
-        </v-list>
-
-        <v-divider />
-
-        <v-alert
-          v-if="error"
-          type="error"
-          dense
-          class="ma-2"
-        >
-          {{ error }}
-        </v-alert>
-      </v-card>
-    </v-menu>
-  </div>
+      </v-list-item-action>
+    </template>
+  </v-select>
 </template>
 
 <script>
@@ -125,7 +60,6 @@ export default {
 
   data() {
     return {
-      menuOpen: false,
       presets: [],
       loadingList: false,
       applyingId: null,
@@ -140,15 +74,10 @@ export default {
   computed: {
     canSeeActions() {
       return this.isSuperUser || this.isAdminOfAnyProduct;
-    },
+    }
   },
 
   watch: {
-    menuOpen(open) {
-      if (open) {
-        this.fetchPresets();
-      }
-    },
   },
 
   created() {
@@ -205,8 +134,8 @@ export default {
       this.error = null;
       this.applyingId = id;
       try {
+        console.log("Applying preset with ID:", id);
         this.$emit("apply-preset", id);
-        this.menuOpen = false;
       } catch (e) {
         this.error = (e && e.message) ? e.message : "Failed to apply preset";
       } finally {
@@ -232,6 +161,10 @@ export default {
       } finally {
         this.deletingId = null;
       }
+    },
+
+    handleClear() {
+      this.$emit("clear-preset");
     },
   },
 };
