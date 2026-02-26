@@ -34,7 +34,7 @@
     "date-fns": "^2.28.0",
     "js-cookie": "^3.0.1",
     "jsplumb": "^2.15.6",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "marked": "^4.0.10",
     "semver": "^5.7.1",
     "splitpanes": "^2.3.8",
