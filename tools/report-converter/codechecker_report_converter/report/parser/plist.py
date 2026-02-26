@@ -13,6 +13,7 @@ import importlib
 import logging
 import os
 import plistlib
+import portalocker
 import traceback
 import sys
 
@@ -530,7 +531,7 @@ class Parser(BaseParser):
     def write(self, data: Any, output_file_path: str):
         """ Creates an analyzer output file from the given data. """
         try:
-            with open(output_file_path, 'wb') as f:
+            with portalocker.Lock(output_file_path, 'wb') as f:
                 plistlib.dump(data, f)
         except TypeError as err:
             LOG.error('Failed to write plist file: %s', output_file_path)
