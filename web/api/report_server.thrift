@@ -566,10 +566,11 @@ struct Guideline {
 }
 
 struct Rule {
-  1: string ruleId,        // The identifier of the rule.
-  2: string title,         // The rule summary.
-  3: string url,           // The link of the rule page.
-  4: list<string> checkers // List of checker names
+  1: string ruleId,          // The identifier of the rule.
+  2: string title,           // The rule summary.
+  3: string url,             // The link of the rule page.
+  4: list<string> checkers,  // List of checker names,
+  5: optional string level,
 }
 typedef map<string, list<Rule>> GuidelineRules
 

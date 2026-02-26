@@ -11,7 +11,7 @@
     sort-by="checkers.severity"
     sort-desc
     @enabled-click="enabledClick"
-  />  
+  />
 </template>
 
 <script>
@@ -41,6 +41,10 @@ export default {
         {
           text: "Title",
           value: "guidelineRuleTitle"
+        },
+        {
+          text: "Level",
+          value: "guidelineLevel"
         },
         {
           text: "Related Checker(s)",
@@ -75,12 +79,18 @@ export default {
       return this.items.some(item => item.guidelineRuleTitle);
     },
 
+    hasLevel() {
+      return this.items.some(item => item.guidelineLevel);
+    },
+
     tableHeaders() {
       if (!this.headers) return;
 
       return this.headers.filter(header => {
         if (header.value === "guidelineRuleTitle") {
           return this.hasTitle;
+        } else if (header.value === "guidelineLevel") {
+          return this.hasLevel;
         }
 
         return true;
