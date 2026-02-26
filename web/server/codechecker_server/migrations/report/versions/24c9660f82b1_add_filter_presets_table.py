@@ -1,9 +1,9 @@
 """
-Change description
+add filter presets table
 
-Revision ID: 950fc47db054
-Revises:     c3dad71f8e6b
-Create Date: 2026-02-06 16:54:48.345829
+Revision ID: 24c9660f82b1
+Revises:     198654dac219
+Create Date: 2026-02-26 11:31:18.868794
 """
 
 from logging import getLogger
@@ -12,10 +12,9 @@ from alembic import op
 import sqlalchemy as sa
 
 
-
 # Revision identifiers, used by Alembic.
-revision = '950fc47db054'
-down_revision = 'c3dad71f8e6b'
+revision = '24c9660f82b1'
+down_revision = '198654dac219'
 branch_labels = None
 depends_on = None
 
@@ -29,7 +28,7 @@ def upgrade():
     sa.Column('report_filter', sa.JSON(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_filter_presets')),
     sa.UniqueConstraint('preset_name', name=op.f('uq_filter_presets_preset_name'))
-    )
+)
 
 
 def downgrade():

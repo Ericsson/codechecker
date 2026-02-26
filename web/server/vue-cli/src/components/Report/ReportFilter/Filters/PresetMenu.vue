@@ -134,7 +134,6 @@ export default {
       this.error = null;
       this.applyingId = id;
       try {
-        console.log("Applying preset with ID:", id);
         this.$emit("apply-preset", id);
       } catch (e) {
         this.error = (e && e.message) ? e.message : "Failed to apply preset";
