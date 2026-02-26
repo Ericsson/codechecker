@@ -954,7 +954,7 @@ class MassStoreRun:
         })
 
         for mip in self.__mips.values():
-            self.__duration += int(sum(mip.check_durations))
+            self.__duration += int(sum(mip.check_durations) * 1000)
 
             for analyzer_type, res in mip.analyzer_statistics.items():
                 if "version" in res:

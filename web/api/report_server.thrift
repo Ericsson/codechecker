@@ -189,7 +189,7 @@ struct RunData {
   1: i64                       runId,                // Unique id of the run.
   2: string                    runDate,              // Date of the run last updated.
   3: string                    name,                 // Human-given identifier.
-  4: i64                       duration,             // Duration of the run (-1 if not finished).
+  4: i64                       duration,             // Duration of the run in milliseconds (-1 if not finished).
   5: i64                       resultCount,          // Number of unresolved results (review status is not FALSE_POSITIVE or INTENTIONAL) in the run.
   6: string                    runCmd,               // The used check command. !!!DEPRECATED!!! This field will be empty so use the getCheckCommand API function to get the check command for a run.
   7: map<DetectionStatus, i32> detectionStatusCount, // Number of reports with a particular detection status.
