@@ -478,7 +478,7 @@ def __register_results(parser):
                         help="Get report details for reports such as bug path "
                              "events, bug report points etc.")
 
-    parser.add_argument('--filterPreset',
+    parser.add_argument('--filter-preset',
                         type=str,
                         dest='filter_preset_name',
                         metavar='PRESET_NAME',
@@ -488,7 +488,7 @@ def __register_results(parser):
                              "is loaded from the server and applied to the "
                              "results. You can override specific filters by "
                              "providing additional filter arguments. Use "
-                             "'CodeChecker cmd filterPreset list' to see "
+                             "'CodeChecker cmd filter-preset list' to see "
                              "available presets.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)

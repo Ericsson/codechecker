@@ -467,14 +467,36 @@ def parse_report_filter(client, args):
     the arguments which is provided in the command line.
     Also, check if filter values are valid values.
 
-    If a filter preset is specified (--filterPreset), it will be loaded
-    from the server and merged with CLI arguments. CLI arguments take
-    precedence over preset values.
+    If a filter preset is specified (--filter-preset), it will be used
+    directly. Specifying additional CLI filter arguments together with
+    a preset is not allowed and will cause an error.
     """
 
+    # CLI argument names that correspond to filter options.
+    _FILTER_CLI_ARGS = [
+        'severity', 'detection_status', 'review_status',
+        'checker_name', 'file_path', 'bug_path_length',
+        'checker_msg', 'analyzer_name', 'component',
+        'report_hash', 'open_reports_date',
+        'detected_at', 'fixed_at',
+        'detected_before', 'detected_after',
+        'fixed_before', 'fixed_after',
+        'tag', 'report_status',
+    ]
+
     # Load preset filter if specified
-    preset_filter = None
     if 'filter_preset_name' in args:
+        # Check that no CLI filter arguments were provided alongside
+        # the preset – they are mutually exclusive.
+        conflicting = [a for a in _FILTER_CLI_ARGS if a in args]
+        if conflicting:
+            LOG.error(
+                "Cannot combine --filter-preset with other filter "
+                "arguments (%s). Either use a preset or specify "
+                "filters on the command line, not both.",
+                ', '.join(f'--{a.replace("_", "-")}' for a in conflicting))
+            sys.exit(1)
+
         preset_name = args.filter_preset_name
         LOG.info("Loading filter preset '%s'...", preset_name)
 
@@ -490,81 +512,20 @@ def parse_report_filter(client, args):
             sys.exit(1)
 
         LOG.info("Filter preset '%s' loaded successfully.", preset_name)
-        preset_filter = preset.reportFilter
-
-    # Parse CLI filter arguments
-    cli_filter = parse_report_filter_offline(args)
-
-    # Merge preset with CLI args if preset was specified
-    if preset_filter:
-        report_filter = _merge_filters(preset_filter, cli_filter, args)
+        report_filter = preset.reportFilter
     else:
-        report_filter = cli_filter
+        # No preset – build the filter from CLI arguments.
+        report_filter = parse_report_filter_offline(args)
 
-    # Handle tags (requires API call to resolve tag names to IDs)
-    if 'tag' in args:
-        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
-        run_histories = client.getRunHistory(None, None, None,
-                                             run_history_filter)
-        if run_histories:
-            report_filter.runTag = [t.id for t in run_histories]
+        # Handle tags (requires API call to resolve tag names to IDs)
+        if 'tag' in args:
+            run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
+            run_histories = client.getRunHistory(None, None, None,
+                                                 run_history_filter)
+            if run_histories:
+                report_filter.runTag = [t.id for t in run_histories]
 
     return report_filter
-
-
-def _merge_filters(preset_filter, cli_filter, args):
-    """
-    Merge preset filter with CLI filter arguments.
-    CLI arguments take precedence over preset values.
-    """
-    merged = ttypes.ReportFilter()
-
-    field_map = {
-        'filepath': 'file_path',
-        'checkerMsg': 'checker_msg',
-        'checkerName': 'checker_name',
-        'reportHash': 'report_hash',
-        'severity': 'severity',
-        'reviewStatus': 'review_status',
-        'detectionStatus': 'detection_status',
-        'runHistoryTag': 'tag',
-        'firstDetectionDate': 'detected_at',
-        'fixDate': 'fixed_at',
-        'isUnique': 'uniqueing',
-        'runTag': 'tag',
-        'componentNames': 'component',
-        'bugPathLength': 'bug_path_length',
-        'analyzerNames': 'analyzer_name',
-        'openReportsDate': 'open_reports_date',
-        'fileMatchesAnyPoint': 'anywhere_on_report_path',
-        'componentMatchesAnyPoint': 'single_origin_report',
-        'reportStatus': 'report_status',
-    }
-
-    for field, arg_name in field_map.items():
-        setattr(merged, field,
-                getattr(cli_filter, field) if arg_name in args
-                else getattr(preset_filter, field))
-
-    # Handle date fields
-    date_args = ['detected_after',
-                 'detected_before',
-                 'fixed_after',
-                 'fixed_before']
-
-    merged.date = (
-        cli_filter.date
-        if any(arg in args for arg in date_args)
-        else preset_filter.date
-    )
-
-    # Fields not set from CLI MAY BE DELETED
-    # TODO CHECK LATER IF I CAN DELETE THESE
-    merged.runName = preset_filter.runName
-    merged.annotations = preset_filter.annotations
-    merged.cleanupPlanNames = preset_filter.cleanupPlanNames
-
-    return merged
 
 
 def parse_report_filter_offline(args):
