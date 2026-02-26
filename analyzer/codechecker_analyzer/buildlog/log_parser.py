@@ -1185,7 +1185,7 @@ def extend_compilation_database_entries(compilation_database):
             source_files = []
             source_dir = entry['directory']
 
-            options = shlex.split(entry['command'])
+            options = shlex.split(entry['command'], posix=(os.name=='posix'))
             for opt in options:
                 if opt.startswith('@'):
                     response_file = os.path.join(source_dir, opt[1:])
