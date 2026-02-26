@@ -409,13 +409,24 @@ Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
 you should be greeted with a web application showing you the analysis results.
 
 
-## Developer documentations
+## Developer Notes
+
 * [Architecture](architecture.md)
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
 * [Package and integration tests](tests.md)
 * [Server-side background tasks](web/background_tasks.md)
+
+For setting up a developer instance do the following from the project root:
+(Fulfillment of the needed requirements are assumed at this point.)
+* create the `venv_dev` virtual environment with `make venv_dev`
+* source the newly created venv with `. venv_dev/bin/activate`
+* Add the following environment variable with `export CC_LIB_DIR=$PWD/build/CodeChecker/lib/python3/`
+* Add the following environment variable with `export PATH=$PWD/build/CodeChecker/bin:$PATH`
+* make a development package with `make dev_package`
+* You can run CodeChecker with either `CodeChecker server` or `./scripts/codechecker_dev_server.py` if you need hot reloading of the CodeChecker server upon source file modification. 
+
 
 ## Conference papers, presentations
 * An overview about the CodeChecker infrastructure was given at [PLDI 2020](http://pldi20.sigplan.org).<br />
