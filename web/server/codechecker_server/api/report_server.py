@@ -3535,8 +3535,6 @@ class ThriftRequestHandler:
                 tag_run_ids = tag_run_ids.filter(
                     RunHistory.run_id.in_(run_ids))
 
-            tag_run_ids = tag_run_ids.subquery()
-
             report_cnt_q = session.query(Report.run_id,
                                          Report.bug_id,
                                          Report.detected_at,
