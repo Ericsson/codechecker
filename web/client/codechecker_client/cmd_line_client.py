@@ -506,7 +506,7 @@ def parse_report_filter(client, args):
         if not preset:
             LOG.error("Filter preset '%s' not found!", preset_name)
             LOG.info(
-                "Use 'CodeChecker cmd filterPreset list' to see available "
+                "Use 'CodeChecker cmd filter-preset list' to see available "
                 "presets."
             )
             sys.exit(1)

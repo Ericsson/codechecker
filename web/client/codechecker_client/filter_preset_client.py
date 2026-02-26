@@ -6,7 +6,7 @@
 #
 # -------------------------------------------------------------------------
 """
-Argument handlers for the 'CodeChecker cmd filterPreset' subcommands.
+Argument handlers for the 'CodeChecker cmd filter-preset' subcommands.
 """
 
 import argparse
