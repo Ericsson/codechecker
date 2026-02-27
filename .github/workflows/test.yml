@@ -39,7 +39,7 @@ jobs:
       - name: Setup Bazel
         uses: abhinavsingh/setup-bazel@v3
         with:
-          version: 4.0.0
+          version: 6.5.0
       - name: Install common dependencies
         run: |
           sudo apt-get update -q
@@ -92,6 +92,11 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
+      - name: Setup Bazel
+        uses: abhinavsingh/setup-bazel@v3
+        with:
+          version: 6.5.0
 
       - name: Install dependencies
         run: sh .github/workflows/install-deps.sh
