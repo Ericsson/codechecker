@@ -1,5 +1,6 @@
 <template>
   <v-select
+    v-model="activePresetId"
     clearable
     :items="presets"
     item-text="name"
@@ -10,6 +11,12 @@
     @focus="fetchPresets"
     @click:clear="handleClear"
   >
+    <template #selection="{ item }">
+      <span :class="{ 'preset-modified': isModified }">
+        {{ item.name }}<template v-if="isModified"> *</template>
+      </span>
+    </template>
+
     <template #item="{ item }">
       <v-list-item-content
         @click="applyPreset(item.id)"
@@ -40,6 +47,7 @@
 </template>
 
 <script>
+import isEqual from "lodash/isEqual";
 import {
   authService,
   ccService,
@@ -47,16 +55,11 @@ import {
   prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
 
-// import { is } froAEm "core-js/core/object";
-// import { ccService, handleThriftError } from "@cc-api";
-
 
 export default {
   name: "PresetMenu",
 
-  props: {
-
-  },
+  expose : [ "onPresetApplied", "clearPresetState" ],
 
   data() {
     return {
@@ -68,16 +71,43 @@ export default {
       error: null,
       isSuperUser: false,
       isAdminOfAnyProduct: false,
+      activePresetId: null,
+      querySnapshot: null,
+      isModified: false,
     };
   },
 
   computed: {
     canSeeActions() {
       return this.isSuperUser || this.isAdminOfAnyProduct;
-    }
+    },
   },
 
   watch: {
+    "$route.query": {
+      handler(newQuery) {
+        if (!this.activePresetId || !this.querySnapshot) {
+          this.isModified = false;
+          return;
+        }
+        const normalize = q => {
+          const sorted = {};
+          for (const k of Object.keys(q).sort()) {
+            const v = q[k];
+            if (Array.isArray(v)) {
+              sorted[ k ] = v.length === 1 ? v[ 0 ] : [ ...v ].sort();
+            } else {
+              sorted[k] = v;
+            }
+          }
+          return sorted;
+        };
+        const normNew = normalize(newQuery);
+        const normSnap = normalize(this.querySnapshot);
+        this.isModified = !isEqual(normNew, normSnap);
+      },
+      deep: true,
+    },
   },
 
   created() {
@@ -133,13 +163,26 @@ export default {
     async applyPreset(id) {
       this.error = null;
       this.applyingId = id;
+      this.querySnapshot = null;
       try {
+        this.activePresetId = id;
         this.$emit("apply-preset", id);
       } catch (e) {
         this.error = (e && e.message) ? e.message : "Failed to apply preset";
       } finally {
         this.applyingId = null;
       }
+    },
+
+    onPresetApplied(settledQuery) {
+      this.querySnapshot = settledQuery
+        ? { ...settledQuery }
+        : { ...this.$route.query };
+    },
+
+    clearPresetState() {
+      this.activePresetId = null;
+      this.querySnapshot = null;
     },
 
     async deletePreset(id) {
@@ -155,6 +198,10 @@ export default {
         });
 
         this.presets = this.presets.filter(p => p.id !== id);
+
+        if (this.activePresetId === id) {
+          this.clearPresetState();
+        }
       } catch (e) {
         this.error = (e && e.message) ? e.message : "Failed to delete preset";
       } finally {
@@ -163,8 +210,16 @@ export default {
     },
 
     handleClear() {
+      this.clearPresetState();
       this.$emit("clear-preset");
     },
   },
 };
 </script>
+
+<style scoped>
+.preset-modified {
+  color: orange;
+  font-weight: bold;
+}
+</style>

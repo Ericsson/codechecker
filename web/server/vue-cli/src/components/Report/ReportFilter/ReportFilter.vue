@@ -31,9 +31,7 @@
         <v-list-item-content>
           <preset-menu
             ref="FilterMenu"
-            :namespace="namespace"
             @apply-preset="getFilterPreset"
-            @update:url="updateUrl"
             @clear-preset="clearAllFilters"
           />
         </v-list-item-content>
@@ -465,7 +463,6 @@ export default {
       activeDatePanelId: 0,
       open_preset_save: false,
       presetName: "",
-      currentlyAppliedPreset: null,
       isSuperUser: false,
       isAdminOfAnyProduct: false,
     };
@@ -581,7 +578,7 @@ export default {
       });
 
       // If all filters are initalized call a post function.
-      Promise.all(results).then(() => {
+      return Promise.all(results).then(() => {
         filters.forEach(filter => filter.afterInit());
         this.afterInit();
 
@@ -781,7 +778,7 @@ export default {
           [ "fixed-before", toISO(rawValue?.before) || "" ],
         ],
         isUnique: (_, rawValue) => [
-          [ "is-unique", rawValue ? "true" : "false" ],
+          [ "is-unique", rawValue ? "on" : "off" ],
         ],
         runName: (_, rawValue) => [ //PTR
           [ "run-name", rawValue || "" ],
@@ -884,9 +881,19 @@ export default {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const nextQuery = { ...presetQueryParams };
-      await this.$router.replace({ query: nextQuery });
+      await this.$router.replace({ query: nextQuery }).catch(() => {});
 
       await this.initByUrl();
+
+      const filters = this.$refs.filters;
+      const states = filters.map(f => f.getUrlState());
+      const settledQuery = Object.assign({}, this.$route.query, ...states);
+
+      this.updateUrl();
+
+      if (this.$refs.FilterMenu && this.$refs.FilterMenu[0]) {
+        this.$refs.FilterMenu[0].onPresetApplied(settledQuery);
+      }
     },
 
     async clearToolbarSilently() {
@@ -914,6 +921,10 @@ export default {
 
     async clearAllFilters() {
       const filters = this.$refs.filters;
+
+      if (this.$refs.FilterMenu && this.$refs.FilterMenu[0]) {
+        this.$refs.FilterMenu[0].clearPresetState();
+      }
 
       // Unregister watchers.
       this.unregisterWatchers();
