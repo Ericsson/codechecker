@@ -71,7 +71,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent, SourceComponentFile
+    SourceComponent, SourceComponentFile, FilterPreset
 
 from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
@@ -1436,6 +1436,71 @@ def remove_reports(session: DBSession,
             .filter(Report.id.in_(r_ids)) \
             .delete(synchronize_session=False)
 
+def tranform_rf_db_to_thrift(rf_db):
+    """
+    Transforms a ReportFilter DB object to a ReportFilter thrift object.
+    """
+    rf_db = json.loads(rf_db)
+    # Pre creation of variables that are objects themselves.
+    recreated_bug_path_length = None
+    if "bugPathLength" in rf_db and isinstance(rf_db["bugPathLength"], dict):
+        recreated_bug_path_length = ttypes.BugPathLengthRange(
+            min=rf_db["bugPathLength"].get("min"),
+            max=rf_db["bugPathLength"].get("max")
+        )
+
+    # ReportDate
+    recreated_date = None
+    if "date" in rf_db and isinstance(rf_db["date"], dict):
+        # as both variables of ReportDate
+        # are of types.DateInterval we need to convert them too
+
+        recreated_date = ttypes.ReportDate(
+            detected=ttypes.DateInterval(**rf_db["date"]["detected"])
+            if isinstance(rf_db["date"].get("detected", None), dict) else None,
+            fixed=ttypes.DateInterval(**rf_db["date"]["fixed"])
+            if isinstance(rf_db["date"].get("fixed", None), dict) else None
+        )
+
+    # Annotations
+    recreated_annotations = []
+    if "annotations" in rf_db and isinstance(rf_db["annotations"], list):
+        for anno in rf_db["annotations"]:
+            if isinstance(anno, dict):
+                recreated_annotation = ttypes.Pair(
+                    first=anno.get("first"),
+                    second=anno.get("second")
+                )
+                recreated_annotations.append(recreated_annotation)
+
+    # NOTE: Update this mapping if new fields are added to the ReportFilter struct.
+    report_filter = ttypes.ReportFilter(
+        filepath            = rf_db.get("filepath"),
+        checkerMsg          = rf_db.get("checkerMsg"),
+        checkerName         = rf_db.get("checkerName"),
+        reportHash          = rf_db.get("reportHash"),
+        severity            = rf_db.get("severity"),
+        reviewStatus        = rf_db.get("reviewStatus"),
+        detectionStatus     = rf_db.get("detectionStatus"),
+        runHistoryTag       = rf_db.get("runHistoryTag"),
+        firstDetectionDate  = rf_db.get("firstDetectionDate"),
+        fixDate             = rf_db.get("fixDate"),
+        isUnique            = rf_db.get("isUnique"),
+        runName             = rf_db.get("runName"),
+        runTag              = rf_db.get("runTag"),
+        componentNames      = rf_db.get("componentNames"),
+        bugPathLength       = recreated_bug_path_length,
+        date                = recreated_date,
+        analyzerNames       = rf_db.get("analyzerNames", None),
+        openReportsDate     = rf_db.get("openReportsDate"),
+        cleanupPlanNames    = rf_db.get("cleanupPlanNames"),
+        fileMatchesAnyPoint = rf_db.get("fileMatchesAnyPoint"),
+        componentMatchesAnyPoint = rf_db.get("componentMatchesAnyPoint"),
+        annotations         = recreated_annotations,
+        reportStatus        = rf_db.get("reportStatus"),
+    )
+    return report_filter
+
 
 class ThriftRequestHandler:
     """
@@ -1628,6 +1693,221 @@ class ThriftRequestHandler:
                                        analyzerStatistics=analyzer_stats,
                                        description=description))
             return results
+
+    # Stores the given FilterPreset with the given id
+    # If the preset exists, it overwrites the name, and all preset values
+    # if the preset does not exist yet, it creates it with
+    # if the id is -1 a new preset filter is created
+    # the filter preset name must be unique.
+    # An error must be thrown if another preset exists with the same name.
+    # The encoding of the name must be unicode. (whitespaces allowed?)
+    # Returns: the id of the modified or created preset, -1 in case of error
+    # PERMISSION: PRODUCT_ADMIN
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def storeFilterPreset(self, filterpreset):
+        """
+        Store a configured FilterPreset.
+        args:
+            filterpreset: object with:
+                - name (str): Human readable name of preset
+                - reportFilter: ReportFilter object itself
+        """
+        self.__require_admin()
+        LOG.info(f"Storing filter preset in backend: {filterpreset.name}")
+        try:
+            def to_jsonable(obj):
+                if obj is None or isinstance(obj, (str, int, float, bool)):
+                    return obj
+                if isinstance(obj, list):
+                    return [to_jsonable(x) for x in obj]
+                if isinstance(obj, dict):
+                    return {k: to_jsonable(v) for k, v in obj.items()}
+                if hasattr(obj, "__dict__"):
+                    return {k: to_jsonable(v) for k, v in obj.__dict__.items()}
+                return str(obj)
+
+            name = filterpreset.name
+            report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
+
+            with DBSession(self._Session) as session:
+                # Check if a preset with the same name already exists
+                existing_preset = session.query(FilterPreset).filter(
+                    FilterPreset.preset_name == name
+                ).one_or_none()
+
+                if existing_preset:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"A filter preset with name '{name}' already exists!")
+
+                preset_entry = FilterPreset(
+                    preset_name=name,
+                    report_filter=report_filter)
+
+                session.add(preset_entry)
+                session.commit()
+                return int(preset_entry.id)
+        except Exception as ex:
+            session.rollback()
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not store the filter preset: " + str(ex))
+
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def deleteFilterPreset(self, preset_id):
+        """
+        Delete preset from products list based on preset_id.
+        returns the id of the deleted preset, -1 in case of error or
+        if the preset does not exist.
+        """
+        self.__require_admin()
+        LOG.info(f"Deleting filter preset by ID: {preset_id}")
+        try:
+            with DBSession(self._Session) as session:
+                preset = session.query(FilterPreset). \
+                    filter(FilterPreset.id == preset_id).one_or_none()
+                if not preset:
+                    return -1
+
+                session.query(FilterPreset) \
+                    .filter(FilterPreset.id == preset_id) \
+                    .delete()
+                session.commit()
+            return preset_id
+        except Exception:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not delete a preset with id: " + str(preset_id))
+
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFilterPreset(self, preset_id):
+        """
+        Returns the FilterPreset identified by preset_id.
+        """
+        self.__require_view()
+        LOG.info(f"Returning filter Preset by ID: {preset_id}")
+
+        try:
+            with DBSession(self._Session) as session:
+                preset = (
+                    session.query(FilterPreset)
+                    .filter(FilterPreset.id == preset_id)
+                    .one_or_none()
+                )
+
+            if preset is None:
+                return -1
+
+            # Pre creation of variables that are objects themselves.
+            report_filter = tranform_rf_db_to_thrift(preset.report_filter)
+
+            filter_preset = ttypes.FilterPreset(preset.id,
+                                         preset.preset_name,
+                                         report_filter
+                                         )
+
+            return filter_preset
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not list a preset :", ex)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def listFilterPreset(self):
+        """
+        Returns all filter presets stored for the product repository
+        """
+        self.__require_view()
+        LOG.info("List back filter presets")
+
+        try:
+            with DBSession(self._Session) as session:
+                all_presets = (
+                    session.query(FilterPreset).all()
+                )
+
+            if not all_presets:
+                return []
+
+            list_of_transformed_presets = []
+            for preset in all_presets:
+                list_of_transformed_presets.append(
+                    ttypes.FilterPreset(
+                        preset.id,
+                        preset.preset_name,
+                        tranform_rf_db_to_thrift(
+                            preset.report_filter)))
+
+            return list_of_transformed_presets
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not list a preset :", ex)
+
+    # TODO remove this funciton from here and from
+    # thrift api if ultimately decide not to use that loading way.
+    @exc_to_thrift_reqfail
+    @timeit
+    def getNameByValueForFilter(self, filter_type, value):
+        """
+        Convert enum integer value to a UI-recognizable string.
+        Returns "" when not convertible / not allowed.
+        """
+
+        self.__require_view()
+        LOG.info("Getting name by value for filter")
+
+        type_name = filter_type[0].upper() + filter_type[1:]
+
+        ALLOWED_ENUMS = {
+            "DetectionStatus",
+            "DiffType",
+            "Encoding",
+            "Order",
+            "ReportStatus",
+            "ReviewStatus",
+            "Severity",
+            "SortType",
+            "RunSortType",
+            "StoreLimitKind",
+            "ExtendedReportDataType",
+            "CommentKind",
+            "ReviewStatusRuleSortType",
+        }
+
+        if type_name not in ALLOWED_ENUMS:
+            return ""
+
+        enum_cls = getattr(ttypes, type_name, None)
+        if not enum_cls or not hasattr(enum_cls, "_VALUES_TO_NAMES"):
+            return ""
+
+        try:
+            value_int = int(value)
+            token = enum_cls._VALUES_TO_NAMES.get(value_int)  # e.g. "CONFIRMED"
+            if not token:
+                return ""
+
+            # Special case for formatting confirmed bug. IN UI for some reason
+            # it is shown as "Confirmed bug" instead of just "Confirmed".
+            if type_name == "ReviewStatus" and token == "CONFIRMED":
+                return "Confirmed bug"
+
+            # Default formatting: "FALSE_POSITIVE" -> "False positive"
+            return token.replace("_", " ").lower().capitalize()
+
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f"CodeChecker could not convert {type_name} value to name: {ex}"
+            )
 
     @exc_to_thrift_reqfail
     @timeit
