@@ -72,6 +72,9 @@ class TestParseStatus(unittest.TestCase):
         print(out)
         print(err)
 
+        if process.returncode != 0:
+            return err
+
         output = out.splitlines(True)
         processed_output = []
         for line in output:
@@ -106,6 +109,10 @@ class TestParseStatus(unittest.TestCase):
             "--analyzers", "clangsa", "-o", self.report_dir]
 
         self.__run_cmd(analyze_cmd)
+
+    def __get_file_list(self, parsed_json, analyzer, list_type):
+        return list(map(os.path.basename,
+                        parsed_json["analyzers"][analyzer][list_type]))
 
     def test_parse_status_summary(self):
         self.__log_and_analyze()
@@ -156,14 +163,69 @@ class TestParseStatus(unittest.TestCase):
 
         parsed_json = json.loads(out)
 
-        def get_file_list(analyzer, list_type):
-            return list(map(
-                os.path.basename,
-                parsed_json["analyzers"][analyzer][list_type]))
-
-        self.assertListEqual(get_file_list("clangsa", "up-to-date"),
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clangsa", "up-to-date"),
                              ["a.cpp", "b.cpp"])
-        self.assertListEqual(get_file_list("clang-tidy", "up-to-date"),
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "up-to-date"),
                              [])
-        self.assertListEqual(get_file_list("clang-tidy", "missing"),
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "missing"),
                              ["a.cpp", "b.cpp"])
+
+    def test_parse_status_filter(self):
+        self.__log_and_analyze()
+
+        file_filter = str(os.path.abspath(
+            os.path.join(self.test_dir, "a.cpp")))
+
+        parse_status_cmd = [self._codechecker_cmd, "parse",
+                            "--status", "-e", "json", "--detailed",
+                            self.report_dir, "--file", file_filter]
+        out = self.__run_cmd(parse_status_cmd)
+
+        parsed_json = json.loads(out)
+
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clangsa", "up-to-date"),
+                             ["a.cpp"])
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "up-to-date"),
+                             [])
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "missing"),
+                             ["a.cpp"])
+
+    def test_parse_status_relative_filter(self):
+        self.__log_and_analyze()
+
+        file_filter = "a.cpp"
+
+        parse_status_cmd = [self._codechecker_cmd, "parse",
+                            "--status", "-e", "json", "--detailed",
+                            self.report_dir, "--file", file_filter]
+        out = self.__run_cmd(parse_status_cmd)
+
+        parsed_json = json.loads(out)
+
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clangsa", "up-to-date"),
+                             ["a.cpp"])
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "up-to-date"),
+                             [])
+        self.assertListEqual(self.__get_file_list(parsed_json,
+                             "clang-tidy", "missing"),
+                             ["a.cpp"])
+
+    def test_parse_status_invalid_filter(self):
+        self.__log_and_analyze()
+
+        file_filter = "nonexistent_file.cpp"
+
+        parse_status_cmd = [self._codechecker_cmd, "parse",
+                            "--status", "-e", "json", "--detailed",
+                            self.report_dir, "--file", file_filter]
+        out = self.__run_cmd(parse_status_cmd)
+
+        self.assertIn("File filter (--file) contains nonexistent files", out)
