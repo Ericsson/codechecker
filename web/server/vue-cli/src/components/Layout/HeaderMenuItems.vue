@@ -113,39 +113,10 @@ export default {
     return {
       dialog: false,
       credits: [
-        { name: "Dániel Krupp",
-          github: "dkrupp",
-          email: "daniel.krupp@ericsson.com"
-        },
         {
-          name: "György Orbán",
-          github: "gyorb",
-          email: "gyorgy.orban@ericsson.com"
-        },
-        {
-          name: "Tibor Brunner",
-          github: "bruntib",
-          email: "tibor.brunner@ericsson.com"
-        },
-        {
-          name: "Gábor Horváth",
-          github: "Xazax-hun",
-          email: "gabor.a.horvath@ericsson.com"
-        },
-        {
-          name: "Richárd Szalay",
-          github: "whisperity",
-          email: "richard.szalay@ericsson.com"
-        },
-        {
-          name: "Márton Csordás",
-          github: "csordasmarton",
-          email: "marton.csordas@ericsson.com"
-        },
-        {
-          name: "Boldizsár Tóth",
-          github: "bobszi",
-          email: "toth.boldizsar@gmail.com"
+          name: "Barnabás Domozi",
+          github: "",
+          email:"barnabas.domozi.ext@ericsson.com"
         },
         {
           name: "Bence Babati",
@@ -153,14 +124,63 @@ export default {
           email: "bence.babati@ericsson.com"
         },
         {
+          name: "Boldizsár Tóth",
+          github: "bobszi",
+          email: "toth.boldizsar@gmail.com"
+        },
+        { name: "Dániel Krupp",
+          github: "dkrupp",
+          email: "daniel.krupp@ericsson.com"
+        },
+        {
           name: "Gábor Alex Ispánovics",
           github: "igalex",
           email: "gabor.alex.ispanovics@ericsson.com"
         },
         {
+          name: "Gábor Horváth",
+          github: "Xazax-hun",
+          email: "gabor.a.horvath@ericsson.com"
+        },
+        {
+          name: "Gergely Gulyás",
+          github: "gulyasgergely902",
+          email: "gergely.gulyas.ext@ericsson.com"
+        },
+        {
+          name: "György Orbán",
+          github: "gyorb",
+          email: "gyorgy.orban@ericsson.com"
+        },
+        {
+          name: "Kristóf Umann",
+          github: "",
+          email:"kristof.umann@ericsson.com"
+        },
+        {
+          name: "Márton Csordás",
+          github: "csordasmarton",
+          email: "marton.csordas@ericsson.com"
+        },
+        {
+          name: "Nóra Zinaeddin",
+          github: "",
+          email:"nora.zinaeddin.ext@ericsson.com"
+        },
+        {
+          name: "Richárd Szalay",
+          github: "whisperity",
+          email: "richard.szalay@ericsson.com"
+        },
+        {
           name: "Szabolcs Sipos",
           github: "labuwx",
           email: "labuwx@balfug.com"
+        },
+        {
+          name: "Tibor Brunner",
+          github: "bruntib",
+          email: "tibor.brunner@ericsson.com"
         }
       ]
     };
