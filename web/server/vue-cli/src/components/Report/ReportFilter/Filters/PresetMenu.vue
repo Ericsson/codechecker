@@ -183,6 +183,7 @@ export default {
     clearPresetState() {
       this.activePresetId = null;
       this.querySnapshot = null;
+      this.isModified = false;
     },
 
     async deletePreset(id) {

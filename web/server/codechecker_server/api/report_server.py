@@ -1709,6 +1709,8 @@ class ThriftRequestHandler:
     def storeFilterPreset(self, filterpreset):
         """
         Store a configured FilterPreset.
+        if the received preset has an id of -1, a new preset is created,
+        otherwise the existing preset with the given id is updated.
         args:
             filterpreset: object with:
                 - name (str): Human readable name of preset
@@ -1727,28 +1729,46 @@ class ThriftRequestHandler:
                 if hasattr(obj, "__dict__"):
                     return {k: to_jsonable(v) for k, v in obj.__dict__.items()}
                 return str(obj)
-
+            id = filterpreset.id
             name = filterpreset.name
             report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
 
             with DBSession(self._Session) as session:
-                # Check if a preset with the same name already exists
+                # case for creating a new preset
                 existing_preset = session.query(FilterPreset).filter(
                     FilterPreset.preset_name == name
                 ).one_or_none()
 
-                if existing_preset:
+                if id == -1:
+                    if existing_preset:
+                        raise codechecker_api_shared.ttypes.RequestFailed(
+                            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                            f"A filter preset with name '{name}' already exists!")
+
+                    preset_entry = FilterPreset(
+                        preset_name=name,
+                        report_filter=report_filter)
+
+                    session.add(preset_entry)
+                    session.commit()
+                    print(f"Created new filter preset with name '{name}' and id {preset_entry.id}")
+                    return preset_entry.id
+
+                # case for updating an existing preset
+                preset_entry = session.query(FilterPreset).filter(
+                    FilterPreset.id == id
+                ).one_or_none()
+
+                if not preset_entry:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        f"A filter preset with name '{name}' already exists!")
+                        f"No filter preset found with id {id}!")
 
-                preset_entry = FilterPreset(
-                    preset_name=name,
-                    report_filter=report_filter)
-
-                session.add(preset_entry)
+                preset_entry.preset_name = name
+                preset_entry.report_filter = report_filter
                 session.commit()
-                return int(preset_entry.id)
+                print(f"Updated filter preset id {id} with name '{name}'")
+                return preset_entry.id
         except Exception as ex:
             session.rollback()
             raise codechecker_api_shared.ttypes.RequestFailed(

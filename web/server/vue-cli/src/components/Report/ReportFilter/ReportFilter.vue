@@ -37,17 +37,17 @@
         </v-list-item-content>
 
         <v-btn
-          v-if="canSeeActions"
+          v-if="canSeeActions && !$refs.FilterMenu[0].isModified"
           class="ml-4"
           color="primary"
-          @click="open_preset_save = true"
+          @click="saveMode = 'create'; open_preset_save = true"
         >
-          Save preset
+          Create Preset
         </v-btn>
         <v-dialog v-model="open_preset_save" max-width="420">
           <v-card>
             <v-card-title>
-              Save filter preset
+              {{ saveDialogTitle }}
             </v-card-title>
 
             <v-card-text>
@@ -70,15 +70,33 @@
               <v-btn
                 color="primary"
                 :disabled="!presetName"
-                @click="saveCurrentFilter"
+                @click="saveCurrentFilter(saveMode)"
               >
                 Save
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
-      </v-list-item>
 
+        <div
+          v-if="canSeeActions && $refs.FilterMenu[0].isModified"
+          class="d-flex flex-column ml-4 mt-6"
+        >
+          <v-btn
+            color="primary"
+            class="mb-2"
+            @click="saveMode = 'override'; open_preset_save = true"
+          >
+            Override Preset
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="saveMode = 'createNew'; open_preset_save = true"
+          >
+            Create as new
+          </v-btn>
+        </div>
+      </v-list-item>
 
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
@@ -462,6 +480,7 @@ export default {
       activeCompareToPanelId: 0,
       activeDatePanelId: 0,
       open_preset_save: false,
+      saveMode: "create",
       presetName: "",
       isSuperUser: false,
       isAdminOfAnyProduct: false,
@@ -479,6 +498,14 @@ export default {
     }),
     canSeeActions() {
       return this.isSuperUser || this.isAdminOfAnyProduct;
+    },
+    saveDialogTitle() {
+      const titles = {
+        create: "Create new preset",
+        override: "Override existing preset",
+        createNew: "Save as new preset",
+      };
+      return titles[this.saveMode] || "Save filter preset";
     }
   },
 
@@ -605,12 +632,17 @@ export default {
       }
     },
 
-    saveCurrentFilter() {
+    saveCurrentFilter(mode) {
+      const activePresetId = this.$refs.FilterMenu?.[0]?.activePresetId;
+
       const preset = {
-        id: 1,
+        id: mode === "override" && activePresetId
+          ? activePresetId
+          : -1,
         name: this.presetName,
         reportFilter: this.reportFilter
       };
+
       new Promise(resolve => {
         ccService.getClient().storeFilterPreset(preset,
           handleThriftError(result => {
@@ -619,6 +651,7 @@ export default {
         );
         this.open_preset_save = false;
         this.presetName = "";
+        this.clearAllFilters();
       })
         .then(result => {
           handleThriftError("OK", result);
@@ -922,9 +955,8 @@ export default {
     async clearAllFilters() {
       const filters = this.$refs.filters;
 
-      if (this.$refs.FilterMenu && this.$refs.FilterMenu[0]) {
-        this.$refs.FilterMenu[0].clearPresetState();
-      }
+      // Clear preset menu state if exists.
+      this.$refs.FilterMenu[0].clearPresetState();
 
       // Unregister watchers.
       this.unregisterWatchers();
