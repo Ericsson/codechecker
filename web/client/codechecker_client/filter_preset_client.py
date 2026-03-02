@@ -384,30 +384,30 @@ def handle_new_preset(args):
 
     report_filter = build_filter_config_from_args(args)
 
+    # Check if preset already exists
+    existing_presets = client.listFilterPreset()
+    existing_preset = next(
+        (p for p in existing_presets if p.name == args.preset_name), None)
+
+    if existing_preset:
+        LOG.info("Filter preset '%s' already exists. Updating...",
+                 args.preset_name)
+        # Pass the existing ID so the server updates the row
+        preset_id_to_send = existing_preset.id
+    else:
+        # -1 tells the server to create a new preset
+        preset_id_to_send = -1
+
     preset_filter = ttypes.FilterPreset(
-        None,  # ID assigned by server (or existing ID if updating)
+        preset_id_to_send,
         args.preset_name,
         report_filter
     )
 
-    # Check if preset already exists
-    existing_presets = client.listFilterPreset()
-    list_of_existing_names = [preset.name for preset in existing_presets]
-    flag_for_existing = args.preset_name in list_of_existing_names
-
-    if flag_for_existing:
-        LOG.info("Filter preset '%s' already exists. Editing...",
-                 args.preset_name)
-        if not args.force:
-            question = 'Do you want to update the existing preset? Y(es)/n(o) '
-            if not get_user_input(question):
-                LOG.info("No changes made to filter preset.")
-                sys.exit(0)
-
     preset_id = client.storeFilterPreset(preset_filter)
 
     if preset_id != -1:
-        action = "updated" if flag_for_existing else "created"
+        action = "updated" if existing_preset else "created"
         LOG.info(
             f"Filter preset '{args.preset_name}' {action} successfully.")
 
@@ -551,15 +551,6 @@ def handle_delete_preset(args):
         LOG.error("Filter preset with ID %d does not exist!",
                   args.preset_id)
         sys.exit(1)
-
-    if not args.force:
-        question = (
-            f"Are you sure you want to delete preset '{preset.name}' "
-            f"(ID: {args.preset_id})? Y(es)/n(o) "
-        )
-        if not get_user_input(question):
-            LOG.info("Filter preset was not deleted.")
-            sys.exit(0)
 
     success = client.deleteFilterPreset(args.preset_id)
 

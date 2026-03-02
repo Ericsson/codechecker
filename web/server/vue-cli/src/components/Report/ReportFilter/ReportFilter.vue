@@ -912,8 +912,6 @@ export default {
 
       await this.clearToolbarSilently();
 
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       const nextQuery = { ...presetQueryParams };
       await this.$router.replace({ query: nextQuery }).catch(() => {});
 

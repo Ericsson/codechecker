@@ -1562,11 +1562,6 @@ def __register_filter_presets(parser):
                             required=False,
                             default=argparse.SUPPRESS,
                             help="Description of the filter preset.")
-        parser.add_argument('--force',
-                            action='store_true',
-                            dest='force',
-                            required=False,
-                            help="Force deletion without confirmation.")
 
         __add_filtering_arguments(parser)
 
@@ -1580,12 +1575,6 @@ def __register_filter_presets(parser):
                             required=True,
                             metavar='PRESET_ID',
                             help="ID of the filter preset to delete.")
-
-        parser.add_argument('--force',
-                            action='store_true',
-                            dest='force',
-                            required=False,
-                            help="Force deletion without confirmation.")
 
     subcommands = parser.add_subparsers(title='available actions')
 
