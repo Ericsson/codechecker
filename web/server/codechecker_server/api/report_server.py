@@ -1875,64 +1875,6 @@ class ThriftRequestHandler:
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "CodeChecker could not list a preset :", ex)
 
-    # TODO remove this funciton from here and from
-    # thrift api if ultimately decide not to use that loading way.
-    @exc_to_thrift_reqfail
-    @timeit
-    def getNameByValueForFilter(self, filter_type, value):
-        """
-        Convert enum integer value to a UI-recognizable string.
-        Returns "" when not convertible / not allowed.
-        """
-
-        self.__require_view()
-        LOG.info("Getting name by value for filter")
-
-        type_name = filter_type[0].upper() + filter_type[1:]
-
-        ALLOWED_ENUMS = {
-            "DetectionStatus",
-            "DiffType",
-            "Encoding",
-            "Order",
-            "ReportStatus",
-            "ReviewStatus",
-            "Severity",
-            "SortType",
-            "RunSortType",
-            "StoreLimitKind",
-            "ExtendedReportDataType",
-            "CommentKind",
-            "ReviewStatusRuleSortType",
-        }
-
-        if type_name not in ALLOWED_ENUMS:
-            return ""
-
-        enum_cls = getattr(ttypes, type_name, None)
-        if not enum_cls or not hasattr(enum_cls, "_VALUES_TO_NAMES"):
-            return ""
-
-        try:
-            value_int = int(value)
-            token = enum_cls._VALUES_TO_NAMES.get(value_int)  # e.g. "CONFIRMED"
-            if not token:
-                return ""
-
-            # Special case for formatting confirmed bug. IN UI for some reason
-            # it is shown as "Confirmed bug" instead of just "Confirmed".
-            if type_name == "ReviewStatus" and token == "CONFIRMED":
-                return "Confirmed bug"
-
-            # Default formatting: "FALSE_POSITIVE" -> "False positive"
-            return token.replace("_", " ").lower().capitalize()
-
-        except Exception as ex:
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                f"CodeChecker could not convert {type_name} value to name: {ex}"
-            )
-
     @exc_to_thrift_reqfail
     @timeit
     def getRunCount(self, run_filter):

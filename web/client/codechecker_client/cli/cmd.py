@@ -1898,7 +1898,7 @@ task, as identified by the token:
     __add_common_arguments(tasks, needs_product_url=False)
 
     filter_preset = subcommands.add_parser(
-        'filter_preset',
+        'filter-preset',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Manage filter presets of a CodeChecker server. "
                     "Filter presets are named collections of filter "

@@ -316,6 +316,9 @@ def display_preset_details(preset):
         if rf.fileMatchesAnyPoint:
             print("File matches any point: yes")
 
+        if rf.fullReportPathInComponent:
+            print("Full report path in component: yes")
+
         if rf.componentMatchesAnyPoint:
             print("Component matches any point: yes")
 
@@ -403,10 +406,9 @@ def handle_new_preset(args):
         args.preset_name,
         report_filter
     )
+    try:
+        preset_id = client.storeFilterPreset(preset_filter)
 
-    preset_id = client.storeFilterPreset(preset_filter)
-
-    if preset_id != -1:
         action = "updated" if existing_preset else "created"
         LOG.info(
             f"Filter preset '{args.preset_name}' {action} successfully.")
@@ -419,8 +421,8 @@ def handle_new_preset(args):
             # This should never happen, but handle gracefully
             LOG.warning("Preset was saved but could not be retrieved.")
             LOG.info(f"Preset ID: {preset_id}, Name: {args.preset_name}")
-    else:
-        LOG.error("An error occurred when saving filter preset.")
+    except Exception as e:
+        LOG.error("An error occurred while saving the filter preset: %s", e)
         sys.exit(1)
 
 
@@ -551,12 +553,15 @@ def handle_delete_preset(args):
         LOG.error("Filter preset with ID %d does not exist!",
                   args.preset_id)
         sys.exit(1)
+    try:
+        success = client.deleteFilterPreset(args.preset_id)
 
-    success = client.deleteFilterPreset(args.preset_id)
-
-    if success:
-        LOG.info("Filter preset '%s' (ID: %d) successfully deleted.",
-                 preset.name, args.preset_id)
-    else:
-        LOG.error("An error occurred when deleting the filter preset.")
+        if success:
+            LOG.info("Filter preset '%s' (ID: %d) successfully deleted.",
+                    preset.name, args.preset_id)
+        else:
+            LOG.error("An error occurred when deleting the filter preset.")
+            sys.exit(1)
+    except Exception as e:
+        LOG.error("An error occurred while deleting the filter preset: %s", e)
         sys.exit(1)

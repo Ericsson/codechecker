@@ -407,7 +407,7 @@ struct ReportFilter {
 }
 
 struct FilterPreset {
-  1: i64          id,           // Unique ID of filter preset.
+  1: i64          id,           // Unique ID of "FilterPreset".
   2: string       name,         // Human readable name of preset.
   3: ReportFilter reportFilter  // Uniquely configured ReportFilter.
 }
@@ -595,30 +595,30 @@ service codeCheckerDBAccess {
 
   // Stores the given FilterPreset with the given id
   // If the preset exists with the given id, it overwrites the name, and all preset values
-  // if the preset does not exist yet, throws and error
-  // if the id is -1 a new preset filter is created and the id of the new preset is returned.
-  // If a preset with that name already existed, it throws an error. Thus the filter preset name must be unique.
+  // If the preset does not exist yet, throws and error
+  // If the id is -1 a new preset filter is created and the id of the new preset is returned.
+  // If a preset with that name already existed, it throws an error. Thus the "FilterPreset" name must be unique.
   // The encoding of the name must be unicode. (whitespaces allowed)
-  // Maximum filter preset name 50
+  // Maximum "FilterPreset" name 50
   // Returns: the id of the modified or created preset
   // PERMISSION: PRODUCT_ADMIN
   i64 storeFilterPreset(1: FilterPreset preset)
                       throws (1: codechecker_api_shared.RequestFailed requestError);
 
-  // Returns the FilterPreset identified by id
+  // Returns the "FilterPreset" identified by id
   // Throws and error in case there is no preset with the given id
   // PERMISSION: PRODUCT_VIEW
   FilterPreset getFilterPreset(1: i64 id)
                             throws (1: codechecker_api_shared.RequestFailed requestError);
 
-  // Removes the filter preset with the given id
-  // returns the id of the filter preset removed
-  // throws an error if the preset with the given id does not exist.
+  // Removes the FilterPreset with the given id
+  // Returns the id of the "FilterPreset" removed
+  // Throws an error if the preset with the given id does not exist.
   // PERMISSION: PRODUCT_ADMIN
   i64 deleteFilterPreset(1: i64 id)
                         throws (1: codechecker_api_shared.RequestFailed requestError);
 
-  // Returns all filter presets stored for the product repository
+  // Returns all "FilterPreset"s stored for the product repository
   // PERMISSION: PRODUCT_VIEW
   list <FilterPreset> listFilterPreset()
                                     throws (1: codechecker_api_shared.RequestFailed requestError);
@@ -1185,10 +1185,4 @@ service codeCheckerDBAccess {
   bool unsetCleanupPlan(1: i64          cleanupPlanId,
                         2: list<string> reportHashes)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
-
-  // Return name based on mapping based on value and classname.
-  // PERMISSION: PRODUCT_VIEW
-  string getNameByValueForFilter(1: string classname,
-                                 2: i64 value)
-                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 }
