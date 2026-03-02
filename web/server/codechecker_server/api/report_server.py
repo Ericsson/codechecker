@@ -1751,7 +1751,6 @@ class ThriftRequestHandler:
 
                     session.add(preset_entry)
                     session.commit()
-                    print(f"Created new filter preset with name '{name}' and id {preset_entry.id}")
                     return preset_entry.id
 
                 # case for updating an existing preset
@@ -1767,7 +1766,6 @@ class ThriftRequestHandler:
                 preset_entry.preset_name = name
                 preset_entry.report_filter = report_filter
                 session.commit()
-                print(f"Updated filter preset id {id} with name '{name}'")
                 return preset_entry.id
         except Exception as ex:
             session.rollback()
@@ -1790,8 +1788,12 @@ class ThriftRequestHandler:
             with DBSession(self._Session) as session:
                 preset = session.query(FilterPreset). \
                     filter(FilterPreset.id == preset_id).one_or_none()
+
                 if not preset:
-                    return -1
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {preset_id}!")
+
 
                 session.query(FilterPreset) \
                     .filter(FilterPreset.id == preset_id) \
@@ -1822,7 +1824,9 @@ class ThriftRequestHandler:
                 )
 
             if preset is None:
-                return -1
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"No filter preset found with id {preset_id}!")
 
             # Pre creation of variables that are objects themselves.
             report_filter = tranform_rf_db_to_thrift(preset.report_filter)

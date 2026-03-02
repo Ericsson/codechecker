@@ -594,26 +594,26 @@ service codeCheckerDBAccess {
   //============================================
 
   // Stores the given FilterPreset with the given id
-  // If the preset exists, it overwrites the name, and all preset values
-  // if the preset does not exist yet, it creates it with
-  // if the id is -1 a new preset filter is created
-  // the filter preset name must be unique.
-  // An error must be thrown if another preset exists with the same name.
-  // The encoding of the name must be unicode. (whitespaces allowed?)
-  // Returns: the id of the modified or created preset, -1 in case of error
+  // If the preset exists with the given id, it overwrites the name, and all preset values
+  // if the preset does not exist yet, throws and error
+  // if the id is -1 a new preset filter is created and the id of the new preset is returned.
+  // If a preset with that name already existed, it throws an error. Thus the filter preset name must be unique.
+  // The encoding of the name must be unicode. (whitespaces allowed)
+  // Maximum filter preset name 50
+  // Returns: the id of the modified or created preset
   // PERMISSION: PRODUCT_ADMIN
   i64 storeFilterPreset(1: FilterPreset preset)
                       throws (1: codechecker_api_shared.RequestFailed requestError);
 
   // Returns the FilterPreset identified by id
-  // Returns -1 in case there is no preset with the given id
+  // Throws and error in case there is no preset with the given id
   // PERMISSION: PRODUCT_VIEW
   FilterPreset getFilterPreset(1: i64 id)
                             throws (1: codechecker_api_shared.RequestFailed requestError);
 
-  // Removes the filterpreset with the given id
+  // Removes the filter preset with the given id
   // returns the id of the filter preset removed
-  // and -1 in case of error.
+  // throws an error if the preset with the given id does not exist.
   // PERMISSION: PRODUCT_ADMIN
   i64 deleteFilterPreset(1: i64 id)
                         throws (1: codechecker_api_shared.RequestFailed requestError);
