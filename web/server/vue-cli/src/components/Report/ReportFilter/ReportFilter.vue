@@ -85,7 +85,9 @@
           <v-btn
             color="primary"
             class="mb-2"
-            @click="saveMode = 'override'; open_preset_save = true"
+            @click="saveMode = 'override';
+                    open_preset_save = true;
+                    presetName = $refs.FilterMenu[0].activePresetName"
           >
             Override Preset
           </v-btn>
@@ -649,12 +651,11 @@ export default {
             resolve(result);
           })
         );
-        this.open_preset_save = false;
-        this.presetName = "";
-        this.clearAllFilters();
       })
         .then(result => {
-          handleThriftError("OK", result);
+          this.open_preset_save = false;
+          this.presetName = "";
+          this.$refs.FilterMenu?.[0]?.selectPresetAfterSave(result);
         }).catch(err => {
           handleThriftError("FAILURE", err);
         });

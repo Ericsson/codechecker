@@ -13,7 +13,8 @@
   >
     <template #selection="{ item }">
       <span :class="{ 'preset-modified': isModified }">
-        {{ item.name }}<template v-if="isModified"> *</template>
+        {{ item.name }}
+        <template v-if="isModified"> *</template>
       </span>
     </template>
 
@@ -59,7 +60,7 @@ import { Permission } from "@cc/shared-types";
 export default {
   name: "PresetMenu",
 
-  expose : [ "onPresetApplied", "clearPresetState" ],
+  expose : [ "onPresetApplied", "clearPresetState", "selectPresetAfterSave" ],
 
   data() {
     return {
@@ -80,6 +81,10 @@ export default {
   computed: {
     canSeeActions() {
       return this.isSuperUser || this.isAdminOfAnyProduct;
+    },
+    activePresetName() {
+      const preset = this.presets.find(p => p.id === this.activePresetId);
+      return preset?.name || "";
     },
   },
 
@@ -213,6 +218,14 @@ export default {
     handleClear() {
       this.clearPresetState();
       this.$emit("clear-preset");
+    },
+
+    async selectPresetAfterSave(id) {
+      const numId = typeof id?.toNumber === "function" ? id.toNumber() : id;
+      await this.fetchPresets();
+      this.activePresetId = numId;
+      this.querySnapshot = { ...this.$route.query };
+      this.isModified = false;
     },
   },
 };
