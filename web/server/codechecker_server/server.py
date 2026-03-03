@@ -857,9 +857,10 @@ class CCSimpleHttpServer(HTTPServer):
         # More on this:
         # https://github.com/Ericsson/codechecker/pull/3733#issuecomment-1235304179
         # https://github.com/PyCQA/pylint/issues/6005
-        orm_product.num_of_runs = \
-            prod.session_factory().query(func.count(Run.id)).one_or_none()[0] \
-            # pylint: disable=not-callable
+        with DBSession(prod.session_factory) as session:
+            orm_product.num_of_runs = \
+                session.query(func.count(Run.id)).one_or_none()[0] \
+                # pylint: disable=not-callable
 
         self.__products[prod.endpoint] = prod
 
