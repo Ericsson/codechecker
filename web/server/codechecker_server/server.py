@@ -166,21 +166,17 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def __handle_readiness(self):
         """ Handle readiness probe. """
-        try:
-            cfg_sess = self.server.config_session()
-            cfg_sess.query(ORMConfiguration).count()
+        with DBSession(self.server.config_session) as cfg_sess:
+            try:
+                cfg_sess.query(ORMConfiguration).count()
 
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
-        except Exception:
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
-        finally:
-            if cfg_sess:
-                cfg_sess.close()
-                cfg_sess.commit()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
+            except Exception:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
 
     def __handle_liveness(self):
         """ Handle liveness probe. """
@@ -925,8 +921,7 @@ class CCSimpleHttpServer(HTTPServer):
 
         # If the product doesn't find in the cache, try to get it from the
         # database.
-        try:
-            cfg_sess = self.config_session()
+        with DBSession(self.config_session) as cfg_sess:
             product = cfg_sess.query(ORMProduct) \
                 .filter(ORMProduct.endpoint == endpoint) \
                 .limit(1).one_or_none()
@@ -941,10 +936,6 @@ class CCSimpleHttpServer(HTTPServer):
             })
 
             return self.__products.get(endpoint, None)
-        finally:
-            if cfg_sess:
-                cfg_sess.close()
-                cfg_sess.commit()
 
     def get_only_product(self):
         """
