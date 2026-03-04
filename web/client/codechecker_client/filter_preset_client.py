@@ -188,8 +188,6 @@ def build_filter_config_from_args(args):
         reviewStatus=convert_review_status(get_arg('review_status')),
         detectionStatus=convert_detection_status(get_arg('detection_status')),
         runHistoryTag=get_arg('tag'),
-        firstDetectionDate=first_detection_timestamp,
-        fixDate=fix_date_timestamp,
         isUnique=(
             (get_arg('uniqueing') == 'on')
             if get_arg('uniqueing')
@@ -207,6 +205,7 @@ def build_filter_config_from_args(args):
         componentMatchesAnyPoint=get_arg('single_origin_report'),
         annotations=None,
         reportStatus=convert_report_status(get_arg('report_status')),
+        fullReportPathInComponent=get_arg('full_report_path_in_component'),
     )
 
 
@@ -280,16 +279,6 @@ def display_preset_details(preset):
         if rf.isUnique is not None:
             print(f"  Is unique: {'yes' if rf.isUnique else 'no'}")
 
-        if rf.firstDetectionDate:
-            date_str = datetime.fromtimestamp(
-                rf.firstDetectionDate).strftime('%Y-%m-%d %H:%M:%S')
-            print(f"  First detection date: {date_str}")
-
-        if rf.fixDate:
-            date_str = datetime.fromtimestamp(
-                rf.fixDate).strftime('%Y-%m-%d %H:%M:%S')
-            print(f"  Fix date: {date_str}")
-
         if rf.openReportsDate:
             date_str = datetime.fromtimestamp(
                 rf.openReportsDate).strftime('%Y-%m-%d %H:%M:%S')
@@ -313,21 +302,45 @@ def display_preset_details(preset):
                 if rf.date.fixed.before:
                     print(f"    Before: {_fmt(rf.date.fixed.before)}")
 
-        if rf.fileMatchesAnyPoint:
-            print("File matches any point: yes")
+        if rf.runName:
+            print(f"  Run names: {', '.join(rf.runName)}")
 
-        if rf.fullReportPathInComponent:
-            print("Full report path in component: yes")
+        if rf.runTag:
+            print(f"  Run tags: {', '.join(str(t) for t in rf.runTag)}")
+
+        if rf.cleanupPlanNames:
+            print(f"  Cleanup plans: {', '.join(rf.cleanupPlanNames)}")
+
+        if rf.fileMatchesAnyPoint:
+            print("  File matches any point: yes")
 
         if rf.componentMatchesAnyPoint:
-            print("Component matches any point: yes")
+            print("  Component matches any point: yes")
+
+        if rf.annotations:
+            for ann in rf.annotations:
+                print(f"  Annotation: {ann.first}={ann.second}")
+
+        if rf.reportStatus:
+            status_names = [
+                ttypes.ReportStatus._VALUES_TO_NAMES.get(s, str(s))
+                for s in rf.reportStatus
+            ]
+            print(f"  Report status: {', '.join(status_names)}")
+
+        if rf.fullReportPathInComponent:
+            print("  Full report path in component: yes")
 
         if not any([rf.filepath, rf.checkerName, rf.checkerMsg,
                     rf.reportHash, rf.severity, rf.reviewStatus,
                     rf.detectionStatus, rf.runHistoryTag,
                     rf.componentNames, rf.analyzerNames,
-                    rf.bugPathLength, rf.firstDetectionDate,
-                    rf.fixDate, rf.openReportsDate, rf.date]):
+                    rf.bugPathLength,
+                    rf.openReportsDate, rf.date,
+                    rf.runName, rf.runTag, rf.cleanupPlanNames,
+                    rf.fileMatchesAnyPoint, rf.componentMatchesAnyPoint,
+                    rf.annotations, rf.reportStatus,
+                    rf.fullReportPathInComponent]):
             print("  (no filters configured)")
     else:
         print("  (no filters configured)")
@@ -372,6 +385,24 @@ def summarize_filters(report_filter):
         active.append("dateRange")
     if rf.isUnique is not None:
         active.append("uniqueing")
+    if rf.runName:
+        active.append(f"runName({len(rf.runName)})")
+    if rf.runTag:
+        active.append(f"runTag({len(rf.runTag)})")
+    if rf.openReportsDate:
+        active.append("openReportsDate")
+    if rf.cleanupPlanNames:
+        active.append(f"cleanupPlans({len(rf.cleanupPlanNames)})")
+    if rf.fileMatchesAnyPoint:
+        active.append("fileMatchesAnyPoint")
+    if rf.componentMatchesAnyPoint:
+        active.append("componentMatchesAnyPoint")
+    if rf.annotations:
+        active.append(f"annotations({len(rf.annotations)})")
+    if rf.reportStatus:
+        active.append(f"reportStatus({len(rf.reportStatus)})")
+    if rf.fullReportPathInComponent:
+        active.append("fullReportPathInComponent")
 
     return ', '.join(active) if active else '(none)'
 
@@ -455,7 +486,7 @@ def handle_list_presets(args):
             rf = preset.reportFilter
             filter_dict = {}
 
-            # Add non-empty fields to filter_dict - using ttypes enums
+            # Add non-empty fields to filter_dict, using ttypes enums
             if rf.filepath:
                 filter_dict['filepath'] = rf.filepath
             if rf.checkerName:
@@ -483,36 +514,49 @@ def handle_list_presets(args):
             if rf.analyzerNames:
                 filter_dict['analyzerNames'] = rf.analyzerNames
             if rf.bugPathLength:
-                filter_dict['bugPathLength'] = {
-                    'min': rf.bugPathLength.min,
-                    'max': rf.bugPathLength.max
-                }
+                filter_dict['bugPathLength'] = ttypes.BugPathLengthRange(
+                    min=rf["bugPathLength"].get("min"),
+                    max=rf["bugPathLength"].get("max")
+                )
             if rf.isUnique is not None:
                 filter_dict['isUnique'] = rf.isUnique
-            if rf.firstDetectionDate:
-                filter_dict['firstDetectionDate'] = rf.firstDetectionDate
-            if rf.fixDate:
-                filter_dict['fixDate'] = rf.fixDate
             if rf.openReportsDate:
                 filter_dict['openReportsDate'] = rf.openReportsDate
             if rf.date:
-                date_dict = {}
-                if rf.date.detected:
-                    date_dict['detected'] = {
-                        'before': rf.date.detected.before,
-                        'after': rf.date.detected.after
-                    }
-                if rf.date.fixed:
-                    date_dict['fixed'] = {
-                        'before': rf.date.fixed.before,
-                        'after': rf.date.fixed.after
-                    }
-                filter_dict['dateRange'] = date_dict
+                filter_dict['date'] = ttypes.ReportDate(
+                    detected=ttypes.DateInterval(
+                        before=rf["date"].get("detected", None),
+                        after=rf["date"].get("detected", None)
+                    ) if rf["date"].get("detected") else None,
+                    fixed=ttypes.DateInterval(
+                        before=rf["date"].get("fixed", None),
+                        after=rf["date"].get("fixed", None)
+                    ) if rf["date"].get("fixed") else None
+                )
+            if rf.runName:
+                filter_dict['runName'] = rf.runName
+            if rf.runTag:
+                filter_dict['runTag'] = rf.runTag
+            if rf.cleanupPlanNames:
+                filter_dict['cleanupPlanNames'] = rf.cleanupPlanNames
             if rf.fileMatchesAnyPoint:
                 filter_dict['fileMatchesAnyPoint'] = rf.fileMatchesAnyPoint
             if rf.componentMatchesAnyPoint:
                 filter_dict['componentMatchesAnyPoint'] = \
                     rf.componentMatchesAnyPoint
+            if rf.annotations:
+                filter_dict['annotations'] = [
+                    ttypes.Pair(first=ann.get("first"), second=ann.get("second"))
+                    for ann in rf.annotations
+                ]
+
+            if rf.reportStatus:
+                filter_dict['reportStatus'] = \
+                    [ttypes.ReportStatus._VALUES_TO_NAMES.get(s, s)
+                     for s in rf.reportStatus]
+            if rf.fullReportPathInComponent:
+                filter_dict['fullReportPathInComponent'] = \
+                    rf.fullReportPathInComponent
 
             preset_dict = {
                 'id': preset.id,

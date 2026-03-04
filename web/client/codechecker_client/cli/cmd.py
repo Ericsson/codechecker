@@ -31,13 +31,7 @@ from codechecker_client import \
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
 
-DEFAULT_FILTER_VALUES = {
-    'review_status': ['unreviewed', 'confirmed'],
-    'detection_status': ['new', 'reopened', 'unresolved'],
-    'uniqueing': 'off',
-    'anywhere_on_report_path': False,
-    'single_origin_report': False
-}
+from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
 

@@ -24,7 +24,6 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
-
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import File, Report, report_file, \
     reports as reports_helper
@@ -46,6 +45,8 @@ from codechecker_client import report_type_converter
 from .client import login_user, setup_client, init_config_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
+
+from .filter_defaults import DEFAULT_FILTER_VALUES
 
 from . import suppress_file_handler
 
@@ -486,9 +487,14 @@ def parse_report_filter(client, args):
 
     # Load preset filter if specified
     if 'filter_preset_name' in args:
-        # Check that no CLI filter arguments were provided alongside
-        # the preset – they are mutually exclusive.
-        conflicting = [a for a in _FILTER_CLI_ARGS if a in args]
+        conflicting = [
+            a for a in _FILTER_CLI_ARGS
+            if a in args and (
+                a not in DEFAULT_FILTER_VALUES
+                or getattr(args, a) != DEFAULT_FILTER_VALUES[a]
+            )
+        ]
+
         if conflicting:
             LOG.error(
                 "Cannot combine --filter-preset with other filter "
