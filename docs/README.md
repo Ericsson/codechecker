@@ -411,9 +411,12 @@ you should be greeted with a web application showing you the analysis results.
 
 ## Developer documentations
 * [Architecture](architecture.md)
+* [Report Directory Specification](report_directory.md)
+* [Plist Report Format Specification](tools/plist.md)
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
+* [Sample CodeChecker Command Line Client](scripts/thrift/README.md)
 * [Package and integration tests](tests.md)
 * [Server-side background tasks](web/background_tasks.md)
 
