@@ -416,7 +416,7 @@ you should be greeted with a web application showing you the analysis results.
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
-* [Sample CodeChecker Command Line Client](scripts/thrift/README.md)
+* [Sample CodeChecker Command Line Client](/scripts/thrift/README.md)
 * [Package and integration tests](tests.md)
 * [Server-side background tasks](web/background_tasks.md)
 
