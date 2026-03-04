@@ -27,12 +27,15 @@ report_directory/
 │   └── *_compile_error.zip
 └── ctu_connections/                    # Cross-translation unit data (for debugging)
 ```
-`CodeChecker store` stores the reports found in the `plist` files and optionally parses the information in the `metadata.json`.
+### Usage
 
-`CodeChecker parse` displays the reports in the `plist` files and displays analysis status based on the existence of the `plist` or `plist.err` files.
+* `CodeChecker store` stores the reports found in the `plist` files and optionally parses the information in the `metadata.json`.
 
-`CodeChecker parse --file` relies on the `result_source_files` section of the `metadata.json`.
+* `CodeChecker parse` displays the reports in the `plist` files and displays analysis status based on the existence of the `plist` or `plist.err` files.
 
+* `CodeChecker parse --file` relies on the `result_source_files` section of the `metadata.json`.
+
+* `CodeChecker fixit` relies on the `fixit` subdirectory.
 ## File Types
 
 ### Information files
@@ -215,19 +218,3 @@ For detailed plist format specification, see [plist.md](tools/plist.md).
   </dict>
 </plist>
 ```
-
-## Usage
-
-1. **View reports:** Use CodeChecker web interface or CLI
-2. **Parse results:** Read plist files programmatically
-3. **Apply fixes:** Use YAML files in `fixit/` directory
-4. **Filter issues:** Query by checker name, severity, or file
-
-## Common Issue Categories
-
-- **cert** - CERT C/C++ coding standards
-- **bugprone** - Bug-prone code patterns
-- **cppcoreguidelines** - C++ Core Guidelines violations
-- **clang-diagnostic** - Compiler warnings
-- **performance** - Performance issues
-- **readability** - Code readability concerns
