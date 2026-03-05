@@ -20,6 +20,7 @@ import json
 import os
 from pathlib import Path
 import sqlalchemy
+from sqlalchemy.orm import Session as SA_Session
 import tempfile
 import time
 from typing import Any, Callable, Dict, List, NoReturn, \
@@ -46,7 +47,7 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import \
-    AnalysisInfo, AnalyzerStatistic, \
+    AnalysisInfo, AnalysisInfoFile, AnalyzerStatistic, \
     ReportPathData, ReportPathDataFile, \
     Checker, CheckerSet, CheckerSetItem, \
     File, FileContent, \
@@ -60,8 +61,6 @@ from ..product import Product as ServerProduct
 from ..session_manager import SessionManager
 from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
-
-from sqlalchemy.orm import Session as SA_Session
 
 
 LOG = get_logger('server')
@@ -775,7 +774,8 @@ class MassStoreRun:
                 continue
 
             with DBSession(self.__product.session_factory) as session:
-                self.__add_file_content(session, source_file_path, file_hash)
+                self.__add_file_content(session, source_file_path, file_hash,
+                                        True)
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
                     session, trimmed_file_path, file_hash)
@@ -830,10 +830,11 @@ class MassStoreRun:
 
     def __add_file_content(
         self,
-        session: DBSession,
+        session: SA_Session,
         source_file_name: str,
-        content_hash: Optional[str]
-    ):
+        content_hash: Optional[str],
+        commit: bool
+    ) -> str:
         """
         Add the necessary file contents. If content_hash in None then this
         function calculates the content hash. Or if it's available at the
@@ -883,11 +884,14 @@ class MassStoreRun:
                     fc = FileContent(content_hash, compressed_content, None)
                     session.add(fc)
 
-                session.commit()
+                if commit:
+                    session.commit()
             except sqlalchemy.exc.IntegrityError:
                 # Other transaction moght have added the same content in
                 # the meantime.
                 session.rollback()
+
+        return content_hash
 
     def __store_checker_identifiers(self, checkers: Set[Tuple[str, str]]):
         """
@@ -1018,6 +1022,28 @@ class MassStoreRun:
 
             session.add(analyzer_statistics)
 
+    def __store_analysis_info_files(
+        self,
+        session: SA_Session,
+        analysis_info_id: int,
+        report_dir_path: str
+    ):
+        """ Store analyzer related config files (e.g. skipfile) """
+        conf_dir_path = os.path.join(report_dir_path, "conf")
+        if not os.path.isdir(conf_dir_path):
+            return
+
+        for file in os.scandir(conf_dir_path):
+            content_hash = self.__add_file_content(session, file.path,
+                                                   None, False)
+
+            if (not session.get(AnalysisInfoFile,
+                                (analysis_info_id, file.name, content_hash))):
+                session.add(AnalysisInfoFile(
+                    analysis_info_id=analysis_info_id,
+                    filename=file.name,
+                    content_hash=content_hash))
+
     def __store_analysis_info(
         self,
         session: SA_Session,
@@ -1090,6 +1116,13 @@ class MassStoreRun:
                                              checker_set_id=checker_set.id)
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
+
+                # Obtain analysis_info.id
+                session.flush()
+
+                self.__store_analysis_info_files(session,
+                                                 analysis_info.id,
+                                                 src_dir_path)
 
     def __add_or_update_run(
         self,
