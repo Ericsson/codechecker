@@ -566,7 +566,7 @@ export default {
       const states = filters.map(filter => filter.getUrlState());
 
       const queryParams = Object.assign({}, this.$route.query, ...states);
-      this.$router.replace({ query: queryParams }).catch(() => {});
+      return this.$router.replace({ query: queryParams }).catch(() => {});
     },
 
     registerWatchers() {
@@ -827,10 +827,14 @@ export default {
           [ "diff-type",
             toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
         ],
-        bugPathLength: (_, rawValue) => [
-          [ "min-bug-path-length", rawValue?.min ?? rawValue?.from ?? "" ],
-          [ "max-bug-path-length", rawValue?.max ?? rawValue?.to ?? "" ],
-        ],
+        bugPathLength: (_, rawValue) => {
+          const toStr = v => (v != null && typeof v.toNumber === "function")
+            ? String(v.toNumber()) : (v != null ? String(v) : "");
+          return [
+            [ "min-bug-path-length", toStr(rawValue?.min) ],
+            [ "max-bug-path-length", toStr(rawValue?.max) ],
+          ];
+        },
         date: (_, rawValue) => [
           [ "detected-after",  toISO(rawValue?.detected?.after) ],
           [ "detected-before", toISO(rawValue?.detected?.before) ],
@@ -917,14 +921,12 @@ export default {
 
       await this.initByUrl();
 
-      const filters = this.$refs.filters;
-      const states = filters.map(f => f.getUrlState());
-      const settledQuery = Object.assign({}, this.$route.query, ...states);
+      await this.updateUrl();
 
-      this.updateUrl();
+      await this.$nextTick();
 
       if (this.$refs.FilterMenu && this.$refs.FilterMenu[0]) {
-        this.$refs.FilterMenu[0].onPresetApplied(settledQuery);
+        this.$refs.FilterMenu[0].onPresetApplied({ ...this.$route.query });
       }
     },
 

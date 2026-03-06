@@ -102,10 +102,18 @@ export default {
           const sorted = {};
           for (const k of Object.keys(q).sort()) {
             const v = q[k];
+            // Skip keys with no meaningful value.
+            if (v === undefined || v === null || v === "") continue;
             if (Array.isArray(v)) {
-              sorted[ k ] = v.length === 1 ? v[ 0 ] : [ ...v ].sort();
+              const filtered = v
+                .filter(x => x !== undefined && x !== null && x !== "")
+                .map(String)
+                .sort();
+              if (filtered.length) {
+                sorted[k] = filtered.length === 1 ? filtered[0] : filtered;
+              }
             } else {
-              sorted[k] = v;
+              sorted[k] = String(v);
             }
           }
           return sorted;
