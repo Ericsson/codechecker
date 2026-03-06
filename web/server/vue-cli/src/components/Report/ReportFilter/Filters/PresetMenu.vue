@@ -19,30 +19,33 @@
     </template>
 
     <template #item="{ item }">
-      <v-list-item-content
+      <div
+        class="d-flex align-center flex-grow-1"
         @click="applyPreset(item.id)"
       >
-        <v-list-item-title>
-          {{ item.name }}
-        </v-list-item-title>
-      </v-list-item-content>
-      <v-list-item-action v-if="canSeeActions">
-        <v-btn
-          :disabled="saving || applyingId !== null || deletingId !== null"
-          icon
-          @click="deletePreset(item.id)"
-        >
-          <v-icon
-            v-if="deletingId === item.id"
-            small
+        <v-list-item-content>
+          <v-list-item-title>
+            {{ item.name }}
+          </v-list-item-title>
+        </v-list-item-content>
+        <v-list-item-action v-if="canSeeActions">
+          <v-btn
+            :disabled="saving || applyingId !== null || deletingId !== null"
+            icon
+            @click.stop="deletePreset(item.id)"
           >
-            mdi-loading
-          </v-icon>
-          <v-icon v-else small>
-            mdi-delete
-          </v-icon>
-        </v-btn>
-      </v-list-item-action>
+            <v-icon
+              v-if="deletingId === item.id"
+              small
+            >
+              mdi-loading
+            </v-icon>
+            <v-icon v-else small>
+              mdi-delete
+            </v-icon>
+          </v-btn>
+        </v-list-item-action>
+      </div>
     </template>
   </v-select>
 </template>

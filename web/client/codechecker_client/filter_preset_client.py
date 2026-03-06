@@ -193,14 +193,14 @@ def build_filter_config_from_args(args):
             if get_arg('uniqueing')
             else None
         ),
-        runName=None,
-        runTag=None,
+        runName=get_arg('run_name'),
+        runTag=get_arg('run_tag'),
         componentNames=get_arg('component'),
         bugPathLength=recreated_bug_path_length,
         date=recreated_date,
         analyzerNames=get_arg('analyzer_name'),
         openReportsDate=open_reports_timestamp,
-        cleanupPlanNames=None,
+        cleanupPlanNames=get_arg('cleanup_plan'),
         fileMatchesAnyPoint=get_arg('anywhere_on_report_path'),
         componentMatchesAnyPoint=get_arg('single_origin_report'),
         annotations=None,

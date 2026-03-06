@@ -14,6 +14,8 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
+from codechecker_api_shared.ttypes import RequestFailed
+
 from libtest import codechecker
 from libtest import env
 
@@ -73,16 +75,15 @@ class TestFilterPresetAPI(unittest.TestCase):
         )
 
         preset = ttypes.FilterPreset(
-            id=None,
+            id=-1,
             name="TestPreset",
             reportFilter=report_filter
         )
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
-        self.assertNotEqual(preset_id, -1, "Should return valid ID")
-        self.assertIsInstance(preset_id, int)
-        self.assertGreater(preset_id, 0)
+        self.assertEqual(preset_id, 1, "Should return valid ID")
+
 
     def test_store_filter_preset_updates_existing(self):
         """
@@ -91,18 +92,23 @@ class TestFilterPresetAPI(unittest.TestCase):
         preset_name = "UpdateTest"
 
         report_filter = ttypes.ReportFilter(severity=[50])
-        preset = ttypes.FilterPreset(None, preset_name, report_filter)
+        preset = ttypes.FilterPreset(
+            -1,
+            preset_name,
+            report_filter
+            )
 
         preset_id = self._cc_client.storeFilterPreset(preset)
-        self.assertNotEqual(preset_id, -1)
+        self.assertEqual(preset_id, 1)
 
         updated_filter = ttypes.ReportFilter(severity=[50, 40, 30])
-        updated_preset = ttypes.FilterPreset(None,
+        updated_preset = ttypes.FilterPreset(1,
                                              preset_name,
                                              updated_filter)
 
         new_id = self._cc_client.storeFilterPreset(updated_preset)
-        self.assertNotEqual(new_id, -1)
+        self.assertEqual(new_id, 1)
+
 
         all_presets = self._cc_client.listFilterPreset()
         preset_names = [p.name for p in all_presets]
@@ -129,37 +135,72 @@ class TestFilterPresetAPI(unittest.TestCase):
             analyzerNames=['clangsa', 'clang-tidy']
         )
 
-        preset = ttypes.FilterPreset(None, "ComplexPreset", report_filter)
+        preset = ttypes.FilterPreset(-1, "ComplexPreset", report_filter)
+
         preset_id = self._cc_client.storeFilterPreset(preset)
 
         self.assertNotEqual(preset_id, -1)
-        self.assertGreater(preset_id, 0)
+        self.assertEqual(preset_id, 1)
 
     def test_store_filter_preset_with_empty_filter(self):
         """
         Test storeFilterPreset with empty ReportFilter.
         """
         report_filter = ttypes.ReportFilter()
-        preset = ttypes.FilterPreset(None, "EmptyFilter", report_filter)
+        preset = ttypes.FilterPreset(-1, "EmptyFilter", report_filter)
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
         self.assertNotEqual(preset_id, -1)
+        self.assertEqual(preset_id, 1)
 
-    def test_store_filter_preset_returns_minus_one_on_error(self):
+        stored = self._cc_client.getFilterPreset(preset_id)
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored.name, "EmptyFilter")
+        self.assertIsNotNone(stored.reportFilter)
+        self.assertEqual(stored.reportFilter.filepath, None)
+        self.assertEqual(stored.reportFilter.checkerMsg, None)
+        self.assertEqual(stored.reportFilter.checkerName, None)
+        self.assertEqual(stored.reportFilter.reportHash, None)
+        self.assertEqual(stored.reportFilter.severity, None)
+        self.assertEqual(stored.reportFilter.reviewStatus, None)
+        self.assertEqual(stored.reportFilter.detectionStatus, None)
+        self.assertEqual(stored.reportFilter.runHistoryTag, None)
+        self.assertEqual(stored.reportFilter.firstDetectionDate, None)
+        self.assertEqual(stored.reportFilter.fixDate, None)
+        self.assertEqual(stored.reportFilter.isUnique, None)
+        self.assertEqual(stored.reportFilter.runName, None)
+        self.assertEqual(stored.reportFilter.runTag, None)
+        self.assertEqual(stored.reportFilter.componentNames, None)
+        self.assertEqual(stored.reportFilter.bugPathLength, None)
+        self.assertEqual(stored.reportFilter.date, None)
+        self.assertEqual(stored.reportFilter.analyzerNames, None)
+        self.assertEqual(stored.reportFilter.openReportsDate, None)
+        self.assertEqual(stored.reportFilter.cleanupPlanNames, None)
+        self.assertEqual(stored.reportFilter.fileMatchesAnyPoint, None)
+        self.assertEqual(stored.reportFilter.componentMatchesAnyPoint, None)
+        self.assertEqual(stored.reportFilter.annotations, [])
+        self.assertEqual(stored.reportFilter.reportStatus, None)
+
+
+    def test_store_filter_preset_returns_error(self):
         """
-        Test storeFilterPreset returns -1 on error.
+        Test storeFilterPreset returns error on empty preset name
+        and attempt to store None.
         """
-        try:
-            preset = ttypes.FilterPreset(None,
-                                         None,
-                                         ttypes.ReportFilter())
 
-            preset_id = self._cc_client.storeFilterPreset(preset)
+        preset = ttypes.FilterPreset(None,
+                                     None,
+                                     ttypes.ReportFilter())
 
-            self.assertEqual(preset_id, -1)
-        except Exception:
-            pass
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.storeFilterPreset(preset)
+
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.storeFilterPreset(None)
+
 
     # ========== getFilterPreset Tests ==========
 
@@ -173,7 +214,7 @@ class TestFilterPresetAPI(unittest.TestCase):
             checkerName=['clang-tidy*'],
             reviewStatus=[0, 1]
         )
-        preset = ttypes.FilterPreset(None,
+        preset = ttypes.FilterPreset(-1,
                                      "GetTest",
                                      report_filter)
 
@@ -190,14 +231,13 @@ class TestFilterPresetAPI(unittest.TestCase):
                          ['clang-tidy*'])
         self.assertEqual(stored_preset.reportFilter.reviewStatus, [0, 1])
 
-    def test_get_filter_preset_returns_none_for_nonexistent(self):
+    def test_get_filter_preset_returns_error_for_nonexistent(self):
         """
-        Test getFilterPreset returns None for non-existent ID.
+        Test getFilterPreset returns RequestFailed for non-existent ID.
         """
+        with self.assertRaises(RequestFailed):
+            self._cc_client.getFilterPreset(999)
 
-        returned_preset = self._cc_client.getFilterPreset(99999)
-
-        self.assertEqual(returned_preset, -1)
 
     def test_get_filter_preset_preserves_all_fields(self):
         """
@@ -217,11 +257,13 @@ class TestFilterPresetAPI(unittest.TestCase):
             componentNames=['comp1', 'comp2'],
             analyzerNames=['clangsa']
         )
-        preset = ttypes.FilterPreset(None,
+        preset = ttypes.FilterPreset(-1,
                                      "CompleteTest",
                                      report_filter)
 
         preset_id = self._cc_client.storeFilterPreset(preset)
+
+        self.assertEqual(preset_id, 1)
 
         stored = self._cc_client.getFilterPreset(preset_id)
 
@@ -258,7 +300,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         Test listFilterPreset returns single preset.
         """
 
-        preset = ttypes.FilterPreset(None,
+        preset = ttypes.FilterPreset(-1,
                                      "SinglePreset",
                                      ttypes.ReportFilter(severity=[50]))
 
@@ -275,13 +317,13 @@ class TestFilterPresetAPI(unittest.TestCase):
         Test listFilterPreset returns all presets.
         """
 
-        preset1 = ttypes.FilterPreset(None,
+        preset1 = ttypes.FilterPreset(-1,
                                       "Preset1",
                                       ttypes.ReportFilter(severity=[50]))
-        preset2 = ttypes.FilterPreset(None,
+        preset2 = ttypes.FilterPreset(-1,
                                       "Preset2",
                                       ttypes.ReportFilter(severity=[40]))
-        preset3 = ttypes.FilterPreset(None,
+        preset3 = ttypes.FilterPreset(-1,
                                       "Preset3",
                                       ttypes.ReportFilter(severity=[30]))
 
@@ -294,10 +336,17 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(len(presets), 3)
 
         preset_ids = [p.id for p in presets]
+        # check if id's of all three presets are in the list of returned presets.
         self.assertIn(id1, preset_ids)
         self.assertIn(id2, preset_ids)
         self.assertIn(id3, preset_ids)
 
+        # check that the id's are correct.
+        self.assertEqual(id1, 1)
+        self.assertEqual(id2, 2)
+        self.assertEqual(id3, 3)
+
+        # check that the names are in the list of returned presets.
         preset_names = [p.name for p in presets]
         self.assertIn("Preset1", preset_names)
         self.assertIn("Preset2", preset_names)
@@ -311,11 +360,11 @@ class TestFilterPresetAPI(unittest.TestCase):
                                               checkerName=['clang*'])
         report_filter_2 = ttypes.ReportFilter(reviewStatus=[0, 1])
 
-        preset1 = ttypes.FilterPreset(None,
+        preset1 = ttypes.FilterPreset(-1,
                                       "WithFilter1",
                                       report_filter_1)
 
-        preset2 = ttypes.FilterPreset(None,
+        preset2 = ttypes.FilterPreset(-1,
                                       "WithFilter2",
                                       report_filter_2)
 
@@ -324,6 +373,9 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         self.assertNotEqual(id1, -1)
         self.assertNotEqual(id2, -1)
+
+        self.assertEqual(id1, 1)
+        self.assertEqual(id2, 2)
 
         presets = self._cc_client.listFilterPreset()
 
@@ -342,7 +394,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         Test deleteFilterPreset removes the preset.
         """
 
-        preset = ttypes.FilterPreset(None,
+        preset = ttypes.FilterPreset(-1,
                                      "DeleteTest",
                                      ttypes.ReportFilter(severity=[50]))
 
@@ -364,22 +416,27 @@ class TestFilterPresetAPI(unittest.TestCase):
         Test deleteFilterPreset returns error for non-existent ID.
         """
 
-        deleted_preset_id = self._cc_client.deleteFilterPreset(99999)
+        with self.assertRaises(RequestFailed):
+            self._cc_client.deleteFilterPreset(99999)
 
-        self.assertEqual(deleted_preset_id, -1)
+        with self.assertRaises(RequestFailed):
+            self._cc_client.deleteFilterPreset(88888)
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.deleteFilterPreset(77777)
 
     def test_delete_filter_preset_only_deletes_specified(self):
         """
         Test deleteFilterPreset only deletes the specified preset.
         """
 
-        preset1 = ttypes.FilterPreset(None,
+        preset1 = ttypes.FilterPreset(-1,
                                       "Keep1",
                                       ttypes.ReportFilter(severity=[50]))
-        preset2 = ttypes.FilterPreset(None,
+        preset2 = ttypes.FilterPreset(-1,
                                       "Delete",
                                       ttypes.ReportFilter(severity=[40]))
-        preset3 = ttypes.FilterPreset(None,
+        preset3 = ttypes.FilterPreset(-1,
                                       "Keep2",
                                       ttypes.ReportFilter(severity=[30]))
 
@@ -406,7 +463,7 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         preset_name = "RecreateTest"
 
-        preset = ttypes.FilterPreset(None,
+        preset = ttypes.FilterPreset(-1,
                                      preset_name,
                                      ttypes.ReportFilter(severity=[50]))
 
@@ -418,7 +475,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         all_presets = self._cc_client.listFilterPreset()
         self.assertEqual(len(all_presets), 0)
 
-        new_preset = ttypes.FilterPreset(None,
+        new_preset = ttypes.FilterPreset(-1,
                                          preset_name,
                                          ttypes.ReportFilter(severity=[40]))
 

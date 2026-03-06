@@ -1808,39 +1808,29 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def getFilterPreset(self, preset_id):
+    def getFilterPreset(self, preset_id: int):
         """
         Returns the FilterPreset identified by preset_id.
         """
         self.__require_view()
         LOG.info(f"Returning filter Preset by ID: {preset_id}")
 
-        try:
-            with DBSession(self._Session) as session:
-                preset = (
-                    session.query(FilterPreset)
-                    .filter(FilterPreset.id == preset_id)
-                    .one_or_none()
-                )
+        with DBSession(self._Session) as session:
+            preset = (
+                session.query(FilterPreset)
+                .filter(FilterPreset.id == preset_id)
+                .one_or_none()
+            )
 
-            if preset is None:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    f"No filter preset found with id {preset_id}!")
-
-            # Pre creation of variables that are objects themselves.
-            report_filter = tranform_rf_db_to_thrift(preset.report_filter)
-
-            filter_preset = ttypes.FilterPreset(preset.id,
-                                         preset.preset_name,
-                                         report_filter
-                                         )
-
-            return filter_preset
-        except Exception as ex:
+        if preset is None:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                "CodeChecker could not list a preset :", ex)
+                f"No filter preset found with id {preset_id}!")
+
+        report_filter = tranform_rf_db_to_thrift(preset.report_filter)
+
+        return ttypes.FilterPreset(
+            preset.id, preset.preset_name, report_filter)
 
     @exc_to_thrift_reqfail
     @timeit
