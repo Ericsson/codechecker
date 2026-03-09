@@ -51,6 +51,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
 from codechecker_api_shared.ttypes import ErrorCode, RequestFailed
 
 from codechecker_common import util
+from codechecker_common.util import thrift_to_json
 from codechecker_common.logger import get_logger
 
 from codechecker_web.shared import webserver_context
@@ -1719,19 +1720,10 @@ class ThriftRequestHandler:
         self.__require_admin()
         LOG.info(f"Storing filter preset in backend: {filterpreset.name}")
         try:
-            def to_jsonable(obj):
-                if obj is None or isinstance(obj, (str, int, float, bool)):
-                    return obj
-                if isinstance(obj, list):
-                    return [to_jsonable(x) for x in obj]
-                if isinstance(obj, dict):
-                    return {k: to_jsonable(v) for k, v in obj.items()}
-                if hasattr(obj, "__dict__"):
-                    return {k: to_jsonable(v) for k, v in obj.__dict__.items()}
-                return str(obj)
             id = filterpreset.id
             name = filterpreset.name
-            report_filter = json.dumps(to_jsonable(filterpreset.reportFilter))
+            report_filter = json.dumps(
+                thrift_to_json(filterpreset.reportFilter))
 
             with DBSession(self._Session) as session:
                 # case for creating a new preset

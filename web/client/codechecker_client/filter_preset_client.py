@@ -16,6 +16,7 @@ from datetime import datetime
 from codechecker_report_converter import twodim
 
 from codechecker_common import logger
+from codechecker_common.util import thrift_to_json
 from codechecker_web.shared.env import get_user_input
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
@@ -170,15 +171,6 @@ def build_filter_config_from_args(args):
         if open_reports_date else None
     )
 
-    detected_at = get_arg('detected_at')
-    first_detection_timestamp = (
-        int(detected_at.timestamp())
-        if detected_at else None
-    )
-
-    fixed_at = get_arg('fixed_at')
-    fix_date_timestamp = int(fixed_at.timestamp()) if fixed_at else None
-
     return ttypes.ReportFilter(
         filepath=get_arg('file_path'),
         checkerMsg=get_arg('checker_msg'),
@@ -203,6 +195,7 @@ def build_filter_config_from_args(args):
         cleanupPlanNames=get_arg('cleanup_plan'),
         fileMatchesAnyPoint=get_arg('anywhere_on_report_path'),
         componentMatchesAnyPoint=get_arg('single_origin_report'),
+        # there is no annotations argument
         annotations=None,
         reportStatus=convert_report_status(get_arg('report_status')),
         fullReportPathInComponent=get_arg('full_report_path_in_component'),
@@ -424,10 +417,11 @@ def handle_new_preset(args):
         (p for p in existing_presets if p.name == args.preset_name), None)
 
     if existing_preset:
-        LOG.info("Filter preset '%s' already exists. Updating...",
+        LOG.info("Filter preset '%s' already exists. " \
+        "Use a different name or delete the existing preset to create a new one.",
                  args.preset_name)
-        # Pass the existing ID so the server updates the row
-        preset_id_to_send = existing_preset.id
+
+        sys.exit(1)
     else:
         # -1 tells the server to create a new preset
         preset_id_to_send = -1
@@ -480,83 +474,22 @@ def handle_list_presets(args):
         return
 
     if args.output_format == 'json':
-        # For JSON output, include full details with human-readable enum values
+        _enum_maps = {
+            'severity': ttypes.Severity._VALUES_TO_NAMES,
+            'reviewStatus': ttypes.ReviewStatus._VALUES_TO_NAMES,
+            'detectionStatus': ttypes.DetectionStatus._VALUES_TO_NAMES,
+            'reportStatus': ttypes.ReportStatus._VALUES_TO_NAMES,
+        }
+
         output = []
         for preset in presets:
-            rf = preset.reportFilter
-            filter_dict = {}
+            filter_dict = thrift_to_json(preset.reportFilter) or {}
 
-            # Add non-empty fields to filter_dict, using ttypes enums
-            if rf.filepath:
-                filter_dict['filepath'] = rf.filepath
-            if rf.checkerName:
-                filter_dict['checkerName'] = rf.checkerName
-            if rf.checkerMsg:
-                filter_dict['checkerMsg'] = rf.checkerMsg
-            if rf.reportHash:
-                filter_dict['reportHash'] = rf.reportHash
-            if rf.severity:
-                filter_dict['severity'] = \
-                    [ttypes.Severity._VALUES_TO_NAMES.get(s, s)
-                     for s in rf.severity]
-            if rf.reviewStatus:
-                filter_dict['reviewStatus'] = \
-                    [ttypes.ReviewStatus._VALUES_TO_NAMES.get(s, s)
-                     for s in rf.reviewStatus]
-            if rf.detectionStatus:
-                filter_dict['detectionStatus'] = \
-                    [ttypes.DetectionStatus._VALUES_TO_NAMES.get(s, s)
-                     for s in rf.detectionStatus]
-            if rf.runHistoryTag:
-                filter_dict['runHistoryTag'] = rf.runHistoryTag
-            if rf.componentNames:
-                filter_dict['componentNames'] = rf.componentNames
-            if rf.analyzerNames:
-                filter_dict['analyzerNames'] = rf.analyzerNames
-            if rf.bugPathLength:
-                filter_dict['bugPathLength'] = ttypes.BugPathLengthRange(
-                    min=rf["bugPathLength"].get("min"),
-                    max=rf["bugPathLength"].get("max")
-                )
-            if rf.isUnique is not None:
-                filter_dict['isUnique'] = rf.isUnique
-            if rf.openReportsDate:
-                filter_dict['openReportsDate'] = rf.openReportsDate
-            if rf.date:
-                filter_dict['date'] = ttypes.ReportDate(
-                    detected=ttypes.DateInterval(
-                        before=rf["date"].get("detected", None),
-                        after=rf["date"].get("detected", None)
-                    ) if rf["date"].get("detected") else None,
-                    fixed=ttypes.DateInterval(
-                        before=rf["date"].get("fixed", None),
-                        after=rf["date"].get("fixed", None)
-                    ) if rf["date"].get("fixed") else None
-                )
-            if rf.runName:
-                filter_dict['runName'] = rf.runName
-            if rf.runTag:
-                filter_dict['runTag'] = rf.runTag
-            if rf.cleanupPlanNames:
-                filter_dict['cleanupPlanNames'] = rf.cleanupPlanNames
-            if rf.fileMatchesAnyPoint:
-                filter_dict['fileMatchesAnyPoint'] = rf.fileMatchesAnyPoint
-            if rf.componentMatchesAnyPoint:
-                filter_dict['componentMatchesAnyPoint'] = \
-                    rf.componentMatchesAnyPoint
-            if rf.annotations:
-                filter_dict['annotations'] = [
-                    ttypes.Pair(first=ann.get("first"), second=ann.get("second"))
-                    for ann in rf.annotations
-                ]
-
-            if rf.reportStatus:
-                filter_dict['reportStatus'] = \
-                    [ttypes.ReportStatus._VALUES_TO_NAMES.get(s, s)
-                     for s in rf.reportStatus]
-            if rf.fullReportPathInComponent:
-                filter_dict['fullReportPathInComponent'] = \
-                    rf.fullReportPathInComponent
+            for key, names in _enum_maps.items():
+                if key in filter_dict and isinstance(
+                        filter_dict[key], list):
+                    filter_dict[key] = [
+                        names.get(v, v) for v in filter_dict[key]]
 
             preset_dict = {
                 'id': preset.id,

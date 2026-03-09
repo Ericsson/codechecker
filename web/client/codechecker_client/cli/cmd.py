@@ -443,6 +443,18 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "entirely in the files specified by the "
                               "given --component.")
 
+    f_group.add_argument('--report-status',
+                         nargs='*',
+                         dest="report_status",
+                         metavar='REPORT_STATUS',
+                         default=init_default('report_status'),
+                         help="R|Filter results by report statuses.\n"
+                              "Reports can be assigned a report status of the "
+                              "following values:\n"
+                              "- Outstanding: Nobody has seen this report.\n"
+                              "- Closed: This is really a bug.\n" +
+                              warn_diff_mode)
+
 
 def __register_results(parser):
     """

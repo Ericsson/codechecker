@@ -223,6 +223,23 @@ def generate_random_token(num_bytes: int = 32) -> str:
     return hash_value[idx:(idx + num_bytes)]
 
 
+def thrift_to_json(obj):
+    """
+    Recursively convert a Thrift object (or any object with __dict__)
+    into a JSON-serializable dict, skipping None-valued fields.
+    """
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+        return obj
+    if isinstance(obj, list):
+        return [thrift_to_json(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: thrift_to_json(v) for k, v in obj.items()}
+    if hasattr(obj, '__dict__'):
+        return {k: thrift_to_json(v) for k, v in obj.__dict__.items()
+                if v is not None}
+    return str(obj)
+
+
 def format_size(num: float, suffix: str = 'B') -> str:
     """
     Pretty print storage units.
