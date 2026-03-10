@@ -11,6 +11,7 @@ sqlalchemy~=2.0
 alembic~=1.5
 portalocker~=3.0
 psutil~=7.0
+types-psutil~=7.0
 multiprocess~=0.70
 thrift~=0.22
 gitpython~=3.0
