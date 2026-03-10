@@ -76,7 +76,7 @@ class TestParseStatus(unittest.TestCase):
         processed_output = []
         for line in output:
             # replace timestamps
-            line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
+            line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]',
                           '[]', line)
             processed_output.append(line)
 
