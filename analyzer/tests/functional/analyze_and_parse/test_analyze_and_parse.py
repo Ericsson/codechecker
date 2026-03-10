@@ -230,7 +230,7 @@ class AnalyzeParseTestCase(
                          "Found 1 source file to analyze in"]
         for line in output:
             # replace timestamps
-            line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
+            line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]',
                           '[]', line)
 
             # Replace full path only to file name on the following
