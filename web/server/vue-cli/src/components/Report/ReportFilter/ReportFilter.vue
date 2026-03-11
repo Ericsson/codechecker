@@ -815,10 +815,10 @@ export default {
           [ "is-unique", rawValue ? "on" : "off" ],
         ],
         runName: (_, rawValue) => [ //PTR
-          [ "run-name", rawValue || "" ],
+          [ "run", rawValue || "" ],
         ],
         runTag: (_, rawValue) => [ //PTR
-          [ "run", rawValue || "" ],
+          [ "run-tag", rawValue || "" ],
         ],
         componentNames: (_, rawValue) =>
           asArray(rawValue).map(v => [ "source-component", v ]),
@@ -847,7 +847,7 @@ export default {
           [ "open-reports-date", toISO(rawValue) || "" ],
         ],
         cleanupPlanNames: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "cleanup-plan-name", v ]),
+          asArray(rawValue).map(v => [ "cleanup-plan", v ]),
         fileMatchesAnyPoint: (_, rawValue) => {
           if (!rawValue) return [];
           return [ [ "anywhere-filepath", "true" ] ];
