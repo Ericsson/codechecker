@@ -57,7 +57,7 @@ LOG_CONFIG = '''
   "formatters": {
     "brief": {
       "format": "[%(levelname)s %(asctime)s] - %(message)s",
-      "datefmt": "%Y-%m-%d %H:%M"
+      "datefmt": "%Y-%m-%d %H:%M:%S"
     },
     "precise": {
       "format": "[%(levelname)s] [%(asctime)s] {%(name)s} [%(process)d] \
