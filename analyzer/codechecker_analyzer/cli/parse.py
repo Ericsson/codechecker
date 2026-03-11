@@ -299,7 +299,6 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
     for c in compile_commands:
         for analyzer in supported_analyzers:
             file, directory, cmd = c["file"], c["directory"], c["command"]
-            file = os.path.abspath(file)
 
             filename = os.path.basename(file)
             action_hash = analyzer_action_hash(file, directory, cmd)
@@ -407,10 +406,25 @@ def print_status(report_dir: str,
                   compile_cmd_path)
         sys.exit(1)
 
+    # Convert all relative compile_cmd.json file paths to absolute
+    for c in compile_commands:
+        if not os.path.isabs(c["file"]):
+            c["file"] = os.path.abspath(
+                os.path.join(c["directory"], c["file"]))
+
     if files:
-        files_filter = [os.path.abspath(fp) for fp in files]
+        file_filter = [os.path.abspath(fp) for fp in files]
+
+        invalid_file_filter = [fp for fp in file_filter
+                               if not os.path.isfile(fp)]
+
+        if invalid_file_filter:
+            LOG.error("File filter (--file) contains nonexistent files:")
+            LOG.error(invalid_file_filter)
+            sys.exit(1)
+
         compile_commands = list(
-            filter(lambda c: c["file"] in files_filter, compile_commands))
+            filter(lambda c: c["file"] in file_filter, compile_commands))
 
         if not compile_commands and not export:
             LOG.warning("File not found in the compilation database!")
@@ -704,7 +718,7 @@ def main(args):
     if os.path.isdir(input_dir) and os.path.isfile(compile_cmd_json):
         print_status(input_dir,
                      False,
-                     getattr(args, 'files', None))
+                     None)
 
     if statistics.num_of_reports:
         sys.exit(2)
