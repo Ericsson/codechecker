@@ -9,7 +9,6 @@
 Argument handlers for the 'CodeChecker cmd filter-preset' subcommands.
 """
 
-import argparse
 import json
 import sys
 from datetime import datetime
@@ -21,6 +20,7 @@ from codechecker_web.shared.env import get_user_input
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from .client import setup_client
+from .cmd_line_client import parse_report_filter_offline
 
 LOG = None
 
@@ -29,177 +29,6 @@ def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
     global LOG
     LOG = logger.get_logger(logger_name)
-
-
-def build_filter_config_from_args(args):
-    """
-    Build a ReportFilter object from command-line arguments.
-    Returns the ReportFilter object directly.
-    """
-
-    args_dict = vars(args)
-
-    def get_arg(key, default=None):
-        value = args_dict.get(key, default)
-        if value == argparse.SUPPRESS:
-            return default
-        return value
-
-    def convert_severity(severity_list):
-        """
-        Convert severity strings to integer enum values using ttypes
-        """
-
-        if not severity_list:
-            return None
-        try:
-            return [ttypes.Severity._NAMES_TO_VALUES[s.upper()]
-                    for s in severity_list]
-        except KeyError as e:
-            invalid_value = str(e).strip("'")
-            valid_values = \
-                ', '.join(ttypes.Severity._NAMES_TO_VALUES.keys()).lower()
-            LOG.error("Invalid severity value: %s", invalid_value.lower())
-            LOG.error("Valid values are: %s", valid_values)
-            sys.exit(1)
-
-    def convert_review_status(status_list):
-        """
-        Convert review status strings to integer enum values using ttypes
-        """
-
-        if not status_list:
-            return None
-        try:
-            return [ttypes.ReviewStatus._NAMES_TO_VALUES[s.upper()]
-                    for s in status_list]
-        except KeyError as e:
-            invalid_value = str(e).strip("'")
-            valid_values = \
-                ', '.join(ttypes.ReviewStatus._NAMES_TO_VALUES.keys()).lower()
-            LOG.error("Invalid review status value: %s", invalid_value.lower())
-            LOG.error("Valid values are: %s", valid_values)
-            sys.exit(1)
-
-    def convert_detection_status(status_list):
-        """
-        Convert detection status strings to integer enum values using ttypes
-        """
-
-        if not status_list:
-            return None
-        try:
-            return [ttypes.DetectionStatus._NAMES_TO_VALUES[s.upper()]
-                    for s in status_list]
-        except KeyError as e:
-            invalid_value = str(e).strip("'")
-            valid_values = \
-                ', '.join(ttypes.DetectionStatus._NAMES_TO_VALUES.keys()) \
-                    .lower()
-            LOG.error("Invalid detection status value: %s",
-                      invalid_value.lower())
-            LOG.error("Valid values are: %s",
-                      valid_values)
-            sys.exit(1)
-
-    def convert_report_status(status_list):
-        """
-        Convert report status strings to integer enum values using ttypes
-        """
-
-        if not status_list:
-            return None
-        try:
-            return [ttypes.ReportStatus._NAMES_TO_VALUES[s.upper()]
-                    for s in status_list]
-        except KeyError as e:
-            invalid_value = str(e).strip("'")
-            valid_values = \
-                ', '.join(ttypes.ReportStatus._NAMES_TO_VALUES.keys()).lower()
-            LOG.error("Invalid report status value: %s", invalid_value.lower())
-            LOG.error("Valid values are: %s", valid_values)
-            sys.exit(1)
-
-    # parse "min:max" format
-    recreated_bug_path_length = None
-    bug_path_str = get_arg('bug_path_length')
-    if bug_path_str:
-        if ':' in bug_path_str:
-            parts = bug_path_str.split(':')
-            min_val = int(parts[0]) if parts[0] else None
-            max_val = int(parts[1]) if len(parts) > 1 and parts[1] else None
-            recreated_bug_path_length = ttypes.BugPathLengthRange(
-                min=min_val,
-                max=max_val
-            )
-
-    # construct from detected_* and fixed_* arguments
-    recreated_date = None
-    detected_after = get_arg('detected_after')
-    detected_before = get_arg('detected_before')
-    fixed_after = get_arg('fixed_after')
-    fixed_before = get_arg('fixed_before')
-
-    detected_interval = None
-    if detected_after or detected_before:
-        detected_interval = ttypes.DateInterval(
-            before=(
-                int(detected_before.timestamp())
-                if detected_before else None),
-            after=(
-                int(detected_after.timestamp())
-                if detected_after else None)
-        )
-
-    fixed_interval = None
-    if fixed_after or fixed_before:
-        fixed_interval = ttypes.DateInterval(
-            before=int(fixed_before.timestamp()) if fixed_before else None,
-            after=int(fixed_after.timestamp()) if fixed_after else None
-        )
-
-    if detected_interval or fixed_interval:
-        recreated_date = ttypes.ReportDate(
-            detected=detected_interval,
-            fixed=fixed_interval
-        )
-
-    # Convert datetime objects to Unix timestamps
-    open_reports_date = get_arg('open_reports_date')
-    open_reports_timestamp = (
-        int(open_reports_date.timestamp())
-        if open_reports_date else None
-    )
-
-    return ttypes.ReportFilter(
-        filepath=get_arg('file_path'),
-        checkerMsg=get_arg('checker_msg'),
-        checkerName=get_arg('checker_name'),
-        reportHash=get_arg('report_hash'),
-        severity=convert_severity(get_arg('severity')),
-        reviewStatus=convert_review_status(get_arg('review_status')),
-        detectionStatus=convert_detection_status(get_arg('detection_status')),
-        runHistoryTag=get_arg('tag'),
-        isUnique=(
-            (get_arg('uniqueing') == 'on')
-            if get_arg('uniqueing')
-            else None
-        ),
-        runName=get_arg('run_name'),
-        runTag=get_arg('run_tag'),
-        componentNames=get_arg('component'),
-        bugPathLength=recreated_bug_path_length,
-        date=recreated_date,
-        analyzerNames=get_arg('analyzer_name'),
-        openReportsDate=open_reports_timestamp,
-        cleanupPlanNames=get_arg('cleanup_plan'),
-        fileMatchesAnyPoint=get_arg('anywhere_on_report_path'),
-        componentMatchesAnyPoint=get_arg('single_origin_report'),
-        # there is no annotations argument
-        annotations=None,
-        reportStatus=convert_report_status(get_arg('report_status')),
-        fullReportPathInComponent=get_arg('full_report_path_in_component'),
-    )
 
 
 def display_preset_details(preset):
@@ -409,7 +238,7 @@ def handle_new_preset(args):
 
     client = setup_client(args.product_url)
 
-    report_filter = build_filter_config_from_args(args)
+    report_filter = parse_report_filter_offline(args)
 
     # Check if preset already exists
     existing_presets = client.listFilterPreset()

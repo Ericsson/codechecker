@@ -641,6 +641,20 @@ def parse_report_filter_offline(args):
     report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
     report_filter.fullReportPathInComponent = args.single_origin_report
 
+    if 'report_status' in args:
+        report_filter.reportStatus = [
+            ttypes.ReportStatus._NAMES_TO_VALUES[x.upper()] for x in
+            args.report_status]
+
+    if 'run_name' in args:
+        report_filter.runName = args.run_name
+
+    if 'run_tag' in args:
+        report_filter.runTag = args.run_tag
+
+    if 'cleanup_plan' in args:
+        report_filter.cleanupPlanNames = args.cleanup_plan
+
     if args.anywhere_on_report_path and \
             'file_path' not in args and 'component' not in args:
         LOG.warning(
