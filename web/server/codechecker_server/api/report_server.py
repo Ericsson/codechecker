@@ -1499,6 +1499,7 @@ def tranform_rf_db_to_thrift(rf_db):
         componentMatchesAnyPoint = rf_db.get("componentMatchesAnyPoint"),
         annotations         = recreated_annotations,
         reportStatus        = rf_db.get("reportStatus"),
+        fullReportPathInComponent = rf_db.get("fullReportPathInComponent")
     )
     return report_filter
 
