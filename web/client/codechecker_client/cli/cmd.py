@@ -455,6 +455,19 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "- Closed: This is really a bug.\n" +
                               warn_diff_mode)
 
+    parser.add_argument('--filter-preset',
+                        type=str,
+                        dest='filter_preset_name',
+                        metavar='PRESET_NAME',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Use a pre-configured filter preset. The preset "
+                             "is loaded from the server and applied to the "
+                             "results. You can override specific filters by "
+                             "providing additional filter arguments. Use "
+                             "'CodeChecker cmd filter-preset list' to see "
+                             "available presets.")
+
 
 def __register_results(parser):
     """
@@ -483,19 +496,6 @@ def __register_results(parser):
                         default=argparse.SUPPRESS,
                         help="Get report details for reports such as bug path "
                              "events, bug report points etc.")
-
-    parser.add_argument('--filter-preset',
-                        type=str,
-                        dest='filter_preset_name',
-                        metavar='PRESET_NAME',
-                        required=False,
-                        default=argparse.SUPPRESS,
-                        help="Use a pre-configured filter preset. The preset "
-                             "is loaded from the server and applied to the "
-                             "results. You can override specific filters by "
-                             "providing additional filter arguments. Use "
-                             "'CodeChecker cmd filter-preset list' to see "
-                             "available presets.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
 
