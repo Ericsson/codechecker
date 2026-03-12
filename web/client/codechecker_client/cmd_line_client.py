@@ -54,9 +54,6 @@ from . import suppress_file_handler
 LOG = None
 
 
-BugPathLengthRange = namedtuple('BugPathLengthRange', ['min', 'max'])
-
-
 def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
     global LOG
@@ -572,8 +569,8 @@ def parse_report_filter_offline(args):
             len(path_lengths) > 1 and path_lengths[1].isdigit() else None
 
         report_filter.bugPathLength = \
-            BugPathLengthRange(min=min_bug_path_length,
-                               max=max_bug_path_length)
+            ttypes.BugPathLengthRange(min=min_bug_path_length,
+                                      max=max_bug_path_length)
 
     values_to_check = [
         (report_filter.severity, ttypes.Severity._VALUES_TO_NAMES, 'severity'),

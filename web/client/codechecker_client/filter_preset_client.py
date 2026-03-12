@@ -263,6 +263,8 @@ def handle_new_preset(args):
     try:
         preset_id = client.storeFilterPreset(preset_filter)
 
+        LOG.info(f"Filter preset '{args.preset_name}' saved with ID: {preset_id}")
+
         action = "updated" if existing_preset else "created"
         LOG.info(
             f"Filter preset '{args.preset_name}' {action} successfully.")

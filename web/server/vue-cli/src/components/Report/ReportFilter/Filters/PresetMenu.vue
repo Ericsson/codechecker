@@ -14,7 +14,7 @@
     <template #selection="{ item }">
       <span :class="{ 'preset-modified': isModified }">
         {{ item.name }}
-        <template v-if="isModified"> *</template>
+        <template v-if="isModified">&nbsp;*</template>
       </span>
     </template>
 
