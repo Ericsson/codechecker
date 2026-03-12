@@ -36,7 +36,7 @@
       </template>
 
       <template v-slot:title="{ item }">
-        <source-component-tooltip :value="item.value">
+        <source-component-tooltip :value="item.value || ''">
           <template v-slot="{ on }">
             <v-list-item-title
               class="mr-1 filter-item-title"

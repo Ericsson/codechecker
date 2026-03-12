@@ -24,7 +24,6 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
-
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import File, Report, report_file, \
     reports as reports_helper
@@ -47,13 +46,12 @@ from .client import login_user, setup_client, init_config_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
 
+from .filter_defaults import DEFAULT_FILTER_VALUES
+
 from . import suppress_file_handler
 
 # Needs to be set in the handler functions.
 LOG = None
-
-
-BugPathLengthRange = namedtuple('BugPathLengthRange', ['min', 'max'])
 
 
 def init_logger(level, stream=None, logger_name='system'):
@@ -466,15 +464,69 @@ def parse_report_filter(client, args):
     Parse and check attributes of the given report filter based on
     the arguments which is provided in the command line.
     Also, check if filter values are valid values.
-    """
-    report_filter = parse_report_filter_offline(args)
 
-    if 'tag' in args:
-        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
-        run_histories = client.getRunHistory(None, None, None,
-                                             run_history_filter)
-        if run_histories:
-            report_filter.runTag = [t.id for t in run_histories]
+    If a filter preset is specified (--filter-preset), it will be used
+    directly. Specifying additional CLI filter arguments together with
+    a preset is not allowed and will cause an error.
+    """
+
+    # CLI argument names that correspond to filter options.
+    _FILTER_CLI_ARGS = [
+        'severity', 'detection_status', 'review_status',
+        'checker_name', 'file_path', 'bug_path_length',
+        'checker_msg', 'analyzer_name', 'component',
+        'report_hash', 'open_reports_date',
+        'detected_at', 'fixed_at',
+        'detected_before', 'detected_after',
+        'fixed_before', 'fixed_after',
+        'tag', 'report_status',
+    ]
+
+    # Load preset filter if specified
+    if 'filter_preset_name' in args:
+        conflicting = [
+            a for a in _FILTER_CLI_ARGS
+            if a in args and (
+                a not in DEFAULT_FILTER_VALUES
+                or getattr(args, a) != DEFAULT_FILTER_VALUES[a]
+            )
+        ]
+
+        if conflicting:
+            LOG.error(
+                "Cannot combine --filter-preset with other filter "
+                "arguments (%s). Either use a preset or specify "
+                "filters on the command line, not both.",
+                ', '.join(f'--{a.replace("_", "-")}' for a in conflicting))
+            sys.exit(1)
+
+        preset_name = args.filter_preset_name
+        LOG.info("Loading filter preset '%s'...", preset_name)
+
+        all_presets = client.listFilterPreset()
+        preset = next((p for p in all_presets if p.name == preset_name), None)
+
+        if not preset:
+            LOG.error("Filter preset '%s' not found!", preset_name)
+            LOG.info(
+                "Use 'CodeChecker cmd filter-preset list' to see available "
+                "presets."
+            )
+            sys.exit(1)
+
+        LOG.info("Filter preset '%s' loaded successfully.", preset_name)
+        report_filter = preset.reportFilter
+    else:
+        # No preset – build the filter from CLI arguments.
+        report_filter = parse_report_filter_offline(args)
+
+        # Handle tags (requires API call to resolve tag names to IDs)
+        if 'tag' in args:
+            run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
+            run_histories = client.getRunHistory(None, None, None,
+                                                 run_history_filter)
+            if run_histories:
+                report_filter.runTag = [t.id for t in run_histories]
 
     return report_filter
 
@@ -517,8 +569,8 @@ def parse_report_filter_offline(args):
             len(path_lengths) > 1 and path_lengths[1].isdigit() else None
 
         report_filter.bugPathLength = \
-            BugPathLengthRange(min=min_bug_path_length,
-                               max=max_bug_path_length)
+            ttypes.BugPathLengthRange(min=min_bug_path_length,
+                                      max=max_bug_path_length)
 
     values_to_check = [
         (report_filter.severity, ttypes.Severity._VALUES_TO_NAMES, 'severity'),
@@ -585,6 +637,20 @@ def parse_report_filter_offline(args):
     report_filter.fileMatchesAnyPoint = args.anywhere_on_report_path
     report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
     report_filter.fullReportPathInComponent = args.single_origin_report
+
+    if 'report_status' in args:
+        report_filter.reportStatus = [
+            ttypes.ReportStatus._NAMES_TO_VALUES[x.upper()] for x in
+            args.report_status]
+
+    if 'run_name' in args:
+        report_filter.runName = args.run_name
+
+    if 'run_tag' in args:
+        report_filter.runTag = args.run_tag
+
+    if 'cleanup_plan' in args:
+        report_filter.cleanupPlanNames = args.cleanup_plan
 
     if args.anywhere_on_report_path and \
             'file_path' not in args and 'component' not in args:

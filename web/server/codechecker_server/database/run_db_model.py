@@ -14,8 +14,8 @@ import os
 from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
-    LargeBinary, MetaData, String, UniqueConstraint, Table, Text
-from sqlalchemy.orm import declarative_base
+    LargeBinary, MetaData, String, UniqueConstraint, Table, Text, JSON
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
@@ -620,3 +620,14 @@ IDENTIFIER = {
     'identifier': "RunDatabase",
     'orm_meta': CC_META
 }
+
+class FilterPreset(Base):
+    __tablename__ = 'filter_presets'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    preset_name = Column(String(100), nullable=False, unique=True)
+    report_filter = Column(JSON, nullable=False)
+
+    def __init__(self, preset_name, report_filter):
+        self.preset_name = preset_name
+        self.report_filter = report_filter

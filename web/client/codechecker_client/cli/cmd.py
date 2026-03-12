@@ -25,18 +25,13 @@ from codechecker_client import \
     product_client, \
     source_component_client, \
     task_client, \
-    token_client
+    token_client, \
+    filter_preset_client
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
 
-DEFAULT_FILTER_VALUES = {
-    'review_status': ['unreviewed', 'confirmed'],
-    'detection_status': ['new', 'reopened', 'unresolved'],
-    'uniqueing': 'off',
-    'anywhere_on_report_path': False,
-    'single_origin_report': False
-}
+from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
 
@@ -447,6 +442,31 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter reports where the report path is "
                               "entirely in the files specified by the "
                               "given --component.")
+
+    f_group.add_argument('--report-status',
+                         nargs='*',
+                         dest="report_status",
+                         metavar='REPORT_STATUS',
+                         default=init_default('report_status'),
+                         help="R|Filter results by report statuses.\n"
+                              "Reports can be assigned a report status of the "
+                              "following values:\n"
+                              "- Outstanding: Nobody has seen this report.\n"
+                              "- Closed: This is really a bug.\n" +
+                              warn_diff_mode)
+
+    parser.add_argument('--filter-preset',
+                        type=str,
+                        dest='filter_preset_name',
+                        metavar='PRESET_NAME',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Use a pre-configured filter preset. The preset "
+                             "is loaded from the server and applied to the "
+                             "results. You can override specific filters by "
+                             "providing additional filter arguments. Use "
+                             "'CodeChecker cmd filter-preset list' to see "
+                             "available presets.")
 
 
 def __register_results(parser):
@@ -1530,6 +1550,69 @@ def __register_token(parser):
     __add_common_arguments(del_t, needs_product_url=False)
 
 
+def __register_filter_presets(parser):
+    """
+    Add argparse subcommand parser for the "filter preset management" action.
+    """
+
+    def __register_new(parser):
+        parser.add_argument('--name',
+                            type=str,
+                            dest='preset_name',
+                            required=True,
+                            metavar='PRESET_NAME',
+                            help="Name of the filter preset to create/edit.")
+        parser.add_argument('--description',
+                            type=str,
+                            dest='description',
+                            required=False,
+                            default=argparse.SUPPRESS,
+                            help="Description of the filter preset.")
+
+        __add_filtering_arguments(parser)
+
+    def __register_delete(parser):
+        """
+        Add argparse subcommand parser for the "delete preset" action.
+        """
+        parser.add_argument('--id',
+                            type=int,
+                            dest='preset_id',
+                            required=True,
+                            metavar='PRESET_ID',
+                            help="ID of the filter preset to delete.")
+
+    subcommands = parser.add_subparsers(title='available actions')
+
+    # Create handlers for individual subcommands.
+    list_presets = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List all filter presets available on the server.",
+        help="List all filter presets.")
+    list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
+    __add_common_arguments(list_presets,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
+
+    new_preset = subcommands.add_parser(
+        'new',
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
+        description="Create a new filter preset or edit an existing one.",
+        help="Create or edit a filter preset.")
+    __register_new(new_preset)
+    new_preset.set_defaults(func=filter_preset_client.handle_new_preset)
+    __add_common_arguments(new_preset)
+
+    delete_preset = subcommands.add_parser(
+        'delete',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Delete a filter preset from the server.",
+        help="Delete a filter preset.")
+    __register_delete(delete_preset)
+    delete_preset.set_defaults(func=filter_preset_client.handle_delete_preset)
+    __add_common_arguments(delete_preset)
+
+
 def add_arguments_to_parser(parser):
     """
     Add the subcommand's arguments to the given argparse.ArgumentParser.
@@ -1819,6 +1902,19 @@ task, as identified by the token:
     __register_tasks(tasks)
     tasks.set_defaults(func=task_client.handle_tasks)
     __add_common_arguments(tasks, needs_product_url=False)
+
+    filter_preset = subcommands.add_parser(
+        'filter-preset',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Manage filter presets of a CodeChecker server. "
+                    "Filter presets are named collections of filter "
+                    "configurations that can be applied to the analysis "
+                    "results of a run. Please see the individual "
+                    "subcommands for details.",
+        help="Access subcommands related to configuring filter presets of a "
+             "CodeChecker server.")
+    __register_filter_presets(filter_preset)
+    __add_common_arguments(filter_preset)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.
