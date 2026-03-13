@@ -83,3 +83,27 @@ class ListRunsEnabledCheckersTest(unittest.TestCase):
         stats = run_data["analyzerStatistics"]["clangsa"]
         self.assertIn("enabledCheckers", stats)
         self.assertEqual(stats["enabledCheckers"], ["a"])
+
+
+class DurationMillisecondPrecisionTest(unittest.TestCase):
+    @patch("codechecker_client.cmd_line_client.init_logger")
+    @patch("codechecker_client.cmd_line_client.setup_client")
+    @patch("codechecker_client.cmd_line_client.get_run_data")
+    def test_duration_shows_milliseconds(self, get_run_data, setup_client, init_logger):
+        run = DummyRun(1, "test_run")
+        run.duration = 1234
+        get_run_data.return_value = [run]
+
+        args = Args(
+            product_url="dummy",
+            sort_type="name",
+            sort_order="asc",
+            output_format="plaintext"
+        )
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cmd_line_client.handle_list_runs(args)
+
+        output = buf.getvalue()
+        self.assertIn("0:00:01.234", output)

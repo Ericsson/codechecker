@@ -99,7 +99,7 @@ class Run(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     date = Column(DateTime)
-    duration = Column(Integer)  # Seconds, -1 if unfinished.
+    duration = Column(Integer)  # Milliseconds, -1 if unfinished.
     name = Column(String)
     version = Column(String)
     can_delete = Column(Boolean, nullable=False, server_default=true(),
@@ -110,8 +110,10 @@ class Run(Base):
         self.duration = -1
 
     def mark_finished(self):
-        if self.duration == -1:
-            self.duration = ceil((datetime.now() - self.date).total_seconds())
+        if self.duration != -1:
+            return
+        runtime_ms = (datetime.now() - self.date) / timedelta(milliseconds=1)
+        self.duration = ceil(runtime_ms)
 
 
 class RunLock(Base):
