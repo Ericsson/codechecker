@@ -2853,7 +2853,8 @@ class ThriftRequestHandler:
                         ruleId=rule.lower(),
                         title=rules[rule].get("title", ""),
                         url=rules[rule].get("rule_url", ""),
-                        checkers=checkers
+                        checkers=checkers,
+                        level=rules[rule].get("level", "")
                     )
                 )
 

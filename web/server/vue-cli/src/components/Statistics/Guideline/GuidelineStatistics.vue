@@ -263,6 +263,7 @@ export default {
                 guidelineRule: rule.ruleId,
                 guidelineUrl: rule.url,
                 guidelineRuleTitle: rule.title,
+                guidelineLevel: rule.level,
                 checkers: filtered_stat.length
                   ? filtered_stat.map(checkerId => {
                     return {
@@ -391,7 +392,8 @@ export default {
                   title: rule.title,
                   url: rule.url,
                   checkers: checkers_with_severity.filter(
-                    cws => rule.checkers.includes(cws.checkerName))
+                    cws => rule.checkers.includes(cws.checkerName)),
+                  level: rule.level
                 };
               });
             }
