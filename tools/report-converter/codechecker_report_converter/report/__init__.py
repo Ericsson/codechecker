@@ -13,7 +13,9 @@ import itertools
 import json
 import logging
 import os
+import re
 
+from codechecker_report_converter.util import trim_path_prefixes
 from typing import Callable, Dict, List, Optional, Protocol, Set, Tuple
 
 from .. import util
@@ -394,6 +396,45 @@ class Report:
             self.macro_expansions
         ):
             event.file.trim(path_prefixes)
+
+        # Also trim file paths in the content of Reports
+        if path_prefixes:
+            self.message = self._trim_path_in_text(self.message, path_prefixes)
+
+            if self.static_message:
+                self.static_message = self._trim_path_in_text(
+                    self.static_message, path_prefixes
+                )
+
+            for event in self.bug_path_events:
+                event.message = self._trim_path_in_text(
+                    event.message, path_prefixes
+                )
+
+            for note in self.notes:
+                note.message = self._trim_path_in_text(
+                    note.message, path_prefixes
+                )
+
+            for macro in self.macro_expansions:
+                macro.message = self._trim_path_in_text(
+                    macro.message, path_prefixes
+                )
+
+    def _trim_path_in_text(self, text: str, path_prefixes: List[str]) -> str:
+        """
+        Finds file paths in text and trims their prefixes using the same logic
+        as trim_path_prefixes from util.py.
+        """
+        if not path_prefixes:
+            return text
+
+        result = text
+        for path in util.find_paths_in_text(text):
+            trimmed_path = util.trim_path_prefixes(path, path_prefixes)
+            result = result.replace(path, trimmed_path)
+
+        return result
 
     @property
     def files(self) -> Set[File]:
