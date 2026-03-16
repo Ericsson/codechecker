@@ -269,7 +269,8 @@ def handle_new_preset(args):
 
         action = "updated" if existing_preset else "created"
         LOG.info(
-            f"Filter preset '{args.preset_name}' {action} successfully.")
+            "Filter preset '%s' %s successfully.",
+            args.preset_name, action)
 
         stored_preset = client.getFilterPreset(preset_id)
 
@@ -278,7 +279,7 @@ def handle_new_preset(args):
         else:
             # This should never happen, but handle gracefully
             LOG.warning("Preset was saved but could not be retrieved.")
-            LOG.info(f"Preset ID: {preset_id}, Name: {args.preset_name}")
+            LOG.info("Preset ID: %s, Name: %s", preset_id, args.preset_name)
     except Exception as e:
         LOG.error("An error occurred while saving the filter preset: %s", e)
         sys.exit(1)

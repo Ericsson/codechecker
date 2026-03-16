@@ -1724,7 +1724,7 @@ class ThriftRequestHandler:
                 - reportFilter: ReportFilter object itself
         """
         self.__require_admin()
-        LOG.info(f"Storing filter preset in backend: {filterpreset.name}")
+        LOG.info("Storing filter preset in backend: %s", filterpreset.name)
         try:
             filter_id = filterpreset.id
             name = filterpreset.name
@@ -1781,7 +1781,7 @@ class ThriftRequestHandler:
         if the preset does not exist.
         """
         self.__require_admin()
-        LOG.info(f"Deleting filter preset by ID: {preset_id}")
+        LOG.info("Deleting filter preset by ID: %s", preset_id)
         try:
             with DBSession(self._Session) as session:
                 preset = session.query(FilterPreset). \
@@ -1810,7 +1810,7 @@ class ThriftRequestHandler:
         Returns the FilterPreset identified by preset_id.
         """
         self.__require_view()
-        LOG.info(f"Returning filter Preset by ID: {preset_id}")
+        LOG.info("Returning filter preset by ID: %s", preset_id)
 
         with DBSession(self._Session) as session:
             preset = (
