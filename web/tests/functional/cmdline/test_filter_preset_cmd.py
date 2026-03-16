@@ -7,24 +7,20 @@
 # -------------------------------------------------------------------------
 
 """
-This module tests the CodeChecker command line.
+This module tests the CodeChecker filter-preset command line interface.
 """
 
 
-import json
 import os
 import shutil
 import subprocess
 import sys
 import uuid
-import tempfile
 import unittest
 
+from libtest import project
 from libtest import codechecker
 from libtest import env
-from libtest import project
-from codechecker_api_shared.ttypes import RequestFailed, Permission
-
 
 def run_cmd(cmd, environ=None):
     print(cmd)
@@ -99,26 +95,26 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         codechecker_cfg.update(server_access)
 
         # Generate a unique name for this test run.
-        test_project_name_1 = project_info['name'] + '1_' + uuid.uuid4().hex
+        self.test_project_name_1 = project_info['name'] + '1_' + uuid.uuid4().hex
 
         ret = codechecker.check_and_store(codechecker_cfg,
-                                          test_project_name_1,
+                                          self.test_project_name_1,
                                           project.path(test_project))
         if ret:
             sys.exit(1)
         print("Analyzing the test project was successful.")
 
-        test_project_name_2 = project_info['name'] + '2_' + uuid.uuid4().hex
+        self.test_project_name_2 = project_info['name'] + '2_' + uuid.uuid4().hex
 
         ret = codechecker.check_and_store(codechecker_cfg,
-                                          test_project_name_2,
+                                          self.test_project_name_2,
                                           project.path(test_project))
         if ret:
             sys.exit(1)
         print("Analyzing the test project was successful.")
 
-        codechecker_cfg['run_names'] = [test_project_name_1,
-                                        test_project_name_2]
+        codechecker_cfg['run_names'] = [self.test_project_name_1,
+                                        self.test_project_name_2]
 
         test_config['codechecker_cfg'] = codechecker_cfg
 
@@ -159,6 +155,11 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self._codechecker_cmd = env.codechecker_cmd()
 
         self._test_config = env.import_test_cfg(test_workspace)
+
+        # Clean up all filter presets before each test to ensure isolation.
+        existing_presets = self._cc_client.listFilterPreset()
+        for preset in existing_presets:
+            self._cc_client.deleteFilterPreset(preset.id)
 
     def test_filter_preset_cmd_help(self):
         """
@@ -206,29 +207,33 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self.assertEqual(ret, 1)
         self.assertIn("argument --name: expected one argument", err)
 
-    def test_filter_preset_cmd_new_overwrite(self):
+    def test_filter_preset_cmd_new_override(self):
         """
-        Test the filter-preset new command line with overwrite.
+        Test the filter-preset new command line with override.
         """
         cmd = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
-               '--name', 'test_preset_overwrite', '--url', str(self.server_url)]
+               '--name', 'test_preset_override', '--url', str(self.server_url)]
         ret, out, _ = run_cmd(cmd)
 
         self.assertEqual(ret, 0)
-        self.assertIn("Filter preset 'test_preset_overwrite' created successfully.", out)
+        self.assertIn("Filter preset 'test_preset_override' created successfully.", out)
 
         # call for list function to check if the preset is listed
-        cmd = [self._codechecker_cmd, 'cmd', 'filter-preset', 'list',
+        cmd2 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'list',
                '--url', str(self.server_url)]
-        ret, out, _ = run_cmd(cmd)
+        ret2, out2, _ = run_cmd(cmd2)
 
-        self.assertEqual(ret, 0)
-        self.assertIn("test_preset_overwrite", out)
+        self.assertEqual(ret2, 0)
+        self.assertIn("test_preset_override", out2)
 
-        # create new preset with the same id but different name to check if it is overwritten
+        # create new preset with the same name and check if it fails.
         cmd = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
-               '--name', 'test_preset_overwrite_2', '--url', str(self.server_url)]
-        ret, out, _ = run_cmd(cmd)
+               '--name', 'test_preset_override', '--url', str(self.server_url)]
+        ret, out, err = run_cmd(cmd)
+
+        self.assertEqual(ret, 1)
+        self.assertIn("Filter preset 'test_preset_override' already exists. " \
+        "Use a different name or delete the existing preset to create a new one.", out)
 
     def test_filter_preset_cmd_delete(self):
         """
@@ -285,7 +290,7 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         Test the filter-preset list command line.
         """
 
-        # add 4 presets to the server and 1 failed one without provided id
+        # add 4 presets to the server and 1 that fails due to duplicate name
         cmd1 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
                 '--name', 'test_preset_1', '--url', str(self.server_url)]
         cmd2 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
@@ -302,12 +307,98 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         run_cmd(cmd3)
         run_cmd(cmd4)
 
-        ret5, _, _ = run_cmd(cmd5)
+        ret5, out5, err = run_cmd(cmd5)
         self.assertEqual(ret5, 1)
+        self.assertIn("Filter preset 'test_preset_4' already exists. " \
+        "Use a different name or delete the existing preset to create a new one.", out5)
+
 
         cmd = [self._codechecker_cmd, 'cmd', 'filter-preset', 'list',
                '--url', str(self.server_url)]
         ret, out, _ = run_cmd(cmd)
 
         self.assertEqual(ret, 0)
-        self.assertIn("test_preset", out)
+        self.assertIn("test_preset_1", out)
+        self.assertIn("test_preset_2", out)
+        self.assertIn("test_preset_3", out)
+        self.assertIn("test_preset_4", out)
+
+    def test_filter_preset_cmd_apply_preset(self):
+        """
+        Test applying a preset that matches some reports.
+        """
+
+        # Add a preset to the server
+        cmd = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
+                '--name', 'test_preset_to_apply_low', '--url', str(self.server_url), '--severity', 'low',]
+        ret, out, _ = run_cmd(cmd)
+
+        self.assertEqual(ret, 0)
+        self.assertIn("Filter preset 'test_preset_to_apply_low' created successfully.", out)
+
+        # Apply severity presets to the results of the
+        # first test project and check if number of reports with the given severity is correct
+        cmd1 = [self._codechecker_cmd, 'cmd', 'results', self.test_project_name_1,
+               '--filter-preset', 'test_preset_to_apply_low', '--url', str(self.server_url)]
+        ret1, out1, _ = run_cmd(cmd1)
+
+        self.assertEqual(ret1, 0)
+        self.assertEqual(out1.count("LOW"), 6)
+
+        cmd2 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
+                '--name', 'test_preset_to_apply_high', '--url', str(self.server_url), '--severity', 'high',]
+        ret2, out2, _ = run_cmd(cmd2)
+
+        self.assertEqual(ret2, 0)
+        self.assertIn("Filter preset 'test_preset_to_apply_high' created successfully.", out2)
+
+        # High severity preset.
+        cmd3 = [self._codechecker_cmd, 'cmd', 'results', self.test_project_name_1,
+               '--filter-preset', 'test_preset_to_apply_high', '--url', str(self.server_url)]
+        _, out3, _ = run_cmd(cmd3)
+
+        self.assertEqual(out3.count("HIGH"), 53)
+
+    def test_filter_preset_cmd_apply_preset_no_match(self):
+        """
+        Test applying a preset that does not match any report.
+        """
+
+        # Add a preset to the server
+        cmd1 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
+                '--name', 'test_preset_to_apply_no_match', '--url', str(self.server_url), '--severity', 'high']
+        ret1, out1, _ = run_cmd(cmd1)
+
+        self.assertEqual(ret1, 0)
+        self.assertIn("Filter preset 'test_preset_to_apply_no_match' created successfully.", out1)
+
+        # Apply high severity preset to the results of the
+        # first test project and check if no reports are listed
+        cmd = [self._codechecker_cmd, 'cmd', 'results', self.test_project_name_1,
+               '--filter-preset', 'test_preset_to_apply_no_match_DOES_NOT_EXIST', '--url', str(self.server_url)]
+        ret, out, err = run_cmd(cmd)
+
+        self.assertEqual(ret, 1)
+        self.assertNotIn("HIGH", out)
+        self.assertIn("Filter preset 'test_preset_to_apply_no_match_DOES_NOT_EXIST' not found!", err)
+
+    def test_filter_preset_cmd_apply_plus_extra_parameters(self):
+        """
+        Test applying a preset with extra parameters that contradict the preset parameters.
+        """
+
+        # Add a preset to the server
+        cmd1 = [self._codechecker_cmd, 'cmd', 'filter-preset', 'new',
+                '--name', 'test_preset_to_apply_plus_extra_parameters', '--url', str(self.server_url), '--severity', 'low',]
+        ret1, out1, _ = run_cmd(cmd1)
+
+        self.assertEqual(ret1, 0)
+        self.assertIn("Filter preset 'test_preset_to_apply_plus_extra_parameters' created successfully.", out1)
+
+        cmd = [self._codechecker_cmd, 'cmd', 'results', self.test_project_name_1,
+               '--filter-preset', 'test_preset_to_apply_plus_extra_parameters', '--url', str(self.server_url), '--severity', 'high']
+        ret, _, err = run_cmd(cmd)
+
+        self.assertEqual(ret, 1)
+        self.assertIn("Cannot combine --filter-preset with other filter arguments "
+        "(--severity). Either use a preset or specify filters on the command line, not both.", err)

@@ -584,7 +584,9 @@ def parse_report_filter_offline(args):
                [validate_filter_values(*x) for x in values_to_check]):
         sys.exit(1)
 
-    report_filter.isUnique = args.uniqueing == 'on'
+    report_filter.isUnique = getattr(args,
+                                     "uniqueing",
+                                     False) == "on"
 
     if 'checker_msg' in args:
         report_filter.checkerMsg = args.checker_msg
@@ -634,9 +636,9 @@ def parse_report_filter_offline(args):
         report_filter.date = ttypes.ReportDate(detected=detected_at,
                                                fixed=fixed_at)
 
-    report_filter.fileMatchesAnyPoint = args.anywhere_on_report_path
-    report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
-    report_filter.fullReportPathInComponent = args.single_origin_report
+    report_filter.fileMatchesAnyPoint = getattr(args, "anywhere_on_report_path", False)
+    report_filter.componentMatchesAnyPoint = getattr(args, "anywhere_on_report_path", False)
+    report_filter.fullReportPathInComponent = getattr(args, "single_origin_report", False)
 
     if 'report_status' in args:
         report_filter.reportStatus = [
@@ -652,13 +654,13 @@ def parse_report_filter_offline(args):
     if 'cleanup_plan' in args:
         report_filter.cleanupPlanNames = args.cleanup_plan
 
-    if args.anywhere_on_report_path and \
+    if getattr(args, "anywhere_on_report_path", False) and \
             'file_path' not in args and 'component' not in args:
         LOG.warning(
             'The flag --anywhere-on-report-path is meaningful only if --file '
             'or --component is used.')
 
-    if args.single_origin_report and 'component' not in args:
+    if getattr(args, "single_origin_report", False) and 'component' not in args:
         LOG.warning(
             'The flag --single-origin-report is meaningful only if '
             '--component is used.')

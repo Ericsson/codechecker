@@ -246,7 +246,7 @@ def handle_new_preset(args):
         (p for p in existing_presets if p.name == args.preset_name), None)
 
     if existing_preset:
-        LOG.info("Filter preset '%s' already exists. " \
+        LOG.error("Filter preset '%s' already exists. " \
         "Use a different name or delete the existing preset to create a new one.",
                  args.preset_name)
 
