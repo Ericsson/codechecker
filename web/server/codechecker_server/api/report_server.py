@@ -1437,6 +1437,7 @@ def remove_reports(session: DBSession,
             .filter(Report.id.in_(r_ids)) \
             .delete(synchronize_session=False)
 
+
 def tranform_rf_db_to_thrift(rf_db):
     """
     Transforms a ReportFilter DB object to a ReportFilter thrift object.
@@ -1474,32 +1475,36 @@ def tranform_rf_db_to_thrift(rf_db):
                 )
                 recreated_annotations.append(recreated_annotation)
 
-    # NOTE: Update this mapping if new fields are added to the ReportFilter struct.
+    # NOTE: Update this mapping if new fields are added
+    # to the ReportFilter struct.
     report_filter = ttypes.ReportFilter(
-        filepath            = rf_db.get("filepath"),
-        checkerMsg          = rf_db.get("checkerMsg"),
-        checkerName         = rf_db.get("checkerName"),
-        reportHash          = rf_db.get("reportHash"),
-        severity            = rf_db.get("severity"),
-        reviewStatus        = rf_db.get("reviewStatus"),
-        detectionStatus     = rf_db.get("detectionStatus"),
-        runHistoryTag       = rf_db.get("runHistoryTag"),
-        firstDetectionDate  = rf_db.get("firstDetectionDate"),
-        fixDate             = rf_db.get("fixDate"),
-        isUnique            = rf_db.get("isUnique"),
-        runName             = rf_db.get("runName"),
-        runTag              = rf_db.get("runTag"),
-        componentNames      = rf_db.get("componentNames"),
-        bugPathLength       = recreated_bug_path_length,
-        date                = recreated_date,
-        analyzerNames       = rf_db.get("analyzerNames", None),
-        openReportsDate     = rf_db.get("openReportsDate"),
-        cleanupPlanNames    = rf_db.get("cleanupPlanNames"),
-        fileMatchesAnyPoint = rf_db.get("fileMatchesAnyPoint"),
-        componentMatchesAnyPoint = rf_db.get("componentMatchesAnyPoint"),
-        annotations         = recreated_annotations,
-        reportStatus        = rf_db.get("reportStatus"),
-        fullReportPathInComponent = rf_db.get("fullReportPathInComponent")
+        filepath=rf_db.get("filepath"),
+        checkerMsg=rf_db.get("checkerMsg"),
+        checkerName=rf_db.get("checkerName"),
+        reportHash=rf_db.get("reportHash"),
+        severity=rf_db.get("severity"),
+        reviewStatus=rf_db.get("reviewStatus"),
+        detectionStatus=rf_db.get("detectionStatus"),
+        runHistoryTag=rf_db.get("runHistoryTag"),
+        firstDetectionDate=rf_db.get("firstDetectionDate"),
+        fixDate=rf_db.get("fixDate"),
+        isUnique=rf_db.get("isUnique"),
+        runName=rf_db.get("runName"),
+        runTag=rf_db.get("runTag"),
+        componentNames=rf_db.get("componentNames"),
+        bugPathLength=recreated_bug_path_length,
+        date=recreated_date,
+        analyzerNames=rf_db.get("analyzerNames", None),
+        openReportsDate=rf_db.get("openReportsDate"),
+        cleanupPlanNames=rf_db.get("cleanupPlanNames"),
+        fileMatchesAnyPoint=rf_db.get(
+            "fileMatchesAnyPoint"),
+        componentMatchesAnyPoint=rf_db.get(
+            "componentMatchesAnyPoint"),
+        annotations=recreated_annotations,
+        reportStatus=rf_db.get("reportStatus"),
+        fullReportPathInComponent=rf_db.get(
+            "fullReportPathInComponent")
     )
     return report_filter
 
@@ -1721,7 +1726,7 @@ class ThriftRequestHandler:
         self.__require_admin()
         LOG.info(f"Storing filter preset in backend: {filterpreset.name}")
         try:
-            id = filterpreset.id
+            filter_id = filterpreset.id
             name = filterpreset.name
             report_filter = json.dumps(
                 thrift_to_json(filterpreset.reportFilter))
@@ -1732,11 +1737,12 @@ class ThriftRequestHandler:
                     FilterPreset.preset_name == name
                 ).one_or_none()
 
-                if id == -1:
+                if filter_id == -1:
                     if existing_preset:
                         raise codechecker_api_shared.ttypes.RequestFailed(
                             codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                            f"A filter preset with name '{name}' already exists!")
+                            "A filter preset with name "
+                            f"'{name}' already exists!")
 
                     preset_entry = FilterPreset(
                         preset_name=name,
@@ -1748,13 +1754,13 @@ class ThriftRequestHandler:
 
                 # case for updating an existing preset
                 preset_entry = session.query(FilterPreset).filter(
-                    FilterPreset.id == id
+                    FilterPreset.id == filter_id
                 ).one_or_none()
 
                 if not preset_entry:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        f"No filter preset found with id {id}!")
+                        f"No filter preset found with id {filter_id}!")
 
                 preset_entry.preset_name = name
                 preset_entry.report_filter = report_filter
@@ -1765,7 +1771,6 @@ class ThriftRequestHandler:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "CodeChecker could not store the filter preset: " + str(ex))
-
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1787,17 +1792,16 @@ class ThriftRequestHandler:
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                         f"No filter preset found with id {preset_id}!")
 
-
                 session.query(FilterPreset) \
                     .filter(FilterPreset.id == preset_id) \
                     .delete()
                 session.commit()
             return preset_id
-        except Exception:
+        except Exception as exc:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                "CodeChecker could not delete a preset with id: " + str(preset_id))
-
+                f"CodeChecker could not delete a preset with id: {preset_id}:",
+                exc)
 
     @exc_to_thrift_reqfail
     @timeit

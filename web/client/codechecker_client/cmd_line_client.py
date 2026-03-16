@@ -10,7 +10,7 @@ Command line client.
 """
 
 
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
 import hashlib
@@ -471,7 +471,7 @@ def parse_report_filter(client, args):
     """
 
     # CLI argument names that correspond to filter options.
-    _FILTER_CLI_ARGS = [
+    filter_cli_args = [
         'severity', 'detection_status', 'review_status',
         'checker_name', 'file_path', 'bug_path_length',
         'checker_msg', 'analyzer_name', 'component',
@@ -485,7 +485,7 @@ def parse_report_filter(client, args):
     # Load preset filter if specified
     if 'filter_preset_name' in args:
         conflicting = [
-            a for a in _FILTER_CLI_ARGS
+            a for a in filter_cli_args
             if a in args and (
                 a not in DEFAULT_FILTER_VALUES
                 or getattr(args, a) != DEFAULT_FILTER_VALUES[a]
@@ -636,9 +636,12 @@ def parse_report_filter_offline(args):
         report_filter.date = ttypes.ReportDate(detected=detected_at,
                                                fixed=fixed_at)
 
-    report_filter.fileMatchesAnyPoint = getattr(args, "anywhere_on_report_path", False)
-    report_filter.componentMatchesAnyPoint = getattr(args, "anywhere_on_report_path", False)
-    report_filter.fullReportPathInComponent = getattr(args, "single_origin_report", False)
+    report_filter.fileMatchesAnyPoint = getattr(
+        args, "anywhere_on_report_path", False)
+    report_filter.componentMatchesAnyPoint = getattr(
+        args, "anywhere_on_report_path", False)
+    report_filter.fullReportPathInComponent = getattr(
+        args, "single_origin_report", False)
 
     if 'report_status' in args:
         report_filter.reportStatus = [
@@ -660,7 +663,8 @@ def parse_report_filter_offline(args):
             'The flag --anywhere-on-report-path is meaningful only if --file '
             'or --component is used.')
 
-    if getattr(args, "single_origin_report", False) and 'component' not in args:
+    if getattr(args, "single_origin_report", False) \
+            and 'component' not in args:
         LOG.warning(
             'The flag --single-origin-report is meaningful only if '
             '--component is used.')

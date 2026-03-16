@@ -16,7 +16,6 @@ from codechecker_report_converter import twodim
 
 from codechecker_common import logger
 from codechecker_common.util import thrift_to_json
-from codechecker_web.shared.env import get_user_input
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from .client import setup_client
@@ -246,9 +245,11 @@ def handle_new_preset(args):
         (p for p in existing_presets if p.name == args.preset_name), None)
 
     if existing_preset:
-        LOG.error("Filter preset '%s' already exists. " \
-        "Use a different name or delete the existing preset to create a new one.",
-                 args.preset_name)
+        LOG.error(
+            "Filter preset '%s' already exists. "
+            "Use a different name or delete the "
+            "existing preset to create a new one.",
+            args.preset_name)
 
         sys.exit(1)
     else:
@@ -263,7 +264,8 @@ def handle_new_preset(args):
     try:
         preset_id = client.storeFilterPreset(preset_filter)
 
-        LOG.info(f"Filter preset '{args.preset_name}' saved with ID: {preset_id}")
+        LOG.info("Filter preset '%s' saved with ID: %d",
+                 args.preset_name, preset_id)
 
         action = "updated" if existing_preset else "created"
         LOG.info(
@@ -365,8 +367,10 @@ def handle_delete_preset(args):
         success = client.deleteFilterPreset(args.preset_id)
 
         if success:
-            LOG.info("Filter preset '%s' (ID: %d) successfully deleted.",
-                    preset.name, args.preset_id)
+            LOG.info(
+                "Filter preset '%s' (ID: %d) "
+                "successfully deleted.",
+                preset.name, args.preset_id)
         else:
             LOG.error("An error occurred when deleting the filter preset.")
             sys.exit(1)

@@ -27,11 +27,11 @@ from codechecker_client import \
     task_client, \
     token_client, \
     filter_preset_client
+from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
 
-from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
 

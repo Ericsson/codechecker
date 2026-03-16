@@ -621,6 +621,7 @@ IDENTIFIER = {
     'orm_meta': CC_META
 }
 
+
 class FilterPreset(Base):
     __tablename__ = 'filter_presets'
 

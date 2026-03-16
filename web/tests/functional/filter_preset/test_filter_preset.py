@@ -16,7 +16,6 @@ from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_api_shared.ttypes import RequestFailed
 
-from libtest import codechecker
 from libtest import env
 
 from . import setup_class, teardown_class
@@ -84,7 +83,6 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         self.assertEqual(preset_id, 1, "Should return valid ID")
 
-
     def test_store_filter_preset_updates_existing(self):
         """
         Test storeFilterPreset updates an existing preset with same name.
@@ -108,7 +106,6 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         new_id = self._cc_client.storeFilterPreset(updated_preset)
         self.assertEqual(new_id, 1)
-
 
         all_presets = self._cc_client.listFilterPreset()
         preset_names = [p.name for p in all_presets]
@@ -182,7 +179,6 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(stored.reportFilter.annotations, [])
         self.assertEqual(stored.reportFilter.reportStatus, None)
 
-
     def test_store_filter_preset_returns_error(self):
         """
         Test storeFilterPreset returns error on empty preset name
@@ -193,14 +189,11 @@ class TestFilterPresetAPI(unittest.TestCase):
                                      None,
                                      ttypes.ReportFilter())
 
-
         with self.assertRaises(RequestFailed):
             self._cc_client.storeFilterPreset(preset)
 
-
         with self.assertRaises(RequestFailed):
             self._cc_client.storeFilterPreset(None)
-
 
     # ========== getFilterPreset Tests ==========
 
@@ -237,7 +230,6 @@ class TestFilterPresetAPI(unittest.TestCase):
         """
         with self.assertRaises(RequestFailed):
             self._cc_client.getFilterPreset(999)
-
 
     def test_get_filter_preset_preserves_all_fields(self):
         """
@@ -336,7 +328,8 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(len(presets), 3)
 
         preset_ids = [p.id for p in presets]
-        # check if id's of all three presets are in the list of returned presets.
+        # check if id's of all three presets are in the list
+        # of returned presets.
         self.assertIn(id1, preset_ids)
         self.assertIn(id2, preset_ids)
         self.assertIn(id3, preset_ids)
