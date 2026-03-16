@@ -89,7 +89,7 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         # connection details.
         print("This test uses a CodeChecker server... connecting...")
         server_access = codechecker.start_or_get_server()
-        server_access['viewer_product'] = 'cmdline'
+        server_access['viewer_product'] = 'filter_preset_cmd'
         codechecker.add_test_package_product(
             server_access, TEST_WORKSPACE)
 
@@ -108,20 +108,8 @@ class TestFilterPresetCmdLine(unittest.TestCase):
             sys.exit(1)
         print("Analyzing the test project was successful.")
 
-        self.test_project_name_2 = \
-            project_info['name'] + '2_' + uuid.uuid4().hex
-
-        ret = codechecker.check_and_store(
-            codechecker_cfg,
-            self.test_project_name_2,
-            project.path(test_project))
-        if ret:
-            sys.exit(1)
-        print("Analyzing the test project was successful.")
-
         codechecker_cfg['run_names'] = [
-            self.test_project_name_1,
-            self.test_project_name_2]
+            self.test_project_name_1]
 
         test_config['codechecker_cfg'] = codechecker_cfg
 
