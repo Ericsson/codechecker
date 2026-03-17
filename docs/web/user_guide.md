@@ -1130,7 +1130,7 @@ CodeChecker cmd results -o json --details my_run
 
 # Get analysis results using a saved filter preset:
 CodeChecker cmd results my_run --filter-preset my_preset \
-    --url http://localhost:8002/Default
+    --url <PRODUCT_URL>
 ```
 
 #### Manage filter presets (`filter-preset`)
@@ -1148,13 +1148,13 @@ A preset stores any combination of the filter arguments available to
 # Create a minimal preset that filters by severity:
 CodeChecker cmd filter-preset new \
     --name "high_and_critical" \
-    --url http://localhost:8002/Default \
+    --url <PRODUCT_URL> \
     --severity critical high
 
 # Create a preset with many filter parameters:
 CodeChecker cmd filter-preset new \
     --name "FullPreset" \
-    --url http://localhost:8002/Default \
+    --url <PRODUCT_URL> \
     --severity critical high medium low style unspecified \
     --review-status unreviewed confirmed false_positive intentional \
     --detection-status new reopened unresolved resolved off unavailable \
@@ -1185,16 +1185,16 @@ already-existing name will fail.
 ```
 # List all presets (default table output):
 CodeChecker cmd filter-preset list \
-    --url http://localhost:8002/Default
+    --url <PRODUCT_URL>
 
 # List presets in CSV format:
 CodeChecker cmd filter-preset list \
-    --url http://localhost:8002/Default \
+    --url <PRODUCT_URL> \
     --output csv
 
 # List presets in JSON format:
 CodeChecker cmd filter-preset list \
-    --url http://localhost:8002/Default \
+    --url <PRODUCT_URL> \
     --output json
 ```
 
@@ -1204,7 +1204,7 @@ CodeChecker cmd filter-preset list \
 # Delete a preset by its ID (shown in the list output):
 CodeChecker cmd filter-preset delete \
     --id 1 \
-    --url http://localhost:8002/Default
+    --url <PRODUCT_URL>
 ```
 
 ##### Applying a filter preset to results
@@ -1214,7 +1214,7 @@ Use the `--filter-preset` flag with `cmd results` to apply a saved preset:
 ```
 CodeChecker cmd results my_run \
     --filter-preset "high_and_critical" \
-    --url http://localhost:8002/Default
+    --url <PRODUCT_URL>
 ```
 
 **Note:** `--filter-preset` cannot be combined with other filter arguments.
