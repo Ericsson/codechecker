@@ -1797,11 +1797,13 @@ class ThriftRequestHandler:
                     .delete()
                 session.commit()
             return preset_id
+        except codechecker_api_shared.ttypes.RequestFailed:
+            raise
         except Exception as exc:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                f"CodeChecker could not delete a preset with id: {preset_id}:",
-                exc)
+                f"Could not delete filter preset with id {preset_id}: \
+                {str(exc)}")
 
     @exc_to_thrift_reqfail
     @timeit

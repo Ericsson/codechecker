@@ -410,7 +410,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         """
 
         with self.assertRaises(RequestFailed):
-            self._cc_client.deleteFilterPreset(99999)
+            self._cc_client.deleteFilterPreset(9999)
 
         with self.assertRaises(RequestFailed):
             self._cc_client.deleteFilterPreset(88888)
