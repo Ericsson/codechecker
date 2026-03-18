@@ -176,7 +176,7 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self.assertEqual(ret, 0)
         self.assertIn(
             "usage: CodeChecker cmd filter-preset", out)
-        self.assertIn("options:", out)
+        self.assertIn("optional arguments:", out)
         self.assertIn("available actions:", out)
         self.assertIn("list", out)
         self.assertIn("new", out)
@@ -289,10 +289,16 @@ class TestFilterPresetCmdLine(unittest.TestCase):
             "Filter preset 'test_preset_to_stay' "
             "created successfully.", out2)
 
+        # find the id of the preset to delete
+        presets = self._cc_client.listFilterPreset()
+        preset_to_delete = next((p for p in presets
+                                 if p.name == "test_preset_to_delete"), None)
+        preset_id = preset_to_delete.id if preset_to_delete else None
+
         # delete the preset
         cmd = [self._codechecker_cmd, 'cmd',
                'filter-preset', 'delete',
-               '--id', '1',
+               '--id', str(preset_id),
                '--url', str(self.server_url)]
         ret, out, _ = run_cmd(cmd)
 

@@ -54,6 +54,10 @@ class TestFilterPresetAPI(unittest.TestCase):
         self._cc_client = env.setup_viewer_client(self._test_workspace)
         self.assertIsNotNone(self._cc_client)
 
+        presets = self._cc_client.listFilterPreset()
+        for preset in presets:
+            self._cc_client.deleteFilterPreset(preset.id)
+
     def teardown_method(self, _):
         """
         Clean up after each test method.
@@ -81,7 +85,11 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
-        self.assertEqual(preset_id, 1, "Should return valid ID")
+        stored = self._cc_client.getFilterPreset(preset_id)
+        self.assertEqual(stored.id, preset_id)
+        self.assertEqual(stored.name, "TestPreset")
+        self.assertEqual(stored.reportFilter.severity, [50, 40])
+        self.assertEqual(stored.reportFilter.checkerName, ['clang*'])
 
     def test_store_filter_preset_updates_existing(self):
         """
@@ -97,15 +105,17 @@ class TestFilterPresetAPI(unittest.TestCase):
             )
 
         preset_id = self._cc_client.storeFilterPreset(preset)
-        self.assertEqual(preset_id, 1)
+
+        stored = self._cc_client.getFilterPreset(preset_id)
+        self.assertEqual(stored.name, preset_name)
 
         updated_filter = ttypes.ReportFilter(severity=[50, 40, 30])
-        updated_preset = ttypes.FilterPreset(1,
+        updated_preset = ttypes.FilterPreset(preset_id,
                                              preset_name,
                                              updated_filter)
 
         new_id = self._cc_client.storeFilterPreset(updated_preset)
-        self.assertEqual(new_id, 1)
+        self.assertEqual(new_id, preset_id)
 
         all_presets = self._cc_client.listFilterPreset()
         preset_names = [p.name for p in all_presets]
@@ -136,8 +146,12 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
-        self.assertNotEqual(preset_id, -1)
-        self.assertEqual(preset_id, 1)
+        stored = self._cc_client.getFilterPreset(preset_id)
+        self.assertEqual(stored.id, preset_id)
+        self.assertEqual(stored.name, "ComplexPreset")
+        self.assertEqual(len(stored.reportFilter.severity), 3)
+        self.assertEqual(len(stored.reportFilter.checkerName), 2)
+        self.assertEqual(len(stored.reportFilter.filepath), 2)
 
     def test_store_filter_preset_with_empty_filter(self):
         """
@@ -148,11 +162,9 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
-        self.assertNotEqual(preset_id, -1)
-        self.assertEqual(preset_id, 1)
-
         stored = self._cc_client.getFilterPreset(preset_id)
         self.assertIsNotNone(stored)
+        self.assertEqual(stored.id, preset_id)
         self.assertEqual(stored.name, "EmptyFilter")
         self.assertIsNotNone(stored.reportFilter)
         self.assertEqual(stored.reportFilter.filepath, None)
@@ -255,9 +267,9 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
-        self.assertEqual(preset_id, 1)
-
         stored = self._cc_client.getFilterPreset(preset_id)
+        self.assertEqual(stored.id, preset_id)
+        self.assertEqual(stored.name, "CompleteTest")
 
         rf = stored.reportFilter
 
@@ -328,18 +340,17 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(len(presets), 3)
 
         preset_ids = [p.id for p in presets]
-        # check if id's of all three presets are in the list
-        # of returned presets.
         self.assertIn(id1, preset_ids)
         self.assertIn(id2, preset_ids)
         self.assertIn(id3, preset_ids)
 
-        # check that the id's are correct.
-        self.assertEqual(id1, 1)
-        self.assertEqual(id2, 2)
-        self.assertEqual(id3, 3)
+        self.assertEqual(
+            self._cc_client.getFilterPreset(id1).name, "Preset1")
+        self.assertEqual(
+            self._cc_client.getFilterPreset(id2).name, "Preset2")
+        self.assertEqual(
+            self._cc_client.getFilterPreset(id3).name, "Preset3")
 
-        # check that the names are in the list of returned presets.
         preset_names = [p.name for p in presets]
         self.assertIn("Preset1", preset_names)
         self.assertIn("Preset2", preset_names)
@@ -364,11 +375,10 @@ class TestFilterPresetAPI(unittest.TestCase):
         id1 = self._cc_client.storeFilterPreset(preset1)
         id2 = self._cc_client.storeFilterPreset(preset2)
 
-        self.assertNotEqual(id1, -1)
-        self.assertNotEqual(id2, -1)
-
-        self.assertEqual(id1, 1)
-        self.assertEqual(id2, 2)
+        self.assertEqual(
+            self._cc_client.getFilterPreset(id1).name, "WithFilter1")
+        self.assertEqual(
+            self._cc_client.getFilterPreset(id2).name, "WithFilter2")
 
         presets = self._cc_client.listFilterPreset()
 
