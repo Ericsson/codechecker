@@ -21,7 +21,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:fio39-c"
     ],
     "cppcheck-StlMissingComparison": [
       "profile:default",
@@ -58,7 +59,8 @@
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
       "memory-safety:cwe-126",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:arr30-c"
     ],
     "cppcheck-arrayIndexOutOfBoundsCond": [
       "profile:default",
@@ -100,7 +102,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:dcl30-c"
     ],
     "cppcheck-autovarInvalidDeallocation": [
       "guideline:memory-safety",
@@ -108,7 +111,8 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-590",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem34-c"
     ],
     "cppcheck-badBitmaskCheck": [
       "profile:default",
@@ -132,7 +136,9 @@
       "profile:sensitive",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp33-c",
+      "sei-cert-c:str38-c"
     ],
     "cppcheck-catchExceptionByValue": [
       "severity:STYLE"
@@ -187,6 +193,10 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
+    ],
+    "cppcheck-subtractPointers": [
+      "severity:MEDIUM",
+      "sei-cert-c:arr336-c"
     ],
     "cppcheck-compareValueOutOfTypeRangeError": [
       "severity:STYLE"
@@ -246,7 +256,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:str53-cpp"
     ],
     "cppcheck-copyCtorAndEqOperator": [
       "profile:default",
@@ -284,7 +295,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:dcl-30-c"
     ],
     "cppcheck-danglingReference": [
       "profile:default",
@@ -299,7 +311,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem50-cpp"
     ],
     "cppcheck-deallocDealloc": [
       "profile:default",
@@ -319,7 +332,9 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-416",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem30-c",
+      "sei-cert-c:mem50-cpp"
     ],
     "cppcheck-derefInvalidIterator": [
       "profile:default",
@@ -339,7 +354,9 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-415",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem36-c",
+      "sei-cert-c:mem56-cpp"
     ],
     "cppcheck-duplInheritedMember": [
       "profile:default",
@@ -397,6 +414,14 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "cppcheck-throwInEntryPoint": [
+      "severity:MEDIUM",
+      "sei-cert-c:con56-cpp",
+      "sei-cert-c:err55-cpp",
+      "sei-cert-c:err57-cpp",
+      "sei-cert-c:mem53-cpp",
+      "sei-cert-c:msc53-cpp"
     ],
     "cppcheck-fflushOnInputStream": [
       "severity:LOW"
@@ -507,7 +532,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:str52-cpp"
     ],
     "cppcheck-invalidContainerLoop": [
       "severity:HIGH"
@@ -522,7 +548,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:flp32-c"
     ],
     "cppcheck-invalidFunctionArgBool": [
       "profile:default",
@@ -552,7 +579,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem50-cpp"
     ],
     "cppcheck-invalidPointerCast": [
       "severity:LOW"
@@ -701,8 +729,12 @@
     "cppcheck-legacyUninitvar": [
       "guideline:sei-cert-c",
       "profile:security",
+      "severity:HIGH",
       "sei-cert-c:exp33-c",
-      "severity:HIGH"
+      "sei-cert-c:exp53-cpp",
+      "sei-cert-c:exp54-cpp",
+      "sei-cert-c:msc33-c",
+      "sei-cert-c:oop57-cpp"
     ],
     "cppcheck-literalWithCharPtrCompare": [
       "profile:default",
@@ -732,19 +764,23 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem31-c",
+      "sei-cert-c:mem34-c"
     ],
     "cppcheck-memleakOnRealloc": [
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:err33-c"
     ],
     "cppcheck-memsetClass": [
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp62-cpp"
     ],
     "cppcheck-memsetClassFloat": [
       "severity:LOW"
@@ -776,7 +812,8 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-762",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem51-cpp"
     ],
     "cppcheck-mismatchSize": [
       "profile:default",
@@ -821,7 +858,10 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:con35-c",
+      "sei-cert-c:msc37-c",
+      "sei-cert-c:msc52-cpp"
     ],
     "cppcheck-moduloAlwaysTrueFalse": [
       "profile:default",
@@ -854,7 +894,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:ctr50-cpp"
     ],
     "cppcheck-negativeIndex": [
       "guideline:memory-safety",
@@ -902,7 +943,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp34-c"
     ],
     "cppcheck-nullPointerArithmetic": [
       "profile:default",
@@ -920,17 +962,29 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:err33-c"
+    ],
+    "cppcheck-nullPointerArithmeticOutOfMemory": [
+      "severity:MEDIUM",
+      "sei-cert-c:arr30-c",
+      "sei-cert-c:err33-c"
     ],
     "cppcheck-nullPointerOutOfMemory": [
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:exp33-c",
+      "sei-cert-c:exp34-c",
+      "sei-cert-c:mem30-c",
+      "sei-cert-c:mem33-c",
+      "sei-cert-c:sig30-c"
     ],
     "cppcheck-nullPointerOutOfResources": [
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:err33-c"
     ],
     "cppcheck-nullPointerRedundantCheck": [
       "profile:default",
@@ -1111,7 +1165,9 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:err30-c",
+      "sei-cert-c:fio42-c"
     ],
     "cppcheck-rethrowNoCurrentException": [
       "profile:default",
@@ -1140,7 +1196,10 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-562",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:dcl30-c",
+      "sei-cert-c:exp54-cpp",
+      "sei-cert-c:exp61-cpp"
     ],
     "cppcheck-returnLocalVariable": [
       "profile:default",
@@ -1200,7 +1259,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:int34-c"
     ],
     "cppcheck-shiftNegativeLHS": [
       "severity:LOW"
@@ -1209,7 +1269,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:int34-c"
     ],
     "cppcheck-shiftTooManyBitsSigned": [
       "profile:default",
@@ -1344,7 +1405,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:str30-c"
     ],
     "cppcheck-suspiciousCase": [
       "profile:default",
@@ -1362,7 +1424,8 @@
       "severity:MEDIUM"
     ],
     "cppcheck-syntaxError": [
-      "severity:CRITICAL"
+      "severity:CRITICAL",
+      "sei-cert-c:pre32-c"
     ],
     "cppcheck-thisSubtraction": [
       "profile:default",
@@ -1428,7 +1491,9 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp53-cpp",
+      "sei-cert-c:mem53-cpp"
     ],
     "cppcheck-uninitstring": [
       "profile:default",
@@ -1442,13 +1507,18 @@
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-457",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:ctr53-cpp",
+      "sei-cert-c:exp33-c",
+      "sei-cert-c:exp62-cpp"
     ],
     "cppcheck-unknownEvaluationOrder": [
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp30-c",
+      "sei-cert-c:exp50-cpp"
     ],
     "cppcheck-unknownMacro": [
       "severity:CRITICAL"
@@ -1580,7 +1650,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp58-cpp"
     ],
     "cppcheck-va_start_subsequentCalls": [
       "profile:default",
@@ -1610,7 +1681,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:oop52-cpp"
     ],
     "cppcheck-writeReadOnlyFile": [
       "profile:default",
@@ -1646,7 +1718,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:int33-c"
     ],
     "cppcheck-zerodivcond": [
       "profile:default",
