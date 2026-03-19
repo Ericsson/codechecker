@@ -62,7 +62,8 @@ module.exports = {
       '@cc/report-server-types': join('codechecker-api', 'lib', 'report_server_types.js'),
       '@cc/shared-types': join('codechecker-api', 'lib', 'codechecker_api_shared_types.js'),
       'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js'),
-      'Vuetify': join('vuetify', 'lib', 'components')
+      'Vuetify': join('vuetify', 'lib', 'components'),
+      'vue$': join('vue', 'dist', 'vue.esm.js')
     }
   },
   module: {

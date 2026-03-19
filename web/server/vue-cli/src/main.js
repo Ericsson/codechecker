@@ -41,6 +41,8 @@ import { eventHub } from "@cc-api";
 
 Vue.config.productionTip = false;
 
+Vue.config.runtimeCompiler = true;
+
 let isFirstRouterResolve = true;
 
 // Ensure we checked auth before each page load.
