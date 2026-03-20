@@ -66,9 +66,9 @@ const headers = [
 </script>
 
 <style lang="scss">
-$class-name: ".severity-statistics > :deep(.v-data-table__wrapper)";
-$unreviewed_col: 2;
-$colspan: 0;
-
-@use "@/components/Statistics/style.scss";
+@use "@/components/Statistics/style.scss" with (
+  $class-name: ".severity-statistics",
+  $unreviewed_col: 2,
+  $colspan: 0
+);
 </style>

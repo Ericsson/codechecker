@@ -1,63 +1,61 @@
 <template>
   <v-col>
     <v-row>
-      <v-card flat>
-        <component-severity-statistics-table
-          :items="statistics"
-          :loading="loading"
-          :filters="statisticsFilters"
-          :total-columns="totalColumns"
+      <component-severity-statistics-table
+        :items="statistics"
+        :loading="loading"
+        :filters="statisticsFilters"
+        :total-columns="totalColumns"
+      >
+        <template
+          v-for="item in severityValues"
+          v-slot:[getHeaderSlotName(item)]="{ column }"
+          :key="item[0]"
         >
-          <template
-            v-for="item in severityValues"
-            v-slot:[getHeaderSlotName(item)]="{ column }"
-            :key="item[0]"
-          >
-            <span>
-              <severity-icon :status="item[1]" :size="16" />
-              {{ column.title }}
-            </span>
-          </template>
-
-          <template
-            v-for="i in severityValues"
-            v-slot:[getItemSlotName(i)]="{ item }"
-            :key="i[0]"
-          >
-            <span>
-              <router-link
-                v-if="item[i[0]].count"
-                :to="{ name: 'reports', query: {
-                  ...router.currentRoute.query,
-                  ...(item.$queryParams || {}),
-                  'source-component': item.component,
-                  'severity': severity.severityFromCodeToString(i[1])
-                }}"
-              >
-                {{ item[i[0]].count }}
-              </router-link>
-
-              <report-diff-count
-                :num-of-new-reports="item[i[0]].new"
-                :num-of-resolved-reports="item[i[0]].resolved"
-                :extra-query-params="{
-                  'source-component': item.component,
-                  'severity': severity.severityFromCodeToString(i[1])
-                }"
-              />
-            </span>
-          </template>
-
-          <template v-slot:header.reports.count="{ column }">
-            <detection-status-icon
-              :status="DetectionStatus.UNRESOLVED"
-              :size="16"
-              left
-            />
+          <span>
+            <severity-icon :status="item[1]" :size="16" />
             {{ column.title }}
-          </template>
-        </component-severity-statistics-table>
-      </v-card>
+          </span>
+        </template>
+
+        <template
+          v-for="i in severityValues"
+          v-slot:[getItemSlotName(i)]="{ item }"
+          :key="i[0]"
+        >
+          <span>
+            <router-link
+              v-if="item[i[0]].count"
+              :to="{ name: 'reports', query: {
+                ...router.currentRoute.query,
+                ...(item.$queryParams || {}),
+                'source-component': item.component,
+                'severity': severity.severityFromCodeToString(i[1])
+              }}"
+            >
+              {{ item[i[0]].count }}
+            </router-link>
+
+            <report-diff-count
+              :num-of-new-reports="item[i[0]].new"
+              :num-of-resolved-reports="item[i[0]].resolved"
+              :extra-query-params="{
+                'source-component': item.component,
+                'severity': severity.severityFromCodeToString(i[1])
+              }"
+            />
+          </span>
+        </template>
+
+        <template v-slot:header.reports.count="{ column }">
+          <detection-status-icon
+            :status="DetectionStatus.UNRESOLVED"
+            :size="16"
+            left
+          />
+          {{ column.title }}
+        </template>
+      </component-severity-statistics-table>
     </v-row>
     <v-row>
       <v-card flat>
