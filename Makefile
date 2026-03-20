@@ -4,15 +4,8 @@ CURRENT_DIR = ${CURDIR}
 BUILD_DIR ?= $(CURRENT_DIR)/build
 PYTHON_BIN ?= python3
 
-API_VERSION := $(shell grep "^api_version" $(CURRENT_DIR)/web/api/py/codechecker_api/setup.py | cut -d"'" -f2)
-VENV_API_VERSION := $(shell \
-	if [ -f $(CURRENT_DIR)/venv_dev/bin/pip ]; then \
-		$(CURRENT_DIR)/venv_dev/bin/pip show codechecker-api 2>/dev/null | grep "^Version:" | cut -d' ' -f2; \
-	elif [ -f $(CURRENT_DIR)/venv/bin/pip ]; then \
-		$(CURRENT_DIR)/venv/bin/pip show codechecker-api 2>/dev/null | grep "^Version:" | cut -d' ' -f2; \
-	else \
-		echo "no venv found"; \
-	fi)
+API_VERSION := $(shell python3 -c "exec(open('$(CURRENT_DIR)/web/codechecker_web/shared/version.py').read()); print(f'{max(SUPPORTED_VERSIONS)}.{SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS)]}.0')")
+VENV_API_VERSION := $(shell pip show codechecker-api 2>/dev/null | grep "^Version:" | cut -d' ' -f2)
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
