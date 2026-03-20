@@ -313,7 +313,7 @@ async function onRunHistoryFilterChanged() {
     const { limit, offset } = run.$history;
 
     const { histories, hasMore } =
-      await getRunHistory(run.runId.toNumber(), limit + offset);
+      await getRunHistory(run.runId.toNumber(), limit, offset);
 
     run.$history.hasMore = hasMore;
     run.$history.values = histories;
@@ -432,7 +432,7 @@ async function runExpanded(run, limit=10, offset=0) {
 async function getRunHistory(runId, limit=10, offset=0) {
   return new Promise(resolve => {
     ccService.getClient().getRunHistory([ runId ], limit, offset,
-      runHistoryFilter, handleThriftError(histories => {
+      runHistoryFilter.value, handleThriftError(histories => {
         resolve({
           hasMore: histories.length === limit,
           runHistory: histories.map(h => ({

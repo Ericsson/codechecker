@@ -201,30 +201,22 @@ watch(() => store.getters["run/runTag"], _.debounce(_runTag => {
 }, 500));
 
 watch(() => store.getters["run/storedAfter"], _.debounce(_storedAfter => {
-  if (!_storedAfter) {
-    return;
-  }
-
   let _date = _storedAfter;
   if (_date instanceof Date) {
     _date = dateTimeToStr(_date);
   }
 
-  updateUrl({ "stored-after": _date });
+  updateUrl({ "stored-after": _date || undefined });
   emit("on-run-filter-changed");
   emit("on-run-history-filter-changed");
 }, 500));
 
 watch(() => store.getters["run/storedBefore"], _.debounce(_storedBefore => {
-  if (!_storedBefore) {
-    return;
-  }
-
   let _date = _storedBefore;
   if (_date instanceof Date) {
     _date = dateTimeToStr(_date);
   }
-  updateUrl({ "stored-before": _date });
+  updateUrl({ "stored-before": _date || undefined });
   emit("on-run-filter-changed");
   emit("on-run-history-filter-changed");
 }, 500));
