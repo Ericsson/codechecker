@@ -157,7 +157,7 @@ import {
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
@@ -242,6 +242,10 @@ watch(selectedGuidelines, async () => {
   await fetchStatistics();
 });
 
+onMounted(() => {
+  fetchStatistics();
+});
+
 function checker_stat(stat) {
   statistics.value = [];
   Object.keys(all_guideline_rules.value).forEach(
@@ -289,7 +293,6 @@ function checker_stat(stat) {
       );
     });
 }
-
 
 function downloadCSV() {
   const _values = [];
