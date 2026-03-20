@@ -56,7 +56,7 @@
           variant="text"
           class="cancel-btn"
           :color="cancelBtnColor"
-          @click="$emit('cancel')"
+          @click="cancelDialog()"
         >
           {{ cancelBtnLabel }}
         </v-btn>
@@ -65,7 +65,7 @@
           variant="text"
           class="confirm-btn"
           :color="confirmBtnColor"
-          @click="$emit('confirm')"
+          @click="emit('confirm')"
         >
           {{ confirmBtnLabel }}
         </v-btn>
@@ -106,4 +106,9 @@ const dialog = computed({
     emit("update:modelValue", value);
   }
 });
+
+function cancelDialog() {
+  emit("cancel");
+  dialog.value = false;
+}
 </script>
