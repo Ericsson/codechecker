@@ -295,21 +295,6 @@ import {
 
 import { useRoute } from "vue-router";
 
-/*import CodeMirror from "codemirror";
-import "codemirror/lib/codemirror.css";
-import "codemirror/mode/clike/clike.js";
-
-// Import libaries for code highlights.
-import "codemirror/addon/scroll/annotatescrollbar.js";
-import "codemirror/addon/search/match-highlighter.js";
-import "codemirror/addon/search/matchesonscrollbar.js";
-
-// Import libaries to support code search.
-import "codemirror/addon/dialog/dialog.css";
-import "codemirror/addon/dialog/dialog.js";
-import "codemirror/addon/search/search.js";
-import "codemirror/addon/search/searchcursor.js";*/
-
 import {
   Decoration,
   EditorView,
@@ -825,7 +810,7 @@ function addLineWidget(element, props, appContext) {
   const advancedLineWidget = createLineWidget(line.to, {
     ...props,
     id: element.$id,
-    value: element.msg,
+    value: element.$message,
     marginLeft: marginLeft,
     report: report.value
   }, appContext);

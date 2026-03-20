@@ -22,6 +22,7 @@
         variant="text"
         icon="mdi-chevron-left"
         size="small"
+        density="compact"
         @click="showPrevReport"
       />
 
@@ -52,6 +53,7 @@
         variant="text"
         icon="mdi-chevron-right"
         size="small"
+        density="compact"
         @click="showNextReport"
       />
     </div>
@@ -122,8 +124,8 @@ function showDocumentation() {
 
 <style lang="scss">
 .report-step-msg {
-  padding-top: 2px;
-  padding-bottom: 2px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
   margin-bottom: 2px;
   max-width: 640px;
   white-space: inherit;
