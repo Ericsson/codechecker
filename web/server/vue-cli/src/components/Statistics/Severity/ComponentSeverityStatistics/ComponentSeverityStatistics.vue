@@ -1,65 +1,87 @@
 <template>
-  <v-col>
-    <v-row>
-      <component-severity-statistics-table
-        :items="statistics"
-        :loading="loading"
-        :filters="statisticsFilters"
-        :total-columns="totalColumns"
-      >
-        <template
-          v-for="item in severityValues"
-          v-slot:[getHeaderSlotName(item)]="{ column }"
-          :key="item[0]"
-        >
-          <span>
-            <severity-icon :status="item[1]" :size="16" />
-            {{ column.title }}
-          </span>
-        </template>
-
-        <template
-          v-for="i in severityValues"
-          v-slot:[getItemSlotName(i)]="{ item }"
-          :key="i[0]"
-        >
-          <span>
-            <router-link
-              v-if="item[i[0]].count"
-              :to="{ name: 'reports', query: {
-                ...router.currentRoute.query,
-                ...(item.$queryParams || {}),
-                'source-component': item.component,
-                'severity': severity.severityFromCodeToString(i[1])
-              }}"
+  <v-row justify="center">
+    <v-col cols="12">
+      <div class="text-left">
+        <div class="text-h6 mb-4">
+          Component severity statistics
+          <tooltip-help-icon>
+            This table shows component statistics per severity
+            levels.
+            <br><br>
+            Each row can be expanded which will show a checker statistics
+            for the actual component.
+            <br><br>
+            The following filters don't affect these values:
+            <ul>
+              <li><b>Severity</b> filter.</li>
+              <li><b>Source component</b> filter.</li>
+            </ul>
+          </tooltip-help-icon>
+        </div>
+        <div class="d-flex justify-center">
+          <component-severity-statistics-table
+            :items="statistics"
+            :loading="loading"
+            :filters="statisticsFilters"
+            :total-columns="totalColumns"
+          >
+            <template
+              v-for="item in severityValues"
+              v-slot:[getHeaderSlotName(item)]="{ column }"
+              :key="item[0]"
             >
-              {{ item[i[0]].count }}
-            </router-link>
+              <span>
+                <severity-icon :status="item[1]" :size="16" />
+                {{ column.title }}
+              </span>
+            </template>
 
-            <report-diff-count
-              :num-of-new-reports="item[i[0]].new"
-              :num-of-resolved-reports="item[i[0]].resolved"
-              :extra-query-params="{
-                'source-component': item.component,
-                'severity': severity.severityFromCodeToString(i[1])
-              }"
-            />
-          </span>
-        </template>
+            <template
+              v-for="i in severityValues"
+              v-slot:[getItemSlotName(i)]="{ item }"
+              :key="i[0]"
+            >
+              <span>
+                <router-link
+                  v-if="item[i[0]].count"
+                  :to="{ name: 'reports', query: {
+                    ...router.currentRoute.query,
+                    ...(item.$queryParams || {}),
+                    'source-component': item.component,
+                    'severity': severity.severityFromCodeToString(i[1])
+                  }}"
+                >
+                  {{ item[i[0]].count }}
+                </router-link>
 
-        <template v-slot:header.reports.count="{ column }">
-          <detection-status-icon
-            :status="DetectionStatus.UNRESOLVED"
-            :size="16"
-            left
-          />
-          {{ column.title }}
-        </template>
-      </component-severity-statistics-table>
-    </v-row>
-    <v-row>
-      <v-card flat>
-        <v-card-title class="justify-center">
+                <report-diff-count
+                  :num-of-new-reports="item[i[0]].new"
+                  :num-of-resolved-reports="item[i[0]].resolved"
+                  :extra-query-params="{
+                    'source-component': item.component,
+                    'severity': severity.severityFromCodeToString(i[1])
+                  }"
+                />
+              </span>
+            </template>
+
+            <template v-slot:header.reports.count="{ column }">
+              <detection-status-icon
+                :status="DetectionStatus.UNRESOLVED"
+                :size="16"
+                left
+              />
+              {{ column.title }}
+            </template>
+          </component-severity-statistics-table>
+        </div>
+      </div>
+    </v-col>
+  </v-row>
+  <v-row justify="center">
+    <v-col cols="12">
+      <div class="text-left">
+        <div class="text-h6 mb-4">
           Report severities
           <tooltip-help-icon>
             This pie chart shows the checker severity distribution in the
@@ -71,26 +93,28 @@
               <li><b>Source component</b> filter.</li>
             </ul>
           </tooltip-help-icon>
-        </v-card-title>
-        <v-row justify="center">
-          <v-overlay
-            :value="loading"
-            :absolute="true"
-            :opacity="0.2"
-          >
-            <v-progress-circular
-              indeterminate
-              size="64"
+        </div>
+        <div class="d-flex justify-center">
+          <div style="width: 400px; height: 400px; position: relative;">
+            <v-overlay
+              :value="loading"
+              :absolute="true"
+              :opacity="0.2"
+            >
+              <v-progress-circular
+                indeterminate
+                size="64"
+              />
+            </v-overlay>
+            <component-severity-statistics-chart
+              :loading="loading"
+              :statistics="statistics"
             />
-          </v-overlay>
-          <component-severity-statistics-chart
-            :loading="loading"
-            :statistics="statistics"
-          />
-        </v-row>
-      </v-card>
-    </v-row>
-  </v-col>
+          </div>
+        </div>
+      </div>
+    </v-col>
+  </v-row>
 </template>
 
 <script setup>

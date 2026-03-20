@@ -27,24 +27,19 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-card
-          flat
-        >
-          <v-card-title
-            class="justify-center"
-          >
-            Severity statistics
-            <tooltip-help-icon>
-              This table shows severity statistics for the product.
-              <br><br>
-              The following filters don't affect these values:
-              <ul>
-                <li><b>Severity</b> filter.</li>
-                <li><b>Source component</b> filter.</li>
-              </ul>
-            </tooltip-help-icon>
-          </v-card-title>
-
+        <div class="text-h6 mb-4">
+          Severity statistics
+          <tooltip-help-icon>
+            This table shows severity statistics for the product.
+            <br><br>
+            The following filters don't affect these values:
+            <ul>
+              <li><b>Severity</b> filter.</li>
+              <li><b>Source component</b> filter.</li>
+            </ul>
+          </tooltip-help-icon>
+        </div>
+        <div class="d-flex justify-center">
           <severity-statistics-table
             :items="statistics"
             :loading="loading"
@@ -53,7 +48,7 @@
           <unique-stat-warning
             v-if="baseStats.reportFilter.value.isUnique"
           />
-        </v-card>
+        </div>
       </v-col>
     </v-row>
     <v-row>
@@ -61,25 +56,6 @@
         <v-card
           flat
         >
-          <v-card-title
-            class="justify-center"
-          >
-            Component severity statistics
-
-            <tooltip-help-icon>
-              This table shows component statistics per severity
-              levels.
-              <br><br>
-              Each row can be expanded which will show a checker statistics
-              for the actual component.
-              <br><br>
-              The following filters don't affect these values:
-              <ul>
-                <li><b>Severity</b> filter.</li>
-                <li><b>Source component</b> filter.</li>
-              </ul>
-            </tooltip-help-icon>
-          </v-card-title>
           <component-severity-statistics
             :bus="bus"
             :namespace="namespace"
