@@ -1200,6 +1200,8 @@ CodeChecker cmd filter-preset list \
 
 ##### Deleting a filter preset
 
+You can find the preset ID by [listing filter presets](#listing-filter-presets).
+
 ```
 # Delete a preset by its ID (shown in the list output):
 CodeChecker cmd filter-preset delete \

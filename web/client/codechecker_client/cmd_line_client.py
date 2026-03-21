@@ -514,7 +514,6 @@ def parse_report_filter(client, args):
             )
             sys.exit(1)
 
-        LOG.info("Filter preset '%s' loaded successfully.", preset_name)
         report_filter = preset.reportFilter
     else:
         # No preset – build the filter from CLI arguments.

@@ -1438,42 +1438,35 @@ def remove_reports(session: DBSession,
             .delete(synchronize_session=False)
 
 
-def tranform_rf_db_to_thrift(rf_db):
+def transform_rf_db_to_thrift(rf_db):
     """
     Transforms a ReportFilter DB object to a ReportFilter thrift object.
     """
     rf_db = json.loads(rf_db)
-    # Pre creation of variables that are objects themselves.
+
     recreated_bug_path_length = None
-    if "bugPathLength" in rf_db and isinstance(rf_db["bugPathLength"], dict):
+    if rf_db.get("bugPathLength"):
         recreated_bug_path_length = ttypes.BugPathLengthRange(
             min=rf_db["bugPathLength"].get("min"),
             max=rf_db["bugPathLength"].get("max")
         )
 
-    # ReportDate
     recreated_date = None
-    if "date" in rf_db and isinstance(rf_db["date"], dict):
-        # as both variables of ReportDate
-        # are of types.DateInterval we need to convert them too
-
+    if rf_db.get("date"):
         recreated_date = ttypes.ReportDate(
             detected=ttypes.DateInterval(**rf_db["date"]["detected"])
-            if isinstance(rf_db["date"].get("detected", None), dict) else None,
+            if rf_db["date"].get("detected") else None,
             fixed=ttypes.DateInterval(**rf_db["date"]["fixed"])
-            if isinstance(rf_db["date"].get("fixed", None), dict) else None
+            if rf_db["date"].get("fixed") else None
         )
 
-    # Annotations
     recreated_annotations = []
-    if "annotations" in rf_db and isinstance(rf_db["annotations"], list):
+    if rf_db.get("annotations"):
         for anno in rf_db["annotations"]:
-            if isinstance(anno, dict):
-                recreated_annotation = ttypes.Pair(
-                    first=anno.get("first"),
-                    second=anno.get("second")
-                )
-                recreated_annotations.append(recreated_annotation)
+            recreated_annotations.append(ttypes.Pair(
+                first=anno.get("first"),
+                second=anno.get("second")
+            ))
 
     # NOTE: Update this mapping if new fields are added
     # to the ReportFilter struct.
@@ -1776,9 +1769,9 @@ class ThriftRequestHandler:
     @timeit
     def deleteFilterPreset(self, preset_id):
         """
-        Delete preset from products list based on preset_id.
-        returns the id of the deleted preset, -1 in case of error or
-        if the preset does not exist.
+        Delete a filter preset based on preset_id.
+        Returns the ID of the deleted preset. Raises an error if the
+        preset does not exist or could not be deleted.
         """
         self.__require_admin()
         LOG.info("Deleting filter preset by ID: %s", preset_id)
@@ -1826,7 +1819,7 @@ class ThriftRequestHandler:
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 f"No filter preset found with id {preset_id}!")
 
-        report_filter = tranform_rf_db_to_thrift(preset.report_filter)
+        report_filter = transform_rf_db_to_thrift(preset.report_filter)
 
         return ttypes.FilterPreset(
             preset.id, preset.preset_name, report_filter)
@@ -1855,7 +1848,7 @@ class ThriftRequestHandler:
                     ttypes.FilterPreset(
                         preset.id,
                         preset.preset_name,
-                        tranform_rf_db_to_thrift(
+                        transform_rf_db_to_thrift(
                             preset.report_filter)))
 
             return list_of_transformed_presets

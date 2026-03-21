@@ -451,10 +451,15 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="R|Filter results by report statuses.\n"
                               "Reports can be assigned a report status of the "
                               "following values:\n"
-                              "- Outstanding: Nobody has seen this report.\n"
-                              "- Closed: This is really a bug.\n" +
+                              "- Outstanding: Currently detected and "
+                              "still unresolved reports.\n"
+                              "- Closed: Reports marked as fixed, false "
+                              "positive, or otherwise resolved.\n" +
                               warn_diff_mode)
 
+
+def __add_filter_preset_argument(parser):
+    """Add the --filter-preset argument to the given parser."""
     parser.add_argument('--filter-preset',
                         type=str,
                         dest='filter_preset_name',
@@ -463,10 +468,9 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                         default=argparse.SUPPRESS,
                         help="Use a pre-configured filter preset. The preset "
                              "is loaded from the server and applied to the "
-                             "results. You can override specific filters by "
-                             "providing additional filter arguments. Use "
-                             "'CodeChecker cmd filter-preset list' to see "
-                             "available presets.")
+                             "results. Use 'CodeChecker cmd filter-preset "
+                             "list --url <PRODUCT_URL>' to see available "
+                             "presets.")
 
 
 def __register_results(parser):
@@ -498,6 +502,7 @@ def __register_results(parser):
                              "events, bug report points etc.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
+    __add_filter_preset_argument(parser)
 
 
 def __register_diff(parser):
@@ -563,6 +568,7 @@ def __register_diff(parser):
                              "the reported defect.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
+    __add_filter_preset_argument(parser)
 
     group = parser.add_argument_group(
         "comparison modes",
@@ -643,6 +649,7 @@ def __register_sum(parser):
     default_filter_values = DEFAULT_FILTER_VALUES
     default_filter_values['uniqueing'] = 'on'
     __add_filtering_arguments(parser, default_filter_values)
+    __add_filter_preset_argument(parser)
 
 
 def __register_delete(parser):
@@ -1561,14 +1568,7 @@ def __register_filter_presets(parser):
                             dest='preset_name',
                             required=True,
                             metavar='PRESET_NAME',
-                            help="Name of the filter preset to create/edit.")
-        parser.add_argument('--description',
-                            type=str,
-                            dest='description',
-                            required=False,
-                            default=argparse.SUPPRESS,
-                            help="Description of the filter preset.")
-
+                            help="Name of the filter preset to create.")
         __add_filtering_arguments(parser)
 
     def __register_delete(parser):
@@ -1597,8 +1597,8 @@ def __register_filter_presets(parser):
     new_preset = subcommands.add_parser(
         'new',
         formatter_class=arg.RawDescriptionDefaultHelpFormatter,
-        description="Create a new filter preset or edit an existing one.",
-        help="Create or edit a filter preset.")
+        description="Create a new filter preset.",
+        help="Create a new filter preset.")
     __register_new(new_preset)
     new_preset.set_defaults(func=filter_preset_client.handle_new_preset)
     __add_common_arguments(new_preset)
