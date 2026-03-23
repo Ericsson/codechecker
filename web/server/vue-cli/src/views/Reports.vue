@@ -226,65 +226,55 @@
           </v-chip>
         </template>
       </v-treeview> -->
-      <div
+      <!-- Old - getRunResults tree (commented out) -->
+      <!-- <div class="flex-grow-1">
+        <h3 class="mb-2">
+          Old - getRunResults
+        </h3>
+
+        <v-treeview
+          :items="formattedDirectoriesForTreeViewRunResults"
+          activatable
+          item-key="fullPath"
+          open-on-click
+          @update:active="onTreeFileClick"
+        >
+          <template #prepend="{ item, open }">
+            <v-icon v-if="item.children.length > 0">
+              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else>
+              mdi-file
+            </v-icon>
+
+            <v-chip class="right ml-2">
+              {{ item.findings }}
+            </v-chip>
+          </template>
+        </v-treeview>
+      </div> -->
+
+      <v-treeview
         v-else
-        class="d-flex align-start fill-height"
-        style="gap: 24px;"
+        :items="formattedDirectoriesForTreeViewFileCounts"
+        activatable
+        item-key="fullPath"
+        open-on-click
+        @update:active="onTreeFileClick"
       >
-        <div class="flex-grow-1">
-          <h3 class="mb-2">
-            Old - getRunResults
-          </h3>
+        <template #prepend="{ item, open }">
+          <v-icon v-if="item.children.length > 0">
+            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+          </v-icon>
+          <v-icon v-else>
+            mdi-file
+          </v-icon>
 
-          <v-treeview
-            :items="formattedDirectoriesForTreeViewRunResults"
-            activatable
-            item-key="fullPath"
-            open-on-click
-            @update:active="onTreeFileClick"
-          >
-            <template #prepend="{ item, open }">
-              <v-icon v-if="item.children.length > 0">
-                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-              </v-icon>
-              <v-icon v-else>
-                mdi-file
-              </v-icon>
-
-              <v-chip class="right ml-2">
-                {{ item.findings }}
-              </v-chip>
-            </template>
-          </v-treeview>
-        </div>
-
-        <div class="flex-grow-1">
-          <h3 class="mb-2">
-            New - getFileCounts
-          </h3>
-
-          <v-treeview
-            :items="formattedDirectoriesForTreeViewFileCounts"
-            activatable
-            item-key="fullPath"
-            open-on-click
-            @update:active="onTreeFileClick"
-          >
-            <template #prepend="{ item, open }">
-              <v-icon v-if="item.children.length > 0">
-                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-              </v-icon>
-              <v-icon v-else>
-                mdi-file
-              </v-icon>
-
-              <v-chip class="right ml-2">
-                {{ item.findings }}
-              </v-chip>
-            </template>
-          </v-treeview>
-        </div>
-      </div>
+          <v-chip class="right ml-2">
+            {{ item.findings }}
+          </v-chip>
+        </template>
+      </v-treeview>
     </pane>
   </splitpanes>
 </template>
@@ -584,68 +574,67 @@ export default {
     //   return dirs;
     // },
 
-    formattedDirectoriesForTreeViewRunResults() {
-      const items = [];
-      
-      this.allReportsRunResults.forEach(report => {
-        const pathParts = report.checkedFile.split("/").slice(0, -1);
-        let currentLevel = items;
-        let currentPath = "";
-        pathParts.forEach(part => {
-          if (part === "") return;
-
-          currentPath += "/" + part;
-          let existingPart = currentLevel.find(
-            item => item.name === part
-          );
-          if (!existingPart) {
-            existingPart = {
-              name: part,
-              fullPath: currentPath,
-              children: [],
-              findings: 0
-            };
-            currentLevel.push(existingPart);
-          }
-          currentLevel = existingPart.children;
-        });
-
-        // append filename as a child of the last directory
-        const fileName = report.checkedFile
-          .split("/").slice(-1)[0];
-        if (fileName) {
-          const filePath = currentPath + "/" + fileName;
-          const existingFile = currentLevel.find(
-            item => item.name === fileName
-          );
-          if (existingFile) {
-            existingFile.findings += 1;
-          } else {
-            currentLevel.push({
-              name: fileName,
-              fullPath: filePath,
-              children: [],
-              findings: 1
-            });
-          }
-        }
-      });
-
-      // count findings for directories
-      // try replacing with getCheckerCounts if performance is an issue
-      function countFindings(node) {
-        if (node.children.length === 0) {
-          return node.findings;
-        } else {
-          node.findings = node.children.reduce((sum, child) => {
-            return sum + countFindings(child);
-          }, 0);
-          return node.findings;
-        }
-      }
-      items.forEach(countFindings);
-      return items;
-    },
+    // formattedDirectoriesForTreeViewRunResults() {
+    //   const items = [];
+    //
+    //   this.allReportsRunResults.forEach(report => {
+    //     const pathParts = report.checkedFile
+    //       .split("/").slice(0, -1);
+    //     let currentLevel = items;
+    //     let currentPath = "";
+    //     pathParts.forEach(part => {
+    //       if (part === "") return;
+    //
+    //       currentPath += "/" + part;
+    //       let existingPart = currentLevel.find(
+    //         item => item.name === part
+    //       );
+    //       if (!existingPart) {
+    //         existingPart = {
+    //           name: part,
+    //           fullPath: currentPath,
+    //           children: [],
+    //           findings: 0
+    //         };
+    //         currentLevel.push(existingPart);
+    //       }
+    //       currentLevel = existingPart.children;
+    //     });
+    //
+    //     const fileName = report.checkedFile
+    //       .split("/").slice(-1)[0];
+    //     if (fileName) {
+    //       const filePath = currentPath + "/" + fileName;
+    //       const existingFile = currentLevel.find(
+    //         item => item.name === fileName
+    //       );
+    //       if (existingFile) {
+    //         existingFile.findings += 1;
+    //       } else {
+    //         currentLevel.push({
+    //           name: fileName,
+    //           fullPath: filePath,
+    //           children: [],
+    //           findings: 1
+    //         });
+    //       }
+    //     }
+    //   });
+    //
+    //   function countFindings(node) {
+    //     if (node.children.length === 0) {
+    //       return node.findings;
+    //     } else {
+    //       node.findings = node.children.reduce(
+    //         (sum, child) => {
+    //           return sum + countFindings(child);
+    //       }, 0);
+    //       return node.findings;
+    //     }
+    //   }
+    //   items.forEach(countFindings);
+    //   return items;
+    // },
 
     formattedDirectoriesForTreeViewFileCounts() {
       const items = [];
@@ -778,22 +767,22 @@ export default {
         this.runIds, this.reportFilter,
         this.cmpData, 0, 0,
         handleThriftError(fileCounts => {
-          this.allReportsRunResults =
+          this.allReportsFileCounts =
             fileCounts || [];
         }));
     },
 
-    loadReportsRunResults() {
-      ccService.getClient().getRunResults(
-        this.runIds, 0, 0, this.sortType,
-        this.reportFilter, this.cmpData,
-        this.getDetails,
-        handleThriftError(reports => {
-          this.allReportsRunResults =
-            reports || [];
-        })
-      );
-    },
+    // loadReportsRunResults() {
+    //   ccService.getClient().getRunResults(
+    //     this.runIds, 0, 0, this.sortType,
+    //     this.reportFilter, this.cmpData,
+    //     this.getDetails,
+    //     handleThriftError(reports => {
+    //       this.allReportsRunResults =
+    //         reports || [];
+    //     })
+    //   );
+    // },
 
     getSortMode() {
       let type = null;
@@ -911,13 +900,14 @@ export default {
             fileCounts;
         }));
 
-      ccService.getClient().getRunResults(
-        this.runIds, 0, 0, sortType,
-        this.reportFilter, this.cmpData,
-        getDetails,
-        handleThriftError(reports => {
-          this.allReportsRunResults = reports;
-        }));
+      // ccService.getClient().getRunResults(
+      //   this.runIds, 0, 0, sortType,
+      //   this.reportFilter, this.cmpData,
+      //   getDetails,
+      //   handleThriftError(reports => {
+      //     this.allReportsRunResults =
+      //       reports;
+      //   }));
 
     }
 
