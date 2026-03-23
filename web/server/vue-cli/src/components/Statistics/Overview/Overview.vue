@@ -1,18 +1,23 @@
 <template>
-  <v-container fluid>
+  <v-container
+    fluid
+  >
     <reports
+      ref="reportsRef"
       :bus="bus"
-      :run-ids="runIds"
-      :report-filter="reportFilter"
+      :run-ids="baseStats.runIds.value"
+      :report-filter="baseStats.reportFilter.value"
     />
-    <v-row class="mt-8">
-      <v-col>
+    <v-row class="mt-4">
+      <v-col
+        class="px-2"
+      >
         <single-line-widget
           icon="mdi-close"
           color="red"
           label="Number of failed files"
           :bus="bus"
-          :get-value="getNumberOfFailedFiles"
+          :value="failedFiles"
         >
           <template #help>
             Number of failed files in the current product.<br><br>
@@ -21,8 +26,11 @@
 
           <template #value="{ value }">
             <failed-files-dialog>
-              <template #default="{ on }">
-                <span class="num-of-failed-files" v-on="on">
+              <template #default="{ props: bindProps }">
+                <span
+                  v-bind="bindProps"
+                  class="num-of-failed-files"
+                >
                   {{ value }}
                 </span>
               </template>
@@ -31,13 +39,15 @@
         </single-line-widget>
       </v-col>
 
-      <v-col>
+      <v-col
+        class="px-2"
+      >
         <single-line-widget
           icon="mdi-card-account-details"
           color="grey"
           label="Number of checkers reporting faults"
           :bus="bus"
-          :get-value="getNumberOfActiveCheckers"
+          :value="activeCheckers"
         >
           <template #help>
             Number of checkers which found some report in the current
@@ -71,39 +81,38 @@
 
           <v-form ref="form" class="interval-selector">
             <v-text-field
-              :value="interval"
+              :model-value="interval"
               class="interval align-center"
               type="number"
               hide-details
-              dense
-              solo
-              @input="setInterval"
+              density="compact"
+              variant="solo"
+              @update:model-value="setInterval"
             >
               <template v-slot:prepend>
                 Last
               </template>
 
-              <template v-slot:append-outer>
+              <template v-slot:append>
                 <v-select
-                  :value="resolution"
+                  :model-value="resolution"
                   class="resolution"
                   :items="resolutions"
-                  label="Resolution"
                   hide-details
-                  dense
-                  solo
-                  @input="setResolution"
+                  density="compact"
+                  variant="solo"
+                  @update:model-value="setResolution"
                 />
               </template>
             </v-text-field>
 
-            <div v-if="intervalError" class="red--text">
+            <div v-if="intervalError" class="text-red">
               {{ intervalError }}
             </div>
           </v-form>
           <outstanding-reports-chart
             :bus="bus"
-            :get-statistics-filters="getStatisticsFilters"
+            :get-statistics-filters="baseStats.getStatisticsFilters"
             :interval="interval"
             :resolution="resolution"
             :styles="{
@@ -117,121 +126,124 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
 import _ from "lodash";
-import { ccService, handleThriftError } from "@cc-api";
-import { DateMixin } from "@/mixins";
-import { BaseStatistics } from "@/components/Statistics";
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import Reports from "./Reports";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { useBaseStatistics } from "@/composables/useBaseStatistics";
+import { ccService, handleThriftError } from "@cc-api";
+
 import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
+import Reports from "./Reports";
 import SingleLineWidget from "./SingleLineWidget";
 
-export default {
-  name: "Overview",
-  components: {
-    FailedFilesDialog,
-    OutstandingReportsChart,
-    Reports,
-    SingleLineWidget,
-    TooltipHelpIcon
-  },
-  mixins: [ BaseStatistics, DateMixin ],
-  data() {
-    const defaultInterval = "7";
+const props = defineProps({
+  bus: { type: Object, required: true },
+  namespace: { type: String, required: true }
+});
 
-    const resolutions = [ "days", "weeks", "months", "years" ];
-    const defaultResolution = resolutions[0];
+const route = useRoute();
+const router = useRouter();
+const baseStats = useBaseStatistics(props, null);
+const failedFiles = ref(null);
+const activeCheckers = ref(null);
 
+const defaultInterval = "7";
+const resolutions = [ "days", "weeks", "months", "years" ];
+const defaultResolution = resolutions[0];
 
-    let interval = this.$route.query["interval"];
-    if (this.validateIntervalValue(interval)) {
-      interval = defaultInterval;
-    }
+const loading = ref(false);
+const reportsRef = ref(null);
 
-    let resolution = this.$route.query["resolution"];
-    if (!resolution || !resolutions.includes(resolution)) {
-      resolution = defaultResolution;
-    }
+baseStats.setupRefreshListener(fetchValues);
 
-    return {
-      intervalError: null,
-      interval,
-      resolutions,
-      resolution
-    };
-  },
-  methods: {
-    validateIntervalValue(val) {
-      if (!val || isNaN(parseInt(val))) {
-        return "Number is required!";
-      }
+let _interval = route.query["interval"];
+if (validateIntervalValue(_interval)) {
+  _interval = defaultInterval;
+}
 
-      if (parseInt(val) > 31) {
-        return "Interval value should between 1-31!";
-      }
+let _resolution = route.query["resolution"];
+if (!_resolution || !resolutions.includes(_resolution)) {
+  _resolution = defaultResolution;
+}
 
-      return null;
-    },
+const intervalError = ref(null);
+const interval = ref(_interval);
+const resolution = ref(_resolution);
 
-    setInterval: _.debounce(function (val) {
-      this.intervalError = this.validateIntervalValue(val);
-      if (this.intervalError) return;
+async function fetchValues() {
+  loading.value = true;
+  failedFiles.value = await getNumberOfFailedFiles();
+  activeCheckers.value = await getNumberOfActiveCheckers();
+  reportsRef.value?.fetchValues();
+  loading.value = false;
+}
 
-      this.interval = val;
-      this.updateUrl();
-
-      this.intervalError = null;
-    }, 300),
-
-    setResolution(val) {
-      this.resolution = val;
-      this.updateUrl();
-    },
-
-    updateUrl() {
-      const queryParams = Object.assign({}, this.$route.query, {
-        interval: this.interval,
-        resolution: this.resolution
-      });
-
-      this.$router.replace({ query: queryParams }).catch(() => {});
-    },
-
-    getNumberOfReports(runIds, reportFilter, cmpData) {
-      return new Promise(resolve => {
-        ccService.getClient().getRunResultCount(runIds, reportFilter, cmpData,
-          handleThriftError(res => {
-            resolve(res.toNumber());
-          }));
-      });
-    },
-
-    getNumberOfFailedFiles() {
-      return new Promise(resolve => {
-        ccService.getClient().getFailedFilesCount(this.runIds,
-          handleThriftError(res => {
-            resolve(res);
-          }));
-      });
-    },
-
-    getNumberOfActiveCheckers() {
-      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
-      const limit = null;
-      const offset = 0;
-
-      return new Promise(resolve => {
-        ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
-          limit, offset, handleThriftError(res => {
-            resolve(res.length);
-          }));
-      });
-    }
+function validateIntervalValue(val) {
+  if (!val || isNaN(parseInt(val))) {
+    return "Number is required!";
   }
-};
+
+  if (parseInt(val) > 31) {
+    return "Interval value should between 1-31!";
+  }
+
+  return null;
+}
+
+const setInterval = _.debounce(function(_val) {
+  intervalError.value = validateIntervalValue(_val);
+  if (intervalError.value) return;
+
+  interval.value = _val;
+  updateUrl();
+
+  intervalError.value = null;
+}, 300);
+
+function setResolution(_val) {
+  resolution.value = _val;
+  updateUrl();
+}
+
+function updateUrl() {
+  const _queryParams = Object.assign({}, route.query, {
+    interval: interval.value,
+    resolution: resolution.value
+  });
+
+  router.replace({ query: _queryParams }).catch(() => {});
+}
+
+function getNumberOfFailedFiles() {
+  return new Promise(_resolve => {
+    ccService.getClient().getFailedFilesCount(
+      baseStats.runIds.value,
+      handleThriftError(_res => {
+        _resolve(_res);
+      }));
+  });
+}
+
+function getNumberOfActiveCheckers() {
+  const {
+    runIds: _runIds,
+    reportFilter: _reportFilter,
+    cmpData: _cmpData
+  } = baseStats.getStatisticsFilters();
+  const _limit = null;
+  const _offset = 0;
+
+  return new Promise(_resolve => {
+    ccService.getClient().getCheckerCounts(_runIds, _reportFilter, _cmpData,
+      _limit, _offset, handleThriftError(_res => {
+        _resolve(_res.length);
+      }));
+  });
+}
 </script>
 
 <style lang="scss" scoped>

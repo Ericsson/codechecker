@@ -36,19 +36,11 @@
   </v-icon>
 </template>
 
-<script>
+<script setup>
 import { ReviewStatus } from "@cc/report-server-types";
 
-export default {
-  name: "DetectionStatusIcon",
-  props: {
-    status: { type: Number, required: true },
-    size: { type: Number, default: null }
-  },
-  data() {
-    return {
-      ReviewStatus
-    };
-  }
-};
+defineProps({
+  status: { type: Number, required: true },
+  size: { type: Number, default: null }
+});
 </script>

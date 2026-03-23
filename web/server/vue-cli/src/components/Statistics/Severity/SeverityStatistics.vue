@@ -1,27 +1,33 @@
 <template>
-  <v-container fluid>
+  <v-container
+    fluid
+  >
     <v-row>
       <v-col>
-        <h3 class="title primary--text mb-2">
+        <h3
+          class="title text-primary mb-2"
+        >
           <v-btn
             color="primary"
-            outlined
+            variant="outlined"
             @click="downloadCSV"
           >
             Export CSV
           </v-btn>
 
           <v-btn
-            icon
+            icon="mdi-refresh"
             title="Reload statistics"
             color="primary"
+            variant="text"
             @click="fetchStatistics"
-          >
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
+          />
         </h3>
-
-        <v-card-title class="justify-center">
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
+        <div class="text-h6 mb-4">
           Severity statistics
           <tooltip-help-icon>
             This table shows severity statistics for the product.
@@ -32,96 +38,103 @@
               <li><b>Source component</b> filter.</li>
             </ul>
           </tooltip-help-icon>
-        </v-card-title>
+        </div>
+        <div class="d-flex justify-center">
+          <severity-statistics-table
+            :items="statistics"
+            :loading="loading"
+          />
 
-        <severity-statistics-table
-          :items="statistics"
-          :loading="loading"
-        />
-
-        <unique-stat-warning v-if="reportFilter.isUnique" />
+          <unique-stat-warning
+            v-if="baseStats.reportFilter.value.isUnique"
+          />
+        </div>
       </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <component-severity-statistics
-          :bus="bus"
-          :namespace="namespace"
-        />
+        <v-card
+          flat
+        >
+          <component-severity-statistics
+            :bus="bus"
+            :namespace="namespace"
+          />
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script>
-import { SeverityMixin, ToCSV } from "@/mixins";
+<script setup>
+import { ref } from "vue";
 
-import { BaseStatistics, UniqueStatWarning } from "@/components/Statistics";
-import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
+import { useBaseStatistics } from "@/composables/useBaseStatistics";
+import { useSeverity } from "@/composables/useSeverity";
+import { useToCSV } from "@/composables/useToCSV";
+
+import { UniqueStatWarning } from "@/components/Statistics";
 import {
   getSeverityStatistics
 } from "@/components/Statistics/StatisticsHelper";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
 
 import SeverityStatisticsTable from "./SeverityStatisticsTable";
 
-export default {
-  name: "SeverityStatistics",
-  components: {
-    SeverityStatisticsTable,
-    UniqueStatWarning,
-    ComponentSeverityStatistics,
-    TooltipHelpIcon
-  },
-  mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
+const props = defineProps({
+  bus: { type: Object, required: true },
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      loading: false,
-      statistics: []
-    };
-  },
+const severity = useSeverity();
+const csv = useToCSV();
+const baseStats = useBaseStatistics(props, getSeverityStatistics);
 
-  methods: {
-    downloadCSV() {
-      const data = [
-        [ "Severity", "Unreviewed", "Confirmed bug",
-          "Outstanding reports (Unreviewed + Confirmed)", "False positive",
-          "Intentional", "Suppressed reports (False positive + Intentional)",
-          "All reports"
-        ],
-        ...this.statistics.map(stat => {
-          return [
-            this.severityFromCodeToString(stat.severity),
-            stat.unreviewed.count, stat.confirmed.count,
-            stat.outstanding.count, stat.falsePositive.count,
-            stat.intentional.count, stat.suppressed.count, stat.reports.count
-          ];
-        })
+const loading = ref(false);
+const statistics = ref([]);
+
+baseStats.setupRefreshListener(fetchStatistics);
+
+function downloadCSV() {
+  const _data = [
+    [ "Severity", "Unreviewed", "Confirmed bug",
+      "Outstanding reports (Unreviewed + Confirmed)", "False positive",
+      "Intentional", "Suppressed reports (False positive + Intentional)",
+      "All reports"
+    ],
+    ...statistics.value.map(_stat => {
+      return [
+        severity.severityFromCodeToString(_stat.severity),
+        _stat.unreviewed.count, _stat.confirmed.count,
+        _stat.outstanding.count, _stat.falsePositive.count,
+        _stat.intentional.count, _stat.suppressed.count, _stat.reports.count
       ];
+    })
+  ];
 
-      this.toCSV(data, "codechecker_severity_statistics.csv");
-    },
+  csv.toCSV(_data, "codechecker_severity_statistics.csv");
+}
 
-    getStatistics: getSeverityStatistics,
+async function fetchStatistics() {
+  loading.value = true;
 
-    async fetchStatistics() {
-      this.loading = true;
+  const {
+    runIds: _runIds,
+    reportFilter: _reportFilter,
+    cmpData: _cmpData
+  } = baseStats.getStatisticsFilters();
+  statistics.value =
+    await getSeverityStatistics(_runIds, _reportFilter, _cmpData);
 
-      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
-      this.statistics =
-        await getSeverityStatistics(runIds, reportFilter, cmpData);
+  await baseStats.fetchDifference("severity");
 
-      await this.fetchDifference("severity");
-
-      this.loading = false;
-    }
-  }
-};
+  loading.value = false;
+}
 </script>
 
-<style lang="scss" scoped>
-::v-deep .severity {
+<style>
+.severity {
   text-decoration: none;
 }
 </style>

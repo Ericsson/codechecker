@@ -1,5 +1,4 @@
-import Vue from "vue";
-import Vuex from "vuex";
+import { createStore } from "vuex";
 
 import auth from "./modules/auth";
 import config from "./modules/config";
@@ -12,9 +11,7 @@ import url from "./modules/url";
 import report from "./modules/report";
 import statistics from "./modules/statistics";
 
-Vue.use(Vuex);
-
-export default new Vuex.Store({
+export default createStore({
   modules: {
     auth,
     config,

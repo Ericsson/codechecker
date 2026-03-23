@@ -1,7 +1,7 @@
 import { ExtendedReportDataType } from "@cc/report-server-types";
 
-import ReportTreeKind from "./ReportTreeKind";
 import ReportStepIconType from "./ReportStepIconType";
+import ReportTreeKind from "./ReportTreeKind";
 
 const highlightColours = [
   "#ffffff",

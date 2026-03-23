@@ -1,86 +1,89 @@
 <template>
   <v-timeline-item
     class="user-comment"
-    color="green"
+    dot-color="green"
     icon="mdi-account"
-    small
+    size="small"
     fill-dot
   >
     <v-card
       class="elevation-2"
     >
-      <v-list two-line>
+      <v-list
+        lines="two"
+      >
         <v-list-item>
-          <user-icon
-            :value="comment.author"
-            :size="32"
-            class="mr-2"
-            tile
-          />
-          <v-list-item-content>
-            <v-list-item-title>
-              {{ comment.author }}
-            </v-list-item-title>
-            <v-list-item-subtitle
-              :title="comment.createdAt"
-            >
-              {{ createdAt }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action>
+          <template v-slot:prepend>
+            <user-icon
+              :value="comment.author"
+              :size="32"
+              class="mr-2"
+              rounded="0"
+            />
+          </template>
+
+          <v-list-item-title>
+            {{ comment.author }}
+          </v-list-item-title>
+
+          <v-list-item-subtitle
+            :title="comment.createdAt"
+          >
+            {{ createdAt }}
+          </v-list-item-subtitle>
+          <template v-slot:append>
             <div>
               <edit-comment-btn
+                class="mr-2"
                 :comment="comment"
-                :bus="bus"
+                @update:comment="updateComment"
               />
 
               <remove-comment-btn
                 :comment="comment"
-                :bus="bus"
+                @remove:comment="removeComment"
               />
             </div>
-          </v-list-item-action>
+          </template>
         </v-list-item>
       </v-list>
-      <!-- eslint-disable vue/no-v-html -->
-      <v-card-text
-        class="pt-0"
-        v-html="message"
-      />
+      <v-card-text class="pt-0 preserve-whitespace">
+        {{ comment.message }}
+      </v-card-text>
     </v-card>
   </v-timeline-item>
 </template>
 
-<script>
-import Vue from "vue";
+<script setup>
 import { formatDistanceToNow, parse } from "date-fns";
-
-import { CommentData } from "@cc/report-server-types";
+import { computed } from "vue";
 
 import { UserIcon } from "@/components/Icons";
 import EditCommentBtn from "./EditCommentBtn";
 import RemoveCommentBtn from "./RemoveCommentBtn";
 
-export default {
-  name: "UserComment",
-  components: {
-    EditCommentBtn,
-    RemoveCommentBtn,
-    UserIcon
-  },
-  props: {
-    comment: { type: CommentData, required: true },
-    bus: { type: Vue, required: true }
-  },
-  computed: {
-    message() {
-      return this.comment.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
-    },
-    createdAt() {
-      const created = parse(this.comment.createdAt,
-        "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
-      return formatDistanceToNow(created);
-    }
-  }
-};
+const props = defineProps({
+  comment: { type: Object, required: true },
+  bus: { type: Object, required: true }
+});
+
+const createdAt = computed(() => {
+  const created = parse(props.comment.createdAt,
+    "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
+  return formatDistanceToNow(created);
+});
+
+function updateComment(comment) {
+  props.bus.emit("update:comment", comment);
+}
+
+function removeComment(comment) {
+  props.bus.emit("remove:comment", comment);
+}
 </script>
+
+<style scoped>
+.preserve-whitespace {
+  white-space: pre-wrap;
+}
+</style>

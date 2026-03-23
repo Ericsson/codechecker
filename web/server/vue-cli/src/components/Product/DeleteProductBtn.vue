@@ -1,25 +1,22 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     max-width="600px"
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
     confirm-btn-color="error"
+    title="Confirm deletion of product"
     @confirm="confirmDelete"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-btn
+        v-bind="activatorProps"
         class="remove-btn"
-        icon
+        icon="mdi-trash-can-outline"
         color="error"
-        v-on="on"
-      >
-        <v-icon>mdi-trash-can-outline</v-icon>
-      </v-btn>
-    </template>
-
-    <template v-slot:title>
-      Confirm deletion of product
+        variant="tonal"
+        size="x-small"
+      />
     </template>
 
     <template v-slot:content>
@@ -36,37 +33,29 @@
         Analysis results stored in the database <b>will NOT</b> be lost!
       </p>
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
-import { handleThriftError, prodService } from "@cc-api";
+<script setup>
+import { ref } from "vue";
+
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { handleThriftError, prodService } from "@cc-api";
 
-export default {
-  name: "DeleteProductBtn",
-  components: {
-    ConfirmDialog
-  },
-  props: {
-    product: { type: Object, required: true }
-  },
+const props = defineProps({
+  product: { type: Object, required: true }
+});
 
-  data() {
-    return {
-      dialog: false
-    };
-  },
+const emit = defineEmits([ "on-complete" ]);
 
-  methods: {
-    confirmDelete() {
-      prodService.getClient().removeProduct(this.product.id,
-        handleThriftError(success => {
-          if (success) {
-            this.$emit("on-complete", this.product);
-          }
-        }));
-    }
-  }
-};
+const dialog = ref(false);
+
+function confirmDelete() {
+  prodService.getClient().removeProduct(props.product.id,
+    handleThriftError(success => {
+      if (success) {
+        emit("on-complete", props.product);
+      }
+    }));
+}
 </script>

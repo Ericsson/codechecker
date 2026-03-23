@@ -1,33 +1,27 @@
 <template>
   <div>
-    <confirm-dialog
+    <ConfirmDialog
       v-model="deletePersonalAccessTokenDialog"
       confirm-btn-color="error"
       confirm-btn-label="Delete access token"
       cancel-btn-color="primary"
+      title="Delete Personal Access Token"
       @confirm="deleteToken(token.name)"
     >
-      <template v-slot:title>
-        Delete Personal Access Token
-      </template>
-
       <template v-slot:content>
         <p>
           You have selected to delete token with name
           <strong>{{ token.name }}</strong>.
         </p>
       </template>
-    </confirm-dialog>
+    </ConfirmDialog>
 
-    <confirm-dialog
+    <ConfirmDialog
       v-model="reviewPersonalAccessTokenDialog"
       confirm-btn-label="OK"
+      title="New Personal Access Token"
       @confirm="reviewPersonalAccessTokenDialog = false"
     >
-      <template v-slot:title>
-        New Personal Access Token
-      </template>
-
       <template v-slot:content>
         <p>
           Token: <strong>{{ token.token }}</strong>
@@ -46,17 +40,23 @@
           after closing this window.
         </p>
       </template>
-    </confirm-dialog>
+    </ConfirmDialog>
 
-    <confirm-dialog
+    <ConfirmDialog
       v-model="addPersonalAccessTokenDialog"
       confirm-btn-label="Add new token"
+      title="Personal Access Tokens"
       @confirm="addNewToken()"
     >
-      <template v-slot:activator="{ on }">
+      <template v-slot:activator="{ props }">
         <v-card flat>
           <v-card-text>
-            <v-btn color="primary" block v-on="on" @click="loadTokens()">
+            <v-btn
+              v-bind="props" 
+              color="primary"
+              block
+              @click="loadTokens()"
+            >
               <v-icon left>
                 mdi-shield-account
               </v-icon>
@@ -66,13 +66,11 @@
         </v-card>
       </template>
 
-      <template v-slot:title>
-        Personal Access Tokens
-      </template>
-
       <template v-slot:content>
         <v-card>
-          <v-simple-table dense>
+          <v-table
+            density="compact"
+          >
             <template v-slot:default>
               <thead>
                 <tr>
@@ -97,7 +95,7 @@
                 </tr>
               </tbody>
             </template>
-          </v-simple-table>
+          </v-table>
 
           <v-card-text>
             <v-form ref="newPersonalAccessTokenForm">
@@ -128,106 +126,95 @@
           </v-card-text>
         </v-card>
       </template>
-    </confirm-dialog>
+    </ConfirmDialog>
   </div>
 </template>
 
-<script>
-import { format } from "date-fns";
-import { authService, handleThriftError } from "@cc-api";
+<script setup>
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { authService, handleThriftError } from "@cc-api";
+import { format } from "date-fns";
+import { computed, onMounted, ref, watch } from "vue";
 
-export default {
-  components: {
-    ConfirmDialog
-  },
-
-  data() {
-    return {
-      addPersonalAccessTokenDialog: false,
-      deletePersonalAccessTokenDialog: false,
-      reviewPersonalAccessTokenDialog: false,
-      accessTokens: [],
-      token: {},
-      newTokenName: "",
-      newTokenDescription: "",
-      newTokenExpiration: 1,
-      maxTokenExpiration: 365,
-      rules: {
-        required: v => !!v || "This field is required",
-        min: v => v >= 1 || "Minimum length is 1 day!",
-        max: v => v <= this.maxTokenExpiration || "Maximum length is "
-          + this.maxTokenExpiration + " days!"
-      }
-    };
-  },
-
-  computed: {
-    personalTokenExpirationHint() {
-      return `Expiration must be between 1 and ${this.maxTokenExpiration} days`;
-    }
-  },
-
-  watch: {
-    addPersonalAccessTokenDialog(addPersonalTokenDialogOpen) {
-      if (!addPersonalTokenDialogOpen) {
-        this.$refs.newPersonalAccessTokenForm.reset();
-      }
-    }
-  },
-
-  created() {
-    this.maxTokenExpiration = this.getMaxTokenExpiration();
-  },
-
-  methods: {
-    addNewToken() {
-      const isFormValid = this.$refs.newPersonalAccessTokenForm.validate();
-      if (isFormValid) {
-        authService.getClient().newPersonalAccessToken(
-          this.newTokenName,
-          this.newTokenDescription,
-          this.newTokenExpiration,
-          handleThriftError(newToken => {
-            this.token = newToken;
-            this.reviewPersonalAccessTokenDialog = true;
-            this.loadTokens();
-            this.$refs.newPersonalAccessTokenForm.reset();
-          })
-        );
-      }
-    },
-
-    getMaxTokenExpiration() {
-      authService.getClient().getMaxTokenExpiration(
-        handleThriftError(maxTokenExpiration => {
-          this.maxTokenExpiration = maxTokenExpiration;
-        }));
-    },
-
-    confirmDelete(token) {
-      this.token = token;
-      this.deletePersonalAccessTokenDialog = true;
-    },
-
-    dateFormat(str) {
-      return format(new Date(str), "yyyy-MM-dd HH:mm:ss");
-    },
-
-    deleteToken(name) {
-      authService.getClient().removePersonalAccessToken(name,
-        handleThriftError(() => {
-          this.loadTokens();
-          this.deletePersonalAccessTokenDialog = false;
-        }));
-    },
-
-    loadTokens() {
-      authService.getClient().getPersonalAccessTokens(
-        handleThriftError(accessTokens => {
-          this.accessTokens = accessTokens;
-        }));
-    }
+const addPersonalAccessTokenDialog = ref(false);
+const deletePersonalAccessTokenDialog = ref(false);
+const reviewPersonalAccessTokenDialog = ref(false);
+const accessTokens = ref([]);
+const token = ref({});
+const newTokenName = ref("");
+const newTokenDescription = ref("");
+const newTokenExpiration = ref(1);
+const maxTokenExpiration = ref(365);
+const rules = ref(
+  {
+    required: v => !!v || "This field is required",
+    min: v => v >= 1 || "Minimum length is 1 day!",
+    max: v => v <= maxTokenExpiration.value || "Maximum length is "
+      + maxTokenExpiration.value + " days!"
   }
-};
+);
+
+const newPersonalAccessTokenForm = ref(null);
+
+const personalTokenExpirationHint = computed(() => {
+  return `Expiration must be between 1 and ${maxTokenExpiration.value} days`;
+});
+
+watch(addPersonalAccessTokenDialog, addPersonalTokenDialogOpen => {
+  if (!addPersonalTokenDialogOpen) {
+    newPersonalAccessTokenForm.value?.reset();
+  }
+});
+
+onMounted(() => {
+  getMaxTokenExpiration();
+});
+
+function addNewToken() {
+  const _isFormValid = newPersonalAccessTokenForm.value?.validate();
+  if (_isFormValid) {
+    authService.getClient().newPersonalAccessToken(
+      newTokenName.value,
+      newTokenDescription.value,
+      newTokenExpiration.value,
+      handleThriftError(newToken => {
+        token.value = newToken;
+        reviewPersonalAccessTokenDialog.value = true;
+        loadTokens();
+        newPersonalAccessTokenForm.value?.reset();
+      })
+    );
+  }
+}
+
+function getMaxTokenExpiration() {
+  authService.getClient().getMaxTokenExpiration(
+    handleThriftError(_maxTokenExpiration => {
+      maxTokenExpiration.value = _maxTokenExpiration;
+    }));
+}
+
+function confirmDelete(_token) {
+  token.value = _token;
+  deletePersonalAccessTokenDialog.value = true;
+}
+
+function dateFormat(dateStr) {
+  return format(new Date(dateStr), "yyyy-MM-dd HH:mm:ss");
+}
+
+function deleteToken(tokenName) {
+  authService.getClient().removePersonalAccessToken(tokenName,
+    handleThriftError(() => {
+      loadTokens();
+      deletePersonalAccessTokenDialog.value = false;
+    }));
+}
+
+function loadTokens() {
+  authService.getClient().getPersonalAccessTokens(
+    handleThriftError(_accessTokens => {
+      accessTokens.value = _accessTokens;
+    }));
+}
 </script>

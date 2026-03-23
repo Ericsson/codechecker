@@ -14,9 +14,10 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text class="pa-0">
@@ -30,13 +31,13 @@
               v-for="(stats, analyzer) in analyzerStatistics"
               :key="analyzer"
             >
-              <v-expansion-panel-header
+              <v-expansion-panel-title
                 class="pa-0 px-1 primary--text font-weight-bold"
               >
                 {{ analyzer }}
-              </v-expansion-panel-header>
+              </v-expansion-panel-title>
 
-              <v-expansion-panel-content class="pa-1">
+              <v-expansion-panel-text class="pa-1">
                 <v-container>
                   <v-row>
                     <v-icon class="mr-2">
@@ -52,8 +53,7 @@
                     <b class="pr-1">Number of successfully analyzed files:</b>
                     <v-chip
                       color="success"
-                      dark
-                      small
+                      size="small"
                     >
                       {{ stats.successful }}
                     </v-chip>
@@ -66,8 +66,7 @@
                     <b class="pr-1">Number of files which failed to analyze:</b>
                     <v-chip
                       color="error"
-                      dark
-                      small
+                      size="small"
                     >
                       {{ stats.failed }}
                     </v-chip>
@@ -91,7 +90,7 @@
                     </v-container>
                   </v-row>
                 </v-container>
-              </v-expansion-panel-content>
+              </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
         </v-container>
@@ -113,65 +112,52 @@
   </v-dialog>
 </template>
 
-<script>
-import { ccService, handleThriftError } from "@cc-api";
+<script setup>
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
+import { ccService, handleThriftError } from "@cc-api";
+import { computed, onMounted, ref, watch } from "vue";
 
-export default {
-  name: "AnalyzerStatisticsDialog",
-  components: {
-    AnalyzerStatisticsIcon
+const props = defineProps({
+  value: { type: Boolean, default: false },
+  runId: { type: Object, default: () => null },
+  runHistoryId: { type: Object, default: () => null }
+});
+
+const emit = defineEmits([ "update:value" ]);
+
+const analyzerStatistics = ref(null);
+const activeExpansionPanels = ref([]);
+
+const dialog = computed({
+  get() {
+    return props.value;
   },
-  props: {
-    value: { type: Boolean, default: false },
-    runId: { type: Object, default: () => null },
-    runHistoryId: { type: Object, default: () => null }
-  },
-
-  data() {
-    return {
-      analyzerStatistics: null,
-      activeExpansionPanels: []
-    };
-  },
-
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  },
-
-  watch: {
-    runId() {
-      this.getAnalysisStatistics();
-    },
-    runHistoryId() {
-      this.getAnalysisStatistics();
-    }
-  },
-
-  mounted() {
-    this.getAnalysisStatistics();
-  },
-
-  methods: {
-    getAnalysisStatistics() {
-      if (!this.dialog && !this.runId && !this.runHistoryId) return;
-
-      ccService.getClient().getAnalysisStatistics(this.runId,
-        this.runHistoryId, handleThriftError(stats => {
-          this.analyzerStatistics = stats;
-
-          // Open all expansion panel.
-          this.activeExpansionPanels = [ ...Array(
-            Object.keys(stats).length).keys() ];
-        }));
-    }
+  set(val) {
+    emit("update:value", val);
   }
-};
+});
+
+watch(() => props.runId, function() {
+  getAnalysisStatistics();
+});
+
+watch(() => props.runHistoryId, function() {
+  getAnalysisStatistics();
+});
+
+onMounted(function() {
+  getAnalysisStatistics();
+});
+
+function getAnalysisStatistics() {
+  if (!dialog.value && !props.runId && !props.runHistoryId) return;
+
+  ccService.getClient().getAnalysisStatistics(props.runId,
+    props.runHistoryId, handleThriftError(stats => {
+      analyzerStatistics.value = stats;
+
+      activeExpansionPanels.value = [ ...Array(
+        Object.keys(stats).length).keys() ];
+    }));
+}
 </script>

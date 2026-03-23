@@ -1,23 +1,20 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     max-width="80%"
     :loading="loading"
+    title="Edit product"
     @confirm="save"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-btn
-        class="edit-btn"
-        icon
+        v-bind="activatorProps"
+        class="edit-btn mr-2"
+        icon="mdi-pencil"
         color="primary"
-        v-on="on"
-      >
-        <v-icon>mdi-pencil</v-icon>
-      </v-btn>
-    </template>
-
-    <template v-slot:title>
-      Edit product
+        size="x-small"
+        variant="tonal"
+      />
     </template>
 
     <template v-slot:content>
@@ -25,7 +22,7 @@
         v-model="success"
         dismissible
         color="success"
-        border="left"
+        border="start"
         elevation="2"
         colored-border
         icon="mdi-check"
@@ -37,7 +34,7 @@
         v-model="error"
         dismissible
         color="error"
-        border="left"
+        border="start"
         elevation="2"
         colored-border
         icon="mdi-alert-outline"
@@ -59,33 +56,33 @@
         </v-tab>
       </v-tabs>
 
-      <v-tabs-items
+      <v-window
         v-model="tab"
       >
-        <v-tab-item>
+        <v-window-item>
           <v-container fluid>
             <product-config-form
-              :is-valid.sync="isValid"
+              v-model="isValid"
+              v-model:product-config="productConfig"
               :is-super-user="isSuperUser"
-              :product-config="productConfig"
             />
           </v-container>
-        </v-tab-item>
-        <v-tab-item>
-          <edit-product-permission
+        </v-window-item>
+        <v-window-item>
+          <EditProductPermission
+            ref="editProductPermission"
+            v-model:success="success"
+            v-model:error="error"
             :product="product"
-            :bus="bus"
-            :success.sync="success"
-            :error.sync="error"
           />
-        </v-tab-item>
-      </v-tabs-items>
+        </v-window-item>
+      </v-window>
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
-import Vue from "vue";
+<script setup>
+import { ref, watch } from "vue";
 
 import { handleThriftError, prodService } from "@cc-api";
 import {
@@ -97,61 +94,49 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import EditProductPermission from "./Permission/EditProductPermission";
 import ProductConfigForm from "./ProductConfigForm";
 
-export default {
-  name: "EditProductBtn",
-  components: {
-    ConfirmDialog,
-    EditProductPermission,
-    ProductConfigForm
-  },
-  props: {
-    product: { type: Object, required: true },
-    isSuperUser: { type: Boolean, default: false }
-  },
-  data() {
-    return {
-      dialog: false,
-      productConfig: new ProductConfiguration({
-        connection: new DatabaseConnection()
-      }),
-      tab: null,
-      loading: false,
-      isValid: false,
-      success: false,
-      error: false,
-      bus: new Vue()
-    };
-  },
-  watch: {
-    dialog() {
-      if (!this.dialog) return;
+const props = defineProps({
+  product: { type: Object, required: true },
+  isSuperUser: { type: Boolean, default: false }
+});
+const emit = defineEmits([ "on-complete" ]);
+const dialog = ref(false);
+const tab = ref(null);
+const loading = ref(false);
+const isValid = ref(false);
+const success = ref(false);
+const error = ref(false);
 
-      this.loading = true;
-      prodService.getClient().getProductConfiguration(this.product.id,
-        handleThriftError(config => {
-          this.productConfig = config;
-          this.loading = false;
-        }));
-    }
-  },
+const editProductPermission = ref(null);
 
-  methods: {
-    save() {
-      prodService.getClient().editProduct(this.product.id, this.productConfig,
-        handleThriftError(success => {
-          if (!success) {
-            this.error = true;
-            return;
-          }
+const productConfig = ref(new ProductConfiguration({
+  connection: new DatabaseConnection()
+}));
 
-          this.success = true;
-          this.$emit("on-complete",
-            new ProductConfiguration(this.productConfig));
-        }));
+watch(dialog, () => {
+  if (!dialog.value) return;
 
-      // Save permissions.
-      this.bus.$emit("save");
-    }
-  }
-};
+  loading.value = true;
+  prodService.getClient().getProductConfiguration(props.product.id,
+    handleThriftError(_config => {
+      productConfig.value = _config;
+      loading.value = false;
+    }));
+});
+
+function save() {
+  prodService.getClient().editProduct(props.product.id, productConfig.value,
+    handleThriftError(_success => {
+      if (!_success) {
+        error.value = true;
+        return;
+      }
+
+      success.value = true;
+      emit("on-complete",
+        new ProductConfiguration(productConfig.value));
+    }));
+
+  // Save permissions.
+  editProductPermission.value?.savePermissions();
+}
 </script>

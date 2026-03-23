@@ -4,7 +4,6 @@
     color="#ff0000"
     :title="title"
     :size="size"
-    :small="small"
   >
     mdi-shield-lock-outline
   </v-icon>
@@ -14,7 +13,6 @@
     color="#4e4e4e"
     :title="title"
     :size="size"
-    :small="small"
   >
     mdi-shield-sun-outline
   </v-icon>
@@ -24,35 +22,24 @@
     color="#669603"
     :title="title"
     :size="size"
-    :small="small"
   >
     mdi-shield-sun-outline
   </v-icon>
 </template>
 
-<script>
+<script setup>
+import { useConfidentiality } from "@/composables/useConfidentiality";
 import { Confidentiality } from "@cc/prod-types";
-import { ConfidentialityMixin } from "@/mixins";
+import { computed } from "vue";
 
-export default {
-  name: "ConfidentialityIcon",
-  mixins: [ ConfidentialityMixin ],
-  props: {
-    value: { type: Number, required: true },
-    size: { type: Number, default: null },
-    small: { type: Boolean, default: false }
-  },
+const props = defineProps({
+  value: { type: Number, required: true },
+  size: { type: Number, default: null }
+});
 
-  data() {
-    return {
-      Confidentiality
-    };
-  },
+const confidentiality = useConfidentiality();
 
-  computed: {
-    title() {
-      return this.confidentialityFromCodeToString(this.value);
-    }
-  }
-};
+const title = computed(
+  () => confidentiality.confidentialityFromCodeToString(props.value)
+);
 </script>
