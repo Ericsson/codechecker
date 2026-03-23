@@ -11,6 +11,13 @@ import os
 from codechecker_report_converter.report.parser import plist
 
 
+def convert_to_printable(text: str) -> str:
+    """Convert non-printable characters to \\xHH format."""
+    return ''.join(
+        c if c.isprintable() or c in '\n\r\t' else f"\\x{ord(c):02x}"
+        for c in text)
+
+
 def update(output_path, return_code, analyzer_info,
            analyzer_cmd, stdout, stderr):
 
@@ -29,10 +36,10 @@ def update(output_path, return_code, analyzer_info,
 
     data = {
         'analyzer_name': analyzer_info.name,
-        'analyzer_cmd': analyzer_cmd,
+        'analyzer_cmd': convert_to_printable(analyzer_cmd),
         'return_code': return_code,
-        'stdout': stdout,
-        'stderr': stderr
+        'stdout': convert_to_printable(stdout),
+        'stderr': convert_to_printable(stderr)
     }
 
     parser.write(data, plist_err_path)
