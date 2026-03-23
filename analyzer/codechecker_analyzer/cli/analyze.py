@@ -53,6 +53,9 @@ EPILOG_ENV_VAR = """
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
+  CC_CLANGTIDY_PLUGIN_DIR  If the CC_ANALYZERS_FROM_PATH environment variable
+                           is set you can configure the plugin directory of
+                           Clang-Tidy by using this environment variable.
 """
 
 EPILOG_ISSUE_HASHES = """

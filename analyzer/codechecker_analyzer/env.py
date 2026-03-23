@@ -212,3 +212,8 @@ def is_analyzer_from_path():
 def get_clangsa_plugin_dir():
     """ Return the value of the CC_CLANGSA_PLUGIN_DIR environment variable. """
     return os.environ.get('CC_CLANGSA_PLUGIN_DIR')
+
+
+def get_clangtidy_plugin_dir():
+    """ Return the value of the CC_CLANGTIDY_PLUGIN_DIR environment variable. """
+    return os.environ.get('CC_CLANGTIDY_PLUGIN_DIR')

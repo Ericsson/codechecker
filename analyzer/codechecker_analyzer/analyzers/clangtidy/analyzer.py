@@ -267,6 +267,42 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
+    def analyzer_base_cmd(cls) -> List[str]:
+        return [cls.analyzer_binary()] + \
+            ["-load=" + f for f in cls.analyzer_plugins()]
+
+    @classmethod
+    def analyzer_plugins(cls) -> List[str]:
+        """
+        Return the list of .so file paths which contain checker plugins to
+        Clang-Tidy.
+        """
+        if env.is_analyzer_from_path():
+            clangtidy_plugin_dir = env.get_clangtidy_plugin_dir()
+            if not clangtidy_plugin_dir:
+                return []
+
+            # If the CC_ANALYZERS_FROM_PATH and CC_CLANGTIDY_PLUGIN_DIR
+            # environment variables are set we will use this value as the
+            # plugin directory.
+            plugin_dir = clangtidy_plugin_dir
+
+        else:
+            base_plugin_dir = analyzer_context.get_context().checker_plugin
+            if not base_plugin_dir:
+                return []
+
+            plugin_dir = os.path.join(base_plugin_dir, "clangtidy")
+
+        if not os.path.isdir(plugin_dir):
+            return []
+
+        return [os.path.join(plugin_dir, f)
+                for f in os.listdir(plugin_dir)
+                if os.path.isfile(os.path.join(plugin_dir, f))
+                and f.endswith(".so")]
+
+    @classmethod
     def get_binary_version(cls) -> Optional[Version]:
         if not cls.analyzer_binary():
             return None
@@ -311,7 +347,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             environ = context.get_env_for_bin(cls.analyzer_binary())
             result = subprocess.check_output(
-                [cls.analyzer_binary(), "-list-checks", "-checks=*"],
+                cls.analyzer_base_cmd() + ["-list-checks", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
@@ -340,7 +376,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         try:
             help_page = subprocess.check_output(
-                [cls.analyzer_binary(), "-dump-config", "-checks=*"],
+                cls.analyzer_base_cmd() + ["-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
                 .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
@@ -365,7 +401,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         try:
             result = subprocess.check_output(
-                [cls.analyzer_binary(), "-dump-config", "-checks=*"],
+                cls.analyzer_base_cmd() + ["-dump-config", "-checks=*"],
                 env=analyzer_context.get_context()
                 .get_env_for_bin(cls.analyzer_binary()),
                 universal_newlines=True,
@@ -494,7 +530,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             config = self.config_handler
 
-            analyzer_cmd = [ClangTidy.analyzer_binary()]
+            analyzer_cmd = ClangTidy.analyzer_base_cmd()
 
             checks, compiler_warnings = self.get_checker_list(config)
 
