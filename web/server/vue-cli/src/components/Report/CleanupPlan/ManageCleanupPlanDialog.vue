@@ -12,30 +12,18 @@
       <slot />
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        <v-container>
-          <v-row>
-            <h1>Manage Cleanup Plans</h1>
-            <span
-              class="subtitle-1"
-            >
-              Use cleanup plans to track progress of reports in your product.
-            </span>
-          </v-row>
-        </v-container>
-
-        <v-spacer />
-
+    <v-card
+      title="Manage Cleanup Plans"
+      subtitle="Use cleanup plans to track progress of reports in your product."
+    >
+      <template v-slot:append>
         <v-btn
           class="close-btn"
           icon="mdi-close"
+          size="small"
           @click="dialog = false"
         />
-      </v-card-title>
+      </template>
 
       <v-card-text class="pa-0">
         <v-container>
@@ -65,13 +53,17 @@ import { computed } from "vue";
 import ListCleanupPlans from "./ListCleanupPlans";
 
 const props = defineProps({
-  value: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false }
 });
 
-const emit = defineEmits([ "update:value" ]);
+const emit = defineEmits([ "update:modelValue" ]);
 
 const dialog = computed({
-  get: () => props.value,
-  set: val => emit("update:value", val)
+  get() {
+    return props.modelValue;
+  },
+  set(value) {
+    emit("update:modelValue", value);
+  }
 });
 </script>
