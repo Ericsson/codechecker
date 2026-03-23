@@ -135,10 +135,13 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
+import { useDateUtils } from "@/composables/useDateUtils";
+
 import _ from "lodash";
 
 const route = useRoute();
 const router = useRouter();
+const { prettifyDate } = useDateUtils();
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
@@ -333,11 +336,6 @@ function getRunCountColor(runCount) {
   } else {
     return "green";
   }
-}
-
-function prettifyDate(date) {
-  if (!date) return "";
-  return new Date(date).toLocaleDateString();
 }
 
 function initializeComponent() {
