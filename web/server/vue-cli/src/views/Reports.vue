@@ -175,85 +175,6 @@
         </template>
       </v-data-table>
 
-      <!-- prototype -->
-      <!-- <div
-        v-else
-        class="d-flex align-center justify-center fill-height"
-      >
-        <p>{{ formattedDirectories }}</p>
-        <tree-item
-          v-for="(child, name) in formattedDirectories"
-          :key="name"
-          :name="name"
-          :children="child"
-        />
-        </div> -->
-
-      <!-- <v-treeview
-        :items="formattedDirectories"
-        activatable
-        item-key="name"
-        open-on-click
-      >
-        <template #prepend="{ item, open }">
-          <v-icon v-if="item.children">
-            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-          </v-icon>
-          <v-icon v-else>
-            mdi-file
-          </v-icon>
-        </template>
-      </v-treeview> -->
-
-      <!-- Last implementation mar11 (down) -->
-
-      <!-- <v-treeview
-        :items="formattedDirectoriesForTreeViewRunResults"
-        activatable
-        item-key="name"
-        open-on-click
-      >
-        <template #prepend="{ item, open }">
-          <v-icon v-if="item.children.length > 0">
-            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-          </v-icon>
-          <v-icon v-else>
-            mdi-file
-          </v-icon>
-
-          <v-chip class="right ml-2">
-            {{ item.findings }}
-          </v-chip>
-        </template>
-      </v-treeview> -->
-      <!-- Old - getRunResults tree (commented out) -->
-      <!-- <div class="flex-grow-1">
-        <h3 class="mb-2">
-          Old - getRunResults
-        </h3>
-
-        <v-treeview
-          :items="formattedDirectoriesForTreeViewRunResults"
-          activatable
-          item-key="fullPath"
-          open-on-click
-          @update:active="onTreeFileClick"
-        >
-          <template #prepend="{ item, open }">
-            <v-icon v-if="item.children.length > 0">
-              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-            </v-icon>
-            <v-icon v-else>
-              mdi-file
-            </v-icon>
-
-            <v-chip class="right ml-2">
-              {{ item.findings }}
-            </v-chip>
-          </template>
-        </v-treeview>
-      </div> -->
-
       <v-treeview
         v-else
         :items="formattedDirectoriesForTreeViewFileCounts"
@@ -301,61 +222,6 @@ import CheckerDocumentationDialog from
 import { ReportFilter } from "@/components/Report/ReportFilter";
 import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 
-// const TreeItem = {
-//   name: "TreeItem",
-//   props: {
-//     name: { type: String, required: true },
-//     children: { type: Object, required: true },
-//     findings: { type: Number, default: 0 }
-//   },
-//   template: `
-//     <ul>
-//       <li>
-//         {{ name }} : {{ findings }} findings
-//       </li>
-//       <div v-if="Object.keys(children).length > 0" class="ml-4">
-//         <tree-item
-//           v-for="(child, name) in children"
-//           :key="name"
-//           :name="name"
-//           :children="child"
-//           :findings="child.findings"
-//         />
-//       </div>
-//     </ul>
-//   `
-// };
-
-// codechecker analyze enable all + store it
-// + show in tree view DONE
-// measure the time between current
-// impelementation and the one with
-// getCheckerCounts DONE
-// implementation A and B for thesis
-// documentation DONE
-// getFileCounts(report server.thrift)  DONE
-
-// getCheckerCounts(report server.thrift)
-// - if performance with getFileCounts is not
-// good, we can try to implement this and use
-// it instead, but it is needed to add new
-// endpoint to get counts for all checkers
-// and not only total count, so it is going
-// to be filename, checker name -> count DONE
-// Introduce new hash in table, in some cases
-// when different checkers report to the same
-// line they may report the same error, so it
-// is needed to group them up
-// In cases the reports are different we
-// should do mapping table to a bug type and
-// add that to hash again
-// Filename, line, bug type -> new hash
-// replace to unique reports button to a drop
-// down to be able to choose report hash and
-// a new hash and then we count and sort,
-// then on the top left corner the number of
-// total reports is going to be completely
-// unique
 const namespace = "report";
 
 export default {
@@ -385,7 +251,6 @@ export default {
 
     return {
       viewMode: "table",
-      // directories: [],
       headers: [
         {
           text: "",
@@ -460,7 +325,6 @@ export default {
         }
       ],
       reports: [],
-      allReportsRunResults: [],
       allReportsFileCounts: [],
       sameReports: {},
       hasTimeStamp: true,
@@ -556,85 +420,6 @@ export default {
         };
       });
     },
-
-    // formattedDirectories() {
-    //   const dirs = {};
-    //   this.reports.forEach(report => {
-    //     const pathParts = report.checkedFile.split("/")
-    //       .slice(0, -1);
-    //     let currentDir = dirs;
-    //     pathParts.forEach(part => {
-    //       if (part === "") return;
-    //       if (!currentDir[part]) {
-    //         currentDir[part] = {};
-    //       }
-    //       currentDir = currentDir[part];
-    //     });
-    //   });
-    //   return dirs;
-    // },
-
-    // formattedDirectoriesForTreeViewRunResults() {
-    //   const items = [];
-    //
-    //   this.allReportsRunResults.forEach(report => {
-    //     const pathParts = report.checkedFile
-    //       .split("/").slice(0, -1);
-    //     let currentLevel = items;
-    //     let currentPath = "";
-    //     pathParts.forEach(part => {
-    //       if (part === "") return;
-    //
-    //       currentPath += "/" + part;
-    //       let existingPart = currentLevel.find(
-    //         item => item.name === part
-    //       );
-    //       if (!existingPart) {
-    //         existingPart = {
-    //           name: part,
-    //           fullPath: currentPath,
-    //           children: [],
-    //           findings: 0
-    //         };
-    //         currentLevel.push(existingPart);
-    //       }
-    //       currentLevel = existingPart.children;
-    //     });
-    //
-    //     const fileName = report.checkedFile
-    //       .split("/").slice(-1)[0];
-    //     if (fileName) {
-    //       const filePath = currentPath + "/" + fileName;
-    //       const existingFile = currentLevel.find(
-    //         item => item.name === fileName
-    //       );
-    //       if (existingFile) {
-    //         existingFile.findings += 1;
-    //       } else {
-    //         currentLevel.push({
-    //           name: fileName,
-    //           fullPath: filePath,
-    //           children: [],
-    //           findings: 1
-    //         });
-    //       }
-    //     }
-    //   });
-    //
-    //   function countFindings(node) {
-    //     if (node.children.length === 0) {
-    //       return node.findings;
-    //     } else {
-    //       node.findings = node.children.reduce(
-    //         (sum, child) => {
-    //           return sum + countFindings(child);
-    //       }, 0);
-    //       return node.findings;
-    //     }
-    //   }
-    //   items.forEach(countFindings);
-    //   return items;
-    // },
 
     formattedDirectoriesForTreeViewFileCounts() {
       const items = [];
@@ -772,18 +557,6 @@ export default {
         }));
     },
 
-    // loadReportsRunResults() {
-    //   ccService.getClient().getRunResults(
-    //     this.runIds, 0, 0, this.sortType,
-    //     this.reportFilter, this.cmpData,
-    //     this.getDetails,
-    //     handleThriftError(reports => {
-    //       this.allReportsRunResults =
-    //         reports || [];
-    //     })
-    //   );
-    // },
-
     getSortMode() {
       let type = null;
       switch (this.pagination.sortBy[0]) {
@@ -900,18 +673,9 @@ export default {
             fileCounts;
         }));
 
-      // ccService.getClient().getRunResults(
-      //   this.runIds, 0, 0, sortType,
-      //   this.reportFilter, this.cmpData,
-      //   getDetails,
-      //   handleThriftError(reports => {
-      //     this.allReportsRunResults =
-      //       reports;
-      //   }));
-
     }
 
-    
+
   }
 };
 </script>
