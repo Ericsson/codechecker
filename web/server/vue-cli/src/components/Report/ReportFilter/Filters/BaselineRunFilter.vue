@@ -175,7 +175,7 @@ const baseSelectOptionFilter =
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
-const id = ref("run");
+const id = "run";
 baseSelectOptionFilter.id.value = id;
 
 const runTagId = ref("run-tag");
@@ -307,7 +307,7 @@ async function getSelectedTagItems(tags) {
 }
 
 async function initByUrl() {
-  let _runs = [].concat(route.query[id.value] || []);
+  let _runs = [].concat(route.query[id] || []);
   const _tags = [].concat(route.query[runTagId.value] || []);
 
   if (_runs.length || _tags.length) {
@@ -370,7 +370,7 @@ function getUrlState() {
   const _tagState = runFilter.selectedTagItems.value.map(item => item.id);
 
   return {
-    [id.value]: _runState.length ? _runState : undefined,
+    [id]: _runState.length ? _runState : undefined,
     [runTagId.value]: _tagState.length ? _tagState : undefined
   };
 }

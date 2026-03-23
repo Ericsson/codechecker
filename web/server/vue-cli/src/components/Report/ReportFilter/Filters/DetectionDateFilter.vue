@@ -195,15 +195,15 @@ function updateReportFilter() {
     baseSelectOptionFilter.reportFilter.value.date
   );
   if (fromDateTime.value || toDateTime.value) {
-    if (!_date[filterFieldName.value])
-      _date[filterFieldName.value] = new DateInterval();
+    if (!_date[filterFieldName])
+      _date[filterFieldName] = new DateInterval();
 
-    _date[filterFieldName.value].before = toDateTime.value
+    _date[filterFieldName].before = toDateTime.value
       ? getUnixTime(toDateTime.value) : null;
-    _date[filterFieldName.value].after = fromDateTime.value
+    _date[filterFieldName].after = fromDateTime.value
       ? getUnixTime(fromDateTime.value) : null;
   } else if (_date) {
-    _date[filterFieldName.value] = null;
+    _date[filterFieldName] = null;
   }
 
   baseSelectOptionFilter.setReportFilter({ date: _date });

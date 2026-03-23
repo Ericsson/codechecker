@@ -340,9 +340,9 @@ const props = defineProps({
 
 const emit = defineEmits([ "set-refresh-filter-state", "refresh" ]);
 
-const activeBaselinePanelId = ref(undefined);
-const activeCompareToPanelId = ref(undefined);
-const activeDatePanelId = ref(undefined);
+const activeBaselinePanelId = ref(0);
+const activeCompareToPanelId = ref(0);
+const activeDatePanelId = ref(0);
 const filters = ref([]);
 
 const setFilterRef = el => {
@@ -362,7 +362,6 @@ const router = useRouter();
 const store = useStore();
 
 const reportFilter = computed(() => store.state[props.namespace].reportFilter);
-const cmpData = computed(() => store.state[props.namespace].cmpData);
 
 watch(() => props.refreshFilter, state => {
   if (!state) return;
@@ -450,18 +449,11 @@ function initByUrl() {
     });
     afterInit();
 
-    // Close COMPARE TO expansion panel if no compare data is set.
-    if (!cmpData.value?.runIds && !cmpData.value?.runTag &&
-        !cmpData.value?.openReportsDate
-    ) {
-      activeCompareToPanelId.value = undefined;
-    }
-
-    closePanelsOnInit();
+    preparePanelsOnInit();
   });
 }
 
-function closePanelsOnInit() {
+function preparePanelsOnInit() {
   if (!reportFilter.value.date) {
     activeDatePanelId.value = undefined;
   }
