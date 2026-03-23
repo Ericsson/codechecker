@@ -189,99 +189,102 @@
         />
         </div> -->
 
-        <!-- <v-treeview
-          :items="formattedDirectories"
-          activatable
-          item-key="name"
-          open-on-click
-        >
-          <template #prepend="{ item, open }">
-            <v-icon v-if="item.children">
-              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-            </v-icon>
-            <v-icon v-else>
-              mdi-file
-            </v-icon>
-          </template>
-        </v-treeview> -->
+      <!-- <v-treeview
+        :items="formattedDirectories"
+        activatable
+        item-key="name"
+        open-on-click
+      >
+        <template #prepend="{ item, open }">
+          <v-icon v-if="item.children">
+            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+          </v-icon>
+          <v-icon v-else>
+            mdi-file
+          </v-icon>
+        </template>
+      </v-treeview> -->
 
-        <!-- Last implementation mar11 (down) -->
+      <!-- Last implementation mar11 (down) -->
 
-        <!-- <v-treeview
-          :items="formattedDirectoriesForTreeViewRunResults"
-          activatable
-          item-key="name"
-          open-on-click
-        >
-          <template #prepend="{ item, open }">
-            <v-icon v-if="item.children.length > 0">
-              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-            </v-icon>
-            <v-icon v-else>
-              mdi-file
-            </v-icon>
+      <!-- <v-treeview
+        :items="formattedDirectoriesForTreeViewRunResults"
+        activatable
+        item-key="name"
+        open-on-click
+      >
+        <template #prepend="{ item, open }">
+          <v-icon v-if="item.children.length > 0">
+            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+          </v-icon>
+          <v-icon v-else>
+            mdi-file
+          </v-icon>
 
-            <v-chip class="right ml-2">
-              {{ item.findings }}
-            </v-chip>
-          </template>
-        </v-treeview> -->
-        <div
-          v-else
-          class="d-flex align-start fill-height"
-          style="gap: 24px;"
-        >
-          <div class="flex-grow-1">
-            <h3 class="mb-2">Old - getRunResults</h3>
+          <v-chip class="right ml-2">
+            {{ item.findings }}
+          </v-chip>
+        </template>
+      </v-treeview> -->
+      <div
+        v-else
+        class="d-flex align-start fill-height"
+        style="gap: 24px;"
+      >
+        <div class="flex-grow-1">
+          <h3 class="mb-2">
+            Old - getRunResults
+          </h3>
 
-            <v-treeview
-              :items="formattedDirectoriesForTreeViewRunResults"
-              activatable
-              item-key="fullPath"
-              open-on-click
-              @update:active="onTreeFileClick"
-            >
-              <template #prepend="{ item, open }">
-                <v-icon v-if="item.children.length > 0">
-                  {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-                </v-icon>
-                <v-icon v-else>
-                  mdi-file
-                </v-icon>
+          <v-treeview
+            :items="formattedDirectoriesForTreeViewRunResults"
+            activatable
+            item-key="fullPath"
+            open-on-click
+            @update:active="onTreeFileClick"
+          >
+            <template #prepend="{ item, open }">
+              <v-icon v-if="item.children.length > 0">
+                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+              </v-icon>
+              <v-icon v-else>
+                mdi-file
+              </v-icon>
 
-                <v-chip class="right ml-2">
-                  {{ item.findings }}
-                </v-chip>
-              </template>
-            </v-treeview>
-          </div>
-
-          <div class="flex-grow-1">
-            <h3 class="mb-2">New - getFileCounts</h3>
-
-            <v-treeview
-              :items="formattedDirectoriesForTreeViewFileCounts"
-              activatable
-              item-key="fullPath"
-              open-on-click
-              @update:active="onTreeFileClick"
-            >
-              <template #prepend="{ item, open }">
-                <v-icon v-if="item.children.length > 0">
-                  {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-                </v-icon>
-                <v-icon v-else>
-                  mdi-file
-                </v-icon>
-
-                <v-chip class="right ml-2">
-                  {{ item.findings }}
-                </v-chip>
-              </template>
-            </v-treeview>
-          </div>
+              <v-chip class="right ml-2">
+                {{ item.findings }}
+              </v-chip>
+            </template>
+          </v-treeview>
         </div>
-      
+
+        <div class="flex-grow-1">
+          <h3 class="mb-2">
+            New - getFileCounts
+          </h3>
+
+          <v-treeview
+            :items="formattedDirectoriesForTreeViewFileCounts"
+            activatable
+            item-key="fullPath"
+            open-on-click
+            @update:active="onTreeFileClick"
+          >
+            <template #prepend="{ item, open }">
+              <v-icon v-if="item.children.length > 0">
+                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+              </v-icon>
+              <v-icon v-else>
+                mdi-file
+              </v-icon>
+
+              <v-chip class="right ml-2">
+                {{ item.findings }}
+              </v-chip>
+            </template>
+          </v-treeview>
+        </div>
+      </div>
     </pane>
   </splitpanes>
 </template>
@@ -333,16 +336,36 @@ import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 //   `
 // };
 
-// codechecker analyze enable all + store it + show in tree view DONE
-// measure the time between current impelementation and the one with getCheckerCounts DONE
-// implementation A and B for thesis documentation DONE
+// codechecker analyze enable all + store it
+// + show in tree view DONE
+// measure the time between current
+// impelementation and the one with
+// getCheckerCounts DONE
+// implementation A and B for thesis
+// documentation DONE
 // getFileCounts(report server.thrift)  DONE
 
-// getCheckerCounts(report server.thrift) - if performance with getFileCounts is not good, we can try to implement this and use it instead, but it is needed to add new endpoint to get counts for all checkers and not only total count, so it is going to be filename, checker name -> count DONE
-// Introduce new hash in table, in some cases when different checkers report to the same line they may report the same error, so it is needed to group them up
-// In cases the reports are different we should do mapping table to a bug type and add that to hash again
+// getCheckerCounts(report server.thrift)
+// - if performance with getFileCounts is not
+// good, we can try to implement this and use
+// it instead, but it is needed to add new
+// endpoint to get counts for all checkers
+// and not only total count, so it is going
+// to be filename, checker name -> count DONE
+// Introduce new hash in table, in some cases
+// when different checkers report to the same
+// line they may report the same error, so it
+// is needed to group them up
+// In cases the reports are different we
+// should do mapping table to a bug type and
+// add that to hash again
 // Filename, line, bug type -> new hash
-// replace to unique reports button to a drop down to be able to choose report hash and a new hash and then we count and sort, then on the top left corner the number of total reports is going to be completely unique
+// replace to unique reports button to a drop
+// down to be able to choose report hash and
+// a new hash and then we count and sort,
+// then on the top left corner the number of
+// total reports is going to be completely
+// unique
 const namespace = "report";
 
 export default {
@@ -750,36 +773,26 @@ export default {
         expandedItem.item.sameReports = sameReports;
       });
     },
-    loadFileCounts(){
-      const start = performance.now();
-      ccService.getClient().getFileCounts(this.runIds, this.reportFilter,
-          this.cmpData, 0, 0, handleThriftError(fileCounts => {
-          const apiEnd = performance.now();
-          console.log("getFileCounts API time:", apiEnd - start, "ms");
-
-          this.allReportsRunResults = fileCounts || [];
-
-          this.$nextTick(() => {
-            console.log("getFileCounts FULL time:", performance.now() - start, "ms");
-          });
+    loadFileCounts() {
+      ccService.getClient().getFileCounts(
+        this.runIds, this.reportFilter,
+        this.cmpData, 0, 0,
+        handleThriftError(fileCounts => {
+          this.allReportsRunResults =
+            fileCounts || [];
         }));
     },
 
     loadReportsRunResults() {
-      const start = performance.now();
-      ccService.getClient().getRunResults(this.runIds, 0, 0, this.sortType,
-        this.reportFilter, this.cmpData, this.getDetails,
-            handleThriftError(reports => {
-            const apiEnd = performance.now();
-            console.log("getRunResults API time:", apiEnd - start, "ms");
-
-            this.allReportsRunResults = reports || [];
-
-            this.$nextTick(() => {
-              console.log("getRunResults FULL time:", performance.now() - start, "ms");
-            });
-          })
-        );
+      ccService.getClient().getRunResults(
+        this.runIds, 0, 0, this.sortType,
+        this.reportFilter, this.cmpData,
+        this.getDetails,
+        handleThriftError(reports => {
+          this.allReportsRunResults =
+            reports || [];
+        })
+      );
     },
 
     getSortMode() {
@@ -890,27 +903,19 @@ export default {
           });
         }));
 
-      const t1 = performance.now();
-      ccService.getClient().getFileCounts(this.runIds, this.reportFilter,
-        this.cmpData, 0, 0, handleThriftError(fileCounts => {
-          console.log("getFileCounts API time:",
-            performance.now() - t1, "ms");
-          console.log("getFileCounts total:",
-            Object.values(fileCounts || {})
-              .reduce((sum, n) => sum + n, 0)
-          );
-          this.allReportsFileCounts = fileCounts;
+      ccService.getClient().getFileCounts(
+        this.runIds, this.reportFilter,
+        this.cmpData, 0, 0,
+        handleThriftError(fileCounts => {
+          this.allReportsFileCounts =
+            fileCounts;
         }));
-      
-      const t2 = performance.now();
+
       ccService.getClient().getRunResults(
         this.runIds, 0, 0, sortType,
-        this.reportFilter, this.cmpData, getDetails,
+        this.reportFilter, this.cmpData,
+        getDetails,
         handleThriftError(reports => {
-          console.log("getRunResults API time:",
-            performance.now() - t2, "ms");
-          console.log("getRunResults length:",
-            reports ? reports.length : 0);
           this.allReportsRunResults = reports;
         }));
 
