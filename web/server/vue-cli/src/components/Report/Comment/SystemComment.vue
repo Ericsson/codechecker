@@ -14,7 +14,8 @@
       >
         <template v-for="(part, index) in messageParts" :key="index">
           <strong v-if="part.bold">{{ part.text }}</strong>
-          <span v-else>{{ part.text }}</span>
+          <!-- eslint-disable vue/no-v-html -->
+          <span v-else v-html="part.text" />
         </template>
       </v-card-text>
     </v-card>
@@ -23,6 +24,7 @@
 
 <script setup>
 import { computed } from "vue";
+import DOMPurify from "dompurify";
 
 const props = defineProps({
   comment: { type: Object, required: true },
@@ -60,7 +62,10 @@ const messageParts = computed(() => {
   
   // Add remaining text
   if (currentIndex < msg.length) {
-    parts.push({ text: msg.slice(currentIndex), bold: false });
+    const dirtyMessage = msg.slice(currentIndex);
+    parts.push(
+      { text: DOMPurify.sanitize(dirtyMessage), bold: false }
+    );
   }
   
   return parts;
