@@ -23,6 +23,7 @@
       :comments="comments"
       :report="report"
       :bus="bus"
+      @new:comments="onNewComment"
     />
 
     <v-container
@@ -47,7 +48,8 @@
                 v-if="comment.kind === CommentKind.USER"
                 :key="comment.id.toString()"
                 :comment="comment"
-                :bus="bus"
+                @update:comment="openEditCommentDialog"
+                @remove:comment="openRemoveCommentDialog"
               />
 
               <system-comment
@@ -80,6 +82,8 @@ const props = defineProps({
   report: { type: Object, default: () => null }
 });
 
+const emit = defineEmits([ "update:commentCount" ]);
+
 const comments = ref([]);
 const selected = ref(null);
 const editDialog = ref(false);
@@ -98,23 +102,27 @@ function fetchComments() {
     }));
 }
 
+function onNewComment() {
+  emit("update:commentCount", props.report);
+  fetchComments();
+}
+
+function openEditCommentDialog(comment) {
+  selected.value = comment;
+  editDialog.value = true;
+}
+
+function openRemoveCommentDialog(comment) {
+  selected.value = comment;
+  removeDialog.value = true;
+}
+
 watch(() => props.report, () => {
   fetchComments();
 });
 
 onMounted(() => {
   fetchComments();
-
-  bus.on("update:comments", fetchComments);
-  bus.on("update:comment", comment => {
-    selected.value = comment;
-    editDialog.value = true;
-  });
-
-  bus.on("remove:comment", comment => {
-    selected.value = comment;
-    removeDialog.value = true;
-  });
 });
 
 onBeforeUnmount(() => {

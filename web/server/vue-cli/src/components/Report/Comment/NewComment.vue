@@ -45,7 +45,7 @@ const props = defineProps({
   report: { type: Object, default: () => null }
 });
 
-const emit = defineEmits([ "update:comments" ]);
+const emit = defineEmits([ "new:comments" ]);
 
 const message = ref(null);
 const loading = ref(false);
@@ -57,7 +57,7 @@ function addNewComment() {
   const _commentData = new CommentData({ message: message.value });
   ccService.getClient().addComment(props.report.reportId, _commentData,
     handleThriftError(() => {
-      emit("update:comments");
+      emit("new:comments");
       message.value = null;
       loading.value = false;
     }));

@@ -274,6 +274,7 @@
           v-fill-height
           class="comments"
           :report="report"
+          @update:comment-count="updateCommentCount"
         />
       </v-col>
     </v-row>
@@ -359,7 +360,7 @@ const jsPlumbInstance = ref(null);
 const lineMarks = ref([]);
 const lineWidgets = ref([]);
 const showArrows = ref(true);
-const numOfComments = ref(null);
+const numOfComments = ref(0);
 const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
@@ -462,13 +463,7 @@ watch(showArrows, async () => {
 });
 
 watch(report, () => {
-  loadNumOfComments.value = true;
-  ccService.getClient().getCommentCount(
-    report.value.reportId,
-    handleThriftError(count => {
-      numOfComments.value = count;
-      loadNumOfComments.value = false;
-    }));
+  updateCommentCount(report.value);
 });
 
 class AdvancedLineWidget extends WidgetType {
@@ -558,7 +553,6 @@ onMounted(() => {
   });
 });
 
-
 onUnmounted(() => {
   document.removeEventListener("keydown", findText);
 });
@@ -579,6 +573,16 @@ function init(_treeItem) {
   } else {
     loadReport(_treeItem.report);
   }
+}
+
+function updateCommentCount(report) {
+  loadNumOfComments.value = true;
+  ccService.getClient().getCommentCount(
+    report.reportId,
+    handleThriftError(count => {
+      numOfComments.value = count;
+      loadNumOfComments.value = false;
+    }));
 }
 
 async function loadReportStep(_report, { stepId, fileId, startLine }) {

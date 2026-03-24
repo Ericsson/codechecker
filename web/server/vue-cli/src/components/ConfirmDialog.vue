@@ -81,7 +81,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   buttons: { type: Boolean, default: true },
   cancelBtnLabel: { type: String, default: "Cancel" },
-  cancelBtnColor: { type: String, default: "error" },
+  cancelBtnColor: { type: String, default: "grey" },
   confirmBtnLabel: { type: String, default: "Save" },
   confirmBtnColor: { type: String, default: "primary" },
   confirmInProgress: { type: Boolean, default: false },

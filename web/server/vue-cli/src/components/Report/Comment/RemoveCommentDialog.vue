@@ -1,81 +1,46 @@
 <template>
-  <v-dialog
+  <ConfirmDialog
     v-model="dialog"
     content-class="remove-comment-dialog"
     persistent
     max-width="600px"
+    title="Remove Comment"
+    confirm-btn-label="Remove"
+    confirm-btn-color="error"
+    @confirm="confirmCommentRemove"
   >
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        Remove comment
+    <template v-slot:content>
+      <v-container>
+        Are you sure you want to delete this comment?
 
-        <v-spacer />
-
-        <v-btn
-          icon="mdi-close"
-          @click="dialog = false"
+        <!-- eslint-disable vue/no-v-html -->
+        <blockquote
+          class="blockquote"
+          v-html="message"
         />
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          Are you sure you want to delete this comment?
-
-          <!-- eslint-disable vue/no-v-html -->
-          <blockquote
-            class="blockquote"
-            v-html="message"
-          />
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          class="cancel-btn"
-          color="primary"
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          class="remove-btn"
-          color="error"
-          text
-          @click="confirmCommentRemove"
-        >
-          Remove
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+      </v-container>
+    </template>
+  </ConfirmDialog>
 </template>
 
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { computed } from "vue";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const props = defineProps({
-  value: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false },
   comment: { type: Object, default: () => null }
 });
 
 const emit = defineEmits([
-  "update:value",
+  "update:modelValue",
   "on-confirm"
 ]);
 
 const dialog = computed({
-  get: () => props.value,
-  set: val => emit("update:value", val)
+  get: () => props.modelValue,
+  set: val => emit("update:modelValue", val)
 });
 
 const message = computed(() => props.comment ? props.comment.message : null);

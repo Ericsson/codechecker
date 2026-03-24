@@ -6,28 +6,6 @@
     title="Analyzer statistics"
     :buttons="false"
   >
-    <template v-slot:activator="{ props: activatorProps }">
-      <v-btn
-        v-if="iconOnly"
-        v-bind="activatorProps"
-        id="show-analysis-info-btn"
-        color="primary"
-        :variant="iconVariant"
-        :size="iconSize"
-        icon="mdi-console"
-      />
-      <v-btn
-        v-else
-        v-bind="activatorProps"
-        id="show-analysis-info-btn"
-        color="primary"
-        :variant="iconVariant"
-        :size="iconSize"
-        prepend-icon="mdi-console"
-      >
-        Analysis Info
-      </v-btn>
-    </template>
     <template v-slot:content>
       <v-expansion-panels
         v-model="activeExpansionPanels"
