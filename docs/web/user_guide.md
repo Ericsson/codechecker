@@ -28,6 +28,11 @@
       - [List runs (`runs`)](#list-runs-runs)
       - [List of run histories (`history`)](#list-of-run-histories-history)
       - [List analysis results' summary (`results`)](#list-analysis-results-summary-results)
+      - [Manage filter presets (`filter-preset`)](#manage-filter-presets-filter-preset)
+        - [Creating a filter preset](#creating-a-filter-preset)
+        - [Listing filter presets](#listing-filter-presets)
+        - [Deleting a filter preset](#deleting-a-filter-preset)
+        - [Applying a filter preset to results](#applying-a-filter-preset-to-results)
         - [Example](#example-1)
       - [Show differences between two runs (`diff`)](#show-differences-between-two-runs-diff)
       - [Show summarised count of results (`sum`)](#show-summarised-count-of-results-sum)
@@ -1122,7 +1127,100 @@ CodeChecker cmd results my_run --severity critical high medium \
 
 # Get detailed analysis results for a run in JSON format.
 CodeChecker cmd results -o json --details my_run
+
+# Get analysis results using a saved filter preset:
+CodeChecker cmd results my_run --filter-preset my_preset \
+    --url <PRODUCT_URL>
 ```
+
+#### Manage filter presets (`filter-preset`)
+
+Filter presets allow you to save a named set of filter parameters on the
+server so they can be reused across multiple queries without having to
+specify all the filter flags every time.
+
+A preset stores any combination of the filter arguments available to
+`cmd results` (severity, checker name, file path, detection status, etc.).
+
+##### Creating a filter preset
+
+```
+# Create a minimal preset that filters by severity:
+CodeChecker cmd filter-preset new \
+    --name "high_and_critical" \
+    --url <PRODUCT_URL> \
+    --severity critical high
+
+# Create a preset with many filter parameters:
+CodeChecker cmd filter-preset new \
+    --name "FullPreset" \
+    --url <PRODUCT_URL> \
+    --severity critical high medium low style unspecified \
+    --review-status unreviewed confirmed false_positive intentional \
+    --detection-status new reopened unresolved resolved off unavailable \
+    --report-status outstanding closed \
+    --file "*/src/*.cpp" "*/include/*.h" \
+    --checker-name "deadcode.DeadStores" "core.NullDereference" \
+    --checker-msg "*null pointer*" "*memory leak*" \
+    --analyzer-name clangsa clang-tidy \
+    --component myComponent \
+    --tag v1.0 v2.0 \
+    --report-hash "abcdef1234567890" \
+    --bug-path-length "1:50" \
+    --detected-before "2026:03:09:00:00:00" \
+    --detected-after "2025:01:01:00:00:00" \
+    --fixed-before "2026:03:09:00:00:00" \
+    --fixed-after "2025:06:01:00:00:00" \
+    --outstanding-reports-date "2026:03:01:00:00:00" \
+    --anywhere-on-report-path \
+    --single-origin-report \
+    --uniqueing off
+```
+
+Preset names must be unique. Attempting to create a preset with an
+already-existing name will fail.
+
+##### Listing filter presets
+
+```
+# List all presets (default table output):
+CodeChecker cmd filter-preset list \
+    --url <PRODUCT_URL>
+
+# List presets in CSV format:
+CodeChecker cmd filter-preset list \
+    --url <PRODUCT_URL> \
+    --output csv
+
+# List presets in JSON format:
+CodeChecker cmd filter-preset list \
+    --url <PRODUCT_URL> \
+    --output json
+```
+
+##### Deleting a filter preset
+
+You can find the preset ID by [listing filter presets](#listing-filter-presets).
+
+```
+# Delete a preset by its ID (shown in the list output):
+CodeChecker cmd filter-preset delete \
+    --id 1 \
+    --url <PRODUCT_URL>
+```
+
+##### Applying a filter preset to results
+
+Use the `--filter-preset` flag with `cmd results` to apply a saved preset:
+
+```
+CodeChecker cmd results my_run \
+    --filter-preset "high_and_critical" \
+    --url <PRODUCT_URL>
+```
+
+**Note:** `--filter-preset` cannot be combined with other filter arguments.
+Either use a preset or specify filters on the command line, not both.
 
 #### Show differences between two runs (`diff`)
 
