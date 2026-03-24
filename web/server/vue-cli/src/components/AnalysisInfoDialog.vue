@@ -91,24 +91,29 @@
           <v-expansion-panel-text
             class="pa-1"
           >
-            <template
-              v-for="(checkers, group) in
-                analysisInfo.checkersGroupedAndSorted[analyzer]"
+            <v-expansion-panels
+              multiple
+              elevation="0"
             >
-              <checker-group
-                v-if="group !== GroupKeys.NoGroup"
-                :key="`group-${group}`"
-                :group="group"
-                :checkers="checkers"
-                :counts="
-                  analysisInfo.checkerGroupCounts[analyzer][group]"
-              />
-              <checker-rows
-                v-else
-                :key="`row-${group}`"
-                :checkers="checkers"
-              />
-            </template>
+              <template
+                v-for="(checkers, group) in
+                  analysisInfo.checkersGroupedAndSorted[analyzer]"
+              >
+                <checker-group
+                  v-if="group !== GroupKeys.NoGroup"
+                  :key="`group-${group}`"
+                  :group="group"
+                  :checkers="checkers"
+                  :counts="
+                    analysisInfo.checkerGroupCounts[analyzer][group]"
+                />
+                <checker-rows
+                  v-else
+                  :key="`row-${group}`"
+                  :checkers="checkers"
+                />
+              </template>
+            </v-expansion-panels>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>

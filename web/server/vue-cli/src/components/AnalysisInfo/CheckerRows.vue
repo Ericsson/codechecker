@@ -1,14 +1,16 @@
 <template>
-  <v-container
-    class="analysis-info-checker-rows-in-columns"
-  >
-    <Checker
+  <v-row>
+    <v-col
       v-for="(checker, idx) in checkers"
       :key="idx"
-      :name="checker[0]"
-      :enabled="checker[1].enabled"
-    />
-  </v-container>
+      cols="6"
+    >
+      <Checker
+        :name="checker[0]"
+        :enabled="checker[1].enabled"
+      />
+    </v-col>
+  </v-row>
 </template>
 
 <script setup>
@@ -18,9 +20,3 @@ defineProps({
   checkers: { type: Array, required: true }
 });
 </script>
-
-<style lang="scss" scoped>
-.analysis-info .analysis-info-checker-rows-in-columns {
-  columns: 32em auto;
-}
-</style>

@@ -1,9 +1,9 @@
 <template>
-  <div
+  <v-expansion-panel
     class="analyzer-checker-group-panel"
     :data-group-name="group"
   >
-    <div
+    <v-expansion-panel-title
       class="pa-0 px-1"
     >
       <v-row
@@ -12,7 +12,7 @@
       >
         <v-col cols="auto">
           <v-chip
-            class="mr-1 pa-1"
+            class="circle-chip"
             :color="groupWideStatus"
             :ripple="false"
             :title="'Group \'' + group + '\' was' +
@@ -21,23 +21,19 @@
               ) +
               ' enabled in this analysis'"
             variant="outlined"
-            size="small"
           >
             <v-icon
               v-if="!needDetailedCounts && groupEnabled"
-              start
             >
               mdi-check
             </v-icon>
             <v-icon
               v-else-if="!needDetailedCounts && !groupEnabled"
-              start
             >
               mdi-close
             </v-icon>
             <v-icon
               v-else-if="needDetailedCounts"
-              start
             >
               mdi-tune
             </v-icon>
@@ -45,7 +41,7 @@
         </v-col>
         <v-col
           cols="auto"
-          class="pl-2 checker-group-name primary--text"
+          class="pl-2 checker-group-name text-primary"
         >
           {{ group }}
         </v-col>
@@ -66,13 +62,13 @@
           />
         </v-col>
       </v-row>
-    </div>
-    <div>
+    </v-expansion-panel-title>
+    <v-expansion-panel-text>
       <CheckerRows
         :checkers="checkers"
       />
-    </div>
-  </div>
+    </v-expansion-panel-text>
+  </v-expansion-panel>
 </template>
 
 <script setup>
@@ -104,7 +100,7 @@ const groupWideStatus = computed(() => {
     return "success";
   if (numEnabled.value === 0 && numDisabled.value > 0)
     return "error";
-  return "grey darken-1";
+  return "grey-darken-1";
 });
 
 const groupEnabled = computed(() => groupWideStatus.value === "success");
@@ -116,5 +112,15 @@ const groupEnabled = computed(() => groupWideStatus.value === "success");
   font-size: 112.5%;
   font-style: italic;
   font-weight: medium;
+}
+
+.circle-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
 }
 </style>
