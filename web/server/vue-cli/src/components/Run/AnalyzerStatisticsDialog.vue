@@ -1,139 +1,132 @@
 <template>
-  <v-dialog
+  <ConfirmDialog
     v-model="dialog"
-    persistent
     max-width="600px"
     scrollable
+    title="Analyzer statistics"
+    :buttons="false"
   >
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
+    <template v-slot:activator="{ props: activatorProps }">
+      <v-btn
+        v-if="iconOnly"
+        v-bind="activatorProps"
+        id="show-analysis-info-btn"
+        color="primary"
+        :variant="iconVariant"
+        :size="iconSize"
+        icon="mdi-console"
+      />
+      <v-btn
+        v-else
+        v-bind="activatorProps"
+        id="show-analysis-info-btn"
+        color="primary"
+        :variant="iconVariant"
+        :size="iconSize"
+        prepend-icon="mdi-console"
       >
-        Analyzer statistics
-
-        <v-spacer />
-
-        <v-btn
-          icon="mdi-close"
-          @click="dialog = false"
-        />
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          <v-expansion-panels
-            v-model="activeExpansionPanels"
-            multiple
-            hover
+        Analysis Info
+      </v-btn>
+    </template>
+    <template v-slot:content>
+      <v-expansion-panels
+        v-model="activeExpansionPanels"
+        multiple
+        hover
+      >
+        <v-expansion-panel
+          v-for="(stats, analyzer) in analyzerStatistics"
+          :key="analyzer"
+        >
+          <v-expansion-panel-title
+            class="pa-0 px-1 text-primary font-weight-bold"
           >
-            <v-expansion-panel
-              v-for="(stats, analyzer) in analyzerStatistics"
-              :key="analyzer"
-            >
-              <v-expansion-panel-title
-                class="pa-0 px-1 primary--text font-weight-bold"
-              >
-                {{ analyzer }}
-              </v-expansion-panel-title>
+            {{ analyzer }}
+          </v-expansion-panel-title>
 
-              <v-expansion-panel-text class="pa-1">
-                <v-container>
+          <v-expansion-panel-text class="pa-1">
+            <v-container>
+              <v-row>
+                <v-icon class="mr-2">
+                  mdi-alpha-v-circle-outline
+                </v-icon>
+                <b class="pr-1">Version:</b> {{ stats.version }}
+              </v-row>
+              <v-row>
+                <analyzer-statistics-icon
+                  value="successful"
+                  class="mr-2"
+                />
+                <b class="pr-1">Number of successfully analyzed files:</b>
+                <v-chip
+                  color="success"
+                  size="small"
+                >
+                  {{ stats.successful }}
+                </v-chip>
+              </v-row>
+              <v-row>
+                <analyzer-statistics-icon
+                  value="failed"
+                  class="mr-2"
+                />
+                <b class="pr-1">Number of files which failed to analyze:</b>
+                <v-chip
+                  color="error"
+                  size="small"
+                >
+                  {{ stats.failed }}
+                </v-chip>
+              </v-row>
+              <v-row v-if="stats.failed">
+                <v-icon class="mr-2">
+                  mdi-text-box-multiple-outline
+                </v-icon>
+                <b>Files which failed to analyze:</b>
+                <v-container class="pl-8">
                   <v-row>
-                    <v-icon class="mr-2">
-                      mdi-alpha-v-circle-outline
-                    </v-icon>
-                    <b class="pr-1">Version:</b> {{ stats.version }}
-                  </v-row>
-                  <v-row>
-                    <analyzer-statistics-icon
-                      value="successful"
-                      class="mr-2"
-                    />
-                    <b class="pr-1">Number of successfully analyzed files:</b>
-                    <v-chip
-                      color="success"
-                      size="small"
-                    >
-                      {{ stats.successful }}
-                    </v-chip>
-                  </v-row>
-                  <v-row>
-                    <analyzer-statistics-icon
-                      value="failed"
-                      class="mr-2"
-                    />
-                    <b class="pr-1">Number of files which failed to analyze:</b>
-                    <v-chip
-                      color="error"
-                      size="small"
-                    >
-                      {{ stats.failed }}
-                    </v-chip>
-                  </v-row>
-                  <v-row v-if="stats.failed">
-                    <v-icon class="mr-2">
-                      mdi-text-box-multiple-outline
-                    </v-icon>
-                    <b>Files which failed to analyze:</b>
-                    <v-container class="pl-8">
-                      <v-row>
-                        <ul>
-                          <li
-                            v-for="file in stats.failedFilePaths"
-                            :key="file"
-                          >
-                            {{ file }}
-                          </li>
-                        </ul>
-                      </v-row>
-                    </v-container>
+                    <ul>
+                      <li
+                        v-for="file in stats.failedFilePaths"
+                        :key="file"
+                      >
+                        {{ file }}
+                      </li>
+                    </ul>
                   </v-row>
                 </v-container>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          text
-          @click="dialog = false"
-        >
-          Close
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+              </v-row>
+            </v-container>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </template>
+  </ConfirmDialog>
 </template>
 
 <script setup>
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
 import { ccService, handleThriftError } from "@cc-api";
 import { computed, onMounted, ref, watch } from "vue";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const props = defineProps({
-  value: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false },
   runId: { type: Object, default: () => null },
   runHistoryId: { type: Object, default: () => null }
 });
 
-const emit = defineEmits([ "update:value" ]);
+const emit = defineEmits([ "update:modelValue" ]);
 
 const analyzerStatistics = ref(null);
 const activeExpansionPanels = ref([]);
 
 const dialog = computed({
   get() {
-    return props.value;
+    return props.modelValue;
   },
   set(val) {
-    emit("update:value", val);
+    emit("update:modelValue", val);
   }
 });
 
