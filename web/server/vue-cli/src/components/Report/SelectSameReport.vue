@@ -42,8 +42,10 @@
       </div>
     </template>
 
-    <template v-slot:item="{ item }">
+    <template v-slot:item="{ item, props: listItemProps }">
       <v-list-item
+        v-bind="listItemProps"
+        :title="null"
         density="compact"
       >
         <detection-status-icon
