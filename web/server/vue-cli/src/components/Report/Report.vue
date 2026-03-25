@@ -358,7 +358,6 @@ const editor = ref(null);
 const sourceFile = ref(null);
 const jsPlumbInstance = ref(null);
 const lineMarks = ref([]);
-const lineWidgets = ref([]);
 const showArrows = ref(true);
 const numOfComments = ref(0);
 const loadNumOfComments = ref(false);
@@ -371,12 +370,16 @@ const docUrl = ref(null);
 const rootEl = ref(null);
 
 const instance = getCurrentInstance();
+const parentAppContext = instance.appContext;
+
 const gitBlame = useGitBlame(editor, sourceFile);
 
 const vFillHeight = FillHeight;
 
 const addMarks = StateEffect.define();
 const addWidgets = StateEffect.define();
+const clearMarks = StateEffect.define();
+const clearWidgets = StateEffect.define();
 
 const markField = StateField.define({
   create() {
@@ -385,17 +388,20 @@ const markField = StateField.define({
   update(marks, tr) {
     marks = marks.map(tr.changes);
 
-    var additions = [];
     for (const effect of tr.effects) {
-      if (effect.is(addMarks)) {
-        additions.push(...effect.value);
+      if (effect.is(clearMarks)) {
+        return Decoration.none;
       }
-    }
 
-    additions.sort((a,b) => a.from - b.from || a.startSide - b.startSide);
-
-    if (additions.length > 0) {
-      marks = marks.update({ add: additions });
+      if (effect.is(addMarks)) {
+        const decoration = effect.value.map(item => 
+          Decoration.mark({
+            class: "checker-step",
+            attributes: { markerid: item.markerId }
+          }).range(item.from, item.to)
+        );
+        return marks.update({ add: decoration });
+      }
     }
 
     return marks;
@@ -403,22 +409,36 @@ const markField = StateField.define({
   provide: f => EditorView.decorations.from(f)
 });
 
-const lineWidgetField = StateField.define({
-  create() {
-    return Decoration.none;
-  },
-  update(widgets, tr) {
-    widgets = widgets.map(tr.changes);
+const lineWidgetField = context => {
+  return StateField.define({
+    create() {
+      return Decoration.none;
+    },
+    update(widgets, tr) {
+      widgets = widgets.map(tr.changes);
 
-    for (const effect of tr.effects) {
-      if (effect.is(addWidgets)) {
-        widgets = widgets.update({ add: effect.value });
+      for (const effect of tr.effects) {
+        if (effect.is(clearWidgets)) {
+          return Decoration.none;
+        }
+
+        if (effect.is(addWidgets)) {
+          const decoration = effect.value.map(item =>
+            Decoration.widget({
+              widget: new AdvancedLineWidget(item.data, context),
+              block: true,
+              key: item.data.id
+            }).range(item.pos)
+          );
+          return widgets.update({ add: decoration });
+        }
       }
-    }
-    return widgets;
-  },
-  provide: f => EditorView.decorations.from(f)
-});
+
+      return widgets;
+    },
+    provide: f => EditorView.decorations.from(f)
+  });
+};
 
 const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
@@ -456,9 +476,12 @@ watch(() => props.treeItem, newTreeItem => {
 watch(showArrows, async () => {
   await nextTick();
   if (showArrows.value) {
-    drawBugPath();
+    await drawBugPath();
+    const viewport = editor.value.viewport;
+    highlightRange(viewport.from, viewport.to);
   } else {
-    clearLines();
+    clearHighlightWidgets();
+    clearArrowLines();
   }
 });
 
@@ -467,23 +490,23 @@ watch(report, () => {
 });
 
 class AdvancedLineWidget extends WidgetType {
-  constructor(props, appContext) {
+  constructor(data, appContext) {
     super();
-    this.props = props;
+    this.data = data;
     this.appContext = appContext;
     this.container = null;
   }
 
   eq(other) {
     return other instanceof AdvancedLineWidget &&
-      this.props.type === other.props.type &&
-      this.props.index === other.props.index &&
-      this.props.id === other.props.id;
+      this.data.type === other.data.type &&
+      this.data.index === other.data.index &&
+      this.data.id === other.data.id;
   }
   
   toDOM() {
     this.container = document.createElement("div");
-    const vnode = h(ReportStepMessage, this.props);
+    const vnode = h(ReportStepMessage, this.data);
     vnode.appContext = this.appContext;
 
     render(vnode, this.container);
@@ -516,11 +539,11 @@ onMounted(() => {
       EditorView.updateListener.of(update => {
         if (update.viewportChanged) {
           const viewport = update.view.viewport;
-          drawLines(viewport.from, viewport.to);
+          highlightRange(viewport.from, viewport.to);
         }
       }),
       markField,
-      lineWidgetField,
+      lineWidgetField(parentAppContext),
       gitBlame.blameCompartment.of([])
     ]
   });
@@ -701,8 +724,9 @@ function resetJsPlumb() {
 }
 
 async function drawBugPath() {
-  clearBubbles();
-  clearLines();
+  clearLineWidgets();
+  clearHighlightWidgets();
+  clearArrowLines();
 
   const _reportId = report.value.reportId;
   const _reportDetail = await new Promise(resolve => {
@@ -780,56 +804,60 @@ async function drawBugPath() {
   // Add lines.
   if (showArrows.value) {
     const _points = _reportDetail.executionPath.filter(_isSameFile);
-    addLines(_points);
+    createArrowConnection(_points);
   }
 }
 
-function clearBubbles() {
-  lineWidgets.value.forEach(widget => widget.clear());
-  lineWidgets.value = [];
+function clearLineWidgets() {
+  editor.value.dispatch({
+    effects: clearWidgets.of(null)
+  });
 }
 
-function clearLines() {
+function clearHighlightWidgets() {
   lineMarks.value = [];
   editor.value.dispatch({
-    effects: addMarks.of([])
+    effects: clearMarks.of(null)
   });
+}
+
+function clearArrowLines() {
   if (jsPlumbInstance.value) {
     jsPlumbInstance.value.reset();
   }
 }
 
-function createLineWidget(pos, props, appContext) {
-  return Decoration.widget({
-    widget: new AdvancedLineWidget(props, appContext),
-    block: true
-  }).range(pos);
+function createLineWidget(pos, data) {
+  editor.value.dispatch({
+    effects: addWidgets.of([
+      { pos: pos, data: data }
+    ])
+  });
 }
 
-function addLineWidget(element, props, appContext) {
+function createHighlightWidget(markerId, from, to) {
+  editor.value.dispatch({
+    effects: addMarks.of([
+      { markerId: markerId, from: from, to: to }
+    ])
+  });
+}
+
+function addLineWidget(element, props) {
   const charWidth = 7.2;
   const marginLeft = charWidth * (element.startCol || 0) + "px";
 
   const line = editor.value.state.doc.line(element.startLine.toNumber());
-  const advancedLineWidget = createLineWidget(line.to, {
-    ...props,
-    id: element.$id,
-    value: element.$message,
-    marginLeft: marginLeft,
-    report: report.value
-  }, appContext);
-
-  lineWidgets.value.push({
-    widget: advancedLineWidget,
-    node: advancedLineWidget.container?.firstChild,
-    clear: () => {
-      // Clear handled by removing from decorations
+  createLineWidget(
+    line.to,
+    {
+      ...props,
+      id: element.$id,
+      value: element.$message,
+      marginLeft: marginLeft,
+      report: report.value
     }
-  });
-
-  editor.value.dispatch({
-    effects: addWidgets.of([ advancedLineWidget ])
-  });
+  );
 }
 
 function renderMainWarning(events) {
@@ -867,7 +895,7 @@ function addEvents(events) {
       nextStep: event.$nextStep,
       docUrl: docUrl.value
     };
-    addLineWidget(event, _props, instance.appContext);
+    addLineWidget(event, _props);
   });
 
 
@@ -878,7 +906,7 @@ function addEvents(events) {
       $message:report.value.checkerMsg,
       startLine:report.value.line, startCol:report.value.column };
     const chrkmsg_props = { type: "error", index:"E", hideDocUrl:true };
-    addLineWidget(chkrmsg_data, chrkmsg_props, instance.appContext);
+    addLineWidget(chkrmsg_data, chrkmsg_props);
   }
 
 }
@@ -901,13 +929,11 @@ function addExtendedData(extendedData) {
     }
 
     const _props = { type: _type, index: _value };
-    addLineWidget(data, _props, instance.appContext);
+    addLineWidget(data, _props);
   });
 }
 
-function addLines(points) {
-  const decorations = [];
-
+function createArrowConnection(points) {
   points.forEach(p => {
     const fromLine = p.startLine - 1;
     const toLine = p.endLine - 1;
@@ -915,29 +941,20 @@ function addLines(points) {
       editor.value.state.doc.line(fromLine + 1).from + p.startCol - 1;
     const toPos =
       editor.value.state.doc.line(toLine + 1).from + p.endCol.toNumber();
-    const _markerId =
+    const markerId =
       [ fromLine, p.startCol - 1, toLine, p.endCol.toNumber() ].join("_");
 
-    decorations.push(
-      Decoration.mark({
-        class: "checker-step",
-        attributes: { markerid: _markerId }
-      }).range(fromPos, toPos)
-    );
+    createHighlightWidget(markerId, fromPos, toPos);
 
     lineMarks.value.push({
-      markerId: _markerId,
+      markerId: markerId,
       from: fromPos,
       to: toPos
     });
   });
-
-  editor.value.dispatch({
-    effects: addMarks.of(decorations)
-  });
 }
 
-function drawLines(_from, _to) {
+function highlightRange(_from, _to) {
   if (!lineMarks.value.length) {
     return;
   }
@@ -1054,11 +1071,11 @@ function truncate(text, length) {
   }
 }
 
-:deep(.checker-step) {
+.checker-step {
   background-color: #eeb;
 }
 
-:deep(.blame-gutter) {
+.blame-gutter {
   width: 400px;
   background-color: #f7f7f7;
 }
