@@ -176,24 +176,44 @@
       </v-data-table>
 
       <splitpanes v-else class="default-theme tree-split">
-        <pane size="30" :style="{ 'min-width': '250px' }">
+        <pane
+          size="30"
+          :style="{ 'min-width': '250px', 'padding-top': '48px' }"
+        >
           <v-treeview
+            v-model="treeSelection"
             :items="treeItems"
             item-key="fullPath"
             open-on-click
             activatable
-            :return-object="true"
+            selectable
+            selection-type="independent"
             dense
             @update:active="onTreeFileClick"
+            @input="onTreeSelectionChange"
           >
             <template #prepend="{ item, open }">
-              <v-icon v-if="item.isDirectory">
+              <v-icon v-if="item.children.length > 0">
                 {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
               </v-icon>
               <v-icon v-else>
                 mdi-file
               </v-icon>
-
+            </template>
+            <template #label="{ item }">
+              <span
+                class="tree-item-label"
+                @click.stop="toggleTreeItem(item)"
+              >
+                {{ item.name }}
+              </span>
+              <severity-icon
+                v-for="sev in item.severities"
+                :key="sev.id"
+                :status="sev.id"
+                :size="14"
+                class="ml-1"
+              />
               <v-chip class="right ml-2" small>
                 {{ item.findings }}
               </v-chip>
@@ -211,6 +231,8 @@
             dense
             :mobile-breakpoint="1100"
             item-key="$id"
+            hide-default-footer
+            :items-per-page="10"
           >
             <template #item.checkedFile="{ item }">
               <router-link
@@ -296,6 +318,7 @@ import {
   Checker,
   MAX_QUERY_SIZE,
   Order,
+  Severity,
   SortMode,
   SortType,
   ReportFilter as ThriftReportFilter
@@ -446,7 +469,9 @@ export default {
       treeItems: [],
       treeSelectedFile: null,
       treeReports: [],
-      treeReportsLoading: false
+      treeReportsLoading: false,
+      fileSeverities: {},
+      treeSelection: []
     };
   },
 
@@ -620,6 +645,7 @@ export default {
     allReportsFileCounts: {
       handler() {
         this.buildTreeItems();
+        this.fetchFileSeverities();
       },
       deep: true
     }
@@ -653,7 +679,7 @@ export default {
               fullPath: currentPath,
               children: [],
               findings: 0,
-              isDirectory: true
+              severities: []
             };
             currentLevel.push(existingPart);
           }
@@ -662,18 +688,21 @@ export default {
 
         // append filename as a child of the last directory
         const fileName = filePath.split("/").slice(-1)[0];
+        const sevs = this.fileSeverities[filePath] || [];
         if (fileName) {
           const existingFile = currentLevel.find(
             item => item.name === fileName
           );
           if (existingFile) {
             existingFile.findings += count;
+            existingFile.severities = sevs;
           } else {
             currentLevel.push({
               name: fileName,
               fullPath: filePath,
               children: [],
-              findings: count
+              findings: count,
+              severities: sevs
             });
           }
         }
@@ -688,6 +717,17 @@ export default {
           node.findings = node.children.reduce((sum, child) => {
             return sum + countFindings(child);
           }, 0);
+          const sevMap = {};
+          node.children.forEach(child => {
+            (child.severities || []).forEach(s => {
+              if (!sevMap[s.id]) {
+                sevMap[s.id] = { id: s.id, count: 0 };
+              }
+              sevMap[s.id].count += s.count;
+            });
+          });
+          node.severities = Object.values(sevMap)
+            .sort((a, b) => b.id - a.id);
           return node.findings;
         }
       }
@@ -702,14 +742,17 @@ export default {
         return;
       }
 
-      const item = activeItems[0];
-      if (!item || item.isDirectory) return;
+      const fullPath = activeItems[0];
+      if (!fullPath) return;
 
-      this.treeSelectedFile = item.fullPath;
+      const isDir = this.isDirectory(fullPath);
+      const filterPath = isDir ? fullPath + "/*" : fullPath;
+
+      this.treeSelectedFile = fullPath;
       this.treeReportsLoading = true;
 
       const filter = new ThriftReportFilter(this.reportFilter);
-      filter.filepath = [ item.fullPath ];
+      filter.filepath = [ filterPath ];
 
       ccService.getClient().getRunResults(
         this.runIds, MAX_QUERY_SIZE, 0, [],
@@ -727,6 +770,110 @@ export default {
       const bugHash = expandedItem.item.bugHash;
       ccService.getSameReports(bugHash).then(sameReports => {
         expandedItem.item.sameReports = sameReports;
+      });
+    },
+
+    onTreeSelectionChange(selectedPaths) {
+      if (!selectedPaths || !selectedPaths.length) {
+        this.treeSelectedFile = null;
+        this.treeReports = [];
+        return;
+      }
+
+      const paths = selectedPaths.map(fp => {
+        const isDir = this.isDirectory(fp);
+        return isDir ? fp + "/*" : fp;
+      });
+
+      this.treeSelectedFile = selectedPaths.join(", ");
+      this.treeReportsLoading = true;
+
+      const filter = new ThriftReportFilter(this.reportFilter);
+      filter.filepath = paths;
+
+      ccService.getClient().getRunResults(
+        this.runIds, MAX_QUERY_SIZE, 0, [],
+        filter, this.cmpData, false,
+        handleThriftError(reports => {
+          this.treeReports = reports;
+          this.treeReportsLoading = false;
+        })
+      );
+    },
+
+    toggleTreeItem(item) {
+      const idx = this.treeSelection.indexOf(
+        item.fullPath
+      );
+      if (idx === -1) {
+        this.treeSelection =
+          [ ...this.treeSelection, item.fullPath ];
+      } else {
+        this.treeSelection =
+          this.treeSelection.filter(
+            p => p !== item.fullPath
+          );
+      }
+      this.onTreeSelectionChange(this.treeSelection);
+    },
+
+    isDirectory(fullPath) {
+      const find = nodes => {
+        for (const n of nodes) {
+          if (n.fullPath === fullPath) {
+            return n.children.length > 0;
+          }
+          if (n.children.length) {
+            const r = find(n.children);
+            if (r !== null) return r;
+          }
+        }
+        return null;
+      };
+      return !!find(this.treeItems);
+    },
+
+    fetchFileSeverities() {
+      const files = Object.keys(
+        this.allReportsFileCounts || {}
+      );
+      if (!files.length) return;
+
+      const sevMap = {};
+      let pending = files.length;
+
+      files.forEach(filePath => {
+        const filter = new ThriftReportFilter(
+          this.reportFilter
+        );
+        filter.filepath = [ filePath ];
+        filter.severity = null;
+
+        ccService.getClient().getSeverityCounts(
+          this.runIds, filter, this.cmpData,
+          handleThriftError(res => {
+            const sevs = [];
+            Object.keys(Severity).forEach(s => {
+              const id = Severity[s];
+              const cnt = res[id];
+              if (cnt) {
+                const n = cnt.toNumber
+                  ? cnt.toNumber() : cnt;
+                if (n > 0) {
+                  sevs.push({ id: id, count: n });
+                }
+              }
+            });
+            sevs.sort((a, b) => b.id - a.id);
+            sevMap[filePath] = sevs;
+
+            pending--;
+            if (pending === 0) {
+              this.fileSeverities =
+                Object.assign({}, sevMap);
+              this.buildTreeItems();
+            }
+          }));
       });
     },
 
@@ -886,5 +1033,9 @@ export default {
   .splitpanes__pane {
     background-color: inherit;
   }
+}
+
+.tree-item-label {
+  font-size: 0.85em;
 }
 </style>
