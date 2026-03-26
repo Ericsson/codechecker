@@ -12,8 +12,38 @@
     @clear="clear(true)"
     @input="setSelectedItems"
   >
-    <template v-slot:append-toolbar>
-      <AnywhereOnReportPath v-model="isAnywhere" />
+    <template v-slot:menu-content>
+      <v-card flat>
+        <AnywhereOnReportPath v-model="isAnywhere" />
+
+        <v-divider v-if="treeItems.length > 0" class="my-1" />
+
+        <v-treeview
+          v-if="treeItems.length > 0"
+          :items="treeItems"
+          activatable
+          item-key="fullPath"
+          open-on-click
+          dense
+          class="file-path-tree"
+          @update:active="onTreeFileClick"
+        >
+          <template #prepend="{ item, open }">
+            <v-icon v-if="item.children.length > 0" small>
+              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else small>
+              mdi-file
+            </v-icon>
+          </template>
+          <template #label="{ item }">
+            <span class="tree-item-label">{{ item.name }}</span>
+            <v-chip class="ml-2" x-small>
+              {{ item.findings }}
+            </v-chip>
+          </template>
+        </v-treeview>
+      </v-card>
     </template>
 
     <template v-slot:icon>
@@ -58,8 +88,67 @@ export default {
         regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
         filterItems: this.filterItems
       },
-      isAnywhere: false
+      isAnywhere: false,
+      allFileCounts: {}
     };
+  },
+
+  computed: {
+    treeItems() {
+      const items = [];
+
+      Object.entries(this.allFileCounts || {}).forEach(([ filePath, count ]) => {
+        if (!filePath) return;
+        const numCount = typeof count === "object" && count.toNumber
+          ? count.toNumber() : count;
+        const pathParts = filePath.split("/").slice(0, -1);
+        let currentLevel = items;
+        let currentPath = "";
+
+        pathParts.forEach(part => {
+          if (part === "") return;
+          currentPath += "/" + part;
+          let existingPart = currentLevel.find(item => item.name === part);
+          if (!existingPart) {
+            existingPart = {
+              name: part,
+              fullPath: currentPath,
+              children: [],
+              findings: 0
+            };
+            currentLevel.push(existingPart);
+          }
+          currentLevel = existingPart.children;
+        });
+
+        const fileName = filePath.split("/").slice(-1)[0];
+        if (fileName) {
+          const existingFile = currentLevel.find(
+            item => item.name === fileName
+          );
+          if (existingFile) {
+            existingFile.findings += numCount;
+          } else {
+            currentLevel.push({
+              name: fileName,
+              fullPath: filePath,
+              children: [],
+              findings: numCount
+            });
+          }
+        }
+      });
+
+      function countFindings(node) {
+        if (node.children.length === 0) return node.findings;
+        node.findings = node.children.reduce(
+          (sum, child) => sum + countFindings(child), 0
+        );
+        return node.findings;
+      }
+      items.forEach(countFindings);
+      return items;
+    }
   },
 
   watch: {
@@ -116,6 +205,45 @@ export default {
       this.initCheckOptionsByUrl();
     },
 
+    async update() {
+      this.bus.$emit("update");
+      this.fetchAllFileCounts();
+
+      if (!this.selectedItems.length) return;
+
+      const items = await this.fetchItems({
+        limit: this.selectedItems.length,
+        query: this.selectedItems.map(item => item.id)
+      });
+
+      this.selectedItems.forEach(selectedItem => {
+        const item = items.find(i => i.id === selectedItem.id);
+        selectedItem.count = item ? item.count : null;
+        selectedItem.value = item ? item.value : null;
+      });
+    },
+
+    fetchAllFileCounts() {
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.filepath = null;
+
+      ccService.getClient().getFileCounts(
+        this.runIds, reportFilter, this.cmpData, 0, 0,
+        handleThriftError(res => {
+          this.allFileCounts = res || {};
+        }));
+    },
+
+    onTreeFileClick(activeItems) {
+      if (!activeItems || activeItems.length === 0) return;
+      const filePath = activeItems[0];
+      if (!filePath) return;
+
+      this.setSelectedItems([
+        { id: filePath, title: filePath, count: "N/A" }
+      ]);
+    },
+
     fetchItems(opt={}) {
       this.loading = true;
 
@@ -152,5 +280,14 @@ export default {
 .filter-item-title {
   direction: rtl;
   text-align: left;
+}
+
+.file-path-tree {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.tree-item-label {
+  font-size: 0.85em;
 }
 </style>
