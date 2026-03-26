@@ -1,6 +1,7 @@
 <template>
   <select-option
     :id="id"
+    ref="selectOption"
     title="File path"
     :bus="bus"
     :fetch-items="fetchItems"
@@ -97,7 +98,9 @@ export default {
     treeItems() {
       const items = [];
 
-      Object.entries(this.allFileCounts || {}).forEach(([ filePath, count ]) => {
+      Object.entries(
+        this.allFileCounts || {}
+      ).forEach(([ filePath, count ]) => {
         if (!filePath) return;
         const numCount = typeof count === "object" && count.toNumber
           ? count.toNumber() : count;
@@ -238,6 +241,10 @@ export default {
       if (!activeItems || activeItems.length === 0) return;
       const filePath = activeItems[0];
       if (!filePath) return;
+
+      // Prevent the menu close from resetting the selection.
+      this.$refs.selectOption.preventApply = true;
+      this.$refs.selectOption.menu = false;
 
       this.setSelectedItems([
         { id: filePath, title: filePath, count: "N/A" }
