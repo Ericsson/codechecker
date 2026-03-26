@@ -175,27 +175,113 @@
         </template>
       </v-data-table>
 
-      <v-treeview
-        v-else
-        :items="formattedDirectoriesForTreeViewFileCounts"
-        activatable
-        item-key="fullPath"
-        open-on-click
-        @update:active="onTreeFileClick"
-      >
-        <template #prepend="{ item, open }">
-          <v-icon v-if="item.children.length > 0">
-            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-          </v-icon>
-          <v-icon v-else>
-            mdi-file
-          </v-icon>
+      <splitpanes v-else class="default-theme tree-split">
+        <pane size="30" :style="{ 'min-width': '250px' }">
+          <v-treeview
+            :items="treeItems"
+            item-key="fullPath"
+            open-on-click
+            activatable
+            :return-object="true"
+            dense
+            @update:active="onTreeFileClick"
+          >
+            <template #prepend="{ item, open }">
+              <v-icon v-if="item.isDirectory">
+                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+              </v-icon>
+              <v-icon v-else>
+                mdi-file
+              </v-icon>
 
-          <v-chip class="right ml-2">
-            {{ item.findings }}
-          </v-chip>
-        </template>
-      </v-treeview>
+              <v-chip class="right ml-2" small>
+                {{ item.findings }}
+              </v-chip>
+            </template>
+          </v-treeview>
+        </pane>
+        <pane>
+          <v-data-table
+            v-if="treeSelectedFile"
+            :headers="treeTableHeaders"
+            :items="formattedTreeReports"
+            :loading="treeReportsLoading"
+            loading-text="Loading reports..."
+            :must-sort="false"
+            dense
+            :mobile-breakpoint="1100"
+            item-key="$id"
+          >
+            <template #item.checkedFile="{ item }">
+              <router-link
+                :to="{ name: 'report-detail', query: {
+                  ...$router.currentRoute.query,
+                  'report-id': item.reportId ? item.reportId : undefined,
+                  'report-hash': item.bugHash,
+                  'report-filepath': item.checkedFile
+                }}"
+                class="file-name"
+              >
+                Line&nbsp;{{ item.line }}
+              </router-link>
+            </template>
+
+            <template #item.checkerMsg="{ item }">
+              <span class="checker-message">
+                {{ item.checkerMsg }}
+              </span>
+            </template>
+
+            <template #item.checkerId="{ item }">
+              <span
+                class="checker-name primary--text"
+                @click="openCheckerDocDialog(
+                  item.checkerId, item.analyzerName)"
+              >
+                {{ item.checkerId }}
+              </span>
+            </template>
+
+            <template #item.severity="{ item }">
+              <severity-icon :status="item.severity" />
+            </template>
+
+            <template #item.bugPathLength="{ item }">
+              <v-chip :color="getBugPathLenColor(item.bugPathLength)">
+                {{ item.bugPathLength }}
+              </v-chip>
+            </template>
+
+            <template #item.reviewData="{ item }">
+              <review-status-icon
+                :status="parseInt(item.reviewData.status)"
+              />
+            </template>
+
+            <template #item.detectionStatus="{ item }">
+              <detection-status-icon
+                :status="parseInt(item.detectionStatus)"
+                :title="item.$detectionStatusTitle"
+              />
+            </template>
+          </v-data-table>
+
+          <v-container
+            v-else
+            class="text-center grey--text"
+            fill-height
+          >
+            <v-row align="center" justify="center">
+              <v-col>
+                <v-icon large class="mb-2">
+                  mdi-cursor-default-click
+                </v-icon>
+                <div>Select a file from the tree to view its reports</div>
+              </v-col>
+            </v-row>
+          </v-container>
+        </pane>
+      </splitpanes>
     </pane>
   </splitpanes>
 </template>
@@ -206,7 +292,14 @@ import { Pane, Splitpanes } from "splitpanes";
 import { mapGetters, mapMutations } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { Checker, Order, SortMode, SortType } from "@cc/report-server-types";
+import {
+  Checker,
+  MAX_QUERY_SIZE,
+  Order,
+  SortMode,
+  SortType,
+  ReportFilter as ThriftReportFilter
+} from "@cc/report-server-types";
 import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
 import { FillHeight } from "@/directives";
@@ -349,7 +442,11 @@ export default {
       initalized: false,
       checkerDocDialog: false,
       selectedChecker: null,
-      expanded: []
+      expanded: [],
+      treeItems: [],
+      treeSelectedFile: null,
+      treeReports: [],
+      treeReportsLoading: false
     };
   },
 
@@ -421,9 +518,121 @@ export default {
       });
     },
 
-    formattedDirectoriesForTreeViewFileCounts() {
+    treeTableHeaders() {
+      return [
+        {
+          text: "Line",
+          value: "checkedFile",
+          sortable: false
+        },
+        {
+          text: "Message",
+          value: "checkerMsg",
+          sortable: false
+        },
+        {
+          text: "Checker name",
+          value: "checkerId",
+          sortable: false
+        },
+        {
+          text: "Analyzer",
+          value: "analyzerName",
+          align: "center",
+          sortable: false
+        },
+        {
+          text: "Severity",
+          value: "severity",
+          sortable: false
+        },
+        {
+          text: "Bug path length",
+          value: "bugPathLength",
+          align: "center",
+          sortable: false
+        },
+        {
+          text: "Latest review status",
+          value: "reviewData",
+          align: "center",
+          sortable: false
+        },
+        {
+          text: "Latest detection status",
+          value: "detectionStatus",
+          align: "center",
+          sortable: false
+        }
+      ];
+    },
+
+    formattedTreeReports() {
+      return this.treeReports.map((report, idx) => {
+        const detectionStatus =
+          this.detectionStatusFromCodeToString(report.detectionStatus);
+        const detectedAt = report.detectedAt
+          ? this.$options.filters.prettifyDate(report.detectedAt) : null;
+        const fixedAt = report.fixedAt
+          ? this.$options.filters.prettifyDate(report.fixedAt) : null;
+
+        const detectionStatusTitle = [
+          `Status: ${detectionStatus}`,
+          ...(detectedAt ? [ `Detected at: ${detectedAt}` ] : []),
+          ...(fixedAt ? [ `Fixed at: ${fixedAt}` ] : [])
+        ].join("\n");
+
+        const reportId = report.reportId
+          ? report.reportId.toString() : String(idx);
+
+        return {
+          ...report,
+          "$detectionStatusTitle": detectionStatusTitle,
+          "$id": reportId + report.bugHash
+        };
+      });
+    },
+
+  },
+
+  watch: {
+    pagination: {
+      handler() {
+        this.updateUrl();
+        if (this.initalized) {
+          this.fetchReports();
+        }
+      },
+      deep: true
+    },
+    formattedReports: {
+      handler() {
+        this.hasTimeStamp =
+          this.formattedReports.some(report => report.timestamp);
+
+        this.hasTestCase =
+          this.formattedReports.some(report => report.testcase);
+
+        this.hasChronologicalOrder =
+          this.formattedReports.some(report => report["chronological_order"]);
+      }
+    },
+    allReportsFileCounts: {
+      handler() {
+        this.buildTreeItems();
+      },
+      deep: true
+    }
+  },
+
+  methods: {
+    ...mapMutations(namespace, {
+      setReportFilter: SET_REPORT_FILTER
+    }),
+
+    buildTreeItems() {
       const items = [];
-      
+
       Object.entries(
         this.allReportsFileCounts || {}
       ).forEach(([ filePath, count ]) => {
@@ -443,7 +652,8 @@ export default {
               name: part,
               fullPath: currentPath,
               children: [],
-              findings: 0
+              findings: 0,
+              isDirectory: true
             };
             currentLevel.push(existingPart);
           }
@@ -482,61 +692,33 @@ export default {
         }
       }
       items.forEach(countFindings);
-      return items;
+      this.treeItems = items;
     },
-
-    
-  },
-
-  watch: {
-    pagination: {
-      handler() {
-        this.updateUrl();
-        if (this.initalized) {
-          this.fetchReports();
-        }
-      },
-      deep: true
-    },
-    formattedReports: {
-      handler() {
-        this.hasTimeStamp =
-          this.formattedReports.some(report => report.timestamp);
-
-        this.hasTestCase =
-          this.formattedReports.some(report => report.testcase);
-
-        this.hasChronologicalOrder =
-          this.formattedReports.some(report => report["chronological_order"]);
-      }
-    }
-  },
-
-  methods: {
-    ...mapMutations(namespace, {
-      setReportFilter: SET_REPORT_FILTER
-    }),
 
     onTreeFileClick(activeItems) {
-      // activeItems is an array of item-key values (fullPath)
-      if (!activeItems || activeItems.length === 0) return;
-
-      const filePath = activeItems[0];
-      if (!filePath) return;
-
-      // Find the FilePathFilter instance inside ReportFilter
-      // and call its setSelectedItems to select this file.
-      const filters = this.$refs.reportFilter.$refs.filters;
-      const filePathFilter = filters.find(
-        f => f.id === "filepath"
-      );
-      if (filePathFilter) {
-        filePathFilter.setSelectedItems([
-          { id: filePath, title: filePath, count: "N/A" }
-        ]);
+      if (!activeItems || activeItems.length === 0) {
+        this.treeSelectedFile = null;
+        this.treeReports = [];
+        return;
       }
 
-      this.viewMode = "table";
+      const item = activeItems[0];
+      if (!item || item.isDirectory) return;
+
+      this.treeSelectedFile = item.fullPath;
+      this.treeReportsLoading = true;
+
+      const filter = new ThriftReportFilter(this.reportFilter);
+      filter.filepath = [ item.fullPath ];
+
+      ccService.getClient().getRunResults(
+        this.runIds, MAX_QUERY_SIZE, 0, [],
+        filter, this.cmpData, false,
+        handleThriftError(reports => {
+          this.treeReports = reports;
+          this.treeReportsLoading = false;
+        })
+      );
     },
 
     itemExpanded(expandedItem) {
@@ -547,6 +729,7 @@ export default {
         expandedItem.item.sameReports = sameReports;
       });
     },
+
     loadFileCounts() {
       ccService.getClient().getFileCounts(
         this.runIds, this.reportFilter,
@@ -696,6 +879,12 @@ export default {
 
   .checker-name {
     cursor: pointer;
+  }
+}
+
+.tree-split {
+  .splitpanes__pane {
+    background-color: inherit;
   }
 }
 </style>
