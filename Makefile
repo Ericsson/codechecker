@@ -252,7 +252,7 @@ set_git_commit_template:
 check_api_version:
 	@if [ "$(API_VERSION)" != "$(VENV_API_VERSION)" ]; then \
 		echo "ERROR: API version mismatch! Source: $(API_VERSION), venv: $(VENV_API_VERSION)"; \
-		echo "Please run 'web/api/completly-rebuild-thrift.sh <venv|venv_dev>' to rebuild the Thrift API."; \
+		echo "Please run './web/api/completly-rebuild-thrift.sh <venv|venv_dev>' to rebuild the Thrift API."; \
 		exit 1; \
 	else \
 		echo "API versions match: $(API_VERSION)"; \
