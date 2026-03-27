@@ -12,7 +12,7 @@
         v-model="checkerDocDialog"
         :checker="selectedChecker"
       />
-      <v-data-table
+      <v-data-table-server
         v-model="selected"
         v-model:page="page"
         v-model:items-per-page="itemsPerPage"
@@ -154,6 +154,7 @@
             class="pa-1"
           />
         </template>
+
         <template v-else #item.reviewData="{ item }">
           <review-status-icon :status="parseInt(item.reviewData.status)" />
         </template>
@@ -164,7 +165,7 @@
             :title="item.$detectionStatusTitle"
           />
         </template>
-      </v-data-table>
+      </v-data-table-server>
     </pane>
   </splitpanes>
 </template>
