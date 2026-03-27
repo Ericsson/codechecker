@@ -460,6 +460,10 @@ watch(enableBlameView, async () => {
     await gitBlame.hideBlameView();
   }
 
+  clearArrowLines();
+  await nextTick();
+  addArrowLines();
+
   jumpTo(
     props.treeItem.step?.startLine.toNumber() ||
       props.treeItem.report.line.toNumber(),
@@ -477,8 +481,7 @@ watch(showArrows, async () => {
   await nextTick();
   if (showArrows.value) {
     await drawBugPath();
-    const viewport = editor.value.viewport;
-    highlightRange(viewport.from, viewport.to);
+    addArrowLines();
   } else {
     clearHighlightWidgets();
     clearArrowLines();
@@ -812,6 +815,11 @@ function clearLineWidgets() {
   editor.value.dispatch({
     effects: clearWidgets.of(null)
   });
+}
+
+function addArrowLines() {
+  const viewport = editor.value.viewport;
+  highlightRange(viewport.from, viewport.to);
 }
 
 function clearHighlightWidgets() {
