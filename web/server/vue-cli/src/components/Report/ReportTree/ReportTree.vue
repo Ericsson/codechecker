@@ -237,21 +237,33 @@ function openReportItems() {
 
   if (_rootNode) {
     openedItems.value.push(_rootNode);
-    nextTick(() => {
-      const _reportNode = _rootNode.children.find(item => {
-        return item.id === ReportTreeKind.getId(
-          ReportTreeKind.REPORT, props.report
-        );
-      });
 
-      if (_reportNode) {
+    const _reportNode = _rootNode.children.find(item => {
+      return item.id === ReportTreeKind.getId(
+        ReportTreeKind.REPORT, props.report
+      );
+    });
+
+    if (_reportNode && _reportNode.getChildren && !_reportNode.isLoading) {
+      _reportNode.isLoading = true;
+      _reportNode.getChildren(_reportNode).then(() => {
+        nextTick(() => {
+          openedItems.value.push(_reportNode);
+          const _node = document.querySelector(`[data-id='${_reportNode.id}']`);
+          if (_node) {
+            _node.scrollIntoView();
+          }
+        });
+      });
+    } else if (_reportNode) {
+      nextTick(() => {
+        openedItems.value.push(_reportNode);
         const _node = document.querySelector(`[data-id='${_reportNode.id}']`);
         if (_node) {
           _node.scrollIntoView();
         }
-        openedItems.value.push(_reportNode);
-      }
-    });
+      });
+    }
   }
 }
 
