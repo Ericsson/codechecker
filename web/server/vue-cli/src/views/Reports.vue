@@ -175,135 +175,87 @@
         </template>
       </v-data-table>
 
-      <splitpanes v-else class="default-theme tree-split">
-        <pane
-          size="30"
-          :style="{ 'min-width': '250px', 'padding-top': '48px' }"
+      <div v-else class="tree-view-container" style="padding-top: 48px;">
+        <div class="tree-header">
+          <span class="tree-header-name">Name</span>
+          <span class="tree-header-cell">All</span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.STYLE" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.LOW" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.MEDIUM" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.HIGH" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.CRITICAL" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="0" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="1" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="2" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="3" :size="14" />
+          </span>
+        </div>
+        <v-treeview
+          :items="treeItems"
+          item-key="fullPath"
+          open-on-click
+          dense
         >
-          <v-treeview
-            v-model="treeSelection"
-            :items="treeItems"
-            item-key="fullPath"
-            open-on-click
-            activatable
-            selectable
-            selection-type="independent"
-            dense
-            @update:active="onTreeFileClick"
-            @input="onTreeSelectionChange"
-          >
-            <template #prepend="{ item, open }">
-              <v-icon v-if="item.children.length > 0">
-                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-              </v-icon>
-              <v-icon v-else>
-                mdi-file
-              </v-icon>
-            </template>
-            <template #label="{ item }">
-              <span
-                class="tree-item-label"
-                @click.stop="toggleTreeItem(item)"
-              >
-                {{ item.name }}
+          <template #prepend="{ item, open }">
+            <v-icon v-if="item.children.length > 0">
+              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else>
+              mdi-file
+            </v-icon>
+          </template>
+          <template #label="{ item }">
+            <div class="tree-row">
+              <span class="tree-item-label">{{ item.name }}</span>
+              <span class="tree-stat-cell">{{ item.findings }}</span>
+              <span class="tree-stat-cell">
+                {{ item.stats.style || '' }}
               </span>
-              <severity-icon
-                v-for="sev in item.severities"
-                :key="sev.id"
-                :status="sev.id"
-                :size="14"
-                class="ml-1"
-              />
-              <v-chip class="right ml-2" small>
-                {{ item.findings }}
-              </v-chip>
-            </template>
-          </v-treeview>
-        </pane>
-        <pane>
-          <v-data-table
-            v-if="treeSelectedFile"
-            :headers="treeTableHeaders"
-            :items="formattedTreeReports"
-            :loading="treeReportsLoading"
-            loading-text="Loading reports..."
-            :must-sort="false"
-            dense
-            :mobile-breakpoint="1100"
-            item-key="$id"
-            hide-default-footer
-            :items-per-page="10"
-          >
-            <template #item.checkedFile="{ item }">
-              <router-link
-                :to="{ name: 'report-detail', query: {
-                  ...$router.currentRoute.query,
-                  'report-id': item.reportId ? item.reportId : undefined,
-                  'report-hash': item.bugHash,
-                  'report-filepath': item.checkedFile
-                }}"
-                class="file-name"
-              >
-                Line&nbsp;{{ item.line }}
-              </router-link>
-            </template>
-
-            <template #item.checkerMsg="{ item }">
-              <span class="checker-message">
-                {{ item.checkerMsg }}
+              <span class="tree-stat-cell">
+                {{ item.stats.low || '' }}
               </span>
-            </template>
-
-            <template #item.checkerId="{ item }">
-              <span
-                class="checker-name primary--text"
-                @click="openCheckerDocDialog(
-                  item.checkerId, item.analyzerName)"
-              >
-                {{ item.checkerId }}
+              <span class="tree-stat-cell">
+                {{ item.stats.medium || '' }}
               </span>
-            </template>
-
-            <template #item.severity="{ item }">
-              <severity-icon :status="item.severity" />
-            </template>
-
-            <template #item.bugPathLength="{ item }">
-              <v-chip :color="getBugPathLenColor(item.bugPathLength)">
-                {{ item.bugPathLength }}
-              </v-chip>
-            </template>
-
-            <template #item.reviewData="{ item }">
-              <review-status-icon
-                :status="parseInt(item.reviewData.status)"
-              />
-            </template>
-
-            <template #item.detectionStatus="{ item }">
-              <detection-status-icon
-                :status="parseInt(item.detectionStatus)"
-                :title="item.$detectionStatusTitle"
-              />
-            </template>
-          </v-data-table>
-
-          <v-container
-            v-else
-            class="text-center grey--text"
-            fill-height
-          >
-            <v-row align="center" justify="center">
-              <v-col>
-                <v-icon large class="mb-2">
-                  mdi-cursor-default-click
-                </v-icon>
-                <div>Select a file from the tree to view its reports</div>
-              </v-col>
-            </v-row>
-          </v-container>
-        </pane>
-      </splitpanes>
+              <span class="tree-stat-cell">
+                {{ item.stats.high || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.critical || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.unreviewed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.confirmed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.false_positive || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.intentional || '' }}
+              </span>
+            </div>
+          </template>
+        </v-treeview>
+      </div>
     </pane>
   </splitpanes>
 </template>
@@ -316,12 +268,10 @@ import { mapGetters, mapMutations } from "vuex";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
-  MAX_QUERY_SIZE,
   Order,
   Severity,
   SortMode,
-  SortType,
-  ReportFilter as ThriftReportFilter
+  SortType
 } from "@cc/report-server-types";
 import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
@@ -441,7 +391,7 @@ export default {
         }
       ],
       reports: [],
-      allReportsFileCounts: [],
+      allReportsFileCounts: {},
       sameReports: {},
       hasTimeStamp: true,
       hasTestCase : true,
@@ -467,11 +417,8 @@ export default {
       selectedChecker: null,
       expanded: [],
       treeItems: [],
-      treeSelectedFile: null,
-      treeReports: [],
-      treeReportsLoading: false,
       fileSeverities: {},
-      treeSelection: []
+      Severity: Severity
     };
   },
 
@@ -543,81 +490,6 @@ export default {
       });
     },
 
-    treeTableHeaders() {
-      return [
-        {
-          text: "Line",
-          value: "checkedFile",
-          sortable: false
-        },
-        {
-          text: "Message",
-          value: "checkerMsg",
-          sortable: false
-        },
-        {
-          text: "Checker name",
-          value: "checkerId",
-          sortable: false
-        },
-        {
-          text: "Analyzer",
-          value: "analyzerName",
-          align: "center",
-          sortable: false
-        },
-        {
-          text: "Severity",
-          value: "severity",
-          sortable: false
-        },
-        {
-          text: "Bug path length",
-          value: "bugPathLength",
-          align: "center",
-          sortable: false
-        },
-        {
-          text: "Latest review status",
-          value: "reviewData",
-          align: "center",
-          sortable: false
-        },
-        {
-          text: "Latest detection status",
-          value: "detectionStatus",
-          align: "center",
-          sortable: false
-        }
-      ];
-    },
-
-    formattedTreeReports() {
-      return this.treeReports.map((report, idx) => {
-        const detectionStatus =
-          this.detectionStatusFromCodeToString(report.detectionStatus);
-        const detectedAt = report.detectedAt
-          ? this.$options.filters.prettifyDate(report.detectedAt) : null;
-        const fixedAt = report.fixedAt
-          ? this.$options.filters.prettifyDate(report.fixedAt) : null;
-
-        const detectionStatusTitle = [
-          `Status: ${detectionStatus}`,
-          ...(detectedAt ? [ `Detected at: ${detectedAt}` ] : []),
-          ...(fixedAt ? [ `Fixed at: ${fixedAt}` ] : [])
-        ].join("\n");
-
-        const reportId = report.reportId
-          ? report.reportId.toString() : String(idx);
-
-        return {
-          ...report,
-          "$detectionStatusTitle": detectionStatusTitle,
-          "$id": reportId + report.bugHash
-        };
-      });
-    },
-
   },
 
   watch: {
@@ -645,7 +517,6 @@ export default {
     allReportsFileCounts: {
       handler() {
         this.buildTreeItems();
-        this.fetchFileSeverities();
       },
       deep: true
     }
@@ -679,7 +550,7 @@ export default {
               fullPath: currentPath,
               children: [],
               findings: 0,
-              severities: []
+              stats: {}
             };
             currentLevel.push(existingPart);
           }
@@ -688,28 +559,27 @@ export default {
 
         // append filename as a child of the last directory
         const fileName = filePath.split("/").slice(-1)[0];
-        const sevs = this.fileSeverities[filePath] || [];
+        const fileStats = this.fileSeverities[filePath] || {};
         if (fileName) {
           const existingFile = currentLevel.find(
             item => item.name === fileName
           );
           if (existingFile) {
             existingFile.findings += count;
-            existingFile.severities = sevs;
+            existingFile.stats = fileStats;
           } else {
             currentLevel.push({
               name: fileName,
               fullPath: filePath,
               children: [],
               findings: count,
-              severities: sevs
+              stats: fileStats
             });
           }
         }
       });
 
-      // count findings for directories
-      // try replacing with getCheckerCounts if performance is an issue
+      // count findings and aggregate stats for directories
       function countFindings(node) {
         if (node.children.length === 0) {
           return node.findings;
@@ -717,51 +587,18 @@ export default {
           node.findings = node.children.reduce((sum, child) => {
             return sum + countFindings(child);
           }, 0);
-          const sevMap = {};
+          const merged = {};
           node.children.forEach(child => {
-            (child.severities || []).forEach(s => {
-              if (!sevMap[s.id]) {
-                sevMap[s.id] = { id: s.id, count: 0 };
-              }
-              sevMap[s.id].count += s.count;
+            Object.keys(child.stats || {}).forEach(k => {
+              merged[k] = (merged[k] || 0) + child.stats[k];
             });
           });
-          node.severities = Object.values(sevMap)
-            .sort((a, b) => b.id - a.id);
+          node.stats = merged;
           return node.findings;
         }
       }
       items.forEach(countFindings);
       this.treeItems = items;
-    },
-
-    onTreeFileClick(activeItems) {
-      if (!activeItems || activeItems.length === 0) {
-        this.treeSelectedFile = null;
-        this.treeReports = [];
-        return;
-      }
-
-      const fullPath = activeItems[0];
-      if (!fullPath) return;
-
-      const isDir = this.isDirectory(fullPath);
-      const filterPath = isDir ? fullPath + "/*" : fullPath;
-
-      this.treeSelectedFile = fullPath;
-      this.treeReportsLoading = true;
-
-      const filter = new ThriftReportFilter(this.reportFilter);
-      filter.filepath = [ filterPath ];
-
-      ccService.getClient().getRunResults(
-        this.runIds, MAX_QUERY_SIZE, 0, [],
-        filter, this.cmpData, false,
-        handleThriftError(reports => {
-          this.treeReports = reports;
-          this.treeReportsLoading = false;
-        })
-      );
     },
 
     itemExpanded(expandedItem) {
@@ -773,118 +610,72 @@ export default {
       });
     },
 
-    onTreeSelectionChange(selectedPaths) {
-      if (!selectedPaths || !selectedPaths.length) {
-        this.treeSelectedFile = null;
-        this.treeReports = [];
-        return;
-      }
-
-      const paths = selectedPaths.map(fp => {
-        const isDir = this.isDirectory(fp);
-        return isDir ? fp + "/*" : fp;
-      });
-
-      this.treeSelectedFile = selectedPaths.join(", ");
-      this.treeReportsLoading = true;
-
-      const filter = new ThriftReportFilter(this.reportFilter);
-      filter.filepath = paths;
-
-      ccService.getClient().getRunResults(
-        this.runIds, MAX_QUERY_SIZE, 0, [],
-        filter, this.cmpData, false,
-        handleThriftError(reports => {
-          this.treeReports = reports;
-          this.treeReportsLoading = false;
-        })
-      );
-    },
-
-    toggleTreeItem(item) {
-      const idx = this.treeSelection.indexOf(
-        item.fullPath
-      );
-      if (idx === -1) {
-        this.treeSelection =
-          [ ...this.treeSelection, item.fullPath ];
-      } else {
-        this.treeSelection =
-          this.treeSelection.filter(
-            p => p !== item.fullPath
-          );
-      }
-      this.onTreeSelectionChange(this.treeSelection);
-    },
-
-    isDirectory(fullPath) {
-      const find = nodes => {
-        for (const n of nodes) {
-          if (n.fullPath === fullPath) {
-            return n.children.length > 0;
-          }
-          if (n.children.length) {
-            const r = find(n.children);
-            if (r !== null) return r;
-          }
+    i64ToNum(val) {
+      if (val == null) return 0;
+      if (typeof val === "number") return val;
+      if (typeof val.toNumber === "function")
+        return val.toNumber();
+      if (val.buffer) {
+        let n = 0;
+        for (let i = 0; i < val.buffer.length; i++) {
+          n = n * 256 + val.buffer[i];
         }
-        return null;
-      };
-      return !!find(this.treeItems);
+        return n;
+      }
+      return Number(val) || 0;
     },
 
     fetchFileSeverities() {
-      const files = Object.keys(
-        this.allReportsFileCounts || {}
-      );
-      if (!files.length) return;
+      const PAGE = 500;
+      const allStats = {};
 
-      const sevMap = {};
-      let pending = files.length;
-
-      files.forEach(filePath => {
-        const filter = new ThriftReportFilter(
-          this.reportFilter
-        );
-        filter.filepath = [ filePath ];
-        filter.severity = null;
-
-        ccService.getClient().getSeverityCounts(
-          this.runIds, filter, this.cmpData,
+      const fetchPage = offset => {
+        ccService.getClient().getFileCountsSummary(
+          this.runIds, this.reportFilter,
+          this.cmpData, PAGE, offset,
           handleThriftError(res => {
-            const sevs = [];
-            Object.keys(Severity).forEach(s => {
-              const id = Severity[s];
-              const cnt = res[id];
-              if (cnt) {
-                const n = cnt.toNumber
-                  ? cnt.toNumber() : cnt;
-                if (n > 0) {
-                  sevs.push({ id: id, count: n });
+            const keys = Object.keys(res || {});
+
+            keys.forEach(filePath => {
+              const summary = res[filePath];
+              const stats = {};
+
+              Object.keys(summary || {}).forEach(key => {
+                const n = this.i64ToNum(summary[key]);
+                if (!n) return;
+
+                if (key === "reports") {
+                  stats.reports = n;
+                } else if (key.startsWith("severity:")) {
+                  const name = key.substring(9).toLowerCase();
+                  stats[name] = (stats[name] || 0) + n;
+                } else if (key.startsWith("review_status:")) {
+                  const name = key.substring(14);
+                  stats[name] = (stats[name] || 0) + n;
                 }
-              }
+              });
+
+              allStats[filePath] = stats;
             });
-            sevs.sort((a, b) => b.id - a.id);
-            sevMap[filePath] = sevs;
 
-            pending--;
-            if (pending === 0) {
-              this.fileSeverities =
-                Object.assign({}, sevMap);
-              this.buildTreeItems();
+            if (keys.length >= PAGE) {
+              fetchPage(offset + PAGE);
+            } else {
+              this.fileSeverities = Object.assign({}, allStats);
+
+              // Build allReportsFileCounts from the summary
+              // so the tree doesn't depend on getFileCounts.
+              const fileCounts = {};
+              Object.keys(allStats).forEach(fp => {
+                fileCounts[fp] = allStats[fp].reports || 0;
+              });
+              this.allReportsFileCounts = fileCounts;
             }
-          }));
-      });
-    },
+          })
+        );
+      };
 
-    loadFileCounts() {
-      ccService.getClient().getFileCounts(
-        this.runIds, this.reportFilter,
-        this.cmpData, 0, 0,
-        handleThriftError(fileCounts => {
-          this.allReportsFileCounts =
-            fileCounts || [];
-        }));
+      fetchPage(0);
     },
 
     getSortMode() {
@@ -995,13 +786,7 @@ export default {
           });
         }));
 
-      ccService.getClient().getFileCounts(
-        this.runIds, this.reportFilter,
-        this.cmpData, 0, 0,
-        handleThriftError(fileCounts => {
-          this.allReportsFileCounts =
-            fileCounts;
-        }));
+      this.fetchFileSeverities();
 
     }
 
@@ -1029,13 +814,56 @@ export default {
   }
 }
 
-.tree-split {
-  .splitpanes__pane {
-    background-color: inherit;
-  }
+.tree-view-container {
+  position: relative;
+  overflow-y: auto;
+  height: calc(100vh - 150px);
+}
+
+.tree-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 4px 40px;
+  font-size: 0.75em;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tree-header-name {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tree-header-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .tree-item-label {
+  flex: 1;
+  min-width: 200px;
   font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.tree-stat-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.8em;
+}
+
 </style>
