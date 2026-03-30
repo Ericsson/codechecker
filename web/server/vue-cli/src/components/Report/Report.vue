@@ -95,7 +95,7 @@
                               {{ reviewData.author }}
                             </v-list-item-title>
                             <v-list-item-subtitle>
-                              {{ prettifiedDate() }}
+                              {{ prettifyDate(reviewData.value.date) }}
                             </v-list-item-subtitle>
                           </v-list-item>
                         </v-list>
@@ -448,9 +448,6 @@ const editorCols = computed(() => {
 });
 const reviewData = computed(() => 
   report.value?.reviewData || new ReviewData()
-);
-const prettifiedDate = computed(
-  () => prettifyDate(reviewData.value.date)
 );
 
 watch(enableBlameView, async () => {
