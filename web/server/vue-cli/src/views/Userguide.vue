@@ -17,3 +17,17 @@ onMounted(() => {
   });
 });
 </script>
+
+<style scoped>
+:deep(ul),
+:deep(ol) {
+  margin-left: 20px;
+}
+
+:deep(ul ul),
+:deep(ol ol),
+:deep(ul ol),
+:deep(ol ul) {
+  margin-left: 2em;
+}
+</style>
