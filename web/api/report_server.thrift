@@ -946,6 +946,21 @@ service codeCheckerDBAccess {
                                  5: i64          offset)
                                  throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // Returns detailed report statistics grouped by file.
+  // The inner map contains total report count ("reports") and
+  // counts per severity, review status and detection status.
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_VIEW
+  map<string, map<string, i64>> getFileCountsSummary(
+                                 1: list<i64>    runIds,
+                                 2: ReportFilter reportFilter,
+                                 3: CompareData  cmpData,
+                                 4: i64          limit,
+                                 5: i64          offset)
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
   // will be used as a baseline excluding the runs in compare data.
