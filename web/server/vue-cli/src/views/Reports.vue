@@ -223,7 +223,10 @@
           </template>
           <template #label="{ item }">
             <div class="tree-row">
-              <span class="tree-item-label">{{ item.name }}</span>
+              <span
+                class="tree-item-label clickable"
+                @click.stop="onTreeItemClick(item)"
+              >{{ item.name }}</span>
               <span class="tree-stat-cell">{{ item.findings }}</span>
               <span class="tree-stat-cell">
                 {{ item.stats.style || '' }}
@@ -526,6 +529,13 @@ export default {
     ...mapMutations(namespace, {
       setReportFilter: SET_REPORT_FILTER
     }),
+
+    onTreeItemClick(item) {
+      const isDir = item.children && item.children.length > 0;
+      const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
+      this.setReportFilter({ filepath: [ pattern ] });
+      this.viewMode = "table";
+    },
 
     buildTreeItems() {
       const items = [];
@@ -857,6 +867,15 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--v-primary-base);
+    }
+  }
 }
 
 .tree-stat-cell {
