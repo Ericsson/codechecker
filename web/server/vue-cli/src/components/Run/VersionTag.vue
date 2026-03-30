@@ -1,24 +1,14 @@
 <template>
   <v-chip
     variant="outlined"
-    size="small"
   >
-    <v-avatar
-      class="mr-0"
-      left
+    <v-icon
+      :color="strToColor(value)"
+      start
     >
-      <v-icon
-        :color="strToColor(value)"
-        size="small"
-      >
-        mdi-tag-outline
-      </v-icon>
-    </v-avatar>
-    <span
-      class="grey--text text--darken-3"
-    >
-      {{ value }}
-    </span>
+      mdi-tag-outline
+    </v-icon>
+    {{ value }}
   </v-chip>
 </template>
 

@@ -53,6 +53,7 @@
                 <v-chip
                   color="success"
                   variant="outlined"
+                  class="mr-2"
                 >
                   <v-icon
                     start

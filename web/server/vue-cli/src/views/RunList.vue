@@ -312,11 +312,11 @@ async function onRunHistoryFilterChanged() {
   await Promise.all(expanded.value.map(async run => {
     const { limit, offset } = run.$history;
 
-    const { histories, hasMore } =
+    const { runHistory, hasMore } =
       await getRunHistory(run.runId.toNumber(), limit, offset);
 
     run.$history.hasMore = hasMore;
-    run.$history.values = histories;
+    run.$history.values = runHistory;
   }));
 
   loading.value = false;
@@ -394,11 +394,11 @@ async function loadMoreRunHistory(run) {
   const offset = run.$history.offset + limit;
   run.$history.offset = offset;
 
-  const { histories, hasMore } =
+  const { runHistory, hasMore } =
     await getRunHistory(run.runId.toNumber(), limit, offset);
 
   run.$history.hasMore = hasMore;
-  run.$history.values.push(...histories);
+  run.$history.values.push(...runHistory);
 
   updateExpandedUrlParam();
 
@@ -432,10 +432,10 @@ async function runExpanded(run, limit=10, offset=0) {
 async function getRunHistory(runId, limit=10, offset=0) {
   return new Promise(resolve => {
     ccService.getClient().getRunHistory([ runId ], limit, offset,
-      runHistoryFilter.value, handleThriftError(histories => {
+      runHistoryFilter.value, handleThriftError(runHistory => {
         resolve({
-          hasMore: histories.length === limit,
-          runHistory: histories.map(h => ({
+          hasMore: runHistory.length === limit,
+          runHistory: runHistory.map(h => ({
             ...h,
             $codeCheckerVersion:
               prettifyCCVersion(h.codeCheckerVersion)
