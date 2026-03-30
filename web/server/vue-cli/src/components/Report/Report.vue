@@ -80,10 +80,9 @@
                         <v-btn
                           v-bind="activatorProps"
                           class="review-status-message"
-                          icon
-                        >
-                          <v-icon>mdi-message-text-outline</v-icon>
-                        </v-btn>
+                          icon="mdi-message-text-outline"
+                          variant="text"
+                        />
                       </template>
                       <v-card>
                         <v-list>
@@ -95,7 +94,7 @@
                               {{ reviewData.author }}
                             </v-list-item-title>
                             <v-list-item-subtitle>
-                              {{ prettifyDate(reviewData.value.date) }}
+                              {{ prettifyDate(reviewData.date) }}
                             </v-list-item-subtitle>
                           </v-list-item>
                         </v-list>
@@ -446,7 +445,7 @@ const editorCols = computed(() => {
   const maxCols = 12;
   return showComments.value ? maxCols - commentCols.value : maxCols;
 });
-const reviewData = computed(() => 
+const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
 );
 
