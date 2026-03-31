@@ -52,7 +52,7 @@ const props = defineProps({
   variant: { type: String, default: "solo" }
 });
 
-const emit = defineEmits([ "on-confirm" ]);
+const emit = defineEmits([ "on-confirm", "delete-complete" ]);
 
 const dialog = ref(false);
 const removingInProgress = ref(false);
@@ -69,6 +69,7 @@ function confirmDelete() {
       dialog.value = false;
 
       emit("on-confirm");
+      emit("delete-complete");
       removingInProgress.value = false;
     }));
 }

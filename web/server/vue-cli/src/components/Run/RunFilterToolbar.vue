@@ -89,6 +89,7 @@
           :selected="selected"
           variant="outlined"
           @on-confirm="update"
+          @delete-complete="emit('delete-complete')"
         />
 
         <v-btn
@@ -165,7 +166,8 @@ const props = defineProps({
 const emit = defineEmits([
   "on-run-filter-changed",
   "on-run-history-filter-changed",
-  "update"
+  "update",
+  "delete-complete"
 ]);
 const route = useRoute();
 const router = useRouter();

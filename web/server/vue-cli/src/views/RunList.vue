@@ -42,6 +42,7 @@
           @on-run-filter-changed="onRunFilterChanged"
           @on-run-history-filter-changed="onRunHistoryFilterChanged"
           @update="fetchRuns"
+          @delete-complete="selected = []"
         />
       </template>
 
