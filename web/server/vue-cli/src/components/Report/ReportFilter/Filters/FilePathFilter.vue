@@ -1,20 +1,29 @@
 <template>
   <select-option
     :id="id"
-    ref="selectOption"
     title="File path"
     :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
-    :search="search"
     :loading="loading"
     :limit="defaultLimit"
     :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >
-    <template v-slot:menu-content>
+    <template v-slot:menu-content="{ onApplyFinished }">
       <v-card flat>
+        <v-toolbar class="pa-2" dense flat>
+          <v-text-field
+            v-model="treeFilter"
+            hide-details
+            prepend-icon="mdi-magnify"
+            single-line
+            label="Search for files (e.g.: */src/*)..."
+            clearable
+          />
+        </v-toolbar>
+
         <AnywhereOnReportPath v-model="isAnywhere" />
 
         <v-divider v-if="treeItems.length > 0" class="my-1" />
@@ -29,7 +38,6 @@
           open-on-click
           dense
           class="file-path-tree"
-          @input="onTreeSelectionChange"
         >
           <template #prepend="{ item, open }">
             <v-icon v-if="item.children.length > 0" small>
@@ -46,18 +54,40 @@
             >
               {{ item.name }}
             </span>
-            <severity-icon
-              v-for="sev in item.severities"
-              :key="sev.id"
-              :status="sev.id"
-              :size="14"
-              class="ml-1"
-            />
             <v-chip class="ml-2" x-small>
               {{ item.findings }}
             </v-chip>
           </template>
         </v-treeview>
+
+        <v-card-actions>
+          <v-spacer />
+
+          <v-btn
+            text
+            class="clear-all-btn"
+            color="grey"
+            @click="clearAll(onApplyFinished)"
+          >
+            <v-icon left>
+              mdi-close-circle-outline
+            </v-icon>
+            Clear All
+          </v-btn>
+
+          <v-btn
+            text
+            class="apply-btn"
+            color="primary"
+            :disabled="treeSelection.length === 0"
+            @click="applyTreeSelection(onApplyFinished)"
+          >
+            <v-icon left>
+              mdi-check-circle-outline
+            </v-icon>
+            Apply
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </template>
 
@@ -80,9 +110,8 @@
 
 <script>
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter, Severity } from "@cc/report-server-types";
+import { ReportFilter } from "@cc/report-server-types";
 
-import { SeverityIcon } from "@/components/Icons";
 import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
 import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
@@ -91,8 +120,7 @@ export default {
   name: "FilePathFilter",
   components: {
     AnywhereOnReportPath,
-    SelectOption,
-    SeverityIcon
+    SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],
 
@@ -100,24 +128,36 @@ export default {
     return {
       id: "filepath",
       anywhereId: "anywhere-filepath",
-      search: {
-        placeHolder: "Search for files (e.g.: */src/*)...",
-        regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
-        filterItems: this.filterItems
-      },
       isAnywhere: false,
       allFileCounts: {},
-      fileSeverities: {},
-      treeSelection: []
+      treeSelection: [],
+      treeFilter: ""
     };
   },
 
   computed: {
+    filteredFileCounts() {
+      if (!this.treeFilter) return this.allFileCounts;
+
+      const pattern = this.treeFilter
+        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".");
+      const regex = new RegExp(pattern, "i");
+      const filtered = {};
+      Object.entries(this.allFileCounts || {}).forEach(([ fp, count ]) => {
+        if (regex.test(fp)) {
+          filtered[fp] = count;
+        }
+      });
+      return filtered;
+    },
+
     treeItems() {
       const items = [];
 
       Object.entries(
-        this.allFileCounts || {}
+        this.filteredFileCounts || {}
       ).forEach(([ filePath, count ]) => {
         if (!filePath) return;
         const numCount = typeof count === "object" && count.toNumber
@@ -135,8 +175,7 @@ export default {
               name: part,
               fullPath: currentPath,
               children: [],
-              findings: 0,
-              severities: []
+              findings: 0
             };
             currentLevel.push(existingPart);
           }
@@ -148,17 +187,14 @@ export default {
           const existingFile = currentLevel.find(
             item => item.name === fileName
           );
-          const sevs = this.fileSeverities[filePath] || [];
           if (existingFile) {
             existingFile.findings += numCount;
-            existingFile.severities = sevs;
           } else {
             currentLevel.push({
               name: fileName,
               fullPath: filePath,
               children: [],
-              findings: numCount,
-              severities: sevs
+              findings: numCount
             });
           }
         }
@@ -169,17 +205,6 @@ export default {
         node.findings = node.children.reduce(
           (sum, child) => sum + countFindings(child), 0
         );
-        const sevMap = {};
-        node.children.forEach(child => {
-          (child.severities || []).forEach(s => {
-            if (!sevMap[s.id]) {
-              sevMap[s.id] = { id: s.id, count: 0 };
-            }
-            sevMap[s.id].count += s.count;
-          });
-        });
-        node.severities = Object.values(sevMap)
-          .sort((a, b) => b.id - a.id);
         return node.findings;
       }
       items.forEach(countFindings);
@@ -244,7 +269,6 @@ export default {
     async update() {
       this.bus.$emit("update");
       await this.fetchAllFileCounts();
-      this.fetchFileSeverities();
 
       if (!this.selectedItems.length) return;
 
@@ -263,67 +287,40 @@ export default {
     fetchAllFileCounts() {
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.filepath = null;
+      const allCounts = {};
 
       return new Promise(resolve => {
-        ccService.getClient().getFileCounts(
-          this.runIds, reportFilter,
-          this.cmpData, 0, 0,
-          handleThriftError(res => {
-            this.allFileCounts = res || {};
-            resolve();
-          }));
-      });
-    },
-
-    fetchFileSeverities() {
-      const files = Object.keys(this.allFileCounts || {});
-      if (!files.length) return;
-
-      const sevMap = {};
-      let pending = files.length;
-
-      files.forEach(filePath => {
-        const filter = new ReportFilter(this.reportFilter);
-        filter.filepath = [ filePath ];
-        filter.severity = null;
-
-        ccService.getClient().getSeverityCounts(
-          this.runIds, filter, this.cmpData,
-          handleThriftError(res => {
-            const sevs = [];
-            Object.keys(Severity).forEach(s => {
-              const id = Severity[s];
-              const cnt = res[id];
-              if (cnt) {
-                const n = cnt.toNumber
-                  ? cnt.toNumber() : cnt;
-                if (n > 0) {
-                  sevs.push({ id: id, count: n });
-                }
+        const fetchPage = offset => {
+          ccService.getClient().getFileCounts(
+            this.runIds, reportFilter,
+            this.cmpData, 500, offset,
+            handleThriftError(res => {
+              const keys = Object.keys(res || {});
+              keys.forEach(fp => {
+                allCounts[fp] = res[fp];
+              });
+              if (keys.length >= 500) {
+                fetchPage(offset + 500);
+              } else {
+                this.allFileCounts = Object.assign({}, allCounts);
+                resolve();
               }
-            });
-            sevs.sort((a, b) => b.id - a.id);
-            sevMap[filePath] = sevs;
-
-            pending--;
-            if (pending === 0) {
-              this.fileSeverities =
-                Object.assign({}, sevMap);
-            }
-          }));
+            }));
+        };
+        fetchPage(0);
       });
     },
 
-    onTreeSelectionChange(selectedPaths) {
-      // Prevent menu close from resetting selection.
-      this.$refs.selectOption.preventApply = true;
+    clearAll(onApplyFinished) {
+      this.treeSelection = [];
+      this.clear(true);
+      if (onApplyFinished) onApplyFinished();
+    },
 
-      if (!selectedPaths || !selectedPaths.length) {
-        this.setSelectedItems([]);
-        return;
-      }
+    applyTreeSelection(onApplyFinished) {
+      if (!this.treeSelection.length) return;
 
-      const items = selectedPaths.map(fp => {
+      const items = this.treeSelection.map(fp => {
         const isDir = this.isDirectory(fp);
         const filterId = isDir ? fp + "/*" : fp;
         return {
@@ -333,6 +330,7 @@ export default {
         };
       });
       this.setSelectedItems(items);
+      if (onApplyFinished) onApplyFinished();
     },
 
     isDirectory(fullPath) {
@@ -361,7 +359,6 @@ export default {
           p => p !== item.fullPath
         );
       }
-      this.onTreeSelectionChange(this.treeSelection);
     },
 
     fetchItems(opt={}) {
