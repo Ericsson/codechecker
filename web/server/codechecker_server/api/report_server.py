@@ -3726,17 +3726,13 @@ class ThriftRequestHandler:
     @timeit
     def getFileCountsSummary(self, run_ids, report_filter, cmp_data,
                              limit, offset):
-        """
-          Returns a detailed summary of report counts per file.
-          For each file path, the inner map contains:
-            - "reports": total report count
-            - severity names (e.g. "CRITICAL", "HIGH", ...):
-                  count per severity
-            - review status names (e.g. "unreviewed", "confirmed", ...):
-                  count per review status
-            - detection status names (e.g. "new", "unresolved", ...):
-                  count per detection status
-        """
+        # Returns detailed report statistics grouped by file.
+        # The inner map contains total report count ("reports") and
+        # counts per severity, review status and detection status.
+        # If the run id list is empty the metrics will be counted
+        # for all of the runs and in compare mode all of the runs
+        # will be used as a baseline excluding the runs in compare data.
+        # PERMISSION: PRODUCT_VIEW
         self.__require_view()
 
         limit = verify_limit_range(limit)
