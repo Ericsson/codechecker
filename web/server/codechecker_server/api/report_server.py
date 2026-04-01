@@ -26,7 +26,7 @@ from typing import Any, Collection, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column, case, cast, true
+    asc, desc, union_all, select, bindparam, literal_column, cast, true
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.types import ARRAY, String
 
@@ -1382,48 +1382,6 @@ def get_run_id_expression(session, report_filter):
             ).label("run_id")
         return func.group_concat(Run.id.distinct()).label("run_id")
     return Run.id.label("run_id")
-
-
-def get_is_enabled_case(subquery):
-    """
-    Creating a case statement to decide the report
-    is enabled or not based on the detection status
-    """
-    detection_status_filters = subquery.c.detection_status.in_(list(
-        map(detection_status_str,
-            (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
-    ))
-
-    return case(
-        (detection_status_filters, False),
-        else_=True
-    )
-
-
-def get_is_opened_case(subquery):
-    """
-    Creating a case statement to decide the report is opened or not
-    based on the detection status and the review status
-    """
-    detection_statuses = (
-        DetectionStatus.NEW,
-        DetectionStatus.UNRESOLVED,
-        DetectionStatus.REOPENED
-    )
-    review_statuses = (
-        API_ReviewStatus.UNREVIEWED,
-        API_ReviewStatus.CONFIRMED
-    )
-    detection_and_review_status_filters = [
-        subquery.c.detection_status.in_(list(map(
-            detection_status_str, detection_statuses))),
-        subquery.c.review_status.in_(list(map(
-            review_status_str, review_statuses)))
-    ]
-    return case(
-        (and_(*detection_and_review_status_filters), True),
-        else_=False
-    )
 
 
 def remove_reports(session: DBSession,
@@ -3345,9 +3303,6 @@ class ThriftRequestHandler:
 
             subquery = subquery.subquery()
 
-            is_enabled_case = get_is_enabled_case(subquery)
-            is_opened_case = get_is_opened_case(subquery)
-
             query = (
                 session.query(
                     subquery.c.checker_id,
@@ -3355,8 +3310,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    is_enabled_case.label("isEnabled"),
-                    is_opened_case.label("isOpened"),
+                    subquery.c.detection_status,
+                    subquery.c.review_status,
                     func.count(subquery.c.bug_id)
                 )
                 .group_by(
@@ -3365,8 +3320,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    is_enabled_case,
-                    is_opened_case
+                    subquery.c.detection_status,
+                    subquery.c.review_status
                 )
             )
 
@@ -3377,8 +3332,8 @@ class ThriftRequestHandler:
                 analyzer_name, \
                 severity, \
                 run_id_list, \
-                is_enabled, \
-                is_opened, \
+                detection_status, \
+                review_status, \
                 cnt \
                     in query.all():
 
@@ -3393,6 +3348,22 @@ class ThriftRequestHandler:
                         closed=0,
                         outstanding=0
                     ))
+
+                is_enabled = detection_status not in map(
+                    detection_status_str,
+                    (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
+
+                is_opened = \
+                    detection_status in map(
+                        detection_status_str,
+                        (DetectionStatus.NEW,
+                         DetectionStatus.UNRESOLVED,
+                         DetectionStatus.REOPENED)) \
+                    and \
+                    review_status in map(
+                        review_status_str,
+                        (API_ReviewStatus.UNREVIEWED,
+                         API_ReviewStatus.CONFIRMED))
 
                 if is_enabled:
                     for r in (run_id_list.split(",")
@@ -3602,10 +3573,24 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
+            detection_and_review_status_filters = [
+                Report.detection_status.in_(list(map(
+                    detection_status_str,
+                    (DetectionStatus.NEW,
+                     DetectionStatus.UNRESOLVED,
+                     DetectionStatus.REOPENED)))),
+                Report.review_status.in_(list(map(
+                    review_status_str,
+                    (API_ReviewStatus.UNREVIEWED,
+                     API_ReviewStatus.CONFIRMED))))
+            ]
+
             extended_table = session.query(
                 Report.review_status,
                 Report.detection_status,
-                Report.bug_id
+                Report.bug_id,
+                and_(*detection_and_review_status_filters)
+                .label("isOutstanding")
             )
 
             if report_filter.annotations is not None:
@@ -3620,19 +3605,16 @@ class ThriftRequestHandler:
 
             extended_table = extended_table.subquery()
 
-            is_outstanding_case = get_is_opened_case(extended_table)
-            case_label = "isOutstanding"
-
             if report_filter.isUnique:
                 q = session.query(
-                    is_outstanding_case.label(case_label),
+                    extended_table.c.isOutstanding,
                     func.count(extended_table.c.bug_id.distinct())) \
-                    .group_by(is_outstanding_case)
+                    .group_by(extended_table.c.isOutstanding)
             else:
                 q = session.query(
-                    is_outstanding_case.label(case_label),
+                    extended_table.c.isOutstanding,
                     func.count(extended_table.c.bug_id)) \
-                    .group_by(is_outstanding_case)
+                    .group_by(extended_table.c.isOutstanding)
 
             results = {
                 report_status_enum(
