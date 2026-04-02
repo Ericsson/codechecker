@@ -166,23 +166,29 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def __handle_readiness(self):
         """ Handle readiness probe. """
-        with DBSession(self.server.config_session) as cfg_sess:
-            try:
-                cfg_sess.query(ORMConfiguration).count()
+        try:
+            with DBSession(self.server.config_session) as cfg_sess:
+                try:
+                    cfg_sess.query(ORMConfiguration).count()
 
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
-            except Exception:
-                self.send_response(500)
-                self.end_headers()
-                self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
+                except Exception:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
+        except BrokenPipeError:
+            pass
 
     def __handle_liveness(self):
         """ Handle liveness probe. """
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
+        try:
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
+        except BrokenPipeError:
+            pass
 
     def end_headers(self):
         """
@@ -518,10 +524,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except BrokenPipeError as ex:
+            # This is considered normal. The client can close the TCP
+            # connection for various reasons and the server cannot
+            # write to a closed socket.
             LOG.warning("%s failed with BrokenPipeError: %s",
                         api_info, str(ex))
-            import traceback
-            traceback.print_exc()
         except Exception as ex:
             if isinstance(ex, ProductNotFoundError):
                 LOG.debug("%s failed with Exception: %s", api_info, str(ex))
