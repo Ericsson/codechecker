@@ -19,7 +19,9 @@
         color="primary"
         outlined
         small
-        @click="viewMode = viewMode === 'tree' ? 'table' : 'tree'"
+        @click="setReportFilter({ filepath: null });
+          viewMode = viewMode === 'tree'
+            ? 'table' : 'tree'"
       >
         {{ viewMode === "table" ? "Tree view" : "Table view" }}
       </v-btn>
