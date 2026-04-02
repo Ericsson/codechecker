@@ -1,6 +1,6 @@
 <template>
   <select-option
-    :id="id.value"
+    :id="id"
     title="Diff type"
     :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
@@ -53,9 +53,8 @@ baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 baseSelectOptionFilter.encodeValue.value = encodeValue;
 baseSelectOptionFilter.decodeValue.value = decodeValue;
 
-const id = ref("diff-type");
-// eslint-disable-next-line vue/no-ref-object-reactivity-loss
-baseSelectOptionFilter.id.value = id.value;
+const id = "diff-type";
+baseSelectOptionFilter.id.value = id;
 
 const defaultValues = ref([ encodeValue(DiffType.NEW) ]);
 
@@ -83,7 +82,7 @@ function decodeValue(diffTypeStr) {
 
 function updateReportFilter() {
   baseSelectOptionFilter.setCmpData({
-    diffType: baseSelectOptionFilter.selectedItems.value[0].id
+    diffType: baseSelectOptionFilter.selectedItems.value.id
   });
 }
 
@@ -141,9 +140,9 @@ function fetchItems() {
         const _id = DiffType[key];
         return {
           id: _id,
-          title: titleFormatter(id),
+          title: titleFormatter(_id),
           count: res[index][key].toNumber(),
-          icon: getIconClass(id)
+          icon: getIconClass(_id)
         };
       }));
       baseSelectOptionFilter.loading.value = false;

@@ -19,7 +19,7 @@
         prepend-icon="mdi-magnify"
         :label="search.placeHolder"
         variant="underlined"
-        @input="filter"
+        @update:model-value="filter"
       />
     </v-toolbar>
 
@@ -79,7 +79,6 @@
             <slot
               name="prepend-count"
               :item="item"
-              :hover="hover"
             />
 
             <v-chip
@@ -204,7 +203,7 @@ const filter = _.debounce(async value => {
 }, 500);
 
 onMounted(() => {
-  localSelectedItems.value = props.selectedItems;
+  localSelectedItems.value = props.selectedItems || [];
 });
 
 // Emit the `apply` event with the selected items.
@@ -241,7 +240,7 @@ function toggleSelection(_item) {
 
 <style lang="scss">
 .regex-label {
-  background-color: var(--v-primary-base);
+  background-color: rgb(var(--v-theme-primary));
   color: white;
 }
 </style>

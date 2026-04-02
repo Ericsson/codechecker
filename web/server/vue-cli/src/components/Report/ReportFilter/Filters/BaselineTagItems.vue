@@ -1,16 +1,16 @@
 <template>
   <v-container class="pa-0" fluid>
     <v-progress-linear
-      v-if="baseFilter.loading"
+      v-if="baseSelectOptionFilter.loading"
       indeterminate
       size="64"
     />
 
     <items
-      v-model:items="tags"
+      :items="tags"
       :selected-items="selectedItems.value"
       :search="search"
-      :limit="baseFilter.defaultLimit"
+      :limit="baseSelectOptionFilter.defaultLimit"
       @apply="apply"
       @cancel="cancel"
       @select="select"
@@ -70,7 +70,9 @@ import { ccService, handleThriftError } from "@cc-api";
 import { DateInterval, ReportFilter } from "@cc/report-server-types";
 
 import BulbMessage from "@/components/BulbMessage";
-import { useBaseFilter } from "@/composables/useBaseFilter";
+import { useBaseSelectOptionFilter }
+  from "@/composables/useBaseSelectOptionFilter";
+
 import { useDateUtils } from "@/composables/useDateUtils";
 import Items from "./SelectOption/Items";
 
@@ -95,7 +97,9 @@ const filterOpt = ref({});
 
 const { getUnixTime, prettifyDate } = useDateUtils();
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter(
+  toRef(props, "namespace")
+);
 
 watch(() => props.runId, async () => {
   tags.value = await fetchTags(filterOpt.value);
@@ -110,60 +114,66 @@ onMounted(async () => {
 });
 
 async function getRunTagFilter() {
-  const _query = filterOpt.value.query;
+  const query = filterOpt.value.query;
 
-  if (!_query && !dateFilter.value)
+  if (!query && !dateFilter.value)
     return null;
 
-  let _stored = null;
+  let stored = null;
   if (dateFilter.value) {
-    const _date = parse(dateFilter.value, "yyyy-MM-dd", new Date());
-    const _midnight = endOfDay(_date);
+    const date = parse(dateFilter.value, "yyyy-MM-dd", new Date());
+    const midnight = endOfDay(date);
 
-    _stored = new DateInterval({
-      before: getUnixTime(_midnight)
+    stored = new DateInterval({
+      before: getUnixTime(midnight)
     });
   }
 
-  const _tags =
-    await ccService.getTags([ props.runId ], null, _query, _stored);
+  const tags =
+    await ccService.getTags([ props.runId ], null, query, stored);
 
-  return _tags.map(_t => _t.id.toNumber());
+  return tags.map(_t => _t.id.toNumber());
 }
 
 async function fetchTags(opt={}) {
-  baseFilter.loading.value = true;
+  baseSelectOptionFilter.loading.value = true;
   filterOpt.value = opt;
 
-  const _reportFilter = new ReportFilter(baseFilter.reportFilter.value);
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
   const _limit = opt.limit || props.limit;
   const _offset = 0;
 
   _reportFilter.runTag = await getRunTagFilter();
 
-  return new Promise(_resolve => {
+  return new Promise((resolve, reject) => {
     ccService.getClient().getRunHistoryTagCounts(
       [ props.runId ],
-      baseFilter.reportFilter.value,
+      baseSelectOptionFilter.reportFilter.value,
       null,
       _limit,
       _offset,
       handleThriftError(res => {
-        _resolve(res.map(_tag => {
-          const _id = _tag.id.toNumber();
-          const _time = prettifyDate(_tag.time);
+        resolve(res.map(tag => {
+          const id = tag.id.toNumber();
+          const time = prettifyDate(tag.time);
           return {
-            _id,
-            runName: _tag.runName,
-            runId: _tag.runId.toNumber(),
-            tagName: _tag.name || _time,
-            time: _time,
-            title: _tag.name,
-            count: _tag.count.toNumber()
+            id,
+            runName: tag.runName,
+            runId: tag.runId.toNumber(),
+            tagName: tag.name || time,
+            time: time,
+            title: tag.name,
+            count: tag.count.toNumber()
           };
         }));
 
-        baseFilter.loading.value = false;
+        baseSelectOptionFilter.loading.value = false;
+      },
+      err => {
+        baseSelectOptionFilter.loading.value = false;
+        reject(err);
       }));
   });
 }
@@ -172,8 +182,8 @@ function filterItems(value) {
   return fetchTags({ query: value ? [ `${value}*` ] : null });
 }
 
-function apply() {
-  emit("apply");
+function apply(selected) {
+  emit("apply", selected);
 }
 
 function select(selectedItems) {

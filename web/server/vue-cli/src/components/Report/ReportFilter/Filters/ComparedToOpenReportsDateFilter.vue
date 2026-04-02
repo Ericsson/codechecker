@@ -32,8 +32,9 @@
         :input-class="id"
         :dialog-class="id"
         :value="date"
+        variant="underlined"
         label="Report date"
-        @input="setDateTime"
+        @update:model-value="setDateTime"
       />
     </v-card-actions>
   </filter-toolbar>

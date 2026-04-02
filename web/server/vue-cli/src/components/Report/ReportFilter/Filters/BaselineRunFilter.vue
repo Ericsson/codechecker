@@ -7,10 +7,10 @@
     :selected-items="baseSelectOptionFilter.selectedItems.value"
     :search="search"
     :loading="baseSelectOptionFilter.loading.value"
-    :apply="apply"
+    :apply="applySelection"
     :panel="baseSelectOptionFilter.panel.value"
-    @cancel="cancelRunSelection"
-    @select="prevSelectedRuns = $event"
+    @cancel="cancelSelection"
+    @select="console.log('select-option @select')"
     @clear="clear(true)"
     @on-menu-show="selectTagForRun = null"
   >
@@ -45,7 +45,7 @@
             :search="search"
             :limit="defaultLimit"
             :format="formatRunTitle"
-            @apply="apply"
+            @apply="applySelection"
             @apply:finished="onApplyFinished"
             @cancel="cancelItemSelection"
             @select="select"
@@ -53,26 +53,24 @@
           >
             <template v-slot:append-toolbar>
               <bulb-message>
-                Use the <v-icon>mdi-cog</v-icon> button beside each run after
-                hovering on the run to specify a tag.
+                Use the <v-icon>mdi-cog</v-icon> button beside each run
+                to specify a tag.
               </bulb-message>
             </template>
 
-            <template v-slot:prepend-count="{ hover, item }">
+            <template v-slot:prepend-count="{ item }">
               <v-tooltip
-                v-if="hover || selectTagForRun === item"
                 max-width="200"
                 location="right"
               >
                 <template v-slot:activator="{ props: tooltipProps }">
                   <v-btn
                     v-bind="{ ...tooltipProps, ...menuProps }"
-                    icon
+                    icon="mdi-cog"
                     size="small"
+                    variant="text"
                     @click.stop="specifyTag(item)"
-                  >
-                    <v-icon>mdi-cog</v-icon>
-                  </v-btn>
+                  />
                 </template>
 
                 <span>
@@ -97,14 +95,17 @@
           </items>
         </template>
 
-        <v-card v-if="selectTagForRun" flat>
+        <v-card
+          v-if="selectTagForRun"
+          flat
+        >
           <baseline-tag-items
             :namespace="namespace"
             :selected-items="prevSelectedTagItems"
             :run-id="selectTagForRun.runIds[0]"
             :limit="defaultLimit"
             @apply="applyTagSelection"
-            @cancel="cancelTagSelection"
+            @cancel="cancelSelection"
             @select="selectRunTags"
           >
             <template v-slot:icon>
@@ -139,7 +140,6 @@
 </template>
 
 <script setup>
-import _ from "lodash";
 import { computed, ref, toRef } from "vue";
 import { useRoute } from "vue-router";
 
@@ -186,7 +186,7 @@ const prevSelectedTagItems = ref([]);
 const search = ref({
   placeHolder: "Search for run names (e.g.: myrun*)...",
   regexLabel: "Filter by wildcard pattern (e.g.: myrun*)",
-  filterItems: []
+  filterItems: baseSelectOptionFilter.filterItems
 });
 
 const route = useRoute();
@@ -230,19 +230,19 @@ function getSelectedRunTitle(run) {
   return formatRunItemWithTags(run, runFilter.selectedTagItems.value);
 }
 
-function runFilterIsChanged() {
+function runFilterIsChanged(newSelection) {
   return filterIsChanged(
     prevSelectedRuns.value,
-    baseSelectOptionFilter.selectedItems.value
+    newSelection
   );
 }
 
-function tagFilterIsChanged() {
+/*function tagFilterIsChanged() {
   return filterIsChanged(
     prevSelectedTagItems.value,
     runFilter.selectedTagItems.value
   );
-}
+}*/
 
 function updateSelectedItems(selectedRunItems) {
   setSelectedItems(selectedRunItems, runFilter.selectedTagItems.value);
@@ -323,31 +323,27 @@ async function initByUrl() {
     }
 
     const _selectedRuns = await getSelectedRunItems(_runs);
+    prevSelectedRuns.value = _selectedRuns;
+    prevSelectedTagItems.value = _selectedTags;
 
     await setSelectedItems(_selectedRuns, _selectedTags, false);
   }
 }
 
-function cancelTagSelection() {
-  prevSelectedTagItems.value = _.cloneDeep(runFilter.selectedTagItems.value);
+function cancelSelection() {
   selectTagMenu.value = false;
   selectTagForRun.value = null;
 }
 
-function cancelRunSelection() {
-  prevSelectedRuns.value = _.cloneDeep(
-    baseSelectOptionFilter.selectedItems.value
-  );
-  cancelTagSelection();
-}
-
-function apply(selectedRunItems) {
-  if (!runFilterIsChanged() && !tagFilterIsChanged()) return;
+function applySelection(selectedRunItems) {
+  const isRunFilterChanged = runFilterIsChanged(selectedRunItems);
+  if (!isRunFilterChanged) return;
 
   setSelectedItems(selectedRunItems, prevSelectedTagItems.value);
 }
 
-function applyTagSelection() {
+function applyTagSelection(selected) {
+  prevSelectedTagItems.value = selected;
   selectTagMenu.value = false;
   prevSelectedTagItems.value.forEach(t => {
     emit("select", item => item.runIds.includes(t.runId));
@@ -359,7 +355,7 @@ async function clear(updateUrl) {
 }
 
 function selectRunTags(selectedItems) {
-  prevSelectedTagItems.value = _.cloneDeep(selectedItems);
+  prevSelectedTagItems.value = selectedItems;
 }
 
 function getUrlState() {
@@ -382,7 +378,8 @@ async function setSelectedItems(runItems, tagItems, updateUrl=true) {
   // we need to remove the tags too.
   runFilter.selectedTagItems.value = tagItems.filter(t =>
     runItems.findIndex(s => s.runIds.includes(t.runId)) > -1);
-  prevSelectedTagItems.value = _.cloneDeep(runFilter.selectedTagItems.value);
+  prevSelectedRuns.value = runItems;
+  prevSelectedTagItems.value = tagItems;
 
   await updateReportFilter();
 
@@ -414,17 +411,21 @@ function onReportFilterChange(key) {
 function fetchItems(opt={}) {
   baseSelectOptionFilter.loading.value = true;
 
-  const _runIds = null;
-  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit;
+  const _runIds = [];
+  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
   const _offset = 0;
 
   const _reportFilter = new ReportFilter(baseSelectOptionFilter.reportFilter);
   _reportFilter.runName = opt.query;
   _reportFilter.runTag = null;
 
-  return new Promise(resolve => {
-    ccService.getClient().getRunReportCounts(_runIds, _reportFilter, _limit,
-      _offset, handleThriftError(res => {
+  return new Promise((resolve, reject) => {
+    ccService.getClient().getRunReportCounts(
+      _runIds,
+      _reportFilter,
+      _limit,
+      _offset,
+      handleThriftError(res => {
         resolve(res.map(run => {
           return {
             id: run.name,
@@ -434,6 +435,9 @@ function fetchItems(opt={}) {
           };
         }));
         baseSelectOptionFilter.loading.value = false;
+      }, err => {
+        baseSelectOptionFilter.loading.value = false;
+        reject(err);
       }));
   });
 }

@@ -30,7 +30,10 @@ export function useBaseSelectOptionFilter(namespaceRef) {
   const getIconClass = ref(() => {});
 
   const getUrlState = () => {
-    const state = selectedItems.value.map(item => encodeValue.value(item.id));
+    const tmpSelectedItems =
+      !Array.isArray(selectedItems.value) ?
+        [ selectedItems.value ] : selectedItems.value;
+    const state = tmpSelectedItems.map(item => encodeValue.value(item.id));
     return { [id.value]: state.length ? state : undefined };
   };
 

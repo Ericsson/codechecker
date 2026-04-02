@@ -54,7 +54,7 @@
           :cancel="cancel"
         >
           <Items
-            v-model:items="items"
+            :items="items"
             :selected-items="props.selectedItems"
             :search="search"
             :multiple="multiple"
@@ -209,7 +209,8 @@ function cancel() {
 }
 
 function emitInput(items) {
-  allSelectedItems.value = items;
+  const itemsArray = !props.multiple ? [ items ] : items;
+  allSelectedItems.value = itemsArray;
   emit("input", items);
 }
 </script>

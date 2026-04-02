@@ -197,8 +197,9 @@ function resetDateTimes() {
 }
 </script>
 
-<style lang="scss" scoped>
-:deep(v-picker.v-card) {
+<style lang="scss">
+
+v-picker.v-card {
   box-shadow: none;
 
   & > .v-picker__title {

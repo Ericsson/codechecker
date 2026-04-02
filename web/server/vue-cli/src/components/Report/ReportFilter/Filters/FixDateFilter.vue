@@ -38,6 +38,7 @@
             :dialog-class="fromDateTimeId"
             :value="fromDateTime"
             :label="fromDateTimeLabel"
+            variant="underlined"
             @input="setFromDateTime"
           />
         </v-col>
@@ -52,6 +53,7 @@
             :dialog-class="toDateTimeId"
             :value="toDateTime"
             :label="toDateTimeLabel"
+            variant="underlined"
             @input="setToDateTime"
           />
         </v-col>
@@ -120,7 +122,7 @@ baseSelectOptionFilter.bus.on("update:url", () => {
 function setSelectedItems(_selectedItems/*, updateUrl=true*/) {
   baseSelectOptionFilter.selectedItems.value = _selectedItems;
   const _interval = getDateInterval(
-    baseSelectOptionFilter.selectedItems.value[0].id
+    baseSelectOptionFilter.selectedItems.value.id
   );
 
   setFromDateTime(_interval.from, false);
