@@ -66,6 +66,8 @@ class MetadataInfoParser:
         self.disabled_checkers: DisabledCheckers = set()
         self.checker_to_analyzer: CheckerToAnalyzer = {}
 
+        self.report_dir_path = None
+
         self.__metadata_dict: Dict[str, Any] = {}
         if os.path.isfile(metadata_file_path):
             self.__metadata_dict = cast(Dict[str, Any],
@@ -183,6 +185,9 @@ class MetadataInfoParser:
         for tool in tools:
             if tool['name'] == 'codechecker' and 'version' in tool:
                 cc_versions.add(tool['version'])
+
+            if tool['name'] == 'codechecker':
+                self.report_dir_path = tool.get('output_path')
 
             if 'command' in tool:
                 check_commands.add(' '.join(tool['command']))

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 import sqlalchemy
+from sqlalchemy import union
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
 
@@ -21,7 +22,7 @@ from codechecker_common.logger import get_logger
 
 from .database import DBSession
 from .run_db_model import \
-    AnalysisInfo, \
+    AnalysisInfo, AnalysisInfoFile, \
     BugPathEvent, BugReportPoint, \
     Comment, Checker, \
     File, FileContent, \
@@ -108,8 +109,9 @@ def remove_unused_files(product):
             if total_count:
                 LOG.debug("%d dangling files deleted.", total_count)
 
-            files = session.query(File.content_hash) \
-                .group_by(File.content_hash)
+            files = union(
+                session.query(File.content_hash),
+                session.query(AnalysisInfoFile.content_hash))
 
             session.query(FileContent) \
                 .filter(FileContent.content_hash.notin_(files)) \

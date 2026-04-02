@@ -79,12 +79,41 @@ class AnalysisInfoChecker(Base):
         self.enabled = is_enabled
 
 
+class AnalysisInfoFile(Base):
+    __tablename__ = "analysis_info_files"
+
+    analysis_info_id = Column(Integer,
+                              ForeignKey("analysis_info.id",
+                                         deferrable=True,
+                                         initially="DEFERRED",
+                                         ondelete="CASCADE"),
+                              primary_key=True)
+
+    filename = Column(String, nullable=False)
+
+    content_hash = Column(String,
+                          ForeignKey("file_contents.content_hash",
+                                     deferrable=True,
+                                     initially="DEFERRED",
+                                     ondelete="CASCADE"),
+                          primary_key=True)
+
+    def __init__(self,
+                 analysis_info_id: int,
+                 filename: str,
+                 content_hash: str):
+        self.analysis_info_id = analysis_info_id
+        self.filename = filename
+        self.content_hash = content_hash
+
+
 class AnalysisInfo(Base):
     __tablename__ = "analysis_info"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     analyzer_command = Column(LargeBinary)
     available_checkers = relationship(AnalysisInfoChecker, uselist=True)
+    analyzer_files = relationship(AnalysisInfoFile, uselist=True)
 
     def __init__(self, analyzer_command: bytes):
         self.analyzer_command = analyzer_command

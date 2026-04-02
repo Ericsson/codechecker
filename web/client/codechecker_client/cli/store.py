@@ -505,6 +505,13 @@ def assemble_zip(inputs,
             files_to_compress[os.path.dirname(review_status_file_path)]\
                 .add(review_status_file_path)
 
+        # Add files from report_dir/conf/ directory
+        conf_dir = os.path.join(dir_path, "conf")
+        if os.path.isdir(conf_dir):
+            for file in os.listdir(os.fsencode(conf_dir)):
+                conf_file = os.path.join(conf_dir, os.fsdecode(file))
+                files_to_compress[conf_dir].add(conf_file)
+
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
     analyzer_result_file_reports = parse_analyzer_result_files(
