@@ -179,6 +179,9 @@ pycodestyle:
 pycodestyle_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
+mypy:
+	$(ACTIVATE_DEV_VENV) && mypy --config-file pyproject.toml
+
 test: test_analyzer test_web
 
 test_in_env: test_analyzer_in_env test_web_in_env

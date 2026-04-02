@@ -1,0 +1,13 @@
+[tool.mypy]
+verbosity = 1
+show_error_codes = true
+
+files = [
+  "codechecker_common/"
+]
+
+mypy_path = [
+  "analyzer/",
+  "web/",
+  "tools/report-converter/"
+]

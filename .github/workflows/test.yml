@@ -27,6 +27,23 @@ jobs:
       - name: Run pycodestyle & pylint
         run: make -k pycodestyle pylint
 
+  type-checker:
+    name: Type checker (mypy)
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Create venv-dev
+        run: |
+          make venv_dev
+      - name: Run mypy
+        run: |
+          make mypy
+
   tools:
     name: Tools (report-converter, etc.)
     runs-on: ubuntu-24.04
@@ -108,25 +125,6 @@ jobs:
       - name: Analyzer unit tests coverage
         working-directory: analyzer
         run: make test_unit_cov
-
-  common:
-    name: Common libraries
-    runs-on: ubuntu-24.04
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install requirements
-        working-directory: codechecker_common
-        run: |
-          pip install -r requirements_py/dev/requirements.txt
-
-      - name: Run mypy tests
-        working-directory: codechecker_common/tests
-        run: make mypy
 
   web:
     name: Web
