@@ -79,7 +79,25 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === "filepath") return;
+      if (key === "filepath") {
+        const paths =
+          this.reportFilter.filepath || [];
+        const curIds =
+          this.selectedItems.map(i => i.id);
+        const same =
+          paths.length === curIds.length &&
+          paths.every((p, i) => p === curIds[i]);
+
+        if (!same) {
+          this.selectedItems = paths.map(p => ({
+            id: p,
+            title: p,
+            count: "N/A"
+          }));
+          this.panel = paths.length > 0;
+        }
+        return;
+      }
       this.update();
     },
 

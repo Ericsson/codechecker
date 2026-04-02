@@ -15,16 +15,27 @@
         :checker="selectedChecker"
       />
 
-      <v-btn
-        color="primary"
-        outlined
-        small
-        @click="setReportFilter({ filepath: null });
-          viewMode = viewMode === 'tree'
-            ? 'table' : 'tree'"
+      <v-btn-toggle
+        v-model="viewMode"
+        mandatory
+        dense
+        class="mb-2"
       >
-        {{ viewMode === "table" ? "Tree view" : "Table view" }}
-      </v-btn>
+        <v-btn
+          value="table"
+          small
+          @click="setReportFilter({ filepath: null })"
+        >
+          Report List
+        </v-btn>
+        <v-btn
+          value="tree"
+          small
+          @click="setReportFilter({ filepath: null })"
+        >
+          File Tree
+        </v-btn>
+      </v-btn-toggle>
 
       <v-data-table
         v-if="viewMode === 'table'"
@@ -808,6 +819,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.v-btn-toggle .v-btn--active {
+  background-color: #2280c3 !important;
+  color: #fff !important;
+}
+
 .splitpanes.default-theme {
   .splitpanes__pane {
     background-color: inherit;
