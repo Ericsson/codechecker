@@ -571,6 +571,9 @@ Environment variables for 'CodeChecker analyze' command:
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
+  CC_CLANGTIDY_PLUGIN_DIR  If the CC_ANALYZERS_FROM_PATH environment variable
+                           is set you can configure the plugin directory of
+                           Clang-Tidy by using this environment variable.
 
 Environment variables for 'CodeChecker parse' command:
 
@@ -1150,6 +1153,9 @@ Environment variables
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
+  CC_CLANGTIDY_PLUGIN_DIR  If the CC_ANALYZERS_FROM_PATH environment variable
+                           is set you can configure the plugin directory of
+                           Clang-Tidy by using this environment variable.
 ```
 </details>
 
@@ -2570,7 +2576,8 @@ You can set the `CC_ANALYZERS_FROM_PATH` environment variable before running a
 CodeChecker command to `yes` or `1` to enforce taking the analyzers from the
 `PATH` instead of the given binaries. If this option is set you can also
 configure the plugin directory of the Clang Static Analyzer by using the
-`CC_CLANGSA_PLUGIN_DIR` environment variable.
+`CC_CLANGSA_PLUGIN_DIR` environment variable and of Clang-Tidy by using the
+`CC_CLANGTIDY_PLUGIN_DIR` environment variable.
 
 Make sure that the required include paths are at the right place!
 Clang based tools search by default for
