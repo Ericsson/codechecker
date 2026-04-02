@@ -348,6 +348,101 @@ class TestReportFilter(unittest.TestCase):
         self.assertGreaterEqual(len(res), len(test_res))
         self.assertLessEqual(test_res.items(), res.items())
 
+    def test_run1_all_file_counts_summary(self):
+        """
+        Get all the file count summaries for run1.
+        """
+        runid = self._runids[0]
+        file_summary = self._cc_client.getFileCountsSummary(
+            [runid], ReportFilter(), None, None, 0)
+        res = {get_filename(k): v for k, v in file_summary.items()}
+
+        self.assertEqual(len(res), len(self.run1_files))
+        for filename, expected_count in self.run1_files.items():
+            self.assertIn(filename, res)
+            self.assertEqual(res[filename]["reports"], expected_count)
+
+    def test_run2_all_file_counts_summary(self):
+        """
+        Get all the file count summaries for run2.
+        """
+        runid = self._runids[1]
+        file_summary = self._cc_client.getFileCountsSummary(
+            [runid], ReportFilter(), None, None, 0)
+        res = {get_filename(k): v for k, v in file_summary.items()}
+
+        self.assertEqual(len(res), len(self.run2_files))
+        for filename, expected_count in self.run2_files.items():
+            self.assertIn(filename, res)
+            self.assertEqual(res[filename]["reports"], expected_count)
+
+    def test_run1_run2_all_file_counts_summary(self):
+        """
+        Get all the file count summaries for run1 and run2.
+        """
+        file_summary = self._cc_client.getFileCountsSummary(
+            self._runids, ReportFilter(), None, None, 0)
+        res = {get_filename(k): v for k, v in file_summary.items()}
+
+        r1_count = Counter(self.run1_files)
+        r2_count = Counter(self.run2_files)
+        all_res = dict(r1_count + r2_count)
+
+        self.assertEqual(len(res), len(all_res))
+        for filename, expected_count in all_res.items():
+            self.assertIn(filename, res)
+            self.assertEqual(res[filename]["reports"], expected_count)
+
+    def test_run1_file_counts_summary_severity(self):
+        """
+        Verify severity totals in file count summaries match
+        severity counts for run1.
+        """
+        runid = self._runids[0]
+        file_summary = self._cc_client.getFileCountsSummary(
+            [runid], ReportFilter(), None, None, 0)
+
+        severity_totals = defaultdict(int)
+        for summary in file_summary.values():
+            for key, value in summary.items():
+                if key.startswith("severity:"):
+                    sev_name = key.split(":")[1]
+                    sev_value = Severity._NAMES_TO_VALUES[sev_name]
+                    severity_totals[sev_value] += value
+
+        self.assertDictEqual(dict(severity_totals), self.run1_sev_counts)
+
+    def test_run1_run2_file_counts_summary_filters(self):
+        """
+        Get file count summaries with filepath filter for run1 and run2.
+        """
+        null_stack_filter = ReportFilter(
+            filepath=["*null_dereference.cpp", "*stack_address_escape.cpp"])
+
+        file_summary = self._cc_client.getFileCountsSummary(
+            self._runids, null_stack_filter, None, None, 0)
+        res = {get_filename(k): v for k, v in file_summary.items()}
+
+        null_r1 = {k: v for k, v in self.run1_files.items()
+                   if "null_dereference" in k}
+
+        stack_r1 = {k: v for k, v in self.run1_files.items()
+                    if "stack_address_escape" in k}
+
+        null_r2 = {k: v for k, v in self.run2_files.items()
+                   if "null_dereference" in k}
+
+        stack_r2 = {k: v for k, v in self.run2_files.items()
+                    if "stack_address_escape" in k}
+
+        test_res = dict(Counter(null_r1) + Counter(null_r2) +
+                        Counter(stack_r1) + Counter(stack_r2))
+
+        self.assertGreaterEqual(len(res), len(test_res))
+        for filename, expected_count in test_res.items():
+            self.assertIn(filename, res)
+            self.assertEqual(res[filename]["reports"], expected_count)
+
     def test_run1_run2_all_checker_msg(self):
         """
         Get all the file checker messages for run1 and run2.
