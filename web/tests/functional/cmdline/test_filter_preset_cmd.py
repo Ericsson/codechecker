@@ -176,7 +176,7 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self.assertEqual(ret, 0)
         self.assertIn(
             "usage: CodeChecker cmd filter-preset", out)
-        self.assertIn("optional arguments:", out)
+        self.assertIn("options:", out)
         self.assertIn("available actions:", out)
         self.assertIn("list", out)
         self.assertIn("new", out)
