@@ -32,10 +32,13 @@ Tasks are generally spawned by API handlers, executed in the control flow of a T
 
 1. An **API** request arrives (later, this might be extended with a _`cron`_ -like scheduler) which exercises an endpoint that results in the need for a task.
 2. _(Optionally)_ some conformance checks are executed on the input, in order to not even create the task if the input is ill-formed.
-3. A task **`token`** is _`ALLOCATED`_: the record is written into the database, and now we have a unique identifier for the task.
-4. The task is **pushed** to the _task queue_ of the CodeChecker server, resulting in the _`ENQUEUED`_ status.
-5. The task's identifier **`token`** is returned to the user.
+3. A task **`token`** is _`ALLOCATED`_: the **`BackgroundTask`** record is written into the database, and now we have a unique identifier for the task.
+4. The task is **pushed** to a shared, synchronised _task queue_ of the CodeChecker server, resulting in the _`ENQUEUED`_ status.
+    * `AbstractTask` subclasses **MUST** be `pickle`-able and reasonably small.
+    * The library offers means to store additional large data on the file system, in a temporary directory specific to the task.
+5. The **`task token`** is returned to the user via the RPC API call, and the API worker is free too respond to other requests.
 6. The API hander exits and the Thrift RPC connection is terminated.
+7. In a loop with some frequency, the user exercises the `getTaskInfo()` API (executed in the context of any _API worker_ process, synchronised over the database) to query whether the task was completed, if the user wishes to receive this information.
 
 The API request dispatching of the CodeChecker server has a **`TaskManager`** instance which should be passed to the API handler implementation, if not already available.
 Then, you can use this _`TaskManager`_ object to perform the necessary actions to enqueue the execution of a task:
@@ -118,7 +121,7 @@ The business logic of tasks are implemented by subclassing the _`AbstractTask`_ 
 4. The implementation does its thing, periodically calling _`task_manager.heartbeat()`_ to update the progress timestamp of the task, and, if appropriate, checking with _`task_manager.should_cancel()`_ whether the admins requested the task to cancel or the server is shutting down.
 5. If _`should_cancel()`_ returned `True`, the task does some appropriate clean-up, and exits by raising the special _`TaskCancelHonoured`_ exception, indicating that it responded to the request. (At this point, the status becomes either _`CANCELLED`_ or _`DROPPED`_, depending on the circumstances of the service.)
 6. Otherwise, or if the task is for some reason not cancellable without causing damage, the task executes its logic.
-7. If the task's _`_implementation()`_ method exits cleanly, it reaches the _`COMPLETED`_ status; otherwise, if any exception escapes from the _`_implementation()`_ method, the task becomes _`FAILED`_.
+7. If the task's _`_implementation()`_ method exits cleanly, it reaches the _`COMPLETED`_ status; otherwise, if any exception escapes from the _`_implementation()`_ method, the task becomes _`FAILED`_, and exception information is logged into the `BackgroundTask.comments` column of the database.
 
 **Caution!** Tasks, executing in a separate background process part of the many processes spawned by a CodeChecker server, no longer have the ability to synchronously communicate with the user!
 This also includes the lack of ability to "return" a value: tasks **only exercise side-effects**, but do not calculate a "result".
@@ -169,6 +172,32 @@ class MyTask(AbstractTask):
             # Actually process the step ...
             foo(element)
 ```
+
+### Abnormal path 1: admin cancellation
+
+At any point following _`ALLOCATED`_ status, but most likely in the _`ENQUEUED`_ and _`RUNNING`_ statuses, a **`SUPERUSER`** may issue a _`cancelTask()`_ order.
+This will set `BackgroundTask.cancel_flag`, and the task is expected (although not required!) to poll its own _`should_cancel()`_ status internally in checkpoints, and terminate gracefully to this request. This is done by **`_implementation()`** exiting by raising a **`TaskCancelHonoured`** exception.
+(If the task does not raise one, it will be allowed to conclude normally, or fail in some other manner.
+Tasks cancelled gracefully will have the _`CANCELLED`_ status.
+
+For example, a background task that performs an action over a set of input files generally should be implemented like this:
+
+```py3
+def _implementation(tm: TaskManager):
+    for file in INPUTS:
+      if tm.should_cancel(self):
+          ROLLBACK()
+          raise TaskCancelHonoured(self)
+
+      DO_LOGIC(file)
+```
+
+### Abnormal path 2: server shutdown
+
+Alternatively, at any point in this life cycle, the server might receive the command to terminate itself (kill signals `SIGINT`, `SIGTERM`; alternatively caused by `CodeChecker server --stop`). Following the termination of _API workers_, the _background workers_ will also shut down one by one.
+At this point, the default behaviour is to cause a special _cancel event_ which tasks currently _`RUNNING`_ may still gracefully honour, as-if it was a `SUPERUSER`'s single-task cancel request. All other tasks that have not started executing yet and are in the _`ALLOCATED`_ or _`ENQUEUED`_ status will never start.
+
+All tasks not in a _normal termination state_ will be set to the _`DROPPED`_ status, with the `comments` field containing a log about the specifics of in which state the task was dropped, and why. (Together, _`CANCELLED`_ and _`DROPPED`_ are the _"abnormal termination states"_, indicating that the task terminated due to some external influence.)
 
 Client-side handling
 --------------------
