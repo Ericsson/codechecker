@@ -21,6 +21,8 @@ from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
 from codechecker_common.review_status_handler import ReviewStatusHandler
 
+from codechecker_analyzer.analyzers.analyzer_base import SourceAnalyzer
+
 from ..result_handler_base import ResultHandler
 
 LOG = get_logger('analyzer.cppcheck')
@@ -30,6 +32,10 @@ class CppcheckResultHandler(ResultHandler):
     """
     Create analyzer result file for Cppcheck output.
     """
+
+    # This attribute is set dynamically when constructing
+    # this class.
+    analyzer: SourceAnalyzer
 
     def __init__(self, *args, **kwargs):
         self.analyzer_info = AnalyzerInfo(name=AnalyzerResult.TOOL_NAME)

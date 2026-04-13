@@ -252,11 +252,11 @@ class CheckerLabels:
         # cover this case properly.
         return list(set(labels))
 
-    def get_description(self, label: str) -> Optional[Dict[str, str]]:
+    def get_description(self, label: str) -> Dict[str, str]:
         """
         Returns the descriptions of the given label's values.
         """
-        return self.__descriptions.get(label)
+        return self.__descriptions.get(label, {})
 
     def checkers(self, analyzer: Optional[str] = None) -> List[str]:
         """

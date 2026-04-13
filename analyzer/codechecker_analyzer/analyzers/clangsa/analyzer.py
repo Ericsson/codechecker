@@ -361,7 +361,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         cls,
         alpha: bool = True,
         debug: bool = False
-    ) -> List[str]:
+    ) -> List[Tuple[str, str]]:
         """
         Return the list of the supported checkers.
 
@@ -425,7 +425,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         result = []
         for cfg, doc in parse_clang_help_page(command, 'OPTIONS:'):
-            result.append(analyzer_base.CheckerConfig(*cfg.split(':', 1), doc))
+            checker, opt = cfg.split(':', 1)
+            result.append(analyzer_base.CheckerConfig(checker, opt, doc))
 
         return result
 
@@ -439,11 +440,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         command.append("-analyzer-config-help")
 
         native_config = parse_clang_help_page(command, 'OPTIONS:')
-        native_config = map(
+        analyzer_config_list: List[analyzer_base.AnalyzerConfig] = list(map(
             lambda cfg: analyzer_base.AnalyzerConfig(cfg[0], cfg[1], str),
-            native_config)
+            native_config))
 
-        return list(native_config) + list(cls.__additional_analyzer_config)
+        return analyzer_config_list + list(cls.__additional_analyzer_config)
 
     def post_analyze(self, result_handler):
         """

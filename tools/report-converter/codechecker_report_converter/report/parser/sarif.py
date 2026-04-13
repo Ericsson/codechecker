@@ -10,7 +10,7 @@ import json
 import logging
 import os
 
-from sarif import loader
+from sarif import loader  # type: ignore
 
 from typing import Any, Dict, List, Optional, Tuple
 

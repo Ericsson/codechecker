@@ -5,6 +5,7 @@
 # to let users select a specific compatible version.
 
 lxml~=6.0
+lxml-stubs~=0.5.0
 portalocker~=3.0
 psutil~=7.0
 PyYAML~=6.0
@@ -12,5 +13,6 @@ types-PyYAML~=6.0
 sarif-tools~=3.0
 multiprocess~=0.70
 setuptools~=80.0
+types-setuptools~=80.0
 semver~=3.0
 argcomplete~=3.0

@@ -18,7 +18,7 @@ import signal
 import sys
 import time
 
-from multiprocess.managers import SyncManager
+from multiprocess.managers import SyncManager  # type: ignore
 
 from codechecker_common.logger import get_logger, DEBUG
 from codechecker_common.review_status_handler import ReviewStatusHandler
