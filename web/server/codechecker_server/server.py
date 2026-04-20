@@ -469,6 +469,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == "Tasks":
                         task_handler = TaskHandler_v6(
                             self.server.config_session,
+                            self.server.manager,
                             self.server.task_manager,
                             self.auth_session)
                         processor = TaskAPI_v6.Processor(task_handler)

@@ -1517,7 +1517,8 @@ class ThriftRequestHandler:
                     "You are not authorized to execute this action.")
 
             if not any(permissions.require_permission(
-                    perm, args, self._auth_session)
+                    perm, args, self._auth_session,
+                    self.__server.manager.is_enabled)
                     for perm in required):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
