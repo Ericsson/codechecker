@@ -68,20 +68,13 @@ class ThriftAuthHandler:
                 "The server must be start by using privilaged access to "
                 "execute this action.")
 
-    def __has_permission(self, permission) -> bool:
-        """ True if the current user has given permission rights. """
-        if self.__manager.is_enabled and not self.__auth_session:
-            return False
-
-        return self.hasPermission(permission, None)
-
     def __require_permission_view(self):
         """
         Checks if the curret user has PERMISSION_VIEW rights. Throws an
         exception if it is not.
         """
         permission = codechecker_api_shared.ttypes.Permission.PERMISSION_VIEW
-        if not self.__has_permission(permission):
+        if not self.hasPermission(permission, None):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                 "You are not authorized to execute this action.")

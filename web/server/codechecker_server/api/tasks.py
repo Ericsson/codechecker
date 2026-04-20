@@ -22,6 +22,7 @@ from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
 from codechecker_common.logger import get_logger
 
 from codechecker_server.profiler import timeit
+from codechecker_server.session_manager import SessionManager
 
 from ..database.config_db_model import BackgroundTask as DBTask, Product
 from ..database.database import DBSession, conv
@@ -113,7 +114,7 @@ class ThriftTaskHandler:
 
     def __init__(self,
                  configuration_database_sessionmaker,
-                 session_manager,
+                 session_manager: SessionManager,
                  task_manager: TaskManager,
                  auth_session):
         self._config_db = configuration_database_sessionmaker
