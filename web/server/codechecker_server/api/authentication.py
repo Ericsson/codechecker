@@ -598,6 +598,7 @@ class ThriftAuthHandler:
             # handler.
             params = ThriftAuthHandler.__unpack_extra_params(extra_params,
                                                              session)
+            is_auth_enabled = self.__manager.is_enabled
 
             perms = []
             for perm in permissions.get_permissions(scope):
@@ -605,14 +606,15 @@ class ThriftAuthHandler:
                 handler = make_handler(perm, params)
 
                 if should_return and perm_filter.given:
-                    should_return = handler.has_permission(self.__auth_session)
+                    should_return = handler.has_permission(self.__auth_session,
+                                                           is_auth_enabled)
 
                 if should_return and perm_filter.canManage:
                     # If the user has any of the permissions that are
                     # authorised to manage the currently iterated permission,
                     # the filter passes.
                     should_return = require_manager(
-                         perm, params, self.__auth_session)
+                         perm, params, self.__auth_session, is_auth_enabled)
 
                 if should_return:
                     perms.append(perm)
@@ -631,7 +633,8 @@ class ThriftAuthHandler:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
-            if not require_manager(perm, params, self.__auth_session):
+            if not require_manager(perm, params, self.__auth_session,
+                                   self.__manager.is_enabled):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     f"You can not manage the permission '{perm.name}'")
@@ -654,7 +657,8 @@ class ThriftAuthHandler:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
-            if not require_manager(perm, params, self.__auth_session):
+            if not require_manager(perm, params, self.__auth_session,
+                                   self.__manager.is_enabled):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     f"You can not manage the permission '{perm.name}'")
@@ -677,7 +681,8 @@ class ThriftAuthHandler:
             perm, params = ThriftAuthHandler.__create_permission_args(
                 permission, extra_params, session)
 
-            if not require_manager(perm, params, self.__auth_session):
+            if not require_manager(perm, params, self.__auth_session,
+                                   self.__manager.is_enabled):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     f"You can not manage the permission '{perm.name}'")
@@ -703,7 +708,8 @@ class ThriftAuthHandler:
                 permission, extra_params, session)
 
             return require_permission(perm, params,
-                                      self.__auth_session)
+                                      self.__auth_session,
+                                      self.__manager.is_enabled)
 
     # ============= Authorization, permission management =============
 

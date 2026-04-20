@@ -76,15 +76,9 @@ class ThriftProductHandler:
             if 'config_db_session' not in args:
                 args['config_db_session'] = session
 
-            # Anonymous access is only allowed if authentication is
-            # turned off
-            if self.__server.manager.is_enabled and not self.__auth_session:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You are not authorized to execute this action.")
-
             if not any(permissions.require_permission(
-                           perm, args, self.__auth_session)
+                           perm, args, self.__auth_session,
+                           self.__server.manager.is_enabled)
                        for perm in required):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
@@ -95,11 +89,13 @@ class ThriftProductHandler:
     def __administrating(self, args):
         """ True if the current user can administrate the given product. """
         if permissions.require_permission(permissions.SUPERUSER, args,
-                                          self.__auth_session):
+                                          self.__auth_session,
+                                          self.__server.manager.is_enabled):
             return True
 
         if permissions.require_permission(permissions.PRODUCT_ADMIN, args,
-                                          self.__auth_session):
+                                          self.__auth_session,
+                                          self.__server.manager.is_enabled):
             return True
 
         return False
@@ -126,9 +122,11 @@ class ThriftProductHandler:
                 'productID': product.id}
 
         has_product_permission = permissions.require_permission(
-            permissions.PRODUCT_VIEW, args, self.__auth_session)
+            permissions.PRODUCT_VIEW, args, self.__auth_session,
+            self.__server.manager.is_enabled)
         has_global_permission = permissions.require_permission(
-            permissions.PERMISSION_VIEW, args, self.__auth_session)
+            permissions.PERMISSION_VIEW, args, self.__auth_session,
+            self.__server.manager.is_enabled)
         has_access_permission = has_product_permission or has_global_permission
 
         admin_perm_name = permissions.PRODUCT_ADMIN.name
@@ -180,7 +178,8 @@ class ThriftProductHandler:
                         'productID': prod.id}
                 if permissions.require_permission(
                         permissions.PRODUCT_ADMIN,
-                        args, self.__auth_session):
+                        args, self.__auth_session,
+                        self.__server.manager.is_enabled):
                     return True
 
             return False
