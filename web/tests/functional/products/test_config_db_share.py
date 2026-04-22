@@ -75,9 +75,14 @@ class TestProductConfigShare(unittest.TestCase):
         # Create a SUPERUSER login.
         root_token = self._auth_client.performLogin("Username:Password",
                                                     "root:root")
+        self._auth_client = env.setup_auth_client(self.test_workspace_main,
+                                                  session_token=root_token)
 
         # Add SUPERUSER permission to the root user and test that the white
         # spaces are being removed from the user name.
+        # TODO: I'm not sure if this test makes sense, because "root" user has
+        # SUPERUSER permission already. "root" is set as "super_user" in
+        # server_config.json.
         ret = self._auth_client.addPermission(Permission.SUPERUSER,
                                               "  root  ",
                                               False,

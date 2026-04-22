@@ -738,6 +738,8 @@ class DictAuth(unittest.TestCase):
                                             session_token='_PROHIBIT')
         session_token = auth_client.performLogin(
             "Username:Password", "root:root")
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token=session_token)
 
         auth_client.addPermission(Permission.SUPERUSER, "root", False, "")
 
