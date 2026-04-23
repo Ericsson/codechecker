@@ -1885,7 +1885,7 @@ class ThriftRequestHandler:
 
                 for cmd in analysis_info_query:
                     command = zlib.decompress(cmd.analyzer_command) \
-                        .decode("utf-8")
+                        .decode("utf-8") if cmd.analyzer_command else ""
 
                     checkers_q = session \
                         .query(Checker.analyzer_name,
