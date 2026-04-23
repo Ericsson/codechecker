@@ -3018,7 +3018,7 @@ class ThriftRequestHandler:
     ):
         """ Return the list of rules to each guideline that given. """
         self.__require_view()
-        
+
         guideline_rules = defaultdict(list)
         for guideline in guidelines:
             rules = self._context.guideline.rules_of_guideline(
