@@ -18,14 +18,16 @@
     "gcc-double-fclose": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-fclose",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:fio42-c"
     ],
     "gcc-double-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
       "guideline:memory-safety",
       "profile:extreme",
       "memory-safety:cwe-415",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:mem30-c"
     ],
     "gcc-exposure-through-output-file": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-output-file",
@@ -67,7 +69,8 @@
     "gcc-fd-use-after-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:pos35-c"
     ],
     "gcc-fd-use-without-check": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-without-check",
@@ -115,10 +118,8 @@
       "memory-safety:cwe-761",
       "severity:HIGH",
       "sei-cert-c:err57-cpp",
-      "sei-cert-c:fio41-c",
       "sei-cert-c:fio42-c",
-      "sei-cert-c:mem53-cpp",
-      "sei-cert-c:mem56-cpp"
+      "sei-cert-c:mem31-c"
     ],
     "gcc-mismatching-deallocation": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
@@ -143,8 +144,7 @@
       "profile:extreme",
       "memory-safety:cwe-476",
       "severity:HIGH",
-      "sei-cert-c:ctr50-cpp",
-      "sei-cert-c:exp33-c"
+      "sei-cert-c:exp34-c"
     ],
     "gcc-out-of-bounds": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
@@ -164,7 +164,6 @@
       "sei-cert-c:int10-c",
       "sei-cert-c:mem33-c",
       "sei-cert-c:mem35-c",
-      "sei-cert-c:mem50-cpp",
       "sei-cert-c:mem54-cpp",
       "sei-cert-c:oop55-cpp"
     ],
@@ -172,15 +171,15 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-argument",
       "profile:extreme",
       "severity:LOW",
-      "sei-cert-c:fio41-c",
-      "sei-cert-c:pos54-c"
+      "sei-cert-c:pos54-c",
+      "sei-cert-c:err33-c"
     ],
     "gcc-possible-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-dereference",
       "profile:extreme",
       "severity:LOW",
-      "sei-cert-c:exp33-c",
-      "sei-cert-c:exp34-c"
+      "sei-cert-c:exp34-c",
+      "sei-cert-c:err33-c"
     ],
     "gcc-putenv-of-auto-var": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var",
@@ -191,7 +190,8 @@
     "gcc-shift-count-negative": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-negative",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:int34-c"
     ],
     "gcc-shift-count-overflow": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-overflow",
@@ -246,8 +246,7 @@
       "profile:extreme",
       "memory-safety:cwe-416",
       "severity:HIGH",
-      "sei-cert-c:mem30-c",
-      "sei-cert-c:mem51-cpp"
+      "sei-cert-c:mem30-c"
     ],
     "gcc-use-of-pointer-in-stale-stack-frame": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-pointer-in-stale-stack-frame",
@@ -265,8 +264,6 @@
       "sei-cert-c:err56-cpp",
       "sei-cert-c:exp33-c",
       "sei-cert-c:exp53-cpp",
-      "sei-cert-c:mem30-c",
-      "sei-cert-c:mem50-cpp",
       "sei-cert-c:oop53-cpp",
       "sei-cert-c:oop54-cpp"
     ],
@@ -297,7 +294,8 @@
     "gcc-write-to-const": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-const",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:str30-c"
     ],
     "gcc-write-to-string-literal": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-string-literal",
@@ -339,12 +337,11 @@
     "gcc-exceptions": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wexceptions",
       "severity:LOW",
-      "sei-cert-c:dcl54-cpp"
+      "sei-cert-c:err54-cpp"
     ],
     "gcc-format-overflow=": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-overflow",
-      "severity:MEDIUM",
-      "sei-cert-c:exp33-c"
+      "severity:MEDIUM"
     ],
     "gcc-analyzer-overlapping-buffers": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
@@ -354,8 +351,7 @@
     "gcc-analyzer-infinite-loop": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop",
       "severity:MEDIUM",
-      "sei-cert-c:exp45-c",
-      "sei-cert-c:sig30-c"
+      "sei-cert-c:exp45-c"
     ],
     "gcc-delete-incomplete": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wdelete-incomplete",
@@ -401,7 +397,8 @@
     "gcc-return-type": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreturn-type",
       "severity:MEDIUM",
-      "sei-cert-c:msc52-cpp"
+      "sei-cert-c:msc52-cpp",
+      "sei-cert-c:msc37-c"
     ]
   }
 }
