@@ -63,6 +63,37 @@ def is_valid_product_endpoint(uripart):
     return True
 
 
+def is_valid_postgresql_db_name(db_name):
+    """
+    Returns whether or not the given string is a safe PostgreSQL database
+    name for CodeChecker to use.
+
+    CodeChecker quotes the database identifier when issuing CREATE DATABASE,
+    so dashes, leading digits, and PostgreSQL reserved keywords are all
+    allowed (e.g. "test-product", "1team", "user" are accepted). However,
+    characters that would break even a quoted identifier, or that are
+    plainly dangerous in an SQL context, are rejected here so we fail fast
+    with a clear error rather than producing broken SQL or an unusable
+    product.
+    """
+    if not db_name or not isinstance(db_name, str):
+        return False
+
+    # PostgreSQL identifiers (even quoted) cannot exceed 63 bytes by
+    # default. Names longer than this are silently truncated by the
+    # server, which would produce a product that cannot be reconnected
+    # to under the name the user provided. Reject them outright.
+    if len(db_name.encode('utf-8')) > 63:
+        return False
+
+    # Forbidden characters: anything that would prematurely terminate
+    # the quoted identifier, embed a statement separator, or corrupt the
+    # connection string. Whitespace is also rejected because a name with
+    # spaces is almost certainly a typo rather than an intent.
+    forbidden = set('"\'\\;\x00\r\n\t ')
+    return not any(c in forbidden for c in db_name)
+
+
 def is_supported_version(version):
     """
     Returns whether or not the given version tag is supported by the current
