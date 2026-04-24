@@ -42,7 +42,7 @@
     "gcc-fd-access-mode-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-access-mode-mismatch",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "gcc-fd-double-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-double-close",
@@ -59,12 +59,12 @@
     "gcc-fd-phase-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-phase-mismatch",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "gcc-fd-type-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-type-mismatch",
       "profile:extreme",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "gcc-fd-use-after-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close",
@@ -170,14 +170,14 @@
     "gcc-possible-null-argument": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-argument",
       "profile:extreme",
-      "severity:LOW",
+      "severity:MEDIUM",
       "sei-cert-c:pos54-c",
       "sei-cert-c:err33-c"
     ],
     "gcc-possible-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-dereference",
       "profile:extreme",
-      "severity:LOW",
+      "severity:MEDIUM",
       "sei-cert-c:exp34-c",
       "sei-cert-c:err33-c"
     ],
@@ -237,7 +237,7 @@
     "gcc-unsafe-call-within-signal-handler": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-unsafe-call-within-signal-handler",
       "profile:extreme",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:sig30-c"
     ],
     "gcc-use-after-free": [
@@ -270,7 +270,7 @@
     "gcc-va-arg-type-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-arg-type-mismatch",
       "profile:extreme",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:msc39-c"
     ],
     "gcc-va-list-exhausted": [
@@ -305,23 +305,23 @@
     ],
     "gcc-stringop-overread": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wstringop-overread",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:arr38-c"
     ],
     "gcc-stringop-overflow=": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wstringop-overflow",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:arr39-c"
     ],
     "gcc-return-local-addr": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wno-return-local-addr",
-      "severity:LOW",
+      "severity:HIGH",
       "sei-cert-c:dcl30-c",
       "sei-cert-c:exp54-cpp"
     ],
     "gcc-switch-unreachable": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wswitch-unreachable",
-      "severity:LOW",
+      "severity:MEDIUM",
       "sei-cert-c:dcl41-c"
     ],
     "gcc-literal-suffix": [
@@ -336,31 +336,31 @@
     ],
     "gcc-exceptions": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wexceptions",
-      "severity:LOW",
+      "severity:MEDIUM",
       "sei-cert-c:err54-cpp"
     ],
     "gcc-format-overflow=": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-overflow",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "gcc-analyzer-overlapping-buffers": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:exp43-c"
     ],
     "gcc-analyzer-infinite-loop": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:exp45-c"
     ],
     "gcc-delete-incomplete": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wdelete-incomplete",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:exp57-cpp"
     ],
     "gcc-invalid-offsetof": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wno-invalid-offsetof",
-      "severity:LOW",
+      "severity:MEDIUM",
       "sei-cert-c:exp59-cpp"
     ],
     "gcc-unused-result": [
@@ -396,7 +396,7 @@
     ],
     "gcc-return-type": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreturn-type",
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:msc52-cpp",
       "sei-cert-c:msc37-c"
     ]
