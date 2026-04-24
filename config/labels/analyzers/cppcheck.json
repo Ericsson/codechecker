@@ -194,7 +194,7 @@
       "severity:HIGH"
     ],
     "cppcheck-subtractPointers": [
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:arr36-c"
     ],
     "cppcheck-compareValueOutOfTypeRangeError": [
@@ -341,7 +341,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "cppcheck-divideSizeof": [
       "profile:default",
@@ -417,11 +417,11 @@
       "severity:MEDIUM"
     ],
     "cppcheck-throwInEntryPoint": [
-      "severity:MEDIUM",
+      "severity:HIGH",
       "sei-cert-c:err55-cpp"
     ],
     "cppcheck-fflushOnInputStream": [
-      "severity:LOW"
+      "severity:MEDIUM"
     ],
     "cppcheck-floatConversionOverflow": [
       "profile:default",
@@ -581,7 +581,7 @@
       "sei-cert-c:mem50-cpp"
     ],
     "cppcheck-invalidPointerCast": [
-      "severity:LOW"
+      "severity:MEDIUM"
     ],
     "cppcheck-invalidPrintfArgType_float": [
       "profile:default",
@@ -1058,10 +1058,10 @@
       "severity:STYLE"
     ],
     "cppcheck-pointerOutOfBounds": [
-      "severity:LOW"
+      "severity:MEDIUM"
     ],
     "cppcheck-pointerOutOfBoundsCond": [
-      "severity:LOW"
+      "severity:MEDIUM"
     ],
     "cppcheck-pointerPositive": [
       "severity:STYLE"
@@ -1076,7 +1076,7 @@
       "severity:LOW"
     ],
     "cppcheck-preprocessorErrorDirective": [
-      "severity:HIGH"
+      "severity:CRITICAL"
     ],
     "cppcheck-publicAllocationError": [
       "profile:default",
@@ -1088,7 +1088,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "cppcheck-purgedConfiguration": [
       "severity:LOW"
@@ -1252,7 +1252,7 @@
       "sei-cert-c:int34-c"
     ],
     "cppcheck-shiftNegativeLHS": [
-      "severity:LOW"
+      "severity:MEDIUM"
     ],
     "cppcheck-shiftTooManyBits": [
       "profile:default",
@@ -1423,7 +1423,7 @@
       "severity:MEDIUM"
     ],
     "cppcheck-thisUseAfterFree": [
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "cppcheck-throwInNoexceptFunction": [
       "profile:default",
