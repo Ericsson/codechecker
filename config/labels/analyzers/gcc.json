@@ -303,102 +303,44 @@
       "severity:HIGH",
       "sei-cert-c:str30-c"
     ],
-    "gcc-stringop-overread": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wstringop-overread",
-      "severity:HIGH",
-      "sei-cert-c:arr38-c"
-    ],
-    "gcc-stringop-overflow=": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wstringop-overflow",
-      "severity:HIGH",
-      "sei-cert-c:arr39-c"
-    ],
-    "gcc-return-local-addr": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wno-return-local-addr",
-      "severity:HIGH",
-      "sei-cert-c:dcl30-c",
-      "sei-cert-c:exp54-cpp"
-    ],
-    "gcc-switch-unreachable": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wswitch-unreachable",
-      "severity:MEDIUM",
-      "sei-cert-c:dcl41-c"
-    ],
-    "gcc-literal-suffix": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wliteral-suffix",
-      "severity:STYLE",
-      "sei-cert-c:dcl51-cpp"
-    ],
-    "gcc-vexing-parse": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wvexing-parse",
-      "severity:STYLE",
-      "sei-cert-c:dcl53-cpp"
-    ],
-    "gcc-exceptions": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wexceptions",
-      "severity:MEDIUM",
-      "sei-cert-c:err54-cpp"
-    ],
-    "gcc-format-overflow=": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-overflow",
-      "severity:HIGH"
-    ],
-    "gcc-analyzer-overlapping-buffers": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
-      "severity:HIGH",
-      "sei-cert-c:exp43-c"
-    ],
-    "gcc-analyzer-infinite-loop": [
+    "gcc-infinite-loop": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop",
+      "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp45-c"
     ],
-    "gcc-delete-incomplete": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wdelete-incomplete",
+    "gcc-overlapping-buffers": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
+      "profile:extreme",
       "severity:HIGH",
-      "sei-cert-c:exp57-cpp"
+      "sei-cert-c:exp43-c"
     ],
-    "gcc-invalid-offsetof": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wno-invalid-offsetof",
-      "severity:MEDIUM",
-      "sei-cert-c:exp59-cpp"
+    "gcc-symbol-too-complex": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-symbol-too-complex",
+      "profile:extreme",
+      "severity:LOW"
     ],
-    "gcc-unused-result": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-result",
-      "severity:MEDIUM",
-      "sei-cert-c:exp63-cpp"
-    ],
-    "gcc-format-security": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-security",
+    "gcc-throw-of-unexpected-type": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-throw-of-unexpected-type",
+      "profile:extreme",
       "severity:HIGH",
-      "sei-cert-c:fio30-c"
+      "sei-cert-c:err55-cpp"
     ],
-    "gcc-pointer-to-int-cast": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wno-pointer-to-int-cast",
-      "severity:MEDIUM",
-      "sei-cert-c:int36-c"
+    "gcc-too-complex": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-too-complex",
+      "profile:extreme",
+      "severity:LOW"
     ],
-    "gcc-int-to-pointer-cast": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wno-int-to-pointer-cast",
-      "severity:MEDIUM",
-      "sei-cert-c:int36-c"
-    ],
-    "gcc-free-nonheap-object": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wfree-nonheap-object",
+    "gcc-undefined-behavior-ptrdiff": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-ptrdiff",
+      "profile:extreme",
       "severity:HIGH",
-      "sei-cert-c:mem34-c",
-      "sei-cert-c:mem51-cpp"
+      "sei-cert-c:arr36-c"
     ],
-    "gcc-placement-new=": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Dialect-Options.html#index-Wplacement-new",
-      "severity:HIGH",
-      "sei-cert-c:mem54-cpp"
-    ],
-    "gcc-return-type": [
-      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreturn-type",
-      "severity:HIGH",
-      "sei-cert-c:msc52-cpp",
-      "sei-cert-c:msc37-c"
+    "gcc-undefined-behavior-strtok": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-strtok",
+      "profile:extreme",
+      "severity:HIGH"
     ]
   }
 }
