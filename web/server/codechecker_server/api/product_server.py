@@ -23,7 +23,8 @@ import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import path_for_fake_root
+from codechecker_common.util import is_valid_postgresql_db_name, \
+    path_for_fake_root
 
 from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
@@ -31,7 +32,7 @@ from codechecker_web.shared import convert
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
 from ..database.database import DBSession, SQLServer, conv, escape_like
-from ..routing import is_valid_product_endpoint, is_valid_postgresql_db_name
+from ..routing import is_valid_product_endpoint
 
 from .thrift_enum_helper import confidentiality_enum, \
         confidentiality_str
