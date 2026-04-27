@@ -3720,6 +3720,100 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    def getFileCountsSummary(self, run_ids, report_filter, cmp_data,
+                             limit, offset):
+        # Returns detailed report statistics grouped by file.
+        # The inner map contains total report count ("reports") and
+        # counts per severity, review status and detection status.
+        # If the run id list is empty the metrics will be counted
+        # for all of the runs and in compare mode all of the runs
+        # will be used as a baseline excluding the runs in compare data.
+        # PERMISSION: PRODUCT_VIEW
+        self.__require_view()
+
+        limit = verify_limit_range(limit)
+
+        results = {}
+        with DBSession(self._Session) as session:
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
+
+            # Get distinct file paths with pagination.
+            distinct_file_path = session.query(File.filepath.distinct()) \
+                .join(Report, Report.file_id == File.id)
+
+            if report_filter.annotations is not None:
+                distinct_file_path = distinct_file_path.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                distinct_file_path = distinct_file_path.group_by(
+                    Report.id)
+
+            distinct_file_path = apply_report_filter(
+                distinct_file_path, filter_expression, join_tables, [File])
+
+            if limit:
+                distinct_file_path = distinct_file_path.limit(limit) \
+                    .offset(offset)
+
+            count_col = Report.bug_id.distinct() if \
+                report_filter.isUnique else Report.bug_id
+
+            # Query: file path, severity, review status,
+            # detection status, and count.
+            stmt = session.query(
+                    File.filepath,
+                    Checker.severity,
+                    Report.review_status,
+                    Report.detection_status,
+                    func.count(count_col).label('cnt')) \
+                .join(Report, Report.file_id == File.id) \
+                .join(Checker, Report.checker_id == Checker.id) \
+                .filter(File.filepath.in_(distinct_file_path))
+
+            stmt = apply_report_filter(
+                stmt, filter_expression, join_tables, [File, Checker])
+
+            stmt = stmt.group_by(
+                File.filepath,
+                Checker.severity,
+                Report.review_status,
+                Report.detection_status)
+
+            severity_names = ttypes.Severity._VALUES_TO_NAMES
+
+            for fp, sev, review_st, detect_st, cnt in stmt:
+                if fp not in results:
+                    results[fp] = {}
+
+                file_summary = results[fp]
+
+                # Total report count.
+                file_summary["reports"] = \
+                    file_summary.get("reports", 0) + cnt
+
+                # Severity count.
+                sev_name = severity_names.get(sev, str(sev))
+                sev_key = f"severity:{sev_name}"
+                file_summary[sev_key] = \
+                    file_summary.get(sev_key, 0) + cnt
+
+                # Review status count.
+                if review_st:
+                    rs_key = f"review_status:{review_st}"
+                    file_summary[rs_key] = \
+                        file_summary.get(rs_key, 0) + cnt
+
+                # Detection status count.
+                if detect_st:
+                    ds_key = f"detection_status:{detect_st}"
+                    file_summary[ds_key] = \
+                        file_summary.get(ds_key, 0) + cnt
+
+        return results
+
+    @exc_to_thrift_reqfail
+    @timeit
     def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data, limit,
                                offset):
         """

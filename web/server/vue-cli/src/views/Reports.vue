@@ -14,7 +14,30 @@
         :checker="selectedChecker"
       />
 
+      <v-btn-toggle
+        v-model="viewMode"
+        mandatory
+        dense
+        class="mb-2"
+      >
+        <v-btn
+          value="table"
+          small
+          @click="setReportFilter({ filepath: null })"
+        >
+          Report List
+        </v-btn>
+        <v-btn
+          value="tree"
+          small
+          @click="setReportFilter({ filepath: null })"
+        >
+          File Tree
+        </v-btn>
+      </v-btn-toggle>
+
       <v-data-table
+        v-if="viewMode === 'table'"
         v-model="selected"
         v-fill-height
         :headers="tableHeaders"
@@ -163,6 +186,91 @@
           />
         </template>
       </v-data-table>
+
+      <div v-else class="tree-view-container" style="padding-top: 48px;">
+        <div class="tree-header">
+          <span class="tree-header-name">Name</span>
+          <span class="tree-header-cell">All</span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.STYLE" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.LOW" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.MEDIUM" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.HIGH" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.CRITICAL" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="0" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="1" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="2" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="3" :size="14" />
+          </span>
+        </div>
+        <v-treeview
+          :items="treeItems"
+          item-key="fullPath"
+          open-on-click
+          dense
+        >
+          <template #prepend="{ item, open }">
+            <v-icon v-if="item.children.length > 0">
+              {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else>
+              mdi-file
+            </v-icon>
+          </template>
+          <template #label="{ item }">
+            <div class="tree-row">
+              <span
+                class="tree-item-label clickable"
+                @click.stop="onTreeItemClick(item)"
+              >{{ item.name }}</span>
+              <span class="tree-stat-cell">{{ item.findings }}</span>
+              <span class="tree-stat-cell">
+                {{ item.stats.style || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.low || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.medium || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.high || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.critical || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.unreviewed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.confirmed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.false_positive || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.intentional || '' }}
+              </span>
+            </div>
+          </template>
+        </v-treeview>
+      </div>
     </pane>
   </splitpanes>
 </template>
@@ -170,10 +278,17 @@
 <script>
 import { Pane, Splitpanes } from "splitpanes";
 
-import { mapGetters } from "vuex";
+import { mapGetters, mapMutations } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { Checker, Order, SortMode, SortType } from "@cc/report-server-types";
+import {
+  Checker,
+  Order,
+  Severity,
+  SortMode,
+  SortType
+} from "@cc/report-server-types";
+import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
 import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin, DetectionStatusMixin } from "@/mixins";
@@ -216,6 +331,7 @@ export default {
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
     return {
+      viewMode: "table",
       headers: [
         {
           text: "",
@@ -290,6 +406,7 @@ export default {
         }
       ],
       reports: [],
+      allReportsFileCounts: {},
       sameReports: {},
       hasTimeStamp: true,
       hasTestCase : true,
@@ -313,7 +430,10 @@ export default {
       initalized: false,
       checkerDocDialog: false,
       selectedChecker: null,
-      expanded: []
+      expanded: [],
+      treeItems: [],
+      fileSeverities: {},
+      Severity: Severity
     };
   },
 
@@ -383,7 +503,8 @@ export default {
           "chronological_order": report.annotations["chronological_order"]
         };
       });
-    }
+    },
+
   },
 
   watch: {
@@ -407,10 +528,101 @@ export default {
         this.hasChronologicalOrder =
           this.formattedReports.some(report => report["chronological_order"]);
       }
+    },
+    allReportsFileCounts: {
+      handler() {
+        this.buildTreeItems();
+      },
+      deep: true
     }
   },
 
   methods: {
+    ...mapMutations(namespace, {
+      setReportFilter: SET_REPORT_FILTER
+    }),
+
+    onTreeItemClick(item) {
+      const isDir = item.children && item.children.length > 0;
+      const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
+      this.setReportFilter({ filepath: [ pattern ] });
+      this.viewMode = "table";
+    },
+
+    buildTreeItems() {
+      const items = [];
+
+      Object.entries(
+        this.allReportsFileCounts || {}
+      ).forEach(([ filePath, count ]) => {
+        if (!filePath) return;
+        const pathParts = filePath.split("/").slice(0, -1);
+        let currentLevel = items;
+        let currentPath = "";
+        pathParts.forEach(part => {
+          if (part === "") return;
+
+          currentPath += "/" + part;
+          let existingPart = currentLevel.find(
+            item => item.name === part
+          );
+          if (!existingPart) {
+            existingPart = {
+              name: part,
+              fullPath: currentPath,
+              children: [],
+              findings: 0,
+              stats: {}
+            };
+            currentLevel.push(existingPart);
+          }
+          currentLevel = existingPart.children;
+        });
+
+        // append filename as a child of the last directory
+        const fileName = filePath.split("/").slice(-1)[0];
+        const fileStats = this.fileSeverities[filePath] || {};
+        if (fileName) {
+          const existingFile = currentLevel.find(
+            item => item.name === fileName
+          );
+          if (existingFile) {
+            existingFile.findings += count;
+            existingFile.stats = fileStats;
+          } else {
+            currentLevel.push({
+              name: fileName,
+              fullPath: filePath,
+              children: [],
+              findings: count,
+              stats: fileStats
+            });
+          }
+        }
+      });
+
+      // count findings and aggregate stats for directories
+      function countFindings(node) {
+        if (node.children.length === 0) {
+          return node.findings;
+        } else {
+          node.findings = node.children.reduce((sum, child) => {
+            return sum + countFindings(child);
+          }, 0);
+          const merged = {};
+          node.children.forEach(child => {
+            Object.keys(child.stats || {}).forEach(k => {
+              merged[k] = (merged[k] || 0) + child.stats[k];
+            });
+          });
+          node.stats = merged;
+          return node.findings;
+        }
+      }
+      items.forEach(countFindings);
+      this.treeItems = items;
+    },
+
     itemExpanded(expandedItem) {
       if (expandedItem.item.sameReports) return;
 
@@ -418,6 +630,74 @@ export default {
       ccService.getSameReports(bugHash).then(sameReports => {
         expandedItem.item.sameReports = sameReports;
       });
+    },
+
+    i64ToNum(val) {
+      if (val == null) return 0;
+      if (typeof val === "number") return val;
+      if (typeof val.toNumber === "function")
+        return val.toNumber();
+      if (val.buffer) {
+        let n = 0;
+        for (let i = 0; i < val.buffer.length; i++) {
+          n = n * 256 + val.buffer[i];
+        }
+        return n;
+      }
+      return Number(val) || 0;
+    },
+
+    fetchFileSeverities() {
+      const PAGE = 500;
+      const allStats = {};
+
+      const fetchPage = offset => {
+        ccService.getClient().getFileCountsSummary(
+          this.runIds, this.reportFilter,
+          this.cmpData, PAGE, offset,
+          handleThriftError(res => {
+            const keys = Object.keys(res || {});
+
+            keys.forEach(filePath => {
+              const summary = res[filePath];
+              const stats = {};
+
+              Object.keys(summary || {}).forEach(key => {
+                const n = this.i64ToNum(summary[key]);
+                if (!n) return;
+
+                if (key === "reports") {
+                  stats.reports = n;
+                } else if (key.startsWith("severity:")) {
+                  const name = key.substring(9).toLowerCase();
+                  stats[name] = (stats[name] || 0) + n;
+                } else if (key.startsWith("review_status:")) {
+                  const name = key.substring(14);
+                  stats[name] = (stats[name] || 0) + n;
+                }
+              });
+
+              allStats[filePath] = stats;
+            });
+
+            if (keys.length >= PAGE) {
+              fetchPage(offset + PAGE);
+            } else {
+              this.fileSeverities = Object.assign({}, allStats);
+
+              // Build allReportsFileCounts from the summary
+              // so the tree doesn't depend on getFileCounts.
+              const fileCounts = {};
+              Object.keys(allStats).forEach(fp => {
+                fileCounts[fp] = allStats[fp].reports || 0;
+              });
+              this.allReportsFileCounts = fileCounts;
+            }
+          })
+        );
+      };
+
+      fetchPage(0);
     },
 
     getSortMode() {
@@ -527,12 +807,22 @@ export default {
             });
           });
         }));
+
+      this.fetchFileSeverities();
+
     }
+
+
   }
 };
 </script>
 
 <style lang="scss" scoped>
+.v-btn-toggle .v-btn--active {
+  background-color: #2280c3 !important;
+  color: #fff !important;
+}
+
 .splitpanes.default-theme {
   .splitpanes__pane {
     background-color: inherit;
@@ -550,4 +840,66 @@ export default {
     cursor: pointer;
   }
 }
+
+.tree-view-container {
+  position: relative;
+  overflow-y: auto;
+  height: calc(100vh - 150px);
+}
+
+.tree-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 4px 40px;
+  font-size: 0.75em;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tree-header-name {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tree-header-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.tree-item-label {
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--v-primary-base);
+    }
+  }
+}
+
+.tree-stat-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.8em;
+}
+
 </style>
