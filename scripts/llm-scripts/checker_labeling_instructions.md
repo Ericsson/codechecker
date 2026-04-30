@@ -1,7 +1,11 @@
-# CodeChecker SEI Cert mapping
+# CodeChecker Labeling
 
-## 1. TASK
+## TASKS
 
+In this section different tasks are defined to update checker labels in CodeChecker.
+To complete a task use only those input sources which are listed as relevant in the "Used in Task" column of the table in section INPUT.
+
+### sei-cert-mapping
 We would like You to identify which SEI Rules that are corresponding to static analysis checkers.
 Checkers are implemented by static analyzer tools such as gcc or clang-tidy.
 There are multiple analyzer tools supported by CodeChecker.
@@ -14,16 +18,38 @@ Add the missing SEI Cert rule mapping to the CodeChecker label files based on th
 
 Check the existing label mappings and remove any that are not relevant.
 
+### severity-mapping
 Make sure that the correct severity labels are added for each checker according to the CodeChecker severity definitions.
 
+### profile-mapping
+Classify the checkers into CodeChecker profiles based on evaluation results.
+
+Noisiness is measured relative to the **median report count** across all checkers
+in the evaluation data.
+
+* default-profile: Checkers with LOW, MEDIUM or HIGH severity whose report count
+  is ≤ 30× the median. Alpha, experimental, style, and debug checkers are excluded.
+
+* sensitive-profile: Checkers with LOW, MEDIUM or HIGH severity whose report count
+  is > 30× and ≤ 100× the median. Alpha, experimental, style, and debug checkers are excluded.
+
+* Checkers with report count > 100× the median are considered "very noisy" and are
+  excluded from both profiles unless explicitly overridden.
+
+
 ## 2. INPUT
-| Path | Contents |
-|------|----------|
-| `scripts/llm-scripts/cppcheck` | The source code and documentation of cppcheck analyzer and checkers |
-| `scripts/llm-scripts/gcc` | The source code and the documentation of the gcc static analyzer and checkers |
-| `scripts/llm-scripts/sei-cert-rules` | Sei Cert rule description |
-| `scripts/llm-scripts/sei-cert-tests` | Sei-Cert test results. There are multiple test cases per each SEI Cert rule demonstrating violations of the rule. Each test case file is named after the corresponding rule. This folder contains a json file per analyzer with the output of the tested analyzer on the test files. If a checker of an analyzer has a relevant finding on a test case, there is likely a correspondence of the given checker and the SEI Cert rule. |
-| `config/labels/descriptions.json` | CodeChecker label definitions including severity and guideline definitions.|
+| Path | Contents |Used in Task|
+|------|----------|------------|
+| `scripts/llm-scripts/cppcheck` | The source code and documentation of cppcheck analyzer and checkers |all tasks|
+| `scripts/llm-scripts/gcc` | The source code and the documentation of the gcc static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clang-tidy` | The source code and the documentation of the clang-tidy static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clangsa` | The source code and the documentation of the clang static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clang-warnings` | The source code and the documentation of the clang warnings |all tasks|
+| `scripts/llm-scripts/sei-cert-rules` | Sei Cert rule description |sei-cert-mapping|
+| `scripts/llm-scripts/sei-cert-tests` | Sei-Cert test results. There are multiple test cases per each SEI Cert rule demonstrating violations of the rule. Each test case file is named after the corresponding rule. This folder contains a json file per analyzer with the output of the tested analyzer on the test files. If a checker of an analyzer has a relevant finding on a test case, there is likely a correspondence of the given checker and the SEI Cert rule. | sei-cert-mapping|
+| `config/labels/descriptions.json` | CodeChecker label definitions including severity and guideline definitions.|all tasks|
+| `config/llm-scripts/evaluation-results`| Analysis results on open source projects| profile-mapping|
+
 
 ## 3. OUTPUT
 
