@@ -106,11 +106,19 @@ class Gcc(analyzer_base.SourceAnalyzer):
         try:
             output = subprocess.check_output(command, env=environ)
 
+            context = analyzer_context.get_context()
+
+            blacklisted_checkers = context.checker_labels.checkers_by_labels(
+                ["blacklist:true"], cls.ANALYZER_NAME)
+
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
                 warning_name, _, description = entry.strip().partition(' ')
-                # GCC Static Analyzer names start with -Wanalyzer.
-                if warning_name.startswith('-Wanalyzer'):
+                # Skip blacklisted warnings, warnings with equal signs in their name and the generic -W flag.
+                if '=' in warning_name or warning_name == '-W' or warning_name in blacklisted_checkers:
+                    continue
+                # GCC Static Analyzer names and warning names start with -W.
+                if warning_name.startswith('-W'):
                     # Rename the checkers interally (similarly to how we
                     # support cppcheck)
                     renamed_checker_name = \
