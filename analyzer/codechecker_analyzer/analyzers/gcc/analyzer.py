@@ -22,7 +22,8 @@ from ..config_handler import CheckerState
 
 from .config_handler import GccConfigHandler
 from .result_handler import GccResultHandler, \
-    actual_name_to_codechecker_name, codechecker_name_to_actual_name_disabled
+    actual_name_to_codechecker_name, \
+    codechecker_name_to_actual_name, codechecker_name_to_actual_name_disabled
 
 LOG = get_logger('analyzer.gcc')
 
@@ -77,6 +78,9 @@ class Gcc(analyzer_base.SourceAnalyzer):
                 # than startswith and a hardcoded slicing
                 analyzer_cmd.append(
                     codechecker_name_to_actual_name_disabled(checker_name))
+            else:
+                analyzer_cmd.append(
+                    codechecker_name_to_actual_name(checker_name))
 
         compile_lang = self.buildaction.lang
         if not has_flag('-x', analyzer_cmd):
@@ -96,27 +100,36 @@ class Gcc(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
+        context = analyzer_context.get_context()
+
         command = [cls.analyzer_binary(), "--help=warning"]
         if not cls.analyzer_binary():
             return []
-        environ = analyzer_context.get_context().get_env_for_bin(
-            command[0])
+        environ = context.get_env_for_bin(command[0])
         checker_list = []
 
         try:
             output = subprocess.check_output(command, env=environ)
 
+            blacklisted_checkers = context.checker_labels.checkers_by_labels(
+                ["blacklist:true"], cls.ANALYZER_NAME)
+
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
                 warning_name, _, description = entry.strip().partition(' ')
-                # GCC Static Analyzer names start with -Wanalyzer.
-                if warning_name.startswith('-Wanalyzer'):
-                    # Rename the checkers interally (similarly to how we
-                    # support cppcheck)
-                    renamed_checker_name = \
-                        actual_name_to_codechecker_name(warning_name)
-                    checker_list.append(
-                        (renamed_checker_name, description.strip()))
+                # We filter out the unwanted checkers
+                if not warning_name.startswith('-W') or '=' in warning_name \
+                        or warning_name == '-W' \
+                        or actual_name_to_codechecker_name(warning_name) \
+                        in blacklisted_checkers:
+                    continue
+                # GCC Static Analyzer names and warning names start with -W.
+                # Rename the checkers interally
+                # (similarly to how we support cppcheck)
+                renamed_checker_name = \
+                    actual_name_to_codechecker_name(warning_name)
+                checker_list.append(
+                    (renamed_checker_name, description.strip()))
             return checker_list
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)

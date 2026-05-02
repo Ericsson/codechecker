@@ -1,7 +1,7 @@
 {
   "analyzer": "gcc",
   "labels": {
-    "gcc-allocation-size": [
+    "gcc-analyzer-allocation-size": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-allocation-size",
       "profile:extreme",
       "severity:HIGH",
@@ -9,19 +9,19 @@
       "sei-cert-c:mem35-c",
       "sei-cert-c:mem54-cpp"
     ],
-    "gcc-deref-before-check": [
+    "gcc-analyzer-deref-before-check": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-deref-before-check",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:exp34-c"
     ],
-    "gcc-double-fclose": [
+    "gcc-analyzer-double-fclose": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-fclose",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:fio42-c"
     ],
-    "gcc-double-free": [
+    "gcc-analyzer-double-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
@@ -31,63 +31,63 @@
       "severity:HIGH",
       "sei-cert-c:mem30-c"
     ],
-    "gcc-exposure-through-output-file": [
+    "gcc-analyzer-exposure-through-output-file": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-output-file",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-exposure-through-uninit-copy": [
+    "gcc-analyzer-exposure-through-uninit-copy": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-uninit-copy",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-fd-access-mode-mismatch": [
+    "gcc-analyzer-fd-access-mode-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-access-mode-mismatch",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-fd-double-close": [
+    "gcc-analyzer-fd-double-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-double-close",
       "profile:extreme",
       "severity:HIGH"
     ],
-    "gcc-fd-leak": [
+    "gcc-analyzer-fd-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-leak",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos35-c",
       "sei-cert-c:pos38-c"
     ],
-    "gcc-fd-phase-mismatch": [
+    "gcc-analyzer-fd-phase-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-phase-mismatch",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-fd-type-mismatch": [
+    "gcc-analyzer-fd-type-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-type-mismatch",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-fd-use-after-close": [
+    "gcc-analyzer-fd-use-after-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos35-c"
     ],
-    "gcc-fd-use-without-check": [
+    "gcc-analyzer-fd-use-without-check": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-without-check",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:pos35-c",
       "sei-cert-c:pos38-c"
     ],
-    "gcc-file-leak": [
+    "gcc-analyzer-file-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-file-leak",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:fio42-c"
     ],
-    "gcc-free-of-non-heap": [
+    "gcc-analyzer-free-of-non-heap": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-free-of-non-heap",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
@@ -98,23 +98,23 @@
       "sei-cert-c:mem34-c",
       "sei-cert-c:mem51-cpp"
     ],
-    "gcc-imprecise-fp-arithmetic": [
+    "gcc-analyzer-imprecise-fp-arithmetic": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-imprecise-fp-arithmetic",
       "profile:extreme",
       "severity:LOW"
     ],
-    "gcc-infinite-recursion": [
+    "gcc-analyzer-infinite-recursion": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-recursion",
       "profile:extreme",
       "severity:HIGH"
     ],
-    "gcc-jump-through-null": [
+    "gcc-analyzer-jump-through-null": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-jump-through-null",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:oop55-cpp"
     ],
-    "gcc-malloc-leak": [
+    "gcc-analyzer-malloc-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-malloc-leak",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
@@ -128,7 +128,7 @@
       "sei-cert-c:fio42-c",
       "sei-cert-c:mem31-c"
     ],
-    "gcc-mismatching-deallocation": [
+    "gcc-analyzer-mismatching-deallocation": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
@@ -140,14 +140,14 @@
       "sei-cert-c:mem51-cpp",
       "sei-cert-c:mem57-cpp"
     ],
-    "gcc-null-argument": [
+    "gcc-analyzer-null-argument": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-argument",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:err33-c",
       "sei-cert-c:exp34-c"
     ],
-    "gcc-null-dereference": [
+    "gcc-analyzer-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
@@ -159,7 +159,7 @@
       "severity:HIGH",
       "sei-cert-c:exp34-c"
     ],
-    "gcc-out-of-bounds": [
+    "gcc-analyzer-out-of-bounds": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
@@ -187,80 +187,80 @@
       "sei-cert-c:mem54-cpp",
       "sei-cert-c:oop55-cpp"
     ],
-    "gcc-possible-null-argument": [
+    "gcc-analyzer-possible-null-argument": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-argument",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:pos54-c",
       "sei-cert-c:err33-c"
     ],
-    "gcc-possible-null-dereference": [
+    "gcc-analyzer-possible-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-dereference",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:exp34-c",
       "sei-cert-c:err33-c"
     ],
-    "gcc-putenv-of-auto-var": [
+    "gcc-analyzer-putenv-of-auto-var": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos34-c"
     ],
-    "gcc-shift-count-negative": [
+    "gcc-analyzer-shift-count-negative": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-negative",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:int34-c"
     ],
-    "gcc-shift-count-overflow": [
+    "gcc-analyzer-shift-count-overflow": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-overflow",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:int34-c"
     ],
-    "gcc-stale-setjmp-buffer": [
+    "gcc-analyzer-stale-setjmp-buffer": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-stale-setjmp-buffer",
       "profile:extreme",
       "severity:HIGH"
     ],
-    "gcc-tainted-allocation-size": [
+    "gcc-analyzer-tainted-allocation-size": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-allocation-size",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-tainted-array-index": [
+    "gcc-analyzer-tainted-array-index": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-array-index",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-tainted-assertion": [
+    "gcc-analyzer-tainted-assertion": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-assertion",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-tainted-divisor": [
+    "gcc-analyzer-tainted-divisor": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-divisor",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-tainted-offset": [
+    "gcc-analyzer-tainted-offset": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-offset",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-tainted-size": [
+    "gcc-analyzer-tainted-size": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-size",
       "profile:extreme",
       "severity:MEDIUM"
     ],
-    "gcc-unsafe-call-within-signal-handler": [
+    "gcc-analyzer-unsafe-call-within-signal-handler": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-unsafe-call-within-signal-handler",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:sig30-c"
     ],
-    "gcc-use-after-free": [
+    "gcc-analyzer-use-after-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-after-free",
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
@@ -272,14 +272,14 @@
       "severity:HIGH",
       "sei-cert-c:mem30-c"
     ],
-    "gcc-use-of-pointer-in-stale-stack-frame": [
+    "gcc-analyzer-use-of-pointer-in-stale-stack-frame": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-pointer-in-stale-stack-frame",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:dcl30-c",
       "sei-cert-c:exp61-cpp"
     ],
-    "gcc-use-of-uninitialized-value": [
+    "gcc-analyzer-use-of-uninitialized-value": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-uninitialized-value",
       "profile:extreme",
       "severity:HIGH",
@@ -291,80 +291,472 @@
       "sei-cert-c:oop53-cpp",
       "sei-cert-c:oop54-cpp"
     ],
-    "gcc-va-arg-type-mismatch": [
+    "gcc-analyzer-va-arg-type-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-arg-type-mismatch",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:msc39-c"
     ],
-    "gcc-va-list-exhausted": [
+    "gcc-analyzer-va-list-exhausted": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-exhausted",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:dcl50-cpp",
       "sei-cert-c:exp47-c"
     ],
-    "gcc-va-list-leak": [
+    "gcc-analyzer-va-list-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-leak",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp58-cpp"
     ],
-    "gcc-va-list-use-after-va-end": [
+    "gcc-analyzer-va-list-use-after-va-end": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-use-after-va-end",
       "profile:extreme",
       "severity:HIGH"
     ],
-    "gcc-write-to-const": [
+    "gcc-analyzer-write-to-const": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-const",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:str30-c"
     ],
-    "gcc-write-to-string-literal": [
+    "gcc-analyzer-write-to-string-literal": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-string-literal",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:str30-c"
     ],
-    "gcc-infinite-loop": [
+    "gcc-analyzer-infinite-loop": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp45-c"
     ],
-    "gcc-overlapping-buffers": [
+    "gcc-analyzer-overlapping-buffers": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp43-c"
     ],
-    "gcc-symbol-too-complex": [
+    "gcc-analyzer-symbol-too-complex": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-symbol-too-complex",
       "profile:extreme",
       "severity:LOW"
     ],
-    "gcc-throw-of-unexpected-type": [
+    "gcc-analyzer-throw-of-unexpected-type": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-throw-of-unexpected-type",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:err55-cpp"
     ],
-    "gcc-too-complex": [
+    "gcc-analyzer-too-complex": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-too-complex",
       "profile:extreme",
       "severity:LOW"
     ],
-    "gcc-undefined-behavior-ptrdiff": [
+    "gcc-analyzer-undefined-behavior-ptrdiff": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-ptrdiff",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:arr36-c"
     ],
-    "gcc-undefined-behavior-strtok": [
+    "gcc-analyzer-undefined-behavior-strtok": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-strtok",
       "profile:extreme",
       "severity:HIGH"
-    ]
+    ],
+    "gcc-NSObject-attribute": [ ],
+    "gcc-abi": [ "blacklist:true" ],
+    "gcc-abi-tag": [ "blacklist:true" ],
+    "gcc-abi=": [ ],
+    "gcc-absolute-value": [ ],
+    "gcc-address": [ ],
+    "gcc-address-of-packed-member": [ ],
+    "gcc-aggregate-return": [ ],
+    "gcc-aggressive-loop-optimizations": [ ],
+    "gcc-aliasing": [ ],
+    "gcc-align-commons": [ ],
+    "gcc-aligned-new=[none|global|all]": [ ],
+    "gcc-all": [ "blacklist:true" ],
+    "gcc-alloc-size": [  ],
+    "gcc-alloc-size-larger-than": [ "blacklist:true" ],
+    "gcc-alloc-zero": [ ],
+    "gcc-alloca": [ ],
+    "gcc-alloca-larger-than=<number>": [ "blacklist:true" ],
+    "gcc-ampersand": [ ],
+    "gcc-arith-conversion": [ ],
+    "gcc-array-bounds": [ "blacklist:true" ],
+    "gcc-array-bounds=<0,2>": [ "blacklist:true" ],
+    "gcc-array-compare": [ ],
+    "gcc-array-parameter": [ "blacklist:true" ],
+    "gcc-array-parameter=<0,2>": [ "blacklist:true" ],
+    "gcc-array-temporaries": [ ],
+    "gcc-assign-intercept": [ ],
+    "gcc-attribute-alias": [ "blacklist:true" ],
+    "gcc-attribute-alias=<0,2>": [ "blacklist:true"],
+    "gcc-attribute-warning": [ ],
+    "gcc-attributes": [ ],
+    "gcc-bad-function-cast": [ ],
+    "gcc-bidi-chars": [ "blacklist:true" ],
+    "gcc-bidi-chars=": [ "blacklist:true" ],
+    "gcc-bool-compare": [ ],
+    "gcc-bool-operation": [ ],
+    "gcc-builtin-declaration-mismatch": [ ],
+    "gcc-builtin-macro-redefined": [ ],
+    "gcc-c++-compat": [ ],
+    "gcc-c++0x-compat": [ "blacklist:true" ],
+    "gcc-c++11-compat": [ ],
+    "gcc-c++11-extensions": [ ],
+    "gcc-c++14-compat": [ ],
+    "gcc-c++14-extensions": [ ],
+    "gcc-c++17-compat": [ ],
+    "gcc-c++17-extensions": [ ],
+    "gcc-c++1z-compat": [ "blacklist:true" ],
+    "gcc-c++20-compat": [ ],
+    "gcc-c++20-extensions": [ ],
+    "gcc-c++23-extensions": [ ],
+    "gcc-c++26-extensions": [ ],
+    "gcc-c++2a-compat": [ "blacklist:true" ],
+    "gcc-c-binding-type": [ ],
+    "gcc-c11-c23-compat": [ ],
+    "gcc-c90-c99-compat": [ ],
+    "gcc-c99-c11-compat": [ ],
+    "gcc-calloc-transposed-args": [ ],
+    "gcc-cannot-profile": [ ],
+    "gcc-cast-align": [ ],
+    "gcc-cast-align=strict": [ ],
+    "gcc-cast-function-type": [ ],
+    "gcc-cast-qual": [ ],
+    "gcc-cast-result": [ ],
+    "gcc-cast-user-defined": [ ],
+    "gcc-catch-value": [ ],
+    "gcc-catch-value=<0,3>": [ ],
+    "gcc-changes-meaning": [ ],
+    "gcc-char-subscripts": [ ],
+    "gcc-character-truncation": [ ],
+    "gcc-chkp": [ "blacklist:true" ],
+    "gcc-class-conversion": [ ],
+    "gcc-class-memaccess": [ ],
+    "gcc-clobbered": [ ],
+    "gcc-comma-subscript": [ ],
+    "gcc-comment": [ ],
+    "gcc-comments": [ "blacklist:true" ],
+    "gcc-compare-distinct-pointer-types": [ ],
+    "gcc-compare-reals": [ ],
+    "gcc-complain-wrong-lang": [ ],
+    "gcc-conditionally-supported": [ ],
+    "gcc-conversion": [ ],
+    "gcc-conversion-extra": [ ],
+    "gcc-conversion-null": [ ],
+    "gcc-coverage-invalid-line-number": [ ],
+    "gcc-coverage-mismatch": [ ],
+    "gcc-coverage-too-many-conditions": [ ],
+    "gcc-cpp": [ ],
+    "gcc-ctad-maybe-unsupported": [ ],
+    "gcc-ctor-dtor-privacy": [ ],
+    "gcc-dangling-else": [ ],
+    "gcc-dangling-pointer": [ "blacklist:true" ],
+    "gcc-dangling-pointer=<0,2>": [ "blacklist:true" ],
+    "gcc-dangling-reference": [ ],
+    "gcc-date-time": [ ],
+    "gcc-declaration-after-statement": [ ],
+    "gcc-declaration-missing-parameter-type": [ ],
+    "gcc-delete-incomplete": [ ],
+    "gcc-delete-non-virtual-dtor": [ ],
+    "gcc-deprecated": [ ],
+    "gcc-deprecated-copy": [ ],
+    "gcc-deprecated-copy-dtor": [ ],
+    "gcc-deprecated-declarations": [ ],
+    "gcc-deprecated-enum-enum-conversion": [ ],
+    "gcc-deprecated-enum-float-conversion": [ ],
+    "gcc-designated-init": [ ],
+    "gcc-disabled-optimization": [ ],
+    "gcc-discarded-array-qualifiers": [ ],
+    "gcc-discarded-qualifiers": [ ],
+    "gcc-div-by-zero": [ ],
+    "gcc-do-subscript": [ ],
+    "gcc-double-promotion": [ ],
+    "gcc-duplicate-decl-specifier": [ ],
+    "gcc-duplicated-branches": [ ],
+    "gcc-duplicated-cond": [ ],
+    "gcc-effc++": [ ],
+    "gcc-elaborated-enum-base": [ ],
+    "gcc-empty-body": [ ],
+    "gcc-endif-labels": [ ],
+    "gcc-enum-compare": [ ],
+    "gcc-enum-conversion": [ ],
+    "gcc-enum-int-mismatch": [ ],
+    "gcc-error-implicit-function-declaration": [ "blacklist:true" ],
+    "gcc-exceptions": [ ],
+    "gcc-expansion-to-defined": [ ],
+    "gcc-extra": [ ],
+    "gcc-extra-semi": [ ],
+    "gcc-flex-array-member-not-at-end": [ ],
+    "gcc-float-conversion": [ ],
+    "gcc-float-equal": [ ],
+    "gcc-format": [ "blacklist:true" ],
+    "gcc-format-contains-nul": [ ],
+    "gcc-format-diag": [ ],
+    "gcc-format-extra-args": [ ],
+    "gcc-format-nonliteral": [ ],
+    "gcc-format-overflow<0,2>": [ "blacklist:true" ],
+    "gcc-format-overflow=<0,2>": [ "blacklist:true" ],
+    "gcc-format-security": [ ],
+    "gcc-format-signedness": [ ],
+    "gcc-format-truncation": [ "blacklist:true" ],
+    "gcc-format-truncation=<0,2>": [ "blacklist:true" ],
+    "gcc-format-y2k": [ ],
+    "gcc-format-zero-length": [ ],
+    "gcc-format=<0,2>": [ "blacklist:true" ],
+    "gcc-frame-address": [ ],
+    "gcc-frame-larger-than=<byte-size>": [ "blacklist:true" ],
+    "gcc-free-nonheap-object": [ ],
+    "gcc-function-elimination": [ ],
+    "gcc-global-module": [ ],
+    "gcc-hardened": [ ],
+    "gcc-hsa": [ ],
+    "gcc-if-not-aligned": [ ],
+    "gcc-ignored-attributes": [ ],
+    "gcc-ignored-qualifiers": [ ],
+    "gcc-implicit": [ ],
+    "gcc-implicit-fallthrough": [ ],
+    "gcc-implicit-fallthrough=<0,5>": [ "blacklist:true" ],
+    "gcc-implicit-function-declaration": [ ],
+    "gcc-implicit-int": [ ],
+    "gcc-implicit-interface": [ ],
+    "gcc-implicit-procedure": [ ],
+    "gcc-inaccessible-base": [ ],
+    "gcc-incompatible-pointer-types": [ ],
+    "gcc-inherited-variadic-ctor": [ ],
+    "gcc-init-list-lifetime": [ ],
+    "gcc-init-self": [ ],
+    "gcc-inline": [ ],
+    "gcc-int-conversion": [ ],
+    "gcc-int-in-bool-context": [ ],
+    "gcc-int-to-pointer-cast": [ ],
+    "gcc-integer-division": [ ],
+    "gcc-interference-size": [ ],
+    "gcc-intrinsic-shadow": [ ],
+    "gcc-intrinsics-std": [ ],
+    "gcc-invalid-constexpr": [ ],
+    "gcc-invalid-imported-macros": [ ],
+    "gcc-invalid-memory-model": [ ],
+    "gcc-invalid-offsetof": [ ],
+    "gcc-invalid-pch": [ ],
+    "gcc-invalid-utf8": [ ],
+    "gcc-jump-misses-init": [ ],
+    "gcc-larger-than-": [ "blacklist:true" ],
+    "gcc-larger-than=<byte-size>": [ "blacklist:true" ],
+    "gcc-line-truncation": [ ],
+    "gcc-literal-suffix": [ ],
+    "gcc-logical-not-parentheses": [ ],
+    "gcc-logical-op": [ ],
+    "gcc-long-long": [ "blacklist:true" ],
+    "gcc-lto-type-mismatch": [ ],
+    "gcc-main": [ ],
+    "gcc-maybe-uninitialized": [ ],
+    "gcc-memset-elt-size": [ ],
+    "gcc-memset-transposed-args": [ ],
+    "gcc-misleading-indentation": [ ],
+    "gcc-mismatched-dealloc": [ ],
+    "gcc-mismatched-new-delete": [ ],
+    "gcc-mismatched-special-enum": [ ],
+    "gcc-mismatched-tags": [ ],
+    "gcc-missing-attributes": [ ],
+    "gcc-missing-braces": [ ],
+    "gcc-missing-declarations": [ ],
+    "gcc-missing-field-initializers": [ ],
+    "gcc-missing-format-attribute": [ ],
+    "gcc-missing-include-dirs": [ ],
+    "gcc-missing-noreturn": [ ],
+    "gcc-missing-parameter-type": [ ],
+    "gcc-missing-profile": [ ],
+    "gcc-missing-prototypes": [ ],
+    "gcc-missing-requires": [ ],
+    "gcc-missing-template-keyword": [ ],
+    "gcc-missing-variable-declarations": [ ],
+    "gcc-multichar": [ ],
+    "gcc-multiple-inheritance": [ ],
+    "gcc-multistatement-macros": [ ],
+    "gcc-namespaces": [ ],
+    "gcc-narrowing": [ ],
+    "gcc-nested-externs": [ ],
+    "gcc-no-alloc-size-larger-than": [ "blacklist:true" ],
+    "gcc-no-alloca-larger-than": [ "blacklist:true" ],
+    "gcc-no-frame-larger-than": [ "blacklist:true" ],
+    "gcc-no-larger-than": [ "blacklist:true" ],
+    "gcc-no-stack-usage": [ "blacklist:true" ],
+    "gcc-no-vla-larger-than": [ "blacklist:true" ],
+    "gcc-noexcept": [ ],
+    "gcc-noexcept-type": [ ],
+    "gcc-non-template-friend": [ ],
+    "gcc-non-virtual-dtor": [ ],
+    "gcc-nonnull": [ ],
+    "gcc-nonnull-compare": [ ],
+    "gcc-normalized": [ ],
+    "gcc-normalized=[none|id|nfc|nfkc]": [ "blacklist:true" ],
+    "gcc-nrvo": [ ],
+    "gcc-objc-root-class": [ ],
+    "gcc-odr": [ ],
+    "gcc-old-style-cast": [ ],
+    "gcc-old-style-declaration": [ ],
+    "gcc-old-style-definition": [ ],
+    "gcc-openacc-parallelism": [ ],
+    "gcc-openmp": [ ],
+    "gcc-openmp-simd": [ ],
+    "gcc-overflow": [ ],
+    "gcc-overlength-strings": [ ],
+    "gcc-overloaded-virtual": [ ],
+    "gcc-overloaded-virtual=<0,2>": [ ],
+    "gcc-override-init": [ ],
+    "gcc-override-init-side-effects": [ ],
+    "gcc-overwrite-recursive": [ ],
+    "gcc-packed": [ ],
+    "gcc-packed-bitfield-compat": [ ],
+    "gcc-packed-not-aligned": [ ],
+    "gcc-padded": [ ],
+    "gcc-parentheses": [ ],
+    "gcc-pedantic": [ "blacklist:true" ],
+    "gcc-pessimizing-move": [ ],
+    "gcc-placement-new": [ ],
+    "gcc-placement-new=<0,2>": [ "blacklist:true" ],
+    "gcc-pmf-conversions": [ ],
+    "gcc-pointer-arith": [ ],
+    "gcc-pointer-compare": [ ],
+    "gcc-pointer-sign": [ ],
+    "gcc-pointer-to-int-cast": [ ],
+    "gcc-pragmas": [ ],
+    "gcc-prio-ctor-dtor": [ ],
+    "gcc-property-assign-default": [ ],
+    "gcc-protocol": [ ],
+    "gcc-psabi": [ ],
+    "gcc-range-loop-construct": [ ],
+    "gcc-real-q-constant": [ ],
+    "gcc-realloc-lhs": [ ],
+    "gcc-realloc-lhs-all": [ ],
+    "gcc-redundant-decls": [ ],
+    "gcc-redundant-move": [ ],
+    "gcc-redundant-tags": [ ],
+    "gcc-register": [ ],
+    "gcc-reorder": [ ],
+    "gcc-restrict": [ ],
+    "gcc-return-local-addr": [ ],
+    "gcc-return-mismatch": [ ],
+    "gcc-return-type": [ ],
+    "gcc-scalar-storage-order": [ ],
+    "gcc-selector": [ ],
+    "gcc-self-move": [ ],
+    "gcc-sequence-point": [ ],
+    "gcc-shadow": [ "blacklist:true" ],
+    "gcc-shadow-compatible-local": [ ],
+    "gcc-shadow-ivar": [ ],
+    "gcc-shadow-local": [ ],
+    "gcc-shadow=compatible-local": [ "blacklist:true" ],
+    "gcc-shadow=global": [ "blacklist:true" ],
+    "gcc-shadow=local": [ ],
+    "gcc-shift-negative-value": [ ],
+    "gcc-shift-overflow": [ ],
+    "gcc-shift-overflow=<0,2>": [ "blacklist:true" ],
+    "gcc-sign-compare": [ ],
+    "gcc-sign-conversion": [ ],
+    "gcc-sign-promo": [ ],
+    "gcc-sized-deallocation": [ ],
+    "gcc-sizeof-array-argument": [ ],
+    "gcc-sizeof-array-div": [ ],
+    "gcc-sizeof-pointer-div": [ ],
+    "gcc-sizeof-pointer-memaccess": [ ],
+    "gcc-stack-protector": [ ],
+    "gcc-stack-usage=<byte-size>": [ ],
+    "gcc-strict-aliasing": [ ],
+    "gcc-strict-aliasing=<0,3>": [ ],
+    "gcc-strict-flex-arrays": [ ],
+    "gcc-strict-null-sentinel": [ ],
+    "gcc-strict-overflow": [ ],
+    "gcc-strict-overflow=<0,5>": [ ],
+    "gcc-strict-prototypes": [ ],
+    "gcc-strict-selector-match": [ ],
+    "gcc-string-compare": [ ],
+    "gcc-stringop-overflow": [ ],
+    "gcc-stringop-overflow=<0,4>": [ ],
+    "gcc-stringop-overread": [ ],
+    "gcc-stringop-truncation": [ ],
+    "gcc-subobject-linkage": [ ],
+    "gcc-suggest-attribute=cold": [ ],
+    "gcc-suggest-attribute=const": [ ],
+    "gcc-suggest-attribute=format": [ ],
+    "gcc-suggest-attribute=malloc": [ ],
+    "gcc-suggest-attribute=noreturn": [ ],
+    "gcc-suggest-attribute=pure": [ ],
+    "gcc-suggest-attribute=returns_nonnull": [ ],
+    "gcc-suggest-final-methods": [ ],
+    "gcc-suggest-final-types": [ ],
+    "gcc-suggest-override": [ ],
+    "gcc-surprising": [ ],
+    "gcc-switch": [ ],
+    "gcc-switch-bool": [ ],
+    "gcc-switch-default": [ ],
+    "gcc-switch-enum": [ ],
+    "gcc-switch-outside-range": [ ],
+    "gcc-switch-unreachable": [ ],
+    "gcc-sync-nand": [ ],
+    "gcc-synth": [ ],
+    "gcc-system-headers": [ ],
+    "gcc-tabs": [ ],
+    "gcc-target-lifetime": [ ],
+    "gcc-tautological-compare": [ ],
+    "gcc-template-id-cdtor": [ ],
+    "gcc-templates": [ ],
+    "gcc-terminate": [ ],
+    "gcc-traditional": [ ],
+    "gcc-traditional-conversion": [ ],
+    "gcc-trampolines": [ ],
+    "gcc-trigraphs": [ ],
+    "gcc-trivial-auto-var-init": [ ],
+    "gcc-tsan": [ ],
+    "gcc-type-limits": [ ],
+    "gcc-undeclared-selector": [ ],
+    "gcc-undef": [ ],
+    "gcc-undefined-do-loop": [ ],
+    "gcc-underflow": [ ],
+    "gcc-unicode": [ ],
+    "gcc-uninitialized": [ ],
+    "gcc-unknown-pragmas": [ ],
+    "gcc-unreachable-code": [ ],
+    "gcc-unsafe-loop-optimizations": [ ],
+    "gcc-unsuffixed-float-constants": [ ],
+    "gcc-unused": [ "blacklist:true"],
+    "gcc-unused-but-set-parameter": [ ],
+    "gcc-unused-but-set-variable": [ ],
+    "gcc-unused-const-variable": [ ],
+    "gcc-unused-const-variable=<0,2>": [ "blacklist:true" ],
+    "gcc-unused-dummy-argument": [ ],
+    "gcc-unused-function": [ ],
+    "gcc-unused-label": [ ],
+    "gcc-unused-local-typedefs": [ ],
+    "gcc-unused-macros": [ ],
+    "gcc-unused-parameter": [ ],
+    "gcc-unused-result": [ ],
+    "gcc-unused-value": [ ],
+    "gcc-unused-variable": [ ],
+    "gcc-use-after-free=<0,3>": [ ],
+    "gcc-use-without-only": [ ],
+    "gcc-useless-cast": [ ],
+    "gcc-varargs": [ ],
+    "gcc-variadic-macros": [ ],
+    "gcc-vector-operation-performance": [ ],
+    "gcc-vexing-parse": [ ],
+    "gcc-virtual-inheritance": [ ],
+    "gcc-virtual-move-assign": [ ],
+    "gcc-vla": [ "blacklist:true" ],
+    "gcc-vla-larger-than=<number>": [ "blacklist:true" ],
+    "gcc-vla-parameter": [ ],
+    "gcc-volatile": [ "blacklist:true" ],
+    "gcc-volatile-register-var": [ ],
+    "gcc-write-strings": [ ],
+    "gcc-xor-used-as-pow": [ ],
+    "gcc-zero-as-null-pointer-constant": [ ],
+    "gcc-zero-length-bounds": [ ],
+    "gcc-zerotrip": [ ]
   }
 }

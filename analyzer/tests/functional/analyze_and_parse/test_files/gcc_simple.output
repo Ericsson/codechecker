@@ -18,7 +18,7 @@ CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --an
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
+[HIGH] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-analyzer-double-free]
   free(i);
   ^
 
@@ -34,11 +34,11 @@ Found 1 defect(s) in gcc_simple.cpp
 ----=================----
 
 ----==== Checker Statistics ====----
-┌─────────────────┬──────────┬───────────────────┐
-│ Checker name    │ Severity │ Number of reports │
-├─────────────────┼──────────┼───────────────────┤
-│ gcc-double-free │ HIGH     │ 1                 │
-└─────────────────┴──────────┴───────────────────┘
+┌──────────────────────────┬──────────┬───────────────────┐
+│ Checker name             │ Severity │ Number of reports │
+├──────────────────────────┼──────────┼───────────────────┤
+│ gcc-analyzer-double-free │ HIGH     │ 1                 │
+└──────────────────────────┴──────────┴───────────────────┘
 ----=================----
 
 ----==== File Statistics ====----

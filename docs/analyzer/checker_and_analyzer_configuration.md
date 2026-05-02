@@ -284,7 +284,7 @@ Example invocation:
 CodeChecker check -l ./compile_commands.json \
   --analyzers gcc \ # Run GCC analyzer only
   -e gcc \ # enable all checkers starting with "gcc"
-  -d gcc-double-free \ # disable gcc-double-free
+  -d gcc-analyzer-double-free \ # disable gcc-analyzer-double-free
   -o ./reports
 ```
 

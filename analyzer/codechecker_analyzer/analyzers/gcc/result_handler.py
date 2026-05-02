@@ -29,18 +29,18 @@ LOG = get_logger('analyzer.gcc')
 
 
 def actual_name_to_codechecker_name(actual_name: str):
-    assert actual_name.startswith('-Wanalyzer')
-    return actual_name.replace("-Wanalyzer", "gcc")
+    assert actual_name.startswith('-W')
+    return actual_name.replace("-W", "gcc-", 1)
 
 
 def codechecker_name_to_actual_name(codechecker_name: str):
-    assert codechecker_name.startswith('gcc')
-    return codechecker_name.replace("gcc", "-Wanalyzer")
+    assert codechecker_name.startswith('gcc-')
+    return codechecker_name.replace("gcc-", "-W", 1)
 
 
 def codechecker_name_to_actual_name_disabled(codechecker_name: str):
-    assert codechecker_name.startswith('gcc')
-    return codechecker_name.replace("gcc", "-Wno-analyzer")
+    assert codechecker_name.startswith('gcc-')
+    return codechecker_name.replace("gcc-", "-Wno-", 1)
 
 
 class GccResultHandler(ResultHandler):
