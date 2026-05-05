@@ -28,10 +28,10 @@ Noisiness is measured relative to the **median report count** across all checker
 in the evaluation data.
 
 * default-profile: Checkers with LOW, MEDIUM or HIGH severity whose report count
-  is ≤ 30× the median. Alpha, experimental, style, and debug checkers are excluded.
+  is ≤ 30× the median. Alpha, experimental, style, and debug checkers are excluded. Also exclude rules which are targeting a specific non-linux platform or programming library such as: abseil, boost, fuchsia, google, llvm, zircon.
 
 * sensitive-profile: Checkers with LOW, MEDIUM or HIGH severity whose report count
-  is > 30× and ≤ 100× the median. Alpha, experimental, style, and debug checkers are excluded.
+  is > 30× and ≤ 100× the median. Alpha, experimental, style, and debug checkers are excluded. Also exclude rules which are targeting a specific non-linux platform or programming library such as: abseil, boost, fuchsia, google, llvm, zircon.
 
 * Checkers with report count > 100× the median are considered "very noisy" and are
   excluded from both profiles unless explicitly overridden.
@@ -42,13 +42,15 @@ in the evaluation data.
 |------|----------|------------|
 | `scripts/llm-scripts/cppcheck` | The source code and documentation of cppcheck analyzer and checkers |all tasks|
 | `scripts/llm-scripts/gcc` | The source code and the documentation of the gcc static analyzer and checkers |all tasks|
-| `scripts/llm-scripts/clang-tidy` | The source code and the documentation of the clang-tidy static analyzer and checkers |all tasks|
-| `scripts/llm-scripts/clangsa` | The source code and the documentation of the clang static analyzer and checkers |all tasks|
-| `scripts/llm-scripts/clang-warnings` | The source code and the documentation of the clang warnings |all tasks|
+| `scripts/llm-scripts/clang-tidy-checks` | The source code of the clang-tidy static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clang-tidy-docs` | The documentation of the clang-tidy static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clangsa-checks` | The source code of the clang static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clangsa-docs` | The source code of the clang static analyzer and checkers |all tasks|
+| `scripts/llm-scripts/clang-warning-docs` | Clang warnings documentation |all tasks|
 | `scripts/llm-scripts/sei-cert-rules` | Sei Cert rule description |sei-cert-mapping|
 | `scripts/llm-scripts/sei-cert-tests` | Sei-Cert test results. There are multiple test cases per each SEI Cert rule demonstrating violations of the rule. Each test case file is named after the corresponding rule. This folder contains a json file per analyzer with the output of the tested analyzer on the test files. If a checker of an analyzer has a relevant finding on a test case, there is likely a correspondence of the given checker and the SEI Cert rule. | sei-cert-mapping|
 | `config/labels/descriptions.json` | CodeChecker label definitions including severity and guideline definitions.|all tasks|
-| `config/llm-scripts/evaluation-results`| Analysis results on open source projects| profile-mapping|
+| `scripts/llm-scripts/evaluation-results`| Analysis results on open source projects| profile-mapping|
 
 
 ## 3. OUTPUT
