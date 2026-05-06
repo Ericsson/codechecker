@@ -1184,30 +1184,40 @@ def extend_compilation_database_entries(compilation_database):
             cmd = []
             source_files = []
             source_dir = entry['directory']
+            response_files = set()
 
             options = shlex.split(entry['command'])
             for opt in options:
                 if opt.startswith('@'):
                     response_file = os.path.join(source_dir, opt[1:])
-                    if not os.path.exists(response_file):
+                    source_file = os.path.join(source_dir, opt)
+
+                    if os.path.exists(response_file):
+                        opts, sources = process_response_file(response_file)
+                        cmd.extend([shlex.quote(x) for x in opts])
+                        source_files.extend(sources)
+                        response_files.add(os.path.abspath(response_file))
+                    elif os.path.exists(source_file):
+                        cmd.append(shlex.quote(opt))
+                    else:
                         LOG.warning("Response file '%s' does not exists.",
                                     response_file)
                         continue
-
-                    opts, sources = process_response_file(response_file)
-                    cmd.extend([shlex.quote(x) for x in opts])
-                    source_files.extend(sources)
                 else:
                     cmd.append(shlex.quote(opt))
 
             entry['command'] = ' '.join(cmd)
 
             if entry['file'].startswith('@'):
-                for source_file in source_files:
-                    new_entry = dict(entry)
-                    new_entry['file'] = source_file
-                    yield new_entry
-                continue
+                response_file = os.path.abspath(os.path.join(
+                    source_dir, entry['file'][1:]))
+
+                if response_file in response_files:
+                    for source_file in source_files:
+                        new_entry = dict(entry)
+                        new_entry['file'] = source_file
+                        yield new_entry
+                    continue
 
         yield entry
 

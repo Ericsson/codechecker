@@ -599,6 +599,38 @@ class LogParserTest(unittest.TestCase):
         build_action = build_actions[0]
         self.assertEqual(build_action.source, src_file_path)
 
+    def test_source_file_path_starts_with_at_sign(self):
+        """
+        Test source file where the path starts with '@'.
+
+        Such paths should not be handled as response files if the path itself
+        exists as a normal source file.
+        """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            src_dir = os.path.join(tmp_dir, "@folder")
+            os.mkdir(src_dir)
+            src_file_path = os.path.join(src_dir, "main.cpp")
+
+            with open(src_file_path, "w",
+                      encoding="utf-8", errors="ignore") as src_file:
+                src_file.write("int main() { return 0; }")
+
+            with open(self.compile_command_file_path, "w",
+                      encoding="utf-8", errors="ignore") as build_json:
+                build_json.write(json.dumps([{
+                    "directory": tmp_dir,
+                    "command": "g++ @folder/main.cpp",
+                    "file": "@folder/main.cpp"
+                }]))
+
+            build_actions, _ = log_parser.parse_unique_log(load_json(
+                self.compile_command_file_path))
+
+            self.assertEqual(len(build_actions), 1)
+
+            build_action = build_actions[0]
+            self.assertEqual(build_action.source, src_file_path)
+
     def test_symlink(self):
         """
         Test if each source file is analyzed exclusively once,
