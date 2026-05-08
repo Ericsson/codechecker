@@ -22,7 +22,7 @@ from ..config_handler import CheckerState
 
 from .config_handler import GccConfigHandler
 from .result_handler import GccResultHandler, \
-    actual_name_to_codechecker_name, codechecker_name_to_actual_name_disabled
+    actual_name_to_codechecker_name, codechecker_name_to_actual_name, codechecker_name_to_actual_name_disabled
 
 LOG = get_logger('analyzer.gcc')
 
@@ -72,11 +72,16 @@ class Gcc(analyzer_base.SourceAnalyzer):
         analyzer_cmd.append('-fdiagnostics-format=sarif-stderr')
 
         for checker_name, value in config.checks().items():
+            print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccxx")
+            print(checker_name)
             if value[0] == CheckerState.DISABLED:
                 # TODO python3.9 removeprefix method would be nicer
                 # than startswith and a hardcoded slicing
                 analyzer_cmd.append(
                     codechecker_name_to_actual_name_disabled(checker_name))
+            else:
+                analyzer_cmd.append(
+                    codechecker_name_to_actual_name(checker_name))
 
         compile_lang = self.buildaction.lang
         if not has_flag('-x', analyzer_cmd):
@@ -114,10 +119,13 @@ class Gcc(analyzer_base.SourceAnalyzer):
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
                 warning_name, _, description = entry.strip().partition(' ')
+                print('ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc')
+                #print(actual_name_to_codechecker_name(warning_name))
                 # Skip blacklisted warnings, warnings with equal signs in their name and the generic -W flag.
-                if '=' in warning_name or warning_name == '-W' or warning_name in blacklisted_checkers:
+                if (not warning_name.startswith('-W')) or ('=' in warning_name) or (warning_name == '-W') or (actual_name_to_codechecker_name(warning_name) in blacklisted_checkers):
                     continue
                 # GCC Static Analyzer names and warning names start with -W.
+                print(warning_name)
                 if warning_name.startswith('-W'):
                     # Rename the checkers interally (similarly to how we
                     # support cppcheck)

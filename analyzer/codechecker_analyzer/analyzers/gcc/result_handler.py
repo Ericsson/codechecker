@@ -29,6 +29,9 @@ LOG = get_logger('analyzer.gcc')
 
 
 def actual_name_to_codechecker_name(actual_name: str):
+    if not actual_name.startswith('-W'):
+        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        print(actual_name)
     assert actual_name.startswith('-W')
     if actual_name.startswith('-Wanalyzer'):
         return actual_name.replace("-Wanalyzer", "gcc")
@@ -43,6 +46,9 @@ def codechecker_name_to_actual_name(codechecker_name: str):
 
 def codechecker_name_to_actual_name_disabled(codechecker_name: str):
     assert codechecker_name.startswith('gcc')
+    print(codechecker_name)
+    if codechecker_name.startswith('gcc-diagnostic-'):
+        return codechecker_name.replace("gcc-diagnostic-", "-Wno-")
     return codechecker_name.replace("gcc", "-Wno-analyzer")
 
 
