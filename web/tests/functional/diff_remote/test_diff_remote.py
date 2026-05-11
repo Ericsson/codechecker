@@ -299,9 +299,6 @@ class DiffRemote(unittest.TestCase):
         # Get the test configuration from the prepared int the test workspace.
         self.test_cfg = env.import_test_cfg(self.test_workspace)
 
-        # Get the clang version which is tested.
-        self._clang_to_test = env.clang_to_test()
-
         # Get the test project configuration from the prepared test workspace.
         self._testproject_data = env.setup_test_proj_cfg(self.test_workspace)
         self.assertIsNotNone(self._testproject_data)
@@ -534,22 +531,25 @@ class DiffRemote(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 6},
-                                  {"HIGH": 19}, {"STYLE": 0},
-                                  {"CRITICAL": 0}]
+        severity_counts = {
+            "MEDIUM": 1,
+            "LOW": 6,
+            "HIGH": 19,
+            "STYLE": 0,
+            "CRITICAL": 0
+        }
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)
 
-        for level in filter_severity_levels:
-            for severity_level, test_result_count in level.items():
-                sev = get_severity_level(severity_level)
-                sev_filter = ReportFilter(severity=[sev])
+        for severity, test_result_count in severity_counts.items():
+            sev = get_severity_level(severity)
+            sev_filter = ReportFilter(severity=[sev])
 
-                diff_result_count = self._cc_client.getRunResultCount(
-                    [base_run_id], sev_filter, cmp_data)
+            diff_result_count = self._cc_client.getRunResultCount(
+                [base_run_id], sev_filter, cmp_data)
 
-                self.assertEqual(test_result_count, diff_result_count)
+            self.assertEqual(test_result_count, diff_result_count)
 
     def test_get_diff_checker_counts_all_unresolved(self):
         """
@@ -715,8 +715,7 @@ class DiffRemote(unittest.TestCase):
         base_run_id = self._base_runid
         new_run_id = self._new_runid
 
-        diff_res_types_filter = self._testproject_data[self._clang_to_test][
-            'diff_res_types_filter']
+        diff_res_types_filter = self._testproject_data['diff_res_types_filter']
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)

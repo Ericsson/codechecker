@@ -47,9 +47,6 @@ class RunResults(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        # Get the clang version which is tested.
-        self._clang_to_test = env.clang_to_test()
-
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
@@ -119,8 +116,7 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-        test_project_results = self._testproject_data[
-            self._clang_to_test]['bugs']
+        test_project_results = self._testproject_data['reports']
         for r in test_project_results:
             print(r)
 
