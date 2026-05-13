@@ -70,6 +70,10 @@ def get_clean_cmd(test_project):
         return ""
 
 
+def get_enabled_checkers(test_project: str):
+    return get_info(test_project).get('enabled_checkers')
+
+
 def clean(test_project, environment=None):
     """Clean the test project."""
     project_path = path(test_project)

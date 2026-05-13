@@ -142,10 +142,6 @@ def del_database(dbname, env=None):
                             env=env, encoding="utf-8", errors="ignore")
 
 
-def clang_to_test():
-    return "clang_"+os.environ.get('TEST_CLANG_VERSION', 'stable')
-
-
 def setup_viewer_client(workspace,
                         endpoint='/CodeCheckerService',
                         auto_handle_connection=True,
