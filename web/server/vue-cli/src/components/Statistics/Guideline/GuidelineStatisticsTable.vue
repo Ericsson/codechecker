@@ -40,8 +40,8 @@ const headers = [
     key: "guidelineRuleTitle"
   },
   {
-    text: "Level",
-    value: "guidelineLevel"
+    title: "Level",
+    key: "guidelineLevel"
   },
   {
     title: "Related Checker(s)",
