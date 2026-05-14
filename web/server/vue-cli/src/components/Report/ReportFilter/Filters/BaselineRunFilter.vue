@@ -458,6 +458,7 @@ defineExpose({
   update: baseSelectOptionFilter.update,
   registerWatchers: baseSelectOptionFilter.registerWatchers,
   unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  selectedItems: baseSelectOptionFilter.selectedItems,
 
   id,
   initByUrl,
