@@ -7,6 +7,87 @@
       align="start"
     >
       <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.28.0"
+              target="_blank"
+              class="text-white"
+            >
+              Highlights of CodeChecker 6.28.0 release
+            </a>
+          </template>
+          <new-feature-item>
+            <template v-slot:title>
+              Upgrade CodeChecker to use Vue 3
+            </template>
+            <p>CodeChecker GUI is now rewritten to the Vue 3 framework.</p>
+            <img
+              src="@/assets/userguide/images/new_features/6.28.0/vue3.png"
+              alt="Filter preset"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Addition of Saving and Loading of Filter Presets
+            </template>
+            Frequently used report filters can be saved into named "presets" and later can be reloaded.
+            <img
+              src="@/assets/userguide/images/new_features/6.28.0/filter-preset.png"
+              alt="Filter preset"
+              width="100%"
+            >
+            The filter presests can also be access in the CLI with the
+            <code>CodeChecker cmd filter-preset</code> commands.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              List enabled checkers in CLI
+            </template>
+            You can list the enabled checkers for any runs from the CLI by executing
+            <pre>
+              CodeChecker cmd runs -n &lt;RUN_NAME&gt; -o json
+            </pre>
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Adding Checker coverage statistics to CLI
+            </template>
+            The <code>CodeChecker cmd sum -n tinxyml_sensitive &lt;run_name&gt;</code>
+            command lists the checkers that have findings and any corresponding guideline rules.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Extend SEI Cert guideline mapping for cppcheck and gcc analyzers
+            </template>
+            All supported <a href="https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html" target="_blank">gcc static analyzer</a>
+            and <a href="https://cppcheck.sourceforge.io/" target="_blank">cppcheck</a> checkers now have the SEI Cert rule associations.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Enable passing credentials from environment variable
+            </template>
+            The authentication credentials can now be passed from environment variable besides <code>.codechecker_password.json</code> file.
+            <pre>
+export CC_PASSWORD="secret"
+CodeChecker cmd login username
+            </pre>
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Add PMD analyzer support
+            </template>
+            It is now possible to store the analysis results of <a href="https://pmd.github.io/" target="_blank">PMD analyzer</a>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item
         dot-color="primary"
         icon="mdi-star"
       >
@@ -330,7 +411,7 @@ Total available compilation commands: 349
 
           <new-feature-item>
             <template v-slot:title>
-              <v-alert 
+              <v-alert
                 density="compact"
                 variant="outlined"
                 type="error"
