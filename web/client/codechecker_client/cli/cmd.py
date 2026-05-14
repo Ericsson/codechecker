@@ -498,8 +498,11 @@ def __register_results(parser):
                         action="store_true",
                         required=False,
                         default=argparse.SUPPRESS,
-                        help="Get report details for reports such as bug path "
-                             "events, bug report points etc.")
+                        help="DEPRECATED. Get report details for reports such "
+                             "as bug path events, bug report points etc. "
+                             "Detailed view contains Git information if it "
+                             "was available and stored for the queried "
+                             "project.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
     __add_filter_preset_argument(parser)
@@ -1644,7 +1647,12 @@ def add_arguments_to_parser(parser):
     results = subcommands.add_parser(
         'results',
         formatter_class=arg.RawDescriptionDefaultHelpFormatter,
-        description="Show the individual analysis reports' summary.",
+        description="Show the analysis reports which match the optional "
+                    "filters.\n\nIn JSON format all available information is "
+                    "shown. In plaintext/table only the report position, "
+                    "checker name, severity, analyzer name, report message, "
+                    "detection and review status and Git blame information "
+                    "is displayed.",
         help="List analysis result (finding) summary for a given run.",
         epilog='''Example scenario: List analysis results
 ------------------------------------------------
