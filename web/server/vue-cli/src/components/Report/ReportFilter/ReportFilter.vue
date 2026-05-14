@@ -690,6 +690,9 @@ onBeforeUnmount(() => {
 
 function saveCurrentFilter(mode) {
   const presetReportFilter = structuredClone(reportFilter.value);
+
+  // Store selected run names in reportFilter.runName (not part of the
+  // standard filter state, but needed for preset serialization).
   const runFilter = filters.value.find(f => f.id === "run");
   presetReportFilter.runName = runFilter?.selectedItems?.map(i => i.id) ?? [];
 
