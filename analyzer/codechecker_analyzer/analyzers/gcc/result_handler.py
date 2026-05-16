@@ -46,7 +46,6 @@ def codechecker_name_to_actual_name(codechecker_name: str):
 
 def codechecker_name_to_actual_name_disabled(codechecker_name: str):
     assert codechecker_name.startswith('gcc')
-    print(codechecker_name)
     if codechecker_name.startswith('gcc-diagnostic-'):
         return codechecker_name.replace("gcc-diagnostic-", "-Wno-")
     return codechecker_name.replace("gcc", "-Wno-analyzer")
