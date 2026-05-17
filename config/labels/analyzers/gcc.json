@@ -417,7 +417,7 @@
     "gcc-diagnostic-enum-compare": [ ],
     "gcc-diagnostic-enum-conversion": [ ],
     "gcc-diagnostic-enum-int-mismatch": [ ],
-    "gcc-diagnostic-error-implicit-function-declaration": [ ],
+    "gcc-diagnostic-error-implicit-function-declaration": [ "blacklist:true" ],
     "gcc-diagnostic-exceptions": [ ],
     "gcc-diagnostic-expansion-to-defined": [ ],
     "gcc-diagnostic-extra": [ ],
