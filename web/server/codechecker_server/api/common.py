@@ -5,6 +5,8 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+import functools
+
 import sqlalchemy
 
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
@@ -46,4 +48,24 @@ def exc_to_thrift_reqfail(function):
             # pylint: disable=raise-missing-from
             raise RequestFailed(ErrorCode.GENERAL, msg)
 
+    return wrapper
+
+
+def requires_view(function):
+    """
+    Decorator for Thrift API methods that require view permission on the
+    current product. Calls into the handler's __require_view() helper
+    before invoking the wrapped method.
+
+    The helper is accessed via getattr because Python name-mangles
+    double-underscore attribute access at compile time, and the
+    decorator lives outside the handler class. Computing the mangled
+    name from the instance's class lets the same decorator work for any
+    handler that defines a __require_view() method.
+    """
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        mangled = f'_{type(self).__name__}__require_view'
+        getattr(self, mangled)()
+        return function(self, *args, **kwargs)
     return wrapper

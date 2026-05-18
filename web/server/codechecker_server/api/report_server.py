@@ -74,7 +74,7 @@ from ..database.run_db_model import \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
-from .common import exc_to_thrift_reqfail
+from .common import exc_to_thrift_reqfail, requires_view
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -1545,9 +1545,8 @@ class ThriftRequestHandler:
                        date or datetime.now())
 
     @timeit
+    @requires_view
     def getRunData(self, run_filter, limit, offset, sort_mode):
-        self.__require_view()
-
         limit = verify_limit_range(limit)
 
         with DBSession(self._Session) as session:
