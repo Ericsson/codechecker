@@ -58,7 +58,8 @@ function enabledClick(_type, _checker_name) {
 }
 </script>
 
-<style lang="scss" scoped>
-$class-name: ".checker-statistics >  :deep(.v-data-table__wrapper)";
-@use "@/components/Statistics/style.scss";
+<style lang="scss">
+@use "@/components/Statistics/style.scss" with (
+  $class-name: ".analysis-statistics"
+);
 </style>
