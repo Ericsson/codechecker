@@ -1,5 +1,6 @@
 <template>
   <base-statistics-table
+    class="guideline-statistics-table"
     :headers="tableHeaders"
     :items="itemsWithUuid"
     :loading="loading"
@@ -110,6 +111,7 @@ function getRowClass(item) {
 </script>
 
 <style lang="scss">
-$class-name: ".checker-statistics > :deep(.v-data-table__wrapper)";
-@use "@/components/Statistics/style.scss";
+@use "@/components/Statistics/style.scss" with (
+  $class-name: ".guideline-statistics-table"
+);
 </style>
