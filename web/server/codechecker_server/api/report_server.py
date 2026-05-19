@@ -1528,7 +1528,7 @@ class ThriftRequestHandler:
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __require_view(self):
+    def _require_view(self):
         self.__require_permission([
             permissions.PRODUCT_VIEW,
             permissions.PERMISSION_VIEW

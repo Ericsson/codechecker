@@ -1110,6 +1110,15 @@ def start_server(config_directory: str, workspace_directory: str,
                  "by a previous server instance matching machine ID '%s'.",
                  dropped_tasks, machine_id)
 
+    # Defense in depth: refuse to start if any Thrift API method
+    # lacks a permission check. The same check is also run as a unit
+    # test for PR CI; the startup variant guarantees that even if an
+    # unprotected method somehow lands in master, the server will
+    # not serve it.
+    from .api.permission_coverage import (
+        assert_all_thrift_methods_protected,
+    )
+    assert_all_thrift_methods_protected()
     server_clazz = CCSimpleHttpServer
     if ':' in listen_address:
         # IPv6 address specified for listening.

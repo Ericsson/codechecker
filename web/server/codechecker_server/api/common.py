@@ -54,18 +54,11 @@ def exc_to_thrift_reqfail(function):
 def requires_view(function):
     """
     Decorator for Thrift API methods that require view permission on the
-    current product. Calls into the handler's __require_view() helper
+    current product. Calls into the handler's _require_view() helper
     before invoking the wrapped method.
-
-    The helper is accessed via getattr because Python name-mangles
-    double-underscore attribute access at compile time, and the
-    decorator lives outside the handler class. Computing the mangled
-    name from the instance's class lets the same decorator work for any
-    handler that defines a __require_view() method.
     """
     @functools.wraps(function)
     def wrapper(self, *args, **kwargs):
-        mangled = f'_{type(self).__name__}__require_view'
-        getattr(self, mangled)()
+        self._require_view()
         return function(self, *args, **kwargs)
     return wrapper
