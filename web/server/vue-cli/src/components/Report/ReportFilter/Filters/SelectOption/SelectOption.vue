@@ -1,7 +1,7 @@
 <template>
   <FilterToolbar
     :title="title"
-    :panel="panel"
+    :panel-active="panel"
     @clear="emit('clear')"
   >
     <template v-slot:append-toolbar-title>

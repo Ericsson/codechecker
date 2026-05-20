@@ -1,6 +1,6 @@
 <template>
   <v-expansion-panels
-    v-model="value"
+    v-model="panelOpen"
   >
     <v-expansion-panel
       eager
@@ -53,15 +53,15 @@ import { ref, watch } from "vue";
 
 const props = defineProps({
   title: { type: String, required: true },
-  panel: { type: Boolean, default: false }
+  panelActive: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([ "clear" ]);
 
-const value = ref(null);
+const panelOpen = ref(undefined);
 
-watch(() => props.panel, newPanel => {
-  value.value = newPanel ? 0 : null;
+watch(() => props.panelActive, active => {
+  panelOpen.value = active ? 0 : undefined;
 }, { immediate: true });
 </script>
 
