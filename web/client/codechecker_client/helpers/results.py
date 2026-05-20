@@ -181,6 +181,10 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def renameFilterPreset(self, id, name):
+        pass
+
+    @thrift_client_call
     def getFilterPreset(self, id):
         pass
 

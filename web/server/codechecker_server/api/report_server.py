@@ -1719,6 +1719,62 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    def renameFilterPreset(self, id: int, name: str):
+        """
+        Rename a filter preset.
+        Returns the ID of the renamed preset.
+        Raises an error if id/name is empty or if
+        a preset with the new name already exists.
+        """
+        self.__require_admin()
+        try:
+            if not name or not name.strip():
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "Preset name cannot be empty!")
+
+            if not id:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "Invalid preset ID!")
+
+            with DBSession(self._Session) as session:
+                preset_entry = session.query(FilterPreset).filter(
+                    FilterPreset.id == id
+                ).one_or_none()
+
+                if not preset_entry:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {id}!")
+
+                existing = session.query(FilterPreset).filter(
+                    FilterPreset.preset_name == name
+                ).one_or_none()
+
+                if existing and existing.id != id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"A filter preset with name "
+                        f"'{name}' already exists!")
+
+                LOG.info("Renaming filter preset { id: %d, name: %s } "
+                         "with name: '%s' ",
+                         preset_entry.id, preset_entry.preset_name,
+                         name)
+
+                preset_entry.preset_name = name
+                session.commit()
+                return preset_entry.id
+
+        except Exception as ex:
+            session.rollback()
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not rename filter preset: " + str(ex))
+
+    @exc_to_thrift_reqfail
+    @timeit
     def deleteFilterPreset(self, preset_id):
         """
         Delete a filter preset based on preset_id.

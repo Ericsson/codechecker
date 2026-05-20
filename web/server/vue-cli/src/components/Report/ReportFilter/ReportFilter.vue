@@ -31,7 +31,9 @@
         <v-btn
           color="primary"
           :disabled="!presetName"
-          @click="saveCurrentFilter(saveMode)"
+          @click="saveMode !== 'rename'
+            ? saveCurrentFilter(saveMode)
+            : renameFilterPreset()"
         >
           Save
         </v-btn>
@@ -101,6 +103,19 @@
           @click="createPreset"
         >
           Create Preset
+        </v-btn>
+      </div>
+      <div
+        v-if="canSeeActions && !presetMenuRef?.isModified
+          && presetMenuRef?.activePresetId"
+        class="d-flex flex-column mb-2 mt-2"
+      >
+        <v-btn
+          color="primary"
+          class="mb-2"
+          @click="renamePresetDialog"
+        >
+          Rename
         </v-btn>
       </div>
       <div
@@ -532,6 +547,7 @@ const saveDialogTitle = computed(() => {
     create: "Create new preset",
     override: "Override existing preset",
     createNew: "Save as new preset",
+    rename: "Rename the preset"
   };
   return titles[saveMode.value] || "Save filter preset";
 });
@@ -726,6 +742,30 @@ function saveCurrentFilter(mode) {
     );
 }
 
+function renameFilterPreset() {
+  const preset_id = presetMenuRef.value?.activePresetId;
+  const new_name = presetName.value;
+  new Promise(
+    resolve => {
+      ccService.getClient().renameFilterPreset(preset_id, new_name,
+        handleThriftError(result => {
+          resolve(result);
+        })
+      );
+    })
+    .then(
+      result => {
+        savePresetDialogOpen.value = false;
+        presetName.value = "";
+        presetMenuRef.value?.selectPresetAfterSave(result);
+      }
+    ).catch(
+      err => {
+        handleThriftError("FAILURE", err);
+      }
+    );
+}
+
 function overridePreset() {
   saveMode.value = "override";
   savePresetDialogOpen.value = true;
@@ -742,6 +782,10 @@ function createPreset() {
   savePresetDialogOpen.value = true;
 }
 
+function renamePresetDialog() {
+  saveMode.value = "rename";
+  savePresetDialogOpen.value = true;
+}
 /*function deletePreset(preset_id) {
   new Promise(resolve => {
     ccService.getClient().deleteFilterPreset(preset_id,
