@@ -5,6 +5,7 @@
   >
     <v-timeline
       align="start"
+      class="centered-timeline"
     >
       <v-timeline-item
         dot-color="green-lighten-1"
@@ -3059,3 +3060,12 @@ analyzer:
 <script setup>
 import { NewFeatureItem, NewReleaseItem } from "@/components/NewFeatures";
 </script>
+
+<style scoped>
+.centered-timeline :deep(.v-timeline-item__body),
+.centered-timeline :deep(.v-timeline-item__opposite) {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+</style>
