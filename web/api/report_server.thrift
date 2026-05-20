@@ -607,8 +607,15 @@ service codeCheckerDBAccess {
   i64 storeFilterPreset(1: FilterPreset preset)
                       throws (1: codechecker_api_shared.RequestFailed requestError);
 
+  // Returns: the id of the renamed preset
+  // Throws an error in case there is no preset with the given id
+  // PERMISSION: PRODUCT_ADMIN
+  i64 renameFilterPreset(1: i64 id
+                         2: string name)
+                      throws (1: codechecker_api_shared.RequestFailed requestError);
+
   // Returns the "FilterPreset" identified by id
-  // Throws and error in case there is no preset with the given id
+  // Throws an error in case there is no preset with the given id
   // PERMISSION: PRODUCT_VIEW
   FilterPreset getFilterPreset(1: i64 id)
                             throws (1: codechecker_api_shared.RequestFailed requestError);

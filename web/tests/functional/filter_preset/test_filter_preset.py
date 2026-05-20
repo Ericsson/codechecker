@@ -207,6 +207,65 @@ class TestFilterPresetAPI(unittest.TestCase):
         with self.assertRaises(RequestFailed):
             self._cc_client.storeFilterPreset(None)
 
+    # ========== RenameFilterPreset Tests ==========
+
+    def test_rename_filter_preset(self):
+        """
+        Test renameFilterPreset renames the preset.
+        """
+
+        preset = ttypes.FilterPreset(
+            id=-1,
+            name="initialName",
+            reportFilter=ttypes.ReportFilter()
+        )
+
+        preset_id = self._cc_client.storeFilterPreset(preset)
+
+        # Rename the preset
+
+        new_preset_id = self._cc_client.renameFilterPreset(preset_id, "TestPreset")
+
+        stored = self._cc_client.getFilterPreset(new_preset_id)
+        self.assertEqual(stored.id, new_preset_id)
+        self.assertEqual(stored.name, "TestPreset")
+
+    def test_rename_filter_preset_returns_error(self):
+        """
+        Test renameFilterPreset returns error on empty new name
+        and attempt to rename None.
+        """
+
+        preset = ttypes.FilterPreset(-1,
+                                     "test",
+                                     ttypes.ReportFilter())
+
+        preset_id = self._cc_client.storeFilterPreset(preset)
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.renameFilterPreset(preset_id, "")
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.renameFilterPreset(None, "new_name")
+
+    def test_rename_filter_preset_duplicate_name(self):
+        """
+        Test renameFilterPreset throws error when new name already exists.
+        """
+
+        preset1 = ttypes.FilterPreset(-1,
+                                      "preset1",
+                                      ttypes.ReportFilter())
+        preset2 = ttypes.FilterPreset(-1,
+                                      "preset2",
+                                      ttypes.ReportFilter())
+
+        id1 = self._cc_client.storeFilterPreset(preset1)
+        id2 = self._cc_client.storeFilterPreset(preset2)
+
+        with self.assertRaises(RequestFailed):
+            self._cc_client.renameFilterPreset(id1, "preset2")
+
     # ========== getFilterPreset Tests ==========
 
     def test_get_filter_preset_by_id(self):
