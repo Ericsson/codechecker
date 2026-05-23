@@ -1588,15 +1588,6 @@ def __register_filter_presets(parser):
     subcommands = parser.add_subparsers(title='available actions')
 
     # Create handlers for individual subcommands.
-    list_presets = subcommands.add_parser(
-        'list',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="List all filter presets available on the server.",
-        help="List all filter presets.")
-    list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
-    __add_common_arguments(list_presets,
-                           output_formats=DEFAULT_OUTPUT_FORMATS)
-
     new_preset = subcommands.add_parser(
         'new',
         formatter_class=arg.RawDescriptionDefaultHelpFormatter,
@@ -1605,6 +1596,34 @@ def __register_filter_presets(parser):
     __register_new(new_preset)
     new_preset.set_defaults(func=filter_preset_client.handle_new_preset)
     __add_common_arguments(new_preset)
+
+    rename_preset = subcommands.add_parser(
+        'rename',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Rename an existing filter preset.",
+        help="Rename an existing filter preset.")
+    rename_preset.set_defaults(func=filter_preset_client.handle_rename_preset)
+    rename_preset.add_argument(
+      '--preset-id',
+      type=int,
+      required=True,
+      help="ID of the filter preset to rename.")
+    rename_preset.add_argument(
+      '--new-name',
+      type=str,
+      required=True,
+      help="New name for the filter preset.")
+    __add_common_arguments(rename_preset,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
+
+    list_presets = subcommands.add_parser(
+        'list',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="List all filter presets available on the server.",
+        help="List all filter presets.")
+    list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
+    __add_common_arguments(list_presets,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
 
     delete_preset = subcommands.add_parser(
         'delete',
