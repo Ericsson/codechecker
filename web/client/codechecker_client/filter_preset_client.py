@@ -284,6 +284,22 @@ def handle_new_preset(args):
         LOG.error("An error occurred while saving the filter preset: %s", e)
         sys.exit(1)
 
+def handle_rename_preset(args):
+    """
+    Handler for renaming a filter preset.
+    """
+    init_logger(args.verbose if 'verbose' in args else None)
+
+    client = setup_client(args.product_url)
+
+    try:
+        client.renameFilterPreset(args.preset_id, args.new_name)
+        LOG.info("Filter preset (ID: %d) renamed to '%s'.",
+                 args.preset_id, args.new_name)
+    except Exception as e:
+        LOG.error("An error occurred while renaming the filter preset: %s", e)
+        sys.exit(1)
+
 
 def handle_list_presets(args):
     """

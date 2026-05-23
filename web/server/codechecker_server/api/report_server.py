@@ -1728,17 +1728,16 @@ class ThriftRequestHandler:
         """
         self.__require_admin()
         try:
-            if not name or not name.strip():
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    "Preset name cannot be empty!")
-
-            if not id:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    "Invalid preset ID!")
-
             with DBSession(self._Session) as session:
+                if not name or not name.strip():
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Preset name cannot be empty!")
+
+                if not id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Invalid preset ID!")
                 preset_entry = session.query(FilterPreset).filter(
                     FilterPreset.id == id
                 ).one_or_none()
