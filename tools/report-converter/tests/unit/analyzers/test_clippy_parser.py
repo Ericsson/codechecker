@@ -77,6 +77,8 @@ class ClippyAnalyzerResultTestCase(unittest.TestCase):
             res = plistlib.load(plist_stream)
 
         res['files'][0] = os.path.join('src', 'lib.rs')
+        self.assertTrue(res['metadata']['generated_by']['name'])
+        res['metadata']['generated_by']['name'] = 'tool-name'
         self.assertTrue(res['metadata']['generated_by']['version'])
         res['metadata']['generated_by']['version'] = 'x.y.z'
 
@@ -84,6 +86,7 @@ class ClippyAnalyzerResultTestCase(unittest.TestCase):
         with open(expected_plist, mode='rb') as plist_stream:
             exp = plistlib.load(plist_stream)
 
+        exp['metadata']['generated_by']['name'] = 'tool-name'
         self.assertEqual(res, exp)
 
         reports = self.analyzer_result.get_reports(result)
