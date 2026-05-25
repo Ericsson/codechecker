@@ -120,7 +120,8 @@ class AnalyzerResult(AnalyzerResultBase):
         if not primary_span:
             return None
 
-        source_file = self.__resolve_span_file(primary_span, cargo_msg, result_dir)
+        source_file = self.__resolve_span_file(
+            primary_span, cargo_msg, result_dir)
         if not source_file:
             return None
 

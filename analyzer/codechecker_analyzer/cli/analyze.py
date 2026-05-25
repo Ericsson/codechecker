@@ -11,13 +11,13 @@ Execute analysis over an already existing build.json compilation database.
 
 import argparse
 import collections
+from functools import partial
 import json
 import os
+from pathlib import Path
 import shutil
 import sys
 from typing import List
-from pathlib import Path
-from functools import partial
 
 from tu_collector import tu_collector
 
@@ -52,11 +52,10 @@ def __is_clippy_selected(args) -> bool:
 
 def __is_clippy_selected_or_valid_to_deduce(args) -> bool:
     """
-    Return whether Clippy was selected explicitly or it is valid to deduce that it should be run.
+    Return whether Clippy is selected or may be deduced.
 
-    If no analyzers were specified,
-    we can assume it is safe to run Clippy
-    if the input is a Cargo manifest.
+    If no analyzers were specified, we can assume it is safe to run Clippy
+    when the input is a Cargo manifest.
     """
     return not args.analyzers or __is_clippy_selected(args)
 

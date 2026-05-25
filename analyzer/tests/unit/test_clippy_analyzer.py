@@ -20,7 +20,6 @@ from codechecker_analyzer.analyzers.clippy.analyzer import \
     Clippy, create_cargo_build_action, find_cargo_manifest
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.arg import AnalyzerConfigArg
-from codechecker_analyzer.buildlog.build_action import BuildAction
 from codechecker_common.checker_labels import CheckerLabels
 
 

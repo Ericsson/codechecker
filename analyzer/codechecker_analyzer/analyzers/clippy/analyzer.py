@@ -62,7 +62,8 @@ class Clippy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def analyzer_binary(cls):
-        return analyzer_context.get_context().analyzer_binaries[cls.ANALYZER_NAME]
+        return analyzer_context.get_context().analyzer_binaries[
+            cls.ANALYZER_NAME]
 
     def add_checker_config(self, _):
         LOG.error('Checker configuration for Clippy is not implemented yet')
@@ -95,8 +96,8 @@ class Clippy(analyzer_base.SourceAnalyzer):
         result_handler = super().analyze(analyzer_cmd, res_handler,
                                          proc_callback, env)
 
-        # Compilation can possibly fail, but valid diagnostics can still be emitted.
-        # In such cases, we want to treat the analysis as successful and report the diagnostics.
+        # Compilation can fail even if Cargo emits valid diagnostics.
+        # In that case, keep the diagnostics and treat analysis as successful.
         if result_handler.analyzer_returncode != 0 and \
                 self.__has_compiler_message(result_handler.analyzer_stdout):
 
@@ -125,11 +126,6 @@ class Clippy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_analyzer_config(cls) -> List[analyzer_base.AnalyzerConfig]:
-        # CodeChecker analyze /repo/Cargo.toml \
-        # --analyzers clippy \
-        # --analyzer-config clippy:cargo-args-file=/repo/.codechecker/cargo-args.txt \
-        # --analyzer-config clippy:cc-verbatim-args-file=/repo/.codechecker/clippy-args.txt \
-        # -o /tmp/repo-clippy
         return [
             analyzer_base.AnalyzerConfig(
                 'cargo-args-file',
@@ -149,7 +145,6 @@ class Clippy(analyzer_base.SourceAnalyzer):
         """
         Run immediately after the analysis.
         """
-        pass
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, environ):
@@ -208,7 +203,8 @@ class Clippy(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
         handler = ClippyConfigHandler()
 
-        if 'analyzer_config' in args and isinstance(args.analyzer_config, list):
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
                 if cfg.analyzer != cls.ANALYZER_NAME:
                     continue

@@ -9,15 +9,14 @@
 from pathlib import Path
 from typing import Optional
 
-from codechecker_report_converter.analyzers.clippy.analyzer_result import \
-    AnalyzerResult
-from codechecker_report_converter.report.parser.base import AnalyzerInfo
-from codechecker_report_converter.report import error_file, report_file
-from codechecker_report_converter.report.hash import get_report_hash, HashType
-
 from codechecker_common.logger import get_logger
 from codechecker_common.review_status_handler import ReviewStatusHandler
 from codechecker_common.skiplist_handler import SkipListHandlers
+from codechecker_report_converter.analyzers.clippy.analyzer_result import \
+    AnalyzerResult
+from codechecker_report_converter.report import error_file, report_file
+from codechecker_report_converter.report.hash import get_report_hash, HashType
+from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
 from ..config_handler import CheckerState
 from ..result_handler_base import ResultHandler
@@ -56,9 +55,11 @@ class ClippyResultHandler(ResultHandler):
         with open(clippy_dest_file_name, 'w', encoding='utf-8') as result:
             result.write(self.analyzer_stdout)
 
-        reports = self.clippy_analyzer_result.get_reports(clippy_dest_file_name)
+        reports = self.clippy_analyzer_result.get_reports(
+            clippy_dest_file_name)
         reports = [r for r in reports
-                   if self.__checker_enabled(r.checker_name) and not r.skip(skip_handlers)]
+                   if self.__checker_enabled(r.checker_name) and
+                   not r.skip(skip_handlers)]
 
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
