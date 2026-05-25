@@ -1365,6 +1365,8 @@ def main(args):
     else:
         compile_commands = \
             compilation_database.gather_compilation_database(args.input)
+        if not args.analyzers:
+            args.analyzers = list(analyzer_types.compile_command_analyzers)
 
     if __is_clippy_selected(args) and not cargo_manifest_path:
         LOG.error(

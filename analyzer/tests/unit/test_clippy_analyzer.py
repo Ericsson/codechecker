@@ -15,7 +15,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from codechecker_analyzer.analyzers import analyzer_base
+from codechecker_analyzer.analyzers import analyzer_base, analyzer_types
 from codechecker_analyzer.analyzers.clippy.analyzer import \
     Clippy, create_cargo_build_action, find_cargo_manifest
 from codechecker_analyzer.analyzers.config_handler import CheckerState
@@ -58,6 +58,38 @@ class ClippyAnalyzerTest(unittest.TestCase):
                 cargo_toml.write('[package]\nname = "sample"\n')
 
             self.assertIsNone(find_cargo_manifest(tmp_dir))
+
+    def test_compile_command_analyzers_exclude_clippy(self):
+        """
+        Compile command analysis does not select Clippy by default.
+        """
+        self.assertNotIn(
+            Clippy.ANALYZER_NAME,
+            analyzer_types.compile_command_analyzers)
+
+    def test_get_analyzers_for_compile_commands_selects_cargo_analyzers(self):
+        """
+        Cargo manifest commands select Clippy for status handling.
+        """
+        analyzers = analyzer_types.get_analyzers_for_compile_commands([{
+            'file': '/sample/Cargo.toml',
+            'directory': '/sample',
+            'command': 'cargo clippy --manifest-path Cargo.toml'
+        }])
+
+        self.assertEqual(analyzers, analyzer_types.cargo_manifest_analyzers)
+
+    def test_get_analyzers_for_compile_commands_selects_c_analyzers(self):
+        """
+        C/C++ compile commands select compile-command analyzers.
+        """
+        analyzers = analyzer_types.get_analyzers_for_compile_commands([{
+            'file': '/sample/main.c',
+            'directory': '/sample',
+            'command': 'gcc -c main.c'
+        }])
+
+        self.assertEqual(analyzers, analyzer_types.compile_command_analyzers)
 
     def test_construct_analyzer_cmd_orders_cargo_and_clippy_args(self):
         """

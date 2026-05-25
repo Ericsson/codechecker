@@ -38,6 +38,27 @@ supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        Infer.ANALYZER_NAME: Infer
                        }
 
+compile_command_analyzers = {
+    analyzer_name: analyzer_class
+    for analyzer_name, analyzer_class in supported_analyzers.items()
+    if analyzer_name != Clippy.ANALYZER_NAME
+}
+
+cargo_manifest_analyzers = {Clippy.ANALYZER_NAME: Clippy}
+
+
+def get_analyzers_for_compile_commands(compile_commands):
+    """
+    Return analyzers that can produce reports for the given compile commands.
+    """
+    if compile_commands and all(
+        os.path.basename(c["file"]) == "Cargo.toml"
+        for c in compile_commands
+    ):
+        return cargo_manifest_analyzers
+
+    return compile_command_analyzers
+
 
 def is_statistics_capable():
     """ Detects if the current clang is Statistics compatible. """
