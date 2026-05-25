@@ -197,38 +197,119 @@
 
       <div v-else class="tree-view-container" style="padding-top: 48px;">
         <div class="tree-header">
-          <span class="tree-header-name">Name</span>
-          <span class="tree-header-cell">All</span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-name sortable"
+            :class="{ active: sortKey === 'name' }"
+            @click="sortByKey('name')"
+          >
+            Name
+            <v-icon v-if="sortKey === 'name'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
+          </span>
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'findings' }"
+            @click="sortByKey('findings')"
+          >
+            All
+            <v-icon v-if="sortKey === 'findings'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
+          </span>
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'style' }"
+            @click="sortByKey('style')"
+          >
             <severity-icon :status="Severity.STYLE" :size="14" />
+            <v-icon v-if="sortKey === 'style'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'low' }"
+            @click="sortByKey('low')"
+          >
             <severity-icon :status="Severity.LOW" :size="14" />
+            <v-icon v-if="sortKey === 'low'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'medium' }"
+            @click="sortByKey('medium')"
+          >
             <severity-icon :status="Severity.MEDIUM" :size="14" />
+            <v-icon v-if="sortKey === 'medium'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'high' }"
+            @click="sortByKey('high')"
+          >
             <severity-icon :status="Severity.HIGH" :size="14" />
+            <v-icon v-if="sortKey === 'high'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'critical' }"
+            @click="sortByKey('critical')"
+          >
             <severity-icon :status="Severity.CRITICAL" :size="14" />
+            <v-icon v-if="sortKey === 'critical'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'unreviewed' }"
+            @click="sortByKey('unreviewed')"
+          >
             <review-status-icon :status="0" :size="14" />
+            <v-icon v-if="sortKey === 'unreviewed'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'confirmed' }"
+            @click="sortByKey('confirmed')"
+          >
             <review-status-icon :status="1" :size="14" />
+            <v-icon v-if="sortKey === 'confirmed'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'false_positive' }"
+            @click="sortByKey('false_positive')"
+          >
             <review-status-icon :status="2" :size="14" />
+            <v-icon v-if="sortKey === 'false_positive'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            :class="{ active: sortKey === 'intentional' }"
+            @click="sortByKey('intentional')"
+          >
             <review-status-icon :status="3" :size="14" />
+            <v-icon v-if="sortKey === 'intentional'" size="x-small">
+              {{ sortDesc ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
         </div>
         <v-treeview
-          :items="treeItems"
+          :items="sortedTreeItems"
           item-key="fullPath"
           open-on-click
           density="compact"
@@ -323,77 +404,19 @@ const sortBy = ref(
 );
 
 const headers = [
-  {
-    title: "",
-    value: "data-table-expand"
-  },
-  {
-    title: "Report hash",
-    value: "bugHash",
-    sortable: false
-  },
-  {
-    title: "File",
-    value: "checkedFile",
-    sortable: true
-  },
-  {
-    title: "Message",
-    value: "checkerMsg",
-    sortable: false
-  },
-  {
-    title: "Checker name",
-    value: "checkerId",
-    sortable: true
-  },
-  {
-    title: "Analyzer",
-    value: "analyzerName",
-    align: "center",
-    sortable: false
-  },
-  {
-    title: "Severity",
-    value: "severity",
-    sortable: true
-  },
-  {
-    title: "Bug path length",
-    value: "bugPathLength",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Latest review status",
-    value: "reviewData",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Latest detection status",
-    value: "detectionStatus",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Timestamp",
-    value: "timestamp",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Chronological order",
-    value: "chronological_order",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Testcase",
-    value: "testcase",
-    align: "center",
-    sortable: true
-  }
+  { title: "", value: "data-table-expand" },
+  { title: "Report hash", value: "bugHash", sortable: false },
+  { title: "File", value: "checkedFile", sortable: true },
+  { title: "Message", value: "checkerMsg", sortable: false },
+  { title: "Checker name", value: "checkerId", sortable: true },
+  { title: "Analyzer", value: "analyzerName", align: "center", sortable: false },
+  { title: "Severity", value: "severity", sortable: true },
+  { title: "Bug path length", value: "bugPathLength", align: "center", sortable: true },
+  { title: "Latest review status", value: "reviewData", align: "center", sortable: true },
+  { title: "Latest detection status", value: "detectionStatus", align: "center", sortable: true },
+  { title: "Timestamp", value: "timestamp", align: "center", sortable: true },
+  { title: "Chronological order", value: "chronological_order", align: "center", sortable: true },
+  { title: "Testcase", value: "testcase", align: "center", sortable: true }
 ];
 
 const reports = ref([]);
@@ -416,6 +439,8 @@ const cmpDataUnwatch = ref(null);
 const viewMode = ref("table");
 const treeItems = ref([]);
 const fileSeverities = ref({});
+const sortKey = ref(null);
+const sortDesc = ref(true);
 
 const runIds = computed(function() {
   return store.getters[`${namespace}/getRunIds`];
@@ -436,28 +461,52 @@ const tableHeaders = computed(function() {
     if (_header.value === "detectionStatus") {
       return !reportFilter.value.isUnique;
     }
-
     if (_header.value === "data-table-expand") {
       return reportFilter.value.isUnique;
     }
-
     if (_header.value === "timestamp") {
-      return hasTimeStamp.value &&
-        !reportFilter.value.isUnique;
+      return hasTimeStamp.value && !reportFilter.value.isUnique;
     }
-
     if (_header.value === "testcase") {
-      return hasTestCase.value &&
-        !reportFilter.value.isUnique;
+      return hasTestCase.value && !reportFilter.value.isUnique;
     }
-
     if (_header.value === "chronological_order") {
-      return hasChronologicalOrder.value &&
-        !reportFilter.value.isUnique;
+      return hasChronologicalOrder.value && !reportFilter.value.isUnique;
     }
-
     return true;
   });
+});
+
+const sortedTreeItems = computed(function() {
+  if (!sortKey.value) return treeItems.value;
+
+  const key = sortKey.value;
+  const desc = sortDesc.value;
+
+  const getVal = node => {
+    if (key === "name") return node.name || "";
+    if (key === "findings") return node.findings || 0;
+    return (node.stats && node.stats[key]) || 0;
+  };
+
+  const compare = (a, b) => {
+    const av = getVal(a);
+    const bv = getVal(b);
+    if (typeof av === "string" || typeof bv === "string") {
+      const res = String(av).localeCompare(String(bv));
+      return desc ? -res : res;
+    }
+    return desc ? bv - av : av - bv;
+  };
+
+  const sortRec = nodes => [ ...nodes ].sort(compare).map(node => {
+    if (node.children && node.children.length > 0) {
+      return { ...node, children: sortRec(node.children) };
+    }
+    return node;
+  });
+
+  return sortRec(treeItems.value);
 });
 
 const formattedReports = computed(function() {
@@ -506,10 +555,8 @@ watch(
   () => {
     hasTimeStamp.value =
       formattedReports.value.some(_report => _report.timestamp);
-
     hasTestCase.value =
       formattedReports.value.some(_report => _report.testcase);
-
     hasChronologicalOrder.value =
       formattedReports.value.some(_report => _report["chronological_order"]);
   }
@@ -527,6 +574,15 @@ watch(
 
 function setReportFilter(payload) {
   store.commit(`${namespace}/SET_REPORT_FILTER`, payload);
+}
+
+function sortByKey(key) {
+  if (sortKey.value === key) {
+    sortDesc.value = !sortDesc.value;
+  } else {
+    sortKey.value = key;
+    sortDesc.value = key !== "name";
+  }
 }
 
 function onTreeItemClick(item) {
@@ -549,7 +605,6 @@ function buildTreeItems() {
 
     pathParts.forEach(part => {
       if (part === "") return;
-
       currentPath += "/" + part;
       let existingPart = currentLevel.find(i => i.name === part);
       if (!existingPart) {
@@ -806,9 +861,7 @@ function fetchReports() {
       _reports.forEach(_report => {
         ccService.getSameReports(_report.bugHash).then(_sameReports => {
           sameReports.value[_report.bugHash] =
-            [
-              ...new Set(_sameReports.map(_r => _r.reviewData.status))
-            ];
+            [ ...new Set(_sameReports.map(_r => _r.reviewData.status)) ];
         });
       });
     }));
@@ -949,6 +1002,20 @@ kbd {
   width: 50px;
   text-align: center;
   flex-shrink: 0;
+}
+
+.tree-header-name.sortable,
+.tree-header-cell.sortable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--v-primary-base);
+  }
+
+  &.active {
+    color: var(--v-primary-base);
+  }
 }
 
 .tree-row {
