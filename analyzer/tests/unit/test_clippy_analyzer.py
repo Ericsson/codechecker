@@ -158,7 +158,10 @@ class ClippyAnalyzerTest(unittest.TestCase):
             manifest = os.path.join(tmp_dir, 'Cargo.toml')
             handler = Clippy.construct_config_handler(Args({
                 'analyzer_config': [],
-                'ordered_checkers': [('rustc', False)],
+                'ordered_checkers': [
+                    ('checker:clippy', True),
+                    ('checker:rustc', False)
+                ],
                 'enable_all': False
             }))
             analyzer = Clippy(handler, create_cargo_build_action(manifest))
