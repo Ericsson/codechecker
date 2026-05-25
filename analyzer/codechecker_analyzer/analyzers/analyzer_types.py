@@ -24,6 +24,7 @@ from .. import host_check
 from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
 from .cppcheck.analyzer import Cppcheck
+from .clippy.analyzer import Clippy
 from .gcc.analyzer import Gcc
 from .infer.analyzer import Infer
 
@@ -31,6 +32,7 @@ LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        ClangTidy.ANALYZER_NAME: ClangTidy,
+                       Clippy.ANALYZER_NAME: Clippy,
                        Cppcheck.ANALYZER_NAME: Cppcheck,
                        Gcc.ANALYZER_NAME: Gcc,
                        Infer.ANALYZER_NAME: Infer

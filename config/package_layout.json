@@ -3,6 +3,7 @@
     "analyzers": {
       "clangsa": "clang",
       "clang-tidy": "clang-tidy",
+      "clippy": "cargo",
       "cppcheck": "cppcheck",
       "gcc": "g++",
       "infer": "infer"
