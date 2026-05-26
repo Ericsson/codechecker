@@ -47,6 +47,7 @@
               block
               size="x-large"
               color="primary"
+              variant="flat"
               @click="ssoButtonHandleClickEvent"
             >
               {{ ssoButtonText }}
