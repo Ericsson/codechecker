@@ -1719,7 +1719,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def renameFilterPreset(self, id: int, name: str):
+    def renameFilterPreset(self, preset_id: int, name: str):
         """
         Rename a filter preset.
         Returns the ID of the renamed preset.
@@ -1734,24 +1734,24 @@ class ThriftRequestHandler:
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                         "Preset name cannot be empty!")
 
-                if not id:
+                if not preset_id:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                         "Invalid preset ID!")
                 preset_entry = session.query(FilterPreset).filter(
-                    FilterPreset.id == id
+                    FilterPreset.id == preset_id
                 ).one_or_none()
 
                 if not preset_entry:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        f"No filter preset found with id {id}!")
+                        f"No filter preset found with id {preset_id}!")
 
                 existing = session.query(FilterPreset).filter(
                     FilterPreset.preset_name == name
                 ).one_or_none()
 
-                if existing and existing.id != id:
+                if existing and existing.id != preset_id:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                         f"A filter preset with name "
