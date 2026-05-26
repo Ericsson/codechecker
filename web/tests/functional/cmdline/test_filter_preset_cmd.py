@@ -282,32 +282,38 @@ class TestFilterPresetCmdLine(unittest.TestCase):
             "Filter preset 'test_preset' "
             "created successfully.", out)
 
+        presets = self._cc_client.listFilterPreset()
+        preset = next(p for p in presets
+                      if p.name == "test_preset")
+
         cmd1 = [self._codechecker_cmd, 'cmd',
                 'filter-preset', 'rename',
-                '--preset-id', '1',
+                '--preset-id', str(preset.id),
                 '--new-name', 'test_preset_renamed',
                 '--url', str(self.server_url)]
 
         ret1, out1, _ = run_cmd(cmd1)
 
         self.assertEqual(ret1, 0)
-        self.assertIn("Filter preset (ID: 1) renamed to 'test_preset_renamed'.", out1)
+        self.assertIn(
+            f"Filter preset (ID: {preset.id}) renamed to "
+            f"'test_preset_renamed'.", out1)
 
-    def test_filter_preset_cmd_rename_noneexistant(self):
+    def test_filter_preset_cmd_rename_nonexistent(self):
         """
-        Test the filter-preset rename on non existant ID.
+        Test the filter-preset rename on non existent ID.
         """
 
         cmd1 = [self._codechecker_cmd, 'cmd',
                 'filter-preset', 'rename',
-                '--preset-id', '1',
+                '--preset-id', '999999',
                 '--new-name', 'test_preset_renamed',
                 '--url', str(self.server_url)]
 
         ret1, out1, _ = run_cmd(cmd1)
 
         self.assertEqual(ret1, 1)
-        self.assertIn("No filter preset found with id 1!", out1)
+        self.assertIn("No filter preset found with id 999999!", out1)
 
     def test_filter_preset_cmd_rename_duplicate_name(self):
         """

@@ -284,6 +284,7 @@ def handle_new_preset(args):
         LOG.error("An error occurred while saving the filter preset: %s", e)
         sys.exit(1)
 
+
 def handle_rename_preset(args):
     """
     Handler for renaming a filter preset.

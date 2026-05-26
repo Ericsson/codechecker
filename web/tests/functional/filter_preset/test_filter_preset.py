@@ -224,7 +224,8 @@ class TestFilterPresetAPI(unittest.TestCase):
 
         # Rename the preset
 
-        new_preset_id = self._cc_client.renameFilterPreset(preset_id, "TestPreset")
+        new_preset_id = self._cc_client.renameFilterPreset(preset_id,
+                                                           "TestPreset")
 
         stored = self._cc_client.getFilterPreset(new_preset_id)
         self.assertEqual(stored.id, new_preset_id)
@@ -250,7 +251,8 @@ class TestFilterPresetAPI(unittest.TestCase):
 
     def test_rename_filter_preset_duplicate_name(self):
         """
-        Test renameFilterPreset throws error when new name already exists.
+        Test renameFilterPreset throws error when
+        new name already exists.
         """
 
         preset1 = ttypes.FilterPreset(-1,
@@ -269,7 +271,6 @@ class TestFilterPresetAPI(unittest.TestCase):
         with self.assertRaises(RequestFailed):
             self._cc_client.renameFilterPreset(id2, "preset1")
 
-
     # ========== getFilterPreset Tests ==========
 
     def test_get_filter_preset_by_id(self):
@@ -282,9 +283,12 @@ class TestFilterPresetAPI(unittest.TestCase):
             checkerName=['clang-tidy*'],
             reviewStatus=[0, 1]
         )
-        preset = ttypes.FilterPreset(-1,
-                                     "GetTest",
-                                     report_filter)
+
+        preset = ttypes.FilterPreset(
+            -1,
+            "GetTest",
+            report_filter
+            )
 
         preset_id = self._cc_client.storeFilterPreset(preset)
 
