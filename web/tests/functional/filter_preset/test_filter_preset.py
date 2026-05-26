@@ -266,6 +266,10 @@ class TestFilterPresetAPI(unittest.TestCase):
         with self.assertRaises(RequestFailed):
             self._cc_client.renameFilterPreset(id1, "preset2")
 
+        with self.assertRaises(RequestFailed):
+            self._cc_client.renameFilterPreset(id2, "preset1")
+
+
     # ========== getFilterPreset Tests ==========
 
     def test_get_filter_preset_by_id(self):
