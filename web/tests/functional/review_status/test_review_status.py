@@ -516,7 +516,7 @@ class TestReviewStatus(unittest.TestCase):
         """
         project.clean('suppress', env.test_env(self.test_workspace))
 
-        suppress_project_bugs = project.get_info('suppress')['bugs']
+        suppress_project_bugs = project.get_info('suppress')['reports']
 
         codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
         codechecker_cfg['reportdir'] = os.path.join(

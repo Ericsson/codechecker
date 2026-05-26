@@ -1091,7 +1091,11 @@ usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES [RUN_NAMES ...]
 
-Show the individual analysis reports' summary.
+Show the analysis reports which match the optional filters.
+
+In JSON format all available information is shown. In plaintext/table only the
+report position, checker name, severity, analyzer name, report message,
+detection and review status and Git blame information is displayed.
 
 positional arguments:
   RUN_NAMES             Names of the analysis runs to show result summaries
@@ -1105,8 +1109,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --details             Get report details for reports such as bug path
-                        events, bug report points etc.
+  --details             DEPRECATED. Get report details for reports such as bug
+                        path events, bug report points etc. Detailed view
+                        contains Git information if it was available and stored
+                        for the queried project.
 ```
 </details>
 

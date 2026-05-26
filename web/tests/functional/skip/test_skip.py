@@ -163,9 +163,6 @@ class TestSkip(unittest.TestCase):
 
         self._codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
 
-        # Get the clang version which is tested.
-        self._clang_to_test = env.clang_to_test()
-
         # Get the test configuration from the prepared test workspace.
         self._testproject_data = env.setup_test_proj_cfg(self.test_workspace)
         self.assertIsNotNone(self._testproject_data)
@@ -209,7 +206,7 @@ class TestSkip(unittest.TestCase):
         # otherwise the test would believe they're missing because of --skip
         # which is not the case.
 
-        test_proj_res = self._testproject_data[self._clang_to_test]['bugs']
+        test_proj_res = self._testproject_data['reports']
         skipped = [x for x in test_proj_res if x['file'] in skipped_files
                    or x['checker'].startswith('clang-diagnostic-')]
 

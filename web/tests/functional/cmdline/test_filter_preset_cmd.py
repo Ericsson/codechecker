@@ -55,16 +55,16 @@ class TestFilterPresetCmdLine(unittest.TestCase):
 
         test_config = {}
 
-        project_info = project.get_info(test_project)
+        self.__project_info = project.get_info(test_project)
 
         # Copy the test project to the workspace. The tests should
         # work only on this test project.
         test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
         shutil.copytree(project.path(test_project), test_proj_path)
 
-        project_info['project_path'] = test_proj_path
+        self.__project_info['project_path'] = test_proj_path
 
-        test_config['test_project'] = project_info
+        test_config['test_project'] = self.__project_info
 
         suppress_file = None
 
@@ -98,7 +98,7 @@ class TestFilterPresetCmdLine(unittest.TestCase):
 
         # Generate a unique name for this test run.
         self.test_project_name_1 = \
-            project_info['name'] + '1_' + uuid.uuid4().hex
+            self.__project_info['name'] + '1_' + uuid.uuid4().hex
 
         ret = codechecker.check_and_store(
             codechecker_cfg,
@@ -441,7 +441,9 @@ class TestFilterPresetCmdLine(unittest.TestCase):
                 '--url', str(self.server_url)]
         _, out3, _ = run_cmd(cmd3)
 
-        self.assertEqual(out3.count("HIGH"), 53)
+        self.assertEqual(
+            out3.count("HIGH"),
+            self.__project_info["severity_counts"]["HIGH"])
 
     def test_filter_preset_cmd_apply_preset_no_match(self):
         """

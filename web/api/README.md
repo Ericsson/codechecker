@@ -13,11 +13,12 @@ container so `docker` needs to be installed to generate the stubs.
   - [`py/codechecker_api/setup.py`](py/codechecker_api/setup.py)
   - [`py/codechecker_api_shared/setup.py`](py/codechecker_api_shared/setup.py)
   - [`js/codechecker-api-node/package.json`](js/codechecker-api-node/package.json)
+  - [`/web/server/vue-cli/package.json`](/web/server/vue-cli/package.json)
 - Let's assume that the current API version is `6.39.0`. Run the
 [change-api-version.sh](change-api-version.sh) script to increment the API
 version: `change-api-version.sh 6.40.0`.
 - Update the supported api versions to `6.40` in the server files:
-  - `web/codechecker_web/shared/version.py`
+  - `/web/codechecker_web/shared/version.py`
 - Run the command `make build` to generate the Thrift API stubs and to create
 new pypi and npm packages. It will modify the following files:
   - [`py/codechecker_api/dist/codechecker_api.tar.gz`](py/codechecker_api/dist/codechecker_api.tar.gz)

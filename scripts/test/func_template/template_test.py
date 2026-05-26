@@ -43,11 +43,6 @@ class TestSkeleton(unittest.TestCase):
         # Set the TEST_WORKSPACE used by the tests.
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-        # Get the clang version which is used for testing.
-        # Important because different clang releases might
-        # find different errors.
-        clang_version = env.clang_to_test()
-
         test_config = {}
 
         test_project = 'cpp'

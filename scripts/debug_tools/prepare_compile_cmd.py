@@ -46,8 +46,9 @@ def prepare(compile_command_json, sources_root):
         if not exists_in_source_root(entry, sources_root):
             continue
 
+        working_dir = entry['directory']
         entry['directory'] =\
-            lib.change_paths(entry['directory'],
+            lib.change_paths(working_dir,
                              lib.IncludePathModifier(sources_root_abs))
 
         try:
@@ -62,11 +63,11 @@ def prepare(compile_command_json, sources_root):
         compiler, compiler_end = lib.find_path_end(cmd.lstrip(), 0)
         entry['command'] = compiler +\
             lib.change_paths(cmd[compiler_end:],
-                             lib.IncludePathModifier(sources_root_abs))
+                             lib.IncludePathModifier(sources_root_abs, working_dir))
 
         entry['file'] =\
             lib.change_paths(entry['file'],
-                             lib.IncludePathModifier(sources_root_abs))
+                             lib.IncludePathModifier(sources_root_abs, working_dir))
 
         result_json.append(entry)
     return result_json

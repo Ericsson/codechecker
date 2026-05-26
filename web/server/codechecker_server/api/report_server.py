@@ -2267,8 +2267,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r.id for r in query_result]
+                blame_infos = {}
+
+                if get_details and query_result:
+                    report_ids = []
+
+                    for r in query_result:
+                        report_ids.append(r.id)
+                        blame_infos[r.id] = self.getBlameInfo(r.file_id)
+
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
@@ -2285,6 +2292,11 @@ class ThriftRequestHandler:
                         row.review_status_author,
                         row.review_status_date,
                         row.review_status_is_in_source)
+
+                    blame_info = None
+                    if row.id in blame_infos:
+                        blame_info = self.__filter_blame_info_on_line(
+                            blame_infos[row.id], row.line)
 
                     results.append(
                         ReportData(runId=row.run_id,
@@ -2305,6 +2317,7 @@ class ThriftRequestHandler:
                                    fixedAt=str(row.fixed_at),
                                    bugPathLength=row.path_length,
                                    details=report_details.get(row.id),
+                                   blameInfo=blame_info,
                                    annotations=annotations))
             else:  # not is_unique
                 filter_expression, join_tables = process_report_filter(
@@ -2371,8 +2384,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r[0].id for r in query_result]
+                blame_infos = {}
+
+                if get_details and query_result:
+                    report_ids = []
+
+                    for r in query_result:
+                        report_ids.append(r[0].id)
+                        blame_infos[r[0].id] = self.getBlameInfo(r[0].file_id)
+
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
@@ -2387,6 +2407,11 @@ class ThriftRequestHandler:
                         report.review_status_author,
                         report.review_status_date,
                         report.review_status_is_in_source)
+
+                    blame_info = None
+                    if report.id in blame_infos:
+                        blame_info = self.__filter_blame_info_on_line(
+                            blame_infos[report.id], report.line)
 
                     results.append(
                         ReportData(runId=report.run_id,
@@ -2408,9 +2433,34 @@ class ThriftRequestHandler:
                                    report.fixed_at else None,
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
+                                   blameInfo=blame_info,
                                    annotations=annotations))
 
             return results
+
+    def __filter_blame_info_on_line(
+        self,
+        blame_info: BlameInfo,
+        line: int
+    ) -> BlameInfo:
+        """
+        This function returns a BlameInfo that contains filtered blame data at
+        the given source code line.
+        """
+        if blame_info.commits and blame_info.blame:
+            blame_data = [
+                b for b in blame_info.blame
+                if b.startLine <= line <= b.endLine]
+            commit_hash = blame_data[0].commitHash if blame_data else None
+            commit_info = {
+                cHash: commit for cHash, commit
+                in blame_info.commits.items()
+                if cHash == commit_hash}
+            blame_info = BlameInfo(
+                commits=commit_info,
+                blame=blame_data)
+
+        return blame_info
 
     @exc_to_thrift_reqfail
     @timeit
