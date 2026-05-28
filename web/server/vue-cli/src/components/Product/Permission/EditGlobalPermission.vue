@@ -4,7 +4,7 @@
       v-model="success"
       dismissible
       color="success"
-      border="left"
+      border="start"
       elevation="2"
       colored-border
       icon="mdi-check"
@@ -16,7 +16,7 @@
       v-model="error"
       dismissible
       color="error"
-      border="left"
+      border="start"
       elevation="2"
       colored-border
       icon="mdi-alert-outline"
@@ -27,57 +27,64 @@
     <v-row>
       <v-col>
         <product-user-permission
+          ref="userPermission"
+          v-model:success="success"
+          v-model:error="error"
           :permissions="permissions"
           :auth-rights="userAuthRights"
-          :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="false"
-          :success.sync="success"
-          :error.sync="error"
+          @update:auth-rights="userAuthRights = $event"
         />
       </v-col>
       <v-col>
         <product-group-permission
+          ref="groupPermission"
+          v-model:success="success"
+          v-model:error="error"
           :permissions="permissions"
           :auth-rights="groupAuthRights"
-          :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="true"
-          :success.sync="success"
-          :error.sync="error"
+          @update:auth-rights="groupAuthRights = $event"
         />
       </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script>
-import PopulatePermissionsMixin from "./PopulatePermissions.mixin";
-import ProductUserPermission from "./ProductUserPermission";
+<script setup>
+import { onMounted, ref } from "vue";
+
+import { usePopulatePermissions } from "@/composables/usePopulatePermissions";
+
 import ProductGroupPermission from "./ProductGroupPermission";
+import ProductUserPermission from "./ProductUserPermission";
 
-export default {
-  name: "EditProductPermission",
-  components: {
-    ProductUserPermission,
-    ProductGroupPermission
-  },
-  mixins: [ PopulatePermissionsMixin ],
-  props: {
-    bus: { type: Object, required: true },
-  },
+const success = ref(false);
+const error = ref(false);
+const scope = ref("SYSTEM");
+const extraParamsJSON = ref(JSON.stringify({}));
+const userPermission = ref(null);
+const groupPermission = ref(null);
 
-  data() {
-    return {
-      scope: "SYSTEM",
-      extraParamsJSON: JSON.stringify({}),
-      success: false,
-      error: false
-    };
-  },
+const {
+  populatePermissions,
+  userAuthRights,
+  groupAuthRights,
+  permissions
+} = usePopulatePermissions();
 
-  mounted() {
-    this.populatePermissions(this.scope, this.extraParamsJSON);
-  }
-};
+onMounted(() => {
+  populatePermissions(scope.value, extraParamsJSON.value);
+});
+
+function saveAll() {
+  userPermission.value?.saveAll();
+  groupPermission.value?.saveAll();
+}
+
+defineExpose({
+  saveAll
+});
 </script>

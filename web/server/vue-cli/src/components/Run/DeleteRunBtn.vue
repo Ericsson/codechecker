@@ -1,5 +1,5 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     content-class="delete-run-dialog"
     max-width="600px"
@@ -7,15 +7,16 @@
     confirm-btn-label="Remove"
     confirm-btn-color="error"
     :confirm-in-progress="removingInProgress"
+    title="Confirm deletion of runs"
     @confirm="confirmDelete"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-btn
+        v-bind="activatorProps"
         color="error"
         class="delete-run-btn mr-2"
-        outlined
+        :variant="variant"
         :disabled="!selected.length"
-        v-on="on"
       >
         <v-icon left>
           mdi-trash-can-outline
@@ -24,63 +25,52 @@
       </v-btn>
     </template>
 
-    <template v-slot:title>
-      Confirm deletion of runs
-    </template>
-
     <template v-slot:content>
       Are you sure? The following runs will be removed:
       <v-chip
         v-for="item in selected"
         :key="item.name"
-        outlined
+        variant="outlined"
         color="error"
         class="mr-2 mb-2"
       >
         {{ item.name }}
       </v-chip>
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { RunFilter } from "@cc/report-server-types";
+import { ref } from "vue";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-export default {
-  name: "DeleteRunBtn",
-  components: {
-    ConfirmDialog
-  },
-  props: {
-    selected: { type: Array, required: true }
-  },
-  data() {
-    return {
-      dialog: false,
-      removingInProgress: false,
-    };
-  },
+const props = defineProps({
+  selected: { type: Array, required: true },
+  variant: { type: String, default: "solo" }
+});
 
-  methods: {
-    confirmDelete() {
-      this.removingInProgress = true;
+const emit = defineEmits([ "on-confirm", "delete-complete" ]);
 
-      const runFilter = new RunFilter({
-        ids: this.selected.map(run => run.runId)
-      });
+const dialog = ref(false);
+const removingInProgress = ref(false);
 
-      ccService.getClient().removeRun(null, runFilter,
-        handleThriftError(() => {
-          this.selected.splice(0, this.selected.length);
-          this.dialog = false;
+function confirmDelete() {
+  removingInProgress.value = true;
 
-          this.$emit("on-confirm");
-          this.removingInProgres = false;
-        }));
-    }
-  }
-};
+  const _runFilter = new RunFilter({
+    ids: props.selected.map(run => run.runId)
+  });
+
+  ccService.getClient().removeRun(null, _runFilter,
+    handleThriftError(() => {
+      dialog.value = false;
+
+      emit("on-confirm");
+      emit("delete-complete");
+      removingInProgress.value = false;
+    }));
+}
 </script>

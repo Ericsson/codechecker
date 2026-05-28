@@ -10,7 +10,7 @@ const commands = {
     return this
       .click(`th:nth-child(${column})`)
       .waitForProgressBarNotPresent()
-      .getTableRows("@tableRows", (data) => {
+      .getTableRows("@tableRows", data => {
         this.api.assert.ok(isSorted(data), "reports are not sorted");
       });
   }
@@ -48,7 +48,7 @@ const menuCommands = {
   }
 };
 
-const createOptionFilterSection = (selector) => {
+const createOptionFilterSection = selector => {
   return {
     selector,
     elements: {
@@ -61,7 +61,7 @@ const createOptionFilterSection = (selector) => {
   };
 };
 
-const createRunFilterSection = (selector) => {
+const createRunFilterSection = selector => {
   return {
     selector,
     elements: {
@@ -74,7 +74,7 @@ const createRunFilterSection = (selector) => {
   };
 };
 
-const createDateRageFilterSection = (selector) => {
+const createDateRageFilterSection = selector => {
   return {
     selector,
     elements: {
@@ -88,7 +88,7 @@ const createDateRageFilterSection = (selector) => {
   };
 };
 
-const createOpenReportsDateFilterSection = (selector) => {
+const createOpenReportsDateFilterSection = selector => {
   return {
     selector,
     elements: {

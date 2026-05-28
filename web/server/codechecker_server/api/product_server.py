@@ -23,7 +23,8 @@ import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import path_for_fake_root
+from codechecker_common.util import is_valid_postgresql_db_name, \
+    path_for_fake_root
 
 from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
@@ -367,7 +368,10 @@ class ThriftProductHandler:
             with engine.connect() as conn:
                 conn.execute(text("commit"))
                 LOG.info("Creating database '%s'", db_name)
-                conn.execute(text(f"CREATE DATABASE {db_name}"))
+                quoted_db_name = engine.dialect.identifier_preparer \
+                    .quote_identifier(db_name)
+                conn.execute(
+                    text(f"CREATE DATABASE {quoted_db_name}"))
                 conn.close()
         except exc.ProgrammingError as e:
             LOG.error("ProgrammingError occurred: %s", str(e))
@@ -408,6 +412,19 @@ class ThriftProductHandler:
             LOG.error(msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                msg)
+
+        if dbc.engine == 'postgresql' \
+                and not is_valid_postgresql_db_name(dbc.database):
+            msg = (
+                f"The specified PostgreSQL database name "
+                f"'{dbc.database}' contains characters that are "
+                "not allowed (quotes, semicolons, whitespace, or "
+                "control characters), or is empty, or exceeds "
+                "PostgreSQL's 63-byte identifier limit.")
+            LOG.error(msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 msg)
 
         if self.__server.get_product(product.endpoint):

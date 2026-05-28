@@ -1,5 +1,5 @@
-import { 
-  DetectionStatus, 
+import {
+  DetectionStatus,
   Severity
 } from "@cc/report-server-types";
 

@@ -13,13 +13,19 @@ if (!Error.captureStackTrace) {
 import "@mdi/font/css/materialdesignicons.css";
 import "splitpanes/dist/splitpanes.css";
 
-import Chart from "chart.js";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import { defaults } from "chart.js";
 
-Chart.plugins.unregister(ChartDataLabels);
+defaults.plugins.datalabels = false;
 
-import Vue from "vue";
-import vuetify from "@/plugins/vuetify";
+import { createApp } from "vue";
+
+import "vuetify/styles";
+import { createVuetify } from "vuetify";
+import * as components from "vuetify/components";
+import * as directives from "vuetify/directives";
+import { aliases, mdi } from "vuetify/iconsets/mdi";
+
+import App from "./App.vue";
 
 import {
   GET_AUTH_PARAMS,
@@ -29,17 +35,22 @@ import {
 import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
+import fromUnixTime from "./filters/from-unix-time";
+import prettifyDate from "./filters/prettify-date";
+import truncate from "./filters/truncate";
+
 import router from "./router";
 import store from "./store";
-import filters from "./filters";
 
-Vue.use(filters);
+const app = createApp(App);
 
-import App from "./App.vue";
+app.config.globalProperties.$filters = {
+  fromUnixTime,
+  prettifyDate,
+  truncate
+};
 
 import { eventHub } from "@cc-api";
-
-Vue.config.productionTip = false;
 
 let isFirstRouterResolve = true;
 
@@ -49,7 +60,9 @@ router.beforeResolve((to, from, next) => {
   if (from.params.endpoint === undefined ||
       to.params.endpoint !== from.params.endpoint
   ) {
-    eventHub.$emit("update", to.params.endpoint);
+    eventHub.dispatchEvent(
+      new CustomEvent("update", { detail: to.params.endpoint })
+    );
   }
 
   // To be backward compatible with the old UI url format we will convert old
@@ -104,9 +117,36 @@ router.afterEach(to => {
   store.commit(SET_QUERIES, { location: query_namespace, query: to.query });
 });
 
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: h => h(App),
-}).$mount("#app");
+const vuetify = createVuetify({
+  components,
+  directives,
+  icons: {
+    defaultSet: "mdi",
+    aliases,
+    sets: {
+      mdi,
+    },
+  },
+  theme: {
+    defaultTheme: "light",
+    themes: {
+      light: {
+        colors: {
+          primary: "#2280c3",
+          secondary: "#2c87c7",
+          accent: "#009688",
+          error: "#f44336",
+          warning: "#ff9800",
+          info: "#3f51b5",
+          success: "#4caf50",
+          grey: "#9E9E9E"
+        }
+      }
+    }
+  }
+});
+
+app.use(router);
+app.use(store);
+app.use(vuetify);
+app.mount("#app");

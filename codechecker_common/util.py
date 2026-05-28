@@ -251,3 +251,26 @@ def format_size(num: float, suffix: str = 'B') -> str:
             return f"{num:3.1f} {unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f} Qi{suffix}"
+
+
+def is_valid_postgresql_db_name(db_name):
+    """
+    Returns whether or not the given string is a safe PostgreSQL database
+    name for CodeChecker to use.
+
+    CodeChecker quotes the database identifier when issuing CREATE DATABASE,
+    so dashes, leading digits, and PostgreSQL reserved keywords are all
+    allowed. However, characters that would break even a quoted
+    identifier, or that are
+    plainly dangerous in an SQL context, are rejected here so we fail fast
+    with a clear error rather than producing broken SQL or an unusable
+    product.
+    """
+    if not db_name or not isinstance(db_name, str):
+        return False
+
+    if len(db_name.encode('utf-8')) > 63:
+        return False
+
+    forbidden = set('"\'\\;\x00\r\n\t ')
+    return not any(c in forbidden for c in db_name)

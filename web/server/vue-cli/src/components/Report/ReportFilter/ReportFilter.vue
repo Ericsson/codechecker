@@ -1,240 +1,281 @@
 <template>
-  <div>
-    <!--
-      'refs' becomes an Array if used inside a v-for. This is the reason
-      why we use this
-    -->
-    <v-list
-      v-for="i in 1"
-      :key="i"
-      dense
-      flat
-      tile
-      elevation="0"
-    >
-      <v-list-item class="pl-1">
-        <v-list-item-content class="mr-5">
-          <clear-all-filters
-            :namespace="namespace"
-            @clear="clearAllFilters"
-          />
-        </v-list-item-content>
-        <v-list-item-avatar :style="{width: 'auto'}">
-          <report-count :value="reportCount" />
-        </v-list-item-avatar>
-      </v-list-item>
+  <v-dialog
+    v-model="savePresetDialogOpen"
+    max-width="420"
+  >
+    <v-card>
+      <v-card-title>
+        {{ saveDialogTitle }}
+      </v-card-title>
 
-      <v-divider />
+      <v-card-text>
+        <v-text-field
+          v-model="presetName"
+          label="Preset name"
+          autofocus
+          variant="outlined"
+          clearable
+        />
+      </v-card-text>
 
-      <!-- PresetMenu component -->
-      <v-list-item class="pl-1">
-        <v-list-item-content>
-          <preset-menu
-            ref="FilterMenu"
-            @apply-preset="getFilterPreset"
-            @clear-preset="clearAllFilters"
-          />
-        </v-list-item-content>
+      <v-card-actions>
+        <v-spacer />
 
         <v-btn
-          v-if="canSeeActions && !$refs.FilterMenu[0].isModified"
-          class="ml-4"
+          text
+          @click="savePresetDialogOpen = false"
+        >
+          Cancel
+        </v-btn>
+
+        <v-btn
           color="primary"
-          @click="saveMode = 'create'; open_preset_save = true"
+          :disabled="!presetName"
+          @click="saveCurrentFilter(saveMode)"
+        >
+          Save
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <div>
+    <div 
+      class="mt-2 mb-2 d-flex align-center justify-space-between w-100 p-1"
+    >
+      <ClearAllFilters
+        :namespace="namespace"
+        @clear="clearAllFilters"
+      />
+      <ReportCount :value="reportCount" />
+    </div>
+
+    <v-divider />
+
+    <!-- PresetMenu component -->
+    <v-list-item class="pl-1">
+      <span
+        class="
+          text-body-2
+          font-weight-semibold
+          mr-2
+          text-truncate"
+      >Filter Preset</span>
+      <tooltip-help-icon
+        class="mr-2"
+      >
+        <b>Filter Presets</b> enables saving and reloading predefined report
+        filter configurations.
+        <br>
+        <ul>
+          <li>
+            <b>Create preset</b>: Creates a new preset based on the
+            current report filter configuration.
+          </li>
+          <li>
+            <b>Override preset</b>: Overrides the currently selected preset
+            with the modified report filter configuration.
+          </li>
+          <li>
+            <b>Create as new</b>: Saves the current report filter configuration
+            as a new filter preset.
+          </li>
+        </ul>
+        <br>
+        <i>Note: Overriding and creating as new are available if a filter
+          preset is selected and the report filter configuration is
+          modified.
+        </i>
+      </tooltip-help-icon>
+      <preset-menu
+        ref="presetMenuRef"
+        @apply-preset="getFilterPreset"
+        @clear-preset="clearAllFilters"
+      />
+
+      <div
+        v-if="canSeeActions && !presetMenuRef?.isModified"
+        class="d-flex flex-column mb-2 mt-2"
+      >
+        <v-btn
+          color="primary"
+          @click="createPreset"
         >
           Create Preset
         </v-btn>
-        <v-dialog v-model="open_preset_save" max-width="420">
-          <v-card>
-            <v-card-title>
-              {{ saveDialogTitle }}
-            </v-card-title>
-
-            <v-card-text>
-              <v-text-field
-                v-model="presetName"
-                label="Preset name"
-                autofocus
-                outlined
-                clearable
-              />
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer />
-
-              <v-btn text @click="open_preset_save = false">
-                Cancel
-              </v-btn>
-
-              <v-btn
-                color="primary"
-                :disabled="!presetName"
-                @click="saveCurrentFilter(saveMode)"
-              >
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <div
-          v-if="canSeeActions && $refs.FilterMenu[0].isModified"
-          class="d-flex flex-column ml-4 mt-6"
+      </div>
+      <div
+        v-if="canSeeActions && presetMenuRef?.isModified"
+        class="d-flex flex-column mb-2 mt-2"
+      >
+        <v-btn
+          color="primary"
+          class="mb-2"
+          @click="overridePreset"
         >
-          <v-btn
-            color="primary"
-            class="mb-2"
-            @click="saveMode = 'override';
-                    open_preset_save = true;
-                    presetName = $refs.FilterMenu[0].activePresetName"
-          >
-            Override Preset
-          </v-btn>
-          <v-btn
-            color="primary"
-            @click="saveMode = 'createNew'; open_preset_save = true"
-          >
-            Create as new
-          </v-btn>
-        </div>
-      </v-list-item>
+          Override Preset
+        </v-btn>
+        <v-btn
+          color="primary"
+          @click="cratePresetAsNew"
+        >
+          Create as new
+        </v-btn>
+      </div>
+    </v-list-item>
 
-      <v-list-item class="unique-filter pl-1">
-        <v-list-item-content>
-          <unique-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
+    <v-divider />
 
-      <v-list-item id="baseline-filters" class="pl-0">
-        <v-list-item-content class="pa-0">
-          <v-expansion-panels
-            v-model="activeBaselinePanelId"
-            hover
-          >
-            <v-expansion-panel>
-              <v-expansion-panel-header
-                class="pa-0 px-1 primary--text"
-              >
-                <header>
-                  <b>BASELINE</b>
-                </header>
-              </v-expansion-panel-header>
-              <v-expansion-panel-content class="pa-1">
-                <baseline-run-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
+    <div>
+      <unique-filter
+        :ref="setFilterRef"
+        :namespace="namespace"
+        @update:url="updateUrl"
+      />
+    </div>
 
-                <v-divider />
+    <v-divider />
 
-                <baseline-open-reports-date-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-list-item-content>
+    <v-list
+      density="compact"
+      :border="false"
+      :rounded="false"
+      elevation="0"
+    >
+      <v-list-item class="pl-0 border-sm border-solid border-opacity">
+        <v-expansion-panels
+          v-model="activeBaselinePanelId"
+          eager
+        >
+          <v-expansion-panel>
+            <v-expansion-panel-title
+              class="pa-0"
+              hide-actions
+            >
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>BASELINE</b></span>
+                <v-spacer />
+              </template>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text class="pa-1">
+              <baseline-run-filter
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
+
+              <v-divider class="mt-2" />
+
+              <baseline-open-reports-date-filter
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
       </v-list-item>
 
       <v-list-item
         v-if="showCompareTo"
-        id="compare-to-filters"
-        class="pl-0"
+        class="pl-0 border-sm border-solid border-opacity border-t-0"
       >
-        <v-list-item-content class="pa-0">
-          <v-expansion-panels
-            v-model="activeCompareToPanelId"
-            hover
-          >
-            <v-expansion-panel>
-              <v-expansion-panel-header
-                class="pa-0 px-1 primary--text"
-              >
-                <header>
-                  <b>COMPARE TO</b>
-                </header>
-              </v-expansion-panel-header>
-              <v-expansion-panel-content class="pa-1">
-                <compared-to-run-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
+        <v-expansion-panels
+          v-model="activeCompareToPanelId"
+          hover
+          eager
+        >
+          <v-expansion-panel>
+            <v-expansion-panel-title
+              class="pa-0"
+              hide-actions
+            >
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>COMPARE TO</b></span>
+                <v-spacer />
+              </template>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text class="pa-1">
+              <compared-to-run-filter
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
 
-                <v-divider />
+              <v-divider class="mt-2" />
 
-                <compared-to-open-reports-date-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
+              <compared-to-open-reports-date-filter
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
 
-                <v-divider v-if="showDiffType" />
+              <v-divider v-if="showDiffType" class="mt-2" />
 
-                <compared-to-diff-type-filter
-                  v-if="showDiffType"
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-list-item-content>
+              <compared-to-diff-type-filter
+                v-if="showDiffType"
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
       </v-list-item>
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <file-path-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-divider />
-
-      <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <checker-name-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <file-path-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <severity-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <checker-name-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <report-status-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <severity-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
+      </v-list-item>
+
+      <v-divider />
+
+      <v-list-item class="pl-1">
+        <report-status-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider v-if="showReviewStatus" />
@@ -243,164 +284,167 @@
         v-if="showReviewStatus"
         class="pl-1"
       >
-        <v-list-item-content class="pa-0">
-          <review-status-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <review-status-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <detection-status-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <detection-status-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <analyzer-name-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <analyzer-name-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <source-component-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <source-component-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <cleanup-plan-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <cleanup-plan-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <checker-message-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <checker-message-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
-      <v-list-item id="date-filters" class="pl-0">
-        <v-list-item-content class="pa-0">
-          <v-expansion-panels v-model="activeDatePanelId" hover>
-            <v-expansion-panel>
-              <v-expansion-panel-header
-                class="pa-0 px-1"
-              >
-                <header>
-                  <b>Dates</b>
-                </header>
-              </v-expansion-panel-header>
-              <v-expansion-panel-content class="pa-1">
-                <detection-date-filter
-                  id="detection-date-filter"
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
+      <v-list-item class="pl-0 border-sm border-solid border-opacity">
+        <v-expansion-panels
+          v-model="activeDatePanelId"
+          hover
+          eager
+        >
+          <v-expansion-panel>
+            <v-expansion-panel-title
+              class="pa-0"
+              hide-actions
+            >
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>Dates</b></span>
+                <v-spacer />
+              </template>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text class="pa-1">
+              <detection-date-filter
+                id="detection-date-filter"
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
 
-                <v-divider class="mt-2" />
+              <v-divider class="mt-2" />
 
-                <fix-date-filter
-                  id="fix-date-filter"
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </v-list-item-content>
+              <fix-date-filter
+                id="fix-date-filter"
+                :ref="setFilterRef"
+                :namespace="namespace"
+                @update:url="updateUrl"
+              />
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
       </v-list-item>
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <report-hash-filter
-            id="report-hash-filter"
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <report-hash-filter
+          id="report-hash-filter"
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <bug-path-length-filter
-            id="bug-path-length-filter"
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
+        <bug-path-length-filter
+          id="bug-path-length-filter"
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
 
       <v-divider />
 
       <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <testcase-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-divider v-if="showRemoveFilteredReports" />
-
-      <v-list-item
-        v-if="showRemoveFilteredReports"
-        class="pl-1"
-      >
-        <v-list-item-content>
-          <remove-filtered-reports
-            class="mt-4"
-            :namespace="namespace"
-            @update="updateAllFilters"
-          />
-        </v-list-item-content>
+        <testcase-filter
+          :ref="setFilterRef"
+          :namespace="namespace"
+          @update:url="updateUrl"
+        />
       </v-list-item>
     </v-list>
+
+    <v-divider v-if="showRemoveFilteredReports" />
+
+    <div
+      v-if="showRemoveFilteredReports"
+      class="mt-2 mb-2 d-flex align-center justify-center w-100 p-1"
+    >
+      <remove-filtered-reports
+        class="mt-4 w-100"
+        :namespace="namespace"
+        @update="updateAllFilters"
+      />
+    </div>
   </div>
 </template>
 
-<script>
-import { mapState } from "vuex";
+<script setup>
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  toRef,
+  watch
+} from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 import {
   AnalyzerNameFilter,
@@ -426,10 +470,13 @@ import {
   UniqueFilter
 } from "./Filters";
 
+import { useBaseFilter } from "@/composables/useBaseFilter";
+
 import ClearAllFilters from "./ClearAllFilters";
 import RemoveFilteredReports from "./RemoveFilteredReports";
 import ReportCount from "./ReportCount";
 import PresetMenu from "./Filters/PresetMenu.vue";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import {
   authService,
   ccService,
@@ -437,561 +484,561 @@ import {
   prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
 
-export default {
-  name: "ReportFilter",
-  components: {
-    AnalyzerNameFilter,
-    PresetMenu,
-    ClearAllFilters,
-    ReportCount,
-    UniqueFilter,
-    ReportHashFilter,
-    BaselineRunFilter,
-    BaselineOpenReportsDateFilter,
-    CleanupPlanFilter,
-    ComparedToDiffTypeFilter,
-    ComparedToOpenReportsDateFilter,
-    ComparedToRunFilter,
-    ReviewStatusFilter,
-    DetectionStatusFilter,
-    SeverityFilter,
-    DetectionDateFilter,
-    FilePathFilter,
-    FixDateFilter,
-    SourceComponentFilter,
-    CheckerNameFilter,
-    CheckerMessageFilter,
-    RemoveFilteredReports,
-    BugPathLengthFilter,
-    TestcaseFilter,
-    ReportStatusFilter
-  },
-  props: {
-    namespace: { type: String, required: true },
-    showCompareTo: { type: Boolean, default: true },
-    showReviewStatus: { type: Boolean, default: true },
-    showRemoveFilteredReports: { type: Boolean, default: true },
-    showDiffType: { type: Boolean, default: true },
-    reportCount: { type: Number, required: true },
-    refreshFilter: { type: Boolean, default: false }
-  },
-
-  data() {
-    return {
-      activeBaselinePanelId: 0,
-      activeCompareToPanelId: 0,
-      activeDatePanelId: 0,
-      open_preset_save: false,
-      saveMode: "create",
-      presetName: "",
-      isSuperUser: false,
-      isAdminOfAnyProduct: false,
-    };
-  },
-
-  computed: {
-    ...mapState({
-      reportFilter(state) {
-        return state[this.namespace].reportFilter;
-      },
-      cmpData(state) {
-        return state[this.namespace].cmpData;
-      }
-    }),
-    canSeeActions() {
-      return this.isSuperUser || this.isAdminOfAnyProduct;
-    },
-    saveDialogTitle() {
-      const titles = {
-        create: "Create new preset",
-        override: "Override existing preset",
-        createNew: "Save as new preset",
-      };
-      return titles[this.saveMode] || "Save filter preset";
-    }
-  },
-
-  watch: {
-    refreshFilter(state) {
-      if (!state) return;
-
-      this.initByUrl();
-      this.$emit("set-refresh-filter-state", false);
-    }
-  },
-
-  created() {
-    authService.getClient().hasPermission(
-      Permission.SUPERUSER,
-      "",
-      handleThriftError(isSuperUser => {
-        this.isSuperUser = isSuperUser;
-
-        if (!isSuperUser) {
-          prodService.getClient().isAdministratorOfAnyProduct(
-            handleThriftError(isAdmin => {
-              this.isAdminOfAnyProduct = isAdmin;
-            })
-          );
-        }
-      })
-    );
-  },
-
-
-
-  mounted() {
-    this.initByUrl();
-  },
-
-  beforeDestroy() {
-    this.unregisterWatchers();
-
-    const filters = this.$refs.filters;
-    filters.forEach(filter => filter.unregisterWatchers());
-  },
-
-  methods: {
-    beforeInit() {
-      this.unregisterWatchers();
-    },
-
-    afterInit() {
-      this.$emit("refresh");
-      this.registerWatchers();
-    },
-
-    updateUrl() {
-      const filters = this.$refs.filters;
-      const states = filters.map(filter => filter.getUrlState());
-
-      const queryParams = Object.assign({}, this.$route.query, ...states);
-      return this.$router.replace({ query: queryParams }).catch(() => {});
-    },
-
-    registerWatchers() {
-      this.unregisterWatchers();
-
-      this.reportFilterUnwatch = this.$store.watch(
-        state => state[this.namespace].reportFilter, () => {
-          this.$emit("refresh");
-        }, { deep: true });
-
-      this.runIdsUnwatch = this.$store.watch(
-        state => state[this.namespace].runIds, () => {
-          this.$emit("refresh");
-        });
-
-      this.cmpDataUnwatch = this.$store.watch(
-        state => state[this.namespace].cmpData, () => {
-          this.$emit("refresh");
-        }, { deep: true });
-    },
-
-    unregisterWatchers() {
-      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-      if (this.runIdsUnwatch) this.runIdsUnwatch();
-      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
-    },
-
-    initByUrl() {
-      const filters = this.$refs.filters;
-
-      // Before init.
-      this.beforeInit();
-      filters.forEach(filter => filter.beforeInit());
-
-      // Init all filters by URL parameters.
-      const results = filters.map(filter => {
-        return filter.initByUrl();
-      });
-
-      // If all filters are initalized call a post function.
-      return Promise.all(results).then(() => {
-        filters.forEach(filter => filter.afterInit());
-        this.afterInit();
-
-        // Close COMPARE TO expansion panel if no compare data is set.
-        if (!this.cmpData?.runIds && !this.cmpData?.runTag &&
-            !this.cmpData?.openReportsDate
-        ) {
-          this.activeCompareToPanelId = -1;
-        }
-
-        this.closePanelsOnInit();
-      });
-    },
-
-    closePanelsOnInit() {
-      // Close NEWCHECK expansion panel if no compare data is set.
-      if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
-        this.activeNewcheckPanelId = -1;
-      }
-
-      // Close Dates expansion panel if no dates are set.
-      if (!this.reportFilter.date) {
-        this.activeDatePanelId = -1;
-      }
-    },
-
-    saveCurrentFilter(mode) {
-      const activePresetId = this.$refs.FilterMenu?.[0]?.activePresetId;
-
-      const preset = {
-        id: mode === "override" && activePresetId
-          ? activePresetId
-          : -1,
-        name: this.presetName,
-        reportFilter: this.reportFilter
-      };
-
-      new Promise(resolve => {
-        ccService.getClient().storeFilterPreset(preset,
-          handleThriftError(result => {
-            resolve(result);
-          })
-        );
-      })
-        .then(result => {
-          this.open_preset_save = false;
-          this.presetName = "";
-          this.$refs.FilterMenu?.[0]?.selectPresetAfterSave(result);
-        }).catch(err => {
-          handleThriftError("FAILURE", err);
-        });
-    },
-    deletePreset(preset_id) {
-      new Promise(resolve => {
-        ccService.getClient().deleteFilterPreset(preset_id,
-          handleThriftError(deleted_pr_id => {
-            resolve(deleted_pr_id);
-          })
-        );
-      })
-        .then(deleted_pr_id => {
-          handleThriftError("OK", deleted_pr_id);
-        }).catch(err => {
-          handleThriftError("FAILURE", err);
-        });
-    },
-
-    async getFilterPreset(preset_id) {
-      if (preset_id == null) {
-        console.warn("getFilterPreset called without preset_id");
-        return;
-      }
-      let filterPreset;
-      try {
-        filterPreset = await new Promise((resolve, reject) => {
-          ccService.getClient().getFilterPreset(preset_id, (err, preset) => {
-            if (err) return reject(err);
-            resolve(preset);
-          });
-        });
-      } catch (err) {
-        handleThriftError("getFilterPreset failed:", err);
-        return;
-      }
-
-      if (preset_id == null) {
-        handleThriftError("getFilterPreset called without preset_id");
-        return;
-      }
-
-      // helper functions
-      function toTitleCase(word) {
-        if (word == null) return "";
-        return String(word)
-          .toLowerCase()
-          .replace(/^\w/, c => c.toUpperCase());
-      }
-      function toEnumNames(value, map) {
-        const normalizeOne = v => {
-          if (v === null || v === undefined || v === "") return "";
-          const n = typeof v === "string" &&
-          v.trim() !== "" ? Number(v) : v;
-          return map?.[n] ?? map?.[v] ?? String(v);
-        };
-
-        if (Array.isArray(value)){
-          return value.map(normalizeOne).filter(Boolean);
-        }
-        return normalizeOne(value);
-      }
-      const toISO = sec => {
-        if (!sec) return "";
-        const d = new Date(sec * 1000);
-        return isNaN(d.getTime()) ? "" : d.toISOString();
-      };
-      const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
-
-      const ENUMS_FOR_STATUSES = {
-        detectionStatus: {
-          0: "NEW",
-          1: "RESOLVED",
-          2: "UNRESOLVED",
-          3: "REOPENED",
-          4: "OFF",
-          5: "UNAVAILABLE",
-        },
-        diffType: {
-          0: "NEW",
-          1: "RESOLVED",
-          2: "UNRESOLVED",
-        },
-        reviewStatus: {
-          0: "UNREVIEWED",
-          1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
-          2: "FALSE POSITIVE", // False_positive -> False positive
-          3: "INTENTIONAL",
-        },
-        severity: {
-          0: "UNSPECIFIED",
-          10: "STYLE",
-          20: "LOW",
-          30: "MEDIUM",
-          40: "HIGH",
-          50: "CRITICAL",
-        },
-        order: {
-          0: "ASC",
-          1: "DESC",
-        },
-        reportStatus: {
-          0: "OUTSTANDING",
-          1: "CLOSED",
-        }
-      };
-
-      const rf = filterPreset?.reportFilter;
-
-      if (!rf || typeof rf !== "object") return;
-
-      const FilterToQuery = {
-        filepath: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "filepath", v ]),
-        checkerMsg: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "checker-msg", v ]),
-        checkerName: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "checker-name", v ]),
-        reportHash: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "report-hash", v ]),
-        severity: (_, rawValue) => {
-          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-          return values
-            .map(v => [
-              "severity",
-              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.severity))
-            ])
-            .filter(([ , val ]) => val !== "");
-        },
-        reviewStatus: (_, rawValue) => {
-          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-          return values
-            .map(v => [
-              "review-status",
-              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reviewStatus))
-            ])
-            .filter(([ , val ]) => val !== "");
-        },
-        detectionStatus: (_, rawValue) => {
-          const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-          return values
-            .map(v => [ "detection-status",
-              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.detectionStatus)) ])
-            .filter(([ , val ]) => val !== "");
-        },
-        runHistoryTag: (_, rawValue) => [ // PTR
-          asArray(rawValue).map(v => [ "run-history-tag", v ]),
-        ],
-        firstDetectionDate: (_, rawValue) => [ //PTR
-          [ "first-detection-date", rawValue || "" ],
-        ],
-        fixDate: (_, rawValue) => [
-          [ "fixed-after", toISO(rawValue?.after) || "" ],
-          [ "fixed-before", toISO(rawValue?.before) || "" ],
-        ],
-        isUnique: (_, rawValue) => [
-          [ "is-unique", rawValue ? "on" : "off" ],
-        ],
-        runName: (_, rawValue) => [ //PTR
-          [ "run", rawValue || "" ],
-        ],
-        runTag: (_, rawValue) => [ //PTR
-          [ "run-tag", rawValue || "" ],
-        ],
-        componentNames: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "source-component", v ]),
-
-        diffType: (_, rawValue) => [
-          [ "diff-type",
-            toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
-        ],
-        bugPathLength: (_, rawValue) => {
-          const toStr = v => (v != null && typeof v.toNumber === "function")
-            ? String(v.toNumber()) : (v != null ? String(v) : "");
-          return [
-            [ "min-bug-path-length", toStr(rawValue?.min) ],
-            [ "max-bug-path-length", toStr(rawValue?.max) ],
-          ];
-        },
-        date: (_, rawValue) => [
-          [ "detected-after",  toISO(rawValue?.detected?.after) ],
-          [ "detected-before", toISO(rawValue?.detected?.before) ],
-          [ "fixed-after",     toISO(rawValue?.fixed?.after) ],
-          [ "fixed-before",    toISO(rawValue?.fixed?.before) ],
-        ],
-        analyzerNames: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "analyzer-name", v ]),
-        openReportsDate: (_, rawValue) => [
-          [ "open-reports-date", toISO(rawValue) || "" ],
-        ],
-        cleanupPlanNames: (_, rawValue) =>
-          asArray(rawValue).map(v => [ "cleanup-plan", v ]),
-        fileMatchesAnyPoint: (_, rawValue) => {
-          if (!rawValue) return [];
-          return [ [ "anywhere-filepath", "true" ] ];
-        },
-        componentMatchesAnyPoint: (_, rawValue) => {
-          if (!rawValue) return [];
-          return [ [ "anywhere-sourcecomponent", "true" ] ];
-        },
-        annotations: (_, rawValue) => {
-          const testcases = Array.isArray(rawValue)
-            ? rawValue
-              .filter(a => a.first === "testcase")
-              .map(a => a.second)
-            : rawValue.first === "testcase"
-              ? [ rawValue.second ]
-              : [];
-          return testcases.map(tc => [ "testcase", tc ]);
-        },
-        reportStatus: (_, rawValue) => {
-          const values = asArray(rawValue);
-          return values
-            .map(v => [ "report-status",
-              toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reportStatus)) ])
-            .filter(([ , val ]) => val !== "");
-        },
-        fullReportPathInComponent: (_, rawValue) => [
-          [ "sameorigin-sourcecomponent", rawValue ? "true" : "false" ],
-        ],
-
-      };
-
-      const presetQueryParams = {};
-
-      for (const [ rawKey, rawValue ] of Object.entries(rf)) {
-        if (rawValue === null || rawValue === undefined || rawValue === ""){
-          continue;
-        }
-
-        const mapper = FilterToQuery[rawKey];
-
-        if (typeof mapper === "string") {
-          presetQueryParams[mapper] = rawValue;
-          continue;
-        }
-
-        if (typeof mapper === "function") {
-          const pairs = mapper(rf, rawValue);
-
-          for (const [ k, v ] of pairs) {
-            if (v === null || v === undefined || v === "") continue;
-
-            if (k in presetQueryParams) {
-              const prev = Array.isArray(presetQueryParams[ k ]) ?
-                presetQueryParams[ k ] : [ presetQueryParams[ k ] ];
-              const next = Array.isArray(v) ? v : [ v ];
-              presetQueryParams[ k ] = [ ...prev, ...next ];
-            } else {
-              presetQueryParams[ k ] = v;
-            }
-          }
-          continue;
-        }
-
-        presetQueryParams[ rawKey ] = rawValue;
-      }
-
-      await this.clearToolbarSilently();
-
-      const nextQuery = { ...presetQueryParams };
-      await this.$router.replace({ query: nextQuery }).catch(() => {});
-
-      await this.initByUrl();
-
-      await this.updateUrl();
-
-      await this.$nextTick();
-
-      if (this.$refs.FilterMenu && this.$refs.FilterMenu[0]) {
-        this.$refs.FilterMenu[0].onPresetApplied({ ...this.$route.query });
-      }
-    },
-
-    async clearToolbarSilently() {
-      const filters = this.$refs.filters;
-      this.unregisterWatchers();
-      filters.forEach(f => f.unregisterWatchers());
-      await Promise.all(filters.map(f => f.clear(false)));
-      this.updateAllFilters();
-    },
-
-    listFilterPreset() {
-      new Promise(resolve => {
-        ccService.getClient().listFilterPreset(
-          handleThriftError(preset_list => {
-            resolve(preset_list);
-          })
-        );
-      })
-        .then(preset_list => {
-          handleThriftError("OK", preset_list);
-        }).catch(err => {
-          handleThriftError("FAILURE", err);
-        });
-    },
-
-    async clearAllFilters() {
-      const filters = this.$refs.filters;
-
-      // Clear preset menu state if exists.
-      this.$refs.FilterMenu[0].clearPresetState();
-
-      // Unregister watchers.
-      this.unregisterWatchers();
-      filters.forEach(filter => filter.unregisterWatchers());
-
-      // Clear all filters and update the url.
-      await Promise.all(filters.map(filter => filter.clear(false)));
-      this.updateUrl();
-
-      // Update filters after clear.
-      this.updateAllFilters();
-
-      // Register watchers.
-      filters.forEach(filter => filter.registerWatchers());
-      this.registerWatchers();
-    },
-
-    updateAllFilters() {
-      const filters = this.$refs.filters;
-      filters.forEach(filter => filter.update() );
-
-      this.$emit("refresh");
-    }
+const props = defineProps({
+  namespace: { type: String, required: true },
+  showCompareTo: { type: Boolean, default: true },
+  showReviewStatus: { type: Boolean, default: true },
+  showRemoveFilteredReports: { type: Boolean, default: true },
+  showDiffType: { type: Boolean, default: true },
+  reportCount: { type: Number, required: true },
+  refreshFilter: { type: Boolean, default: false }
+});
+
+const emit = defineEmits([ "set-refresh-filter-state", "refresh" ]);
+
+const activeBaselinePanelId = ref(0);
+const activeCompareToPanelId = ref(0);
+const activeDatePanelId = ref(0);
+const filters = ref([]);
+const savePresetDialogOpen = ref(false);
+const saveMode = ref("create");
+const presetName = ref("");
+const isSuperUser = ref(false);
+const isAdminOfAnyProduct = ref(false);
+const presetMenuRef = ref(null);
+
+const setFilterRef = el => {
+  if (el && !filters.value.includes(el)) {
+    filters.value.push(el);
   }
 };
+
+const {
+  reportFilterUnwatch,
+  runIdsUnwatch,
+  cmpDataUnwatch
+} = useBaseFilter(toRef(props, "namespace"));
+
+const route = useRoute();
+const router = useRouter();
+const store = useStore();
+
+const reportFilter = computed(() => store.state[props.namespace].reportFilter);
+const canSeeActions = computed(() => {
+  return isSuperUser.value || isAdminOfAnyProduct.value;
+});
+const saveDialogTitle = computed(() => {
+  const titles = {
+    create: "Create new preset",
+    override: "Override existing preset",
+    createNew: "Save as new preset",
+  };
+  return titles[saveMode.value] || "Save filter preset";
+});
+
+watch(() => props.refreshFilter, state => {
+  if (!state) return;
+  
+  initByUrl();
+  emit("set-refresh-filter-state", false);
+});
+
+onMounted(() => {
+  nextTick(() => {
+    initByUrl();
+  });
+
+  authService.getClient().hasPermission(
+    Permission.SUPERUSER,
+    "",
+    handleThriftError(_isSuperUser => {
+      isSuperUser.value = _isSuperUser;
+
+      if (!isSuperUser.value) {
+        prodService.getClient().isAdministratorOfAnyProduct(
+          handleThriftError(_isAdminOfAnyProduct => {
+            isAdminOfAnyProduct.value = _isAdminOfAnyProduct;
+          })
+        );
+      }
+    })
+  );
+});
+
+function beforeInit() {
+  unregisterWatchers();
+}
+
+function afterInit() {
+  emit("refresh");
+  registerWatchers();
+}
+
+function updateUrl() {
+  const _filters = filters.value;
+
+  if (!_filters?.length) {
+    return;
+  };
+
+  const _states = _filters
+    .filter(filter => filter?.getUrlState)
+    .map(filter => filter?.getUrlState?.());
+
+  const _queryParams = Object.assign({}, route.query, ..._states);
+  router.replace({ query: _queryParams }).catch(() => {});
+}
+
+function registerWatchers() {
+  unregisterWatchers();
+
+  reportFilterUnwatch.value = store.watch(
+    state => state[props.namespace].reportFilter, () => {
+      emit("refresh");
+    }, { deep: true });
+
+  runIdsUnwatch.value = store.watch(
+    state => state[props.namespace].runIds, () => {
+      emit("refresh");
+    });
+
+  cmpDataUnwatch.value = store.watch(
+    state => state[props.namespace].cmpData, () => {
+      emit("refresh");
+    }, { deep: true });
+}
+
+function unregisterWatchers() {
+  if (reportFilterUnwatch.value) reportFilterUnwatch.value();
+  if (runIdsUnwatch.value) runIdsUnwatch.value();
+  if (cmpDataUnwatch.value) cmpDataUnwatch.value();
+}
+
+function initByUrl() {
+  const _filters = filters.value;
+  if (!_filters?.length) {
+    return;
+  };
+
+  // Before init.
+  beforeInit();
+  _filters.forEach(filter => {
+    if (filter?.beforeInit) filter?.beforeInit?.();
+  });
+
+  // Init all filters by URL parameters.
+  const _results = _filters
+    .filter(filter => filter?.initByUrl)
+    .map(filter => filter?.initByUrl?.());
+
+  // If all filters are initalized call a post function.
+  Promise.all(_results).then(() => {
+    _filters.forEach(filter => {
+      if (filter?.afterInit) filter?.afterInit?.();
+    });
+    afterInit();
+
+    preparePanelsOnInit();
+  });
+}
+
+function preparePanelsOnInit() {
+  if (!reportFilter.value.date) {
+    activeDatePanelId.value = undefined;
+  }
+}
+
+async function clearAllFilters() {
+  const _filters = filters.value;
+  if (!_filters?.length) return;
+
+  presetMenuRef.value.clearPresetState();
+
+  // Unregister watchers.
+  unregisterWatchers();
+  _filters.forEach(filter => filter?.unregisterWatchers?.());
+
+  // Clear all filters and update the url.
+  await Promise.all(_filters.map(filter => filter?.clear?.(false)));
+  updateUrl();
+
+  // Update filters after clear.
+  updateAllFilters();
+
+  // Register watchers.
+  _filters.forEach(filter => filter?.registerWatchers?.());
+  registerWatchers();
+}
+
+function updateAllFilters() {
+  const _filters = filters.value;
+  if (!_filters?.length) return;
+
+  _filters.forEach(filter => filter?.update?.() );
+
+  emit("refresh");
+}
+
+onBeforeUnmount(() => {
+  unregisterWatchers();
+
+  const _filters = filters.value;
+  if (_filters?.length) {
+    _filters.forEach(filter => filter?.unregisterWatchers?.());
+  }
+});
+
+function saveCurrentFilter(mode) {
+  const activePresetId = presetMenuRef.value?.activePresetId;
+
+  const preset = {
+    id: mode === "override" && activePresetId
+      ? activePresetId
+      : -1,
+    name: presetName.value,
+    reportFilter: reportFilter.value
+  };
+
+  new Promise(
+    resolve => {
+      ccService.getClient().storeFilterPreset(preset,
+        handleThriftError(result => {
+          resolve(result);
+        })
+      );
+    })
+    .then(
+      result => {
+        savePresetDialogOpen.value = false;
+        presetName.value = "";
+        presetMenuRef.value?.selectPresetAfterSave(result);
+      }
+    ).catch(
+      err => {
+        handleThriftError("FAILURE", err);
+      }
+    );
+}
+
+function overridePreset() {
+  saveMode.value = "override";
+  savePresetDialogOpen.value = true;
+  presetName.value = presetMenuRef.value.activePresetName;
+}
+
+function cratePresetAsNew() {
+  saveMode.value = "createNew";
+  savePresetDialogOpen.value = true;
+}
+
+function createPreset() {
+  saveMode.value = "create";
+  savePresetDialogOpen.value = true;
+}
+
+/*function deletePreset(preset_id) {
+  new Promise(resolve => {
+    ccService.getClient().deleteFilterPreset(preset_id,
+      handleThriftError(deleted_pr_id => {
+        resolve(deleted_pr_id);
+      })
+    );
+  })
+    .then(deleted_pr_id => {
+      handleThriftError("OK", deleted_pr_id);
+    }).catch(err => {
+      handleThriftError("FAILURE", err);
+    });
+}*/
+
+async function getFilterPreset(preset_id) {
+  if (preset_id == null) {
+    console.warn("getFilterPreset called without preset_id");
+    return;
+  }
+
+  let filterPreset;
+  try {
+    filterPreset = await new Promise((resolve, reject) => {
+      ccService.getClient().getFilterPreset(preset_id, (err, preset) => {
+        if (err) return reject(err);
+        resolve(preset);
+      });
+    });
+  } catch (err) {
+    handleThriftError("getFilterPreset failed:", err);
+    return;
+  }
+
+  // helper functions
+  function toTitleCase(word) {
+    if (word == null) return "";
+    return String(word)
+      .toLowerCase()
+      .replace(/^\w/, c => c.toUpperCase());
+  }
+  function toEnumNames(value, map) {
+    const normalizeOne = v => {
+      if (v === null || v === undefined || v === "") return "";
+      const n = typeof v === "string" &&
+      v.trim() !== "" ? Number(v) : v;
+      return map?.[n] ?? map?.[v] ?? String(v);
+    };
+
+    if (Array.isArray(value)){
+      return value.map(normalizeOne).filter(Boolean);
+    }
+    return normalizeOne(value);
+  }
+  const toISO = sec => {
+    if (!sec) return "";
+    const d = new Date(sec * 1000);
+    return isNaN(d.getTime()) ? "" : d.toISOString();
+  };
+  const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
+
+  const ENUMS_FOR_STATUSES = {
+    detectionStatus: {
+      0: "NEW",
+      1: "RESOLVED",
+      2: "UNRESOLVED",
+      3: "REOPENED",
+      4: "OFF",
+      5: "UNAVAILABLE",
+    },
+    diffType: {
+      0: "NEW",
+      1: "RESOLVED",
+      2: "UNRESOLVED",
+    },
+    reviewStatus: {
+      0: "UNREVIEWED",
+      1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
+      2: "FALSE POSITIVE", // False_positive -> False positive
+      3: "INTENTIONAL",
+    },
+    severity: {
+      0: "UNSPECIFIED",
+      10: "STYLE",
+      20: "LOW",
+      30: "MEDIUM",
+      40: "HIGH",
+      50: "CRITICAL",
+    },
+    order: {
+      0: "ASC",
+      1: "DESC",
+    },
+    reportStatus: {
+      0: "OUTSTANDING",
+      1: "CLOSED",
+    }
+  };
+
+  const rf = filterPreset?.reportFilter;
+
+  if (!rf || typeof rf !== "object") return;
+
+  const FilterToQuery = {
+    filepath: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "filepath", v ]),
+    checkerMsg: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "checker-msg", v ]),
+    checkerName: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "checker-name", v ]),
+    reportHash: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "report-hash", v ]),
+    severity: (_, rawValue) => {
+      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+      return values
+        .map(v => [
+          "severity",
+          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.severity))
+        ])
+        .filter(([ , val ]) => val !== "");
+    },
+    reviewStatus: (_, rawValue) => {
+      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+      return values
+        .map(v => [
+          "review-status",
+          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reviewStatus))
+        ])
+        .filter(([ , val ]) => val !== "");
+    },
+    detectionStatus: (_, rawValue) => {
+      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+      return values
+        .map(v => [ "detection-status",
+          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.detectionStatus)) ])
+        .filter(([ , val ]) => val !== "");
+    },
+    runHistoryTag: (_, rawValue) => [ // PTR
+      asArray(rawValue).map(v => [ "run-history-tag", v ]),
+    ],
+    firstDetectionDate: (_, rawValue) => [ //PTR
+      [ "first-detection-date", rawValue || "" ],
+    ],
+    fixDate: (_, rawValue) => [
+      [ "fixed-after", toISO(rawValue?.after) || "" ],
+      [ "fixed-before", toISO(rawValue?.before) || "" ],
+    ],
+    isUnique: (_, rawValue) => [
+      [ "is-unique", rawValue ? "on" : "off" ],
+    ],
+    runName: (_, rawValue) => [ //PTR
+      [ "run", rawValue || "" ],
+    ],
+    runTag: (_, rawValue) => [ //PTR
+      [ "run-tag", rawValue || "" ],
+    ],
+    componentNames: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "source-component", v ]),
+
+    diffType: (_, rawValue) => [
+      [ "diff-type",
+        toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
+    ],
+    bugPathLength: (_, rawValue) => {
+      const toStr = v => (v != null && typeof v.toNumber === "function")
+        ? String(v.toNumber()) : (v != null ? String(v) : "");
+      return [
+        [ "min-bug-path-length", toStr(rawValue?.min) ],
+        [ "max-bug-path-length", toStr(rawValue?.max) ],
+      ];
+    },
+    date: (_, rawValue) => [
+      [ "detected-after",  toISO(rawValue?.detected?.after) ],
+      [ "detected-before", toISO(rawValue?.detected?.before) ],
+      [ "fixed-after",     toISO(rawValue?.fixed?.after) ],
+      [ "fixed-before",    toISO(rawValue?.fixed?.before) ],
+    ],
+    analyzerNames: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "analyzer-name", v ]),
+    openReportsDate: (_, rawValue) => [
+      [ "open-reports-date", toISO(rawValue) || "" ],
+    ],
+    cleanupPlanNames: (_, rawValue) =>
+      asArray(rawValue).map(v => [ "cleanup-plan", v ]),
+    fileMatchesAnyPoint: (_, rawValue) => {
+      if (!rawValue) return [];
+      return [ [ "anywhere-filepath", "true" ] ];
+    },
+    componentMatchesAnyPoint: (_, rawValue) => {
+      if (!rawValue) return [];
+      return [ [ "anywhere-sourcecomponent", "true" ] ];
+    },
+    annotations: (_, rawValue) => {
+      const testcases = Array.isArray(rawValue)
+        ? rawValue
+          .filter(a => a.first === "testcase")
+          .map(a => a.second)
+        : rawValue.first === "testcase"
+          ? [ rawValue.second ]
+          : [];
+      return testcases.map(tc => [ "testcase", tc ]);
+    },
+    reportStatus: (_, rawValue) => {
+      const values = asArray(rawValue);
+      return values
+        .map(v => [ "report-status",
+          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reportStatus)) ])
+        .filter(([ , val ]) => val !== "");
+    },
+    fullReportPathInComponent: (_, rawValue) => {
+      if (!rawValue) return [];
+      return [ [ "sameorigin-sourcecomponent", "true" ] ];
+    },
+
+  };
+
+  const presetQueryParams = {};
+
+  for (const [ rawKey, rawValue ] of Object.entries(rf)) {
+    if (rawValue === null || rawValue === undefined || rawValue === ""){
+      continue;
+    }
+
+    const mapper = FilterToQuery[rawKey];
+
+    if (typeof mapper === "string") {
+      presetQueryParams[mapper] = rawValue;
+      continue;
+    }
+
+    if (typeof mapper === "function") {
+      const pairs = mapper(rf, rawValue);
+
+      for (const [ k, v ] of pairs) {
+        if (v === null || v === undefined || v === "") continue;
+
+        if (k in presetQueryParams) {
+          const prev = Array.isArray(presetQueryParams[ k ]) ?
+            presetQueryParams[ k ] : [ presetQueryParams[ k ] ];
+          const next = Array.isArray(v) ? v : [ v ];
+          presetQueryParams[ k ] = [ ...prev, ...next ];
+        } else {
+          presetQueryParams[ k ] = v;
+        }
+      }
+      continue;
+    }
+
+    presetQueryParams[ rawKey ] = rawValue;
+  }
+
+  clearToolbarSilently();
+
+  const nextQuery = { ...presetQueryParams };
+  await router.replace({ query: nextQuery }).catch(() => {});
+
+  initByUrl();
+  updateUrl();
+  await nextTick();
+
+  if (presetMenuRef.value) {
+    presetMenuRef.value.onPresetApplied({ ...route.query });
+  }
+}
+
+async function clearToolbarSilently() {
+  const _filters = filters.value;
+  unregisterWatchers();
+  _filters.forEach(f => f.unregisterWatchers());
+  await Promise.all(_filters.map(f => f.clear(false)));
+  updateAllFilters();
+}
+
+/*function listFilterPreset() {
+  new Promise(
+    resolve => {
+      ccService.getClient().listFilterPreset(
+        handleThriftError(preset_list => {
+          resolve(preset_list);
+        })
+      );
+    })
+    .then(preset_list => {
+      handleThriftError("OK", preset_list);
+    }).catch(err => {
+      handleThriftError("FAILURE", err);
+    });
+}*/
 </script>
 
 <style lang="scss">
-.v-expansion-panel--active > .v-expansion-panel-header,
-.v-expansion-panel-header {
+.v-list-item {
+  min-height: 40px !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.v-expansion-panel--active > .v-expansion-panel-title,
+.v-expansion-panel-title {
   min-height: 40px;
 }
 
-.v-expansion-panel-content > .v-expansion-panel-content__wrap {
+.v-expansion-panel-text > .v-expansion-panel-text__wrap {
   padding: 0 4px 0 6px;
 }
 
@@ -1005,10 +1052,15 @@ export default {
   border-top: 0;
 }
 
-.v-expansion-panel-header__icon {
+.v-expansion-panel-title {
+  min-height: 48px !important;
+  font-size: 0.875rem !important;
+}
+
+.v-expansion-panel-title__icon {
   order: 1;
 }
-.v-expansion-panel-header header {
+.v-expansion-panel-title header {
   order: 2;
 }
 </style>

@@ -9,9 +9,9 @@
       </v-col>
       <v-col class="pt-0">
         <component
+          v-bind="{ to: links[key] }"
           :is="links[key] ? 'router-link' : 'span'"
           :class="key"
-          v-bind="{ to: links[key] }"
         >
           <severity-icon
             v-if="key === 'severity'"
@@ -39,7 +39,7 @@
 
           <v-chip
             v-else-if="key === 'bugPathLength'"
-            :color="getBugPathLenColor(value[key])"
+            :color="bugPathLenColor.getBugPathLenColor(value[key])"
           >
             {{ value[key] }}
           </v-chip>
@@ -53,129 +53,115 @@
   </v-container>
 </template>
 
-<script>
-import { ccService } from "@cc-api";
+<script setup>
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
   SeverityIcon
 } from "@/components/Icons";
-import {
-  BugPathLengthColorMixin,
-  DetectionStatusMixin,
-  ReviewStatusMixin,
-  SeverityMixin
-} from "@/mixins";
+import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
+import { useDetectionStatus } from "@/composables/useDetectionStatus";
+import { useReviewStatus } from "@/composables/useReviewStatus";
+import { useSeverity } from "@/composables/useSeverity";
+import { ccService } from "@cc-api";
+import { computed, onMounted, ref, watch } from "vue";
 
-export default {
-  name: "ReportInfo",
-  components: {
-    DetectionStatusIcon,
-    ReviewStatusIcon,
-    SeverityIcon
-  },
-  mixins: [
-    BugPathLengthColorMixin,
-    DetectionStatusMixin,
-    ReviewStatusMixin,
-    SeverityMixin
-  ],
-  props: {
-    value: { type: Object, default: null }
-  },
-  data() {
-    return {
-      runName: null
-    };
-  },
-  computed: {
-    fields() {
-      return [
-        "runName", "reportId", "bugHash", "checkedFile", "line",
-        "column", "analyzerName", "checkerId", "checkerMsg", "bugPathLength",
-        "severity", "detectionStatus", "reviewData", "detectedAt", "fixedAt"
-      ];
-    },
-    links() {
-      return {
-        "runName": { name: "runs", query: {
-          "run": this.runName } },
-        "bugHash": { name: "reports", query: {
-          "report-hash": this.value.bugHash } },
-        "checkedFile": { name: "reports", query: {
-          "filepath": this.value.checkedFile } },
-        "analyzerName": { name: "reports", query: {
-          "analyzer-name": this.value.analyzerName } },
-        "checkerId": { name: "reports", query: {
-          "checker-name": this.value.checkerId } },
-        "checkerMsg": { name: "reports", query: {
-          "checker-msg": this.value.checkerMsg } },
-        "severity": { name: "reports", query: {
-          "severity": this.severityFromCodeToString(this.value.severity) } },
-        "detectionStatus": { name: "reports", query: {
-          "detection-status": this.detectionStatusFromCodeToString(
-            this.value.detectionStatus) } },
-        "reviewData": { name: "reports", query: {
-          "review-status": this.reviewStatusFromCodeToString(
-            this.value.reviewData.status) } },
-        "bugPathLength": { name: "reports", query: {
-          "min-bug-path-length": this.value.bugPathLength,
-          "max-bug-path-length": this.value.bugPathLength } },
-      };
-    }
-  },
-  watch: {
-    async value() {
-      this.fetchRunName();
-    }
-  },
-  mounted() {
-    this.fetchRunName();
-  },
-  methods: {
-    async fetchRunName() {
-      const runs = await ccService.getRuns([ this.value.runId ]);
-      this.runName = runs[0].name;
-    },
+const props = defineProps({
+  value: { type: Object, default: null }
+});
 
-    formatLabel(key) {
-      switch (key) {
-      case "runName":
-        return "Run name";
-      case "reportId":
-        return "Report id";
-      case "bugHash":
-        return "Report hash";
-      case "checkedFile":
-        return "File path";
-      case "line":
-        return "Line";
-      case "column":
-        return "Column";
-      case "checkerId":
-        return "Checker name";
-      case "checkerMsg":
-        return "Checker message";
-      case "analyzerName":
-        return "Analyzer name";
-      case "bugPathLength":
-        return "Bug path length";
-      case "severity":
-        return "Severity";
-      case "detectionStatus":
-        return "Latest detection status";
-      case "reviewData":
-        return "Latest review status";
-      case "detectedAt":
-        return "Detected at";
-      case "fixedAt":
-        return "Fixed at";
-      default:
-        return key;
-      }
-    }
+const runName = ref(null);
+
+const bugPathLenColor = useBugPathLenColor();
+const detectionStatus = useDetectionStatus();
+const reviewStatus = useReviewStatus();
+const severity = useSeverity();
+
+const fields = computed(function() {
+  return [
+    "runName", "reportId", "bugHash", "checkedFile", "line",
+    "column", "analyzerName", "checkerId", "checkerMsg", "bugPathLength",
+    "severity", "detectionStatus", "reviewData", "detectedAt", "fixedAt"
+  ];
+});
+
+const links = computed(function() {
+  return {
+    "runName": { name: "runs", query: {
+      "run": runName.value } },
+    "bugHash": { name: "reports", query: {
+      "report-hash": props.value.bugHash } },
+    "checkedFile": { name: "reports", query: {
+      "filepath": props.value.checkedFile } },
+    "analyzerName": { name: "reports", query: {
+      "analyzer-name": props.value.analyzerName } },
+    "checkerId": { name: "reports", query: {
+      "checker-name": props.value.checkerId } },
+    "checkerMsg": { name: "reports", query: {
+      "checker-msg": props.value.checkerMsg } },
+    "severity": { name: "reports", query: {
+      "severity": severity.severityFromCodeToString(props.value.severity) } },
+    "detectionStatus": { name: "reports", query: {
+      "detection-status": detectionStatus.detectionStatusFromCodeToString(
+        props.value.detectionStatus) } },
+    "reviewData": { name: "reports", query: {
+      "review-status": reviewStatus.reviewStatusFromCodeToString(
+        props.value.reviewData.status) } },
+    "bugPathLength": { name: "reports", query: {
+      "min-bug-path-length": props.value.bugPathLength,
+      "max-bug-path-length": props.value.bugPathLength } },
+  };
+});
+
+watch(() => props.value, function() {
+  fetchRunName();
+});
+
+onMounted(function() {
+  fetchRunName();
+});
+
+async function fetchRunName() {
+  const runs = await ccService.getRuns([ props.value.runId ]);
+  runName.value = runs[0].name;
+}
+
+function formatLabel(key) {
+  switch (key) {
+  case "runName":
+    return "Run name";
+  case "reportId":
+    return "Report id";
+  case "bugHash":
+    return "Report hash";
+  case "checkedFile":
+    return "File path";
+  case "line":
+    return "Line";
+  case "column":
+    return "Column";
+  case "checkerId":
+    return "Checker name";
+  case "checkerMsg":
+    return "Checker message";
+  case "analyzerName":
+    return "Analyzer name";
+  case "bugPathLength":
+    return "Bug path length";
+  case "severity":
+    return "Severity";
+  case "detectionStatus":
+    return "Latest detection status";
+  case "reviewData":
+    return "Latest review status";
+  case "detectedAt":
+    return "Detected at";
+  case "fixedAt":
+    return "Fixed at";
+  default:
+    return key;
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>

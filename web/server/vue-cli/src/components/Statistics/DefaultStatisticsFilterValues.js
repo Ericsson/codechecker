@@ -1,15 +1,14 @@
+import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { DetectionStatus } from "@cc/report-server-types";
-import { DetectionStatusMixin } from "@/mixins";
 
-const detectionStatusToString =
-DetectionStatusMixin.methods.detectionStatusFromCodeToString;
+const detectionStatus = useDetectionStatus();
 
 const defaultStatisticsFilterValues = {
   "is-unique": "on",
   "detection-status": [
-    detectionStatusToString(DetectionStatus.NEW),
-    detectionStatusToString(DetectionStatus.REOPENED),
-    detectionStatusToString(DetectionStatus.UNRESOLVED)
+    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.NEW),
+    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.REOPENED),
+    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.UNRESOLVED)
   ]
 };
 

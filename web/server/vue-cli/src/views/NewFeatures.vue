@@ -1,19 +1,109 @@
 <template>
   <!-- eslint-disable max-len -->
-  <v-container fluid>
-    <v-timeline align-top>
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+  <v-container
+    fluid
+  >
+    <v-timeline
+      align="start"
+      class="centered-timeline"
+    >
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.28.0"
+              target="_blank"
+              class="text-white"
+            >
+              Highlights of CodeChecker 6.28.0 release
+            </a>
+          </template>
+          <new-feature-item>
+            <template v-slot:title>
+              Upgrade CodeChecker to use Vue 3
+            </template>
+            <p>CodeChecker GUI is now rewritten to the Vue 3 framework.</p>
+            <img
+              src="@/assets/userguide/images/new_features/6.28.0/vue3.png"
+              alt="Filter preset"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Addition of Saving and Loading of Filter Presets
+            </template>
+            Frequently used report filters can be saved into named "presets" and later can be reloaded.
+            <img
+              src="@/assets/userguide/images/new_features/6.28.0/filter-preset.png"
+              alt="Filter preset"
+              width="100%"
+            >
+            The filter presests can also be access in the CLI with the
+            <code>CodeChecker cmd filter-preset</code> commands.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              List enabled checkers in CLI
+            </template>
+            You can list the enabled checkers for any runs from the CLI by executing
+            <pre>
+              CodeChecker cmd runs -n &lt;RUN_NAME&gt; -o json
+            </pre>
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Adding Checker coverage statistics to CLI
+            </template>
+            The <code>CodeChecker cmd sum -n tinxyml_sensitive &lt;run_name&gt;</code>
+            command lists the checkers that have findings and any corresponding guideline rules.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Extend SEI Cert guideline mapping for cppcheck and gcc analyzers
+            </template>
+            All supported <a href="https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html" target="_blank">gcc static analyzer</a>
+            and <a href="https://cppcheck.sourceforge.io/" target="_blank">cppcheck</a> checkers now have the SEI Cert rule associations.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Enable passing credentials from environment variable
+            </template>
+            The authentication credentials can now be passed from environment variable besides <code>.codechecker_password.json</code> file.
+            <pre>
+export CC_PASSWORD="secret"
+CodeChecker cmd login username
+            </pre>
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Add PMD analyzer support
+            </template>
+            It is now possible to store the analysis results of <a href="https://pmd.github.io/" target="_blank">PMD analyzer</a>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.27.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.27.0 release
             </a>
           </template>
-
           <new-feature-item>
             <template v-slot:title>
               Asynchronous Store
@@ -144,14 +234,18 @@ Total available compilation commands: 349
           </new-feature-item>
         </new-release-item>
       </v-timeline-item>
-
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.26.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.26.0 release
             </a>
@@ -220,7 +314,12 @@ Total available compilation commands: 349
 
           <new-feature-item>
             <template v-slot:title>
-              <v-alert dense outlined type="error" class="py-0 ma-0">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0"
+              >
                 Backward incompatible changes!
               </v-alert>
             </template>
@@ -234,13 +333,18 @@ Total available compilation commands: 349
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.25.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.25.0 release
             </a>
@@ -308,7 +412,12 @@ Total available compilation commands: 349
 
           <new-feature-item>
             <template v-slot:title>
-              <v-alert dense outlined type="error" class="py-0 ma-0">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0"
+              >
                 Backward incompatible changes!
               </v-alert>
             </template>
@@ -390,13 +499,18 @@ Total available compilation commands: 349
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.24.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.24.0 release
             </a>
@@ -440,13 +554,18 @@ Total available compilation commands: 349
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.23.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.23.0 release
             </a>
@@ -745,7 +864,12 @@ CodeChecker cmd products add -n "My product" --report-limit 1000000 myproduct
 
           <new-feature-item>
             <template v-slot:title>
-              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0 ml-2"
+              >
                 Backward incompatible change!
               </v-alert>
             </template>
@@ -767,13 +891,18 @@ CodeChecker cmd products add -n "My product" --report-limit 1000000 myproduct
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.2"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.22.2 release
             </a>
@@ -792,13 +921,18 @@ CodeChecker cmd products add -n "My product" --report-limit 1000000 myproduct
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.1"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.22.1 release
             </a>
@@ -814,13 +948,18 @@ CodeChecker cmd products add -n "My product" --report-limit 1000000 myproduct
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.22.0 release
             </a>
@@ -886,7 +1025,12 @@ CodeChecker analyze my_project -o reports
           <new-feature-item>
             <template v-slot:title>
               Removed deprecated flags, turn missing checker warnings to errors
-              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0 ml-2"
+              >
                 Backward incompatible change!
               </v-alert>
             </template>
@@ -915,13 +1059,18 @@ CodeChecker analyze my_project -o reports
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.21.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.21.0 release
             </a>
@@ -956,13 +1105,18 @@ CodeChecker analyze my_project -o reports
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.20.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.20.0 release
             </a>
@@ -1023,13 +1177,18 @@ CodeChecker analyze my_project -o reports
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.19.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.19.0 release
             </a>
@@ -1038,7 +1197,12 @@ CodeChecker analyze my_project -o reports
           <new-feature-item>
             <template v-slot:title>
               Fix JSON format of CodeChecker version subcommand
-              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0 ml-2"
+              >
                 Backward incompatible change!
               </v-alert>
             </template>
@@ -1053,7 +1217,12 @@ CodeChecker analyze my_project -o reports
           <new-feature-item>
             <template v-slot:title>
               Not allowing disabling modeling checkers in ClangSA
-              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+                class="py-0 ma-0 ml-2"
+              >
                 Backward incompatible change!
               </v-alert>
             </template>
@@ -1109,13 +1278,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.18.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.18.0 release
             </a>
@@ -1123,7 +1297,11 @@ analyzer:
 
           <new-feature-item>
             <template v-slot:title>
-              <v-alert dense outlined type="error">
+              <v-alert
+                density="compact"
+                variant="outlined"
+                type="error"
+              >
                 Backward incompatible CLI change!
               </v-alert>
             </template>
@@ -1150,13 +1328,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.17.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.17.0 release
             </a>
@@ -1366,13 +1549,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.16.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.16.0 release
             </a>
@@ -1447,13 +1635,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.15.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.15.0 release
             </a>
@@ -1615,13 +1808,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.14.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.14.0 release
             </a>
@@ -1785,13 +1983,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.13.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.13.0 release
             </a>
@@ -1975,13 +2178,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.12.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.12.0 release
             </a>
@@ -2207,13 +2415,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.11.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.11.0 release
             </a>
@@ -2329,13 +2542,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.10.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.10.0 release
             </a>
@@ -2374,13 +2592,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.9.1"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.9.1 release
             </a>
@@ -2409,13 +2632,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.9.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.9.0 release
             </a>
@@ -2427,17 +2655,17 @@ analyzer:
             </template>
             <p>
               We added 2 new detection types:
-              <ul>
-                <li>
-                  <b>Off</b> - were reported by a checker that is switched off
-                  during the analysis.
-                </li>
-                <li>
-                  <b>Unavailable</b> - were reported by a checker that does not
-                  exists anymore because it was removed or renamed.
-                </li>
-              </ul>
             </p>
+            <ul>
+              <li>
+                <b>Off</b> - were reported by a checker that is switched off
+                during the analysis.
+              </li>
+              <li>
+                <b>Unavailable</b> - were reported by a checker that does not
+                exists anymore because it was removed or renamed.
+              </li>
+            </ul>
           </new-feature-item>
 
           <new-feature-item>
@@ -2452,13 +2680,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
-        <new-release-item color="green lighten-1">
+      <v-timeline-item
+        dot-color="green-lighten-1"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-green-lighten-1"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.8.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.8.0 release
             </a>
@@ -2637,13 +2870,18 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.7.0"
               target="_blank"
-              class="white--text"
+              class="text-white"
             >
               Highlights of CodeChecker 6.7.0 release
             </a>
@@ -2717,16 +2955,16 @@ analyzer:
                   Creating an index.html file that lists the found reports
                   which links to the local html pages.
                   <b>Examples:</b>
-                  <ul>
-                    <li>
-                      <code>CodeChecker parse ./reports -e html -o ./reports_html</code>
-                    </li>
-                  </ul>
-                  For more information
-                  <a href="https://github.com/Ericsson/codechecker/blob/master/docs/usage.md#step-3">
-                    see
-                  </a>.
                 </p>
+                <ul>
+                  <li>
+                    <code>CodeChecker parse ./reports -e html -o ./reports_html</code>
+                  </li>
+                </ul>
+                For more information
+                <a href="https://github.com/Ericsson/codechecker/blob/master/docs/usage.md#step-3">
+                  see
+                </a>.
               </v-col>
               <v-col>
                 <img
@@ -2819,14 +3057,15 @@ analyzer:
   </v-container>
 </template>
 
-<script>
+<script setup>
 import { NewFeatureItem, NewReleaseItem } from "@/components/NewFeatures";
-
-export default {
-  name: "NewFeatures",
-  components: {
-    NewFeatureItem,
-    NewReleaseItem
-  }
-};
 </script>
+
+<style scoped>
+.centered-timeline :deep(.v-timeline-item__body),
+.centered-timeline :deep(.v-timeline-item__opposite) {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+</style>

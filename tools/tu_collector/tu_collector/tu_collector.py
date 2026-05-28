@@ -218,7 +218,7 @@ def __gather_dependencies(
     except subprocess.CalledProcessError as ex:
         output, rc = ex.output, ex.returncode
     except OSError as oerr:
-        output, rc = oerr.strerror, oerr.errno
+        output, rc = oerr.strerror or "", oerr.errno or 0
 
     if rc != 0:
         raise IOError(output)

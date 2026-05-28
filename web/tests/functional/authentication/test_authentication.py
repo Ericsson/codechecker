@@ -542,6 +542,40 @@ class DictAuth(unittest.TestCase):
             subprocess.check_output(
                 store_cmd, encoding="utf-8", errors="ignore")
 
+    def test_cc_password_env_auth(self):
+        """
+        Tests authentication if credential is passed
+        in the CC_PASSWORD env var.
+        """
+
+        codechecker_cfg = self._test_cfg['codechecker_cfg']
+
+        # Login with good password
+        my_env = os.environ.copy()
+        my_env["CC_PASSWORD"] = "test"
+
+        login_cmd = [env.codechecker_cmd(), 'cmd', 'login', 'cc',
+                     '--url', env.parts_to_url(codechecker_cfg)]
+
+        login_response = subprocess.check_output(
+            login_cmd, env=my_env, encoding="utf-8", errors="ignore")
+        self.assertTrue(login_response,
+                        "Server reported successful authentication")
+
+        logout_cmd = [env.codechecker_cmd(), 'cmd', 'login', 'cc',
+                      '-d', '--url', env.parts_to_url(codechecker_cfg)]
+        subprocess.check_output(
+            logout_cmd, env=my_env, encoding="utf-8", errors="ignore")
+        # Login with wrong password
+        my_env["CC_PASSWORD"] = "wrong"
+
+        login_cmd = [env.codechecker_cmd(), 'cmd', 'login', 'cc',
+                     '--url', env.parts_to_url(codechecker_cfg)]
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_output(
+                login_cmd, env=my_env, encoding="utf-8", errors="ignore")
+
     def test_group_auth(self):
         """
         Test for case insensitive group comparison at authorization.

@@ -1,4 +1,4 @@
-import ServiceClient from "@cc/server-info";
+import { Client as ServiceClient } from "@cc/server-info";
 import { BaseService } from "./_base.service";
 
 class ServerInfoService extends BaseService {

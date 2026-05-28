@@ -1,7 +1,7 @@
 <template>
   <v-data-table
     :headers="headers"
-    :items="value"
+    :items="items"
     :loading="loading"
     loading-text="Loading cleanup plans..."
     no-data-text="There aren't any cleanup plan that match."
@@ -18,107 +18,98 @@
 
     <template v-slot:item.closedAt="{ item }">
       <span v-if="item.closedAt">
-        {{ item.closedAt | fromUnixTime }}
+        {{ fromUnixTime(item.closedAt) }}
       </span>
     </template>
 
     <template v-slot:item.actions="{ item }">
       <v-btn
-        class="edit-btn"
+        class="edit-btn mr-2"
         color="primary"
-        small
-        @click="$emit('edit', item)"
+        size="small"
+        variant="tonal"
+        prepend-icon="mdi-pencil-outline"
+        @click="emit('edit', item)"
       >
-        <v-icon small class="mr-1">
-          mdi-pencil
-        </v-icon>
         Edit
       </v-btn>
 
       <v-btn
         v-if="item.closedAt"
-        class="reopen-btn white--text"
-        small
+        class="reopen-btn mr-2"
+        size="small"
         color="green"
-        @click="$emit('reopen', item)"
+        variant="tonal"
+        prepend-icon="mdi-refresh"
+        @click="emit('reopen', item)"
       >
-        <v-icon small class="mr-1">
-          mdi-refresh-circle
-        </v-icon>
         Reopen
       </v-btn>
 
       <v-btn
         v-else
-        class="close-btn white--text"
-        small
+        class="close-btn mr-2"
+        size="small"
         color="green"
-        @click="$emit('close', item)"
+        variant="tonal"
+        prepend-icon="mdi-close-circle-outline"
+        @click="emit('close', item)"
       >
-        <v-icon small class="mr-1">
-          mdi-close-circle
-        </v-icon>
         Close
       </v-btn>
 
       <v-btn
         class="remove-btn"
-        small
+        size="small"
         color="error"
-        @click="$emit('remove', item)"
+        variant="tonal"
+        prepend-icon="mdi-trash-can-outline"
+        @click="emit('remove', item)"
       >
-        <v-icon small class="mr-1">
-          mdi-trash-can-outline
-        </v-icon>
         Delete
       </v-btn>
     </template>
   </v-data-table>
 </template>
 
-<script>
+<script setup>
+import { fromUnixTime } from "@/filters/from-unix-time";
+import { computed } from "vue";
 import DueDate from "./DueDate";
 
-export default {
-  name: "ListCleanupPlansTable",
-  components: {
-    DueDate
+const props = defineProps({
+  items: { type: Array, required: true },
+  loading: { type: Boolean, default: false },
+  hideCols: { type: Array, default: () => [] }
+});
+
+const emit = defineEmits([ "remove", "close", "reopen", "edit" ]);
+
+const headers = computed(() => [
+  {
+    title: "Name",
+    key: "name",
+    sortable: true
   },
-  props: {
-    value: { type: Array, required: true },
-    loading: { type: Boolean, default: false },
-    hideCols: { type: Array, default: () => [] }
+  {
+    title: "Description",
+    key: "description",
+    sortable: true
   },
-  computed: {
-    headers() {
-      return [
-        {
-          text: "Name",
-          value: "name",
-          sortable: true
-        },
-        {
-          text: "Description",
-          value: "description",
-          sortable: true
-        },
-        {
-          text: "Due date",
-          value: "dueDate",
-          sortable: true
-        },
-        {
-          text: "Closed at",
-          value: "closedAt",
-          sortable: true
-        },
-        {
-          text: "Actions",
-          value: "actions",
-          sortable: false
-        },
-      ].filter(c => !this.hideCols.includes(c.value));
-    }
-  }
-};
+  {
+    title: "Due date",
+    key: "dueDate",
+    sortable: true
+  },
+  {
+    title: "Closed at",
+    key: "closedAt",
+    sortable: true
+  },
+  {
+    title: "Actions",
+    key: "actions",
+    sortable: false
+  },
+].filter(c => !props.hideCols.includes(c.value)));
 </script>

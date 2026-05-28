@@ -1,31 +1,34 @@
 <template>
-  <v-container fluid>
+  <v-container
+    fluid
+  >
     <statistics-dialog
       v-if="type"
-      :value.sync="showRuns[type]"
+      v-model="showRuns[type]"
       :checker-name="selectedCheckerName"
       :type="type"
       :run-data="runData"
     />
     <v-row>
       <v-col>
-        <h3 class="title primary--text mb-2">
+        <h3
+          class="title text-primary mb-2"
+        >
           <v-btn
             color="primary"
-            outlined
+            variant="outlined"
             @click="downloadCSV"
           >
             Export CSV
           </v-btn>
 
           <v-btn
-            icon
+            icon="mdi-refresh"
             title="Reload statistics"
             color="primary"
+            variant="text"
             @click="fetchStatistics"
-          >
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
+          />
           <tooltip-help-icon
             color="primary"
             size="x-large"
@@ -41,7 +44,10 @@
             natively with <strong>CodeChecker 6.24</strong> and above.
           </tooltip-help-icon>
         </h3>
-
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <v-alert
           icon="mdi-information"
           class="mt-2"
@@ -56,15 +62,16 @@
               <v-select
                 v-model="selectedGuidelineIndexes"
                 :items="guidelineOptions"
-                item-text="name"
+                item-title="name"
+                item-value="value"
                 label="Select guidelines"
-                outlined
+                variant="outlined"
                 multiple
                 density="comfortable"
               >
                 <template v-slot:selection="{ item }">
                   <div class="selection-item">
-                    {{ item.name }}
+                    {{ item.raw.name }}
                   </div>
                 </template>
               </v-select>
@@ -89,7 +96,7 @@
             icon="mdi-alert"
             class="mt-2"
             color="deep-orange"
-            outlined
+            variant="outlined"
           >
             There is no proper run for <strong>guideline</strong>
             statistics. Please create a new run first that analysed
@@ -101,7 +108,7 @@
             icon="mdi-alert"
             class="mt-2"
             color="deep-orange"
-            outlined
+            variant="outlined"
           >
             The guideline statistics is not available
             for
@@ -133,16 +140,16 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import {
-  ReviewStatusMixin,
-  SeverityMixin,
-  ToCSV
-} from "@/mixins";
-import { AnalysisInfoHandlingAPIMixin } from "@/mixins/api";
-import { BaseStatistics } from "@/components/Statistics";
-import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
-import StatisticsDialog from "../StatisticsDialog";
+  CheckerInfoAvailability,
+  useAnalysisInfo
+} from "@/composables/useAnalysisInfo";
+import { useBaseStatistics } from "@/composables/useBaseStatistics";
+import { useSeverity } from "@/composables/useSeverity";
+import { useToCSV } from "@/composables/useToCSV";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
   Guideline,
@@ -150,393 +157,370 @@ import {
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
-import { ccService, handleThriftError } from "@cc-api";
-import {
-  CheckerInfoAvailability
-} from "@/mixins/api/analysis-info-handling.mixin";
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import StatisticsDialog from "../StatisticsDialog";
+import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 
-export default {
-  name: "GuidelineStatistics",
-  components: {
-    GuidelineStatisticsTable,
-    StatisticsDialog,
-    TooltipHelpIcon
+const emit = defineEmits([ "refresh-filter" ]);
+const router = useRouter();
+const route = useRoute();
+const severity = useSeverity();
+const toCSV = useToCSV();
+const baseStatistics = useBaseStatistics();
+const analysisInfoComp = useAnalysisInfo();
+
+const guidelineOptions = ref([
+  {
+    id: "sei-cert-c",
+    name: "SEI CERT Coding Standard (C)",
+    value: 0
   },
-  mixins: [
-    AnalysisInfoHandlingAPIMixin,
-    BaseStatistics,
-    ReviewStatusMixin,
-    SeverityMixin,
-    ToCSV
-  ],
-
-  data() {
-    // If there were more guideline types,
-    // we could list the existing guidelines here.
-    const guidelineOptions = [
-      {
-        id: "sei-cert-c",
-        name: "SEI CERT Coding Standard (C)",
-        value: 0
-      },
-      {
-        id: "sei-cert-cpp",
-        name: "SEI CERT Coding Standard (C++)",
-        value: 1
-      },
-      {
-        id: "cwe-top-25-2024",
-        name: "CWE Top 25 Most Dangerous Software Weaknesses 2024",
-        value: 2
-      },
-      {
-        id: "owasp-top-10-2021",
-        name: "OWASP Top 10 Web Application Security Risks 2021",
-        value: 3
-      },
-      {
-        id: "memory-safety",
-        name: "Memory-safety related CWEs",
-        value: 4
-      }
-    ];
-
-    return {
-      all_guideline_rules: {},
-      guidelineOptions: guidelineOptions,
-      checker_stat: {},
-      guideline_stat: {},
-      loading: false,
-      noProperRun: false,
-      problematicRuns: [],
-      runs: null,
-      runData: [],
-      selectedCheckerName: null,
-      selectedGuidelineIndexes: [ 0, 1, 2, 3, 4 ],
-      showRuns: {
-        enabled: false,
-        disabled: false,
-        problematic: false
-      },
-      statistics: [],
-      type: null,
-      hideNotOutstanding: false,
-    };
+  {
+    id: "sei-cert-cpp",
+    name: "SEI CERT Coding Standard (C++)",
+    value: 1
   },
-
-  computed: {
-    actualRunNames() {
-      return this.runs.filter(run => !this.problematicRuns.map(
-        problematicRun => problematicRun.runId
-      ).includes(run.runId)).map(run => run.runName);
-    },
-
-    selectedGuidelines() {
-      return this.selectedGuidelineIndexes.map(idx => new Guideline({
-        guidelineName: this.guidelineOptions[idx].id
-      }));
-    },
-
-    filteredStatistics() {
-      if (this.hideNotOutstanding) {
-        return this.statistics.filter(stat =>
-          stat.checkers.some(checker => checker.outstanding > 0)
-        );
-      }
-      return this.statistics;
-    }
+  {
+    id: "cwe-top-25-2024",
+    name: "CWE Top 25 Most Dangerous Software Weaknesses 2024",
+    value: 2
   },
-
-  watch: {
-    checker_stat(stat) {
-      this.statistics = [];
-      Object.keys(this.all_guideline_rules).forEach(
-        guideline => {
-          this.statistics.push(
-            ...this.all_guideline_rules[guideline].map(rule => {
-              const filtered_stat = Object.keys(stat).filter(
-                checkerId => rule.checkers.map(c => c.checkerName).includes(
-                  stat[checkerId].checkerName));
-              return {
-                guidelineName: guideline,
-                guidelineRule: rule.ruleId,
-                guidelineUrl: rule.url,
-                guidelineRuleTitle: rule.title,
-                guidelineLevel: rule.level,
-                checkers: filtered_stat.length
-                  ? filtered_stat.map(checkerId => {
-                    return {
-                      name: stat[checkerId].checkerName,
-                      severity: stat[checkerId].severity,
-                      enabledInAllRuns: stat[checkerId].disabled.length === 0
-                        ? 1
-                        : 0,
-                      enabledRunLength: stat[checkerId].enabled.length,
-                      disabledRunLength: stat[checkerId].disabled.length,
-                      closed: stat[checkerId].closed.toNumber(),
-                      outstanding: stat[checkerId].outstanding.toNumber(),
-                    };
-                  })
-                  : (rule.checkers.length ?
-                    rule.checkers.map(checker => {
-                      return {
-                        name: checker.checkerName,
-                        severity: this.severityFromStringToCode(
-                          checker.severity),
-                        enabledInAllRuns: 0,
-                        enabledRunLength: 0,
-                        disabledRunLength: this.runs.length,
-                        closed: 0,
-                        outstanding: 0,
-                      };
-                    })
-                    : [])
-              };
-            })
-          );
-        });
-    },
-
-    async runIds() {
-      this.noProperRun = false;
-    },
-
-    async selectedGuidelines() {
-      await this.fetchStatistics();
-    }
+  {
+    id: "owasp-top-10-2021",
+    name: "OWASP Top 10 Web Application Security Risks 2021",
+    value: 3
   },
+  {
+    id: "memory-safety",
+    name: "Memory-safety related CWEs",
+    value: 4
+  }
+]);
+const all_guideline_rules = ref({});
+const checker_stats = ref({});
+const loading = ref(false);
+const noProperRun = ref(false);
+const problematicRuns = ref([]);
+const runs = ref(null);
+const runData = ref([]);
+const selectedCheckerName = ref(null);
+const selectedGuidelineIndexes = ref([ 0, 1, 2, 3, 4 ]);
+const showRuns = ref({
+  enabled: false,
+  disabled: false,
+  problematic: false
+});
+const statistics = ref([]);
+const type = ref(null);
+const hideNotOutstanding = ref(false);
 
+const actualRunNames = computed(() => {
+  return runs.value.filter(run => !problematicRuns.value.map(
+    problematicRun => problematicRun.runId
+  ).includes(run.runId)).map(run => run.runName);
+});
 
-  methods: {
-    downloadCSV() {
-      const values = [];
-      this.statistics.forEach(stat => {
-        stat.checkers.forEach(checker => {
-          const value = [
-            stat.guidelineName,
-            stat.guidelineRule,
-            stat.guidelineRuleTitle,
-            checker.name,
-            this.severityFromCodeToString(checker.severity),
-            checker.enabledInAllRuns
-              ? "Enabled in all selected runs"
-              : "Not enabled in all selected runs",
-            checker.closed,
-            checker.outstanding
-          ];
+const selectedGuidelines = computed(() => selectedGuidelineIndexes.value.map(
+  idx => new Guideline({ guidelineName: guidelineOptions.value[idx].id })
+));
 
-          values.push(value);
-        });
-      });
+const filteredStatistics = computed(() => {
+  if (hideNotOutstanding.value) {
+    return statistics.value.filter(stat =>
+      stat.checkers.some(checker => checker.outstanding > 0)
+    );
+  }
+  return statistics.value;
+});
 
-      const data = [
-        [
-          "Guideline Name", "Rule Name", "Rule Title", "Related Checker(s)",
-          "Checker Severity", "Checker Status", "Closed Reports",
-          "Outstanding Reports"
-        ],
-        ...values
+watch(() => baseStatistics.runIds, async () => {
+  noProperRun.value = false;
+});
+
+watch(selectedGuidelines, async () => {
+  await fetchStatistics();
+});
+
+onMounted(() => {
+  fetchStatistics();
+});
+
+function checker_stat(stat) {
+  statistics.value = [];
+  Object.keys(all_guideline_rules.value).forEach(
+    guideline => {
+      statistics.value.push(
+        ...all_guideline_rules.value[guideline].map(rule => {
+          const filtered_stat = Object.keys(stat).filter(
+            checkerId => rule.checkers.map(c => c.checkerName).includes(
+              stat[checkerId].checkerName));
+          return {
+            guidelineName: guideline,
+            guidelineRule: rule.ruleId,
+            guidelineUrl: rule.url,
+            guidelineRuleTitle: rule.title,
+            guidelineLevel: rule.level,
+            checkers: filtered_stat.length
+              ? filtered_stat.map(checkerId => {
+                return {
+                  name: stat[checkerId].checkerName,
+                  severity: stat[checkerId].severity,
+                  enabledInAllRuns: stat[checkerId].disabled.length === 0
+                    ? 1
+                    : 0,
+                  enabledRunLength: stat[checkerId].enabled.length,
+                  disabledRunLength: stat[checkerId].disabled.length,
+                  closed: stat[checkerId].closed.toNumber(),
+                  outstanding: stat[checkerId].outstanding.toNumber(),
+                };
+              })
+              : (rule.checkers.length ?
+                rule.checkers.map(checker => {
+                  return {
+                    name: checker.checkerName,
+                    severity: severity.severityFromStringToCode(
+                      checker.severity),
+                    enabledInAllRuns: 0,
+                    enabledRunLength: 0,
+                    disabledRunLength: runs.value.length,
+                    closed: 0,
+                    outstanding: 0,
+                  };
+                })
+                : [])
+          };
+        })
+      );
+    });
+}
+
+function downloadCSV() {
+  const _values = [];
+  statistics.value.forEach(stat => {
+    stat.checkers.forEach(checker => {
+      const _value = [
+        stat.guidelineName,
+        stat.guidelineRule,
+        stat.guidelineRuleTitle,
+        checker.name,
+        severity.severityFromCodeToString(checker.severity),
+        checker.enabledInAllRuns
+          ? "Enabled in all selected runs"
+          : "Not enabled in all selected runs",
+        checker.closed,
+        checker.outstanding
       ];
 
-      this.toCSV(data, "codechecker_guideline_statistics.csv");
-    },
+      _values.push(_value);
+    });
+  });
 
-    async getAllGuidelineRules() {
-      this.all_guideline_rules = await new Promise(resolve => {
-        ccService.getClient().getGuidelineRules(
-          this.selectedGuidelines,
-          handleThriftError(async guidelines => {
-            for (const [ guideline, rules ] of Object.entries(guidelines)) {
-              const all_checkers = [];
-              rules.forEach(rule => {
-                rule.checkers.map(checker => {
-                  const chk = new Checker({
-                    analyzerName: null,
-                    checkerId: checker
-                  });
+  const _data = [
+    [
+      "Guideline Name", "Rule Name", "Rule Title", "Related Checker(s)",
+      "Checker Severity", "Checker Status", "Closed Reports",
+      "Outstanding Reports"
+    ],
+    ..._values
+  ];
 
-                  if (!all_checkers.some(
-                    c => c.checkerId === chk.checkerId)) {
-                    all_checkers.push(chk);
-                  }
-                });
+  toCSV.toCSV(_data, "codechecker_guideline_statistics.csv");
+}
+
+async function getAllGuidelineRules() {
+  all_guideline_rules.value = await new Promise(resolve => {
+    ccService.getClient().getGuidelineRules(
+      selectedGuidelines.value,
+      handleThriftError(async guidelines => {
+        for (const [ guideline, rules ] of Object.entries(guidelines)) {
+          const _all_checkers = [];
+          rules.forEach(rule => {
+            rule.checkers.map(checker => {
+              const chk = new Checker({
+                analyzerName: null,
+                checkerId: checker
               });
 
-              const checkers_with_severity = await new Promise(resolve => {
-                ccService.getClient().getCheckerLabels(
-                  all_checkers, handleThriftError(labels => {
-                    resolve(
-                      labels.map((label, i) => {
-                        const severityLabels = label.filter(param =>
-                          param.startsWith("severity")
-                        );
-                        return severityLabels.length
-                          ? {
-                            checkerName: all_checkers[i].checkerId,
-                            severity: severityLabels[0].split("severity:")[1]
-                          }
-                          : {
-                            checkerName: all_checkers[i].checkerId,
-                            severity: null
-                          };
-                      })
+              if (!_all_checkers.some(
+                c => c.checkerId === chk.checkerId)) {
+                _all_checkers.push(chk);
+              }
+            });
+          });
+
+          const _checkers_with_severity = await new Promise(resolve => {
+            ccService.getClient().getCheckerLabels(
+              _all_checkers, handleThriftError(labels => {
+                resolve(
+                  labels.map((label, i) => {
+                    const severityLabels = label.filter(param =>
+                      param.startsWith("severity")
                     );
+                    return severityLabels.length
+                      ? {
+                        checkerName: _all_checkers[i].checkerId,
+                        severity: severityLabels[0].split("severity:")[1]
+                      }
+                      : {
+                        checkerName: _all_checkers[i].checkerId,
+                        severity: null
+                      };
                   })
                 );
-              });
+              })
+            );
+          });
 
-              guidelines[guideline] = rules.map(rule => {
-                return {
-                  ruleId: rule.ruleId,
-                  title: rule.title,
-                  url: rule.url,
-                  checkers: checkers_with_severity.filter(
-                    cws => rule.checkers.includes(cws.checkerName)),
-                  level: rule.level
-                };
-              });
-            }
-
-            resolve(guidelines);
-          })
-        );
-      });
-    },
-
-    async getRunData() {
-      const limit = MAX_QUERY_SIZE;
-      let offset = 0;
-
-      const filter = new RunFilter({
-        ids: this.runIds
-      });
-
-      const runCount = await new Promise(resolve => {
-        ccService.getClient().getRunCount(
-          filter, handleThriftError(runCnt => {
-            resolve(runCnt.toNumber());
-          }));
-      });
-
-      const runs = [];
-
-      for ( offset; offset <= runCount; offset+=limit ) {
-        const limitedRuns = await new Promise(resolve => {
-          ccService.getClient().getRunData(
-            filter, limit, offset, null, handleThriftError(runDataList => {
-              resolve(runDataList.map(runData => ({
-                runId: runData.runId,
-                runName: runData.name,
-                codeCheckerVersion: runData.codeCheckerVersion
-              })));
-            }));
-        });
-        runs.push(...limitedRuns);
-      }
-
-      return runs;
-    },
-
-    async fetchStatistics() {
-      this.loading = true;
-
-      await this.fetchProblematicRuns();
-
-      await this.getAllGuidelineRules();
-
-      const filter = new ReportFilter(this.reportFilter);
-
-      const checker_stat = await new Promise(resolve => {
-        ccService.getClient().getCheckerStatusVerificationDetails(
-          this.runIds,
-          filter,
-          handleThriftError(res => {
-            resolve(res);
-          }));
-      });
-
-      this.checker_stat = checker_stat;
-      this.loading = false;
-    },
-
-    async fetchProblematicRuns() {
-      this.loading = true;
-
-      const runs = await this.getRunData();
-      this.problematicRuns = (await Promise.all(
-        runs.map(async runData => {
-          var analysisInfo = await this.loadAnalysisInfo(
-            runData.runId, null, null);
-
-          if (analysisInfo.checkerInfoAvailability !=
-          CheckerInfoAvailability.Available) {
+          guidelines[guideline] = rules.map(rule => {
             return {
-              ...runData,
-              analysisInfo: analysisInfo
+              ruleId: rule.ruleId,
+              title: rule.title,
+              url: rule.url,
+              checkers: _checkers_with_severity.filter(
+                cws => rule.checkers.includes(cws.checkerName)),
+              level: rule.level
             };
-          } else {
-            return null;
-          }
-        }))).filter(element => element !== null);
+          });
+        }
 
-      this.runs = runs;
-      this.loading = false;
-    },
+        resolve(guidelines);
+      })
+    );
+  });
+}
 
-    showingRuns(type, checker_name) {
-      this.type = type;
-      this.selectedCheckerName = checker_name;
-      if ( type === "problematic" ) {
-        this.runData = this.problematicRuns;
-      }
-      else {
-        const checker_id = Object.keys(this.checker_stat).find(checker_id =>
-          this.checker_stat[checker_id].checkerName === checker_name
-        );
+async function getRunData() {
+  const _filter = new RunFilter({
+    ids: baseStatistics.runIds
+  });
 
-        if ( checker_id ) {
-          this.runData = this.checker_stat[checker_id][type].map(
-            run_id => this.runs.find(
-              runData => runData.runId.toNumber() === run_id.toNumber()
-            )
+  const _runCount = await new Promise(resolve => {
+    ccService.getClient().getRunCount(
+      _filter,
+      handleThriftError(runCnt => {
+        resolve(runCnt.toNumber());
+      })
+    );
+  });
+
+  const _runs = [];
+  const _limit = MAX_QUERY_SIZE;
+  for (let _offset = 0; _offset <= _runCount; _offset+=_limit) {
+    const _limitedRuns = await new Promise(resolve => {
+      ccService.getClient().getRunData(
+        _filter,
+        _limit,
+        _offset,
+        null,
+        handleThriftError(runDataList => {
+          resolve(
+            runDataList.map(runData => ({
+              runId: runData.runId,
+              runName: runData.name,
+              codeCheckerVersion: runData.codeCheckerVersion
+            }))
           );
-        }
-        else {
-          this.runData = this.runs;
-        }
-      }
+        })
+      );
+    });
+    _runs.push(..._limitedRuns);
+  }
 
-      this.showRuns[type] = true;
-    },
+  return _runs;
+}
 
-    cleanRunList() {
-      if ( this.actualRunNames.length ){
-        this.$router.replace({
-          query: {
-            ...this.$route.query,
-            "run": this.actualRunNames
-          }
-        }).then(() => {
-          this.$emit("refresh-filter");
-        }).catch(() => {});
-      }
-      else {
-        this.noProperRun = true;
-      }
-    },
+async function fetchStatistics() {
+  loading.value = true;
 
-    formattedGuidelines(guidelineRules) {
-      return guidelineRules.map(guidelineRule => {
-        const rules = guidelineRule.rules.join("; ");
-        return `${guidelineRule.type}: ${rules}`;
-      }).join("  ");
+  await fetchProblematicRuns();
+
+  await getAllGuidelineRules();
+
+  const filter = new ReportFilter(baseStatistics.reportFilter);
+
+  const checker_stat_result = await new Promise(resolve => {
+    ccService.getClient().getCheckerStatusVerificationDetails(
+      baseStatistics.runIds,
+      filter,
+      handleThriftError(res => {
+        resolve(res);
+      }));
+  });
+
+  checker_stats.value = checker_stat_result;
+  checker_stat(checker_stat_result);
+  loading.value = false;
+}
+
+async function fetchProblematicRuns() {
+  loading.value = true;
+
+  const _runs = await getRunData();
+  problematicRuns.value = (await Promise.all(
+    _runs.map(async runData => {
+      var _analysisInfo = await analysisInfoComp.loadAnalysisInfo(
+        runData.runId, null, null);
+
+      if (_analysisInfo.checkerInfoAvailability !=
+      CheckerInfoAvailability.Available) {
+        return {
+          ...runData,
+          analysisInfo: _analysisInfo
+        };
+      } else {
+        return null;
+      }
+    }))).filter(element => element !== null);
+
+  runs.value = _runs;
+  loading.value = false;
+}
+
+function showingRuns(_type, _checker_name) {
+  type.value = _type;
+  selectedCheckerName.value = _checker_name;
+  if ( _type === "problematic" ) {
+    runData.value = problematicRuns.value;
+  }
+  else {
+    const _checker_id = Object.keys(checker_stats.value).find(_checker_id =>
+      checker_stats.value[_checker_id].checkerName === _checker_name
+    );
+
+    if (_checker_id) {
+      runData.value = checker_stats.value[_checker_id][_type].map(
+        run_id => runs.value.find(
+          runData => runData.runId.toNumber() === run_id.toNumber()
+        )
+      );
+    }
+    else {
+      runData.value = runs.value;
     }
   }
-};
+
+  showRuns.value[_type] = true;
+}
+
+function cleanRunList() {
+  if ( actualRunNames.value.length ){
+    router.replace({
+      query: {
+        ...route.query,
+        "run": actualRunNames.value
+      }
+    }).then(() => {
+      emit("refresh-filter");
+    }).catch(() => {});
+  }
+  else {
+    noProperRun.value = true;
+  }
+}
 </script>
 
-<style scoped>
+<style>
   .selection-item {
     display: block;
     width: 100%;

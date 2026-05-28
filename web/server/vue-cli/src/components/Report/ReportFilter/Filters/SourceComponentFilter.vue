@@ -1,18 +1,18 @@
 <template>
   <manage-source-component-dialog
-    :value.sync="dialog"
+    v-model="isDialogOpen"
   >
     <select-option
-      :id="id"
+      :id="id.value"
       title="Source component"
-      :bus="bus"
+      :bus="baseSelectOptionFilter.bus"
       :fetch-items="fetchItems"
-      :selected-items="selectedItems"
+      :selected-items="baseSelectOptionFilter.selectedItems.value"
       :search="search"
-      :loading="loading"
-      :panel="panel"
-      @clear="clear(true)"
-      @input="setSelectedItems"
+      :loading="baseSelectOptionFilter.loading.value"
+      :panel="baseSelectOptionFilter.panel.value"
+      @clear="baseSelectOptionFilter.clear(true)"
+      @input="baseSelectOptionFilter.setSelectedItems"
     >
       <template v-slot:append-toolbar>
         <ReportFilterModeSelector v-model="reportFilterMode" />
@@ -21,12 +21,11 @@
         <v-btn
           v-if="administrating"
           class="manage-components-btn"
-          icon
-          small
-          @click.stop="dialog = true"
-        >
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
+          icon="mdi-pencil"
+          variant="plain"
+          size="small"
+          @click="isDialogOpen = true"
+        />
       </template>
 
       <template v-slot:icon>
@@ -36,12 +35,12 @@
       </template>
 
       <template v-slot:title="{ item }">
-        <source-component-tooltip :value="item.value || ''">
-          <template v-slot="{ on }">
+        <source-component-tooltip :value="item.value">
+          <template v-slot="{ props: slotProps }">
             <v-list-item-title
+              v-bind="slotProps"
               class="mr-1 filter-item-title"
               :title="item.title"
-              v-on="on"
             >
               {{ item.title }}
             </v-list-item-title>
@@ -52,143 +51,161 @@
   </manage-source-component-dialog>
 </template>
 
-<script>
-import { mapGetters } from "vuex";
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed, ref, toRef, watch } from "vue";
+import { useStore } from "vuex";
 
 import {
   ManageSourceComponentDialog,
   SourceComponentTooltip
 } from "@/components/Report/SourceComponent";
 
-import SelectOption from "./SelectOption/SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
+import { useBaseSelectOptionFilter }
+  from "@/composables/useBaseSelectOptionFilter";
+import { useRoute } from "vue-router";
 import ReportFilterModeSelector
   from "./SelectOption/ReportFilterModeSelector.vue";
+import SelectOption from "./SelectOption/SelectOption";
 
-export default {
-  name: "SourceComponentFilter",
-  components: {
-    ReportFilterModeSelector,
-    ManageSourceComponentDialog,
-    SelectOption,
-    SourceComponentTooltip
-  },
-  mixins: [ BaseSelectOptionFilterMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "source-component",
-      anywhereId: "anywhere-sourcecomponent",
-      sameOriginId: "sameorigin-sourcecomponent",
-      search: {
-        placeHolder : "Search for source components...",
-        filterItems: this.filterItems
-      },
-      dialog: false,
-      reportFilterMode: null,
-      isAnywhere: false,
-      isSameOrigin: false
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  computed: {
-    ...mapGetters([
-      "currentProduct"
-    ]),
+const id = ref("source-component");
+const anywhereId = ref("anywhere-sourcecomponent");
+const sameOriginId = ref("sameorigin-sourcecomponent");
+const isDialogOpen = ref(false);
+const reportFilterMode = ref(null);
+const isAnywhere = ref(false);
+const isSameOrigin = ref(false);
 
-    administrating() {
-      return this.currentProduct?.administrating;
-    }
-  },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
-  watch: {
-    dialog(value) {
-      if (value) return;
+const search = ref({
+  placeHolder : "Search for source components...",
+  filterItems: baseSelectOptionFilter.filterItems
+});
+const store = useStore();
+const route = useRoute();
 
-      // If the source component manager dialog is closed we need to update
-      // the filter items to make sure that new items will be shown.
-      this.bus.$emit("update");
-    },
+const currentProduct = computed(() => store.getters.currentProduct);
 
-    reportFilterMode() {
-      if (this.reportFilterMode == "anywhere") {
-        this.isAnywhere = true;
-        this.isSameOrigin = false;
-      } else if (this.reportFilterMode == "single-origin") {
-        this.isAnywhere = false;
-        this.isSameOrigin = true;
-      } else {
-        this.isAnywhere = false;
-        this.isSameOrigin = false;
-      }
+const administrating = computed(() => {
+  return currentProduct.value?.administrating;
+});
 
-      this.updateReportFilter();
-      this.$emit("update:url");
-      this.update();
-    }
-  },
+watch(isDialogOpen, value => {
+  if (value) return;
 
-  methods: {
-    updateReportFilter() {
-      this.setReportFilter({
-        componentNames: this.selectedItems.map(item => item.id),
-        componentMatchesAnyPoint: this.isAnywhere,
-        fullReportPathInComponent: this.isSameOrigin
-      });
-    },
+  // If the source component manager dialog is closed we need to update
+  // the filter items to make sure that new items will be shown.
+  baseSelectOptionFilter.bus.emit("update");
+});
 
-    onReportFilterChange(key) {
-      if (key === "componentNames") return;
-      this.update();
-    },
-
-    getUrlState() {
-      const state =
-        this.selectedItems.map(item => this.encodeValue(item.id));
-
-      return {
-        [this.id]: state.length ? state : undefined,
-        [this.anywhereId]: this.isAnywhere || undefined,
-        [this.sameOriginId]: this.isSameOrigin || undefined
-      };
-    },
-
-    setReportFilterMode() {
-      if (this.isAnywhere && !this.isSameOrigin) {
-        this.reportFilterMode = "anywhere";
-      } else if (!this.isAnywhere && this.isSameOrigin) {
-        this.reportFilterMode = "single-origin";
-      } else {
-        this.reportFilterMode = "end";
-      }
-    },
-
-    initByUrl() {
-      this.isAnywhere = !!this.$route.query[this.anywhereId];
-      this.isSameOrigin = !!this.$route.query[this.sameOriginId];
-      this.setReportFilterMode();
-      this.initCheckOptionsByUrl();
-    },
-
-    fetchItems(opt={}) {
-      this.loading = true;
-
-      return new Promise(resolve => {
-        const filter = opt.query;
-        ccService.getClient().getSourceComponents(filter,
-          handleThriftError(res => {
-            resolve(res.map(component => {
-              return {
-                id : component.name,
-                title: component.name,
-                value: component.value || component.description
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
+watch(reportFilterMode, () => {
+  if (reportFilterMode.value == "anywhere") {
+    isAnywhere.value = true;
+    isSameOrigin.value = false;
+  } else if (reportFilterMode.value == "single-origin") {
+    isAnywhere.value = false;
+    isSameOrigin.value = true;
+  } else {
+    isAnywhere.value = false;
+    isSameOrigin.value = false;
   }
-};
+
+  updateReportFilter();
+  emit("update:url");
+  baseSelectOptionFilter.update();
+});
+
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
+
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    componentNames:
+      baseSelectOptionFilter.selectedItems.value.map(item => item.id),
+    componentMatchesAnyPoint: isAnywhere.value,
+    fullReportPathInComponent: isSameOrigin.value
+  });
+}
+
+function onReportFilterChange(key) {
+  if (key === "componentNames") return;
+  baseSelectOptionFilter.update();
+}
+
+function getUrlState() {
+  const _state =
+    baseSelectOptionFilter.selectedItems.value.map(
+      item => baseSelectOptionFilter.encodeValue.value(item.id)
+    );
+
+  return {
+    [id.value]: _state.length ? _state : undefined,
+    [anywhereId.value]: isAnywhere.value || undefined,
+    [sameOriginId.value]: isSameOrigin.value || undefined
+  };
+}
+
+function setReportFilterMode() {
+  if (isAnywhere.value && !isSameOrigin.value) {
+    reportFilterMode.value = "anywhere";
+  } else if (!isAnywhere.value && isSameOrigin.value) {
+    reportFilterMode.value = "single-origin";
+  } else {
+    reportFilterMode.value = "end";
+  }
+}
+
+function initByUrl() {
+  isAnywhere.value = !!route.query[anywhereId.value];
+  isSameOrigin.value = !!route.query[sameOriginId.value];
+  setReportFilterMode();
+  baseSelectOptionFilter.initCheckOptionsByUrl();
+}
+
+function fetchItems(opt={}) {
+  baseSelectOptionFilter.loading.value = true;
+
+  return new Promise(resolve => {
+    const _filter = opt.query;
+    ccService.getClient().getSourceComponents(
+      _filter,
+      handleThriftError(res => {
+        resolve(res.map(component => {
+          return {
+            id : component.name,
+            title: component.name,
+            value: component.value || component.description
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+
+  id,
+  getUrlState,
+  initByUrl,
+  onReportFilterChange,
+  updateReportFilter,
+  fetchItems
+});
 </script>
