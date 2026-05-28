@@ -148,11 +148,22 @@
         >
           <v-expansion-panel>
             <v-expansion-panel-title
-              class="pa-0 px-1"
-              expand-icon="mdi-chevron-down"
-              collapse-icon="mdi-chevron-up"
+              class="pa-0"
+              hide-actions
             >
-              <b>BASELINE</b>
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>BASELINE</b></span>
+                <v-spacer />
+              </template>
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <baseline-run-filter
@@ -161,7 +172,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider />
+              <v-divider class="mt-2" />
 
               <baseline-open-reports-date-filter
                 :ref="setFilterRef"
@@ -184,11 +195,22 @@
         >
           <v-expansion-panel>
             <v-expansion-panel-title
-              class="pa-0 px-1 primary--text"
-              expand-icon="mdi-chevron-down"
-              collapse-icon="mdi-chevron-up"
+              class="pa-0"
+              hide-actions
             >
-              <b>COMPARE TO</b>
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>COMPARE TO</b></span>
+                <v-spacer />
+              </template>
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <compared-to-run-filter
@@ -197,7 +219,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider />
+              <v-divider class="mt-2" />
 
               <compared-to-open-reports-date-filter
                 :ref="setFilterRef"
@@ -205,7 +227,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider v-if="showDiffType" />
+              <v-divider v-if="showDiffType" class="mt-2" />
 
               <compared-to-diff-type-filter
                 v-if="showDiffType"
@@ -327,9 +349,22 @@
         >
           <v-expansion-panel>
             <v-expansion-panel-title
-              class="pa-0 px-1"
+              class="pa-0"
+              hide-actions
             >
-              <b>Dates</b>
+              <template #default="{ expanded }">
+                <v-icon class="expansion-btn">
+                  {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
+                </v-icon>
+                <span
+                  class="
+                    text-body-2
+                    font-weight-semibold
+                    mr-2
+                    text-truncate"
+                ><b>Dates</b></span>
+                <v-spacer />
+              </template>
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <detection-date-filter
