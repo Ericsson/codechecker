@@ -18,6 +18,22 @@ from typing import Dict, List, Optional, TextIO
 
 LOG = logging.getLogger('report-converter')
 
+# Regular expression patterns for path matching
+DRIVE_LETTER = r'[A-Za-z]:'
+PATH_SEPARATOR = r'[/\\]'
+PATH_COMPONENT = r'[^/\s\\]+'
+FILE_EXTENSION = r'\.[a-zA-Z0-9]+'
+PATH_PATTERN = f'(?:{DRIVE_LETTER})?{PATH_SEPARATOR}{PATH_COMPONENT}' \
+               f'(?:{PATH_SEPARATOR}{PATH_COMPONENT})*(?:{FILE_EXTENSION})?'
+
+
+def find_paths_in_text(text: str) -> List[str]:
+    """
+    Find all potential file paths in the given text.
+    Handles both Unix and Windows paths.
+    """
+    return [match.group() for match in re.finditer(PATH_PATTERN, text)]
+
 
 def get_last_mod_time(file_path: str) -> Optional[float]:
     """ Return the last modification time of a file. """
