@@ -728,12 +728,12 @@ CodeChecker recognizes several third party coding guidelines, such as
 CppCoreGuidelines, SEI-CERT, or MISRA. These are collections of best
 programming practices to avoid common programming errors. Some checkers cover
 the rules of these guidelines. CodeChecker assigns the 'guideline' label to
-these checkers, such as 'guideline:sei-cert'. This way you can list and enable
-those checkers which check the fulfillment of certain guideline rules. See the
-output of "CodeChecker checkers --guideline" command.
+these checkers, such as 'guideline:sei-cert-c'. This way you can list and
+enable those checkers which check the fulfillment of certain guideline rules.
+See the output of "CodeChecker checkers --guideline" command.
 
 Guidelines are labels themselves, and can be used as a label:
-'-e guideline:<value>', e.g. '-e guideline:sei-cert'.
+'-e guideline:<value>', e.g. '-e guideline:sei-cert-c'.
 
 Note: The 'guideline' label is mandatory when there is ambiguity between the
 name of a guideline and a checker prefix group or a checker profile. This
