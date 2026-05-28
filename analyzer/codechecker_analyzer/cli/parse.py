@@ -30,7 +30,7 @@ from codechecker_report_converter.report.statistics import Statistics
 
 from codechecker_analyzer import analyzer_context, suppress_handler
 from codechecker_analyzer.util import analyzer_action_hash
-from codechecker_analyzer.analyzers.analyzer_types import supported_analyzers
+from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.review_status_handler import ReviewStatusHandler
@@ -286,6 +286,8 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
                           detailed_flag: bool):
 
     recent, old, failed, missing, analyzed_actions = {}, {}, {}, {}, {}
+    supported_analyzers = \
+        analyzer_types.get_analyzers_for_compile_commands(compile_commands)
 
     for analyzer in supported_analyzers:
         recent[analyzer] = {}
@@ -442,7 +444,7 @@ def print_status(report_dir: str,
         LOG.info("----==== Summary ====----")
         for k, v in summary_map.items():
             LOG.info(v)
-            for analyzer in supported_analyzers:
+            for analyzer in status["analyzers"]:
                 count = status["analyzers"][analyzer]["summary"][k]
                 if count > 0:
                     if detailed_flag:

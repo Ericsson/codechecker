@@ -1,0 +1,20 @@
+{
+  "analyzer": "clippy",
+  "labels": {
+    "clippy": [
+      "profile:default",
+      "severity:LOW",
+      "doc_url:https://rust-lang.github.io/rust-clippy/"
+    ],
+    "rustc-E": [
+      "profile:default",
+      "severity:CRITICAL",
+      "doc_url:https://doc.rust-lang.org/error_codes/error-index.html"
+    ],
+    "rustc": [
+      "profile:default",
+      "severity:LOW",
+      "doc_url:https://doc.rust-lang.org/rustc/lints/index.html"
+    ]
+  }
+}

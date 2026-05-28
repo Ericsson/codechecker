@@ -268,6 +268,15 @@ class Context(metaclass=Singleton):
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
 
+                # Rustup installs toolchain commands (cargo, rustc,
+                # cargo-clippy, ...) as symlinks to the rustup executable.
+                # Rustup dispatches based on argv[0], so invoking the realpath
+                # directly would run rustup itself instead of the requested
+                # tool.
+                if self.__analyzers[name].endswith('/rustup'):
+                    self.__analyzers[name] = compiler_binary
+                    continue
+
                 # If the compiler binary is a simlink to ccache, use the
                 # original compiler binary.
                 if self.__analyzers[name].endswith("/ccache"):

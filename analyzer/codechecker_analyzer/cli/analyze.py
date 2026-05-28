@@ -11,25 +11,26 @@ Execute analysis over an already existing build.json compilation database.
 
 import argparse
 import collections
+from functools import partial
 import json
 import os
+from pathlib import Path
 import shutil
 import sys
 from typing import List
-from pathlib import Path
-from functools import partial
 
 from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, \
     compilation_database
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
+from codechecker_analyzer.analyzers.clippy.analyzer import \
+    Clippy, create_cargo_build_action, find_cargo_manifest
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
     analyzer_config, checker_config, AnalyzerConfigArg, CheckerConfigArg
 
 from codechecker_analyzer.buildlog import log_parser
-
 from codechecker_common import arg, logger, cmd_config, review_status_handler
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.skiplist_handler import SkipListHandler, \
@@ -40,6 +41,24 @@ LOG = logger.get_logger('system')
 
 header_file_extensions = (
     '.h', '.hh', '.H', '.hp', '.hxx', '.hpp', '.HPP', '.h++', '.tcc')
+
+
+def __is_clippy_selected(args) -> bool:
+    """
+    Return whether Clippy was selected explicitly.
+    """
+    return bool(args.analyzers) and Clippy.ANALYZER_NAME in args.analyzers
+
+
+def __is_clippy_selected_or_valid_to_deduce(args) -> bool:
+    """
+    Return whether Clippy is selected or may be deduced.
+
+    If no analyzers were specified, we can assume it is safe to run Clippy
+    when the input is a Cargo manifest.
+    """
+    return not args.analyzers or __is_clippy_selected(args)
+
 
 EPILOG_ENV_VAR = """
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
@@ -1332,8 +1351,29 @@ def main(args):
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
 
-    compile_commands = \
-        compilation_database.gather_compilation_database(args.input)
+    actions = None
+    skipped_cmp_cmd_count = 0
+    cargo_manifest_path = find_cargo_manifest(args.input) \
+        if __is_clippy_selected_or_valid_to_deduce(args) else None
+
+    if cargo_manifest_path:
+        actions = [create_cargo_build_action(cargo_manifest_path)]
+        compile_commands = [actions[0].to_dict()]
+
+        if not args.analyzers:
+            args.analyzers = [Clippy.ANALYZER_NAME]
+    else:
+        compile_commands = \
+            compilation_database.gather_compilation_database(args.input)
+        if not args.analyzers:
+            args.analyzers = list(analyzer_types.compile_command_analyzers)
+
+    if __is_clippy_selected(args) and not cargo_manifest_path:
+        LOG.error(
+            "Clippy analysis requires direct Cargo.toml input, got '%s'.",
+            args.input)
+        sys.exit(1)
+
     if compile_commands is None:
         LOG.error(f"Found no compilation commands in '{args.input}'")
         sys.exit(1)
@@ -1402,16 +1442,17 @@ def main(args):
     LOG.debug("args: %s", str(args))
     LOG.debug("Output will be stored to: '%s'", args.output_path)
 
-    actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
-        compile_commands,
-        args.compile_uniqueing,
-        compiler_info_file,
-        args.keep_gcc_include_fixed,
-        args.keep_gcc_intrin,
-        args.jobs,
-        skip_handlers,
-        pre_analysis_skip_handlers,
-        ctu_or_stats_enabled)
+    if actions is None:
+        actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
+            compile_commands,
+            args.compile_uniqueing,
+            compiler_info_file,
+            args.keep_gcc_include_fixed,
+            args.keep_gcc_intrin,
+            args.jobs,
+            skip_handlers,
+            pre_analysis_skip_handlers,
+            ctu_or_stats_enabled)
 
     if not actions:
         LOG.warning("No analysis is required.")

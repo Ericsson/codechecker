@@ -24,6 +24,7 @@ from .. import host_check
 from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
 from .cppcheck.analyzer import Cppcheck
+from .clippy.analyzer import Clippy
 from .gcc.analyzer import Gcc
 from .infer.analyzer import Infer
 
@@ -31,10 +32,32 @@ LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        ClangTidy.ANALYZER_NAME: ClangTidy,
+                       Clippy.ANALYZER_NAME: Clippy,
                        Cppcheck.ANALYZER_NAME: Cppcheck,
                        Gcc.ANALYZER_NAME: Gcc,
                        Infer.ANALYZER_NAME: Infer
                        }
+
+compile_command_analyzers = {
+    analyzer_name: analyzer_class
+    for analyzer_name, analyzer_class in supported_analyzers.items()
+    if analyzer_name != Clippy.ANALYZER_NAME
+}
+
+cargo_manifest_analyzers = {Clippy.ANALYZER_NAME: Clippy}
+
+
+def get_analyzers_for_compile_commands(compile_commands):
+    """
+    Return analyzers that can produce reports for the given compile commands.
+    """
+    if compile_commands and all(
+        os.path.basename(c["file"]) == "Cargo.toml"
+        for c in compile_commands
+    ):
+        return cargo_manifest_analyzers
+
+    return compile_command_analyzers
 
 
 def is_statistics_capable():
