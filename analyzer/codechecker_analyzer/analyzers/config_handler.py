@@ -191,7 +191,8 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         for identifier, enabled in cmdline_enable:
             labels = checker_labels.labels() \
                 if callable(getattr(checker_labels, 'labels', None)) \
-                else ["guideline", "profile", "severity", "sei-cert"]
+                else ["guideline", "profile", "severity",
+                      "sei-cert-c", "sei-cert-cpp"]
 
             all_namespaces = ["checker", "prefix"] + labels
 

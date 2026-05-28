@@ -11,7 +11,7 @@ Current labels are:
 |-------|-------------|
 | profile | A grouping of checker that can be used after `--enable`/`--disable` flags during analysis. |
 | guideline | A coding guideline which contains a coding rule covered by the given checker. |
-| sei-cert | Rules of SEI-CERT coding guideline that the given checker covers. |
+| sei-cert-c, sei-cert-cpp | Rules of SEI-CERT coding guideline that the given checker covers. |
 | severity | Indicates how severe a bug described by the given checker is when it occurs. |
 
 As for severities, the following levels are defined:
