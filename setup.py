@@ -241,7 +241,7 @@ setuptools.setup(
     author_email='codechecker-tool@googlegroups.com',
     description="CodeChecker is an analyzer tooling, defect database and "
                 "viewer extension",
-    long_description=long_description,
+    long_description=read_long_description(),
     long_description_content_type = "text/markdown",
     url="https://github.com/Ericsson/CodeChecker",
     project_urls={
