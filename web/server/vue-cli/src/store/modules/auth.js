@@ -27,9 +27,9 @@ const getters = {
   token() {
     return authService.getToken();
   },
-  isAuthenticated() {
-    // Check token existence dynamically to avoid initialization issues
-    return !!authService.getToken();
+  isAuthenticated(state) {
+    state.isAuthenticated = !!authService.getToken();
+    return state.isAuthenticated;
   },
   authParams(state) {
     return state.authParams;
