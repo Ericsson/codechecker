@@ -13,14 +13,9 @@ cat > "$WORK/compile_commands.json" <<EOF
 [{"directory": "$WORK", "command": "gcc -c $WORK/main.c", "file": "$WORK/main.c"}]
 EOF
 
-# analyze exits 3: gcc and infer are not installed, so their analysis is "missing".
-set +e
-CodeChecker analyze "$WORK/compile_commands.json" -o "$WORK/reports"; rc=$?
-set -e
-if [ $rc -ne 3 ]; then
-  echo "ERROR: Expected analyze exit code 3, got $rc" >&2
-  exit 1
-fi
+# analyze exits 0: clangsa, clang-tidy, cppcheck all succeed.
+# gcc has no checkers enabled but is not considered a failure.
+CodeChecker analyze "$WORK/compile_commands.json" -o "$WORK/reports"
 
 # parse exits 2: at least one report was emitted (division by zero).
 COUNT="$( (CodeChecker parse "$WORK/reports" -e json; rc=$?; [ $rc -eq 2 ] || exit $rc) | jq '.reports | length')"
