@@ -2483,7 +2483,7 @@ overwritten when the package is reinstalled!
 There are some coding guidelines which contain best practices on avoiding
 common programming mistakes
 ([https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines](C++ Core Guidelines),
-[https://wiki.sei.cmu.edu/confluence/display/seccode/SEI+CERT+Coding+Standards](SEI-CERT), etc.)
+[https://cmu-sei.github.io/secure-coding-standards/](SEI-CERT), etc.)
 Many of these guideline rules can be checked by static analyzer tools. The
 detailed output of `CodeChecker checkers` command contains information about
 which checkers cover certain guideline rules. This mapping is given in the
