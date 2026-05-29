@@ -24,9 +24,6 @@ const getters = {
   currentUser(state) {
     return state.currentUser;
   },
-  token() {
-    return authService.getToken();
-  },
   isAuthenticated(state) {
     state.isAuthenticated = !!authService.getToken();
     return state.isAuthenticated;
