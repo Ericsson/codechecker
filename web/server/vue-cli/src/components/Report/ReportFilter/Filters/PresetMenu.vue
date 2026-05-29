@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import isEqual from "lodash/isEqual";
 import {
   authService,
@@ -86,7 +86,7 @@ const activePresetName = computed(() => {
   return preset?.name || "";
 });
 
-watch(() => route.query, newQuery => {
+function checkModified() {
   if (!activePresetId.value || !querySnapshot.value) {
     isModified.value = false;
     return;
@@ -113,14 +113,20 @@ watch(() => route.query, newQuery => {
     }
     return sorted;
   };
-  const normNew = normalize(newQuery);
+  const normNew = normalize(route.query);
   const normSnap = normalize(querySnapshot.value);
+
   isModified.value = !isEqual(normNew, normSnap);
+}
+
+watch(() => route.query, () => {
+  checkModified();
 }, { deep: true });
 
-watch(activePresetId, () => {
+watch(activePresetId, newVal => {
+  if (newVal == null || settingPreset.value) return;
   settingPreset.value = true;
-  emit("apply-preset", activePresetId.value);
+  emit("apply-preset", newVal);
   settingPreset.value = false;
 });
 
@@ -174,6 +180,7 @@ async function fetchPresets() {
 
 function onPresetApplied(savedQuery) {
   querySnapshot.value = savedQuery ? { ...savedQuery } : { ...route.query };
+  checkModified();
 }
 
 function clearPresetState() {
@@ -219,6 +226,13 @@ async function selectPresetAfterSave(id) {
   isModified.value = false;
 }
 
+async function selectPresetSilently(id) {
+  settingPreset.value = true;
+  activePresetId.value = id;
+  await nextTick();
+  settingPreset.value = false;
+}
+
 defineExpose({
   activePresetId,
   activePresetName,
@@ -226,6 +240,8 @@ defineExpose({
   onPresetApplied,
   clearPresetState,
   selectPresetAfterSave,
+  selectPresetSilently,
+  fetchPresets,
 });
 
 </script>
