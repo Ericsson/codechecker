@@ -14,7 +14,7 @@ human-readable format.
 import argparse
 import os
 import sys
-from typing import Dict, Optional, Set, List
+from typing import Dict, Optional, Set, List, Any
 import json
 import fnmatch
 
@@ -285,7 +285,11 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
                           report_dir: str,
                           detailed_flag: bool):
 
-    recent, old, failed, missing, analyzed_actions = {}, {}, {}, {}, {}
+    recent: Dict[str, Dict[str, int]] = {}
+    old: Dict[str, Dict[str, int]] = {}
+    failed: Dict[str, Dict[str, int]] = {}
+    missing: Dict[str, Dict[str, int]] = {}
+    analyzed_actions: Dict[str, int] = {}
 
     for analyzer in supported_analyzers:
         recent[analyzer] = {}
@@ -331,7 +335,7 @@ def get_report_dir_status(compile_commands: List[dict[str, str]],
         "failed": failed
     }
 
-    out_analyzers = {}
+    out_analyzers: Dict[str, Any] = {}
     for analyzer in supported_analyzers:
         detailed, summary = {}, {}
 

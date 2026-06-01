@@ -2,12 +2,34 @@
 verbosity = 1
 show_error_codes = true
 
+# Packages are explicitly defined at mypy_path/<package_name>,
+# rather than discovered via __init__.py.
+explicit_package_bases = true
+
 files = [
-  "codechecker_common/"
+  "codechecker_common/",
+  "tools/",
+  "analyzer/"
 ]
 
 mypy_path = [
   "analyzer/",
+  "analyzer/tools/statistics_collector/",
+  "analyzer/tools/merge_clang_extdef_mappings/",
   "web/",
-  "tools/report-converter/"
+  "tools/report-converter/",
+  "tools/tu_collector/"
+]
+
+exclude = [
+  # Ignore tests
+  "/tests/libtest/",
+  "/tests/functional/",
+  "/tests/unit/",
+
+  # Ignore setup.py files
+  "/setup.py$",
+
+  # Ignore build directories
+  "/build/",
 ]
