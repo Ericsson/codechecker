@@ -39,7 +39,7 @@
     </v-card>
   </v-dialog>
   <div>
-    <div 
+    <div
       class="mt-2 mb-2 d-flex align-center justify-space-between w-100 p-1"
     >
       <ClearAllFilters
@@ -538,7 +538,7 @@ const saveDialogTitle = computed(() => {
 
 watch(() => props.refreshFilter, state => {
   if (!state) return;
-  
+
   initByUrl();
   emit("set-refresh-filter-state", false);
 });
@@ -689,14 +689,20 @@ onBeforeUnmount(() => {
 });
 
 function saveCurrentFilter(mode) {
-  const activePresetId = presetMenuRef.value?.activePresetId;
+  const presetReportFilter = structuredClone(reportFilter.value);
 
+  // Store selected run names in reportFilter.runName (not part of the
+  // standard filter state, but needed for preset serialization).
+  const runFilter = filters.value.find(f => f.id === "run");
+  presetReportFilter.runName = runFilter?.selectedItems?.map(i => i.id) ?? [];
+
+  const activePresetId = presetMenuRef.value?.activePresetId;
   const preset = {
     id: mode === "override" && activePresetId
       ? activePresetId
       : -1,
     name: presetName.value,
-    reportFilter: reportFilter.value
+    reportFilter: presetReportFilter
   };
 
   new Promise(
@@ -993,7 +999,6 @@ async function getFilterPreset(preset_id) {
   await router.replace({ query: nextQuery }).catch(() => {});
 
   initByUrl();
-  updateUrl();
   await nextTick();
 
   if (presetMenuRef.value) {
@@ -1006,7 +1011,6 @@ async function clearToolbarSilently() {
   unregisterWatchers();
   _filters.forEach(f => f.unregisterWatchers());
   await Promise.all(_filters.map(f => f.clear(false)));
-  updateAllFilters();
 }
 
 /*function listFilterPreset() {
