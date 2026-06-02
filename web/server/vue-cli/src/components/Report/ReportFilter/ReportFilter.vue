@@ -31,9 +31,7 @@
         <v-btn
           color="primary"
           :disabled="!presetName"
-          @click="saveMode !== 'rename'
-            ? saveCurrentFilter(saveMode)
-            : renameFilterPreset()"
+          @click="savePreset(saveMode)"
         >
           Save
         </v-btn>
@@ -95,7 +93,8 @@
       />
 
       <div
-        v-if="canSeeActions && !presetMenuRef?.isModified"
+        v-if="canSeeActions && !presetMenuRef?.isModified
+          && !presetMenuRef?.activePresetId"
         class="d-flex flex-column mb-2 mt-2"
       >
         <v-btn
@@ -704,66 +703,44 @@ onBeforeUnmount(() => {
   }
 });
 
-function saveCurrentFilter(mode) {
-  const presetReportFilter = structuredClone(reportFilter.value);
+async function savePreset(mode) {
+  try {
+    let result;
+    if (mode === "rename") {
+      const preset_id = presetMenuRef.value?.activePresetId;
+      const new_name = presetName.value;
+      result = await new Promise(resolve => {
+        ccService.getClient().renameFilterPreset(preset_id, new_name,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      });
+    } else {
+      const activePresetId = presetMenuRef.value?.activePresetId;
+      const preset = {
+        id: mode === "override" && activePresetId
+          ? activePresetId
+          : -1,
+        name: presetName.value,
+        reportFilter: reportFilter.value
+      };
 
-  // Store selected run names in reportFilter.runName (not part of the
-  // standard filter state, but needed for preset serialization).
-  const runFilter = filters.value.find(f => f.id === "run");
-  presetReportFilter.runName = runFilter?.selectedItems?.map(i => i.id) ?? [];
+      result = await new Promise(resolve => {
+        ccService.getClient().storeFilterPreset(preset,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      });
+    }
 
-  const activePresetId = presetMenuRef.value?.activePresetId;
-  const preset = {
-    id: mode === "override" && activePresetId
-      ? activePresetId
-      : -1,
-    name: presetName.value,
-    reportFilter: presetReportFilter
-  };
-
-  new Promise(
-    resolve => {
-      ccService.getClient().storeFilterPreset(preset,
-        handleThriftError(result => {
-          resolve(result);
-        })
-      );
-    })
-    .then(
-      result => {
-        savePresetDialogOpen.value = false;
-        presetName.value = "";
-        presetMenuRef.value?.selectPresetAfterSave(result);
-      }
-    ).catch(
-      err => {
-        handleThriftError("FAILURE", err);
-      }
-    );
-}
-
-function renameFilterPreset() {
-  const preset_id = presetMenuRef.value?.activePresetId;
-  const new_name = presetName.value;
-  new Promise(
-    resolve => {
-      ccService.getClient().renameFilterPreset(preset_id, new_name,
-        handleThriftError(result => {
-          resolve(result);
-        })
-      );
-    })
-    .then(
-      result => {
-        savePresetDialogOpen.value = false;
-        presetName.value = "";
-        presetMenuRef.value?.selectPresetAfterSave(result);
-      }
-    ).catch(
-      err => {
-        handleThriftError("FAILURE", err);
-      }
-    );
+    savePresetDialogOpen.value = false;
+    presetName.value = "";
+    presetMenuRef.value?.selectPresetAfterSave(result);
+  } catch (err) {
+    handleThriftError("FAILURE", err);
+  }
 }
 
 function overridePreset() {
