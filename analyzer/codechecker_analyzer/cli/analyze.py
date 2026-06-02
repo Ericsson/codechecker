@@ -1091,7 +1091,7 @@ def __update_review_status_config(args):
     if 'review_status_config' in args:
         LOG.debug("Copying review status config file %s to %s",
                   args.review_status_config, rs_config_to_send)
-        os.symlink(args.review_status_config, rs_config_to_send)
+        shutil.copyfile(args.review_status_config, rs_config_to_send)
 
 
 def __update_analysis_config_files(args):
