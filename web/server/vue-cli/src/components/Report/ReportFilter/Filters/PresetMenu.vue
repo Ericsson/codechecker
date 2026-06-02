@@ -86,7 +86,7 @@ const activePresetName = computed(() => {
   return preset?.name || "";
 });
 
-function checkModified() {
+function checkModified(currentQuery) {
   if (!activePresetId.value || !querySnapshot.value) {
     isModified.value = false;
     return;
@@ -113,14 +113,14 @@ function checkModified() {
     }
     return sorted;
   };
-  const normNew = normalize(route.query);
+  const normNew = normalize(currentQuery);
   const normSnap = normalize(querySnapshot.value);
 
   isModified.value = !isEqual(normNew, normSnap);
 }
 
-watch(() => route.query, () => {
-  checkModified();
+watch(() => route.query, newQuery => {
+  checkModified(newQuery);
 }, { deep: true });
 
 watch(activePresetId, newVal => {
@@ -180,7 +180,7 @@ async function fetchPresets() {
 
 function onPresetApplied(savedQuery) {
   querySnapshot.value = savedQuery ? { ...savedQuery } : { ...route.query };
-  checkModified();
+  checkModified(route.query);
 }
 
 function clearPresetState() {

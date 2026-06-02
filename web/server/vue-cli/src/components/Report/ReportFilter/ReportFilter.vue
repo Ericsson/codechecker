@@ -1078,7 +1078,6 @@ async function initFilterPresetFromUrl(presetId){
   await initByUrl();
   updateUrl();
   await nextTick();
-
 }
 
 async function clearToolbarSilently() {
