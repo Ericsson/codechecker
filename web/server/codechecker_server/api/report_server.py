@@ -1737,7 +1737,8 @@ class ThriftRequestHandler:
                 if not preset_id:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        "Invalid preset ID!")
+                        "Preset ID cannot be empty!")
+
                 preset_entry = session.query(FilterPreset).filter(
                     FilterPreset.id == preset_id
                 ).one_or_none()
