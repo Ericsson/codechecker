@@ -162,12 +162,17 @@ import { useRoute, useRouter } from "vue-router";
 import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 
+const props = defineProps({
+  bus: { type: Object, required: true },
+  namespace: { type: String, required: true }
+});
+
 const emit = defineEmits([ "refresh-filter" ]);
 const router = useRouter();
 const route = useRoute();
 const severity = useSeverity();
 const toCSV = useToCSV();
-const baseStatistics = useBaseStatistics();
+const baseStatistics = useBaseStatistics(props, null);
 const analysisInfoComp = useAnalysisInfo();
 
 const guidelineOptions = ref([
@@ -233,6 +238,8 @@ const filteredStatistics = computed(() => {
   }
   return statistics.value;
 });
+
+baseStatistics.setupRefreshListener(fetchStatistics);
 
 watch(() => baseStatistics.runIds, async () => {
   noProperRun.value = false;
@@ -392,7 +399,7 @@ async function getAllGuidelineRules() {
 
 async function getRunData() {
   const _filter = new RunFilter({
-    ids: baseStatistics.runIds
+    ids: baseStatistics.runIds.value
   });
 
   const _runCount = await new Promise(resolve => {
