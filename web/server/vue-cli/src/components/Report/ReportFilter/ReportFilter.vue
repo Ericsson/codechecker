@@ -88,7 +88,7 @@
       </tooltip-help-icon>
       <preset-menu
         ref="presetMenuRef"
-        @apply-preset="getFilterPreset"
+        @apply-preset="initFilterPresetFromUrl"
         @clear-preset="clearAllFilters"
       />
 
@@ -514,6 +514,7 @@ const activeBaselinePanelId = ref(0);
 const activeCompareToPanelId = ref(0);
 const activeDatePanelId = ref(0);
 const filters = ref([]);
+const isInitializing = ref(false);
 const savePresetDialogOpen = ref(false);
 const saveMode = ref("create");
 const presetName = ref("");
@@ -629,9 +630,13 @@ function unregisterWatchers() {
   if (cmpDataUnwatch.value) cmpDataUnwatch.value();
 }
 
-function initByUrl() {
+async function initByUrl() {
+  if (isInitializing.value) return;
+  isInitializing.value = true;
+
   const _filters = filters.value;
   if (!_filters?.length) {
+    isInitializing.value = false;
     return;
   };
 
@@ -640,6 +645,17 @@ function initByUrl() {
   _filters.forEach(filter => {
     if (filter?.beforeInit) filter?.beforeInit?.();
   });
+
+  const presetId = route.query.filterPreset;
+
+  if (presetId && presetMenuRef.value) {
+    await presetMenuRef.value.fetchPresets();
+    await presetMenuRef.value.selectPresetSilently(Number(presetId));
+    const presetSnapshot = await buildPresetQuery(presetId);
+    if (presetSnapshot) {
+      presetMenuRef.value.onPresetApplied(presetSnapshot);
+    }
+  }
 
   // Init all filters by URL parameters.
   const _results = _filters
@@ -654,7 +670,10 @@ function initByUrl() {
     afterInit();
 
     preparePanelsOnInit();
+  }).finally(() => {
+    isInitializing.value = false;
   });
+
 }
 
 function preparePanelsOnInit() {
@@ -675,6 +694,11 @@ async function clearAllFilters() {
 
   // Clear all filters and update the url.
   await Promise.all(_filters.map(filter => filter?.clear?.(false)));
+
+  // Clear FilterPreset from url.
+  await router.replace({ query: { ...route.query,
+    filterPreset: undefined } }).catch(() => {});
+
   updateUrl();
 
   // Update filters after clear.
@@ -773,13 +797,236 @@ function renamePresetDialog() {
   })
     .then(deleted_pr_id => {
       handleThriftError("OK", deleted_pr_id);
-    }).catch(err => {
-      handleThriftError("FAILURE", err);
-    });
-}*/
+      }).catch(err => {
+        handleThriftError("FAILURE", err);
+        });
+        }*/
 
-async function getFilterPreset(preset_id) {
-  if (preset_id == null) {
+// helper functions
+function toTitleCase(word) {
+  if (word == null) return "";
+  return String(word)
+    .toLowerCase()
+    .replace(/^\w/, c => c.toUpperCase());
+}
+function toEnumNames(value, map) {
+  const normalizeOne = v => {
+    if (v === null || v === undefined || v === "") return "";
+    const n = typeof v === "string" &&
+      v.trim() !== "" ? Number(v) : v;
+    return map?.[n] ?? map?.[v] ?? String(v);
+  };
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeOne).filter(Boolean);
+  }
+  return normalizeOne(value);
+}
+const toISO = sec => {
+  if (!sec) return "";
+  const d = new Date(sec * 1000);
+  return isNaN(d.getTime()) ? "" : d.toISOString();
+};
+const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
+
+const ENUMS_FOR_STATUSES = {
+  detectionStatus: {
+    0: "NEW",
+    1: "RESOLVED",
+    2: "UNRESOLVED",
+    3: "REOPENED",
+    4: "OFF",
+    5: "UNAVAILABLE",
+  },
+  diffType: {
+    0: "NEW",
+    1: "RESOLVED",
+    2: "UNRESOLVED",
+  },
+  reviewStatus: {
+    0: "UNREVIEWED",
+    1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
+    2: "FALSE POSITIVE", // False_positive -> False positive
+    3: "INTENTIONAL",
+  },
+  severity: {
+    0: "UNSPECIFIED",
+    10: "STYLE",
+    20: "LOW",
+    30: "MEDIUM",
+    40: "HIGH",
+    50: "CRITICAL",
+  },
+  order: {
+    0: "ASC",
+    1: "DESC",
+  },
+  reportStatus: {
+    0: "OUTSTANDING",
+    1: "CLOSED",
+  }
+};
+const FilterToQuery = {
+  filepath: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "filepath", v ]),
+  checkerMsg: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "checker-msg", v ]),
+  checkerName: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "checker-name", v ]),
+  reportHash: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "report-hash", v ]),
+  severity: (_, rawValue) => {
+    const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+    return values
+      .map(v => [
+        "severity",
+        toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.severity))
+      ])
+      .filter(([ , val ]) => val !== "");
+  },
+  reviewStatus: (_, rawValue) => {
+    const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+    return values
+      .map(v => [
+        "review-status",
+        toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reviewStatus))
+      ])
+      .filter(([ , val ]) => val !== "");
+  },
+  detectionStatus: (_, rawValue) => {
+    const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
+    return values
+      .map(v => [ "detection-status",
+        toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.detectionStatus)) ])
+      .filter(([ , val ]) => val !== "");
+  },
+  runHistoryTag: (_, rawValue) => [ // PTR
+    asArray(rawValue).map(v => [ "run-history-tag", v ]),
+  ],
+  firstDetectionDate: (_, rawValue) => [ //PTR
+    [ "first-detection-date", rawValue || "" ],
+  ],
+  fixDate: (_, rawValue) => [
+    [ "fixed-after", toISO(rawValue?.after) || "" ],
+    [ "fixed-before", toISO(rawValue?.before) || "" ],
+  ],
+  isUnique: (_, rawValue) => [
+    [ "is-unique", rawValue ? "on" : "off" ],
+  ],
+  runName: (_, rawValue) => [ //PTR
+    [ "run", rawValue || "" ],
+  ],
+  runTag: (_, rawValue) => [ //PTR
+    [ "run-tag", rawValue || "" ],
+  ],
+  componentNames: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "source-component", v ]),
+
+  diffType: (_, rawValue) => [
+    [ "diff-type",
+      toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
+  ],
+  bugPathLength: (_, rawValue) => {
+    const toStr = v => (v != null && typeof v.toNumber === "function")
+      ? String(v.toNumber()) : (v != null ? String(v) : "");
+    return [
+      [ "min-bug-path-length", toStr(rawValue?.min) ],
+      [ "max-bug-path-length", toStr(rawValue?.max) ],
+    ];
+  },
+  date: (_, rawValue) => [
+    [ "detected-after", toISO(rawValue?.detected?.after) ],
+    [ "detected-before", toISO(rawValue?.detected?.before) ],
+    [ "fixed-after", toISO(rawValue?.fixed?.after) ],
+    [ "fixed-before", toISO(rawValue?.fixed?.before) ],
+  ],
+  analyzerNames: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "analyzer-name", v ]),
+  openReportsDate: (_, rawValue) => [
+    [ "open-reports-date", toISO(rawValue) || "" ],
+  ],
+  cleanupPlanNames: (_, rawValue) =>
+    asArray(rawValue).map(v => [ "cleanup-plan", v ]),
+  fileMatchesAnyPoint: (_, rawValue) => {
+    if (!rawValue) return [];
+    return [ [ "anywhere-filepath", "true" ] ];
+  },
+  componentMatchesAnyPoint: (_, rawValue) => {
+    if (!rawValue) return [];
+    return [ [ "anywhere-sourcecomponent", "true" ] ];
+  },
+  annotations: (_, rawValue) => {
+    const testcases = Array.isArray(rawValue)
+      ? rawValue
+        .filter(a => a.first === "testcase")
+        .map(a => a.second)
+      : rawValue.first === "testcase"
+        ? [ rawValue.second ]
+        : [];
+    return testcases.map(tc => [ "testcase", tc ]);
+  },
+  reportStatus: (_, rawValue) => {
+    const values = asArray(rawValue);
+    return values
+      .map(v => [ "report-status",
+        toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reportStatus)) ])
+      .filter(([ , val ]) => val !== "");
+  },
+  fullReportPathInComponent: (_, rawValue) => {
+    if (!rawValue) return [];
+    return [ [ "sameorigin-sourcecomponent", "true" ] ];
+  },
+
+};
+
+async function buildPresetQuery(presetId) {
+  let filterPreset;
+  try {
+    filterPreset = await new Promise((resolve, reject) => {
+      ccService.getClient().getFilterPreset(presetId, (err, preset) => {
+        if (err) return reject(err);
+        resolve(preset);
+      });
+    });
+  } catch {
+    return null;
+  }
+
+  const rf = filterPreset?.reportFilter;
+  if (!rf || typeof rf !== "object") return null;
+
+  const presetQueryParams = {};
+  for (const [ rawKey, rawValue ] of Object.entries(rf)) {
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      continue;
+    }
+    const mapper = FilterToQuery[rawKey];
+    if (typeof mapper === "string") {
+      presetQueryParams[mapper] = rawValue;
+      continue;
+    }
+    if (typeof mapper === "function") {
+      const pairs = mapper(rf, rawValue);
+      for (const [ k, v ] of pairs) {
+        if (v === null || v === undefined || v === "") continue;
+        if (k in presetQueryParams) {
+          const prev = Array.isArray(presetQueryParams[ k ]) ?
+            presetQueryParams[ k ] : [ presetQueryParams[ k ] ];
+          const next = Array.isArray(v) ? v : [ v ];
+          presetQueryParams[ k ] = [ ...prev, ...next ];
+        } else {
+          presetQueryParams[ k ] = v;
+        }
+      }
+      continue;
+    }
+    presetQueryParams[ rawKey ] = rawValue;
+  }
+  return { ...presetQueryParams, filterPreset: presetId };
+}
+
+async function initFilterPreset(presetId) {
+  if (presetId == null) {
     console.warn("getFilterPreset called without preset_id");
     return;
   }
@@ -787,7 +1034,7 @@ async function getFilterPreset(preset_id) {
   let filterPreset;
   try {
     filterPreset = await new Promise((resolve, reject) => {
-      ccService.getClient().getFilterPreset(preset_id, (err, preset) => {
+      ccService.getClient().getFilterPreset(presetId, (err, preset) => {
         if (err) return reject(err);
         resolve(preset);
       });
@@ -797,187 +1044,9 @@ async function getFilterPreset(preset_id) {
     return;
   }
 
-  // helper functions
-  function toTitleCase(word) {
-    if (word == null) return "";
-    return String(word)
-      .toLowerCase()
-      .replace(/^\w/, c => c.toUpperCase());
-  }
-  function toEnumNames(value, map) {
-    const normalizeOne = v => {
-      if (v === null || v === undefined || v === "") return "";
-      const n = typeof v === "string" &&
-      v.trim() !== "" ? Number(v) : v;
-      return map?.[n] ?? map?.[v] ?? String(v);
-    };
-
-    if (Array.isArray(value)){
-      return value.map(normalizeOne).filter(Boolean);
-    }
-    return normalizeOne(value);
-  }
-  const toISO = sec => {
-    if (!sec) return "";
-    const d = new Date(sec * 1000);
-    return isNaN(d.getTime()) ? "" : d.toISOString();
-  };
-  const asArray = v => (Array.isArray(v) ? v : (v == null ? [] : [ v ]));
-
-  const ENUMS_FOR_STATUSES = {
-    detectionStatus: {
-      0: "NEW",
-      1: "RESOLVED",
-      2: "UNRESOLVED",
-      3: "REOPENED",
-      4: "OFF",
-      5: "UNAVAILABLE",
-    },
-    diffType: {
-      0: "NEW",
-      1: "RESOLVED",
-      2: "UNRESOLVED",
-    },
-    reviewStatus: {
-      0: "UNREVIEWED",
-      1: "CONFIRMED BUG", // Confirmed -> Confirmed bug
-      2: "FALSE POSITIVE", // False_positive -> False positive
-      3: "INTENTIONAL",
-    },
-    severity: {
-      0: "UNSPECIFIED",
-      10: "STYLE",
-      20: "LOW",
-      30: "MEDIUM",
-      40: "HIGH",
-      50: "CRITICAL",
-    },
-    order: {
-      0: "ASC",
-      1: "DESC",
-    },
-    reportStatus: {
-      0: "OUTSTANDING",
-      1: "CLOSED",
-    }
-  };
-
   const rf = filterPreset?.reportFilter;
 
   if (!rf || typeof rf !== "object") return;
-
-  const FilterToQuery = {
-    filepath: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "filepath", v ]),
-    checkerMsg: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "checker-msg", v ]),
-    checkerName: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "checker-name", v ]),
-    reportHash: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "report-hash", v ]),
-    severity: (_, rawValue) => {
-      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-      return values
-        .map(v => [
-          "severity",
-          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.severity))
-        ])
-        .filter(([ , val ]) => val !== "");
-    },
-    reviewStatus: (_, rawValue) => {
-      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-      return values
-        .map(v => [
-          "review-status",
-          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reviewStatus))
-        ])
-        .filter(([ , val ]) => val !== "");
-    },
-    detectionStatus: (_, rawValue) => {
-      const values = Array.isArray(rawValue) ? rawValue : [ rawValue ];
-      return values
-        .map(v => [ "detection-status",
-          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.detectionStatus)) ])
-        .filter(([ , val ]) => val !== "");
-    },
-    runHistoryTag: (_, rawValue) => [ // PTR
-      asArray(rawValue).map(v => [ "run-history-tag", v ]),
-    ],
-    firstDetectionDate: (_, rawValue) => [ //PTR
-      [ "first-detection-date", rawValue || "" ],
-    ],
-    fixDate: (_, rawValue) => [
-      [ "fixed-after", toISO(rawValue?.after) || "" ],
-      [ "fixed-before", toISO(rawValue?.before) || "" ],
-    ],
-    isUnique: (_, rawValue) => [
-      [ "is-unique", rawValue ? "on" : "off" ],
-    ],
-    runName: (_, rawValue) => [ //PTR
-      [ "run", rawValue || "" ],
-    ],
-    runTag: (_, rawValue) => [ //PTR
-      [ "run-tag", rawValue || "" ],
-    ],
-    componentNames: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "source-component", v ]),
-
-    diffType: (_, rawValue) => [
-      [ "diff-type",
-        toTitleCase(toEnumNames(rawValue, ENUMS_FOR_STATUSES.diffType)) ],
-    ],
-    bugPathLength: (_, rawValue) => {
-      const toStr = v => (v != null && typeof v.toNumber === "function")
-        ? String(v.toNumber()) : (v != null ? String(v) : "");
-      return [
-        [ "min-bug-path-length", toStr(rawValue?.min) ],
-        [ "max-bug-path-length", toStr(rawValue?.max) ],
-      ];
-    },
-    date: (_, rawValue) => [
-      [ "detected-after",  toISO(rawValue?.detected?.after) ],
-      [ "detected-before", toISO(rawValue?.detected?.before) ],
-      [ "fixed-after",     toISO(rawValue?.fixed?.after) ],
-      [ "fixed-before",    toISO(rawValue?.fixed?.before) ],
-    ],
-    analyzerNames: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "analyzer-name", v ]),
-    openReportsDate: (_, rawValue) => [
-      [ "open-reports-date", toISO(rawValue) || "" ],
-    ],
-    cleanupPlanNames: (_, rawValue) =>
-      asArray(rawValue).map(v => [ "cleanup-plan", v ]),
-    fileMatchesAnyPoint: (_, rawValue) => {
-      if (!rawValue) return [];
-      return [ [ "anywhere-filepath", "true" ] ];
-    },
-    componentMatchesAnyPoint: (_, rawValue) => {
-      if (!rawValue) return [];
-      return [ [ "anywhere-sourcecomponent", "true" ] ];
-    },
-    annotations: (_, rawValue) => {
-      const testcases = Array.isArray(rawValue)
-        ? rawValue
-          .filter(a => a.first === "testcase")
-          .map(a => a.second)
-        : rawValue.first === "testcase"
-          ? [ rawValue.second ]
-          : [];
-      return testcases.map(tc => [ "testcase", tc ]);
-    },
-    reportStatus: (_, rawValue) => {
-      const values = asArray(rawValue);
-      return values
-        .map(v => [ "report-status",
-          toTitleCase(toEnumNames(v, ENUMS_FOR_STATUSES.reportStatus)) ])
-        .filter(([ , val ]) => val !== "");
-    },
-    fullReportPathInComponent: (_, rawValue) => {
-      if (!rawValue) return [];
-      return [ [ "sameorigin-sourcecomponent", "true" ] ];
-    },
-
-  };
 
   const presetQueryParams = {};
 
@@ -1016,15 +1085,20 @@ async function getFilterPreset(preset_id) {
 
   clearToolbarSilently();
 
-  const nextQuery = { ...presetQueryParams };
+  const nextQuery = { ...presetQueryParams, filterPreset: presetId };
   await router.replace({ query: nextQuery }).catch(() => {});
-
-  initByUrl();
-  await nextTick();
 
   if (presetMenuRef.value) {
     presetMenuRef.value.onPresetApplied({ ...route.query });
   }
+}
+
+async function initFilterPresetFromUrl(presetId){
+  // replace query parameters with preset parameters.
+  await initFilterPreset(presetId);
+  await initByUrl();
+  updateUrl();
+  await nextTick();
 }
 
 async function clearToolbarSilently() {
@@ -1040,7 +1114,7 @@ async function clearToolbarSilently() {
       ccService.getClient().listFilterPreset(
         handleThriftError(preset_list => {
           resolve(preset_list);
-        })
+          })
       );
     })
     .then(preset_list => {

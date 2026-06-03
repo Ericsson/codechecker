@@ -2,15 +2,9 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye as builder
+FROM python:3.10.20-slim-trixie as builder
 
-ARG CC_REPO=https://github.com/Ericsson/CodeChecker.git
-ENV CC_REPO ${CC_REPO}
-
-ARG CC_VERSION=master
-ENV CC_VERSION ${CC_VERSION}
-
-COPY hooks/ /hooks
+COPY web/docker/hooks/ /hooks
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -x && apt-get update -qq \
@@ -22,10 +16,9 @@ RUN set -x && apt-get update -qq \
     && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Download CodeChecker release.
-RUN git clone ${CC_REPO} /codechecker
+# Copy CodeChecker source code.
+COPY . /codechecker
 WORKDIR /codechecker
-RUN git checkout ${CC_VERSION}
 
 # Run script before the package generation.
 RUN chmod a+x /hooks/before_build.sh && sync && /hooks/before_build.sh
@@ -40,7 +33,7 @@ RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye
+FROM python:3.10.20-slim-trixie
 
 ARG CC_GID=950
 ARG CC_UID=950
@@ -127,7 +120,7 @@ RUN chown codechecker:codechecker /codechecker
 
 ENV PATH="/codechecker/bin:$PATH"
 
-COPY ./entrypoint.sh /usr/local/bin/
+COPY web/docker/entrypoint.sh /usr/local/bin/
 RUN chmod a+x /usr/local/bin/entrypoint.sh \
   && chown codechecker:codechecker /usr/local/bin/entrypoint.sh
 
