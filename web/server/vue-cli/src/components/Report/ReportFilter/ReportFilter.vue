@@ -762,7 +762,7 @@ async function savePreset(mode) {
     presetName.value = "";
     presetMenuRef.value?.selectPresetAfterSave(result);
   } catch (err) {
-    handleThriftError("Failed to save preset: ", err);
+    handleThriftError("Failed to save a preset: ", err);
   }
 }
 
@@ -1042,7 +1042,7 @@ async function initFilterPreset(presetId) {
       });
     });
   } catch (err) {
-    handleThriftError("Failed to initialize preset:", err);
+    handleThriftError("Failed to initialize a preset: ", err);
     return;
   }
 
