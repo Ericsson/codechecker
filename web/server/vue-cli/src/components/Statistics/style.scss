@@ -82,6 +82,6 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
   }
 }
 
-.highlight-row {
+#{$class-name} .highlight-row {
   background-color: $outstanding-bg-color !important;
 }
