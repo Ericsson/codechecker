@@ -2,7 +2,7 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye as builder
+FROM python:3.10.20-slim-trixie as builder
 
 COPY web/docker/hooks/ /hooks
 
@@ -33,7 +33,7 @@ RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye
+FROM python:3.10.20-slim-trixie
 
 ARG CC_GID=950
 ARG CC_UID=950
