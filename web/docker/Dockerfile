@@ -87,7 +87,7 @@ RUN apt-get update -qq  && \
     # gcc is needed to build psutil.
     gcc \
     # netcat is needed for 'wait-for' script.
-    netcat \
+    netcat-openbsd \
   \
   # Install necessary runtime environment files.
   && pip3 install -r /requirements_py/requirements.txt \
