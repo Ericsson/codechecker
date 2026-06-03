@@ -1672,7 +1672,7 @@ class ThriftRequestHandler:
         LOG.info("Storing filter preset in backend: %s", filterpreset.name)
         try:
             filter_id = filterpreset.id
-            name = filterpreset.name
+            name = filterpreset.name.strip()
             report_filter = json.dumps(
                 thrift_to_json(filterpreset.reportFilter))
 
@@ -1729,7 +1729,10 @@ class ThriftRequestHandler:
         self.__require_admin()
         try:
             with DBSession(self._Session) as session:
-                if not name or not name.strip():
+
+                name = name.strip()
+
+                if not name:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                         "Preset name cannot be empty!")
