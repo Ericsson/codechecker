@@ -1672,7 +1672,7 @@ class ThriftRequestHandler:
         LOG.info("Storing filter preset in backend: %s", filterpreset.name)
         try:
             filter_id = filterpreset.id
-            name = filterpreset.name
+            name = filterpreset.name.strip()
             report_filter = json.dumps(
                 thrift_to_json(filterpreset.reportFilter))
 
@@ -1716,6 +1716,65 @@ class ThriftRequestHandler:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "CodeChecker could not store the filter preset: " + str(ex))
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def renameFilterPreset(self, preset_id: int, name: str):
+        """
+        Rename a filter preset.
+        Returns the ID of the renamed preset.
+        Raises an error if id/name is empty or if
+        a preset with the new name already exists.
+        """
+        self.__require_admin()
+        try:
+            with DBSession(self._Session) as session:
+
+                name = name.strip()
+
+                if not name:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Preset name cannot be empty!")
+
+                if not preset_id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Preset ID cannot be empty!")
+
+                preset_entry = session.query(FilterPreset).filter(
+                    FilterPreset.id == preset_id
+                ).one_or_none()
+
+                if not preset_entry:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {preset_id}!")
+
+                existing = session.query(FilterPreset).filter(
+                    FilterPreset.preset_name == name
+                ).one_or_none()
+
+                if existing and existing.id != preset_id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"A filter preset with name "
+                        f"'{name}' already exists!")
+
+                LOG.info("Renaming filter preset { id: %d, name: %s } "
+                         "with name: '%s' ",
+                         preset_entry.id, preset_entry.preset_name,
+                         name)
+
+                preset_entry.preset_name = name
+                session.commit()
+                return preset_entry.id
+
+        except Exception as ex:
+            session.rollback()
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not rename filter preset: " + str(ex))
 
     @exc_to_thrift_reqfail
     @timeit

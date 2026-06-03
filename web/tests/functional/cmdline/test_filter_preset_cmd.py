@@ -164,6 +164,8 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         for preset in existing_presets:
             self._cc_client.deleteFilterPreset(preset.id)
 
+    # ========== Help Tests ==========
+
     def test_filter_preset_cmd_help(self):
         """
         Test the filter-preset -help command line.
@@ -181,6 +183,8 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self.assertIn("list", out)
         self.assertIn("new", out)
         self.assertIn("delete", out)
+
+    # ========== New Preset Tests ==========
 
     def test_filter_preset_cmd_new(self):
         """
@@ -261,6 +265,141 @@ class TestFilterPresetCmdLine(unittest.TestCase):
             "delete the existing preset to create a "
             "new one.", out)
 
+    # ========== Rename Preset Tests ==========
+
+    def test_filter_preset_cmd_rename(self):
+        """
+        Test the filter-preset rename command line.
+        """
+        cmd = [self._codechecker_cmd, 'cmd',
+               'filter-preset', 'new',
+               '--name', 'test_preset',
+               '--url', str(self.server_url)]
+        ret, out, _ = run_cmd(cmd)
+
+        self.assertEqual(ret, 0)
+        self.assertIn(
+            "Filter preset 'test_preset' "
+            "created successfully.", out)
+
+        presets = self._cc_client.listFilterPreset()
+        preset = next(p for p in presets
+                      if p.name == "test_preset")
+
+        cmd1 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'rename',
+                '--preset-id', str(preset.id),
+                '--new-name', 'test_preset_renamed',
+                '--url', str(self.server_url)]
+
+        ret1, out1, _ = run_cmd(cmd1)
+
+        self.assertEqual(ret1, 0)
+        self.assertIn(
+            f"Filter preset (ID: {preset.id}) renamed to "
+            f"'test_preset_renamed'.", out1)
+
+    def test_filter_preset_cmd_rename_nonexistent(self):
+        """
+        Test the filter-preset rename on non existent ID.
+        """
+
+        cmd1 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'rename',
+                '--preset-id', '999999',
+                '--new-name', 'test_preset_renamed',
+                '--url', str(self.server_url)]
+
+        ret1, out1, _ = run_cmd(cmd1)
+
+        self.assertEqual(ret1, 1)
+        self.assertIn("No filter preset found with id 999999!", out1)
+
+    def test_filter_preset_cmd_rename_duplicate_name(self):
+        """
+        Test renaming a preset to a name that already exists.
+        """
+        cmd1 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'new',
+                '--name', 'preset_a',
+                '--url', str(self.server_url)]
+        cmd2 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'new',
+                '--name', 'preset_b',
+                '--url', str(self.server_url)]
+        run_cmd(cmd1)
+        run_cmd(cmd2)
+
+        presets = self._cc_client.listFilterPreset()
+        preset_a = next(p for p in presets if p.name == "preset_a")
+
+        cmd = [self._codechecker_cmd, 'cmd',
+               'filter-preset', 'rename',
+               '--preset-id', str(preset_a.id),
+               '--new-name', 'preset_b',
+               '--url', str(self.server_url)]
+        ret, out, _ = run_cmd(cmd)
+
+        self.assertEqual(ret, 1)
+        self.assertIn("already exists", out)
+
+    def test_filter_preset_cmd_rename_empty_name(self):
+        """
+        Test renaming a preset with an empty name.
+        """
+        cmd1 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'new',
+                '--name', 'preset_to_rename',
+                '--url', str(self.server_url)]
+        run_cmd(cmd1)
+
+        presets = self._cc_client.listFilterPreset()
+        preset = next(p for p in presets
+                      if p.name == "preset_to_rename")
+
+        cmd = [self._codechecker_cmd, 'cmd',
+               'filter-preset', 'rename',
+               '--preset-id', str(preset.id),
+               '--new-name', '',
+               '--url', str(self.server_url)]
+        ret, out, _ = run_cmd(cmd)
+
+        self.assertEqual(ret, 1)
+        self.assertIn("Preset name cannot be empty", out)
+
+    def test_filter_preset_cmd_rename_verify_list(self):
+        """
+        Test that rename is reflected in the list output.
+        """
+        cmd1 = [self._codechecker_cmd, 'cmd',
+                'filter-preset', 'new',
+                '--name', 'old_name',
+                '--url', str(self.server_url)]
+        run_cmd(cmd1)
+
+        presets = self._cc_client.listFilterPreset()
+        preset = next(p for p in presets
+                      if p.name == "old_name")
+
+        cmd = [self._codechecker_cmd, 'cmd',
+               'filter-preset', 'rename',
+               '--preset-id', str(preset.id),
+               '--new-name', 'new_name',
+               '--url', str(self.server_url)]
+        ret, _, _ = run_cmd(cmd)
+        self.assertEqual(ret, 0)
+
+        cmd_list = [self._codechecker_cmd, 'cmd',
+                    'filter-preset', 'list',
+                    '--url', str(self.server_url)]
+        ret, out, _ = run_cmd(cmd_list)
+
+        self.assertEqual(ret, 0)
+        self.assertNotIn("old_name", out)
+        self.assertIn("new_name", out)
+
+    # ========== Delete Preset Tests ==========
+
     def test_filter_preset_cmd_delete(self):
         """
         Test the filter-preset delete command line.
@@ -332,6 +471,8 @@ class TestFilterPresetCmdLine(unittest.TestCase):
         self.assertIn(
             "Filter preset with ID 999 does not exist!",
             out)
+
+    # ========== List Preset Tests ==========
 
     def test_filter_preset_cmd_list(self):
         """

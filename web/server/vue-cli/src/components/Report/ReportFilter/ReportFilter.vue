@@ -31,7 +31,7 @@
         <v-btn
           color="primary"
           :disabled="!presetName"
-          @click="saveCurrentFilter(saveMode)"
+          @click="savePreset(saveMode)"
         >
           Save
         </v-btn>
@@ -93,14 +93,28 @@
       />
 
       <div
-        v-if="canSeeActions && !presetMenuRef?.isModified"
+        v-if="canSeeActions && !presetMenuRef?.isModified
+          && !presetMenuRef?.activePresetId"
         class="d-flex flex-column mb-2 mt-2"
       >
         <v-btn
           color="primary"
-          @click="createPreset"
+          @click="createPresetDialog"
         >
           Create Preset
+        </v-btn>
+      </div>
+      <div
+        v-if="canSeeActions && !presetMenuRef?.isModified
+          && presetMenuRef?.activePresetId"
+        class="d-flex flex-column mb-2 mt-2"
+      >
+        <v-btn
+          color="primary"
+          class="mb-2"
+          @click="renamePresetDialog"
+        >
+          Rename
         </v-btn>
       </div>
       <div
@@ -110,13 +124,13 @@
         <v-btn
           color="primary"
           class="mb-2"
-          @click="overridePreset"
+          @click="overridePresetDialog"
         >
           Override Preset
         </v-btn>
         <v-btn
           color="primary"
-          @click="cratePresetAsNew"
+          @click="createPresetAsNewDialog"
         >
           Create as new
         </v-btn>
@@ -533,6 +547,7 @@ const saveDialogTitle = computed(() => {
     create: "Create new preset",
     override: "Override existing preset",
     createNew: "Save as new preset",
+    rename: "Rename the preset"
   };
   return titles[saveMode.value] || "Save filter preset";
 });
@@ -712,60 +727,68 @@ onBeforeUnmount(() => {
   }
 });
 
-function saveCurrentFilter(mode) {
-  const presetReportFilter = structuredClone(reportFilter.value);
+async function savePreset(mode) {
+  try {
+    let result;
+    const activePresetId = presetMenuRef.value?.activePresetId;
+    if (mode === "rename") {
+      const new_name = presetName.value;
+      result = await new Promise(resolve => {
+        ccService.getClient().renameFilterPreset(activePresetId, new_name,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      });
+    } else {
+      const preset = {
+        id: mode === "override" && activePresetId
+          ? activePresetId
+          : -1,
+        name: presetName.value,
+        reportFilter: reportFilter.value
+      };
 
-  // Store selected run names in reportFilter.runName (not part of the
-  // standard filter state, but needed for preset serialization).
-  const runFilter = filters.value.find(f => f.id === "run");
-  presetReportFilter.runName = runFilter?.selectedItems?.map(i => i.id) ?? [];
+      result = await new Promise(resolve => {
+        ccService.getClient().storeFilterPreset(preset,
+          handleThriftError(result => {
+            resolve(result);
+          })
+        );
+      });
+    }
 
-  const activePresetId = presetMenuRef.value?.activePresetId;
-  const preset = {
-    id: mode === "override" && activePresetId
-      ? activePresetId
-      : -1,
-    name: presetName.value,
-    reportFilter: presetReportFilter
-  };
-
-  new Promise(
-    resolve => {
-      ccService.getClient().storeFilterPreset(preset,
-        handleThriftError(result => {
-          resolve(result);
-        })
-      );
-    })
-    .then(
-      result => {
-        savePresetDialogOpen.value = false;
-        presetName.value = "";
-        presetMenuRef.value?.selectPresetAfterSave(result);
-      }
-    ).catch(
-      err => {
-        handleThriftError("FAILURE", err);
-      }
-    );
+    savePresetDialogOpen.value = false;
+    presetName.value = "";
+    presetMenuRef.value?.selectPresetAfterSave(result);
+  } catch (err) {
+    handleThriftError("Failed to save a preset: ", err);
+  }
 }
 
-function overridePreset() {
+function overridePresetDialog() {
   saveMode.value = "override";
   savePresetDialogOpen.value = true;
   presetName.value = presetMenuRef.value.activePresetName;
 }
 
-function cratePresetAsNew() {
+function createPresetAsNewDialog() {
   saveMode.value = "createNew";
   savePresetDialogOpen.value = true;
+  presetName.value = presetMenuRef.value.activePresetName;
 }
 
-function createPreset() {
+function createPresetDialog() {
   saveMode.value = "create";
   savePresetDialogOpen.value = true;
+  presetName.value = presetMenuRef.value.activePresetName;
 }
 
+function renamePresetDialog() {
+  saveMode.value = "rename";
+  savePresetDialogOpen.value = true;
+  presetName.value = presetMenuRef.value.activePresetName;
+}
 /*function deletePreset(preset_id) {
   new Promise(resolve => {
     ccService.getClient().deleteFilterPreset(preset_id,
@@ -1006,7 +1029,7 @@ async function buildPresetQuery(presetId) {
 
 async function initFilterPreset(presetId) {
   if (presetId == null) {
-    console.warn("getFilterPreset called without preset_id");
+    console.warn("getFilterPreset called without presetId");
     return;
   }
 
@@ -1019,7 +1042,7 @@ async function initFilterPreset(presetId) {
       });
     });
   } catch (err) {
-    handleThriftError("getFilterPreset failed:", err);
+    handleThriftError("Failed to initialize a preset: ", err);
     return;
   }
 
