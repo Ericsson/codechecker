@@ -44,6 +44,7 @@
             class="d-flex justify-center flex-column"
           >
             <v-btn
+              class="text-uppercase"
               block
               size="x-large"
               color="primary"
@@ -108,6 +109,7 @@
               >
                 <v-btn
                   id="login-btn"
+                  class="text-uppercase"
                   block
                   size="x-large"
                   color="primary"
