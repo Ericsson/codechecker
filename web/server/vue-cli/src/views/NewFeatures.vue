@@ -2063,7 +2063,7 @@ analyzer:
               Coding guideline mapping to checkers (SEI-CERT)
             </template>
             There are  coding guidelines like
-            <a href="https://wiki.sei.cmu.edu/confluence/display/seccode/SEI+CERT+Coding+Standards">SEI-CERT</a>,
+            <a href="https://cmu-sei.github.io/secure-coding-standards/">SEI-CERT</a>,
             <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines">C++ Core Guidelines</a>,
             etc.) which contain best practices on avoiding common programming
             mistakes. To easily identify which checker maps to which guideline

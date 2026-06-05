@@ -32,30 +32,34 @@ class TestGuidelines(unittest.TestCase):
             "rules": [
                 {
                     "rule_id": "con50-cpp",
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON50-CPP.+Do+not+destroy+a+mutex"
-                                "+while+it+is+locked",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con50-cpp/",
                     "title": ""
                 },
                 {
                     "rule_id": "con51-cpp",
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON51-CPP.+Ensure+actively+held+"
-                                "locks+are+released+on+exceptional+conditions",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con51-cpp/",
                     "title": ""
                 },
                 {
                     "rule_id": "con52-cpp",
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON52-CPP.+Prevent+data+races+when"
-                                "+accessing+bit-fields+from+multiple+threads",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con52-cpp/",
                     "title": ""
                 },
                 {
                     "rule_id": "con53-cpp",
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON53-CPP.+Avoid+deadlock+by+"
-                                "locking+in+a+predefined+order",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con53-cpp/",
                     "title": ""
                 },
             ]
@@ -78,27 +82,31 @@ class TestGuidelines(unittest.TestCase):
             g.rules_of_guideline("sei-cert"),
             {
                 "con50-cpp": {
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON50-CPP.+Do+not+destroy+a+mutex"
-                                "+while+it+is+locked",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con50-cpp/",
                     "title": ""
                 },
                 "con51-cpp": {
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON51-CPP.+Ensure+actively+held+"
-                                "locks+are+released+on+exceptional+conditions",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con51-cpp/",
                     "title": ""
                 },
                 "con52-cpp": {
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON52-CPP.+Prevent+data+races+when"
-                                "+accessing+bit-fields+from+multiple+threads",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con52-cpp/",
                     "title": ""
                 },
                 "con53-cpp": {
-                    "rule_url": "https://wiki.sei.cmu.edu/confluence/display"
-                                "/cplusplus/CON53-CPP.+Avoid+deadlock+by+"
-                                "locking+in+a+predefined+order",
+                    "rule_url":
+                        "https://cmu-sei.github.io/secure-coding"
+                        "-standards/sei-cert-cpp-coding-standard"
+                        "/rules/concurrency-con/con53-cpp/",
                     "title": ""
                 },
             })
