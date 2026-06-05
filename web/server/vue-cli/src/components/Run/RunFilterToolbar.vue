@@ -69,7 +69,7 @@
           label="History stored before..."
           prepend-inner-icon="mdi-calendar-arrow-left"
           variant="outlined"
-          density="compact" 
+          density="compact"
           clearable
         >
           <template #append-inner>
@@ -92,6 +92,11 @@
           @delete-complete="emit('delete-complete')"
         />
 
+        <LoadMultipleRunsBtn
+          :selected="selected"
+          :disabled="!enoughRunsSelected"
+          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
+        />
         <v-btn
           variant="outlined"
           color="primary"
@@ -153,7 +158,7 @@ import {
 import _ from "lodash";
 
 import DateTimePicker from "@/components/DateTimePicker";
-import { DeleteRunBtn } from "@/components/Run";
+import { DeleteRunBtn, LoadMultipleRunsBtn } from "@/components/Run";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
 const props = defineProps({
@@ -306,4 +311,15 @@ function updateUrl(params) {
 function update() {
   emit("update");
 }
+
+function getSelectedRunsFilterQuery(selected) {
+  return {
+    run: selected.map(item => item.name)
+  };
+}
+
+const enoughRunsSelected = computed(() => {
+  return  props.selected.length >= 2;;
+});
+
 </script>

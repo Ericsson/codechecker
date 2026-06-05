@@ -196,10 +196,10 @@ const itemsPerPage = ref(
   itemsPerPageOptions[0].value
 );
 const sortBy = ref(
-  route.query["sort-by"] 
-    ? [ { 
-      key: route.query["sort-by"], 
-      order: route.query["sort-desc"] === "true" ? "desc" : "asc" 
+  route.query["sort-by"]
+    ? [ {
+      key: route.query["sort-by"],
+      order: route.query["sort-desc"] === "true" ? "desc" : "asc"
     } ]
     : [ { key: "name", order: "asc" } ]
 );
