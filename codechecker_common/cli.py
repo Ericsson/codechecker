@@ -121,6 +121,18 @@ def get_data_files_dir_path():
         if os.path.exists(data_dir_path):
             return data_dir_path
 
+    # Editable / development install fallback: config/ lives at the
+    # repository root, which is the parent of this package's directory.
+    repo_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir)
+    )
+    if os.path.isfile(
+        os.path.join(repo_root, "pyproject.toml")
+    ) and os.path.isfile(
+        os.path.join(repo_root, "config", "package_layout.json")
+    ):
+        return repo_root
+
     print("Failed to get CodeChecker data files directory path in: ",
           data_dir_paths)
     sys.exit(1)
