@@ -14,7 +14,30 @@
         v-model="checkerDocDialog"
         :checker="selectedChecker"
       />
+      <v-btn-toggle
+        v-model="viewMode"
+        mandatory
+        density="compact"
+        class="mb-2"
+      >
+        <v-btn
+          value="table"
+          size="small"
+          @click="setReportFilter({ filepath: null })"
+        >
+          Report List
+        </v-btn>
+        <v-btn
+          value="tree"
+          size="small"
+          @click="setReportFilter({ filepath: null })"
+        >
+          File Tree
+        </v-btn>
+      </v-btn-toggle>
+
       <v-data-table-server
+        v-if="viewMode === 'table'"
         v-model="selected"
         v-model:page="page"
         v-model:items-per-page="itemsPerPage"
@@ -170,6 +193,81 @@
           />
         </template>
       </v-data-table-server>
+
+      <div v-else class="tree-view-container">
+        <div class="tree-header">
+          <span class="tree-header-name">Name</span>
+          <span class="tree-header-cell">All</span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.STYLE" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.LOW" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.MEDIUM" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.HIGH" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <severity-icon :status="Severity.CRITICAL" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="0" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="1" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="2" :size="14" />
+          </span>
+          <span class="tree-header-cell">
+            <review-status-icon :status="3" :size="14" />
+          </span>
+        </div>
+        <v-treeview
+          :items="treeItems"
+          item-value="fullPath"
+          open-on-click
+          density="compact"
+        >
+          <template #prepend="{ item, isOpen }">
+            <v-icon v-if="item.children.length > 0">
+              {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
+            </v-icon>
+            <v-icon v-else>mdi-file</v-icon>
+          </template>
+          <template #title="{ item }">
+            <div class="tree-row">
+              <span
+                class="tree-item-label clickable"
+                @click.stop="onTreeItemClick(item)"
+              >{{ item.name }}</span>
+              <span class="tree-stat-cell">{{ item.findings }}</span>
+              <span class="tree-stat-cell">{{ item.stats.style || '' }}</span>
+              <span class="tree-stat-cell">{{ item.stats.low || '' }}</span>
+              <span class="tree-stat-cell">{{ item.stats.medium || '' }}</span>
+              <span class="tree-stat-cell">{{ item.stats.high || '' }}</span>
+              <span class="tree-stat-cell">
+                {{ item.stats.critical || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.unreviewed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.confirmed || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.false_positive || '' }}
+              </span>
+              <span class="tree-stat-cell">
+                {{ item.stats.intentional || '' }}
+              </span>
+            </div>
+          </template>
+        </v-treeview>
+      </div>
     </pane>
   </splitpanes>
 </template>
@@ -181,7 +279,14 @@ import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { Checker, Order, SortMode, SortType } from "@cc/report-server-types";
+import {
+  Checker,
+  Order,
+  Severity,
+  SortMode,
+  SortType
+} from "@cc/report-server-types";
+import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
 import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
@@ -312,6 +417,10 @@ const checkerDocDialog = ref(false);
 const selectedChecker = ref(null);
 const expanded = ref([]);
 const expandedItemsHistory = ref({});
+const viewMode = ref("table");
+const allReportsFileCounts = ref({});
+const fileSeverities = ref({});
+const treeItems = ref([]);
 const runIdsUnwatch = ref(null);
 const reportFilterUnwatch = ref(null);
 const cmpDataUnwatch = ref(null);
@@ -413,6 +522,131 @@ watch(
       formattedReports.value.some(_report => _report["chronological_order"]);
   }
 );
+
+watch(allReportsFileCounts, () => {
+  buildTreeItems();
+}, { deep: true });
+
+function setReportFilter(params) {
+  store.commit(`${namespace}/${SET_REPORT_FILTER}`, params);
+}
+
+function onTreeItemClick(item) {
+  const isDir = item.children && item.children.length > 0;
+  const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
+  setReportFilter({ filepath: [ pattern ] });
+  viewMode.value = "table";
+}
+
+function i64ToNum(val) {
+  if (val == null) return 0;
+  if (typeof val === "number") return val;
+  if (typeof val.toNumber === "function") return val.toNumber();
+  if (val.buffer) {
+    let n = 0;
+    for (let i = 0; i < val.buffer.length; i++) n = n * 256 + val.buffer[i];
+    return n;
+  }
+  return Number(val) || 0;
+}
+
+function fetchFileSeverities() {
+  const PAGE = 500;
+  const allStats = {};
+
+  const fetchPage = offset => {
+    ccService.getClient().getFileCountsSummary(
+      runIds.value, reportFilter.value, cmpData.value, PAGE, offset,
+      handleThriftError(res => {
+        const keys = Object.keys(res || {});
+        keys.forEach(filePath => {
+          const summary = res[filePath];
+          const stats = {};
+          Object.keys(summary || {}).forEach(key => {
+            const n = i64ToNum(summary[key]);
+            if (!n) return;
+            if (key === "reports") {
+              stats.reports = n;
+            } else if (key.startsWith("severity:")) {
+              stats[key.substring(9).toLowerCase()] =
+                (stats[key.substring(9).toLowerCase()] || 0) + n;
+            } else if (key.startsWith("review_status:")) {
+              const name = key.substring(14);
+              stats[name] = (stats[name] || 0) + n;
+            }
+          });
+          allStats[filePath] = stats;
+        });
+        if (keys.length >= PAGE) {
+          fetchPage(offset + PAGE);
+        } else {
+          fileSeverities.value = Object.assign({}, allStats);
+          const fileCounts = {};
+          Object.keys(allStats).forEach(fp => {
+            fileCounts[fp] = allStats[fp].reports || 0;
+          });
+          allReportsFileCounts.value = fileCounts;
+        }
+      })
+    );
+  };
+  fetchPage(0);
+}
+
+function buildTreeItems() {
+  const items = [];
+  Object.entries(allReportsFileCounts.value || {}).forEach(
+    ([ filePath, count ]) => {
+      if (!filePath) return;
+      const pathParts = filePath.split("/").slice(0, -1);
+      let currentLevel = items;
+      let currentPath = "";
+      pathParts.forEach(part => {
+        if (part === "") return;
+        currentPath += "/" + part;
+        let existing = currentLevel.find(n => n.name === part);
+        if (!existing) {
+          existing = {
+            name: part, fullPath: currentPath,
+            children: [], findings: 0, stats: {}
+          };
+          currentLevel.push(existing);
+        }
+        currentLevel = existing.children;
+      });
+      const fileName = filePath.split("/").slice(-1)[0];
+      const fileStats = fileSeverities.value[filePath] || {};
+      if (fileName) {
+        const existing = currentLevel.find(n => n.name === fileName);
+        if (existing) {
+          existing.findings += count;
+          existing.stats = fileStats;
+        } else {
+          currentLevel.push({
+            name: fileName, fullPath: filePath,
+            children: [], findings: count, stats: fileStats
+          });
+        }
+      }
+    });
+
+  function aggregate(node) {
+    if (node.children.length === 0) return node.findings;
+    node.findings = node.children.reduce(
+      (sum, child) => sum + aggregate(child), 0
+    );
+    const merged = {};
+    node.children.forEach(child => {
+      Object.keys(child.stats || {}).forEach(k => {
+        merged[k] = (merged[k] || 0) + child.stats[k];
+      });
+    });
+    node.stats = merged;
+    return node.findings;
+  }
+  items.forEach(aggregate);
+  treeItems.value = items;
+}
 
 function itemExpanded(expandedItems) {
   if (!expandedItems || expandedItems.length === 0) return;
@@ -541,6 +775,8 @@ function fetchReports() {
       loading.value = false;
       initalized.value = true;
 
+      fetchFileSeverities();
+
       _reports.forEach(_report => {
         ccService.getSameReports(_report.bugHash).then(_sameReports => {
           sameReports.value[_report.bugHash] =
@@ -625,6 +861,72 @@ body {
   .splitpanes__pane {
     background-color: inherit;
   }
+}
+
+.v-btn-toggle .v-btn--active {
+  background-color: #2280c3 !important;
+  color: #fff !important;
+}
+
+.tree-view-container {
+  position: relative;
+  overflow-y: auto;
+  height: calc(100vh - 150px);
+}
+
+.tree-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 4px 40px;
+  font-size: 0.75em;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tree-header-name {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tree-header-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.tree-item-label {
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: rgb(var(--v-theme-primary));
+    }
+  }
+}
+
+.tree-stat-cell {
+  width: 50px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.8em;
 }
 
 .v-data-table {
