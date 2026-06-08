@@ -5,17 +5,14 @@
   </span>
 </template>
 
-<script>
-export default {
-  name: "ReportCount",
-  props: {
-    value: { type: Number, required: true }
-  },
+<script setup>
+import { ref } from "vue";
 
-  data() {
-    return {
-      id: "report-count"
-    };
-  }
-};
+defineProps({
+  value: { type: Number, required: true }
+});
+
+const id = ref("report-count");
+
+defineExpose({ id });
 </script>

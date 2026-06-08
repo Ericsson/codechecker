@@ -1,7 +1,12 @@
 <template>
-  <splitpanes class="default-theme">
-    <pane size="20" :style="{ 'min-width': '300px' }">
-      <report-filter
+  <splitpanes
+    class="default-theme height-constraint"
+  >
+    <pane
+      size="20"
+      :style="{ 'min-width': '300px' }"
+    >
+      <ReportFilter
         v-fill-height
         :namespace="namespace"
         :show-remove-filtered-reports="false"
@@ -22,8 +27,9 @@
             v-for="t in tabs"
             :key="t.name"
             :to="{ ...t.to, query: {
-              ...$router.currentRoute.query
+              ...$route.query
             }}"
+            class="mx-2"
             exact
           >
             <v-icon class="mr-2">
@@ -35,6 +41,7 @@
 
         <keep-alive>
           <router-view
+            :key="$route.name"
             :bus="bus"
             :namespace="namespace"
             @refresh-filter="setRefreshFilterState(true)"
@@ -45,154 +52,151 @@
   </splitpanes>
 </template>
 
-<script>
-import Vue from "vue";
+<script setup>
+import { computed, nextTick, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
-import { mapState } from "vuex";
+import mitt from "mitt";
 
 import { ccService, handleThriftError } from "@cc-api";
 
 import { FillHeight } from "@/directives";
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
+const vFillHeight = FillHeight;
+
+const router = useRouter();
+const store = useStore();
+
 const namespace = "statistics";
 
-export default {
-  name: "Statistics",
-  components: {
-    Splitpanes,
-    Pane,
-    ReportFilter
+const tabs = [
+  {
+    name: "Product Overview",
+    icon: "mdi-briefcase-outline",
+    to: { name: "product-overview" },
+    showCompareTo: true
   },
-  directives: { FillHeight },
-  data() {
-    const tabs = [
-      {
-        name: "Product Overview",
-        icon: "mdi-briefcase-outline",
-        to: { name: "product-overview" },
-        showCompareTo: true
-      },
-      {
-        name: "Checker Statistics",
-        icon: "mdi-card-account-details",
-        to: { name: "checker-statistics" },
-        showCompareTo: true
-      },
-      {
-        name: "Severity Statistics",
-        icon: "mdi-speedometer",
-        to: { name: "severity-statistics" },
-        showCompareTo: true
-      },
-      {
-        name: "Component Statistics",
-        icon: "mdi-puzzle-outline",
-        to: { name: "component-statistics" },
-        showCompareTo: true
-      },
-      {
-        name: "Checker Coverage",
-        icon: "mdi-clipboard-check-outline",
-        to: { name: "checker-coverage-statistics" },
-        showCompareTo: false
-      },
-      {
-        name: "Guideline Statistics",
-        icon: "mdi-clipboard-text-outline",
-        to: { name: "guideline-statistics" },
-        showCompareTo: false
-      },
-    ];
-
-    return {
-      namespace: namespace,
-      refreshFilterState: false,
-      reportCount: 0,
-      showCompareTo: true,
-      tab: null,
-      tabs: tabs,
-      bus: new Vue(),
-
-      // Map the tab link names to boolean values. If the value of a key is
-      // true, it means that on the next tab change the tab needs to be
-      // updated.
-      refreshTabs: tabs.reduce((map, tab) => {
-        const resolve = this.$router.resolve(tab.to);
-        map[resolve.route.name] = false;
-
-        return map;
-      }, {})
-    };
+  {
+    name: "Checker Statistics",
+    icon: "mdi-card-account-details",
+    to: { name: "checker-statistics" },
+    showCompareTo: true
   },
-
-  computed: {
-    ...mapState({
-      runIds(state, getters) {
-        return getters[`${this.namespace}/getRunIds`];
-      },
-      reportFilter(state, getters) {
-        return getters[`${this.namespace}/getReportFilter`];
-      }
-    })
+  {
+    name: "Severity Statistics",
+    icon: "mdi-speedometer",
+    to: { name: "severity-statistics" },
+    showCompareTo: true
   },
-
-  watch: {
-    /**
-     * Refresh the current statistics tab if the tab is marked as true in the
-     * refresh tab map.
-     */
-    tab() {
-      if (!this.tab) return;
-
-      this.showCompareTo = this.tabs.filter(
-        tab => tab.showCompareTo
-      ).map(
-        tab => tab.to.name
-      ).includes(
-        this.$router.currentRoute.name
-      );
-
-      const resolve = this.$router.resolve(this.tab);
-      if (this.refreshTabs[resolve.route.name]) {
-        this.refreshCurrentTab();
-      }
-    }
+  {
+    name: "Component Statistics",
+    icon: "mdi-puzzle-outline",
+    to: { name: "component-statistics" },
+    showCompareTo: true
   },
+  {
+    name: "Checker Coverage",
+    icon: "mdi-clipboard-check-outline",
+    to: { name: "checker-coverage-statistics" },
+    showCompareTo: false
+  },
+  {
+    name: "Guideline Statistics",
+    icon: "mdi-clipboard-text-outline",
+    to: { name: "guideline-statistics" },
+    showCompareTo: false
+  },
+];
 
-  methods: {
-    refresh() {
-      ccService.getClient().getRunResultCount(this.runIds,
-        this.reportFilter, null, handleThriftError(res => {
-          this.reportCount = res.toNumber();
-        }));
+const refreshFilterState = ref(false);
+const reportCount = ref(0);
+const showCompareTo = ref(true);
+const tab = ref(null);
 
-      this.tabs.forEach(tab => {
-        const resolve = this.$router.resolve(tab.to);
-        this.refreshTabs[resolve.route.name] = true;
-      });
+const bus = mitt();
 
-      this.refreshCurrentTab();
-    },
-
-    /**
-     * Refresh the current statistics tab.
-     */
-    refreshCurrentTab() {
-      this.bus.$emit("refresh");
-
-      const resolve = this.$router.resolve(this.tab);
-      this.refreshTabs[resolve.route.name] = false;
-    },
-
-    setRefreshFilterState(state) {
-      this.refreshFilterState=state;
-    }
+const refreshTabs = tabs.reduce((map, _tab) => {
+  const _resolve = router.resolve(_tab.to);
+  if (_resolve.route?.name) {
+    map[_resolve.route.name] = false;
   }
-};
+  return map;
+}, {});
+
+const runIds = computed(function() {
+  return store.getters[`${namespace}/getRunIds`];
+});
+
+const reportFilter = computed(function() {
+  return store.getters[`${namespace}/getReportFilter`];
+});
+
+watch(() => tab.value, async () => {
+  if (tab.value == null) return;
+
+  const currentTab = tabs[tab.value];
+  if (!currentTab) return;
+
+  showCompareTo.value = currentTab.showCompareTo;
+
+  await nextTick();
+  refreshCurrentTab();
+});
+
+function refresh() {
+  ccService.getClient().getRunResultCount(
+    runIds.value,
+    reportFilter.value,
+    null,
+    handleThriftError(_res => {
+      reportCount.value = _res.toNumber();
+    }));
+
+  tabs.forEach(_tab => {
+    const _resolve = router.resolve(_tab.to);
+    if (_resolve.route?.name) {
+      refreshTabs[_resolve.route.name] = true;
+    }
+  });
+
+  refreshCurrentTab();
+}
+
+function refreshCurrentTab() {
+  bus.emit("refresh");
+
+  if (tab.value == null) return;
+
+  const currentTab = tabs[tab.value];
+  if (!currentTab) return;
+
+  const _resolve = router.resolve(currentTab.to);
+  if (_resolve.route?.name) {
+    refreshTabs[_resolve.route.name] = false;
+  }
+}
+
+function setRefreshFilterState(state) {
+  refreshFilterState.value = state;
+}
 </script>
 
 <style lang="scss" scoped>
+body {
+  overflow: hidden;
+}
+
+.height-constraint {
+  height: calc(100vh - 100px);
+}
+
+.splitpanes__pane {
+  overflow-y: auto;
+  height: 100%;
+}
+
 .splitpanes.default-theme {
   .splitpanes__pane {
     background-color: inherit;

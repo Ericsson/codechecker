@@ -8,13 +8,13 @@
     </v-overlay>
 
     <edit-comment-dialog
-      :value.sync="editDialog"
+      v-model="editDialog"
       :comment="selected"
       @on-confirm="fetchComments"
     />
 
     <remove-comment-dialog
-      :value.sync="removeDialog"
+      v-model="removeDialog"
       :comment="selected"
       @on-confirm="fetchComments"
     />
@@ -23,14 +23,23 @@
       :comments="comments"
       :report="report"
       :bus="bus"
+      @new:comments="onNewComment"
     />
 
-    <v-container fluid class="px-0">
-      <v-row class="ma-0">
-        <v-col cols="auto">
+    <v-container
+      fluid
+      class="px-0"
+    >
+      <v-row
+        class="ma-0"
+      >
+        <v-col
+          cols="auto"
+        >
           <v-timeline
             v-if="comments.length"
-            dense
+            density="compact"
+            color="primary"
           >
             <template
               v-for="comment in comments"
@@ -39,7 +48,8 @@
                 v-if="comment.kind === CommentKind.USER"
                 :key="comment.id.toString()"
                 :comment="comment"
-                :bus="bus"
+                @update:comment="openEditCommentDialog"
+                @remove:comment="openRemoveCommentDialog"
               />
 
               <system-comment
@@ -55,92 +65,79 @@
   </v-container>
 </template>
 
-<script>
-import Vue from "vue";
+<script setup>
+import mitt from "mitt";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
 import { CommentKind } from "@cc/report-server-types";
 
 import EditCommentDialog from "./EditCommentDialog";
 import NewComment from "./NewComment";
-import UserComment from "./UserComment";
 import RemoveCommentDialog from "./RemoveCommentDialog";
 import SystemComment from "./SystemComment";
+import UserComment from "./UserComment";
 
-export default {
-  name: "ReportComments",
-  components: {
-    EditCommentDialog,
-    NewComment,
-    UserComment,
-    RemoveCommentDialog,
-    SystemComment
-  },
-  props: {
-    report: { type: Object, default: () => null }
-  },
+const props = defineProps({
+  report: { type: Object, default: () => null }
+});
 
-  data() {
-    return {
-      CommentKind,
-      comments: [],
-      selected: null,
-      editDialog: false,
-      removeDialog: false,
-      loading: false,
-      bus: new Vue()
-    };
-  },
+const emit = defineEmits([ "update:commentCount" ]);
 
-  watch: {
-    report() {
-      this.fetchComments();
-    }
-  },
+const comments = ref([]);
+const selected = ref(null);
+const editDialog = ref(false);
+const removeDialog = ref(false);
+const loading = ref(false);
+const bus = mitt();
 
-  mounted() {
-    this.fetchComments();
+function fetchComments() {
+  if (!props.report) return;
 
-    this.bus.$on("update:comments", this.fetchComments);
+  loading.value = true;
+  ccService.getClient().getComments(props.report.reportId,
+    handleThriftError(_comments => {
+      comments.value = _comments;
+      loading.value = false;
+    }));
+}
 
-    this.bus.$on("update:comment", comment => {
-      this.selected = comment;
-      this.editDialog = true;
-    });
+function onNewComment() {
+  emit("update:commentCount", props.report);
+  fetchComments();
+}
 
-    this.bus.$on("remove:comment", comment => {
-      this.selected = comment;
-      this.removeDialog = true;
-    });
-  },
+function openEditCommentDialog(comment) {
+  selected.value = comment;
+  editDialog.value = true;
+}
 
-  methods: {
-    fetchComments() {
-      if (!this.report) return;
+function openRemoveCommentDialog(comment) {
+  selected.value = comment;
+  removeDialog.value = true;
+}
 
-      this.loading = true;
-      ccService.getClient().getComments(this.report.reportId,
-        handleThriftError(comments => {
-          this.comments = comments;
-          this.loading = false;
-        }));
-    }
-  }
-};
+watch(() => props.report, () => {
+  fetchComments();
+});
+
+onMounted(() => {
+  fetchComments();
+});
+
+onBeforeUnmount(() => {
+  bus.off("update:comments", fetchComments);
+  bus.off("update:comment");
+  bus.off("remove:comment");
+});
 </script>
 
-<style lang="scss" scoped>
-$width: 48px;
-
-::v-deep .v-timeline-item__divider {
-  min-width: $width;
+<style lang="scss">
+:deep(.v-timeline-item .v-timeline-item__dot) {
+  background-color: var(--v-theme-primary) !important;
 }
 
-.v-timeline--dense ::v-deep .v-timeline-item__body {
-  max-width: calc(100% - #{$width});
-}
-
-.v-application--is-ltr .v-timeline--dense:not(.v-timeline--reverse):before {
-  left: calc((#{$width} / 2) - 1px)
+:deep(.v-timeline-item .v-timeline-item__dot .v-icon) {
+  color: white !important;
 }
 </style>

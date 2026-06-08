@@ -146,6 +146,14 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def getCheckerStatusVerificationDetails(self, runIds, reportFilter):
+        pass
+
+    @thrift_client_call
+    def getCheckerLabels(self, checkers):
+        pass
+
+    @thrift_client_call
     def exportData(self, runId):
         pass
 
@@ -167,6 +175,26 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     # STORAGE RELATED API CALLS
+
+    @thrift_client_call
+    def storeFilterPreset(self, preset):
+        pass
+
+    @thrift_client_call
+    def renameFilterPreset(self, id, name):
+        pass
+
+    @thrift_client_call
+    def getFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def deleteFilterPreset(self, id):
+        pass
+
+    @thrift_client_call
+    def listFilterPreset(self):
+        pass
 
     @thrift_client_call
     def getMissingContentHashes(self, file_hashes):
@@ -203,4 +231,8 @@ class ThriftResultsHelper(BaseClientHelper):
 
     @thrift_client_call
     def storeAnalysisStatistics(self, run_name, zip_file):
+        pass
+
+    @thrift_client_call
+    def getAnalysisInfo(self, analysis_info_filter, limit, offset):
         pass

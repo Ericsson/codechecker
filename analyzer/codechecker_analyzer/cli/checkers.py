@@ -15,7 +15,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Union
 
 from codechecker_report_converter import twodim
 
@@ -63,12 +63,12 @@ List checkers in "HIGH" severity:
     CodeChecker checkers --severity HIGH
 
 List checkers covering str34-c SEI-CERT rule:
-    CodeChecker checkers --label sei-cert:str-34-c
-    CodeChecker checkers --guideline sei-cert:str34-c
+    CodeChecker checkers --label sei-cert-c:str34-c
+    CodeChecker checkers --guideline sei-cert-c:str34-c
 
-List checkers covering all SEI-CERT rules:
-    CodeChecker checkers --label guideline:sei-cert
-    CodeChecker checkers --guideline sei-cert
+List checkers covering all SEI-CERT C rules:
+    CodeChecker checkers --label guideline:sei-cert-c
+    CodeChecker checkers --guideline sei-cert-c
 
 List available profiles, guidelines and severities:
     CodeChecker checkers --profile
@@ -195,9 +195,9 @@ def __guideline_to_label(
 ) -> str:
     """
     Transforms --guideline parameter as if they were given through --label.
-    For example "--guideline sei-cert" is equivalent with
-    "--label guideline:sei-cert" and "--guideline sei-cert:str38-c" is the same
-    as "--label sei-cert:str38-c".
+    For example "--guideline sei-cert-c" is equivalent with
+    "--label guideline:sei-cert-c" and "--guideline sei-cert-c:str38-c" is the
+    same as "--label sei-cert-c:str38-c".
     """
     guidelines = []
     for analyzer in args.analyzers:
@@ -280,7 +280,7 @@ def __print_profiles(args: argparse.Namespace, cl: CheckerLabels):
 
     if 'details' in args:
         header = ['Profile name', 'Description']
-        rows = cl.get_description('profile').items()
+        rows: List[Tuple] = list(cl.get_description('profile').items())
     else:
         header = ['Profile name']
         rows = [(key,) for key in cl.get_description('profile')]
@@ -301,7 +301,7 @@ def __print_severities(args: argparse.Namespace, cl: CheckerLabels):
 
     if 'details' in args:
         header = ['Severity', 'Description']
-        rows = cl.get_description('severity').items()
+        rows: List[Tuple] = list(cl.get_description('severity').items())
     else:
         header = ['Severity']
         rows = [(key,) for key in cl.get_description('severity')]
@@ -330,7 +330,7 @@ def __print_guidelines(args: argparse.Namespace, cl: CheckerLabels):
         header = list(map(__uglify, header))
 
     if args.output_format == 'json':
-        rows = [(g, sorted(list(r))) for g, r in result.items()]
+        rows: List[Tuple] = [(g, sorted(list(r))) for g, r in result.items()]
     else:
         rows = [(g, ', '.join(sorted(r))) for g, r in result.items()]
 
@@ -475,7 +475,7 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
 
     checker_info = __get_detailed_checker_info(args, cl)
 
-    result = []
+    result: List[Tuple] = []
     for analyzer in args.analyzers:
         if labels:
             checkers = cl.checkers_by_labels(labels, analyzer)
@@ -501,7 +501,7 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
 
     if 'details' in args:
         header = ['Status', 'Name', 'Analyzer', 'Description', 'Labels']
-        rows = list(map(__format_row, result))
+        rows: Union[List[List], List[Tuple]] = list(map(__format_row, result))
     else:
         header = ['Name']
         rows = [[r[1]] for r in result]
@@ -535,7 +535,7 @@ def __print_checker_config(args: argparse.Namespace):
     if args.output_format in ['csv', 'json']:
         header = list(map(__uglify, header))
 
-    rows = []
+    rows: List[Tuple] = []
     analyzer_failures = []
     for analyzer in working_analyzers:
         analyzer_class = analyzer_types.supported_analyzers[analyzer]

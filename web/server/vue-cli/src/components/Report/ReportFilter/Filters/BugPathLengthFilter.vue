@@ -54,113 +54,129 @@
   </filter-toolbar>
 </template>
 
-<script>
+<script setup>
 import { BugPathLengthRange } from "@cc/report-server-types";
+import { computed, ref, toRef } from "vue";
 
-import BaseFilterMixin from "./BaseFilter.mixin";
+import { useBaseFilter } from "@/composables/useBaseFilter";
 import FilterToolbar from "./Layout/FilterToolbar";
 
-export default {
-  name: "BugPathLengthFilter",
-  components: {
-    FilterToolbar
-  },
-  mixins: [ BaseFilterMixin ],
-  data() {
-    return {
-      minId: "min-bug-path-length",
-      maxId: "max-bug-path-length",
-      minBugPathLength: null,
-      maxBugPathLength: null,
-      rules: {
-        bugPathLength: [
-          v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
-        ]
-      },
-    };
-  },
+import { useRoute } from "vue-router";
 
-  computed: {
-    selectedBugPathLengthTitle() {
-      return [
-        ...(this.minBugPathLength ? [ `min: ${this.minBugPathLength}` ]: []),
-        ...(this.maxBugPathLength ? [ `max: ${this.maxBugPathLength}` ]: [])
-      ].join(", ");
-    }
-  },
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  methods: {
-    setMinBugPathLength(bugPathLength, updateUrl=true) {
-      if (this.$refs.form && !this.$refs.form.validate()) return;
+const emit = defineEmits([
+  "update:url"
+]);
 
-      this.minBugPathLength = bugPathLength;
-      this.updateReportFilter();
+const baseFilter = useBaseFilter(toRef(props, "namespace"));
 
-      if (updateUrl) {
-        this.$emit("update:url");
-      }
-    },
+const { panel, setReportFilter } = baseFilter;
 
-    setMaxBugPathLength(bugPathLength, updateUrl=true) {
-      if (this.$refs.form && !this.$refs.form.validate()) return;
+const minId = ref("min-bug-path-length");
+const maxId = ref("max-bug-path-length");
+const minBugPathLength = ref(null);
+const maxBugPathLength = ref(null);
+const rules = ref({
+  bugPathLength: [
+    v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
+  ]
+});
+const form = ref(null);
 
-      this.maxBugPathLength = bugPathLength;
-      this.updateReportFilter();
+const route = useRoute();
 
-      if (updateUrl) {
-        this.$emit("update:url");
-      }
-    },
+const selectedBugPathLengthTitle = computed(() => {
+  return [
+    ...(minBugPathLength.value ? [ `min: ${minBugPathLength.value}` ] : []),
+    ...(maxBugPathLength.value ? [ `max: ${maxBugPathLength.value}` ] : [])
+  ].join(", ");
+});
 
-    getUrlState() {
-      return {
-        [this.minId]: this.minBugPathLength || undefined,
-        [this.maxId]: this.maxBugPathLength || undefined
-      };
-    },
+function setMinBugPathLength(_bugPathLength, _updateUrl=true) {
+  if (form.value && !form.value.validate()) return;
 
-    initByUrl() {
-      return new Promise(resolve => {
-        const minBugPathLength = this.$route.query[this.minId];
-        if (parseInt(minBugPathLength)) {
-          this.setMinBugPathLength(minBugPathLength, false);
-        }
+  minBugPathLength.value = _bugPathLength;
+  updateReportFilter();
 
-        const maxBugPathLength = this.$route.query[this.maxId];
-        if (parseInt(maxBugPathLength)) {
-          this.setMaxBugPathLength(maxBugPathLength, false);
-        }
-
-        resolve();
-      });
-    },
-
-    initPanel() {
-      this.panel = this.minBugPathLength !== null ||
-        this.maxBugPathLength !== null;
-    },
-
-    updateReportFilter() {
-      let bugPathLength = null;
-
-      if (this.minBugPathLength || this.maxBugPathLength)  {
-        bugPathLength = new BugPathLengthRange({
-          min : this.minBugPathLength ? this.minBugPathLength : null,
-          max : this.maxBugPathLength ? this.maxBugPathLength : null,
-        });
-      }
-
-      this.setReportFilter({ bugPathLength: bugPathLength });
-    },
-
-    clear(updateUrl) {
-      this.setMinBugPathLength(null, false);
-      this.setMaxBugPathLength(null, false);
-
-      if (updateUrl) {
-        this.$emit("update:url");
-      }
-    }
+  if (_updateUrl) {
+    emit("update:url");
   }
-};
+}
+
+function setMaxBugPathLength(_bugPathLength, _updateUrl=true) {
+  if (form.value && !form.value.validate()) return;
+
+  maxBugPathLength.value = _bugPathLength;
+  updateReportFilter();
+
+  if (_updateUrl) {
+    emit("update:url");
+  }
+}
+
+function getUrlState() {
+  return {
+    [minId.value]: minBugPathLength.value || undefined,
+    [maxId.value]: maxBugPathLength.value || undefined
+  };
+}
+
+function initByUrl() {
+  return new Promise(resolve => {
+    const _minBugPathLength = route.query[minId.value];
+    if (parseInt(_minBugPathLength)) {
+      setMinBugPathLength(_minBugPathLength, false);
+    }
+
+    const _maxBugPathLength = route.query[maxId.value];
+    if (parseInt(_maxBugPathLength)) {
+      setMaxBugPathLength(_maxBugPathLength, false);
+    }
+
+    resolve();
+  });
+}
+
+function initPanel() {
+  panel.value = minBugPathLength.value !== null ||
+    maxBugPathLength.value !== null;
+}
+
+function updateReportFilter() {
+  let _bugPathLength = null;
+
+  if (minBugPathLength.value || maxBugPathLength.value)  {
+    _bugPathLength = new BugPathLengthRange({
+      min : minBugPathLength.value ? minBugPathLength.value : null,
+      max : maxBugPathLength.value ? maxBugPathLength.value : null,
+    });
+  }
+
+  setReportFilter({ bugPathLength: _bugPathLength });
+}
+
+function clear(updateUrl) {
+  setMinBugPathLength(null, false);
+  setMaxBugPathLength(null, false);
+
+  if (updateUrl) {
+    emit("update:url");
+  }
+}
+
+defineExpose({
+  beforeInit: baseFilter.beforeInit,
+  afterInit: baseFilter.afterInit,
+  registerWatchers: baseFilter.registerWatchers,
+  unregisterWatchers: baseFilter.unregisterWatchers,
+
+  getUrlState,
+  initByUrl,
+  initPanel,
+  clear,
+  updateReportFilter,
+});
 </script>

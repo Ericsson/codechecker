@@ -9,19 +9,17 @@
           label="Search by report hash..."
           single-line
           hide-details
-          outlined
-          solo
-          flat
-          dense
+          variant="outlined"
+          density="compact"
           clearable
-          @input="onTextFilterChanged"
+          @update:model-value="onTextFilterChanged"
         />
       </v-col>
       <v-col class="py-0">
         <select-review-status
-          v-model="reviewStatus"
+          v-model="reviewStatusValue"
           label="Search by review status"
-          @change="onFilterChanged"
+          @update:model-value="onFilterChanged"
         />
       </v-col>
       <v-col class="py-0">
@@ -32,12 +30,10 @@
           label="Search by author..."
           single-line
           hide-details
-          outlined
-          solo
-          flat
-          dense
+          variant="outlined"
+          density="compact"
           clearable
-          @input="onTextFilterChanged"
+          @update:model-value="onTextFilterChanged"
         />
       </v-col>
       <v-col class="py-0">
@@ -61,99 +57,101 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
 import _ from "lodash";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 import { ReviewStatusRuleFilter } from "@cc/report-server-types";
 
-import { ReviewStatusMixin } from "@/mixins";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { useReviewStatus } from "@/composables/useReviewStatus";
 import SelectReviewStatus from "./SelectReviewStatus";
 
-export default {
-  name: "ReviewStatusRuleFilter",
-  components: { SelectReviewStatus, TooltipHelpIcon },
-  mixins: [ ReviewStatusMixin ],
-  props: {
-    bus: { type: Object, required: true }
-  },
-  data() {
-    const queries = this.$router.currentRoute.query;
-    const reportHash = queries["report-hash"];
-    const noAssociatedReports =
-      (queries["no-associated-reports"] && true) || false;
-    const reviewStatus = queries["review-status"]
-      ? this.reviewStatusFromStringToCode(queries["review-status"]) : null;
-    const author = queries["author"];
+const props = defineProps({
+  bus: { type: Object, required: true }
+});
 
-    return {
-      author,
-      reportHash,
-      reviewStatus,
-      noAssociatedReports
-    };
-  },
-  computed: {
-    status() {
-      if (this.reviewStatus !== null) {
-        return this.reviewStatusFromCodeToString(this.reviewStatus);
-      }
-      return null;
-    },
+const emit = defineEmits([ "on:filter" ]);
 
-    filter() {
-      if (
-        !this.reportHash &&
-        !this.noAssociatedReports &&
-        !this.reviewStatus &&
-        !this.author
-      ) return;
+const route = useRoute();
+const router = useRouter();
+const reviewStatus = useReviewStatus();
 
-      const filter = new ReviewStatusRuleFilter();
-      filter.reportHashes = this.reportHash ? [ `${this.reportHash}*` ] : null;
-      filter.authors = this.author ? [ `${this.author}*` ] : null;
-      filter.reviewStatuses =
-        this.reviewStatus !== null ? [ this.reviewStatus ] : null;
-      filter.noAssociatedReports = this.noAssociatedReports;
+const queries = route.query;
+const reportHash = ref(queries["report-hash"]);
+const noAssociatedReports = ref(
+  (queries["no-associated-reports"] && true) || false
+);
+const reviewStatusValue = ref(
+  queries["review-status"]
+    ? reviewStatus.reviewStatusFromStringToCode(queries["review-status"])
+    : null
+);
+const author = ref(queries["author"]);
 
-      return filter;
-    }
-  },
-  mounted() {
-    this.onFilterChanged();
-
-    this.bus.$on("clear", () => {
-      this.reportHash = null;
-      this.author = null;
-      this.reviewStatus = null;
-      this.noAssociatedReports = null;
-
-      this.onFilterChanged();
-    });
-  },
-  methods: {
-    onTextFilterChanged: _.debounce(function () {
-      this.onFilterChanged();
-    }, 400),
-
-    onFilterChanged () {
-      this.$emit("on:filter", this.filter);
-      this.updateUrl({
-        "report-hash": this.reportHash ? this.reportHash : undefined,
-        "author": this.author ? this.author : undefined,
-        "no-associated-reports": this.noAssociatedReports ? "on" : undefined,
-        "review-status": this.status !== null ? this.status : undefined
-      });
-    },
-
-    updateUrl(params) {
-      this.$router.replace({
-        query: {
-          ...this.$route.query,
-          ...params
-        }
-      }).catch(() => {});
-    }
+const status = computed(function() {
+  if (reviewStatusValue.value !== null) {
+    return reviewStatus.reviewStatusFromCodeToString(reviewStatusValue.value);
   }
-};
+  return null;
+});
+
+const filter = computed(function() {
+  if (
+    !reportHash.value &&
+    !noAssociatedReports.value &&
+    reviewStatusValue.value === null &&
+    !author.value
+  ) return;
+
+  const _filter = new ReviewStatusRuleFilter();
+  _filter.reportHashes = reportHash.value ? [ `${reportHash.value}*` ] : null;
+  _filter.authors = author.value ? [ `${author.value}*` ] : null;
+  _filter.reviewStatuses =
+    reviewStatusValue.value !== null ? [ reviewStatusValue.value ] : null;
+  _filter.noAssociatedReports = noAssociatedReports.value;
+
+  return _filter;
+});
+
+onMounted(function() {
+  onFilterChanged();
+
+  props.bus.on("clear", () => {
+    reportHash.value = null;
+    author.value = null;
+    reviewStatusValue.value = null;
+    noAssociatedReports.value = null;
+
+    onFilterChanged();
+  });
+});
+
+onUnmounted(() => {
+  props.bus.off("clear");
+});
+
+const onTextFilterChanged = _.debounce(function () {
+  onFilterChanged();
+}, 400);
+
+function onFilterChanged () {
+  emit("on:filter", filter.value);
+  updateUrl({
+    "report-hash": reportHash.value ? reportHash.value : undefined,
+    "author": author.value ? author.value : undefined,
+    "no-associated-reports": noAssociatedReports.value ? "on" : undefined,
+    "review-status": status.value !== null ? status.value : undefined
+  });
+}
+
+function updateUrl(params) {
+  router.replace({
+    query: {
+      ...route.query,
+      ...params
+    }
+  }).catch(() => {});
+}
 </script>

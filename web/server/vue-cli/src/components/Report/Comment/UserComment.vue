@@ -1,86 +1,85 @@
 <template>
   <v-timeline-item
     class="user-comment"
-    color="green"
+    dot-color="green"
     icon="mdi-account"
-    small
+    size="small"
     fill-dot
   >
     <v-card
-      class="elevation-2"
+      class="elevation-2 d-flex"
     >
-      <v-list two-line>
-        <v-list-item>
-          <user-icon
-            :value="comment.author"
-            :size="32"
-            class="mr-2"
-            tile
-          />
-          <v-list-item-content>
+      <div class="flex-grow-1">
+        <v-list
+          lines="two"
+        >
+          <v-list-item>
+            <template v-slot:prepend>
+              <user-icon
+                :value="comment.author"
+                :size="32"
+                class="mr-2"
+                rounded="0"
+              />
+            </template>
+
             <v-list-item-title>
               {{ comment.author }}
             </v-list-item-title>
+
             <v-list-item-subtitle
               :title="comment.createdAt"
             >
               {{ createdAt }}
             </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action>
-            <div>
-              <edit-comment-btn
-                :comment="comment"
-                :bus="bus"
-              />
-
-              <remove-comment-btn
-                :comment="comment"
-                :bus="bus"
-              />
-            </div>
-          </v-list-item-action>
-        </v-list-item>
-      </v-list>
-      <!-- eslint-disable vue/no-v-html -->
-      <v-card-text
-        class="pt-0"
-        v-html="message"
-      />
+          </v-list-item>
+        </v-list>
+        <v-card-text class="pt-0 preserve-whitespace">
+          {{ comment.message }}
+        </v-card-text>
+      </div>
+      <div class="d-flex flex-column ga-1 pa-2">
+        <v-btn
+          class="edit-btn"
+          icon="mdi-pencil"
+          size="small"
+          variant="text"
+          @click="emit('update:comment', comment)"
+        />
+        <v-divider />
+        <v-btn
+          class="remove-btn"
+          icon="mdi-trash-can-outline"
+          size="small"
+          variant="text"
+          @click="emit('remove:comment', comment)"
+        />
+      </div>
     </v-card>
   </v-timeline-item>
 </template>
 
-<script>
-import Vue from "vue";
+<script setup>
 import { formatDistanceToNow, parse } from "date-fns";
-
-import { CommentData } from "@cc/report-server-types";
+import { computed } from "vue";
 
 import { UserIcon } from "@/components/Icons";
-import EditCommentBtn from "./EditCommentBtn";
-import RemoveCommentBtn from "./RemoveCommentBtn";
 
-export default {
-  name: "UserComment",
-  components: {
-    EditCommentBtn,
-    RemoveCommentBtn,
-    UserIcon
-  },
-  props: {
-    comment: { type: CommentData, required: true },
-    bus: { type: Vue, required: true }
-  },
-  computed: {
-    message() {
-      return this.comment.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
-    },
-    createdAt() {
-      const created = parse(this.comment.createdAt,
-        "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
-      return formatDistanceToNow(created);
-    }
-  }
-};
+const props = defineProps({
+  comment: { type: Object, required: true }
+});
+
+const emit = defineEmits([ "update:comment", "remove:comment" ]);
+
+const createdAt = computed(() => {
+  const created = parse(props.comment.createdAt,
+    "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
+  return formatDistanceToNow(created);
+});
 </script>
+
+<style scoped>
+.preserve-whitespace {
+  white-space: pre-wrap;
+}
+</style>

@@ -7,15 +7,14 @@
     offset-y
     min-width="auto"
   >
-    <template v-slot:activator="{ on, attrs }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-text-field
+        v-bind="activatorProps"
         :value="date"
         label="Due date"
         append-icon="mdi-calendar"
         readonly
-        outlined
-        v-bind="attrs"
-        v-on="on"
+        variant="outlined"
       />
     </template>
 
@@ -23,34 +22,26 @@
   </v-menu>
 </template>
 
-<script>
+<script setup>
 import { format, fromUnixTime, getUnixTime, parse } from "date-fns";
+import { computed, ref } from "vue";
 
-export default {
-  name: "DueDateMenu",
-  props: {
-    value: { type: Number, default: null },
-  },
-  data() {
-    return {
-      menu: false,
-      format: "yyyy-MM-dd"
-    };
-  },
-  computed: {
-    date: {
-      get() {
-        return this.value
-          ? format(fromUnixTime(this.value), this.format, new Date)
-          : null;
-      },
-      set(val) {
-        this.$emit("update:value",
-          val ? getUnixTime(parse(val, this.format, new Date)) : null);
+const props = defineProps({
+  value: { type: Number, default: null },
+});
 
-        this.menu = false;
-      }
-    }
-  }
-};
+const emit = defineEmits([ "update:value" ]);
+
+const menu = ref(false);
+const dateFormatStr = "yyyy-MM-dd";
+
+const date = computed({
+  get() {
+    return format(fromUnixTime(props.value), dateFormatStr, new Date);
+  },
+  set(val) {
+    emit("update:value", getUnixTime(parse(val, dateFormatStr, new Date)));
+    menu.value = false;
+  },
+});
 </script>

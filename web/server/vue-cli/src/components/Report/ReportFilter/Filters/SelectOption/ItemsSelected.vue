@@ -1,103 +1,112 @@
 <template>
   <v-list
-    v-if="selected.length"
+    v-if="localSelectedItems.length"
     class="pa-0"
-    dense
+    density="compact"
   >
-    <v-list-item-group
-      v-model="selected"
-      active-class="light-blue--text"
-      lighten-4
-      multiple
+    <v-list-item
+      v-for="item in localSelectedItems"
+      :key="item.id"
+      :value="item"
+      class="selected-item pa-0 px-1 ma-0 mb-1"
+      :disabled="!multiple"
+      density="compact"
+      @click="removeSelected(item)"
     >
-      <v-list-item
-        v-for="item in selected"
-        :key="item.id"
-        :value="item"
-        class="selected-item pa-0 px-1 ma-0 mb-1"
-        :disabled="!multiple"
-        dense
-      >
-        <v-list-item-icon class="ma-1 mr-2">
+      <template v-slot:prepend>
+        <div class="ma-1 mr-2">
           <slot name="icon" :item="item" />
-        </v-list-item-icon>
+        </div>
+      </template>
 
-        <v-list-item-content class="pa-0">
-          <slot name="title" :item="item">
-            <v-list-item-title :title="item.title">
-              {{ item.title }}
-            </v-list-item-title>
-          </slot>
-        </v-list-item-content>
+      <slot name="title" :item="item">
+        <v-list-item-title :title="item.title">
+          {{ item.title }}
+        </v-list-item-title>
+      </slot>
 
+      <template v-slot:append>
         <v-chip
           class="report-count"
           color="#878d96"
-          outlined
-          small
+          variant="outlined"
+          size="small"
         >
           {{ item.count || item.count === 0 ? item.count : "N/A" }}
         </v-chip>
-
         <v-icon
           class="remove-btn font-weight-bold"
           color="error"
-        >
-          mdi-close
-        </v-icon>
-      </v-list-item>
-    </v-list-item-group>
+          icon="mdi-close"
+        />
+      </template>
+    </v-list-item>
   </v-list>
 
   <v-list-item
     v-else
-    dense
+    density="compact"
   >
-    <v-list-item-content>
-      <v-list-item-title>No filter</v-list-item-title>
-    </v-list-item-content>
+    <v-list-item-title>No filter</v-list-item-title>
   </v-list-item>
 </template>
 
-<script>
-export default {
-  name: "ItemsSelected",
-  props: {
-    selectedItems: { type: Array, required: true },
-    multiple: { type: Boolean, default: true }
-  },
-  computed: {
-    selected: {
-      get() {
-        return this.selectedItems;
-      },
-      set(value) {
-        this.$emit("update:select", value);
-      }
-    }
+<script setup>
+import { onMounted, ref, watch } from "vue";
+
+const props = defineProps({
+  selectedItems: { type: Array, required: true },
+  multiple: { type: Boolean, default: true }
+});
+
+const emit = defineEmits([ "update:select" ]);
+
+const localSelectedItems = ref([]);
+
+onMounted(() => {
+  localSelectedItems.value = props.selectedItems;
+});
+
+watch(() => props.selectedItems, val => {
+  localSelectedItems.value = Array.isArray(val) ? val : [ val ];
+}, { deep: true });
+
+function removeSelected(_item) {
+  if (localSelectedItems.value.some(itm => itm.id === _item.id)) {
+    localSelectedItems.value =
+      localSelectedItems.value.filter(itm => itm.id !== _item.id);
   }
-};
+
+  emit("update:select", localSelectedItems.value);
+}
 </script>
 
 <style lang="scss" scoped>
-.v-list-item.v-list-item--dense {
+.v-list-item.v-list-item--density-compact {
   min-height: auto;
 }
 
 .selected-item {
+  position: relative;
+
   &:before {
     content: "";
-    display: block;
-    background-color: var(--v-primary-base);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(var(--v-theme-primary));
     border-radius: 4px;
+    opacity: 0.1;
   }
 
   &:hover:before {
-    background-color: var(--v-error-base);
+    background-color: rgb(var(--v-theme-error));
   }
 
   .remove-btn {
-    display:none;
+    display: none;
   }
 
   &:hover {

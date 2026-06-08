@@ -1,4 +1,4 @@
-import ServiceClient from "@cc/prod";
+import { Client as ServiceClient } from "@cc/prod";
 import { BaseService } from "./_base.service";
 
 class ProductsService extends BaseService {

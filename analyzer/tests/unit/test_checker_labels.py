@@ -39,7 +39,7 @@ class TestCheckerLabels(unittest.TestCase):
               "UNSPECIFIED": "Unspecified documentation"
           },
           "guideline": {
-              "sei-cert": "SEI-CERT documentation"
+              "sei-cert-c": "SEI-CERT C documentation"
           }
         }
 
@@ -101,8 +101,8 @@ class TestCheckerLabels(unittest.TestCase):
                     "profile:sensitive",
                     "profile:security",
                     "profile:extreme",
-                    "guideline:sei-cert",
-                    "sei-cert:err34-c",
+                    "guideline:sei-cert-c",
+                    "sei-cert-c:err34-c",
                     "severity:LOW"
                 ]
             }
@@ -182,7 +182,7 @@ class TestCheckerLabels(unittest.TestCase):
 
         self.assertEqual(
             sorted(cl.labels()),
-            sorted(['guideline', 'profile', 'sei-cert', 'severity']))
+            sorted(['guideline', 'profile', 'sei-cert-c', 'severity']))
 
         self.assertEqual(
             sorted(cl.occurring_values('profile')),

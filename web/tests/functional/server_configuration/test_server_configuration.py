@@ -122,6 +122,13 @@ class ConfigTests(unittest.TestCase):
         self.session_token = self.auth_client.performLogin(
             "Username:Password", "root:root")
 
+        self.auth_client = env.setup_auth_client(
+            self._test_workspace,
+            session_token=self.session_token)
+
+        # TODO: I'm not sure if this test makes sense, because "root" user has
+        # SUPERUSER permission already. "root" is set as "super_user" in
+        # server_config.json.
         ret = self.auth_client.addPermission(Permission.SUPERUSER,
                                              "root",
                                              False,

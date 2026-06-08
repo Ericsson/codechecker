@@ -4,20 +4,20 @@
     :content-class="dialogClass"
     width="400"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props: activatorProps }">
       <v-text-field
+        v-bind="activatorProps"
+        v-model="formattedDateTime"
         :label="label"
-        :value="formattedDatetime"
         :class="[ inputClass, 'pa-0', 'ma-0' ]"
         :prepend-inner-icon="prependInnerIcon"
-        :outlined="outlined"
-        :dense="dense"
+        :variant="variant"
+        :density="density"
         hide-details
         readonly
-        v-on="on"
       >
-        <template #append>
-          <slot name="append" />
+        <template #append-inner>
+          <slot name="append-inner" />
         </template>
       </v-text-field>
     </template>
@@ -37,24 +37,26 @@
           >
             <v-icon>mdi-clock-outline</v-icon>
           </v-tab>
+        </v-tabs>
 
-          <v-tab-item>
+        <v-window v-model="activeTab">
+          <v-window-item>
             <v-date-picker
               v-model="date"
               full-width
-              @input="activeTab = 1"
+              @update:model-value="activeTab = 1"
             />
-          </v-tab-item>
+          </v-window-item>
 
-          <v-tab-item>
+          <v-window-item>
             <v-time-picker
               v-model="time"
               full-width
               use-seconds
               format="24hr"
             />
-          </v-tab-item>
-        </v-tabs>
+          </v-window-item>
+        </v-window>
       </v-card-text>
 
       <v-card-actions>
@@ -64,7 +66,7 @@
           color="grey lighten-1"
           class="clear-btn"
           text
-          @click.native="clear"
+          @click="clear"
         >
           Clear
         </v-btn>
@@ -82,114 +84,125 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
+import {
+  computed,
+  onMounted,
+  ref,
+  watch
+} from "vue";
+
+const props = defineProps({
+  modelValue: { type: [ Date, String ], default: null },
+  label: { type: String, default: "" },
+  dateFormat: { type: String, default: "yyyy-MM-dd" },
+  timeFormat: { type: String, default: "HH:mm:ss" },
+  defaultTime: { type: String, default: "00:00:00" },
+  inputClass: { type: String, default: null },
+  dialogClass: { type: String, default: null },
+  variant: { type: String, default: "solo" },
+  density: { type: String, default: "compact" },
+  prependInnerIcon: { type: String, default: null },
+});
+
+const emit = defineEmits([
+  "update:modelValue"
+]);
 import { format, parse } from "date-fns";
+const dialog = ref(false);
+const activeTab = ref(0);
+const date = ref(null);
+const time = ref(null);
 
-export default {
-  name: "DateTimePicker",
-  props: {
-    value: { type: [ Date, String ], default: null },
-    label: { type: String, default: "" },
-    dateFormat: { type: String, default: "yyyy-MM-dd" },
-    timeFormat: { type: String, default: "HH:mm:ss" },
-    defaultTime: { type: String, default: "00:00:00" },
-    inputClass: { type: String, default: null },
-    dialogClass: { type: String, default: null },
-    outlined: { type: Boolean, default: false },
-    dense: { type: Boolean, default: false },
-    prependInnerIcon: { type: String, default: null },
-  },
-  data() {
-    return {
-      dialog: false,
-      activeTab: 0,
-      date: null,
-      time: this.defaultTime
-    };
-  },
+const dateTimeFormat = computed(() =>
+  `${props.dateFormat} ${props.timeFormat}`
+);
 
-  computed: {
-    dateTimeFormat() {
-      return `${this.dateFormat} ${this.timeFormat}`;
-    },
-
-    dateTime() {
-      if (this.date && this.time) {
-        const dt = this.date + " " + this.time;
-        return parse(dt, this.dateTimeFormat, new Date());
-      }
-
-      return null;
-    },
-
-    formattedDatetime() {
-      return this.dateTime ? format(this.dateTime, this.dateTimeFormat) : null;
+const dateTime = computed(() => {
+  if (date.value && time.value) {
+    let dateStr;
+    if (date.value instanceof Date) {
+      dateStr = format(date.value, props.dateFormat);
+    } else {
+      dateStr = date.value;
     }
-  },
-
-  watch: {
-    value() {
-      this.init();
-    }
-  },
-
-  mounted() {
-    this.init();
-  },
-
-  methods: {
-    init() {
-      if (!this.value) {
-        this.resetDateTimes();
-        return;
-      }
-
-      let initValue = null;
-      if (this.value instanceof Date) {
-        initValue = this.value;
-      } else if (typeof this.value === "string" ||
-                 this.value instanceof String
-      ) {
-        initValue = parse(this.value, this.dateTimeFormat, new Date());
-      }
-
-      this.date = format(initValue, this.dateFormat);
-      this.time = format(initValue, this.timeFormat);
-    },
-
-    clear() {
-      this.reset();
-      this.resetDateTimes();
-
-      this.$emit("input", null);
-    },
-
-    ok() {
-      this.reset();
-
-      this.$emit("input", this.dateTime);
-    },
-
-    reset() {
-      this.dialog = false;
-      this.activeTab = 0;
-    },
-
-    resetDateTimes() {
-      this.date = null;
-      this.time = this.defaultTime;
-    }
+    
+    const _dt = dateStr + " " + time.value;
+    const _parsedDate = parse(_dt, dateTimeFormat.value, new Date());
+    return !isNaN(_parsedDate) ? _parsedDate : null;
   }
-};
+  return null;
+});
+
+const formattedDateTime = computed(() => 
+  dateTime.value &&
+  !isNaN(dateTime.value) ? format(dateTime.value, dateTimeFormat.value) : null
+);
+
+watch(() => props.modelValue, init);
+
+onMounted(() => {
+  if (!time.value) {
+    time.value = props.defaultTime;
+  }
+  init();
+});
+
+function init() {
+  if (!props.modelValue) {
+    resetDateTimes();
+    return;
+  }
+
+  let initValue = null;
+  if (props.modelValue instanceof Date) {
+    initValue = props.modelValue;
+  } else if (typeof props.modelValue === "string" ||
+              props.modelValue instanceof String
+  ) {
+    initValue = parse(props.modelValue, dateTimeFormat.value, new Date());
+  }
+
+  // Check if initValue is a valid date
+  if (!initValue || isNaN(initValue)) {
+    resetDateTimes();
+    return;
+  }
+
+  date.value = format(initValue, props.dateFormat);
+  time.value = format(initValue, props.timeFormat);
+}
+
+function clear() {
+  reset();
+  resetDateTimes();
+
+  emit("update:modelValue", null);
+}
+
+function ok() {
+  emit("update:modelValue", dateTime.value);
+
+  reset();
+}
+
+function reset() {
+  dialog.value = false;
+  activeTab.value = 0;
+}
+
+function resetDateTimes() {
+  date.value = null;
+  time.value = props.defaultTime;
+}
 </script>
 
-<style lang="scss" scoped>
-::v-deep .v-picker.v-card {
+<style lang="scss">
+v-picker.v-card {
   box-shadow: none;
 
   & > .v-picker__title {
     border-radius: 0;
   }
 }
-
 </style>

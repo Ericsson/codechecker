@@ -26,7 +26,7 @@ from typing import Any, Collection, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column, case, cast, true
+    asc, desc, union_all, select, bindparam, literal_column, cast, true
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.types import ARRAY, String
 
@@ -51,6 +51,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
 from codechecker_api_shared.ttypes import ErrorCode, RequestFailed
 
 from codechecker_common import util
+from codechecker_common.util import thrift_to_json
 from codechecker_common.logger import get_logger
 
 from codechecker_web.shared import webserver_context
@@ -71,7 +72,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent
+    SourceComponent, SourceComponentFile, FilterPreset
 
 from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
@@ -148,41 +149,79 @@ def slugify(text):
 
 
 def get_component_values(
-    session: DBSession,
-    component_name: str
+    component: SourceComponent
 ) -> Tuple[List[str], List[str]]:
     """
-    Get component values by component names and returns a tuple where the
-    first item contains a list path which should be skipped and the second
-    item contains a list of path which should be included.
+    Returns a tuple where the first item contains a list paths that should be
+    included and the second item contains a list of paths that should be
+    skipped.
     E.g.:
       +/a/b/x.cpp
       +/a/b/y.cpp
       -/a/b
     On the above component value this function will return the following:
-      (['/a/b'], ['/a/b/x.cpp', '/a/b/y.cpp'])
+      (['/a/b/x.cpp', '/a/b/y.cpp'], ['/a/b'])
     """
-    components = session.query(SourceComponent) \
-        .filter(SourceComponent.name.like(component_name)) \
-        .all()
-
-    skip = []
     include = []
+    skip = []
 
-    for component in components:
-        values = component.value.decode('utf-8').split('\n')
-        for value in values:
-            value = value.strip()
-            if not value:
-                continue
+    values = component.value.decode('utf-8').split('\n')
+    for value in values:
+        value = value.strip()
+        if not value:
+            continue
 
-            v = value[1:]
-            if value[0] == '+':
-                include.append(v)
-            elif value[0] == '-':
-                skip.append(v)
+        v = value[1:]
+        if value[0] == '+':
+            include.append(v)
+        elif value[0] == '-':
+            skip.append(v)
 
-    return skip, include
+    return include, skip
+
+
+def update_source_component_files(
+    session: DBSession,
+    component: Optional[SourceComponent] = None
+):
+    """
+    Refreshes the SourceComponentFile table for a specific source component.
+    If `component` is None, then all source components are updated.
+    """
+    if component is None:
+        all_components = session.query(SourceComponent)
+    else:
+        all_components = [component]
+
+    # 1. Delete existing associations for this component
+    session.query(SourceComponentFile) \
+        .filter(SourceComponentFile.source_component_name.in_(
+            map(lambda component: component.name, all_components))) \
+        .delete(synchronize_session=False)
+
+    for comp in all_components:
+        # 2. Re-calculate associations
+        include, skip = get_component_values(comp)
+
+        file_ids_query = None
+        if skip and include:
+            include_q, skip_q = get_include_skip_queries(include, skip)
+            file_ids_query = include_q.except_(skip_q)
+        elif include:
+            include_q, _ = get_include_skip_queries(include, [])
+            file_ids_query = include_q
+        elif skip:
+            _, skip_q = get_include_skip_queries([], skip)
+            file_ids_query = select(File.id).where(File.id.notin_(skip_q))
+
+        if file_ids_query is not None:
+            file_ids = session.execute(file_ids_query).fetchall()
+
+            if file_ids:
+                session.bulk_insert_mappings(
+                    SourceComponentFile,
+                    [{'source_component_name': comp.name,
+                      'file_id': fid[0]} for fid in file_ids])
 
 
 def process_report_filter(
@@ -508,18 +547,10 @@ def get_source_component_file_query(
     component_name: str
 ):
     """ Get filter query for a single source component. """
-    skip, include = get_component_values(session, component_name)
-
-    if skip and include:
-        include_q, skip_q = get_include_skip_queries(include, skip)
-        return File.id.in_(include_q.except_(skip_q))
-
-    if include:
-        return or_(*[File.filepath.like(conv(fp)) for fp in include])
-    elif skip:
-        return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
-
-    return None
+    return File.id.in_(
+        session.query(SourceComponentFile.file_id)
+        .filter(SourceComponentFile.source_component_name == component_name)
+    )
 
 
 def get_reports_by_bugpath_filter_for_single_origin(
@@ -637,28 +668,12 @@ def get_other_source_component_file_query(session):
         (Files NOT IN Component_1) AND (Files NOT IN Component_2) ... AND
         (Files NOT IN Component_N)
     """
-    component_names = session.query(SourceComponent.name).all()
-
-    # If there are no user defined source components we don't have to filter.
-    if not component_names:
+    # Check if there are any source components
+    if not session.query(SourceComponent).count():
         return None
 
-    def get_query(component_name: str):
-        """ Get file filter query for auto generated Other component. """
-        skip, include = get_component_values(session, component_name)
-
-        if skip and include:
-            include_q, skip_q = get_include_skip_queries(include, skip)
-            return File.id.notin_(include_q.except_(skip_q))
-        elif include:
-            return and_(*[File.filepath.notlike(conv(fp)) for fp in include])
-        elif skip:
-            return or_(*[File.filepath.like(conv(fp)) for fp in skip])
-
-        return None
-
-    queries = [get_query(n) for (n, ) in component_names]
-    return and_(*queries)
+    files_in_components = session.query(SourceComponentFile.file_id)
+    return File.id.notin_(files_in_components)
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
@@ -1369,48 +1384,6 @@ def get_run_id_expression(session, report_filter):
     return Run.id.label("run_id")
 
 
-def get_is_enabled_case(subquery):
-    """
-    Creating a case statement to decide the report
-    is enabled or not based on the detection status
-    """
-    detection_status_filters = subquery.c.detection_status.in_(list(
-        map(detection_status_str,
-            (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
-    ))
-
-    return case(
-        (detection_status_filters, False),
-        else_=True
-    )
-
-
-def get_is_opened_case(subquery):
-    """
-    Creating a case statement to decide the report is opened or not
-    based on the detection status and the review status
-    """
-    detection_statuses = (
-        DetectionStatus.NEW,
-        DetectionStatus.UNRESOLVED,
-        DetectionStatus.REOPENED
-    )
-    review_statuses = (
-        API_ReviewStatus.UNREVIEWED,
-        API_ReviewStatus.CONFIRMED
-    )
-    detection_and_review_status_filters = [
-        subquery.c.detection_status.in_(list(map(
-            detection_status_str, detection_statuses))),
-        subquery.c.review_status.in_(list(map(
-            review_status_str, review_statuses)))
-    ]
-    return case(
-        (and_(*detection_and_review_status_filters), True),
-        else_=False
-    )
-
-
 def remove_reports(session: DBSession,
                    report_ids: Collection,
                    chunk_size: int = SQLITE_MAX_VARIABLE_NUMBER):
@@ -1421,6 +1394,70 @@ def remove_reports(session: DBSession,
         session.query(Report) \
             .filter(Report.id.in_(r_ids)) \
             .delete(synchronize_session=False)
+
+
+def transform_rf_db_to_thrift(rf_db):
+    """
+    Transforms a ReportFilter DB object to a ReportFilter thrift object.
+    """
+    rf_db = json.loads(rf_db)
+
+    recreated_bug_path_length = None
+    if rf_db.get("bugPathLength"):
+        recreated_bug_path_length = ttypes.BugPathLengthRange(
+            min=rf_db["bugPathLength"].get("min"),
+            max=rf_db["bugPathLength"].get("max")
+        )
+
+    recreated_date = None
+    if rf_db.get("date"):
+        recreated_date = ttypes.ReportDate(
+            detected=ttypes.DateInterval(**rf_db["date"]["detected"])
+            if rf_db["date"].get("detected") else None,
+            fixed=ttypes.DateInterval(**rf_db["date"]["fixed"])
+            if rf_db["date"].get("fixed") else None
+        )
+
+    recreated_annotations = []
+    if rf_db.get("annotations"):
+        for anno in rf_db["annotations"]:
+            recreated_annotations.append(ttypes.Pair(
+                first=anno.get("first"),
+                second=anno.get("second")
+            ))
+
+    # NOTE: Update this mapping if new fields are added
+    # to the ReportFilter struct.
+    report_filter = ttypes.ReportFilter(
+        filepath=rf_db.get("filepath"),
+        checkerMsg=rf_db.get("checkerMsg"),
+        checkerName=rf_db.get("checkerName"),
+        reportHash=rf_db.get("reportHash"),
+        severity=rf_db.get("severity"),
+        reviewStatus=rf_db.get("reviewStatus"),
+        detectionStatus=rf_db.get("detectionStatus"),
+        runHistoryTag=rf_db.get("runHistoryTag"),
+        firstDetectionDate=rf_db.get("firstDetectionDate"),
+        fixDate=rf_db.get("fixDate"),
+        isUnique=rf_db.get("isUnique"),
+        runName=rf_db.get("runName"),
+        runTag=rf_db.get("runTag"),
+        componentNames=rf_db.get("componentNames"),
+        bugPathLength=recreated_bug_path_length,
+        date=recreated_date,
+        analyzerNames=rf_db.get("analyzerNames", None),
+        openReportsDate=rf_db.get("openReportsDate"),
+        cleanupPlanNames=rf_db.get("cleanupPlanNames"),
+        fileMatchesAnyPoint=rf_db.get(
+            "fileMatchesAnyPoint"),
+        componentMatchesAnyPoint=rf_db.get(
+            "componentMatchesAnyPoint"),
+        annotations=recreated_annotations,
+        reportStatus=rf_db.get("reportStatus"),
+        fullReportPathInComponent=rf_db.get(
+            "fullReportPathInComponent")
+    )
+    return report_filter
 
 
 class ThriftRequestHandler:
@@ -1472,15 +1509,9 @@ class ThriftRequestHandler:
             args = dict(self.__permission_args)
             args['config_db_session'] = session
 
-            # Anonymous access is only allowed if authentication is
-            # turned off
-            if self._manager.is_enabled and not self._auth_session:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You are not authorized to execute this action.")
-
             if not any(permissions.require_permission(
-                    perm, args, self._auth_session)
+                    perm, args, self._auth_session,
+                    self._manager.is_enabled)
                     for perm in required):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
@@ -1615,6 +1646,228 @@ class ThriftRequestHandler:
                                        description=description))
             return results
 
+    # Stores the given FilterPreset with the given id
+    # If the preset exists, it overwrites the name, and all preset values
+    # if the preset does not exist yet, it creates it with
+    # if the id is -1 a new preset filter is created
+    # the filter preset name must be unique.
+    # An error must be thrown if another preset exists with the same name.
+    # The encoding of the name must be unicode. (whitespaces allowed?)
+    # Returns: the id of the modified or created preset, -1 in case of error
+    # PERMISSION: PRODUCT_ADMIN
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def storeFilterPreset(self, filterpreset):
+        """
+        Store a configured FilterPreset.
+        if the received preset has an id of -1, a new preset is created,
+        otherwise the existing preset with the given id is updated.
+        args:
+            filterpreset: object with:
+                - name (str): Human readable name of preset
+                - reportFilter: ReportFilter object itself
+        """
+        self.__require_admin()
+        LOG.info("Storing filter preset in backend: %s", filterpreset.name)
+        try:
+            filter_id = filterpreset.id
+            name = filterpreset.name.strip()
+            report_filter = json.dumps(
+                thrift_to_json(filterpreset.reportFilter))
+
+            with DBSession(self._Session) as session:
+                # case for creating a new preset
+                existing_preset = session.query(FilterPreset).filter(
+                    FilterPreset.preset_name == name
+                ).one_or_none()
+
+                if filter_id == -1:
+                    if existing_preset:
+                        raise codechecker_api_shared.ttypes.RequestFailed(
+                            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                            "A filter preset with name "
+                            f"'{name}' already exists!")
+
+                    preset_entry = FilterPreset(
+                        preset_name=name,
+                        report_filter=report_filter)
+
+                    session.add(preset_entry)
+                    session.commit()
+                    return preset_entry.id
+
+                # case for updating an existing preset
+                preset_entry = session.query(FilterPreset).filter(
+                    FilterPreset.id == filter_id
+                ).one_or_none()
+
+                if not preset_entry:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {filter_id}!")
+
+                preset_entry.preset_name = name
+                preset_entry.report_filter = report_filter
+                session.commit()
+                return preset_entry.id
+        except Exception as ex:
+            session.rollback()
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not store the filter preset: " + str(ex))
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def renameFilterPreset(self, preset_id: int, name: str):
+        """
+        Rename a filter preset.
+        Returns the ID of the renamed preset.
+        Raises an error if id/name is empty or if
+        a preset with the new name already exists.
+        """
+        self.__require_admin()
+        try:
+            with DBSession(self._Session) as session:
+
+                name = name.strip()
+
+                if not name:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Preset name cannot be empty!")
+
+                if not preset_id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Preset ID cannot be empty!")
+
+                preset_entry = session.query(FilterPreset).filter(
+                    FilterPreset.id == preset_id
+                ).one_or_none()
+
+                if not preset_entry:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {preset_id}!")
+
+                existing = session.query(FilterPreset).filter(
+                    FilterPreset.preset_name == name
+                ).one_or_none()
+
+                if existing and existing.id != preset_id:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"A filter preset with name "
+                        f"'{name}' already exists!")
+
+                LOG.info("Renaming filter preset { id: %d, name: %s } "
+                         "with name: '%s' ",
+                         preset_entry.id, preset_entry.preset_name,
+                         name)
+
+                preset_entry.preset_name = name
+                session.commit()
+                return preset_entry.id
+
+        except Exception as ex:
+            session.rollback()
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not rename filter preset: " + str(ex))
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def deleteFilterPreset(self, preset_id):
+        """
+        Delete a filter preset based on preset_id.
+        Returns the ID of the deleted preset. Raises an error if the
+        preset does not exist or could not be deleted.
+        """
+        self.__require_admin()
+        LOG.info("Deleting filter preset by ID: %s", preset_id)
+        try:
+            with DBSession(self._Session) as session:
+                preset = session.query(FilterPreset). \
+                    filter(FilterPreset.id == preset_id).one_or_none()
+
+                if not preset:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        f"No filter preset found with id {preset_id}!")
+
+                session.query(FilterPreset) \
+                    .filter(FilterPreset.id == preset_id) \
+                    .delete()
+                session.commit()
+            return preset_id
+        except codechecker_api_shared.ttypes.RequestFailed:
+            raise
+        except Exception as exc:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f"Could not delete filter preset with id {preset_id}: \
+                {str(exc)}")
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFilterPreset(self, preset_id: int):
+        """
+        Returns the FilterPreset identified by preset_id.
+        """
+        self.__require_view()
+        LOG.info("Returning filter preset by ID: %s", preset_id)
+
+        with DBSession(self._Session) as session:
+            preset = (
+                session.query(FilterPreset)
+                .filter(FilterPreset.id == preset_id)
+                .one_or_none()
+            )
+
+        if preset is None:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f"No filter preset found with id {preset_id}!")
+
+        report_filter = transform_rf_db_to_thrift(preset.report_filter)
+
+        return ttypes.FilterPreset(
+            preset.id, preset.preset_name, report_filter)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def listFilterPreset(self):
+        """
+        Returns all filter presets stored for the product repository
+        """
+        self.__require_view()
+        LOG.info("List back filter presets")
+
+        try:
+            with DBSession(self._Session) as session:
+                all_presets = (
+                    session.query(FilterPreset).all()
+                )
+
+            if not all_presets:
+                return []
+
+            list_of_transformed_presets = []
+            for preset in all_presets:
+                list_of_transformed_presets.append(
+                    ttypes.FilterPreset(
+                        preset.id,
+                        preset.preset_name,
+                        transform_rf_db_to_thrift(
+                            preset.report_filter)))
+
+            return list_of_transformed_presets
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "CodeChecker could not list a preset :", ex)
+
     @exc_to_thrift_reqfail
     @timeit
     def getRunCount(self, run_filter):
@@ -1691,7 +1944,7 @@ class ThriftRequestHandler:
 
                 for cmd in analysis_info_query:
                     command = zlib.decompress(cmd.analyzer_command) \
-                        .decode("utf-8")
+                        .decode("utf-8") if cmd.analyzer_command else ""
 
                     checkers_q = session \
                         .query(Checker.analyzer_name,
@@ -2073,8 +2326,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r.id for r in query_result]
+                blame_infos = {}
+
+                if get_details and query_result:
+                    report_ids = []
+
+                    for r in query_result:
+                        report_ids.append(r.id)
+                        blame_infos[r.id] = self.getBlameInfo(r.file_id)
+
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
@@ -2091,6 +2351,11 @@ class ThriftRequestHandler:
                         row.review_status_author,
                         row.review_status_date,
                         row.review_status_is_in_source)
+
+                    blame_info = None
+                    if row.id in blame_infos:
+                        blame_info = self.__filter_blame_info_on_line(
+                            blame_infos[row.id], row.line)
 
                     results.append(
                         ReportData(runId=row.run_id,
@@ -2111,6 +2376,7 @@ class ThriftRequestHandler:
                                    fixedAt=str(row.fixed_at),
                                    bugPathLength=row.path_length,
                                    details=report_details.get(row.id),
+                                   blameInfo=blame_info,
                                    annotations=annotations))
             else:  # not is_unique
                 filter_expression, join_tables = process_report_filter(
@@ -2177,8 +2443,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r[0].id for r in query_result]
+                blame_infos = {}
+
+                if get_details and query_result:
+                    report_ids = []
+
+                    for r in query_result:
+                        report_ids.append(r[0].id)
+                        blame_infos[r[0].id] = self.getBlameInfo(r[0].file_id)
+
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
@@ -2193,6 +2466,11 @@ class ThriftRequestHandler:
                         report.review_status_author,
                         report.review_status_date,
                         report.review_status_is_in_source)
+
+                    blame_info = None
+                    if report.id in blame_infos:
+                        blame_info = self.__filter_blame_info_on_line(
+                            blame_infos[report.id], report.line)
 
                     results.append(
                         ReportData(runId=report.run_id,
@@ -2214,9 +2492,34 @@ class ThriftRequestHandler:
                                    report.fixed_at else None,
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
+                                   blameInfo=blame_info,
                                    annotations=annotations))
 
             return results
+
+    def __filter_blame_info_on_line(
+        self,
+        blame_info: BlameInfo,
+        line: int
+    ) -> BlameInfo:
+        """
+        This function returns a BlameInfo that contains filtered blame data at
+        the given source code line.
+        """
+        if blame_info.commits and blame_info.blame:
+            blame_data = [
+                b for b in blame_info.blame
+                if b.startLine <= line <= b.endLine]
+            commit_hash = blame_data[0].commitHash if blame_data else None
+            commit_info = {
+                cHash: commit for cHash, commit
+                in blame_info.commits.items()
+                if cHash == commit_hash}
+            blame_info = BlameInfo(
+                commits=commit_info,
+                blame=blame_data)
+
+        return blame_info
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2823,6 +3126,8 @@ class ThriftRequestHandler:
         guidelines: List[ttypes.Guideline]
     ):
         """ Return the list of rules to each guideline that given. """
+        self.__require_view()
+
         guideline_rules = defaultdict(list)
         for guideline in guidelines:
             rules = self._context.guideline.rules_of_guideline(
@@ -2839,7 +3144,8 @@ class ThriftRequestHandler:
                         ruleId=rule.lower(),
                         title=rules[rule].get("title", ""),
                         url=rules[rule].get("rule_url", ""),
-                        checkers=checkers
+                        checkers=checkers,
+                        level=rules[rule].get("level", "")
                     )
                 )
 
@@ -3102,9 +3408,6 @@ class ThriftRequestHandler:
 
             subquery = subquery.subquery()
 
-            is_enabled_case = get_is_enabled_case(subquery)
-            is_opened_case = get_is_opened_case(subquery)
-
             query = (
                 session.query(
                     subquery.c.checker_id,
@@ -3112,8 +3415,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    is_enabled_case.label("isEnabled"),
-                    is_opened_case.label("isOpened"),
+                    subquery.c.detection_status,
+                    subquery.c.review_status,
                     func.count(subquery.c.bug_id)
                 )
                 .group_by(
@@ -3122,8 +3425,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    is_enabled_case,
-                    is_opened_case
+                    subquery.c.detection_status,
+                    subquery.c.review_status
                 )
             )
 
@@ -3134,8 +3437,8 @@ class ThriftRequestHandler:
                 analyzer_name, \
                 severity, \
                 run_id_list, \
-                is_enabled, \
-                is_opened, \
+                detection_status, \
+                review_status, \
                 cnt \
                     in query.all():
 
@@ -3150,6 +3453,22 @@ class ThriftRequestHandler:
                         closed=0,
                         outstanding=0
                     ))
+
+                is_enabled = detection_status not in map(
+                    detection_status_str,
+                    (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
+
+                is_opened = \
+                    detection_status in map(
+                        detection_status_str,
+                        (DetectionStatus.NEW,
+                         DetectionStatus.UNRESOLVED,
+                         DetectionStatus.REOPENED)) \
+                    and \
+                    review_status in map(
+                        review_status_str,
+                        (API_ReviewStatus.UNREVIEWED,
+                         API_ReviewStatus.CONFIRMED))
 
                 if is_enabled:
                     for r in (run_id_list.split(",")
@@ -3359,10 +3678,24 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
+            detection_and_review_status_filters = [
+                Report.detection_status.in_(list(map(
+                    detection_status_str,
+                    (DetectionStatus.NEW,
+                     DetectionStatus.UNRESOLVED,
+                     DetectionStatus.REOPENED)))),
+                Report.review_status.in_(list(map(
+                    review_status_str,
+                    (API_ReviewStatus.UNREVIEWED,
+                     API_ReviewStatus.CONFIRMED))))
+            ]
+
             extended_table = session.query(
                 Report.review_status,
                 Report.detection_status,
-                Report.bug_id
+                Report.bug_id,
+                and_(*detection_and_review_status_filters)
+                .label("isOutstanding")
             )
 
             if report_filter.annotations is not None:
@@ -3377,19 +3710,16 @@ class ThriftRequestHandler:
 
             extended_table = extended_table.subquery()
 
-            is_outstanding_case = get_is_opened_case(extended_table)
-            case_label = "isOutstanding"
-
             if report_filter.isUnique:
                 q = session.query(
-                    is_outstanding_case.label(case_label),
+                    extended_table.c.isOutstanding,
                     func.count(extended_table.c.bug_id.distinct())) \
-                    .group_by(is_outstanding_case)
+                    .group_by(extended_table.c.isOutstanding)
             else:
                 q = session.query(
-                    is_outstanding_case.label(case_label),
+                    extended_table.c.isOutstanding,
                     func.count(extended_table.c.bug_id)) \
-                    .group_by(is_outstanding_case)
+                    .group_by(extended_table.c.isOutstanding)
 
             results = {
                 report_status_enum(
@@ -3520,8 +3850,6 @@ class ThriftRequestHandler:
             if run_ids:
                 tag_run_ids = tag_run_ids.filter(
                     RunHistory.run_id.in_(run_ids))
-
-            tag_run_ids = tag_run_ids.subquery()
 
             report_cnt_q = session.query(Report.run_id,
                                          Report.bug_id,
@@ -3899,6 +4227,8 @@ class ThriftRequestHandler:
                                             user)
 
             session.add(component)
+            update_source_component_files(session, component)
+
             session.commit()
 
             return True

@@ -10,7 +10,7 @@ Command line client.
 """
 
 
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
 import hashlib
@@ -19,11 +19,11 @@ import re
 import sys
 import shutil
 import time
+import json
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
-
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import File, Report, report_file, \
     reports as reports_helper
@@ -46,13 +46,12 @@ from .client import login_user, setup_client, init_config_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
 
+from .filter_defaults import DEFAULT_FILTER_VALUES
+
 from . import suppress_file_handler
 
 # Needs to be set in the handler functions.
 LOG = None
-
-
-BugPathLengthRange = namedtuple('BugPathLengthRange', ['min', 'max'])
 
 
 def init_logger(level, stream=None, logger_name='system'):
@@ -465,15 +464,68 @@ def parse_report_filter(client, args):
     Parse and check attributes of the given report filter based on
     the arguments which is provided in the command line.
     Also, check if filter values are valid values.
-    """
-    report_filter = parse_report_filter_offline(args)
 
-    if 'tag' in args:
-        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
-        run_histories = client.getRunHistory(None, None, None,
-                                             run_history_filter)
-        if run_histories:
-            report_filter.runTag = [t.id for t in run_histories]
+    If a filter preset is specified (--filter-preset), it will be used
+    directly. Specifying additional CLI filter arguments together with
+    a preset is not allowed and will cause an error.
+    """
+
+    # CLI argument names that correspond to filter options.
+    filter_cli_args = [
+        'severity', 'detection_status', 'review_status',
+        'checker_name', 'file_path', 'bug_path_length',
+        'checker_msg', 'analyzer_name', 'component',
+        'report_hash', 'open_reports_date',
+        'detected_at', 'fixed_at',
+        'detected_before', 'detected_after',
+        'fixed_before', 'fixed_after',
+        'tag', 'report_status',
+    ]
+
+    # Load preset filter if specified
+    if 'filter_preset_name' in args:
+        conflicting = [
+            a for a in filter_cli_args
+            if a in args and (
+                a not in DEFAULT_FILTER_VALUES
+                or getattr(args, a) != DEFAULT_FILTER_VALUES[a]
+            )
+        ]
+
+        if conflicting:
+            LOG.error(
+                "Cannot combine --filter-preset with other filter "
+                "arguments (%s). Either use a preset or specify "
+                "filters on the command line, not both.",
+                ', '.join(f'--{a.replace("_", "-")}' for a in conflicting))
+            sys.exit(1)
+
+        preset_name = args.filter_preset_name
+        LOG.info("Loading filter preset '%s'...", preset_name)
+
+        all_presets = client.listFilterPreset()
+        preset = next((p for p in all_presets if p.name == preset_name), None)
+
+        if not preset:
+            LOG.error("Filter preset '%s' not found!", preset_name)
+            LOG.info(
+                "Use 'CodeChecker cmd filter-preset list' to see available "
+                "presets."
+            )
+            sys.exit(1)
+
+        report_filter = preset.reportFilter
+    else:
+        # No preset – build the filter from CLI arguments.
+        report_filter = parse_report_filter_offline(args)
+
+        # Handle tags (requires API call to resolve tag names to IDs)
+        if 'tag' in args:
+            run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
+            run_histories = client.getRunHistory(None, None, None,
+                                                 run_history_filter)
+            if run_histories:
+                report_filter.runTag = [t.id for t in run_histories]
 
     return report_filter
 
@@ -516,8 +568,8 @@ def parse_report_filter_offline(args):
             len(path_lengths) > 1 and path_lengths[1].isdigit() else None
 
         report_filter.bugPathLength = \
-            BugPathLengthRange(min=min_bug_path_length,
-                               max=max_bug_path_length)
+            ttypes.BugPathLengthRange(min=min_bug_path_length,
+                                      max=max_bug_path_length)
 
     values_to_check = [
         (report_filter.severity, ttypes.Severity._VALUES_TO_NAMES, 'severity'),
@@ -531,7 +583,9 @@ def parse_report_filter_offline(args):
                [validate_filter_values(*x) for x in values_to_check]):
         sys.exit(1)
 
-    report_filter.isUnique = args.uniqueing == 'on'
+    report_filter.isUnique = getattr(args,
+                                     "uniqueing",
+                                     False) == "on"
 
     if 'checker_msg' in args:
         report_filter.checkerMsg = args.checker_msg
@@ -581,17 +635,35 @@ def parse_report_filter_offline(args):
         report_filter.date = ttypes.ReportDate(detected=detected_at,
                                                fixed=fixed_at)
 
-    report_filter.fileMatchesAnyPoint = args.anywhere_on_report_path
-    report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
-    report_filter.fullReportPathInComponent = args.single_origin_report
+    report_filter.fileMatchesAnyPoint = getattr(
+        args, "anywhere_on_report_path", False)
+    report_filter.componentMatchesAnyPoint = getattr(
+        args, "anywhere_on_report_path", False)
+    report_filter.fullReportPathInComponent = getattr(
+        args, "single_origin_report", False)
 
-    if args.anywhere_on_report_path and \
+    if 'report_status' in args:
+        report_filter.reportStatus = [
+            ttypes.ReportStatus._NAMES_TO_VALUES[x.upper()] for x in
+            args.report_status]
+
+    if 'run_name' in args:
+        report_filter.runName = args.run_name
+
+    if 'run_tag' in args:
+        report_filter.runTag = args.run_tag
+
+    if 'cleanup_plan' in args:
+        report_filter.cleanupPlanNames = args.cleanup_plan
+
+    if getattr(args, "anywhere_on_report_path", False) and \
             'file_path' not in args and 'component' not in args:
         LOG.warning(
             'The flag --anywhere-on-report-path is meaningful only if --file '
             'or --component is used.')
 
-    if args.single_origin_report and 'component' not in args:
+    if getattr(args, "single_origin_report", False) \
+            and 'component' not in args:
         LOG.warning(
             'The flag --single-origin-report is meaningful only if '
             '--component is used.')
@@ -651,11 +723,25 @@ def handle_list_runs(args):
         # to a json format.
         results = []
         for run in runs:
-            if 'details' in args and args.details:
-                run.analyzerStatistics = \
-                    client.getAnalysisStatistics(run.runId, None)
+            enabled_checkers: Dict[str, Set[str]] = {}
+            info_list: List[ttypes.AnalysisInfo] = client.getAnalysisInfo(
+                ttypes.AnalysisInfoFilter(runId=run.runId),
+                constants.MAX_QUERY_SIZE,
+                0)
+            for info in info_list:
+                for analyzer, checkers in (info.checkers or {}).items():
+                    enabled_checkers.setdefault(analyzer, set())
+                    for checker_name, checker_info in (checkers or {}).items():
+                        if checker_info.enabled:
+                            enabled_checkers[analyzer].add(checker_name)
+            run.analyzerStatistics = client.getAnalysisStatistics(
+                run.runId, None) or {}
+            for analyzer in run.analyzerStatistics:
+                stat = run.analyzerStatistics[analyzer]
+                stat.enabledCheckers = sorted(
+                    list(enabled_checkers.get(analyzer, set())))
             results.append({run.name: run})
-        print(CmdLineOutputEncoder().encode(results))
+        print(json.dumps(results, cls=CmdLineOutputEncoder, indent=4))
 
     else:  # plaintext, csv
         header = ['Name', 'Number of unresolved reports',
@@ -716,8 +802,9 @@ def handle_list_results(args):
 
     report_filter = parse_report_filter(client, args)
 
-    query_report_details = args.details and args.output_format == 'json' \
-        if 'details' in args else None
+    # TODO: JSON format contains detailed information either way. --details
+    # flag is deprecated in 6.28.0 and should be removed in 6.29.0.
+    query_report_details = 'details' in args or args.output_format == 'json'
 
     all_results = get_run_results(client,
                                   run_ids,
@@ -729,16 +816,11 @@ def handle_list_results(args):
                                   query_report_details)
 
     if args.output_format == 'json':
-        if 'details' in args:
-            run_id2name = {run.runId: run.name for run in run_data}
-            for report in all_results:
-                report.runName = run_id2name[report.runId]
-
+        run_id2name = {run.runId: run.name for run in run_data}
+        for report in all_results:
+            report.runName = run_id2name[report.runId]
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-        header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
-                  'Analyzer name', 'Review status', 'Detection status']
-
         rows = []
         max_msg_len = 50
         for res in all_results:
@@ -764,9 +846,37 @@ def handle_list_results(args):
             if len(msg) > max_msg_len:
                 msg = msg[:max_msg_len] + '...'
 
-            rows.append((checked_file, res.checkerId, sev, msg,
-                         res.bugPathLength, res.analyzerName, rw_status,
-                         dt_status))
+            if query_report_details:
+                if res.blameInfo and res.blameInfo.commits:
+                    commit_hash = next(iter(res.blameInfo.commits.keys()))
+                    commit = res.blameInfo.commits[commit_hash]
+                    commit_time = commit.committedDateTime
+                    commit_summary = commit.summary
+                else:
+                    commit_hash = ""
+                    commit_time = ""
+                    commit_summary = ""
+
+                header = [
+                    'File', 'Checker', 'Severity', 'Message',
+                    'Bug path length', 'Analyzer name', 'Review status',
+                    'Detection status', 'Commit hash', 'Commit time',
+                    'Commit summary']
+
+                rows.append((
+                    checked_file, res.checkerId, sev, msg,
+                    res.bugPathLength, res.analyzerName, rw_status,
+                    dt_status, commit_hash, commit_time, commit_summary))
+            else:
+                header = [
+                    'File', 'Checker', 'Severity', 'Message',
+                    'Bug path length', 'Analyzer name', 'Review status',
+                    'Detection status']
+
+                rows.append((
+                    checked_file, res.checkerId, sev, msg,
+                    res.bugPathLength, res.analyzerName, rw_status,
+                    dt_status))
 
         print(twodim.to_str(args.output_format, header, rows))
 
@@ -1452,6 +1562,13 @@ def handle_list_result_types(args):
     def checker_count(checker_dict, key):
         return checker_dict.get(key, 0)
 
+    def formatted_guidelines(guideline_rules: Iterable[dict]) -> Optional[str]:
+        return ";  ".join(
+            f"{guideline_rule['guideline']}: "
+            f"{', '.join(guideline_rule['rules'])}"
+            for guideline_rule in guideline_rules
+        ) if guideline_rules else None
+
     client = setup_client(args.product_url)
 
     if 'component' in args:
@@ -1502,6 +1619,44 @@ def handle_list_result_types(args):
             "reports": count
         })
         severity_total += count
+
+    # Get checker coverage statistic
+    checker_details = client.getCheckerStatusVerificationDetails(
+        run_ids, all_checkers_report_filter)
+
+    checkers = [ttypes.Checker(stat.analyzerName, stat.checkerName)
+                for stat in checker_details.values()]
+    checker_labels = client.getCheckerLabels(checkers)
+
+    all_guideline_rules = []
+    for labels in checker_labels:
+        guideline_entries = []
+        guidelines = [label.split("guideline:")[1]
+                      for label in labels if label.startswith("guideline")]
+
+        for guideline in guidelines:
+            guideline_entries.append({
+                "guideline": guideline,
+                "rules": [label.split(f"{guideline}:")[1]
+                          for label in labels
+                          if label.startswith(f"{guideline}:")]
+            })
+        all_guideline_rules.append(guideline_entries)
+
+    for checker_id, guideline_rules in zip(
+            checker_details, all_guideline_rules):
+        setattr(checker_details[checker_id], "guidelineRules", guideline_rules)
+
+    checker_coverage_stat = [{
+        "checker": stat.checkerName,
+        "severity": stat.severity,
+        "guidelineRules": stat.guidelineRules,
+        "enabledInAllRuns": len(stat.disabled) == 0,
+        "enabledRunLength": len(stat.enabled),
+        "disabledRunLength": len(stat.disabled),
+        "closed": stat.closed,
+        "outstanding": stat.outstanding,
+    } for stat in checker_details.values()]
 
     all_results = []
     total = defaultdict(int)
@@ -1555,13 +1710,27 @@ def handle_list_result_types(args):
 
         rows = []
         for stat in severities:
-            rows.append((stat['severity'],
-                         str(stat['reports'])))
+            rows.append((stat['severity'], str(stat['reports'])))
 
         rows.append(('Total', str(severity_total)))
 
         print(twodim.to_str(args.output_format, header, rows,
                             separate_footer=True))
+
+        # Print checker coverage stat
+        header = ["Checker Name", "guideline", "Severity",
+                  "Enabled in all selected runs", "Closed Reports",
+                  "Outstanding Reports",]
+
+        rows = [(stat["checker"],
+                 formatted_guidelines(stat["guidelineRules"]),
+                 ttypes.Severity._VALUES_TO_NAMES[stat["severity"]],
+                 stat["enabledInAllRuns"],
+                 str(stat["closed"]),
+                 str(stat["outstanding"])) for stat in checker_coverage_stat]
+
+        print(twodim.to_str(args.output_format, header, rows,
+                            separate_footer=False))
 
 
 def handle_remove_run_results(args):

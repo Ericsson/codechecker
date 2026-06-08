@@ -9,26 +9,28 @@ the results stored on a server.
 
 Table of Contents
 =================
-* [Server-side configuration](#server-side-configuration)
-    * [<i>Dictionary</i> authentication](#dictionary-authentication)
-    * [External authentication methods](#external-auth-methods)
-        * [<i>PAM</i> authentication](#pam-authentication)
-        * [<i>LDAP</i> authentication](#ldap-authentication)
-            * [Configuration options](#configuration-options)
-      * [Membership in custom groups with <i>regex_groups</i>](#regex_groups-authentication)
-      * [<i>OAuth</i> authentication](#oauth-authentication)
-        * [<i>OAuth</i> Configuration options](#oauth-configuration-options)
-        * [<i>OAuth</i> details per each provider](#oauth-details-per-each-provider)
-* [Client-side configuration](#client-side-configuration)
-    * [Web-browser client](#web-browser-client)
-    * [Command-line client](#command-line-client)
-        * [Preconfigured credentials](#preconfigured-credentials)
-        * [Automatic login](#automatic-login)
-        * [Currently active tokens](#currently-active-tokens)
-* [Personal access token](#personal-access-token)
-    * [`new`](#new-personal-access-token)
-    * [`list`](#list-personal-access-token)
-    * [`del`](#remove-personal-access-token)
+- [CodeChecker authentication subsystem](#codechecker-authentication-subsystem)
+- [Table of Contents](#table-of-contents)
+- [Server-side configuration ](#server-side-configuration-)
+  - [Dictionary authentication ](#dictionary-authentication-)
+  - [External authentication methods ](#external-authentication-methods-)
+    - [PAM authentication ](#pam-authentication-)
+    - [LDAP authentication ](#ldap-authentication-)
+      - [Configuration options ](#configuration-options-)
+  - [Membership in custom groups with regex\_groups](#membership-in-custom-groups-with-regex_groups)
+    - [OAuth authentication ](#oauth-authentication-)
+      - [OAuth Configuration options ](#oauth-configuration-options-)
+      - [OAuth Details per each provider ](#oauth-details-per-each-provider-)
+- [Client-side configuration ](#client-side-configuration-)
+  - [Web-browser client ](#web-browser-client-)
+  - [Command-line client ](#command-line-client-)
+    - [Preconfigured credentials ](#preconfigured-credentials-)
+    - [Automatic login ](#automatic-login-)
+    - [Currently active tokens ](#currently-active-tokens-)
+- [Personal access token ](#personal-access-token-)
+  - [New personal access token ](#new-personal-access-token-)
+  - [List personal access tokens ](#list-personal-access-tokens-)
+  - [Remove personal access token ](#remove-personal-access-token-)
 
 # Server-side configuration <a name="server-side-configuration"></a>
 
@@ -360,7 +362,7 @@ Specific behavior related to each provider is configured by a provider `template
     A key-value table that is used to set variables across all providers, for convenience.
 
     Any variable can be specified. If using the `host` variable, it should be in the format `https://example.com`, including the protocol.
-    
+
     The `callback_url`'s default value uses the `host` and `provider` variables.
     Template `ms_entra/v2.0` uses the `tenant_id` variable.
 
@@ -394,7 +396,7 @@ Specific behavior related to each provider is configured by a provider `template
 
       * `variables`
 
-          A key-value table that is used to set variables used inside parameters.  
+          A key-value table that is used to set variables used inside parameters.
           To use a variable, specify it using `{variable}`.
           The `{provider}` variable is automatically set.
 
@@ -494,7 +496,7 @@ Specific behavior related to each provider is configured by a provider `template
           *Default*: Set by template.
 
     ### 🔧 Example: OAuth Configuration using templates
-    
+
     ```jsonc
     "github": {
       "enabled": false,
@@ -622,7 +624,14 @@ To alleviate the need for supplying authentication in the command-line every
 time a server is connected to, users can pre-configure their credentials to be
 used in authentication.
 
-To do so first copy the `config/session_client.json` file from the CodeChecker
+You can pass the credential used as a password or personal access token
+in the `.codechecker.password.json` or
+directly in the `CC_PASSWORD` environment variable.
+If this environment variable is set, the credentials
+described in `.codechecker.password.json` will be ignored.
+
+If you wish to provide (multiple different) credentials in a password configuration file,
+first copy the `config/session_client.json` file from the CodeChecker
 package to your home directory and rename it to `.codechecker.passwords.json`
 After creating the new file open `~/.codechecker.passwords.json`.
 
@@ -656,10 +665,9 @@ authenticate in the name of the given user. This way no need to store passwords
 in text files. For more information [see](#personal-access-token).
 
 The location of the password file can be configured by the `CC_PASS_FILE`
-environment variable. This environment variable can also be used to setup
-different credential files to login to the same server with a different user.
+environment variable.
 
-Furthermore, the location of the session file can be configured by the
+The location of the session file can be configured by the
 `CC_SESSION_FILE` environment variable. This can be useful if CodeChecker does
 not have the permission to create a session file under the user's home
 directory (e.g. in some CI environments).

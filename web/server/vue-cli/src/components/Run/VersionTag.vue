@@ -1,35 +1,23 @@
 <template>
   <v-chip
-    outlined
-    small
+    variant="outlined"
   >
-    <v-avatar
-      class="mr-0"
-      left
+    <v-icon
+      :color="strToColor(value)"
+      start
     >
-      <v-icon
-        :color="strToColor(value)"
-        small
-      >
-        mdi-tag-outline
-      </v-icon>
-    </v-avatar>
-    <span
-      class="grey--text text--darken-3"
-    >
-      {{ value }}
-    </span>
+      mdi-tag-outline
+    </v-icon>
+    {{ value }}
   </v-chip>
 </template>
 
-<script>
-import { StrToColorMixin } from "@/mixins";
+<script setup>
+import { useStrToColor } from "@/composables/useStrToColor";
 
-export default {
-  name: "VersionTag",
-  mixins: [ StrToColorMixin ],
-  props: {
-    value: { type: String, required: true }
-  }
-};
+defineProps({
+  value: { type: String, required: true }
+});
+
+const { strToColor } = useStrToColor();
 </script>

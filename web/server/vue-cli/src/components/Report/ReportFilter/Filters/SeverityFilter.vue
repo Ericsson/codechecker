@@ -1,14 +1,14 @@
 <template>
   <select-option
-    :id="id"
+    :id="id.value"
     title="Severity"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :loading="loading"
-    :selected-items="selectedItems"
-    :panel="panel"
-    @clear="clear(true)"
-    @input="setSelectedItems"
+    :loading="baseSelectOptionFilter.loading.value"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :panel="baseSelectOptionFilter.panel.value"
+    @clear="baseSelectOptionFilter.clear(true)"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon="{ item }">
       <severity-icon :status="item.id" />
@@ -16,74 +16,105 @@
   </select-option>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { ref, toRef } from "vue";
 
-import { ReportFilter, Severity } from "@cc/report-server-types";
 import { SeverityIcon } from "@/components/Icons";
-import { SeverityMixin } from "@/mixins";
+import { ReportFilter, Severity } from "@cc/report-server-types";
 
+import { useBaseSelectOptionFilter }
+  from "@/composables/useBaseSelectOptionFilter";
+import { useSeverity } from "@/composables/useSeverity";
 import SelectOption from "./SelectOption/SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-export default {
-  name: "SeverityFilter",
-  components: {
-    SelectOption,
-    SeverityIcon
-  },
-  mixins: [ BaseSelectOptionFilterMixin, SeverityMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "severity"
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  methods: {
-    encodeValue(severityId) {
-      return this.severityFromCodeToString(severityId);
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+baseSelectOptionFilter.encodeValue.value = encodeValue;
+baseSelectOptionFilter.decodeValue.value = decodeValue;
 
-    decodeValue(severityName) {
-      return this.severityFromStringToCode(severityName);
-    },
+const id = ref("severity");
+// eslint-disable-next-line vue/no-ref-object-reactivity-loss
+baseSelectOptionFilter.id.value = id.value;
 
-    updateReportFilter() {
-      this.setReportFilter({
-        severity: this.selectedItems.map(item => item.id)
-      });
-    },
+const severity = useSeverity();
 
-    onReportFilterChange(key) {
-      if (key === "severity") return;
-      this.update();
-    },
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
 
-    fetchItems() {
-      this.loading = true;
+function encodeValue(severityId) {
+  return severity.severityFromCodeToString(severityId);
+}
 
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.severity = null;
+function decodeValue(severityName) {
+  return severity.severityFromStringToCode(severityName);
+}
 
-      return new Promise(resolve => {
-        ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
-          this.cmpData, handleThriftError(res => {
-            resolve(Object.keys(Severity).map(status => {
-              const severityId = Severity[status];
-              const count =
-                res[severityId] !== undefined ? res[severityId].toNumber() : 0;
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    severity: baseSelectOptionFilter.selectedItems.value.map(item => item.id)
+  });
+}
 
-              return {
-                id: severityId,
-                title: this.encodeValue(severityId),
-                count: count
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
-  }
-};
+function onReportFilterChange(key) {
+  if (key === "severity") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems() {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
+  _reportFilter.severity = null;
+
+  return new Promise(resolve => {
+    ccService.getClient().getSeverityCounts(
+      baseSelectOptionFilter.runIds.value,
+      _reportFilter,
+      baseSelectOptionFilter.cmpData.value,
+      handleThriftError(res => {
+        resolve(Object.keys(Severity).map(status => {
+          const _severityId = Severity[status];
+          const _count =
+            res[_severityId] !== undefined ? res[_severityId].toNumber() : 0;
+
+          return {
+            id: _severityId,
+            title: encodeValue(_severityId),
+            count: _count
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  initByUrl: baseSelectOptionFilter.initByUrl,
+  getUrlState: baseSelectOptionFilter.getUrlState,
+
+  id,
+  encodeValue,
+  decodeValue,
+  updateReportFilter,
+  onReportFilterChange,
+  fetchItems
+});
 </script>

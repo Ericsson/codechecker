@@ -1,60 +1,50 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     max-width="600px"
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
     confirm-btn-color="error"
     content-class="remove-cleanup-plan-dialog"
+    title="Remove cleanup plan"
     @confirm="removeCleanupPlan"
   >
-    <template v-slot:title>
-      Remove cleanup plan
-    </template>
-
     <template v-if="cleanupPlan" v-slot:content>
       Are you sure that you would like to remove
       <b>{{ cleanupPlan.name }}</b> cleanup plan?
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed } from "vue";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-export default {
-  name: "RemoveCleanupPlanDialog",
-  components: {
-    ConfirmDialog
-  },
-  props: {
-    value: { type: Boolean, default: false },
-    cleanupPlan: { type: Object, default: () => null }
-  },
+const props = defineProps({
+  modelValue: { type: Boolean, default: false },
+  cleanupPlan: { type: Object, default: () => null }
+});
 
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  },
+const emit = defineEmits([ "update:modelValue", "on:confirm" ]);
 
-  methods: {
-    removeCleanupPlan() {
-      ccService.getClient().removeCleanupPlan(this.cleanupPlan.id,
-        handleThriftError(success => {
-          if (success) {
-            this.$emit("on:confirm");
-            this.dialog = false;
-          }
-        }));
-    }
+const dialog = computed({
+  get() {
+    return props.modelValue;
+  },
+  set(val) {
+    emit("update:modelValue", val);
   }
-};
+});
+
+function removeCleanupPlan() {
+  ccService.getClient().removeCleanupPlan(props.cleanupPlan.id,
+    handleThriftError(success => {
+      if (success) {
+        emit("on:confirm");
+        dialog.value = false;
+      }
+    }));
+}
 </script>

@@ -1,45 +1,41 @@
 <template>
   <v-container>
-    <edit-cleanup-plan-dialog
-      :value.sync="editDialog"
-      :cleanup-plan="selected"
-      @save:cleanup-plan="fetchCleanupPlans"
-    />
-
     <remove-cleanup-plan-dialog
-      :value.sync="removeDialog"
+      v-model="removeDialog"
       :cleanup-plan="selected"
-      @on:confirm="fetchCleanupPlans"
+      @on:confirm="cleanupPlan.fetchCleanupPlans"
     />
 
-    <v-toolbar flat>
+    <v-toolbar
+      elevation="0"
+      color="transparent"
+    >
       <v-row>
-        <v-col class="pa-0" align="right">
+        <v-col class="d-flex justify-end align-center">
           <v-btn
-            icon
+            icon="mdi-refresh"
             title="Reload cleanup plans"
             color="primary"
-            @click="fetchCleanupPlans"
-          >
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
+            @click="cleanupPlan.fetchCleanupPlans"
+          />
 
-          <v-btn
-            color="primary"
-            class="new-cleanup-plan-btn mr-2"
-            outlined
-            @click="newCleanupPlan"
-          >
-            New
-          </v-btn>
+          <edit-cleanup-plan-dialog
+            v-model="editDialog"
+            :cleanup-plan="selected"
+            @save:cleanup-plan="cleanupPlan.fetchCleanupPlans"
+          />
         </v-col>
       </v-row>
     </v-toolbar>
 
-    <cleanup-plan-tab v-model="tab">
-      <template v-slot:open>
+    <cleanup-plan-tab
+      v-model="selectedTab"
+    >
+      <template
+        v-slot:open
+      >
         <list-cleanup-plans-table
-          :value="openCleanupPlans || []"
+          :items="cleanupPlan.openCleanupPlans?.value || []"
           :loading="loading"
           :hide-cols="[ 'closedAt' ]"
           @edit="editCleanupPlan"
@@ -48,9 +44,11 @@
           @remove="removeCleanupPlan"
         />
       </template>
-      <template v-slot:closed>
+      <template
+        v-slot:closed
+      >
         <list-cleanup-plans-table
-          :value="closedCleanupPlans || []"
+          :items="cleanupPlan.closedCleanupPlans?.value || []"
           :loading="loading"
           :hide-cols="[ 'dueDate' ]"
           @edit="editCleanupPlan"
@@ -63,75 +61,67 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { onMounted, ref, watch } from "vue";
 
+import { useCleanupPlan } from "@/composables/useCleanupPlan";
 import CleanupPlanTab from "./CleanupPlanTab";
-import CleanupPlanTabMixin from "./CleanupPlanTab.mixin";
 import EditCleanupPlanDialog from "./EditCleanupPlanDialog";
-import RemoveCleanupPlanDialog from "./RemoveCleanupPlanDialog";
 import ListCleanupPlansTable from "./ListCleanupPlansTable.vue";
+import RemoveCleanupPlanDialog from "./RemoveCleanupPlanDialog";
 
-export default {
-  name: "ListCleanupPlans",
-  components: {
-    CleanupPlanTab,
-    EditCleanupPlanDialog,
-    ListCleanupPlansTable,
-    RemoveCleanupPlanDialog
-  },
-  mixins: [ CleanupPlanTabMixin ],
-  data() {
-    return {
-      selected: null,
-      editDialog: false,
-      removeDialog: false,
-    };
-  },
+const selected = ref(null);
+const editDialog = ref(false);
+const removeDialog = ref(false);
+const cleanupPlan = useCleanupPlan();
+const selectedTab = ref(0);
 
-  created() {
-    this.fetchCleanupPlans();
-  },
+watch(selectedTab, () => {
+  cleanupPlan.tab.value = selectedTab.value;
+});
 
-  methods: {
-    editCleanupPlan(cleanupPlan) {
-      this.selected = cleanupPlan;
-      this.editDialog = true;
-    },
-
-    newCleanupPlan() {
-      this.selected = null;
-      this.editDialog = true;
-    },
-
-    removeCleanupPlan(cleanupPlan) {
-      this.selected = cleanupPlan;
-      this.removeDialog = true;
-    },
-
-    closeCleanupPlan(cleanupPlan) {
-      this.loading = true;
-      ccService.getClient().closeCleanupPlan(cleanupPlan.id,
-        handleThriftError(() => {
-          this.loading = false;
-          this.fetchCleanupPlans();
-
-          // If a cleanup is reopened, we need to reload the closed cleanups.
-          this.closedCleanupPlans = null;
-        }));
-    },
-
-    reopenCleanupPlan(cleanupPlan) {
-      this.loading = true;
-      ccService.getClient().reopenCleanupPlan(cleanupPlan.id,
-        handleThriftError(() => {
-          this.loading = false;
-          this.fetchCleanupPlans();
-
-          // If a cleanup is reopened, we need to reload the opened cleanups.
-          this.openCleanupPlans = null;
-        }));
-    },
+watch(editDialog, open => {
+  if (!open) {
+    selected.value = null;
   }
-};
+});
+
+onMounted(() => {
+  cleanupPlan.fetchCleanupPlans();
+});
+
+function editCleanupPlan(_cleanupPlan) {
+  selected.value = _cleanupPlan;
+  editDialog.value = true;
+}
+
+function removeCleanupPlan(_cleanupPlan) {
+  selected.value = _cleanupPlan;
+  removeDialog.value = true;
+}
+
+function closeCleanupPlan(_cleanupPlan) {
+  cleanupPlan.loading.value = true;
+  ccService.getClient().closeCleanupPlan(_cleanupPlan.id,
+    handleThriftError(() => {
+      cleanupPlan.loading.value = false;
+      cleanupPlan.fetchCleanupPlans();
+
+      // If a cleanup is reopened, we need to reload the closed cleanups.
+      cleanupPlan.closedCleanupPlans.value = null;
+    }));
+}
+
+function reopenCleanupPlan(_cleanupPlan) {
+  cleanupPlan.loading.value = true;
+  ccService.getClient().reopenCleanupPlan(_cleanupPlan.id,
+    handleThriftError(() => {
+      cleanupPlan.loading.value = false;
+      cleanupPlan.fetchCleanupPlans();
+
+      // If a cleanup is reopened, we need to reload the opened cleanups.
+      cleanupPlan.openCleanupPlans.value = null;
+    }));
+}
 </script>

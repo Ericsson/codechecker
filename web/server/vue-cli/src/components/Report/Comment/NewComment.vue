@@ -3,7 +3,7 @@
     <v-row class="ma-0">
       <v-textarea
         v-model="message"
-        outlined
+        variant="outlined"
         name="message"
         label="Leave a message..."
         hide-details
@@ -19,11 +19,13 @@
         <v-btn
           class="new-comment-btn"
           color="primary"
-          small
+          size="small"
           :loading="loading"
           @click="addNewComment"
         >
-          <v-icon small>
+          <v-icon
+            size="small"
+          >
             mdi-plus
           </v-icon>
           Add
@@ -33,36 +35,31 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { CommentData } from "@cc/report-server-types";
+import { ref } from "vue";
 
-export default {
-  name: "NewComment",
-  props: {
-    comments: { type: Array, required: true },
-    report: { type: Object, default: () => null },
-    bus: { type: Object, required: true }
-  },
-  data() {
-    return {
-      message: null,
-      loading: false
-    };
-  },
-  methods: {
-    addNewComment() {
-      if (!this.message) return;
+const props = defineProps({
+  comments: { type: Array, required: true },
+  report: { type: Object, default: () => null }
+});
 
-      this.loading = true;
-      const commentData = new CommentData({ message: this.message });
-      ccService.getClient().addComment(this.report.reportId, commentData,
-        handleThriftError(() => {
-          this.bus.$emit("update:comments");
-          this.message = null;
-          this.loading = false;
-        }));
-    }
-  }
-};
+const emit = defineEmits([ "new:comments" ]);
+
+const message = ref(null);
+const loading = ref(false);
+
+function addNewComment() {
+  if (!message.value) return;
+
+  loading.value = true;
+  const _commentData = new CommentData({ message: message.value });
+  ccService.getClient().addComment(props.report.reportId, _commentData,
+    handleThriftError(() => {
+      emit("new:comments");
+      message.value = null;
+      loading.value = false;
+    }));
+}
 </script>

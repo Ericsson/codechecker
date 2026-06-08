@@ -1,43 +1,33 @@
 <template>
   <div>
-    <v-avatar
-      left
-      :size="32"
-    >
-      <detection-status-icon
-        :status="item.detectionStatus"
-        :size="16"
-      />
-      <review-status-icon
-        :status="item.reviewStatus"
-        :size="16"
-      />
-    </v-avatar>
+    <detection-status-icon
+      :status="item.detectionStatus"
+      :size="16"
+    />
+    <review-status-icon
+      :status="item.reviewStatus"
+      :size="16"
+    />
     {{ item.runName }}:{{ item.fileName }}:L{{ item.line }}
     <v-chip
-      :color="getBugPathLenColor(item.bugPathLength)"
+      :color="bugPathLenColor.getBugPathLenColor(item.bugPathLength)"
       label
       light
-      small
+      size="small"
     >
       {{ item.bugPathLength }}
     </v-chip>
   </div>
 </template>
 
-<script>
+<script setup>
 import { DetectionStatusIcon, ReviewStatusIcon } from "@/components/Icons";
-import { BugPathLengthColorMixin } from "@/mixins";
+import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
 
-export default {
-  name: "SelectSameReportItem",
-  components: {
-    DetectionStatusIcon,
-    ReviewStatusIcon
-  },
-  mixins: [ BugPathLengthColorMixin ],
-  props: {
-    item: { type: Object, required: true }
-  }
-};
+defineProps({
+  item: { type: Object, required: true }
+});
+
+const bugPathLenColor = useBugPathLenColor();
+
 </script>

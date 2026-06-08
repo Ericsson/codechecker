@@ -37,6 +37,7 @@ def run_cmd(cmd, environ=None):
 
     out, err = proc.communicate()
     print(out)
+    print(err)
     return proc.returncode, out, err
 
 
@@ -233,20 +234,15 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, ret)
         for run in json.loads(res):
             for data in run.values():
-                self.assertIsNone(
-                    data['analyzerStatistics']['clangsa']['failedFilePaths'])
-
-        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
-                   '-o', 'json', '--url', str(self.server_url),
-                   '--details']
-        ret, res, _ = run_cmd(res_cmd, environ=environ)
-
-        self.assertEqual(0, ret)
-        for run in json.loads(res):
-            for data in run.values():
                 self.assertEqual(
                     data['analyzerStatistics']['clangsa']['failedFilePaths'],
                     [])
+                self.assertNotEqual(
+                    data['analyzerStatistics']['clangsa']['enabledCheckers'],
+                    [])
+                self.assertIn(
+                    'core.NullDereference',
+                    data['analyzerStatistics']['clangsa']['enabledCheckers'])
 
     def test_proxy_settings(self):
         """ Test proxy settings validation. """
@@ -352,8 +348,7 @@ class TestCmdline(unittest.TestCase):
         check_env = self._test_config['codechecker_cfg']['check_env']
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'test_files1*',
-                   'test_files1*', '-o', 'json', '--url', str(self.server_url),
-                   '--details']
+                   'test_files1*', '-o', 'json', '--url', str(self.server_url)]
 
         ret, out, _ = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(0, ret)

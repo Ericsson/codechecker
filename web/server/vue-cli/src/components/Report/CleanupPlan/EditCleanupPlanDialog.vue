@@ -1,177 +1,123 @@
 <template>
-  <v-dialog
+  <ConfirmDialog
     v-model="dialog"
     content-class="edit-cleanup-plan-dialog"
     max-width="600px"
     scrollable
+    :title="title"
+    @confirm="saveCleanupPlan"
+    @cancel="resetValues"
   >
-    <template v-slot:activator="{}">
-      <slot />
+    <template v-slot:activator="{ props: activatorProps }">
+      <v-btn
+        v-bind="activatorProps"
+        color="primary"
+        class="new-cleanup-plan-btn"
+        variant="outlined"
+      >
+        New
+      </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        <div
-          v-if="cleanupPlan"
-        >
-          Edit cleanup plan
-        </div>
-        <div
-          v-else
-        >
-          New cleanup plan
-          <div class="subtitle-1">
-            Create a new cleanup plan which helps you to fix legacy reports.
-          </div>
-        </div>
+    <template v-slot:content>
+      <v-container>
+        <v-form ref="form">
+          <v-text-field
+            v-model.trim="name"
+            class="cleanup-plan-name"
+            label="Name*"
+            autofocus
+            variant="outlined"
+            required
+            :rules="rules.name"
+          />
 
-        <v-spacer />
+          <due-date-menu
+            v-model="dueDate"
+          />
 
-        <v-btn class="close-btn" icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          <v-form ref="form">
-            <v-text-field
-              v-model.trim="name"
-              class="cleanup-plan-name"
-              label="Name*"
-              autofocus
-              outlined
-              required
-              :rules="rules.name"
-            />
-
-            <due-date-menu
-              :value.sync="dueDate"
-            />
-
-            <v-textarea
-              v-model.trim="description"
-              class="cleanup-plan-description "
-              label="Description"
-              outlined
-            />
-          </v-form>
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          class="cancel-btn"
-          color="error"
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          class="save-btn"
-          color="primary"
-          text
-          @click="saveCleanupPlan"
-        >
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+          <v-textarea
+            v-model.trim="description"
+            class="cleanup-plan-description "
+            label="Description"
+            variant="outlined"
+          />
+        </v-form>
+      </v-container>
+    </template>
+  </ConfirmDialog>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
+import { computed, ref, watch } from "vue";
 
-import DueDateMenu from "./DueDateMenu";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
-export default {
-  name: "NewCleanupPlanDialog",
-  components: {
-    DueDateMenu
-  },
-  props: {
-    value: { type: Boolean, default: false },
-    cleanupPlan: { type: Object, default: () => null },
-  },
-  data() {
-    return {
-      description: null,
-      dueDate: null,
-      name: null,
-      dueDateMenu: false,
-      rules: {
-        name: [ v => !!v || "Name is required" ],
-        value: [
-          v => !!v || "Value is required"
-        ]
-      }
-    };
-  },
-  computed: {
-    dialog: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit("update:value", val);
-      }
-    }
-  },
+const props = defineProps({
+  modelValue: { type: Boolean, default: false },
+  cleanupPlan: { type: Object, default: () => null }
+});
 
-  watch: {
-    dialog() {
-      if (!this.dialog) return;
+const emit = defineEmits([
+  "save:cleanup-plan",
+  "update:modelValue"
+]);
 
-      this.description = this.cleanupPlan?.description || null;
-      this.dueDate = this.cleanupPlan?.dueDate?.toNumber() || null;
-      this.name = this.cleanupPlan?.name || null;
-    }
-  },
+const form = ref(null);
 
-  methods: {
-    async saveCleanupPlan() {
-      if (!this.$refs.form.validate()) return;
+const description = ref(null);
+const dueDate = ref(null);
+const name = ref(null);
+const dueDateMenu = ref(false);
+const rules = ref({
+  name: [ v => !!v || "Name is required" ],
+  value: [
+    v => !!v || "Value is required"
+  ]
+});
 
-      if (this.cleanupPlan) {
-        // Edit an existing cleanup plan.
-        ccService.getClient().updateCleanupPlan(
-          this.cleanupPlan.id, this.name,
-          this.description, this.dueDate,
-          handleThriftError(async success => {
-            if (success) {
-              this.$emit("save:cleanup-plan");
-              this.dialog = false;
-            }
-          }));
-      } else {
-        // Add new cleanup plan.
-        ccService.getClient().addCleanupPlan(
-          this.name, this.description, this.dueDate,
-          handleThriftError(async () => {
-            this.$emit("save:cleanup-plan");
-            this.dialog = false;
-          }));
-      }
-    },
+const dialog = computed({
+  get: () => props.modelValue,
+  set: val => emit("update:modelValue", val)
+});
 
-    onAPIOperationFinished(success) {
-      if (success) {
-        this.$emit("save:cleanup-plan");
-        this.dialog = false;
-      }
-    }
+const title = computed(
+  () => props.cleanupPlan ? "Edit cleanup plan" : "New cleanup plan"
+);
+
+watch(dialog, () => {
+  if (!dialog.value) return;
+
+  description.value = props.cleanupPlan?.description || null;
+  dueDate.value = props.cleanupPlan?.dueDate?.toNumber() || null;
+  name.value = props.cleanupPlan?.name || null;
+});
+
+async function saveCleanupPlan() {
+  if (!form.value.validate()) return;
+
+  if (props.cleanupPlan) {
+    // Edit an existing cleanup plan.
+    ccService.getClient().updateCleanupPlan(
+      props.cleanupPlan.id, name.value,
+      description.value, dueDate.value,
+      handleThriftError(async success => {
+        if (success) {
+          emit("save:cleanup-plan");
+          dialog.value = false;
+        }
+      }));
+  } else {
+    // Add new cleanup plan.
+    ccService.getClient().addCleanupPlan(
+      name.value, description.value, dueDate.value,
+      handleThriftError(async () => {
+        emit("save:cleanup-plan");
+        dialog.value = false;
+      }));
   }
-};
+}
 </script>
 
 <style lang="scss">

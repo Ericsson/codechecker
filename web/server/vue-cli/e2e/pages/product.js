@@ -64,7 +64,7 @@ const commands = {
   togglePermissions() {
     const section = this.section.editGlobalPermissionsDialog;
 
-    section.api.elements("@checkBox", (response) => {
+    section.api.elements("@checkBox", response => {
       response.result.value.map(c => section.api.elementIdClick(
         c.ELEMENT || c["element-6066-11e4-a52e-4f735466cecf"]));
     });
@@ -210,7 +210,7 @@ const commands = {
       .pause(500) // Wait some time to make sure progressbar appeared.
       .waitForElementNotPresent("@progressBar");
 
-    this.getTableRows("@tableRows", (data) => {
+    this.getTableRows("@tableRows", data => {
       this.api.assert.ok(isSorted(data), "runs are not sorted");
     });
 

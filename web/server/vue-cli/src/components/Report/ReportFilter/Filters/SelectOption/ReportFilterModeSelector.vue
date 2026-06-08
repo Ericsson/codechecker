@@ -7,10 +7,10 @@
       <template v-slot:label>
         <span>
           End of report path
-          <tooltip-help-icon>
+          <TooltipHelpIcon>
             Filters reports with final error location within the
             selected component(s).
-          </tooltip-help-icon>
+          </TooltipHelpIcon>
         </span>
       </template>
     </v-radio>
@@ -18,10 +18,10 @@
       <template v-slot:label>
         <span>
           Anywhere on report path
-          <tooltip-help-icon>
+          <TooltipHelpIcon>
             Filters reports that have any bug path element within the
             selected component(s).
-          </tooltip-help-icon>
+          </TooltipHelpIcon>
         </span>
       </template>
     </v-radio>
@@ -29,32 +29,29 @@
       <template v-slot:label>
         <span>
           Single origin
-          <tooltip-help-icon>
+          <TooltipHelpIcon>
             Filters reports with the full bug path contained within the
             selected component(s).
-          </tooltip-help-icon>
+          </TooltipHelpIcon>
         </span>
       </template>
     </v-radio>
   </v-radio-group>
 </template>
 
-<script>
+<script setup>
 import TooltipHelpIcon from "@/components/TooltipHelpIcon.vue";
 
-export default {
-  name: "ReportFilterModeSelector",
-  components: { TooltipHelpIcon },
-  props: {
-    value: {
-      type: String,
-      default: ""
-    }
-  },
-  methods: {
-    emitUpdate(selection) {
-      this.$emit("input", selection);
-    }
+defineProps({
+  value: {
+    type: String,
+    default: ""
   }
-};
+});
+
+const emit = defineEmits([ "input" ]);
+
+function emitUpdate(selection) {
+  emit("input", selection);
+}
 </script>

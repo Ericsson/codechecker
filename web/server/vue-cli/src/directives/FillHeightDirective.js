@@ -31,7 +31,7 @@ function fillHeight(el) {
 }
 
 export const FillHeight = {
-  bind(el, binding) {
+  mounted(el, binding) {
     const callback = binding.value || (() => {});
     const options = binding.options || {
       passive: true
@@ -45,23 +45,19 @@ export const FillHeight = {
     window.addEventListener("resize", _.debounce(fn, 200), options);
 
     el._onResize = { fn, options };
+    
+    // Call immediately after mount
+    fn(el);
   },
 
-  inserted(el) {
+  updated(el) {
     if (!el._onResize) return;
 
     const { fn } = el._onResize;
     fn(el);
   },
 
-  componentUpdated(el) {
-    if (!el._onResize) return;
-
-    const { fn } = el._onResize;
-    fn(el);
-  },
-
-  unbind(el) {
+  unmounted(el) {
     if (!el._onResize) return;
     const { fn, options } = el._onResize;
 

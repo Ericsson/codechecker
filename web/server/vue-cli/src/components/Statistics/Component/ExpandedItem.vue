@@ -20,15 +20,11 @@
   </td>
 </template>
 
-<script>
+<script setup>
 import { CheckerStatisticsTable } from "@/components/Statistics";
 
-export default {
-  name: "ExpandedItem",
-  components: { CheckerStatisticsTable },
-  props: {
-    item: { type: Object, required: true },
-    colspan: { type: Number, required: true }
-  }
-};
+defineProps({
+  item: { type: Object, required: true },
+  colspan: { type: Number, required: true }
+});
 </script>
