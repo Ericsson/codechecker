@@ -9,6 +9,7 @@ DBPORT ?= TEST_DBPORT=5432
 DBUNAME ?= TEST_DBUSERNAME=postgres
 
 # Test project configuration, tests are run on these files.
+# TODO: CLANG_VERSION may be deprecated if not actually used anywhere.
 CLANG_VERSION ?= TEST_CLANG_VERSION=stable
 TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 PYTHON_BIN ?= python3

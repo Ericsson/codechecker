@@ -1,9 +1,15 @@
 <template>
-  <v-card :color="color" :flat="flat">
-    <v-card-title class="title">
+  <v-card
+    :flat="flat"
+  >
+    <v-card-title
+      :class="[`${color}`]"
+    >
       <slot name="title" />
     </v-card-title>
-    <v-card-text class="white text--primary">
+    <v-card-text
+      class="bg-white text-black"
+    >
       <v-container>
         <slot />
       </v-container>
@@ -11,12 +17,9 @@
   </v-card>
 </template>
 
-<script>
-export default {
-  name: "NewFeatureItem",
-  props: {
-    color: { type: String, default: null },
-    flat: { type: Boolean, default: true }
-  }
-};
+<script setup>
+defineProps({
+  color: { type: String, default: null },
+  flat: { type: Boolean, default: true }
+});
 </script>

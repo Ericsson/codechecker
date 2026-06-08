@@ -5,8 +5,8 @@
     max-width="80%"
     scrollable
   >
-    <template v-slot:activator="{ on }">
-      <slot :on="on" />
+    <template v-slot:activator="{ props }">
+      <slot :on="props" />
     </template>
 
     <v-card>
@@ -18,15 +18,17 @@
 
         <v-spacer />
 
-        <v-btn class="close-btn" icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-btn
+          class="close-btn"
+          icon="mdi-close"
+          @click="dialog = false"
+        />
       </v-card-title>
 
       <v-card-text class="pa-0">
         <v-card :loading="loading" flat>
           <v-container>
-            <v-simple-table>
+            <v-table>
               <template v-slot:default>
                 <thead>
                   <tr>
@@ -51,8 +53,8 @@
                         v-for="i in failedFiles[file]"
                         :key="i.runName"
                         color="#878d96"
-                        outlined
-                        small
+                        variant="outlined"
+                        size="small"
                       >
                         {{ i.runName }}
                       </v-chip>
@@ -60,7 +62,7 @@
                   </tr>
                 </tbody>
               </template>
-            </v-simple-table>
+            </v-table>
           </v-container>
         </v-card>
       </v-card-text>
@@ -68,32 +70,25 @@
   </v-dialog>
 </template>
 
-<script>
+<script setup>
+import { computed, ref, watch } from "vue";
+
 import { ccService, handleThriftError } from "@cc-api";
 
-export default {
-  name: "FailedFilesDialog",
-  data() {
-    return {
-      dialog: false,
-      loading: false,
-      failedFiles: {}
-    };
-  },
-  computed: {
-    files() {
-      return Object.keys(this.failedFiles).sort((a, b) => a.localeCompare(b));
-    }
-  },
-  watch: {
-    dialog() {
-      this.loading = true;
-      ccService.getClient().getFailedFiles(null,
-        handleThriftError(res => {
-          this.failedFiles = res;
-          this.loading = false;
-        }));
-    }
-  }
-};
+const dialog = ref(false);
+const loading = ref(false);
+const failedFiles = ref({});
+
+const files = computed(function() {
+  return Object.keys(failedFiles.value).sort((_a, _b) => _a.localeCompare(_b));
+});
+
+watch(dialog, function() {
+  loading.value = true;
+  ccService.getClient().getFailedFiles(null,
+    handleThriftError(_res => {
+      failedFiles.value = _res;
+      loading.value = false;
+    }));
+});
 </script>

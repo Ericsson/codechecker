@@ -3,9 +3,3 @@
     <router-view />
   </v-container>
 </template>
-
-<script>
-export default {
-  name: "Product"
-};
-</script>

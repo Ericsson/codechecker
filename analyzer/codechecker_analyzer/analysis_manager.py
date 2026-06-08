@@ -19,7 +19,7 @@ import zipfile
 from functools import lru_cache
 from threading import Timer
 
-import multiprocess
+import multiprocess  # type: ignore
 
 from codechecker_common.logger import get_logger
 from codechecker_common.process import kill_process_tree

@@ -13,6 +13,7 @@ import logging
 import os
 import pathlib
 import shutil
+import time
 from typing import Optional
 
 from codechecker_common.logger import get_logger
@@ -199,7 +200,29 @@ class AbstractTask:
                                         "SYSTEM[AbstractTask::execute()]")
                 db_task.set_finished(successfully=False)
 
-            task_manager._mutate_task_record(self, _log_exception_and_fail)
+            # If a database error occurs, we may not be able to set the
+            # task state to 'FAILED' immediately since the database server
+            # could be down. Therefore, we retry multiple times.
+            # Between retries, we sleep for 2^i seconds.
+            retries: int = 0
+            max_retries: int = 10
+            while retries < max_retries:
+                if retries > 0:
+                    time.sleep(2 ** retries)
+
+                try:
+                    task_manager._mutate_task_record(self,
+                                                     _log_exception_and_fail)
+                    break  # Success
+                except Exception:
+                    retries += 1
+                    LOG.error("Failed to set task '%s' state to 'FAILED'! "
+                              "(machine: '%s', executor: #%d, retry: %d/%d)",
+                              self.token, task_manager.machine_id, os.getpid(),
+                              retries, max_retries)
+                    import traceback
+                    traceback.print_exc()
+
         finally:
             self.destroy_data()
             task_manager._send_done_message(self.token)

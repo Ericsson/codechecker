@@ -227,6 +227,10 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-memoryunsafecastchecker",
       "severity:HIGH"
     ],
+    "alpha.webkit.NoDeleteChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-nodeletechecker",
+      "severity:MEDIUM"
+    ],
     "alpha.webkit.NoUnretainedMemberChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-nounretainedmemberchecker",
       "severity:MEDIUM"
@@ -344,8 +348,23 @@
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
-      "sei-cert-c:exp34-c",
       "memory-safety:cwe-476",
+      "sei-cert-c:exp34-c",
+      "severity:HIGH"
+    ],
+    "core.NullPointerArithm": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nullpointerarithm-c-c",
+      "guideline:cwe-top-25-2024",
+      "guideline:memory-safety",
+      "guideline:sei-cert-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "cwe-top-25-2024:cwe-476",
+      "memory-safety:cwe-476",
+      "sei-cert-c:arr30-c",
+      "sei-cert-c:exp34-c",
       "severity:HIGH"
     ],
     "core.StackAddrEscapeBase": [
@@ -697,6 +716,25 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-cpp:mem54-cpp",
+      "severity:MEDIUM"
+    ],
+    "optin.core.FixedAddressDereference": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-fixedaddressdereference-c-c-objc",
+      "guideline:cwe-top25-2024",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "cwe-top25:cwe-119",
+      "severity:HIGH"
+    ],
+    "optin.core.UnconditionalVAArg": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-unconditionalvaarg",
+      "guideline:sei-cert-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert-c:exp47-c",
       "severity:MEDIUM"
     ],
     "optin.cplusplus.UninitializedObject": [

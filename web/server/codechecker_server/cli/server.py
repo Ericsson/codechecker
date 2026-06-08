@@ -466,6 +466,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
 
     :returns: dictionary of product endpoints with database statuses
     """
+    LOG.info("Connecting to product databases ...")
     engine = cfg_sql_server.create_engine()
     config_session = sessionmaker(bind=engine)
     sess = config_session()
@@ -1023,9 +1024,9 @@ def server_init_start(args):
                                 None,
                                 force_upgrade)
 
-    prod_statuses = check_product_db_status(cfg_sql_server,
-                                            context.run_migration_root,
-                                            environ)
+        prod_statuses = check_product_db_status(cfg_sql_server,
+                                                context.run_migration_root,
+                                                environ)
     print_prod_status(prod_statuses)
 
     non_ok_db = False

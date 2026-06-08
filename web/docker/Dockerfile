@@ -2,15 +2,9 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye as builder
+FROM python:3.10.20-slim-trixie as builder
 
-ARG CC_REPO=https://github.com/Ericsson/CodeChecker.git
-ENV CC_REPO ${CC_REPO}
-
-ARG CC_VERSION=master
-ENV CC_VERSION ${CC_VERSION}
-
-COPY hooks/ /hooks
+COPY web/docker/hooks/ /hooks
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -x && apt-get update -qq \
@@ -19,13 +13,12 @@ RUN set -x && apt-get update -qq \
     curl \
     git \
     make \
-    && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Download CodeChecker release.
-RUN git clone ${CC_REPO} /codechecker
+# Copy CodeChecker source code.
+COPY . /codechecker
 WORKDIR /codechecker
-RUN git checkout ${CC_VERSION}
 
 # Run script before the package generation.
 RUN chmod a+x /hooks/before_build.sh && sync && /hooks/before_build.sh
@@ -40,7 +33,7 @@ RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:3.10.16-slim-bullseye
+FROM python:3.10.20-slim-trixie
 
 ARG CC_GID=950
 ARG CC_UID=950
@@ -94,7 +87,7 @@ RUN apt-get update -qq  && \
     # gcc is needed to build psutil.
     gcc \
     # netcat is needed for 'wait-for' script.
-    netcat \
+    netcat-openbsd \
   \
   # Install necessary runtime environment files.
   && pip3 install -r /requirements_py/requirements.txt \
@@ -127,7 +120,7 @@ RUN chown codechecker:codechecker /codechecker
 
 ENV PATH="/codechecker/bin:$PATH"
 
-COPY ./entrypoint.sh /usr/local/bin/
+COPY web/docker/entrypoint.sh /usr/local/bin/
 RUN chmod a+x /usr/local/bin/entrypoint.sh \
   && chown codechecker:codechecker /usr/local/bin/entrypoint.sh
 
@@ -138,6 +131,9 @@ ADD https://raw.githubusercontent.com/eficode/wait-for/${WAIT_FOR_VERSION}/wait-
 RUN chmod 755 /usr/local/bin/wait-for
 
 EXPOSE 8001
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/live', timeout=3).read()" || exit 1
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint.sh"]
 

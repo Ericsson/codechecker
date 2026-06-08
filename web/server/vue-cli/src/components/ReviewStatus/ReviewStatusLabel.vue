@@ -1,14 +1,10 @@
 <template>
-  <div>
-    <v-avatar
-      left
+  <div class="d-inline-flex align-center">
+    <review-status-icon
+      :status="value"
       :size="16"
-    >
-      <review-status-icon
-        :status="value"
-        :size="16"
-      />
-    </v-avatar>
+      class="mr-2"
+    />
 
     <slot name="label">
       {{ label }}
@@ -16,24 +12,18 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ReviewStatusIcon } from "@/components/Icons";
-import { ReviewStatusMixin } from "@/mixins";
+import { useReviewStatus } from "@/composables/useReviewStatus";
+import { computed } from "vue";
 
-// TODO: this is the same as SelectReviewStatusItem component.
-export default {
-  name: "ReviewStatusLabel",
-  components: {
-    ReviewStatusIcon
-  },
-  mixins: [ ReviewStatusMixin ],
-  props: {
-    value: { type: Number, required: true }
-  },
-  computed: {
-    label() {
-      return this.reviewStatusFromCodeToString(this.value);
-    }
-  }
-};
+const props = defineProps({
+  value: { type: Number, required: true }
+});
+
+const reviewStatus = useReviewStatus();
+
+const label = computed(function() {
+  return reviewStatus.reviewStatusFromCodeToString(props.value);
+});
 </script>

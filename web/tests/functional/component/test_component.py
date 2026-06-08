@@ -118,8 +118,6 @@ class TestComponent(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
 
-        self._clang_to_test = env.clang_to_test()
-
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
@@ -136,8 +134,10 @@ class TestComponent(unittest.TestCase):
                                                   session_token='_PROHIBIT')
 
         # Create a PRODUCT_ADMIN login.
-        admin_token = self._auth_client.performLogin("Username:Password",
-                                                     "admin:admin123")
+        root_token = self._auth_client.performLogin("Username:Password",
+                                                    "root:root")
+        self._auth_client = env.setup_auth_client(self._test_workspace,
+                                                  session_token=root_token)
 
         extra_params = '{"productID":' + str(product_id) + '}'
         ret = self._auth_client.addPermission(Permission.PRODUCT_ADMIN,
@@ -145,6 +145,9 @@ class TestComponent(unittest.TestCase):
                                               False,
                                               extra_params)
         self.assertTrue(ret)
+
+        admin_token = self._auth_client.performLogin("Username:Password",
+                                                     "admin:admin123")
 
         self._cc_client = env.setup_viewer_client(self._test_workspace,
                                                   session_token=admin_token)

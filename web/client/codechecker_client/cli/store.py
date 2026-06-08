@@ -165,6 +165,10 @@ database.""",
         'epilog': """
 Environment variables
 ------------------------------------------------
+  CC_PASSWORD      You can provide authentication credentials directly in this
+                   variable. "CodeChecker cmd login" will use it as a
+                   password or personal access token if set.
+
   CC_PASS_FILE     The location of the password file for auto login. By default
                    CodeChecker will use '~/.codechecker.passwords.json' file.
                    It can also be used to setup different credential files to

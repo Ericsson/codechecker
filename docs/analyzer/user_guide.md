@@ -439,12 +439,14 @@ checker configuration:
   CppCoreGuidelines, SEI-CERT, or MISRA. These are collections of best
   programming practices to avoid common programming errors. Some checkers cover
   the rules of these guidelines. CodeChecker assigns the 'guideline' label to
-  these checkers, such as 'guideline:sei-cert'. This way you can list and enable
-  those checkers which check the fulfillment of certain guideline rules. See the
-  output of "CodeChecker checkers --guideline" command.
+  these checkers, such as 'guideline:sei-cert-c' or 'guideline:sei-cert-cpp'.
+  This way you can list and enable those checkers which check the fulfillment
+  of certain guideline rules. See the output of
+  "CodeChecker checkers --guideline" command.
 
   Guidelines are labels themselves, and can be used as a label:
-  '-e guideline:<value>', e.g. '-e guideline:sei-cert'.
+  '-e guideline:<value>', e.g. '-e guideline:sei-cert-c' or
+  '-e guideline:sei-cert-cpp'.
 
   Note: The 'guideline' label is mandatory when there is ambiguity between the
   name of a guideline and a checker prefix group or a checker profile. This
@@ -2451,12 +2453,12 @@ List checkers in "HIGH" severity:
     CodeChecker checkers --severity HIGH
 
 List checkers covering str34-c SEI-CERT rule:
-    CodeChecker checkers --label sei-cert:str-34-c
-    CodeChecker checkers --guideline sei-cert:str34-c
+    CodeChecker checkers --label sei-cert-c:str34-c
+    CodeChecker checkers --guideline sei-cert-c:str34-c
 
-List checkers covering all SEI-CERT rules:
-    CodeChecker checkers --label guideline:sei-cert
-    CodeChecker checkers --guideline sei-cert
+List checkers covering all SEI-CERT C rules:
+    CodeChecker checkers --label guideline:sei-cert-c
+    CodeChecker checkers --guideline sei-cert-c
 
 List available profiles, guidelines and severities:
     CodeChecker checkers --profile
@@ -2483,7 +2485,7 @@ overwritten when the package is reinstalled!
 There are some coding guidelines which contain best practices on avoiding
 common programming mistakes
 ([https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines](C++ Core Guidelines),
-[https://wiki.sei.cmu.edu/confluence/display/seccode/SEI+CERT+Coding+Standards](SEI-CERT), etc.)
+[https://cmu-sei.github.io/secure-coding-standards/](SEI-CERT), etc.)
 Many of these guideline rules can be checked by static analyzer tools. The
 detailed output of `CodeChecker checkers` command contains information about
 which checkers cover certain guideline rules. This mapping is given in the

@@ -198,17 +198,17 @@ class PermissionHandler(metaclass=ABCMeta):
                      self._perm_name, 'group' if is_group else 'user',
                      auth_name)
 
-    def has_permission(self, auth_session):
+    def has_permission(self, auth_session, is_auth_enabled):
         """
         Returns whether or not the given authenticated user session
         (or None, if authentication is disabled on the server!) is given
         the current permission.
         """
         if not auth_session:
-            # If the user does not have an auth_session it means it is a guest
-            # and the server is running in authentication disabled mode.
-            # All permissions are automatically granted in this case.
-            return True
+            # If the user does not have an auth_session it means it is a guest.
+            # All permissions are automatically granted when authentication is
+            # not enabled on the server.
+            return not is_auth_enabled
 
         elif auth_session.is_root and self._perm_name == 'SUPERUSER':
             # The special master superuser (root) automatically has the
@@ -644,17 +644,19 @@ def initialise_defaults(scope, extra_params):
             handler._rem_perm_impl('*', False)
 
 
-def require_permission(permission, extra_params, user):
+def require_permission(permission, extra_params, user, is_auth_enabled):
     """
     Returns whether or not the given user has the given permission.
 
     :param extra_params: The scope-specific argument dict, which already
       contains a valid database session.
+    :param is_auth_enabled: Guest users are handled differently when
+      authentication is disabled on the server.
     """
 
     handler = handler_from_scope_params(permission,
                                         extra_params)
-    if handler.has_permission(user):
+    if handler.has_permission(user, is_auth_enabled):
         return True
 
     # If the user for some reason does not have the permission directly
@@ -663,7 +665,7 @@ def require_permission(permission, extra_params, user):
     while ancestors:
         handler = handler_from_scope_params(ancestors[0], extra_params)
 
-        if handler.has_permission(user):
+        if handler.has_permission(user, is_auth_enabled):
             return True
         else:
             ancestors = ancestors[1:] + ancestors[0].inherited_from
@@ -671,19 +673,21 @@ def require_permission(permission, extra_params, user):
     return False
 
 
-def require_manager(permission, extra_params, user):
+def require_manager(permission, extra_params, user, is_auth_enabled):
     """
     Returns whether or not the given user has rights to manage the given
     permission.
 
     :param extra_params: The scope-specific argument dict, which already
       contains a valid database session.
+    :param is_auth_enabled: Guest users are handled differently when
+      authentication is disabled on the server.
     """
 
     for manager in permission.managed_by:
         manager_handler = handler_from_scope_params(manager,
                                                     extra_params)
-        if manager_handler.has_permission(user):
+        if manager_handler.has_permission(user, is_auth_enabled):
             return True
 
     return False

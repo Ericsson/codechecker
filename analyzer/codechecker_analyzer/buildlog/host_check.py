@@ -32,7 +32,7 @@ def check_intercept(env) -> bool:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             encoding="utf-8",
-            errors="ignore")
+            errors="ignore")  # type: ignore
 
         if not res:
             return True
@@ -74,4 +74,4 @@ def check_ldlogger(env) -> bool:
     alternative_logger_lib_dir_path = os.path.join(
         lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib', '**',
         'ldlogger.so')
-    return glob.glob(alternative_logger_lib_dir_path, recursive=True)
+    return bool(glob.glob(alternative_logger_lib_dir_path, recursive=True))

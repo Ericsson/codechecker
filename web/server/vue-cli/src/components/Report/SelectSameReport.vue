@@ -3,94 +3,142 @@
     v-model="active"
     :items="items"
     :hide-details="true"
-    :menu-props="{ contentClass: 'select-same-report-menu' }"
     class="select-same-report small"
     label="Found in"
-    item-text="label"
+    item-title="label"
     item-value="id"
     height="0"
     flat
-    dense
-    solo
-    @input="selectSameReport"
+    density="compact"
+    variant="solo"
+    @update:model-value="selectSameReport"
   >
     <template v-slot:selection="{ item }">
-      <select-same-report-item :item="item" />
+      <div class="d-flex align-center">
+        <detection-status-icon
+          class="mr-2"
+          :status="item.raw.detectionStatus"
+          :size="16"
+        />
+        <review-status-icon
+          class="mr-2"
+          :status="item.raw.reviewStatus"
+          :size="16"
+        />
+        <span
+          class="mr-2"
+        >
+          {{ item.raw.runName }}:{{ item.raw.fileName }}:L{{ item.raw.line }}
+        </span>
+        <v-chip
+          class="text-black"
+          :color="bugPathLenColor.getBugPathLenColor(item.raw.bugPathLength)"
+          label
+          size="small"
+          variant="flat"
+        >
+          {{ item.raw.bugPathLength }}
+        </v-chip>
+      </div>
     </template>
 
-    <template v-slot:item="{ item }">
-      <select-same-report-item :item="item" />
+    <template v-slot:item="{ item, props: listItemProps }">
+      <v-list-item
+        v-bind="listItemProps"
+        :title="null"
+        density="compact"
+      >
+        <detection-status-icon
+          class="mr-2"
+          :status="item.raw.detectionStatus"
+          :size="16"
+        />
+        <review-status-icon
+          class="mr-2"
+          :status="item.raw.reviewStatus"
+          :size="16"
+        />
+        <span
+          class="mr-2"
+        >
+          {{ item.raw.runName }}:{{ item.raw.fileName }}:L{{ item.raw.line }}
+        </span>
+        <v-chip
+          class="text-black"
+          :color="bugPathLenColor.getBugPathLenColor(item.raw.bugPathLength)"
+          label
+          size="small"
+          variant="flat"
+        >
+          {{ item.raw.bugPathLength }}
+        </v-chip>
+      </v-list-item>
     </template>
   </v-select>
 </template>
 
-<script>
+<script setup>
 import { ccService } from "@cc-api";
+import { onMounted, ref, watch } from "vue";
 
-import SelectSameReportItem from "./SelectSameReportItem";
+import { DetectionStatusIcon, ReviewStatusIcon } from "@/components/Icons";
+import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
 
-export default {
-  name: "SelectSameReport",
-  components: {
-    SelectSameReportItem
-  },
-  props: {
-    report: { type: Object, default: null }
-  },
-  data() {
-    return {
-      items: [],
-      active: null
-    };
-  },
-  watch: {
-    report() {
-      this.init();
-    }
-  },
+const props = defineProps({
+  report: { type: Object, default: null }
+});
 
-  mounted() {
-    this.init();
-  },
+const emit = defineEmits([ "update:report" ]);
 
-  methods: {
-    init() {
-      if (!this.report) return;
+const items = ref([]);
+const active = ref(null);
+const bugPathLenColor = useBugPathLenColor();
 
-      this.active = this.report.reportId;
-      this.getSameReports();
-    },
+watch(() => props.report, () => {
+  init();
+});
 
-    getSameReports() {
-      ccService.getSameReports(this.report.bugHash).then(reports => {
-        this.items = reports.map(report => {
-          return {
-            id: report.reportId,
-            runName: report.$runName,
-            fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
-            line: report.line,
-            bugPathLength: report.bugPathLength,
-            detectionStatus: report.detectionStatus,
-            reviewStatus: report.reviewData.status
-          };
-        });
-      });
-    },
+onMounted(() => {
+  init();
+});
 
-    selectSameReport(reportId) {
-      this.$emit("update:report", reportId.toNumber());
-    }
-  }
-};
+function init() {
+  if (!props.report) return;
+
+  active.value = props.report.reportId;
+  getSameReports();
+}
+
+function getSameReports() {
+  ccService.getSameReports(props.report.bugHash).then(_reports => {
+    items.value = _reports.map(_report => {
+      const fileName = _report.checkedFile.replace(/^.*[\\/]/, "");
+      return {
+        id: _report.reportId,
+        label: `${_report.$runName}:${fileName}:L${_report.line}`,
+        runName: _report.$runName,
+        fileName: _report.checkedFile.replace(/^.*[\\/]/, ""),
+        line: _report.line,
+        bugPathLength: _report.bugPathLength,
+        detectionStatus: _report.detectionStatus,
+        reviewStatus: _report.reviewData.status
+      };
+    });
+  });
+}
+
+function selectSameReport(reportId) {
+  emit("update:report", reportId.toNumber());
+}
 </script>
 
-<style lang="scss" scoped>
-::v-deep .v-select__selections input {
+<style lang="scss">
+:deep(.v-select__selections input) {
   display: none;
 }
 
 .v-select.v-text-field--outlined {
-  ::v-deep .theme--light.v-label {
+  :deep(.theme--light.v-label) {
     background-color: #fff;
   }
 }

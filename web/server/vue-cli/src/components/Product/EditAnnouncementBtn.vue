@@ -1,46 +1,43 @@
 <template>
-  <confirm-dialog
+  <ConfirmDialog
     v-model="dialog"
     confirm-btn-label="Change"
+    title="Change announcement"
     @confirm="confirmAnnouncementChange"
+    @cancel="resetValue"
   >
-    <template v-slot:activator="{ on }">
+    <template v-slot:activator="{ props }">
       <v-btn
+        v-bind="props"
         id="edit-announcement-btn"
         color="primary"
         class="mr-2"
-        v-on="on"
+        variant="outlined"
       >
-        <v-icon left>
-          mdi-bullhorn-outline
-        </v-icon>
+        <template v-slot:prepend>
+          <v-icon>mdi-bullhorn-outline</v-icon>
+        </template>
         Edit announcement
       </v-btn>
-    </template>
-
-    <template v-slot:title>
-      Change announcement
     </template>
 
     <template v-slot:content>
       <v-text-field
         v-model="value"
         append-icon="mdi-bullhorn-outline"
-        label="Write your alert here..."
-        single-line
+        label="Announcement text"
         hide-details
-        outlined
-        solo
+        variant="outlined"
         clearable
-        flat
-        dense
+        density="compact"
       />
     </template>
-  </confirm-dialog>
+  </ConfirmDialog>
 </template>
 
-<script>
-import { mapActions, mapGetters, mapMutations } from "vuex";
+<script setup>
+import { computed, onMounted, ref } from "vue";
+import { useStore } from "vuex";
 
 import { confService, handleThriftError } from "@cc-api";
 
@@ -49,50 +46,38 @@ import { SET_ANNOUNCEMENT } from "@/store/mutations.type";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-export default {
-  name: "EditAnnouncementBtn",
-  components: {
-    ConfirmDialog
-  },
+const store = useStore();
+const dialog = ref(false);
+const value = ref(null);
+const originalValue = ref(null);
 
-  data() {
-    return {
-      dialog: false,
-      value: null
-    };
-  },
+const announcement = computed(() => store.getters.announcement);
 
-  computed: {
-    ...mapGetters([
-      "announcement"
-    ])
-  },
-
-  mounted() {
-    this.getAnnouncement().then(announcement => {
-      this.value = announcement;
+onMounted(() => {
+  if (announcement.value) {
+    value.value = announcement.value;
+    originalValue.value = announcement.value;
+  } else {
+    store.dispatch(GET_ANNOUNCEMENT).then(result => {
+      value.value = result;
+      originalValue.value = result;
     });
-  },
-
-  methods: {
-    ...mapActions([
-      GET_ANNOUNCEMENT
-    ]),
-    ...mapMutations([
-      SET_ANNOUNCEMENT
-    ]),
-
-    // TODO: set announcement back to the original value on cancel.
-    confirmAnnouncementChange() {
-      const announcementB64 = this.value
-        ? window.btoa(this.value) : window.btoa("");
-
-      confService.getClient().setNotificationBannerText(announcementB64,
-        handleThriftError(() => {
-          this.dialog = false;
-          this.setAnnouncement(this.value);
-        }));
-    }
   }
-};
+});
+
+function confirmAnnouncementChange() {
+  const announcementB64 = value.value
+    ? window.btoa(value.value) : window.btoa("");
+
+  confService.getClient().setNotificationBannerText(announcementB64,
+    handleThriftError(() => {
+      dialog.value = false;
+      store.commit(SET_ANNOUNCEMENT, value.value);
+    }));
+}
+
+function resetValue() {
+  dialog.value = false;
+  value.value = originalValue.value;
+}
 </script>

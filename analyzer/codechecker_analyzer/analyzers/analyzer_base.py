@@ -152,6 +152,13 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
+    def analyzer_binary(cls) -> str:
+        """
+        Return path to the analyzer binary.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
     def get_analyzer_config(cls) -> List[AnalyzerConfig]:
         return []
 

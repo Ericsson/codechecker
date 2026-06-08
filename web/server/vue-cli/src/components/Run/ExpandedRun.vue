@@ -7,15 +7,14 @@
     <v-timeline
       v-for="(group, date) in formattedHistories"
       :key="date"
-      dense
-      clipped
+      density="compact"
     >
       <v-timeline-item
         class="pb-2"
         icon="mdi-calendar-month"
         fill-dot
-        color="accent"
-        small
+        dot-color="accent"
+        size="small"
       >
         <strong>{{ date }}</strong>
       </v-timeline-item>
@@ -26,11 +25,14 @@
         class="run-history pb-2"
         icon="mdi-history"
         fill-dot
-        color="primary"
-        small
+        dot-color="primary"
+        size="small"
+        width="100%"
       >
-        <v-row justify="space-between">
-          <v-col class="pa-0 mr-5" cols="auto" align-self="center">
+        <div
+          class="d-flex justify-space-between align-center"
+        >
+          <div>
             <router-link
               :to="{ name: 'reports',
                      query: {
@@ -40,90 +42,100 @@
               }"
               class="date mr-2"
             >
-              <strong>{{ history.time | prettifyDate }}</strong>
+              <strong>{{ prettifiedTime(history) }}</strong>
             </router-link>
-          </v-col>
-          <v-col class="pa-0" align-self="center" cols="auto">
-            <v-list-item two-line>
-              <v-list-item-content>
-                <v-list-item-title>
-                  <v-chip
-                    color="success"
-                    outlined
+          </div>
+
+          <div>
+            <v-list-item
+              two-line
+            >
+              <v-list-item-title>
+                <v-chip
+                  color="success"
+                  variant="outlined"
+                  class="mr-2"
+                >
+                  <v-icon
+                    start
                   >
-                    <v-icon left>
-                      mdi-account
-                    </v-icon>
-                    {{ history.user }}
-                  </v-chip>
+                    mdi-account
+                  </v-icon>
+                  {{ history.user }}
+                </v-chip>
 
-                  <version-tag
-                    v-if="history.versionTag"
-                    :value="history.versionTag"
-                  />
-                </v-list-item-title>
+                <version-tag
+                  v-if="history.versionTag"
+                  :value="history.versionTag"
+                />
+              </v-list-item-title>
 
-                <v-list-item-subtitle>
-                  <show-statistics-btn
-                    :extra-queries="{
-                      run: history.runName,
-                      'run-tag': history.id
-                    }"
-                  />
+              <v-list-item-subtitle>
+                <show-statistics-btn
+                  :extra-queries="{
+                    run: history.runName,
+                    'run-tag': history.id
+                  }"
+                />
 
-                  <v-divider class="mx-2 d-inline" inset vertical />
+                <v-divider
+                  class="mx-2 d-inline"
+                  inset
+                  vertical="true"
+                />
 
-                  <analysis-info-btn
-                    @click.native="openAnalysisInfoDialog(
-                      run.runId, history.id)"
-                  />
+                <analysis-info-dialog
+                  :run-id="run?.runId"
+                  :run-history-id="history?.id"
+                  :icon-only="true"
+                  icon-size="default"
+                />
 
-                  <v-divider class="mx-2 d-inline" inset vertical />
+                <v-divider
+                  class="mx-2 d-inline"
+                  inset
+                  vertical="true"
+                />
 
-                  <span :title="history.codeCheckerVersion">
-                    v{{ history.$codeCheckerVersion }}
-                  </span>
+                <span :title="history.codeCheckerVersion">
+                  v{{ history.$codeCheckerVersion }}
+                </span>
 
-                  <v-divider class="mx-2 d-inline" inset vertical />
+                <v-divider
+                  class="mx-2 d-inline"
+                  inset
+                  vertical="true"
+                />
 
-                  <analyzer-statistics-btn
-                    v-if="Object.keys(history.analyzerStatistics).length"
-                    :value="history.analyzerStatistics"
-                    @click.native="openAnalyzerStatisticsDialog(null, history)"
-                  />
-                </v-list-item-subtitle>
-              </v-list-item-content>
+                <analyzer-statistics-btn
+                  v-if="Object.keys(history.analyzerStatistics).length"
+                  :value="history.analyzerStatistics"
+                  @click="openAnalyzerStatisticsDialog(null, history)"
+                />
+              </v-list-item-subtitle>
             </v-list-item>
-          </v-col>
+          </div>
 
           <v-spacer />
 
-          <v-col
-            class="compare-events"
-            align="right"
-            cols="auto"
-            width="100px"
-            align-self="center"
+          <div
+            class="py-0 d-flex justify-space-between align-center"
           >
-            <v-container class="py-0">
-              <v-row class="flex-nowrap py-0">
-                <v-checkbox
-                  v-model="baselineTags"
-                  :value="history.id.toNumber()"
-                  class="ma-0 pa-0"
-                  hide-details
-                />
+            <v-checkbox
+              v-model="baselineTags"
+              :value="history.id.toNumber()"
+              class="ma-0 pa-0"
+              hide-details
+            />
 
-                <v-checkbox
-                  v-model="comparedToTags"
-                  :value="history.id.toNumber()"
-                  class="ma-0 pa-0"
-                  hide-details
-                />
-              </v-row>
-            </v-container>
-          </v-col>
-        </v-row>
+            <v-checkbox
+              v-model="comparedToTags"
+              :value="history.id.toNumber()"
+              class="ma-0 pa-0"
+              hide-details
+            />
+          </div>
+        </div>
       </v-timeline-item>
     </v-timeline>
 
@@ -136,65 +148,70 @@
   </v-card>
 </template>
 
-<script>
+<script setup>
+import { useDateUtils } from "@/composables/useDateUtils";
 import { format, parse } from "date-fns";
-import AnalysisInfoBtn from "./AnalysisInfoBtn";
+import { computed } from "vue";
+import { AnalysisInfoDialog } from "@/components";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
 import VersionTag from "./VersionTag";
 
-export default {
-  name: "ExpandedRun",
-  components: {
-    AnalysisInfoBtn,
-    AnalyzerStatisticsBtn,
-    ShowStatisticsBtn,
-    VersionTag
+const props = defineProps({
+  histories: { type: Array, required: true },
+  run: { type: Object, required: true },
+  openAnalysisInfoDialog: { type: Function, default: () => {} },
+  openAnalyzerStatisticsDialog: { type: Function, default: () => {} },
+  selectedBaselineTags: { type: Array, required: true },
+  selectedComparedToTags: { type: Array, required: true }
+});
+
+const emit = defineEmits([
+  "update:selected-baseline-tags",
+  "update:selected-compared-to-tags"
+]);
+
+const { prettifyDate } = useDateUtils();
+
+const baselineTags = computed({
+  get() {
+    return props.selectedBaselineTags;
   },
-  props: {
-    histories: { type: Array, required: true },
-    run: { type: Object, required: true },
-    openAnalysisInfoDialog: { type: Function, default: () => {} },
-    openAnalyzerStatisticsDialog: { type: Function, default: () => {} },
-    selectedBaselineTags: { type: Array, required: true },
-    selectedComparedToTags: { type: Array, required: true }
-  },
-  computed: {
-    baselineTags: {
-      get() {
-        return this.selectedBaselineTags;
-      },
-      set(newVal) {
-        this.$emit("update:selected-baseline-tags", newVal);
-      }
-    },
-
-    comparedToTags: {
-      get() {
-        return this.selectedComparedToTags;
-      },
-      set(newVal) {
-        this.$emit("update:selected-compared-to-tags", newVal);
-      }
-    },
-
-    formattedHistories() {
-      return this.histories.reduce((acc, curr) => {
-        const date =
-          parse(curr.time, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
-
-        const group = format(date, "MMMM, yyyy");
-
-        if (!acc[group])
-          acc[group] = [];
-
-        acc[group].push(curr);
-
-        return acc;
-      }, {});
-    }
+  set(newVal) {
+    emit("update:selected-baseline-tags", newVal);
   }
-};
+});
+
+const comparedToTags = computed({
+  get() {
+    return props.selectedComparedToTags;
+  },
+  set(newVal) {
+    emit("update:selected-compared-to-tags", newVal);
+  }
+});
+
+const formattedHistories = computed(function() {
+  return props.histories.reduce((acc, curr) => {
+    const _date =
+      parse(curr.time, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
+
+    const _group = format(_date, "MMMM, yyyy");
+
+    if (!acc[_group])
+      acc[_group] = [];
+
+    acc[_group].push(curr);
+
+    return acc;
+  }, {});
+});
+
+const prettifiedTime = computed(function() {
+  return function(history) {
+    return prettifyDate(history.time);
+  };
+});
 </script>
 
 <style lang="scss" scoped>

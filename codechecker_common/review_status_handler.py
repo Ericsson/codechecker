@@ -184,7 +184,7 @@ class ReviewStatusHandler:
                 report.checker_name != rule['filters']['checker_name']:
             return False
 
-        if 'report_hash' in rule['filters'] and not \
+        if 'report_hash' in rule['filters'] and report.report_hash and not \
                 report.report_hash.startswith(rule['filters']['report_hash']):
             return False
 
@@ -211,7 +211,7 @@ class ReviewStatusHandler:
                 return review_status
 
         # 3. Return "unreviewed" otherwise.
-        return SourceReviewStatus(bug_hash=report.report_hash)
+        return SourceReviewStatus(bug_hash=report.report_hash or "")
 
     def set_review_status_config(self, config_file):
         """
@@ -289,7 +289,7 @@ class ReviewStatusHandler:
                     message=rule['actions']['reason']
                     .encode(encoding='utf-8', errors='ignore')
                     if 'reason' in rule['actions'] else b'',
-                    bug_hash=report.report_hash,
+                    bug_hash=report.report_hash or "",
                     in_source=True)
 
         return None
@@ -343,7 +343,7 @@ class ReviewStatusHandler:
                 return SourceReviewStatus(
                     status=status,
                     message=message.encode('utf-8'),
-                    bug_hash=report.report_hash,
+                    bug_hash=report.report_hash or "",
                     in_source=True)
 
             if len(src_comment_data) > 1:

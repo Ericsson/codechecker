@@ -21,7 +21,7 @@ import sys
 # dependencies.
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    os.sys.path.append(os.path.dirname(current_dir))
+    sys.path.append(os.path.dirname(current_dir))
 
 from codechecker_merge_clang_extdef_mappings import \
     merge_clang_extdef_mappings  # noqa

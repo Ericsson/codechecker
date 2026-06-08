@@ -1161,10 +1161,10 @@ class SessionManager:
     def __cleanup_sessions(self):
         self.__logins_since_prune = 0
 
-        for s in self.__sessions:
+        for s in self.__sessions[:]:
             if s.is_refresh_time_expire:
                 self.invalidate_local_session(s.token)
 
-        for s in self.__sessions:
+        for s in self.__sessions[:]:
             if not s.is_alive:
                 self.invalidate(s.token)

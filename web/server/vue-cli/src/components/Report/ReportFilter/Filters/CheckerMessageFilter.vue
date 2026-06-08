@@ -1,15 +1,15 @@
 <template>
   <select-option
-    :id="id"
+    :id="id.value"
     title="Checker message"
-    :bus="bus"
+    :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
-    :selected-items="selectedItems"
+    :selected-items="baseSelectOptionFilter.selectedItems.value"
     :search="search"
-    :loading="loading"
-    :limit="defaultLimit"
-    :panel="panel"
-    @clear="clear(true)"
+    :loading="baseSelectOptionFilter.loading.value"
+    :limit="baseSelectOptionFilter.defaultLimit.value"
+    :panel="baseSelectOptionFilter.panel.value"
+    @clear="baseSelectOptionFilter.clear(true)"
     @input="setSelectedItems"
   >
     <template v-slot:icon>
@@ -20,66 +20,96 @@
   </select-option>
 </template>
 
-<script>
+<script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
+import { ref, toRef } from "vue";
 
+import {
+  useBaseSelectOptionFilter
+} from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
-import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-export default {
-  name: "CheckerMessageFilter",
-  components: {
-    SelectOption
-  },
-  mixins: [ BaseSelectOptionFilterMixin ],
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  data() {
-    return {
-      id: "checker-msg",
-      search: {
-        placeHolder: "Search for checker messages (e.g.: *deref*)...",
-        regexLabel: "Filter by wildcard pattern (e.g.: *deref*)",
-        filterItems: this.filterItems
-      }
-    };
-  },
+const emit = defineEmits([ "update:url" ]);
 
-  methods: {
-    updateReportFilter() {
-      this.setReportFilter({
-        checkerMsg: this.selectedItems.map(item => item.id)
-      });
-    },
+const baseSelectOptionFilter =
+  useBaseSelectOptionFilter(toRef(props, "namespace"));
+baseSelectOptionFilter.fetchItems.value = fetchItems;
+baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
-    onReportFilterChange(key) {
-      if (key === "checkerMsg") return;
-      this.update();
-    },
+const id = ref("checker-msg");
+// eslint-disable-next-line vue/no-ref-object-reactivity-loss
+baseSelectOptionFilter.id.value = id.value;
 
-    fetchItems(opt={}) {
-      this.loading = true;
+const search = ref({
+  placeHolder: "Search for checker messages (e.g.: *deref*)...",
+  regexLabel: "Filter by wildcard pattern (e.g.: *deref*)",
+  filterItems: baseSelectOptionFilter.filterItems
+});
 
-      const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.checkerMsg = opt.query;
+baseSelectOptionFilter.bus.on("update:url", () => {
+  emit("update:url");
+});
 
-      const limit = opt.limit || this.defaultLimit;
-      const offset = null;
+function updateReportFilter() {
+  baseSelectOptionFilter.setReportFilter({
+    checkerMsg: baseSelectOptionFilter.selectedItems.value.map(item => item.id)
+  });
+}
 
-      return new Promise(resolve => {
-        ccService.getClient().getCheckerMsgCounts(this.runIds, reportFilter,
-          this.cmpData, limit, offset, handleThriftError(res => {
-            resolve(Object.keys(res).map(msg => {
-              return {
-                id : msg,
-                title: msg,
-                count: res[msg].toNumber()
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    }
-  }
-};
+function onReportFilterChange(key) {
+  if (key === "checkerMsg") return;
+  baseSelectOptionFilter.update();
+}
+
+function fetchItems(opt={}) {
+  baseSelectOptionFilter.loading.value = true;
+
+  const _reportFilter = new ReportFilter(
+    baseSelectOptionFilter.reportFilter.value
+  );
+  _reportFilter.checkerMsg = opt.query;
+
+  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
+  const _offset = 0;
+
+  return new Promise(resolve => {
+    ccService.getClient().getCheckerMsgCounts(
+      baseSelectOptionFilter.runIds.value,
+      _reportFilter,
+      baseSelectOptionFilter.cmpData.value,
+      _limit,
+      _offset,
+      handleThriftError(res => {
+        resolve(Object.keys(res).map(msg => {
+          return {
+            id : msg,
+            title: msg,
+            count: res[msg].toNumber()
+          };
+        }));
+        baseSelectOptionFilter.loading.value = false;
+      }));
+  });
+}
+
+defineExpose({
+  beforeInit: baseSelectOptionFilter.beforeInit,
+  afterInit: baseSelectOptionFilter.afterInit,
+  clear: baseSelectOptionFilter.clear,
+  update: baseSelectOptionFilter.update,
+  registerWatchers: baseSelectOptionFilter.registerWatchers,
+  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  initByUrl: baseSelectOptionFilter.initByUrl,
+  getUrlState: baseSelectOptionFilter.getUrlState,
+
+  id,
+  updateReportFilter,
+  onReportFilterChange,
+  fetchItems
+});
 </script>

@@ -80,13 +80,13 @@ module.exports = {
     const colIdx = 9;
 
     // Sort reports in ascending order by bug path length.
-    reportPage.sortReports(colIdx, (data) => {
+    reportPage.sortReports(colIdx, data => {
       return data.every((e, ind, a) =>
         !ind || parseInt(a[ind - 1][colIdx - 1]) <= parseInt(e[colIdx - 1]));
     });
 
     // Sort reports in descending order by bug path length.
-    reportPage.sortReports(colIdx, (data) => {
+    reportPage.sortReports(colIdx, data => {
       return data.every((e, ind, a) =>
         !ind || parseInt(a[ind - 1][colIdx - 1]) >= parseInt(e[colIdx - 1]));
     });
@@ -169,7 +169,6 @@ module.exports = {
       browser.assert.ok(result.value.length === 1);
 
       getSelectedItemText(browser, result.value[0], text => {
-        console.log(text.value);
         browser.assert.ok(text.value.startsWith(`${runName}:${tagName}`));
       });
     });
@@ -256,7 +255,6 @@ module.exports = {
       browser.assert.ok(result.value.length === 1);
 
       getSelectedItemText(browser, result.value[0], text => {
-        console.log(text.value);
         browser.assert.ok(text.value.startsWith(`${runName}:${tagName}`));
       });
     });
@@ -467,7 +465,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    dialogSection.api.elements("@tableRows", (elements) => {
+    dialogSection.api.elements("@tableRows", elements => {
       browser.assert.ok(elements.result.value.length === 1);
     });
 
@@ -484,7 +482,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    dialogSection.api.elements("@tableRows", (elements) => {
+    dialogSection.api.elements("@tableRows", elements => {
       browser.assert.ok(elements.result.value.length === 1);
     });
 
@@ -569,7 +567,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    dialogSection.api.elements("@tableRows", (elements) => {
+    dialogSection.api.elements("@tableRows", elements => {
       browser.assert.ok(elements.result.value.length === 1);
     });
 
@@ -585,7 +583,7 @@ module.exports = {
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
-    dialogSection.api.elements("@tableRows", (elements) => {
+    dialogSection.api.elements("@tableRows", elements => {
       browser.assert.ok(elements.result.value.length === 1);
     });
 
@@ -622,7 +620,7 @@ module.exports = {
       browser.assert.ok(result.value.length === 1);
     });
 
-    reportPage.getTableRows("@tableRows", (data) => {
+    reportPage.getTableRows("@tableRows", data => {
       browser.assert.ok(
         [...new Set(data.map(r => r[2]))].filter(d => d).length === 1);
     });
@@ -657,7 +655,7 @@ module.exports = {
     reportPage.expect.section(dialogSection).to.be.visible.before(5000);
     dialogSection.pause(500);
 
-    dialogSection.api.elements("@tableRows", (elements) => {
+    dialogSection.api.elements("@tableRows", elements => {
       browser.assert.ok(elements.result.value.length === 1);
     });
 

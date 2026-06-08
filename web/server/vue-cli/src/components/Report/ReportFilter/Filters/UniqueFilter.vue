@@ -1,13 +1,13 @@
 <template>
   <v-checkbox
-    class="ma-0 py-0"
+    v-model="isUniqueModel"
     :hide-details="true"
-    :input-value="isUnique"
-    @change="setIsUnique"
   >
     <template v-slot:label>
       Unique reports
-      <tooltip-help-icon>
+      <tooltip-help-icon
+        class="mr-2"
+      >
         This narrows the report list to unique report types. The same bug may
         appear several times if it is found in different runs or on different
         control paths, i.e. through different function calls. By checking
@@ -18,66 +18,74 @@
   </v-checkbox>
 </template>
 
-<script>
+<script setup>
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
-import BaseFilterMixin from "./BaseFilter.mixin";
+import { useBaseFilter } from "@/composables/useBaseFilter";
+import { ref, toRef, watch } from "vue";
+import { useRoute } from "vue-router";
 
-export default {
-  name: "UniqueFilter",
-  components: { TooltipHelpIcon },
-  mixins: [ BaseFilterMixin ],
-  data() {
-    return {
-      id: "is-unique",
-      defaultValue: false
-    };
-  },
+const props = defineProps({
+  namespace: { type: String, required: true }
+});
 
-  computed: {
-    isUnique() {
-      return !!this.$store.state[this.namespace].reportFilter.isUnique;
-    }
-  },
+const emit = defineEmits([ "update:url" ]);
+const id = ref("is-unique");
+const defaultValue = ref(false);
+const isUniqueModel = ref(false);
 
-  methods: {
-    setIsUnique(isUnique, updateUrl=true) {
-      this.setReportFilter({ isUnique: isUnique });
-      if (updateUrl) {
-        this.$emit("update:url");
-      }
-    },
+const baseFilter = useBaseFilter(toRef(props, "namespace"));
 
-    encodeValue(isUnique) {
-      return isUnique ? "on" : "off";
-    },
+const route = useRoute();
 
-    decodeValue(state) {
-      return state === "on" ? true : false;
-    },
+watch(isUniqueModel, value => {
+  setIsUnique(value);
+});
 
-    getUrlState() {
-      return {
-        [this.id]: this.encodeValue(this.isUnique)
-      };
-    },
-
-    initByUrl() {
-      return new Promise(resolve => {
-        const state = this.$route.query[this.id];
-        if (state) {
-          const isUnique = this.decodeValue(state);
-          this.setIsUnique(isUnique, false);
-        } else {
-          this.setIsUnique(this.defaultValue, false);
-        }
-
-        resolve();
-      });
-    },
-
-    clear(updateUrl) {
-      this.setIsUnique(this.defaultValue, updateUrl);
-    }
+function setIsUnique(val, updateUrl=true) {
+  baseFilter.setReportFilter({ isUnique: val });
+  if (updateUrl) {
+    emit("update:url");
   }
-};
+}
+
+function encodeValue(boolVal) {
+  return boolVal ? "on" : "off";
+}
+
+function decodeValue(stateVal) {
+  return stateVal === "on" ? true : false;
+}
+
+function getUrlState() {
+  return {
+    [id.value]: encodeValue(isUniqueModel.value)
+  };
+}
+
+function initByUrl() {
+  return new Promise(resolve => {
+    const _state = route.query[id.value];
+    isUniqueModel.value = decodeValue(_state);
+
+    resolve();
+  });
+}
+
+function clear(updateUrl) {
+  setIsUnique(defaultValue.value, updateUrl);
+}
+
+defineExpose({
+  beforeInit: baseFilter.beforeInit,
+  afterInit: baseFilter.afterInit,
+  registerWatchers: baseFilter.registerWatchers,
+  unregisterWatchers: baseFilter.unregisterWatchers,
+
+  id,
+  encodeValue,
+  decodeValue,
+  getUrlState,
+  initByUrl,
+  clear
+});
 </script>

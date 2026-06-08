@@ -4,51 +4,39 @@
     color="#4b9fd5"
     title="Unreviewed"
     :size="size"
-  >
-    mdi-eye-off
-  </v-icon>
+    icon="mdi-eye-off"
+  />
 
   <v-icon
     v-else-if="status === ReviewStatus.CONFIRMED"
     color="#e92625"
     title="Confirmed"
     :size="size"
-  >
-    mdi-check-circle-outline
-  </v-icon>
+    icon="mdi-check-circle-outline"
+  />
 
   <v-icon
     v-else-if="status === ReviewStatus.FALSE_POSITIVE"
     color="#808080"
     title="False positive"
     :size="size"
-  >
-    mdi-cancel
-  </v-icon>
+    icon="mdi-cancel"
+  />
 
   <v-icon
     v-else-if="status === ReviewStatus.INTENTIONAL"
     color="#669603"
     title="Intentional"
     :size="size"
-  >
-    mdi-close-circle-outline
-  </v-icon>
+    icon="mdi-close-circle-outline"
+  />
 </template>
 
-<script>
+<script setup>
 import { ReviewStatus } from "@cc/report-server-types";
 
-export default {
-  name: "DetectionStatusIcon",
-  props: {
-    status: { type: Number, required: true },
-    size: { type: Number, default: null }
-  },
-  data() {
-    return {
-      ReviewStatus
-    };
-  }
-};
+defineProps({
+  status: { type: Number, required: true },
+  size: { type: Number, default: undefined }
+});
 </script>

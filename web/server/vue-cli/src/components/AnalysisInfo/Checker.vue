@@ -8,7 +8,7 @@
     <v-col
       cols="auto"
     >
-      <analyzer-statistics-icon
+      <AnalyzerStatisticsIcon
         class="mr-2"
         :value="(enabled ? 'successful' : 'failed')"
         :title="'\'' + name + '\' ' + (enabled ? 'was' : 'was not') +
@@ -24,19 +24,13 @@
   </v-row>
 </template>
 
-<script>
+<script setup>
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
 
-export default {
-  name: "Checker",
-  components: {
-    AnalyzerStatisticsIcon
-  },
-  props: {
-    name: { type: String, required: true },
-    enabled: { type: Boolean, required: true }
-  }
-};
+defineProps({
+  name: { type: String, required: true },
+  enabled: { type: Boolean, required: true }
+});
 </script>
 <style lang="scss" scoped>
 .analysis-info {
