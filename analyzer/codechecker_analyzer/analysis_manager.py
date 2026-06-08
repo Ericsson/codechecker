@@ -305,6 +305,29 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
     LOG.debug("ZIP file written at '%s'", zip_file)
 
 
+def handle_failure(
+    source_analyzer, rh, result_base, skip_handlers,
+    rs_handler: ReviewStatusHandler
+):
+    """
+    The result post-processing and the cleanup of the old plist files is done
+    here as a preparatory step for `handle_reproducer`.
+    """
+
+    # In case of compiler errors the error message still needs to be collected
+    # from the standard output by this postprocess phase so we can present them
+    # as CodeChecker reports.
+    checks = source_analyzer.config_handler.checks()
+    state = checks.get('clang-diagnostic-error', (CheckerState.ENABLED, ''))[0]
+    if state == CheckerState.ENABLED:
+        rh.postprocess_result(skip_handlers, rs_handler)
+
+    # Remove files that successfully analyzed earlier on.
+    plist_file = result_base + ".plist"
+    if os.path.exists(plist_file):
+        os.remove(plist_file)
+
+
 def setup_process_timeout(proc, timeout,
                           failure_callback=None):
     """
@@ -534,29 +557,16 @@ def check(check_data):
                                filter_handlers, rs_handler,
                                capture_analysis_output, success_dir)
             else:
-                # Postprocess failed analyses to capture compiler errors
-                # in reports/statistics, unless clang-diagnostic-error
-                # checker is explicitly disabled.
-                checks = source_analyzer.config_handler.checks()
-                state = checks.get('clang-diagnostic-error',
-                                   (CheckerState.ENABLED, ''))[0]
-                if state != CheckerState.DISABLED:
-                    rh.postprocess_result(skip_handlers, rs_handler)
+                handle_failure(
+                    source_analyzer, rh, result_base, skip_handlers, rs_handler
+                )
 
-                # Remove stale plist files from previous successful runs
-                plist_file = result_base + ".plist"
-                if os.path.exists(plist_file):
-                    os.remove(plist_file)
-
-            # Generate reproducer or failure zip
-            if generate_reproducer:
-                handle_reproducer(source_analyzer, rh,
-                                  os.path.join(reproducer_dir, zip_file),
-                                  actions_map)
-            elif not success:
-                handle_reproducer(source_analyzer, rh,
-                                  os.path.join(failed_dir, zip_file),
-                                  actions_map)
+            dir_for_reproducers = failed_dir if not success \
+                                                and not generate_reproducer \
+                                             else reproducer_dir
+            handle_reproducer(source_analyzer, rh,
+                              os.path.join(dir_for_reproducers, zip_file),
+                              actions_map)
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
