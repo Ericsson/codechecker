@@ -1,0 +1,48 @@
+=================================================================
+==10110==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7ffd79a61914 at pc 0x0000004ce73f bp 0x7ffd79a61750 sp 0x7ffd79a61748
+READ of size 4 at 0x7ffd79a61914 thread T0
+    #0 0x4ce73e in main files/asan3.c:5:10
+    #1 0x7fe16aa0662f in __libc_start_call_main (/lib64/libc.so.6+0x4062f)
+    #2 0x7fe16aa066ef in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x406ef)
+    #3 0x41f284 in _start /BUILD/glibc-2.35/csu/../sysdeps/x86_64/start.S:115
+
+Address 0x7ffd79a61914 is located in stack of thread T0 at offset 436 in frame
+    #0 0x4ce51f in main files/asan3.c:2
+
+  This frame has 1 object(s):
+    [32, 432) 'stack_array' (line 3) <== Memory access at offset 436 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow files/asan3.c:5:10 in main
+Shadow bytes around the buggy address:
+  0x10002f3442d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f3442e0: 00 00 00 00 00 00 00 00 00 00 00 00 f1 f1 f1 f1
+  0x10002f3442f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344310: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x10002f344320: 00 00[f3]f3 f3 f3 f3 f3 f3 f3 f3 f3 00 00 00 00
+  0x10002f344330: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344340: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344350: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344360: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x10002f344370: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==10110==ABORTING
