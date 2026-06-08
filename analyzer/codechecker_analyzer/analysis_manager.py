@@ -562,8 +562,10 @@ def check(check_data):
                     source_analyzer, rh, result_base, skip_handlers, rs_handler
                 )
 
-            only_reproducer = generate_reproducer or success
-            output_dir_for_zips = reproducer_dir if only_reproducer \
+            if success and not generate_reproducer:
+                return
+
+            output_dir_for_zips = reproducer_dir if generate_reproducer \
                 else failed_dir
 
             handle_reproducer(source_analyzer, rh,
