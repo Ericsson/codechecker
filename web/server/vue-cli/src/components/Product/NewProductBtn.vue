@@ -1,39 +1,38 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     max-width="50%"
-    title="New product"
     @confirm="save"
   >
-    <template v-slot:activator="{ props: activatorProps }">
+    <template v-slot:activator="{ on }">
       <v-btn
-        v-bind="activatorProps"
         id="new-product-btn"
         color="primary"
-        class="mr-2"
-        variant="tonal"
+        v-on="on"
       >
-        <template v-slot:prepend>
-          <v-icon>mdi-plus</v-icon>
-        </template>
+        <v-icon left>
+          mdi-plus
+        </v-icon>
         New product
       </v-btn>
     </template>
 
+    <template v-slot:title>
+      New product
+    </template>
+
     <template v-slot:content>
-      <ProductConfigForm
+      <product-config-form
         ref="form"
-        v-model="isValid"
-        v-model:product-config="productConfig"
+        :is-valid.sync="isValid"
         :is-super-user="isSuperUser"
+        :product-config="productConfig"
       />
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
-import { ref } from "vue";
-
+<script>
 import { handleThriftError, prodService } from "@cc-api";
 import {
   DatabaseConnection,
@@ -43,28 +42,39 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ProductConfigForm from "./ProductConfigForm";
 
-defineProps({
-  isSuperUser: { type: Boolean, default: false }
-});
-const emit = defineEmits([ "on-complete" ]);
-const dialog = ref(false);
-const isValid = ref(false);
-const form = ref(null);
-const productConfig = ref(new ProductConfiguration({
-  connection: new DatabaseConnection()
-}));
-
-function save() {
-  if (!form.value.validate()) return;
-
-  prodService.getClient().addProduct(productConfig.value,
-    handleThriftError(() => {
-      emit("on-complete", new ProductConfiguration(productConfig.value));
-
-      dialog.value = false;
-      productConfig.value = new ProductConfiguration({
+export default {
+  name: "NewProductBtn",
+  components: {
+    ConfirmDialog,
+    ProductConfigForm
+  },
+  props: {
+    isSuperUser: { type: Boolean, default: false }
+  },
+  data() {
+    return {
+      dialog: false,
+      productConfig: new ProductConfiguration({
         connection: new DatabaseConnection()
-      });
-    }));
-}
+      }),
+      isValid: false
+    };
+  },
+  methods: {
+    save() {
+      if (!this.$refs.form.validate()) return;
+
+      prodService.getClient().addProduct(this.productConfig,
+        handleThriftError(() => {
+          this.$emit("on-complete",
+            new ProductConfiguration(this.productConfig));
+
+          this.dialog = false;
+          this.productConfig = new ProductConfiguration({
+            connection: new DatabaseConnection()
+          });
+        }));
+    }
+  }
+};
 </script>

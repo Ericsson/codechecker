@@ -25,13 +25,18 @@ from codechecker_client import \
     product_client, \
     source_component_client, \
     task_client, \
-    token_client, \
-    filter_preset_client
-from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
+    token_client
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
 
+DEFAULT_FILTER_VALUES = {
+    'review_status': ['unreviewed', 'confirmed'],
+    'detection_status': ['new', 'reopened', 'unresolved'],
+    'uniqueing': 'off',
+    'anywhere_on_report_path': False,
+    'single_origin_report': False
+}
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
 
@@ -443,35 +448,6 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "entirely in the files specified by the "
                               "given --component.")
 
-    f_group.add_argument('--report-status',
-                         nargs='*',
-                         dest="report_status",
-                         metavar='REPORT_STATUS',
-                         default=init_default('report_status'),
-                         help="R|Filter results by report statuses.\n"
-                              "Reports can be assigned a report status of the "
-                              "following values:\n"
-                              "- Outstanding: Currently detected and "
-                              "still unresolved reports.\n"
-                              "- Closed: Reports marked as fixed, false "
-                              "positive, or otherwise resolved.\n" +
-                              warn_diff_mode)
-
-
-def __add_filter_preset_argument(parser):
-    """Add the --filter-preset argument to the given parser."""
-    parser.add_argument('--filter-preset',
-                        type=str,
-                        dest='filter_preset_name',
-                        metavar='PRESET_NAME',
-                        required=False,
-                        default=argparse.SUPPRESS,
-                        help="Use a pre-configured filter preset. The preset "
-                             "is loaded from the server and applied to the "
-                             "results. Use 'CodeChecker cmd filter-preset "
-                             "list --url <PRODUCT_URL>' to see available "
-                             "presets.")
-
 
 def __register_results(parser):
     """
@@ -498,14 +474,10 @@ def __register_results(parser):
                         action="store_true",
                         required=False,
                         default=argparse.SUPPRESS,
-                        help="DEPRECATED. Get report details for reports such "
-                             "as bug path events, bug report points etc. "
-                             "Detailed view contains Git information if it "
-                             "was available and stored for the queried "
-                             "project.")
+                        help="Get report details for reports such as bug path "
+                             "events, bug report points etc.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
-    __add_filter_preset_argument(parser)
 
 
 def __register_diff(parser):
@@ -571,7 +543,6 @@ def __register_diff(parser):
                              "the reported defect.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
-    __add_filter_preset_argument(parser)
 
     group = parser.add_argument_group(
         "comparison modes",
@@ -652,7 +623,6 @@ def __register_sum(parser):
     default_filter_values = DEFAULT_FILTER_VALUES
     default_filter_values['uniqueing'] = 'on'
     __add_filtering_arguments(parser, default_filter_values)
-    __add_filter_preset_argument(parser)
 
 
 def __register_delete(parser):
@@ -1125,6 +1095,14 @@ def __register_runs(parser):
                             "run_2_c_name, run_3_d_name then \"run_2* "
                             "run_3_d_name\" shows the last three runs.")
 
+    group.add_argument('--details',
+                       default=argparse.SUPPRESS,
+                       action='store_true',
+                       required=False,
+                       help="Adds extra details to the run information in "
+                            "JSON format, such as the list of files that are "
+                            "failed to analyze.")
+
     group.add_argument('--all-before-run',
                        type=str,
                        dest="all_before_run",
@@ -1560,81 +1538,6 @@ def __register_token(parser):
     __add_common_arguments(del_t, needs_product_url=False)
 
 
-def __register_filter_presets(parser):
-    """
-    Add argparse subcommand parser for the "filter preset management" action.
-    """
-
-    def __register_new(parser):
-        parser.add_argument('--name',
-                            type=str,
-                            dest='preset_name',
-                            required=True,
-                            metavar='PRESET_NAME',
-                            help="Name of the filter preset to create.")
-        __add_filtering_arguments(parser)
-
-    def __register_delete(parser):
-        """
-        Add argparse subcommand parser for the "delete preset" action.
-        """
-        parser.add_argument('--id',
-                            type=int,
-                            dest='preset_id',
-                            required=True,
-                            metavar='PRESET_ID',
-                            help="ID of the filter preset to delete.")
-
-    subcommands = parser.add_subparsers(title='available actions')
-
-    # Create handlers for individual subcommands.
-    new_preset = subcommands.add_parser(
-        'new',
-        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
-        description="Create a new filter preset.",
-        help="Create a new filter preset.")
-    __register_new(new_preset)
-    new_preset.set_defaults(func=filter_preset_client.handle_new_preset)
-    __add_common_arguments(new_preset)
-
-    rename_preset = subcommands.add_parser(
-        'rename',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Rename an existing filter preset.",
-        help="Rename an existing filter preset.")
-    rename_preset.set_defaults(func=filter_preset_client.handle_rename_preset)
-    rename_preset.add_argument(
-      '--preset-id',
-      type=int,
-      required=True,
-      help="ID of the filter preset to rename.")
-    rename_preset.add_argument(
-      '--new-name',
-      type=str,
-      required=True,
-      help="New name for the filter preset.")
-    __add_common_arguments(rename_preset,
-                           output_formats=DEFAULT_OUTPUT_FORMATS)
-
-    list_presets = subcommands.add_parser(
-        'list',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="List all filter presets available on the server.",
-        help="List all filter presets.")
-    list_presets.set_defaults(func=filter_preset_client.handle_list_presets)
-    __add_common_arguments(list_presets,
-                           output_formats=DEFAULT_OUTPUT_FORMATS)
-
-    delete_preset = subcommands.add_parser(
-        'delete',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Delete a filter preset from the server.",
-        help="Delete a filter preset.")
-    __register_delete(delete_preset)
-    delete_preset.set_defaults(func=filter_preset_client.handle_delete_preset)
-    __add_common_arguments(delete_preset)
-
-
 def add_arguments_to_parser(parser):
     """
     Add the subcommand's arguments to the given argparse.ArgumentParser.
@@ -1648,7 +1551,6 @@ def add_arguments_to_parser(parser):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="List the analysis runs available on the server.",
         help="List the available analysis runs.")
-
     __register_runs(runs)
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
     __add_common_arguments(runs, output_formats=DEFAULT_OUTPUT_FORMATS)
@@ -1666,12 +1568,7 @@ def add_arguments_to_parser(parser):
     results = subcommands.add_parser(
         'results',
         formatter_class=arg.RawDescriptionDefaultHelpFormatter,
-        description="Show the analysis reports which match the optional "
-                    "filters.\n\nIn JSON format all available information is "
-                    "shown. In plaintext/table only the report position, "
-                    "checker name, severity, analyzer name, report message, "
-                    "detection and review status and Git blame information "
-                    "is displayed.",
+        description="Show the individual analysis reports' summary.",
         help="List analysis result (finding) summary for a given run.",
         epilog='''Example scenario: List analysis results
 ------------------------------------------------
@@ -1929,19 +1826,6 @@ task, as identified by the token:
     __register_tasks(tasks)
     tasks.set_defaults(func=task_client.handle_tasks)
     __add_common_arguments(tasks, needs_product_url=False)
-
-    filter_preset = subcommands.add_parser(
-        'filter-preset',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Manage filter presets of a CodeChecker server. "
-                    "Filter presets are named collections of filter "
-                    "configurations that can be applied to the analysis "
-                    "results of a run. Please see the individual "
-                    "subcommands for details.",
-        help="Access subcommands related to configuring filter presets of a "
-             "CodeChecker server.")
-    __register_filter_presets(filter_preset)
-    __add_common_arguments(filter_preset)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.

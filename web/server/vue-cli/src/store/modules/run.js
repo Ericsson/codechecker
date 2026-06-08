@@ -11,9 +11,9 @@ import {
   SET_RUN_NAME
 } from "../mutations.type";
 
-import { useDateUtils } from "@/composables/useDateUtils";
+import { DateMixin } from "@/mixins";
 
-const date = useDateUtils();
+const getUnixTime = DateMixin.methods.getUnixTime;
 
 const state = {
   runName: null,
@@ -44,10 +44,10 @@ const getters = {
       names = [ `*${state.runName}*` ];
     let after = null;
     if (state.storedAfter)
-      after = date.getUnixTime(state.storedAfter);
+      after = getUnixTime(state.storedAfter);
     let before = null;
     if (state.storedBefore)
-      before = date.getUnixTime(state.storedBefore);
+      before = getUnixTime(state.storedBefore);
 
     return new RunFilter({
       names: names,
@@ -62,10 +62,8 @@ const getters = {
     let storedAt = null;
     if (state.storedAfter || state.storedBefore) {
       storedAt = new DateInterval({
-        before: 
-          state.storedBefore ? date.getUnixTime(state.storedBefore) : null,
-        after: 
-          state.storedAfter ? date.getUnixTime(state.storedAfter) : null
+        before: state.storedBefore ? getUnixTime(state.storedBefore) : null,
+        after: state.storedAfter ? getUnixTime(state.storedAfter) : null
       });
     }
 

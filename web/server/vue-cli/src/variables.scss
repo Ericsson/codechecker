@@ -1,4 +1,3 @@
 $font-size-root: 14px;
 
-@use 'vuetify/styles';
-@use "sass:math";
+@import '~vuetify/src/styles/styles.sass';

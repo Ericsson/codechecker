@@ -252,12 +252,6 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
                  '-b', build_cmd,
                  '--quiet']
 
-    enabled_checkers = project.get_enabled_checkers(test_project_path)
-    if enabled_checkers:
-        check_cmd.append('--disable-all')
-        for checker in enabled_checkers:
-            check_cmd.extend(['--enable', f"checker:{checker}"])
-
     suppress_file = codechecker_cfg.get('suppress_file')
     if suppress_file:
         check_cmd.extend(['--suppress', suppress_file])

@@ -1,11 +1,14 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     content-class="remove-review-status-rule-dialog"
     confirm-btn-label="Remove"
-    title="Remove review status rule"
     @confirm="removeReviewStatusRule"
   >
+    <template v-slot:title>
+      Remove review status rule
+    </template>
+
     <template v-slot:content>
       <v-container
         v-if="rule"
@@ -17,7 +20,7 @@
           v-if="rule.associatedReportCount"
           class="mt-2"
           color="error"
-          border="start"
+          border="left"
           elevation="2"
           colored-border
           icon="mdi-alert-outline"
@@ -35,42 +38,45 @@
         </v-alert>
       </v-container>
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReviewStatusRuleFilter } from "@cc/report-server-types";
-import { computed } from "vue";
 
 import { ConfirmDialog } from "@/components";
 
-const props = defineProps({
-  value: { type: Boolean, default: false },
-  rule: { type: Object, default: () => null },
-});
-
-const emit = defineEmits([ "update:value", "on:confirm" ]);
-
-const dialog = computed({
-  get() {
-    return props.value;
+export default {
+  name: "RemoveReviewStatusRuleDialog",
+  components: { ConfirmDialog },
+  props: {
+    value: { type: Boolean, default: false },
+    rule: { type: Object, default: () => null },
   },
-  set(val) {
-    emit("update:value", val);
-  }
-});
-
-function removeReviewStatusRule() {
-  const _filter = new ReviewStatusRuleFilter();
-  _filter.reportHashes = [ props.rule.reportHash ];
-
-  ccService.getClient().removeReviewStatusRules(_filter,
-    handleThriftError(success => {
-      if (success) {
-        emit("on:confirm", props.rule);
-        dialog.value = false;
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
       }
-    }));
-}
+    },
+  },
+  methods: {
+    removeReviewStatusRule() {
+      const filter = new ReviewStatusRuleFilter();
+      filter.reportHashes = [ this.rule.reportHash ];
+
+      ccService.getClient().removeReviewStatusRules(filter,
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("on:confirm", this.rule);
+            this.dialog = false;
+          }
+        }));
+    }
+  }
+};
 </script>

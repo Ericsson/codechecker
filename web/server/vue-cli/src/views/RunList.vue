@@ -1,41 +1,36 @@
 <template>
-  <v-card
-    variant="flat"
-    rounded="0"
-  >
-    <AnalyzerStatisticsDialog
-      v-model="analyzerStatisticsDialog"
+  <v-card flat tile>
+    <analysis-info-dialog
+      :value.sync="analysisInfoDialog"
       :run-id="selectedRunId"
       :run-history-id="selectedRunHistoryId"
     />
 
-    <AnalysisInfoDialog
-      v-model="analysisInfoDialog"
+    <analyzer-statistics-dialog
+      :value.sync="analyzerStatisticsDialog"
       :run-id="selectedRunId"
       :run-history-id="selectedRunHistoryId"
     />
 
-    <v-data-table-server
+    <v-data-table
       v-model="selected"
-      v-model:page="page"
-      v-model:items-per-page="itemsPerPage"
-      v-model:sort-by="sortBy"
-      v-model:expanded="expanded"
-      v-model:items-per-page-options="itemsPerPageOptions"
-      :items-length="totalItems"
       :headers="headers"
       :items="runs"
+      :options.sync="pagination"
       :loading="loading"
       loading-text="Loading runs..."
-      :must-sort="true"
-      show-select
+      :server-items-length.sync="totalItems"
+      :footer-props="footerProps"
+      :expanded.sync="expanded"
       show-expand
+      :must-sort="true"
       :mobile-breakpoint="1000"
-      item-value="runId"
-      return-object
+      item-key="name"
+      show-select
+      @item-expanded="runExpanded"
     >
       <template v-slot:top>
-        <RunFilterToolbar
+        <run-filter-toolbar
           :selected="selected"
           :selected-baseline-runs="selectedBaselineRuns"
           :selected-baseline-tags="selectedBaselineTags"
@@ -44,41 +39,38 @@
           @on-run-filter-changed="onRunFilterChanged"
           @on-run-history-filter-changed="onRunHistoryFilterChanged"
           @update="fetchRuns"
-          @delete-complete="selected = []"
         />
       </template>
 
-      <template v-slot:expanded-row="{ columns, item }">
-        <tr>
-          <td
-            v-if="item.$history"
-            :colspan="columns.length"
+      <template v-slot:expanded-item="{ item }">
+        <td
+          v-if="item.$history"
+          :colspan="headers.length + 1"
+        >
+          <expanded-run
+            :histories="item.$history.values"
+            :run="item"
+            :open-analysis-info-dialog="openAnalysisInfoDialog"
+            :open-analyzer-statistics-dialog="openAnalyzerStatisticsDialog"
+            :selected-baseline-tags.sync="selectedBaselineTags"
+            :selected-compared-to-tags.sync="selectedComparedToTags"
           >
-            <expanded-run
-              v-model:selected-baseline-tags="selectedBaselineTags"
-              v-model:selected-compared-to-tags="selectedComparedToTags"
-              :histories="item.$history.values"
-              :run="item"
-              :open-analysis-info-dialog="openAnalysisInfoDialog"
-              :open-analyzer-statistics-dialog="openAnalyzerStatisticsDialog"
+            <v-btn
+              v-if="item.$history.hasMore"
+              class="load-more-btn mb-4"
+              color="primary"
+              :loading="loadingMoreRunHistories"
+              @click="loadMoreRunHistory(item)"
             >
-              <v-btn
-                v-if="item.$history.hasMore"
-                class="load-more-btn mb-4"
-                color="primary"
-                :loading="loadingMoreRunHistories"
-                @click="loadMoreRunHistory(item)"
-              >
-                Load more (+{{ item.$history.limit }})
-              </v-btn>
-            </expanded-run>
-          </td>
-        </tr>
+              Load more (+{{ item.$history.limit }})
+            </v-btn>
+          </expanded-run>
+        </td>
       </template>
 
       <template #item.name="{ item }">
         <run-name-column
-          :run-id="item.runId"
+          :id="item.runId"
           :name="item.name"
           :description="item.description"
           :version-tag="item.versionTag"
@@ -95,7 +87,7 @@
           :value="item.analyzerStatistics"
           :show-dividers="false"
           tag="div"
-          @click="openAnalyzerStatisticsDialog(item)"
+          @click.native="openAnalyzerStatisticsDialog(item)"
         />
       </template>
 
@@ -103,12 +95,12 @@
         <v-chip
           class="ma-2"
           color="primary"
-          variant="outlined"
+          outlined
         >
           <v-icon left>
             mdi-calendar-range
           </v-icon>
-          {{ prettifyDate(item.runDate) }}
+          {{ item.runDate | prettifyDate }}
         </v-chip>
       </template>
 
@@ -116,9 +108,9 @@
         <v-chip
           class="ma-2"
           color="success"
-          variant="outlined"
+          outlined
         >
-          <v-icon start>
+          <v-icon left>
             mdi-clock-outline
           </v-icon>
           {{ item.$duration }}
@@ -152,17 +144,12 @@
           </v-row>
         </v-container>
       </template>
-    </v-data-table-server>
+    </v-data-table>
   </v-card>
 </template>
 
-<script setup>
-import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useStore } from "vuex";
-
-import { useVersion } from "@/composables/useVersion";
-
+<script>
+import { mapGetters } from "vuex";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Order,
@@ -170,6 +157,7 @@ import {
   RunSortType
 } from "@cc/report-server-types";
 
+import { AnalysisInfoDialog } from "@/components";
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
@@ -178,393 +166,392 @@ import {
   RunNameColumn
 } from "@/components/Run";
 
-const { prettifyCCVersion } = useVersion();
+import { VersionMixin } from "@/mixins";
 
-const route = useRoute();
-const router = useRouter();
-const store = useStore();
-
-const itemsPerPageOptions = [
-  { value: 25, title: "25" },
-  { value: 50, title: "50" },
-  { value: 100, title: "100" },
-  { value: -1, title: "$vuetify.dataFooter.itemsPerPageAll" }
-];
-const page = ref(parseInt(route.query["page"]) || 1);
-const itemsPerPage = ref(
-  parseInt(route.query["items-per-page"]) ||
-  itemsPerPageOptions[0].value
-);
-const sortBy = ref(
-  route.query["sort-by"] 
-    ? [ { 
-      key: route.query["sort-by"], 
-      order: route.query["sort-desc"] === "true" ? "desc" : "asc" 
-    } ]
-    : [ { key: "name", order: "asc" } ]
-);
-
-const initialized = ref(false);
-const analysisInfoDialog = ref(false);
-const totalItems = ref(0);
-const loading = ref(false);
-const selected = ref([]);
-const selectedBaselineRuns = ref([]);
-const selectedBaselineTags = ref([]);
-const selectedComparedToRuns = ref([]);
-const selectedComparedToTags = ref([]);
-const analyzerStatisticsDialog = ref(false);
-const selectedRunId = ref(null);
-const selectedRunHistoryId = ref(null);
-const expanded = ref([]);
-const loadingMoreRunHistories = ref(false);
-const runs = ref([]);
-
-const headers = ref([
-  {
-    title: "",
-    key: "data-table-expand"
+export default {
+  name: "RunList",
+  components: {
+    AnalyzerStatisticsBtn,
+    AnalyzerStatisticsDialog,
+    AnalysisInfoDialog,
+    ExpandedRun,
+    RunNameColumn,
+    RunFilterToolbar
   },
-  {
-    title: "Name",
-    key: "name",
-    sortable: true
-  },
-  {
-    title: "Number of unresolved reports",
-    key: "resultCount",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Analyzer statistics",
-    key: "analyzerStatistics",
-    sortable: false
-  },
-  {
-    title: "Latest storage date",
-    key: "runDate",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Analysis duration",
-    key: "duration",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "CodeChecker version",
-    key: "codeCheckerVersion",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Diff",
-    key: "diff",
-    align: "center",
-    sortable: false,
-    width: "100px"
-  }
-]);
+  mixins: [ VersionMixin ],
 
-const runFilter = computed(() => store.getters["run/runFilter"]);
-const runHistoryFilter = computed(() => store.getters["run/runHistoryFilter"]);
+  data() {
+    const itemsPerPageOptions = [ 25, 50, 100 ];
 
-watch(
-  [ page, itemsPerPage, sortBy ],
-  () => {
-    updateUrl();
-    if (initialized.value) {
-      fetchRuns();
-    }
-  }, { deep: true }
-);
+    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
+    const itemsPerPage =
+      parseInt(this.$router.currentRoute.query["items-per-page"]) ||
+      itemsPerPageOptions[0];
+    const sortBy = this.$router.currentRoute.query["sort-by"];
+    const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
-watch(expanded, (newVal, oldVal) => {
-  const added = newVal.find(item => !oldVal.includes(item));
-
-  if (added) {
-    runExpanded(added);
-  } else {
-    updateExpandedUrlParam();
-  }
-});
-
-onMounted(async () => {
-  await fetchRuns();
-  await initExpandedItems();
-
-  initialized.value = true;
-});
-
-function onRunFilterChanged() {
-  if (page.value !== 1) {
-    page.value = 1;
-  } else {
-    fetchRuns();
-  }
-}
-
-async function onRunHistoryFilterChanged() {
-  loading.value = true;
-
-  await Promise.all(expanded.value.map(async run => {
-    const { limit, offset } = run.$history;
-
-    const { runHistory, hasMore } =
-      await getRunHistory(run.runId.toNumber(), limit, offset);
-
-    run.$history.hasMore = hasMore;
-    run.$history.values = runHistory;
-  }));
-
-  loading.value = false;
-}
-
-async function initExpandedItems() {
-  const _expanded = route.query["expanded"];
-  if (!_expanded)
-    return;
-
-  const expandedItems = JSON.parse(_expanded);
-  for (const [ key, val ] of Object.entries(expandedItems)) {
-    const limit = val.limit;
-    const offset = val.offset;
-    const runId = +key;
-
-    const run = runs.value.find(r => r.runId.toNumber() === runId);
-    const { runHistory, hasMore } =
-      await getRunHistory(runId, limit + offset, 0);
-
-    run.$history = {
-      limit,
-      offset,
-      hasMore,
-      values: runHistory
+    return {
+      initialized: false,
+      analysisInfoDialog: false,
+      pagination: {
+        page: page,
+        itemsPerPage: itemsPerPage,
+        sortBy: sortBy ? [ sortBy ] : [],
+        sortDesc: sortDesc !== undefined ? [ sortDesc === "true" ] : []
+      },
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions
+      },
+      totalItems: 0,
+      loading: false,
+      selected: [],
+      selectedBaselineRuns: [],
+      selectedBaselineTags: [],
+      selectedComparedToRuns: [],
+      selectedComparedToTags: [],
+      analyzerStatisticsDialog: false,
+      selectedRunId: null,
+      selectedRunHistoryId: null,
+      expanded: [],
+      loadingMoreRunHistories: false,
+      headers: [
+        {
+          text: "",
+          value: "data-table-expand"
+        },
+        {
+          text: "Name",
+          value: "name",
+          sortable: true
+        },
+        {
+          text: "Number of unresolved reports",
+          value: "resultCount",
+          align: "center",
+          sortable: true
+        },
+        {
+          text: "Analyzer statistics",
+          value: "analyzerStatistics",
+          sortable: false
+        },
+        {
+          text: "Latest storage date",
+          value: "runDate",
+          align: "center",
+          sortable: true
+        },
+        {
+          text: "Analysis duration",
+          value: "duration",
+          align: "center",
+          sortable: true
+        },
+        {
+          text: "CodeChecker version",
+          value: "codeCheckerVersion",
+          align: "center",
+          sortable: true
+        },
+        {
+          text: "Diff",
+          value: "diff",
+          align: "center",
+          sortable: false,
+          width: "100px"
+        }
+      ],
+      runs: []
     };
+  },
 
-    expanded.value.push(run);
-  }
-}
+  computed: {
+    ...mapGetters("run", [
+      "runFilter",
+      "runHistoryFilter"
+    ])
+  },
 
-function updateUrl() {
-  const _defaultItemsPerPage = itemsPerPageOptions[0].value;
-  const _itemsPerPage =
-    itemsPerPage.value === _defaultItemsPerPage
-      ? undefined
-      : itemsPerPage;
+  watch: {
+    pagination: {
+      handler() {
+        if (!this.initialized) return;
 
-  const _page = page.value === 1 ? undefined : page.value;
-  const _sortBy = sortBy.value?.[0]?.key;
-  const _sortDesc = sortBy.value?.[0]?.order === "desc";
-  router.replace({
-    query: {
-      ...route.query,
-      "items-per-page": _itemsPerPage,
-      "page": _page,
-      "sort-by": _sortBy,
-      "sort-desc": _sortDesc,
+        const defaultItemsPerPage = this.footerProps.itemsPerPageOptions[0];
+        const itemsPerPage =
+          this.pagination.itemsPerPage === defaultItemsPerPage
+            ? undefined
+            : this.pagination.itemsPerPage;
+
+        const page = this.pagination.page === 1
+          ? undefined : this.pagination.page;
+        const sortBy = this.pagination.sortBy.length
+          ? this.pagination.sortBy[0] : undefined;
+        const sortDesc = this.pagination.sortDesc.length
+          ? this.pagination.sortDesc[0] : undefined;
+
+        this.updateUrl({
+          "items-per-page": itemsPerPage,
+          "page": page,
+          "sort-by": sortBy,
+          "sort-desc": sortDesc,
+        });
+
+        this.fetchRuns();
+      },
+      deep: true
     }
-  }).catch(() => {});
-}
+  },
 
-function updateExpandedUrlParam() {
-  const _expanded = expanded.value.reduce((expandedMap, run) => {
-    if (run?.$history) {
-      expandedMap[run.runId] = {
-        limit: run.$history.limit,
-        offset: run.$history.offset
+  async mounted() {
+    await this.fetchRuns();
+    await this.initExpandedItems();
+
+    this.initialized = true;
+  },
+
+  methods: {
+    onRunFilterChanged() {
+      if (this.pagination.page !== 1) {
+        this.pagination.page = 1;
+      } else {
+        this.fetchRuns();
+      }
+    },
+
+    async onRunHistoryFilterChanged() {
+      this.loading = true;
+
+      await Promise.all(this.expanded.map(async run => {
+        const { limit, offset } = run.$history;
+
+        const { histories, hasMore } =
+          await this.getRunHistory(run.runId, limit + offset);
+
+        run.$history.hasMore = hasMore;
+        run.$history.values = histories;
+      }));
+
+      this.loading = false;
+    },
+
+    async initExpandedItems() {
+      const expanded = this.$router.currentRoute.query["expanded"];
+      if (!expanded)
+        return;
+
+      const expandedItems = JSON.parse(expanded);
+      for (const [ key, val ] of Object.entries(expandedItems)) {
+        const limit = val.limit;
+        const offset = val.offset;
+        const runId = +key;
+
+        const run = this.runs.find(r => r.runId.toNumber() === runId);
+        const { histories, hasMore } =
+          await this.getRunHistory(runId, limit + offset, 0);
+
+        run.$history = {
+          limit,
+          offset,
+          hasMore,
+          values: histories
+        };
+
+        this.expanded.push(run);
+      }
+    },
+
+    updateUrl(params) {
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          ...params
+        }
+      }).catch(() => {});
+    },
+
+    updateExpandedUrlParam() {
+      const expanded = this.expanded.reduce((acc, curr) => {
+        acc[curr.runId] = {
+          limit: curr.$history.limit,
+          offset: curr.$history.offset
+        };
+
+        return acc;
+      }, {});
+
+      this.updateUrl({
+        expanded: this.expanded.length ? JSON.stringify(expanded) : undefined
+      });
+    },
+
+    async loadMoreRunHistory(run) {
+      this.loadingMoreRunHistories = true;
+
+      const limit = run.$history.limit;
+
+      const offset = run.$history.offset + limit;
+      run.$history.offset = offset;
+
+      const { histories, hasMore } =
+        await this.getRunHistory(run.runId, limit, offset);
+
+      run.$history.hasMore = hasMore;
+      run.$history.values.push(...histories);
+
+      this.updateExpandedUrlParam();
+
+      this.loadingMoreRunHistories = false;
+    },
+
+    async runExpanded(run, limit=10, offset=0) {
+      if (run.item.$history) {
+        // Use nextTick to wait while expanded array is updated.
+        return this.$nextTick(this.updateExpandedUrlParam);
+      }
+
+      this.loading = true;
+
+      const { histories, hasMore } =
+        await this.getRunHistory(run.item.runId, limit, offset);
+
+      run.item.$history = {
+        limit,
+        offset,
+        hasMore,
+        values: histories
+      };
+
+      this.updateExpandedUrlParam();
+
+      this.loading = false;
+    },
+
+    getRunHistory(runId, limit=10, offset=null) {
+      return new Promise(resolve => {
+        ccService.getClient().getRunHistory([ runId ], limit, offset,
+          this.runHistoryFilter, handleThriftError(histories => {
+            resolve({
+              hasMore: histories.length === limit,
+              histories: histories.map(h => ({
+                ...h,
+                $codeCheckerVersion:
+                  this.prettifyCCVersion(h.codeCheckerVersion)
+              }))
+            });
+          }));
+      });
+    },
+
+    getSortMode() {
+      let type = null;
+      switch (this.pagination.sortBy[0]) {
+      case "name":
+        type = RunSortType.NAME;
+        break;
+      case "resultCount":
+        type = RunSortType.UNRESOLVED_REPORTS;
+        break;
+      case "duration":
+        type = RunSortType.DURATION;
+        break;
+      case "codeCheckerVersion":
+        type = RunSortType.CC_VERSION;
+        break;
+      default:
+        type = RunSortType.DATE;
+      }
+
+      const ord = this.pagination.sortDesc[0] === false
+        ? Order.ASC : Order.DESC;
+
+      return new RunSortMode({ type: type, ord: ord });
+    },
+
+    fetchRuns() {
+      this.loading = true;
+
+      // Get total item count.
+      ccService.getClient().getRunCount(this.runFilter,
+        handleThriftError(totalItems => {
+          this.totalItems = totalItems.toNumber();
+        }));
+
+      // Get the runs.
+      const limit = this.pagination.itemsPerPage;
+      const offset = limit * (this.pagination.page - 1);
+      const sortMode = this.getSortMode();
+
+      return new Promise(resolve => {
+        ccService.getClient().getRunData(this.runFilter, limit, offset,
+          sortMode, handleThriftError(runs => {
+            this.runs = runs.map(r => {
+              const version = this.prettifyCCVersion(r.codeCheckerVersion);
+
+              // Init run history by the expanded array.
+              const oldRun = this.expanded.find(e =>
+                e.runId.toNumber() === r.runId.toNumber());
+
+              return {
+                ...r,
+                $history: oldRun ? oldRun.$history : null,
+                $duration: this.prettifyDuration(r.duration),
+                $codeCheckerVersion: version
+              };
+            });
+
+            this.loading = false;
+
+            resolve(this.runs);
+          }));
+      });
+    },
+
+    openAnalysisInfoDialog(runId, runHistoryId=null) {
+      this.selectedRunId = runId;
+      this.selectedRunHistoryId = runHistoryId;
+      this.analysisInfoDialog = true;
+    },
+
+    openAnalyzerStatisticsDialog(report, history=null) {
+      this.selectedRunId = report ? report.runId : null;
+      this.selectedRunHistoryId = history ? history.id : null;
+      this.analyzerStatisticsDialog = true;
+    },
+
+    prettifyDuration(seconds) {
+      if (seconds >= 0) {
+        const durHours = Math.floor(seconds / 3600);
+        const durMins  = Math.floor(seconds / 60) - durHours * 60;
+        const durSecs  = seconds - durMins * 60 - durHours * 3600;
+
+        const prettyDurHours = (durHours < 10 ? "0" : "") + durHours;
+        const prettyDurMins  = (durMins  < 10 ? "0" : "") + durMins;
+        const prettyDurSecs  = (durSecs  < 10 ? "0" : "") + durSecs;
+
+        return prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
+      }
+
+      return "";
+    },
+
+    getReportFilterQuery(run) {
+      return {
+        run: run.name
+      };
+    },
+
+    getStatisticsFilterQuery(run) {
+      return {
+        run: run.name
       };
     }
-
-    return expandedMap;
-  }, {});
-
-  updateUrl({
-    expanded: expanded.value.length ? JSON.stringify(_expanded) : undefined
-  });
-}
-
-async function loadMoreRunHistory(run) {
-  loadingMoreRunHistories.value = true;
-
-  const limit = run.$history.limit;
-
-  const offset = run.$history.offset + limit;
-  run.$history.offset = offset;
-
-  const { runHistory, hasMore } =
-    await getRunHistory(run.runId.toNumber(), limit, offset);
-
-  run.$history.hasMore = hasMore;
-  run.$history.values.push(...runHistory);
-
-  updateExpandedUrlParam();
-
-  loadingMoreRunHistories.value = false;
-}
-
-async function runExpanded(run, limit=10, offset=0) {
-  // Check if given item has any history added to it.
-  // Simply update the url params if so.
-  if (run.$history) {
-    return nextTick(updateExpandedUrlParam);
   }
-
-  loading.value = true;
-
-  const { runHistory, hasMore } =
-    await getRunHistory(run.runId.toNumber(), limit, offset);
-
-  run.$history = {
-    limit,
-    offset,
-    hasMore,
-    values: runHistory
-  };
-
-  updateExpandedUrlParam();
-
-  loading.value = false;
-}
-
-async function getRunHistory(runId, limit=10, offset=0) {
-  return new Promise(resolve => {
-    ccService.getClient().getRunHistory([ runId ], limit, offset,
-      runHistoryFilter.value, handleThriftError(runHistory => {
-        resolve({
-          hasMore: runHistory.length === limit,
-          runHistory: runHistory.map(h => ({
-            ...h,
-            $codeCheckerVersion:
-              prettifyCCVersion(h.codeCheckerVersion)
-          }))
-        });
-      }));
-  });
-}
-
-function getSortMode() {
-  let type = null;
-  const _sortBy = sortBy.value?.[0]?.key;
-
-  switch (_sortBy) {
-  case "name":
-    type = RunSortType.NAME;
-    break;
-  case "resultCount":
-    type = RunSortType.UNRESOLVED_REPORTS;
-    break;
-  case "duration":
-    type = RunSortType.DURATION;
-    break;
-  case "codeCheckerVersion":
-    type = RunSortType.CC_VERSION;
-    break;
-  default:
-    type = RunSortType.DATE;
-  }
-
-  const _ord = sortBy.value?.[0]?.order === "asc" ? Order.ASC : Order.DESC;
-
-  return new RunSortMode({ type: type, ord: _ord });
-}
-
-async function fetchRuns() {
-  loading.value = true;
-
-  // Get total item count.
-  ccService.getClient().getRunCount(runFilter.value,
-    handleThriftError(_totalItems => {
-      totalItems.value = _totalItems.toNumber();
-    }));
-
-  // Get the runs.
-  const limit = itemsPerPage.value;
-  const offset = limit * (page.value - 1);
-  const sortMode = getSortMode();
-
-  return new Promise(_resolve => {
-    ccService.getClient().getRunData(runFilter.value, limit, offset, sortMode,
-      handleThriftError(_runs => {
-        runs.value = _runs.map(_r => {
-          const version = prettifyCCVersion(_r.codeCheckerVersion);
-
-          // Init run history by the expanded array.
-          const oldRun = expanded.value.find(_e =>
-            _e.runId.toNumber() === _r.runId.toNumber());
-
-          return {
-            ..._r,
-            $history: oldRun ? oldRun.$history : null,
-            $duration: prettifyDuration(_r.duration),
-            $codeCheckerVersion: version
-          };
-        });
-
-        loading.value = false;
-
-        _resolve(runs);
-      }));
-  });
-}
-
-function openAnalysisInfoDialog(runId, runHistoryId=null) {
-  selectedRunId.value = runId;
-  selectedRunHistoryId.value = runHistoryId;
-  analysisInfoDialog.value = true;
-}
-
-function openAnalyzerStatisticsDialog(report, history=null) {
-  selectedRunId.value = report ? report.runId : null;
-  selectedRunHistoryId.value = history ? history.id : null;
-  analyzerStatisticsDialog.value = true;
-}
-
-function prettifyDuration(seconds) {
-  if (seconds >= 0) {
-    const durHours = Math.floor(seconds / 3600);
-    const durMins  = Math.floor(seconds / 60) - durHours * 60;
-    const durSecs  = seconds - durMins * 60 - durHours * 3600;
-
-    const prettyDurHours = (durHours < 10 ? "0" : "") + durHours;
-    const prettyDurMins  = (durMins  < 10 ? "0" : "") + durMins;
-    const prettyDurSecs  = (durSecs  < 10 ? "0" : "") + durSecs;
-
-    return prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
-  }
-
-  return "";
-}
-
-function getReportFilterQuery(run) {
-  return {
-    run: run.name
-  };
-}
-
-function getStatisticsFilterQuery(run) {
-  return {
-    run: run.name
-  };
-}
-
-function prettifyDate(date) {
-  if (!date) return "";
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const seconds = String(d.getSeconds()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
+};
 </script>
 
 <style lang="scss" scoped>
-.v-data-table :deep(tbody tr.v-data-table__expanded__content) {
+.v-data-table ::v-deep tbody tr.v-data-table__expanded__content {
   box-shadow: none;
 }
 </style>

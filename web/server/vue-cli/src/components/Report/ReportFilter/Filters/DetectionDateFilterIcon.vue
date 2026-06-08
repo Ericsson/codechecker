@@ -50,10 +50,17 @@
   </v-avatar>
 </template>
 
-<script setup>
+<script>
 import DetectionDateFilterItems from "./DetectionDateFilterItems";
 
-defineProps({
-  value: { type: Number, required: true }
-});
+export default {
+  props: {
+    value: { type: Number, required: true }
+  },
+  data() {
+    return {
+      DetectionDateFilterItems
+    };
+  }
+};
 </script>

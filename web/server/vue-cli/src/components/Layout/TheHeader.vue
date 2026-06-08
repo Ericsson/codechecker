@@ -1,42 +1,56 @@
 <template>
   <v-app-bar
-    extension-height="24"
+    extension-height="24px"
+    app
     color="primary"
-    density="default"
+    dark
   >
     <template
       v-if="announcement && announcement.length"
       v-slot:extension
     >
-      <div
-        class="d-flex justify-center align-center w-100"
-        style="background-color: #ff9800; height: 24px; color: black;"
+      <v-system-bar
+        color="#ff9800"
+        absolute
+        height="24px"
+        light
       >
-        <v-icon>mdi-bullhorn-outline</v-icon>
-        <span class="font-weight-semibold ml-2">
-          {{ announcement }}
-        </span>
-      </div>
+        <v-row>
+          <v-col
+            class="py-0"
+            align="center"
+          >
+            <v-icon>mdi-bullhorn-outline</v-icon>
+            <span class="font-weight-bold">
+              {{ announcement }}
+            </span>
+          </v-col>
+        </v-row>
+      </v-system-bar>
     </template>
 
     <v-app-bar-nav-icon>
       <v-avatar
         size="36px"
-        :image="require('@/assets/logo.png')"
-        color="transparent"
-      />
+      >
+        <img
+          alt="Logo"
+          src="@/assets/logo.png"
+        >
+      </v-avatar>
     </v-app-bar-nav-icon>
 
     <v-toolbar-title class="pl-0">
       CodeChecker {{ packageVersion }}
-      <v-chip
-        v-if="currentProductDisplayName"
-        class="mx-2"
-        variant="outlined"
-      >
-        {{ currentProductDisplayName }}
-      </v-chip>
     </v-toolbar-title>
+
+    <v-chip
+      v-if="currentProductDisplayName"
+      class="mx-2"
+      outlined
+    >
+      {{ currentProductDisplayName }}
+    </v-chip>
 
     <v-spacer />
 
@@ -48,8 +62,6 @@
         :key="item.name"
         :to="{
           name: item.route,
-          params: $route.params.endpoint ?
-            { endpoint: $route.params.endpoint } : {},
           query: queries[item.query_namespace] === undefined
             ? item.query || {}
             : queries[item.query_namespace]
@@ -57,9 +69,9 @@
         :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
         :exact="item.exact"
-        variant="text"
+        text
       >
-        <v-icon class="mr-2">
+        <v-icon left>
           {{ item.icon }}
         </v-icon>
         {{ item.name }}
@@ -68,48 +80,47 @@
 
     <v-menu
       v-if="showConfigItems"
+      offset-y
     >
-      <template v-slot:activator="{ props }">
+      <template v-slot:activator="{ on, attrs }">
         <v-btn
-          v-bind="props"
-          variant="text"
+          text
           :class="configureMenuItems.map(c => c.route).includes($route.name) &&
             'v-btn--active router-link-active'"
+          v-bind="attrs"
+          v-on="on"
         >
-          <v-icon class="mr-2">
+          <v-icon left>
             mdi-cog-outline
           </v-icon>
           Configuration
-          <v-icon class="ml-2">
+          <v-icon right>
             mdi-menu-down
           </v-icon>
         </v-btn>
       </template>
 
       <v-list>
-        <v-list-item
-          v-for="item in configureMenuItems"
-          :key="item.title"
-          :to="{ 
-            name: item.route,
-            params: $route.params.endpoint ?
-              { endpoint: $route.params.endpoint } : {}
-          }"
-          exact
-        >
-          <template v-slot:prepend>
-            <v-icon class="mr-1">
-              {{ item.icon }}
-            </v-icon>
-          </template>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item>
+        <v-list-item-group color="primary">
+          <v-list-item
+            v-for="item in configureMenuItems"
+            :key="item.title"
+            :to="{ name: item.route }"
+            exact
+          >
+            <v-list-item-avatar class="mr-1">
+              <v-icon>{{ item.icon }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list-item-group>
       </v-list>
     </v-menu>
 
     <v-divider
       v-if="showUserInfo && menuItems.length"
       class="mx-2"
+      inset
       vertical
       :style="{ display: 'inline' }"
     />
@@ -118,11 +129,11 @@
       v-if="showUserInfo"
     />
 
-    <v-menu>
-      <template v-slot:activator="{ props }">
+    <v-menu offset-y>
+      <template v-slot:activator="{ on }">
         <v-btn
-          v-bind="props"
           icon
+          v-on="on"
         >
           <v-icon>mdi-dots-vertical</v-icon>
         </v-btn>
@@ -133,10 +144,8 @@
   </v-app-bar>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import { useStore } from "vuex";
+<script>
+import { mapActions, mapGetters } from "vuex";
 
 import { GET_ANNOUNCEMENT, GET_PACKAGE_VERSION } from "@/store/actions.type";
 
@@ -145,107 +154,122 @@ import { defaultStatisticsFilterValues } from "@/components/Statistics";
 import HeaderMenuItems from "./HeaderMenuItems";
 import UserInfoMenu from "./UserInfoMenu";
 
-const store = useStore();
-const route = useRoute();
+export default {
+  name: "TheHeader",
+  components: {
+    HeaderMenuItems,
+    UserInfoMenu
+  },
+  data() {
+    return {
+      menuButtons: [
+        {
+          name: "Products",
+          query_namespace: "products",
+          icon: "mdi-briefcase-outline",
+          route: "products",
+          active: [ "products" ],
+          exact: true,
+          hide: [ "products", "login", "404" ]
+        },
+        {
+          name: "Runs",
+          query_namespace: "runs",
+          icon: "mdi-run-fast",
+          route: "runs",
+          active: [ "runs", "main_runs" ],
+          exact: true,
+          hide: [ "products", "login", "404" ]
+        },
+        {
+          name: "Reports",
+          query_namespace: "report_filter",
+          icon: "mdi-bug",
+          route: "reports",
+          active: [ "reports" ],
+          exact: true,
+          query: defaultReportFilterValues,
+          hide: [ "products", "login", "404" ]
+        },
+        {
+          name: "Statistics",
+          query_namespace: "report_filter",
+          icon: "mdi-chart-line",
+          route: "statistics",
+          active: [ "statistics" ],
+          exact: false,
+          query: defaultStatisticsFilterValues,
+          hide: [ "products", "login", "404" ]
+        }
+      ],
+      configureMenuItems: [
+        {
+          title: "Cleanup Plan",
+          icon: "mdi-sign-direction",
+          route: "cleanup-plan"
+        },
+        {
+          title: "Review Status Rules",
+          icon: "mdi-format-list-checkbox",
+          route: "review-status-rules"
+        },
+        {
+          title: "Source Component",
+          icon: "mdi-puzzle-outline",
+          route: "source-component"
+        }
+      ]
+    };
+  },
 
-const menuButtons = ref([
-  {
-    name: "Products",
-    query_namespace: "products",
-    icon: "mdi-briefcase-outline",
-    route: "products",
-    active: [ "products" ],
-    exact: true,
-    hide: [ "products", "login", "404" ]
+  computed: {
+    ...mapGetters([
+      "queries",
+      "authParams",
+      "isAuthenticated",
+      "announcement",
+      "packageVersion",
+      "currentProduct"
+    ]),
+
+    currentProductDisplayName() {
+      return this.currentProduct
+        ? window.atob(this.currentProduct.displayedName_b64)
+        : null;
+    },
+
+    menuItems() {
+      if (!this.$route.name) return [];
+
+      return this.menuButtons.filter(item => {
+        return !item.hide || !item.hide.includes(this.$route.name);
+      });
+    },
+
+    showMenuItems() {
+      return !this.authParams?.requiresAuthentication || this.isAuthenticated;
+    },
+
+    showUserInfo() {
+      return this.authParams?.requiresAuthentication && this.isAuthenticated;
+    },
+
+    showConfigItems() {
+      return ![ "products", "login", "404" ].includes(this.$route.name) &&
+        this.showMenuItems;
+    }
   },
-  {
-    name: "Runs",
-    query_namespace: "runs",
-    icon: "mdi-run-fast",
-    route: "runs",
-    active: [ "runs", "main_runs" ],
-    exact: true,
-    hide: [ "products", "login", "404" ]
+
+  mounted() {
+    this.getAnnouncement();
+    this.getPackageVersion();
   },
-  {
-    name: "Reports",
-    query_namespace: "report_filter",
-    icon: "mdi-bug",
-    route: "reports",
-    active: [ "reports" ],
-    exact: true,
-    query: defaultReportFilterValues,
-    hide: [ "products", "login", "404" ]
-  },
-  {
-    name: "Statistics",
-    query_namespace: "report_filter",
-    icon: "mdi-chart-line",
-    route: "statistics",
-    active: [ "statistics" ],
-    exact: false,
-    query: defaultStatisticsFilterValues,
-    hide: [ "products", "login", "404" ]
+
+  methods: {
+    ...mapActions([
+      GET_ANNOUNCEMENT,
+      GET_PACKAGE_VERSION
+    ])
   }
-]);
-
-const configureMenuItems = ref([
-  {
-    title: "Cleanup Plan",
-    icon: "mdi-sign-direction",
-    route: "cleanup-plan"
-  },
-  {
-    title: "Review Status Rules",
-    icon: "mdi-format-list-checkbox",
-    route: "review-status-rules"
-  },
-  {
-    title: "Source Component",
-    icon: "mdi-puzzle-outline",
-    route: "source-component"
-  }
-]);
-
-const queries = computed(() => store.getters.queries);
-const authParams = computed(() => store.getters.authParams);
-const isAuthenticated = computed(() => store.getters.isAuthenticated);
-const announcement = computed(() => store.getters.announcement);
-const packageVersion = computed(() => store.getters.packageVersion);
-const currentProduct = computed(() => store.getters.currentProduct);
-
-const currentProductDisplayName = computed(() => {
-  return currentProduct.value
-    ? window.atob(currentProduct.value.displayedName_b64)
-    : null;
-});
-
-const menuItems = computed(() => {
-  if (!route.name) return [];
-
-  return menuButtons.value.filter(item => {
-    return !item.hide || !item.hide.includes(route.name);
-  });
-});
-
-const showMenuItems = computed(() => {
-  return !authParams.value?.requiresAuthentication || isAuthenticated.value;
-});
-
-const showUserInfo = computed(() => {
-  return authParams.value?.requiresAuthentication && isAuthenticated.value;
-});
-
-const showConfigItems = computed(() => {
-  return ![ "products", "login", "404" ].includes(route.name) &&
-    showMenuItems;
-});
-
-onMounted(() => {
-  getAnnouncement();
-  getPackageVersion();
-});
-
-const getAnnouncement = () => store.dispatch(GET_ANNOUNCEMENT);
-const getPackageVersion = () => store.dispatch(GET_PACKAGE_VERSION);
+};
 </script>

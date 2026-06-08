@@ -1,6 +1,5 @@
 <template>
   <base-statistics-table
-    class="guideline-statistics-table"
     :headers="tableHeaders"
     :items="itemsWithUuid"
     :loading="loading"
@@ -9,109 +8,108 @@
     loading-text="Loading guideline statistics..."
     no-data-text="No guideline statistics available"
     item-key="uuid"
-    :sort-by="[{ key: 'checkers.severity', order: 'desc' }]"
+    sort-by="checkers.severity"
+    sort-desc
     @enabled-click="enabledClick"
-  />
+  />  
 </template>
 
-<script setup>
-import { computed } from "vue";
-
+<script>
 import { BaseStatisticsTable } from "@/components/Statistics";
 import { v4 as uuidv4 } from "uuid";
 
-const props = defineProps({
-  items: { type: Array, required: true },
-  loading: { type: Boolean, default: false }
-});
+export default {
+  name: "GuidelineStatisticsTable",
+  components: {
+    BaseStatisticsTable
+  },
+  props: {
+    items: { type: Array, required: true },
+    loading: { type: Boolean, default: false }
+  },
+  data() {
+    return {
+      headers: [
+        {
+          text: "Guideline Name",
+          value: "guidelineName"
+        },
+        {
+          text: "Rule Name",
+          value: "guidelineRule"
+        },
+        {
+          text: "Title",
+          value: "guidelineRuleTitle"
+        },
+        {
+          text: "Related Checker(s)",
+          value: "checkers.name"
+        },
+        {
+          text: "Checker Severity",
+          value: "checkers.severity",
+          align: "center"
+        },
+        {
+          text: "Checker Status",
+          value: "checkers.enabledInAllRuns",
+          align: "center"
+        },
+        {
+          text: "Closed Reports",
+          value: "checkers.closed",
+          align: "center"
+        },
+        {
+          text: "Outstanding Reports",
+          value: "checkers.outstanding",
+          align: "center"
+        },
+      ]
+    };
+  },
 
-const emit = defineEmits([ "enabled-click" ]);
+  computed: {
+    hasTitle() {
+      return this.items.some(item => item.guidelineRuleTitle);
+    },
 
-const headers = [
-  {
-    title: "Guideline Name",
-    key: "guidelineName"
-  },
-  {
-    title: "Rule Name",
-    key: "guidelineRule"
-  },
-  {
-    title: "Title",
-    key: "guidelineRuleTitle"
-  },
-  {
-    title: "Level",
-    key: "guidelineLevel"
-  },
-  {
-    title: "Related Checker(s)",
-    key: "checkers.name"
-  },
-  {
-    title: "Checker Severity",
-    key: "checkers.severity",
-    align: "center"
-  },
-  {
-    title: "Checker Status",
-    key: "checkers.enabledInAllRuns",
-    align: "center"
-  },
-  {
-    title: "Closed Reports",
-    key: "checkers.closed",
-    align: "center"
-  },
-  {
-    title: "Outstanding Reports",
-    key: "checkers.outstanding",
-    align: "center"
-  },
-];
+    tableHeaders() {
+      if (!this.headers) return;
 
-const hasTitle = computed(function() {
-  return props.items.some(_item => _item.guidelineRuleTitle);
-});
+      return this.headers.filter(header => {
+        if (header.value === "guidelineRuleTitle") {
+          return this.hasTitle;
+        }
 
-const hasLevel = computed(function() {
-  return props.items.some(_item => _item.guidelineLevel);
-});
+        return true;
+      });
+    },
 
-const tableHeaders = computed(function() {
-  if (!headers) return;
-
-  return headers.filter(_header => {
-    if (_header.value === "guidelineRuleTitle") {
-      return hasTitle.value;
-    } else if (_header.value === "guidelineLevel") {
-      return hasLevel.value;
+    itemsWithUuid() {
+      return this.items.map(item => ({
+        ...item,
+        uuid: item.uuid || uuidv4()
+      }));
     }
+  },
 
-    return true;
-  });
-});
+  methods: {
+    enabledClick(type, checker_name) {
+      this.$emit("enabled-click", type, checker_name);
+    },
 
-const itemsWithUuid = computed(function() {
-  return props.items.map(_item => ({
-    ..._item,
-    uuid: _item.uuid || uuidv4()
-  }));
-});
-
-function enabledClick(_type, _checker_name) {
-  emit("enabled-click", _type, _checker_name);
-}
-
-function getRowClass(item) {
-  const _hasOutstanding = item.checkers.some(
-    _checker => _checker.outstanding > 0);
-  return _hasOutstanding ? "highlight-row" : "";
-}
+    getRowClass(item) {
+      const hasOutstanding = item.checkers.some(
+        checker => checker.outstanding > 0);
+      return hasOutstanding ? "highlight-row" : "";
+    }
+  }
+};
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
-  $class-name: ".guideline-statistics-table"
-);
+$class-name: ".checker-statistics > ::v-deep .v-data-table__wrapper";
+@import "@/components/Statistics/style.scss";
 </style>

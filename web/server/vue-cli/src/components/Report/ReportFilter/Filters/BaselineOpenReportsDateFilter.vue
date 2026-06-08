@@ -2,13 +2,11 @@
   <filter-toolbar
     :id="id"
     title="Outstanding reports on a given date"
-    :panel="baseFilter.panel"
+    :panel="panel"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
-      <tooltip-help-icon
-        class="mr-2"
-      >
+      <tooltip-help-icon>
         Filter reports that were <i>DETECTED BEFORE</i> the given date and
         <i>NOT FIXED BEFORE</i> the given date.<br><br>
 
@@ -31,103 +29,88 @@
       <date-time-picker
         :input-class="id"
         :dialog-class="id"
-        :model-value="date"
-        variant="underlined"
+        :value="date"
         label="Report date"
-        @update:model-value="setDateTime"
+        @input="setDateTime"
       />
     </v-card-actions>
   </filter-toolbar>
 </template>
 
-<script setup>
-import { computed, ref, toRef } from "vue";
-
-import { useRoute } from "vue-router";
-
+<script>
+import DateMixin from "@/mixins/date.mixin";
 import DateTimePicker from "@/components/DateTimePicker";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
-import { useBaseFilter } from "@/composables/useBaseFilter";
-import { useDateUtils } from "@/composables/useDateUtils";
 
+import BaseFilterMixin from "./BaseFilter.mixin";
 import FilterToolbar from "./Layout/FilterToolbar";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "BaselineOpenReportsDateFilter",
+  components: {
+    DateTimePicker,
+    FilterToolbar,
+    TooltipHelpIcon
+  },
+  mixins: [ BaseFilterMixin, DateMixin ],
 
-const emit = defineEmits([
-  "update:url"
-]);
+  data() {
+    return {
+      id: "open-reports-date",
+      date: null
+    };
+  },
 
-const id = ref("open-reports-date");
-const date = ref(null);
-
-const { dateTimeToStr, getUnixTime } = useDateUtils();
-
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
-
-const route = useRoute();
-
-const selectedDateTitle = computed(() => 
-  date.value ? dateTimeToStr(date.value) : null
-);
-
-function setDateTime(_date, updateUrl=true) {
-  date.value = _date;
-  updateReportFilter();
-
-  if (updateUrl) {
-    emit("update:url");
-  }
-}
-
-function updateReportFilter() {
-  baseFilter.setReportFilter({
-    openReportsDate: date.value ? getUnixTime(date.value) : null
-  });
-}
-
-function getUrlState() {
-  return {
-    [ id.value ]: date.value ? dateTimeToStr(date.value) : undefined
-  };
-}
-
-function initByUrl() {
-  const _date = route.query[id.value];
-  if (_date) {
-    const _dateTime = new Date(_date);
-
-    // We need to round the date upward because we will send the dates
-    // to the server without milliseconds.
-    if (_dateTime.getMilliseconds()) {
-      _dateTime.setMilliseconds(1000);
+  computed: {
+    selectedDateTitle() {
+      return this.date ? this.dateTimeToStr(this.date) : null;
     }
+  },
 
-    setDateTime(_dateTime, false);
+  methods: {
+    setDateTime(date, updateUrl=true) {
+      this.date = date;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
+    updateReportFilter() {
+      this.setReportFilter({
+        openReportsDate: this.date ? this.getUnixTime(this.date) : null
+      });
+    },
+
+    getUrlState() {
+      return {
+        [ this.id ]: this.date ? this.dateTimeToStr(this.date) : undefined
+      };
+    },
+
+    initByUrl() {
+      const date = this.$route.query[this.id];
+      if (date) {
+        const dateTime = new Date(date);
+
+        // We need to round the date upward because we will send the dates
+        // to the server without milliseconds.
+        if (dateTime.getMilliseconds()) {
+          dateTime.setMilliseconds(1000);
+        }
+
+        this.setDateTime(dateTime, false);
+      }
+    },
+
+    initPanel() {
+      this.panel = this.date !== null;
+    },
+
+    clear(updateUrl) {
+      this.setDateTime(null, updateUrl);
+    }
   }
-}
-
-function initPanel() {
-  baseFilter.panel.value = date.value !== null;
-}
-
-function clear(updateUrl) {
-  setDateTime(null, updateUrl);
-}
-
-defineExpose({
-  beforeInit: baseFilter.beforeInit,
-  afterInit: baseFilter.afterInit,
-  registerWatchers: baseFilter.registerWatchers,
-  unregisterWatchers: baseFilter.unregisterWatchers,
-
-  id,
-  updateReportFilter,
-  getUrlState,
-  initByUrl,
-  initPanel,
-  clear
-});
+};
 </script>

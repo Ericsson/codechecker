@@ -36,19 +36,25 @@
   </span>
 </template>
 
-<script setup>
+<script>
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
-import { computed } from "vue";
 
-const props = defineProps({
-  value: { type: Object, required: true },
-  tag: { type: String, default: "span" },
-  showDividers: { type: Boolean, default: true }
-});
-
-const size = computed(function() {
-  return Object.keys(props.value).length;
-});
+export default {
+  name: "AnalyzerStatisticsBtn",
+  components: {
+    AnalyzerStatisticsIcon
+  },
+  props: {
+    value: { type: Object, required: true },
+    tag: { type: String, default: "span" },
+    showDividers: { type: Boolean, default: true }
+  },
+  computed: {
+    size() {
+      return Object.keys(this.value).length;
+    }
+  }
+};
 </script>
 
 <style lang="scss">

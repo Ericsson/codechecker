@@ -6,5 +6,3 @@ export default function fromUnixTime(
 ) {
   return format(fromUnixTimestamp(timestamp), dateFormat);
 }
-
-export { fromUnixTime };

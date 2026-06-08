@@ -2,15 +2,15 @@
   <select-option
     :id="id"
     title="Checker name"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :selected-items="selectedItems"
     :search="search"
-    :loading="baseSelectOptionFilter.loading.value"
-    :limit="baseSelectOptionFilter.defaultLimit.value"
-    :panel="baseSelectOptionFilter.panel.value"
-    @clear="baseSelectOptionFilter.clear(true)"
-    @input="baseSelectOptionFilter.setSelectedItems"
+    :loading="loading"
+    :limit="defaultLimit"
+    :panel="panel"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -20,95 +20,66 @@
   </select-option>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
-import { ref, toRef } from "vue";
 
-import {
-  useBaseSelectOptionFilter
-} from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "CheckerNameFilter",
+  components: {
+    SelectOption
+  },
+  mixins: [ BaseSelectOptionFilterMixin ],
 
-const emit = defineEmits([ "update:url" ]);
+  data() {
+    return {
+      id: "checker-name",
+      search: {
+        placeHolder: "Search for checker names (e.g.: core*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: core*)",
+        filterItems: this.filterItems
+      }
+    };
+  },
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+  methods: {
+    updateReportFilter() {
+      this.setReportFilter({
+        checkerName: this.selectedItems.map(item => item.id)
+      });
+    },
 
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
+    onReportFilterChange(key) {
+      if (key === "checkerName") return;
+      this.update();
+    },
 
-const id = "checker-name";
-baseSelectOptionFilter.id.value = id;
+    fetchItems(opt={}) {
+      this.loading = true;
 
-const search = ref({
-  placeHolder: "Search for checker names (e.g.: core*)...",
-  regexLabel: "Filter by wildcard pattern (e.g.: core*)",
-  filterItems: baseSelectOptionFilter.filterItems
-});
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.checkerName = opt.query;
 
-function updateReportFilter() {
-  baseSelectOptionFilter.setReportFilter({
-    checkerName: baseSelectOptionFilter.selectedItems.value.map(item => item.id)
-  });
-}
+      const limit = opt.limit || this.defaultLimit;
+      const offset = 0;
 
-function onReportFilterChange(key) {
-  if (key === "checkerName") return;
-  baseSelectOptionFilter.update();
-}
-
-function fetchItems(opt={}) {
-  baseSelectOptionFilter.loading.value = true;
-
-  const _reportFilter = new ReportFilter(
-    baseSelectOptionFilter.reportFilter.value
-  );
-  _reportFilter.checkerName = opt.query;
-
-  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
-  const _offset = 0;
-
-  return new Promise(resolve => {
-    ccService.getClient().getCheckerCounts(
-      baseSelectOptionFilter.runIds.value,
-      _reportFilter,
-      baseSelectOptionFilter.cmpData.value,
-      _limit,
-      _offset,
-      handleThriftError(res => {
-        resolve(res.map(checker => {
-          return {
-            id: checker.name,
-            title: checker.name,
-            count: checker.count.toNumber()
-          };
-        }));
-        baseSelectOptionFilter.loading.value = false;
-      }));
-  });
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  clear: baseSelectOptionFilter.clear,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-  initByUrl: baseSelectOptionFilter.initByUrl,
-  getUrlState: baseSelectOptionFilter.getUrlState,
-
-  id,
-  updateReportFilter,
-  onReportFilterChange,
-  fetchItems
-});
+      return new Promise(resolve => {
+        ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+            resolve(res.map(checker => {
+              return {
+                id: checker.name,
+                title: checker.name,
+                count: checker.count.toNumber()
+              };
+            }));
+            this.loading = false;
+          }));
+      });
+    }
+  }
+};
 </script>

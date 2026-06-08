@@ -15,7 +15,7 @@ import { authService, handleThriftError } from "@cc-api";
 
 const state = {
   currentUser: "",
-  isAuthenticated: false, // Will be set properly in getter
+  isAuthenticated: !!authService.getToken(),
   authParams: null,
   packageVersion: undefined
 };
@@ -24,8 +24,10 @@ const getters = {
   currentUser(state) {
     return state.currentUser;
   },
+  token() {
+    return authService.getToken();
+  },
   isAuthenticated(state) {
-    state.isAuthenticated = !!authService.getToken();
     return state.isAuthenticated;
   },
   authParams(state) {
@@ -44,7 +46,7 @@ const actions = {
     });
   },
 
-  async [GET_LOGGED_IN_USER]({ commit, dispatch, state }) {
+  async [GET_LOGGED_IN_USER]({ commit, dispatch }) {
     await dispatch(GET_AUTH_PARAMS);
     if (!state.authParams.requiresAuthentication) return "";
 

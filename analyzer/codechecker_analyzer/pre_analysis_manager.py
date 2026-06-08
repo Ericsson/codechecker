@@ -17,7 +17,7 @@ import sys
 import traceback
 import uuid
 
-import multiprocess  # type: ignore
+import multiprocess
 
 from codechecker_common.logger import get_logger
 

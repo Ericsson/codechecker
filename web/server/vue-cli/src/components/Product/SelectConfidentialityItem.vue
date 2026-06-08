@@ -6,24 +6,26 @@
     >
       <confidentiality-icon
         :value="confidentialityFromStringToCode(value)"
-        size="small"
+        small
       />
     </v-avatar>
     {{ value }}
   </div>
 </template>
 
-<script setup>
+<script>
+import { ConfidentialityMixin } from "@/mixins";
 import { ConfidentialityIcon } from "@/components/Icons";
-import { useConfidentiality } from "@/composables/useConfidentiality";
 
-defineProps({
-  value: { type: String, required: true }
-});
-
-const {
-  confidentialityFromStringToCode 
-} = useConfidentiality();
-
+export default {
+  name: "SelectConfidentialityItem",
+  components: {
+    ConfidentialityIcon
+  },
+  mixins: [ ConfidentialityMixin ],
+  props: {
+    value: { type: String, required: true }
+  }
+};
 </script>
 

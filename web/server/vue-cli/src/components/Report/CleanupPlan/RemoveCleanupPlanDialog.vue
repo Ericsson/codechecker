@@ -1,50 +1,60 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     max-width="600px"
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
     confirm-btn-color="error"
     content-class="remove-cleanup-plan-dialog"
-    title="Remove cleanup plan"
     @confirm="removeCleanupPlan"
   >
+    <template v-slot:title>
+      Remove cleanup plan
+    </template>
+
     <template v-if="cleanupPlan" v-slot:content>
       Are you sure that you would like to remove
       <b>{{ cleanupPlan.name }}</b> cleanup plan?
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed } from "vue";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  cleanupPlan: { type: Object, default: () => null }
-});
-
-const emit = defineEmits([ "update:modelValue", "on:confirm" ]);
-
-const dialog = computed({
-  get() {
-    return props.modelValue;
+export default {
+  name: "RemoveCleanupPlanDialog",
+  components: {
+    ConfirmDialog
   },
-  set(val) {
-    emit("update:modelValue", val);
-  }
-});
+  props: {
+    value: { type: Boolean, default: false },
+    cleanupPlan: { type: Object, default: () => null }
+  },
 
-function removeCleanupPlan() {
-  ccService.getClient().removeCleanupPlan(props.cleanupPlan.id,
-    handleThriftError(success => {
-      if (success) {
-        emit("on:confirm");
-        dialog.value = false;
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
       }
-    }));
-}
+    }
+  },
+
+  methods: {
+    removeCleanupPlan() {
+      ccService.getClient().removeCleanupPlan(this.cleanupPlan.id,
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("on:confirm");
+            this.dialog = false;
+          }
+        }));
+    }
+  }
+};
 </script>

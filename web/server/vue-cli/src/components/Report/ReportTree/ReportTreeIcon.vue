@@ -82,7 +82,7 @@ off or unavailable."
   </v-icon>
 </template>
 
-<script setup>
+<script>
 import { DetectionStatus } from "@cc/report-server-types";
 
 import {
@@ -91,10 +91,28 @@ import {
   SeverityIcon
 } from "@/components/Icons";
 
-import ReportStepIcon from "./ReportStepIcon";
 import ReportTreeKind from "./ReportTreeKind";
+import ReportStepIcon from "./ReportStepIcon";
 
-defineProps({
-  item: { type: Object, required: true }
-});
+export default {
+  name: "ReportTreeIcon",
+  components: {
+    DetectionStatusIcon,
+    ReportStepEnumIcon,
+    ReportStepIcon,
+    SeverityIcon
+  },
+  props: {
+    item: {
+      type: Object,
+      required: true
+    }
+  },
+  data() {
+    return {
+      DetectionStatus,
+      ReportTreeKind
+    };
+  },
+};
 </script>

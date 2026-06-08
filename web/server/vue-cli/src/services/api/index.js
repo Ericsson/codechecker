@@ -7,7 +7,6 @@ import {
 } from "./_base.service";
 import prodService from "./product.service";
 import serverInfoService from "./server-info.service";
-import tokenService from "./token.service";
 
 export {
   authService,
@@ -17,6 +16,5 @@ export {
   extractTagWithRunName,
   handleThriftError,
   prodService,
-  serverInfoService,
-  tokenService
+  serverInfoService
 };

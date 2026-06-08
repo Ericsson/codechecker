@@ -13,17 +13,18 @@
         <v-alert
           class="mt-4"
           type="error"
-          density="compact"
-          variant="outlined"
+          dense
+          outlined
+          text
         >
           The report (
-          report ID: <i>{{ route.query["report-id"] }}</i>,
-          report hash: <i>{{ route.query["report-hash"] }}</i>,
+          report ID: <i>{{ $router.currentRoute.query["report-id"] }}</i>,
+          report hash: <i>{{ $router.currentRoute.query["report-hash"] }}</i>,
           file path:
-          <i>"{{ route.query["report-filepath"] }}"</i>
+          <i>"{{ $router.currentRoute.query["report-filepath"] }}"</i>
           ) was removed from the database.
 
-          <span v-if="!route.query['report-hash']">
+          <span v-if="!$router.currentRoute.query['report-hash']">
             Unfortunately, your hyperlink was copied from an older version of
             CodeChecker and the request does not contain the <i>report-hash</i>
             parameter which could be used as a fallback mechanism.
@@ -37,38 +38,33 @@
     v-else
     class="default-theme"
   >
-    <pane
-      size="20"
-    >
+    <pane size="20">
       <v-container
         fluid
         class="pa-0"
       >
-        <v-row
-          no-gutters
-        >
-          <v-col
-            class="px-2"
-          >
+        <v-row no-gutters>
+          <v-col class="px-2">
             <v-btn
               id="back-to-reports-btn"
               block
-              variant="outlined"
-              rounded="xs"
-              size="small"
+              outlined
+              tile
+              small
               class="mb-2"
               color="primary"
               :to="{ name: 'reports', query: {
-                ...route.query,
+                ...$router.currentRoute.query,
                 'report-id': undefined,
                 'report-filepath': undefined,
-                ...reportFilter.reportHash ? {} : {
-                  'report-hash' : undefined 
-                }
+                ...(
+                  reportFilter.reportHash ? {} : { 'report-hash' : undefined }
+                )
               }}"
             >
               <v-icon
-                size="small"
+                left
+                small
               >
                 mdi-arrow-left
               </v-icon>
@@ -76,9 +72,7 @@
             </v-btn>
           </v-col>
         </v-row>
-        <v-row
-          no-gutters
-        >
+        <v-row no-gutters>
           <v-col>
             <report-tree
               v-fill-height
@@ -92,7 +86,7 @@
     </pane>
 
     <pane>
-      <Report
+      <report
         :tree-item="treeItem"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
@@ -102,11 +96,9 @@
   </splitpanes>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useStore } from "vuex";
+<script>
 import { Pane, Splitpanes } from "splitpanes";
+import { mapState } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
 import {
@@ -121,129 +113,126 @@ import { FillHeight } from "@/directives";
 import { Report } from "@/components/Report";
 import { ReportTree } from "@/components/Report/ReportTree";
 
-const vFillHeight = FillHeight;
+export default {
+  name: "ReportDetail",
+  components: {
+    Splitpanes,
+    Pane,
+    Report,
+    ReportTree
+  },
+  directives: { FillHeight },
+  data() {
+    return {
+      report: null,
+      treeItem: null,
+      showComments: true,
+      reportNotFound: false,
+      reviewStatus: null
+    };
+  },
+  computed: {
+    ...mapState({
+      runIds: state => state.report.runIds,
+      reportFilter: state => state.report.reportFilter,
+      cmpData: state => state.report.cmpData,
+    })
+  },
 
-const route = useRoute();
-const router = useRouter();
-const store = useStore();
+  mounted() {
+    const reportId = this.$router.currentRoute.query["report-id"];
+    const reportHash = this.$router.currentRoute.query["report-hash"];
+    this.loadReport(reportId, reportHash);
+  },
 
-const report = ref(null);
-const treeItem = ref(null);
-const showComments = ref(true);
-const reportNotFound = ref(false);
-const reviewStatus = ref(null);
-
-const runIds = computed(function() {
-  return store.state.report.runIds;
-});
-
-const reportFilter = computed(function() {
-  return store.state.report.reportFilter;
-});
-
-const cmpData = computed(function() {
-  return store.state.report.cmpData;
-});
-
-onMounted(function() {
-  const _reportId = route.query["report-id"];
-  const _reportHash = route.query["report-hash"];
-  loadReport(_reportId, _reportHash);
-});
-
-function loadReport(reportId, reportHash) {
-  if (reportId) {
-    loadReportById(reportId).catch(() => {
-      if (reportHash) {
-        loadReportByHash(reportHash);
-      } else {
-        reportNotFound.value = true;
+  methods: {
+    loadReport(reportId, reportHash) {
+      if (reportId) {
+        this.loadReportById(reportId).catch(() => {
+          if (reportHash) {
+            this.loadReportByHash(reportHash);
+          } else {
+            this.reportNotFound = true;
+          }
+        });
+      } else if (reportHash) {
+        this.loadReportByHash(reportHash);
       }
-    });
-  } else if (reportHash) {
-    loadReportByHash(reportHash);
-  }
-}
+    },
 
-function loadReportById(reportId) {
-  return new Promise((_res, _rej) => {
-    ccService.getClient().getReport(
-      reportId,
-      handleThriftError(_reportData => {
-        report.value = _reportData;
-        treeItem.value = { report: _reportData };
-        _res(true);
-      }, _err => {
-        console.warn("Failed to get report for ID:", reportId);
-        console.warn(_err);
-        _rej(_err);
-      }));
-  });
-}
+    loadReportById(reportId) {
+      return new Promise((res, rej) => {
+        ccService.getClient().getReport(reportId,
+          handleThriftError(reportData => {
+            this.report = reportData;
+            res(true);
+          }, err => {
+            console.warn("Failed to get report for ID:", reportId);
+            console.warn(err);
+            rej(err);
+          }));
+      });
+    },
 
-function loadReportByHash(reportHash) {
-  const _limit = MAX_QUERY_SIZE;
-  const _offset = 0;
-  const _getDetails = false;
+    loadReportByHash(reportHash) {
+      const limit = MAX_QUERY_SIZE;
+      const offset = 0;
+      const getDetails = false;
 
-  const _sortType = new SortMode({
-    type: SortType.BUG_PATH_LENGTH,
-    ord: Order.ASC
-  });
+      const sortType = new SortMode({
+        type: SortType.BUG_PATH_LENGTH,
+        ord: Order.ASC
+      });
 
-  const _filePath = route.query["report-filepath"];
-  const _reportFilter = new ReportFilter({
-    ...reportFilter.value,
-    isUnique: false,
-    reportHash: [ reportHash ],
-    filePath: [ _filePath ]
-  });
+      const filePath = this.$router.currentRoute.query["report-filepath"];
+      const reportFilter = new ReportFilter({
+        ...this.reportFilter,
+        isUnique: false,
+        reportHash: [ reportHash ],
+        filePath: [ filePath ]
+      });
 
-  ccService.getClient().getRunResults(
-    runIds.value,
-    _limit,
-    _offset,
-    [ _sortType ],
-    _reportFilter,
-    cmpData.value,
-    _getDetails,
-    handleThriftError(_reports => {
-      if (_reports.length) {
-        report.value = _reports[0];
-      } else {
-        reportNotFound.value = true;
+      ccService.getClient().getRunResults(this.runIds, limit, offset,
+        [ sortType ], reportFilter, this.cmpData, getDetails,
+        handleThriftError(reports => {
+          if (reports.length) {
+            this.report = reports[0];
+          } else {
+            this.reportNotFound = true;
+          }
+        }));
+    },
+
+    updateUrl() {
+      const reportId = this.report.reportId.toString();
+      const currentReportId = this.$router.currentRoute.query["report-id"];
+      if (reportId !== currentReportId) {
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "report-id": reportId
+          }
+        }).catch(() => {});
       }
-    }));
-}
+    },
 
-function updateUrl() {
-  const _reportId = report.value.reportId.toString();
-  const _currentReportId = route.query["report-id"];
-  if (_reportId !== _currentReportId) {
-    router.replace({
-      query: {
-        ...route.query,
-        "report-id": _reportId
+    onReportTreeClick(item) {
+      if (!item) return;
+
+      if (item.report) {
+        this.report = item.report;
+        this.updateUrl();
       }
-    }).catch(() => {});
+
+      this.treeItem = item;
+    },
+
+    updateReviewData(newReviewData, reportId) {
+      this.reviewStatus = newReviewData.status;
+      this.loadReport(reportId);
+    }
   }
-}
-
-function onReportTreeClick(item) {
-  if (!item) return;
-
-  if (item.report) {
-    report.value = item.report;
-    updateUrl();
-  }
-
-  treeItem.value = item;
-}
-
-function updateReviewData(newReviewData, reportId) {
-  reviewStatus.value = newReviewData.status;
-  loadReport(reportId);
-}
+};
 </script>
 
 <style lang="scss" scoped>

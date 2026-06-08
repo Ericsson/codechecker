@@ -5,12 +5,8 @@
     :nudge-width="200"
     offset-x
   >
-    <template v-slot:activator="{ props }">
-      <v-icon
-        v-bind="props"
-        color="primary"
-        class="description"
-      >
+    <template v-slot:activator="{ on }">
+      <v-icon color="primary" class="description" v-on="on">
         mdi-information-outline
       </v-icon>
     </template>
@@ -21,8 +17,11 @@
   </v-menu>
 </template>
 
-<script setup>
-defineProps({
-  value: { type: String, required: true }
-});
+<script>
+export default {
+  name: "RunDescription",
+  props: {
+    value: { type: String, required: true }
+  }
+};
 </script>

@@ -3,14 +3,14 @@
     right
     color="white"
   >
-    <template v-slot:activator="{ props }">
-      <slot :on="props" />
+    <template v-slot:activator="{ on }">
+      <slot :on="on" />
     </template>
 
     <v-card
       v-if="value"
       class="mx-auto"
-      variant="outlined"
+      outlined
     >
       <v-list-item
         v-for="v in value.split('\n')"
@@ -18,7 +18,7 @@
         :class="[
           v[0] === '+' ? 'include' : v[0] === '-' ? 'exclude': 'other'
         ]"
-        density="compact"
+        dense
       >
         {{ v }}
       </v-list-item>
@@ -26,10 +26,13 @@
   </v-tooltip>
 </template>
 
-<script setup>
-defineProps({
-  value: { type: String, required: true }
-});
+<script>
+export default {
+  name: "SourceComponentTooltip",
+  props: {
+    value: { type: String, required: true }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

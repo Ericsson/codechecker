@@ -7,59 +7,67 @@
     :mobile-breakpoint="1000"
     loading-text="Loading checker statistics..."
     item-key="checker"
-    :sort-by="[{ key: 'severity', order: 'desc' }]"
+    sort-by="severity"
+    sort-desc
     @enabled-click="enabledClick"
   />
 </template>
 
-<script setup>
+<script>
 import { BaseStatisticsTable } from "@/components/Statistics";
 
-defineProps({
-  items: { type: Array, required: true },
-  loading: { type: Boolean, default: false }
-});
-
-const emit = defineEmits([ "enabled-click" ]);
-
-const headers = [
-  {
-    title: "Checker Name",
-    key: "checker"
+export default {
+  name: "CheckerCoverageStatisticsTable",
+  components: {
+    BaseStatisticsTable
   },
-  {
-    title: "Guideline",
-    key: "guidelineRules"
+  props: {
+    items: { type: Array, required: true },
+    loading: { type: Boolean, default: false }
   },
-  {
-    title: "Severity",
-    key: "severity",
-    align: "center"
+  data() {
+    return {
+      headers: [
+        {
+          text: "Checker Name",
+          value: "checker"
+        },
+        {
+          text: "Guideline",
+          value: "guidelineRules"
+        },
+        {
+          text: "Severity",
+          value: "severity",
+          align: "center"
+        },
+        {
+          text: "Status",
+          value: "enabledInAllRuns",
+          align: "center"
+        },
+        {
+          text: "Closed Reports",
+          value: "closed",
+          align: "center"
+        },
+        {
+          text: "Outstanding Reports",
+          value: "outstanding",
+          align: "center"
+        }
+      ]
+    };
   },
-  {
-    title: "Status",
-    key: "enabledInAllRuns",
-    align: "center"
-  },
-  {
-    title: "Closed Reports",
-    key: "closed",
-    align: "center"
-  },
-  {
-    title: "Outstanding Reports",
-    key: "outstanding",
-    align: "center"
+  methods: {
+    enabledClick(type, checker_name) {
+      this.$emit("enabled-click", type, checker_name);
+    }
   }
-];
-
-function enabledClick(_type, _checker_name) {
-  emit("enabled-click", _type, _checker_name);
-}
+};
 </script>
 
-<style lang="scss">
-@use "@/components/Statistics/style.scss" with (
-  $class-name: ".analysis-statistics"
-);
+<style lang="scss" scoped>
+$class-name: ".checker-statistics > ::v-deep .v-data-table__wrapper";
+@import "@/components/Statistics/style.scss";
 </style>

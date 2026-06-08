@@ -1,12 +1,12 @@
 <template>
   <select-option
     :title="title"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
-    :loading="baseSelectOptionFilter.loading.value"
+    :selected-items="selectedItems"
+    :loading="loading"
     :multiple="false"
-    :panel="baseSelectOptionFilter.panel.value"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >
@@ -36,10 +36,9 @@
           <date-time-picker
             :input-class="fromDateTimeId"
             :dialog-class="fromDateTimeId"
-            :model-value="fromDateTime"
+            :value="fromDateTime"
             :label="fromDateTimeLabel"
-            variant="underlined"
-            @update:model-value="setFromDateTime"
+            @input="setFromDateTime"
           />
         </v-col>
 
@@ -51,10 +50,9 @@
           <date-time-picker
             :input-class="toDateTimeId"
             :dialog-class="toDateTimeId"
-            :model-value="toDateTime"
+            :value="toDateTime"
             :label="toDateTimeLabel"
-            variant="underlined"
-            @update:model-value="setToDateTime"
+            @input="setToDateTime"
           />
         </v-col>
       </v-row>
@@ -62,190 +60,159 @@
   </select-option>
 </template>
 
-<script setup>
-import { computed, ref, toRef } from "vue";
-import { useRoute } from "vue-router";
-
+<script>
 import { DateInterval, ReportDate } from "@cc/report-server-types";
 
 import DateTimePicker from "@/components/DateTimePicker";
-import {
-  useBaseSelectOptionFilter
-} from "@/composables/useBaseSelectOptionFilter";
-import { useDateUtils } from "@/composables/useDateUtils";
-import DetectionDateFilterIcon from "./DetectionDateFilterIcon";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
+import DateMixin from "@/mixins/date.mixin";
+import SelectOption from "./SelectOption/SelectOption";
 import DetectionDateFilterItems, {
   getDateInterval,
   titleFormatter
 } from "./DetectionDateFilterItems";
-import SelectOption from "./SelectOption/SelectOption";
+import DetectionDateFilterIcon from "./DetectionDateFilterIcon";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "DetectionDateFilter",
+  components: {
+    DateTimePicker,
+    DetectionDateFilterIcon,
+    SelectOption
+  },
+  mixins: [ BaseSelectOptionFilterMixin, DateMixin ],
+  data() {
+    return {
+      title: "Detection date",
+      fromDateTimeId: "detected-after",
+      toDateTimeId: "detected-before",
+      fromDateTimeLabel: "Detected after...",
+      toDateTimeLabel: "Detected before...",
+      fromDateTime: null,
+      toDateTime: null,
+      filterFieldName: "detected"
+    };
+  },
 
-const emit = defineEmits([
-  "update:url"
-]);
-
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
-
-const { dateTimeToStr, getUnixTime } = useDateUtils();
-
-const title = "Detection date";
-const fromDateTimeId = "detected-after";
-const toDateTimeId = "detected-before";
-const fromDateTimeLabel = "Detected after...";
-const toDateTimeLabel = "Detected before...";
-const fromDateTime = ref(null);
-const toDateTime = ref(null);
-const filterFieldName = "detected";
-
-const route = useRoute();
-
-const selectedDetectionDateTitle = computed(() => {
-  return [
-    ...(fromDateTime.value
-      ? [ `after: ${dateTimeToStr(fromDateTime.value)}` ] : []),
-    ...(toDateTime.value
-      ? [ `before: ${dateTimeToStr(toDateTime.value)}` ] : [])
-  ].join(", ");
-});
-
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
-
-function setSelectedItems(_selectedItems/*, updateUrl=true*/) {
-  baseSelectOptionFilter.selectedItems.value = _selectedItems;
-  const _interval = getDateInterval(
-    baseSelectOptionFilter.selectedItems.value.id
-  );
-
-  setFromDateTime(_interval.from, false);
-  setToDateTime(_interval.to, false);
-
-  emit("update:url");
-}
-
-function setFromDateTime(_dateTime, _updateUrl=true) {
-  fromDateTime.value = _dateTime;
-  updateReportFilter();
-
-  if (_updateUrl) {
-    baseSelectOptionFilter.selectedItems.value = [];
-    emit("update:url");
-  }
-}
-
-function setToDateTime(_dateTime, _updateUrl=true) {
-  toDateTime.value = _dateTime;
-  updateReportFilter();
-
-  if (_updateUrl) {
-    baseSelectOptionFilter.selectedItems.value = [];
-    emit("update:url");
-  }
-}
-
-function getUrlState() {
-  const _state = {};
-
-  _state[fromDateTimeId] = fromDateTime.value
-    ? dateTimeToStr(fromDateTime.value) : undefined;
-
-  _state[toDateTimeId] = toDateTime.value
-    ? dateTimeToStr(toDateTime.value) : undefined;
-
-  return _state;
-}
-
-function initByUrl() {
-  return new Promise(resolve => {
-    const _fromDateTime = route.query[fromDateTimeId];
-    if (_fromDateTime) {
-      setFromDateTime(new Date(_fromDateTime), false);
+  computed: {
+    selectedDetectionDateTitle() {
+      return [
+        ...(this.fromDateTime
+          ? [ `after: ${this.dateTimeToStr(this.fromDateTime)}` ]: []),
+        ...(this.toDateTime
+          ? [ `before: ${this.dateTimeToStr(this.toDateTime)}` ]: [])
+      ].join(", ");
     }
+  },
 
-    const _toDateTime = route.query[toDateTimeId];
-    if (_toDateTime) {
-      const _dateTime = new Date(_toDateTime);
+  methods: {
+    setSelectedItems(selectedItems/*, updateUrl=true*/) {
+      this.selectedItems = selectedItems;
+      const interval = getDateInterval(selectedItems[0].id);
 
-      // We need to round the date upward because we will send the dates
-      // to the server without milliseconds.
-      if (_dateTime.getMilliseconds()) {
-        _dateTime.setMilliseconds(1000);
+      this.setFromDateTime(interval.from, false);
+      this.setToDateTime(interval.to, false);
+
+      this.$emit("update:url");
+    },
+
+    setFromDateTime(dateTime, updateUrl=true) {
+      this.fromDateTime = dateTime;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.selectedItems = [];
+        this.$emit("update:url");
+      }
+    },
+
+    setToDateTime(dateTime, updateUrl=true) {
+      this.toDateTime = dateTime;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.selectedItems = [];
+        this.$emit("update:url");
+      }
+    },
+
+    getUrlState() {
+      const state = {};
+
+      state[this.fromDateTimeId] = this.fromDateTime
+        ? this.dateTimeToStr(this.fromDateTime) : undefined;
+
+      state[this.toDateTimeId] = this.toDateTime
+        ? this.dateTimeToStr(this.toDateTime) : undefined;
+
+      return state;
+    },
+
+    initByUrl() {
+      return new Promise(resolve => {
+        const fromDateTime = this.$route.query[this.fromDateTimeId];
+        if (fromDateTime) {
+          this.setFromDateTime(new Date(fromDateTime), false);
+        }
+
+        const toDateTime = this.$route.query[this.toDateTimeId];
+        if (toDateTime) {
+          const dateTime = new Date(toDateTime);
+
+          // We need to round the date upward because we will send the dates
+          // to the server without milliseconds.
+          if (dateTime.getMilliseconds()) {
+            dateTime.setMilliseconds(1000);
+          }
+
+          this.setToDateTime(dateTime, false);
+        }
+
+        resolve();
+      });
+    },
+
+    initPanel() {
+      this.panel = this.fromDateTime !== null || this.toDateTime !== null;
+    },
+
+    updateReportFilter() {
+      const date = new ReportDate(this.reportFilter.date);
+      if (this.fromDateTime || this.toDateTime) {
+        if (!date[this.filterFieldName])
+          date[this.filterFieldName] = new DateInterval();
+
+        date[this.filterFieldName].before = this.toDateTime
+          ? this.getUnixTime(this.toDateTime) : null;
+        date[this.filterFieldName].after = this.fromDateTime
+          ? this.getUnixTime(this.fromDateTime) : null;
+      } else if (date) {
+        date[this.filterFieldName] = null;
       }
 
-      setToDateTime(_dateTime, false);
+      this.setReportFilter({ date: date });
+    },
+
+    fetchItems() {
+      return Object.keys(DetectionDateFilterItems).map(key => {
+        const id = DetectionDateFilterItems[key];
+
+        return {
+          id: id,
+          title: titleFormatter(id)
+        };
+      });
+    },
+
+    clear(updateUrl) {
+      this.setFromDateTime(null, false);
+      this.setToDateTime(null, false);
+      this.selectedItems = [];
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
     }
-
-    resolve();
-  });
-}
-
-function initPanel() {
-  baseSelectOptionFilter.panel.value =
-    fromDateTime.value !== null || toDateTime.value !== null;
-}
-
-function updateReportFilter() {
-  const _date = new ReportDate(
-    baseSelectOptionFilter.reportFilter.value.date
-  );
-  if (fromDateTime.value || toDateTime.value) {
-    if (!_date[filterFieldName])
-      _date[filterFieldName] = new DateInterval();
-
-    _date[filterFieldName].before = toDateTime.value
-      ? getUnixTime(toDateTime.value) : null;
-    _date[filterFieldName].after = fromDateTime.value
-      ? getUnixTime(fromDateTime.value) : null;
-  } else if (_date) {
-    _date[filterFieldName] = null;
   }
-
-  baseSelectOptionFilter.setReportFilter({ date: _date });
-}
-
-function fetchItems() {
-  return Object.keys(DetectionDateFilterItems).map(key => {
-    const _id = DetectionDateFilterItems[key];
-
-    return {
-      id: _id,
-      title: titleFormatter(_id)
-    };
-  });
-}
-
-function clear(updateUrl) {
-  setFromDateTime(null, false);
-  setToDateTime(null, false);
-  baseSelectOptionFilter.selectedItems.value = [];
-
-  if (updateUrl) {
-    emit("update:url");
-  }
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-
-  setSelectedItems,
-  getUrlState,
-  initByUrl,
-  initPanel,
-  clear,
-  updateReportFilter,
-  fetchItems
-}
-);
+};
 </script>

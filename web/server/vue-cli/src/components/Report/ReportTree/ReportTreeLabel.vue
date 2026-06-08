@@ -35,44 +35,55 @@
   </span>
 </template>
 
-<script setup>
-import { DetectionStatus } from "@cc/report-server-types";
-import { computed } from "vue";
+<script>
 import ReportTreeKind from "./ReportTreeKind";
+import { DetectionStatus } from "@cc/report-server-types";
 
-const props = defineProps({
-  item: { type: Object, required: true }
-});
+export default {
+  name: "ReportTreeLabel",
+  props: {
+    item: {
+      type: Object,
+      required: true
+    }
+  },
+  data() {
+    return {
+      ReportTreeKind,
+      DetectionStatus
+    };
+  },
+  computed: {
+    reportStepContent() {
+      return `${this.fileName}${this.item.step.startLine} ` +
+        `- ${this.item.step.msg}`;
+    },
 
-const reportStepContent = computed(function() {
-  return `${fileName.value}${props.item.step.startLine} ` +
-    `- ${props.item.step.msg}`;
-});
+    fileName() {
+      return this.item.fileName ? `${this.item.fileName}:` : "L";
+    },
 
-const fileName = computed(function() {
-  return props.item.fileName ? `${props.item.fileName}:` : "L";
-});
+    isExtendedReportData() {
+      return this.item.kind === ReportTreeKind.MACRO_EXPANSION ||
+             this.item.kind === ReportTreeKind.NOTE;
+    },
+    isExtendedReportDataItem() {
+      return this.item.kind === ReportTreeKind.MACRO_EXPANSION_ITEM ||
+             this.item.kind === ReportTreeKind.NOTE_ITEM;
+    },
 
-const isExtendedReportData = computed(function() {
-  return props.item.kind === ReportTreeKind.MACRO_EXPANSION ||
-         props.item.kind === ReportTreeKind.NOTE;
-});
+    newReportCount() {
+      if (this.item && this.item.kind === ReportTreeKind.SEVERITY_LEVEL) {
+        return this.item.children.filter(element => {
+          return element.report.detectionStatus == DetectionStatus.NEW;
+        }).length;
+      }
+      return 0;
+    },
 
-const isExtendedReportDataItem = computed(function() {
-  return props.item.kind === ReportTreeKind.MACRO_EXPANSION_ITEM ||
-         props.item.kind === ReportTreeKind.NOTE_ITEM;
-});
-
-const newReportCount = computed(function() {
-  if (props.item && props.item.kind === ReportTreeKind.SEVERITY_LEVEL) {
-    return props.item.children.filter(element => {
-      return element.report.detectionStatus == DetectionStatus.NEW;
-    }).length;
+    newReportCountLabel() {
+      return ` [${this.newReportCount} new]`;
+    }
   }
-  return 0;
-});
-
-const newReportCountLabel = computed(function() {
-  return ` [${newReportCount.value} new]`;
-});
+};
 </script>

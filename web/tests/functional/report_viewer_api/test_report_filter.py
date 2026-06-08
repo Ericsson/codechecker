@@ -51,6 +51,9 @@ class TestReportFilter(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
@@ -108,30 +111,32 @@ class TestReportFilter(unittest.TestCase):
         """ Filter by severity levels."""
         runid = self._runids[0]
 
-        severity_test_data = self._testproject_data['severity_counts']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+            'filter_severity_levels']
 
-        for severity, test_result_count in severity_test_data.items():
-            logging.debug(
-                'Severity level filter %s test result count: %d',
-                severity,
-                test_result_count)
-            sort_types = None
-            sev = get_severity_level(severity)
-            sev_f = ReportFilter(severity=[sev])
+        for level in severity_test_data:
+            for severity_level, test_result_count in level.items():
+                logging.debug('Severity level filter %s test result count: %d',
+                              severity_level,
+                              test_result_count)
+                sort_types = None
+                sev = get_severity_level(severity_level)
+                sev_f = ReportFilter(severity=[sev])
 
-            run_result_count = self._cc_client.getRunResultCount(
-                [runid], sev_f, None)
-            run_results = self._cc_client.getRunResults(
-                [runid], run_result_count, 0, sort_types, sev_f, None,
-                False)
-            self.assertIsNotNone(run_results)
-            self.assertEqual(test_result_count, len(run_results))
+                run_result_count = self._cc_client.getRunResultCount(
+                    [runid], sev_f, None)
+                run_results = self._cc_client.getRunResults(
+                    [runid], run_result_count, 0, sort_types, sev_f, None,
+                    False)
+                self.assertIsNotNone(run_results)
+                self.assertEqual(test_result_count, len(run_results))
 
     def test_filter_checker_id(self):
         """ Filter by checker id. """
         runid = self._runids[0]
 
-        severity_test_data = self._testproject_data['filter_checker_id']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+            'filter_checker_id']
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.items():
@@ -157,7 +162,8 @@ class TestReportFilter(unittest.TestCase):
         """ Filter by checker id. """
         runid = self._runids[0]
 
-        severity_test_data = self._testproject_data['filter_filepath']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+            'filter_filepath']
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.items():
@@ -184,7 +190,7 @@ class TestReportFilter(unittest.TestCase):
         """ Filter by file path case insensitive."""
 
         runid = self._runids[0]
-        filter_test_data = self._testproject_data[
+        filter_test_data = self._testproject_data[self._clang_to_test][
             'filter_filepath_case_insensitive']
 
         for level in filter_test_data:
@@ -235,7 +241,8 @@ class TestReportFilter(unittest.TestCase):
         """ Filter by review status. """
         runid = self._runids[0]
 
-        severity_test_data = self._testproject_data['filter_review_status']
+        severity_test_data = self._testproject_data[self._clang_to_test][
+            'filter_review_status']
 
         run_result_count = self._cc_client.getRunResultCount([runid],
                                                              ReportFilter(),
@@ -312,7 +319,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
 
-        bugs = self._testproject_data['reports']
+        bugs = self._testproject_data[self._clang_to_test]['bugs']
 
         unique_filter = ReportFilter(isUnique=True)
         run_result_count = self._cc_client.getRunResultCount([runid],
@@ -404,7 +411,7 @@ class TestReportFilter(unittest.TestCase):
         """ Filter by analyzer name. """
         runid = self._runids[0]
 
-        analyzer_name_test_data = self._testproject_data[
+        analyzer_name_test_data = self._testproject_data[self._clang_to_test][
             'filter_analyzer_name']
 
         for level in analyzer_name_test_data:

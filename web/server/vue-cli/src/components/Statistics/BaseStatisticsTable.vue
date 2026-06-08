@@ -1,99 +1,80 @@
 <template>
   <v-data-table
-    v-bind="{ ...$props }"
     :disable-pagination="true"
     :hide-default-footer="true"
     :custom-sort="customSort"
     :must-sort="true"
-    items-per-page="-1"
     class="elevation-0"
+    v-bind="{ ...$props, ...$attrs }"
+    v-on="$listeners"
   >
-    <template v-slot:header.component="{ column }">
+    <template v-slot:header.component="{ header }">
       <v-icon size="16">
         mdi-puzzle-outline
       </v-icon>
-      {{ column.title }}
+      {{ header.text }}
     </template>
 
-    <template v-slot:header.unreviewed.count="{ column }">
+    <template v-slot:header.unreviewed.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.UNREVIEWED"
         :size="16"
         left
       />
-      {{ column.title }}
+      {{ header.text }}
     </template>
 
-    <template v-slot:header.confirmed.count="{ column }">
+    <template v-slot:header.confirmed.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.CONFIRMED"
         :size="16"
         left
       />
-      {{ column.title }}
+      {{ header.text }}
     </template>
 
-    <template v-slot:header.outstanding.count="{ column }">
-      <div class="d-flex flex-column align-center">
-        <div>
-          <v-icon color="red" :size="16">
-            mdi-sigma
-          </v-icon>
-          {{ column.title }}
-        </div>
-        <div class="text-caption">
-          (Unreviewed + Confirmed)
-        </div>
-      </div>
+    <template v-slot:header.outstanding.count="{ header }">
+      <v-icon color="red" :size="16">
+        mdi-sigma
+      </v-icon>
+      {{ header.text }}<br>
+      <span class="pl-4">(Unreviewed + Confirmed)</span>
     </template>
 
-    <template v-slot:header.falsePositive.count="{ column }">
+    <template v-slot:header.falsePositive.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.FALSE_POSITIVE"
         :size="16"
         left
       />
-      {{ column.title }}
+      {{ header.text }}
     </template>
 
-    <template v-slot:header.intentional.count="{ column }">
+    <template v-slot:header.intentional.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.INTENTIONAL"
         :size="16"
         left
       />
-      {{ column.title }}
+      {{ header.text }}
     </template>
 
-    <template v-slot:header.suppressed.count="{ column }">
-      <div class="d-flex flex-column align-center">
-        <div>
-          <v-icon color="grey" :size="16">
-            mdi-sigma
-          </v-icon>
-          {{ column.title }}
-        </div>
-        <div class="text-caption">
-          (False positive + Intentional)
-        </div>
-      </div>
+    <template v-slot:header.suppressed.count="{ header }">
+      <v-icon color="grey" :size="16">
+        mdi-sigma
+      </v-icon>
+      {{ header.text }}<br>
+      <span class="pl-4">(False positive + Intentional)</span>
     </template>
 
-
-    <template v-slot:header.reports.count="{ column }">
-      <div class="d-flex flex-column align-center">
-        <div>
-          <detection-status-icon
-            :status="DetectionStatus.UNRESOLVED"
-            :size="16"
-            left
-          />
-          {{ column.title }}
-        </div>
-        <div class="text-caption">
-          (Outstanding + Suppressed)
-        </div>
-      </div>
+    <template v-slot:header.reports.count="{ header }">
+      <detection-status-icon
+        :status="DetectionStatus.UNRESOLVED"
+        :size="16"
+        left
+      />
+      {{ header.text }}<br>
+      <span class="pl-4">(Outstanding + Suppressed)</span>
     </template>
 
     <template #item.checker="{ item }">
@@ -101,7 +82,7 @@
         <router-link
           class="checker-name"
           :to="{ name: 'reports', query: {
-            ...route.query,
+            ...$router.currentRoute.query,
             ...(item.$queryParams || {}),
             'checker-name': item.checker
           }}"
@@ -113,11 +94,11 @@
 
     <template #item.component="{ item }">
       <source-component-tooltip :value="item.value">
-        <template v-slot="{ props: slotProps }">
-          <span v-bind="slotProps">
+        <template v-slot="{ on }">
+          <span v-on="on">
             <router-link
               :to="{ name: 'reports', query: {
-                ...route.query,
+                ...$router.currentRoute.query,
                 'source-component': item.component
               }}"
             >
@@ -132,7 +113,7 @@
       <router-link
         class="severity"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
           'severity': severityFromCodeToString(item.severity)
@@ -146,7 +127,7 @@
       <router-link
         v-if="item.unreviewed.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
@@ -167,7 +148,7 @@
       <router-link
         v-if="item.confirmed.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
@@ -188,7 +169,7 @@
       <router-link
         v-if="item.outstanding.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': [
@@ -211,7 +192,7 @@
       <router-link
         v-if="item.falsePositive.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
@@ -232,7 +213,7 @@
       <router-link
         v-if="item.intentional.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
@@ -253,7 +234,7 @@
       <router-link
         v-if="item.suppressed.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
           'review-status': [
@@ -276,7 +257,7 @@
       <router-link
         v-if="item.reports.count"
         :to="{ name: 'reports', query: {
-          ...route.query,
+          ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           ...getBaseQueryParams(item),
         }}"
@@ -320,7 +301,7 @@
         <router-link
           :to="{ name: 'reports', query: {
             ...uniqueMode,
-            'run': route.query.run,
+            'run': $router.currentRoute.query.run,
             ...getBaseQueryParams(item),
             'report-status': reportStatusFromCodeToString(ReportStatus.CLOSED)
           }}"
@@ -338,7 +319,7 @@
         <router-link
           :to="{ name: 'reports', query: {
             ...uniqueMode,
-            'run': route.query.run,
+            'run': $router.currentRoute.query.run,
             ...getBaseQueryParams(item),
             'report-status': reportStatusFromCodeToString(
               ReportStatus.OUTSTANDING
@@ -396,7 +377,7 @@
             <td>
               <router-link
                 :to="{ name: 'reports', query: {
-                  ...route.query,
+                  ...$router.currentRoute.query,
                   ...(item.$queryParams || {}),
                   'checker-name': checker.name
                 }}"
@@ -498,7 +479,7 @@
               <router-link
                 :to="{ name: 'reports', query: {
                   ...uniqueMode,
-                  'run': route.query.run,
+                  'run': $router.currentRoute.query.run,
                   ...getBaseQueryParams({
                     checker: checker.name,
                     severity: checker.severity}),
@@ -534,7 +515,7 @@
               <router-link
                 :to="{ name: 'reports', query: {
                   ...uniqueMode,
-                  'run': route.query.run,
+                  'run': $router.currentRoute.query.run,
                   ...getBaseQueryParams({
                     checker: checker.name,
                     severity: checker.severity}),
@@ -553,7 +534,7 @@
       </div>
     </template>
 
-    <template v-if="necessaryTotal" v-slot:body.append>
+    <template v-if="necessaryTotal" slot="body.append">
       <tr>
         <td class="text-center" :colspan="colspan">
           <strong>Total</strong>
@@ -569,7 +550,7 @@
     </template>
 
     <template
-      v-for="(_, slot) of $slots"
+      v-for="(_, slot) of $scopedSlots"
       v-slot:[slot]="scope"
     >
       <slot :name="slot" v-bind="scope" />
@@ -577,177 +558,179 @@
   </v-data-table>
 </template>
 
-<script setup>
-import CountChips from "@/components/CountChips";
-import {
-  DetectionStatusIcon,
-  ReviewStatusIcon,
-  SeverityIcon
-} from "@/components/Icons";
-import { SourceComponentTooltip } from "@/components/Report/SourceComponent";
-import { useReportStatus } from "@/composables/useReportStatus";
-import { useReviewStatus } from "@/composables/useReviewStatus";
-import { useSeverity } from "@/composables/useSeverity";
+<script>
 import {
   DetectionStatus,
   ReportStatus,
   ReviewStatus
 } from "@cc/report-server-types";
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+import {
+  DetectionStatusIcon,
+  ReviewStatusIcon,
+  SeverityIcon
+} from "@/components/Icons";
+import {
+  DetectionStatusMixin,
+  ReportStatusMixin,
+  ReviewStatusMixin,
+  SeverityMixin
+} from "@/mixins";
+import CountChips from "@/components/CountChips";
+import { SourceComponentTooltip } from "@/components/Report/SourceComponent";
 import ReportDiffCount from "./ReportDiffCount";
 
-const props = defineProps({
-  headers: { type: Array, required: true },
-  items: { type: Array, required: true },
-  colspan: { type: Number, default: 2 },
-  totalColumns: {
-    type: Array,
-    default: () => [ "unreviewed", "confirmed", "outstanding",
-      "falsePositive", "intentional", "suppressed","reports" ]
+export default {
+  name: "BaseStatisticsTable",
+  components: {
+    CountChips,
+    DetectionStatusIcon,
+    ReportDiffCount,
+    ReviewStatusIcon,
+    SeverityIcon,
+    SourceComponentTooltip
   },
-  necessaryTotal: { type: Boolean, default: false }
-});
-
-defineEmits([ "enabled-click" ]);
-
-const route = useRoute();
-const reportStatus = useReportStatus();
-const reviewStatus = useReviewStatus();
-const severity = useSeverity();
-
-const severityFromCodeToString = computed(function() {
-  return severity.severityFromCodeToString;
-});
-
-const reviewStatusFromCodeToString = computed(function() {
-  return reviewStatus.reviewStatusFromCodeToString;
-});
-
-const reportStatusFromCodeToString = computed(function() {
-  return reportStatus.reportStatusFromCodeToString;
-});
-
-const total = computed(function() {
-  const _initVal = props.totalColumns.reduce((acc, curr) => {
-    acc[curr] = 0;
-    return acc;
-  }, {});
-
-  return props.items.reduce((_total, curr) => {
-    props.totalColumns.forEach(c => _total[c] += curr[c].count);
-    return _total;
-  }, _initVal);
-});
-
-const uniqueMode = computed(function() {
-  if ( route.query["is-unique"] !== undefined ) {
+  mixins: [
+    DetectionStatusMixin,
+    ReportStatusMixin,
+    ReviewStatusMixin,
+    SeverityMixin
+  ],
+  props: {
+    items: { type: Array, required: true },
+    colspan: { type: Number, default: 2 },
+    totalColumns: {
+      type: Array,
+      default: () => [ "unreviewed", "confirmed", "outstanding",
+        "falsePositive", "intentional", "suppressed","reports" ]
+    },
+    necessaryTotal: { type: Boolean, default: false }
+  },
+  data() {
     return {
-      "is-unique": route.query["is-unique"]
+      DetectionStatus,
+      ReportStatus,
+      ReviewStatus
     };
-  }
-  else return {};
-});
+  },
+  computed: {
+    total() {
+      const initVal = this.totalColumns.reduce((acc, curr) => {
+        acc[curr] = 0;
+        return acc;
+      }, {});
 
-function getBaseQueryParams({ checker, component, severity: sev }) {
-  const _query = {};
+      return this.items.reduce((total, curr) => {
+        this.totalColumns.forEach(c => total[c] += curr[c].count);
+        return total;
+      }, initVal);
+    },
 
-  if (checker)
-    _query["checker-name"] = checker;
-
-  if (component)
-    _query["source-component"] = component;
-
-  if (sev)
-    _query["severity"] = severity.severityFromCodeToString(sev);
-
-  return _query;
-}
-
-function getRuleStyle(guidelineRule) {
-  return {
-    display: guidelineRule.rules.length > 1 ? "block" : "inline-block",
-    "margin-left": guidelineRule.rules.length > 1 ? "1em" : "0"
-  };
-}
-
-function customSort(items, sortBy) {
-  if (!sortBy || sortBy.length === 0) return items;
-
-  return items.sort((a, b) => {
-    let _result = 0;
-
-    sortBy.forEach(sortItem => {
-      if (_result !== 0) return;
-
-      const column = sortItem.key;
-      const sortDesc = sortItem.order === "desc";
-
-      let _aValue, _bValue;
-      if (column.startsWith("checkers.")) {
-        const _prop = column.split("checkers.")[1];
-
-        _aValue = getNestedTableContent(
-          a.checkers, _prop, sortDesc);
-        _bValue = getNestedTableContent(
-          b.checkers, _prop, sortDesc);
+    uniqueMode() {
+      if ( this.$router.currentRoute.query["is-unique"] !== undefined ) {
+        return {
+          "is-unique": this.$router.currentRoute.query["is-unique"]
+        };
       }
-      else if (column.includes(".")) {
-        const _sub_columns = column.split(".");
-        _aValue = _sub_columns.reduce((element, sub_coulmn) => (
-          element && element[sub_coulmn] !== undefined
-            ? element[sub_coulmn] : undefined), a);
-        _bValue = _sub_columns.reduce((element, sub_coulmn) => (
-          element && element[sub_coulmn] !== undefined
-            ? element[sub_coulmn] : undefined), b);
-      }
-      else {
-        _aValue = a[column];
-        _bValue = b[column];
-      }
-
-      if (_aValue < _bValue) {
-        _result = sortDesc ? 1 : -1;
-      } else if (_aValue > _bValue) {
-        _result = sortDesc ? -1 : 1;
-      }
-    });
-
-    return _result;
-  });
-}
-
-function getNestedTableContent(checkers, prop, descending) {
-  if (checkers && checkers.length > 0) {
-    if (prop === "enabledInAllRuns" ){
-      const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
-          ? (current["enabledRunLength"] > max_or_min["enabledRunLength"]
-            ? current : max_or_min)
-          : (current["enabledRunLength"] < max_or_min["enabledRunLength"]
-            ? current : max_or_min);
-      });
-      return _selectedChecker["enabledRunLength"];
+      else return {};
     }
-    else {
-      const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
-          ? (current[prop] > max_or_min[prop] ? current : max_or_min) 
-          : (current[prop] < max_or_min[prop] ? current : max_or_min);
+  },
+  methods: {
+    getBaseQueryParams({ checker, component, severity }) {
+      const query = {};
+
+      if (checker)
+        query["checker-name"] = checker;
+
+      if (component)
+        query["source-component"] = component;
+
+      if (severity)
+        query["severity"] = this.severityFromCodeToString(severity);
+
+      return query;
+    },
+
+    getRuleStyle(guidelineRule) {
+      return {
+        display: guidelineRule.rules.length > 1 ? "block" : "inline-block",
+        "margin-left": guidelineRule.rules.length > 1 ? "1em" : "0"
+      };
+    },
+
+    customSort(items, sortBy, sortDesc) {
+      return items.sort((a, b) => {
+        let result = 0;
+
+        sortBy.forEach((column, index) => {
+          if (result !== 0) return;
+
+          let aValue, bValue;
+          if (column.startsWith("checkers.")) {
+            const prop = column.split("checkers.")[1];
+
+            aValue = this.getNestedTableContent(
+              a.checkers, prop, sortDesc[index]);
+            bValue = this.getNestedTableContent(
+              b.checkers, prop, sortDesc[index]);
+          }
+          else if (column.includes(".")) {
+            const sub_columns = column.split(".");
+            aValue = sub_columns.reduce((element, sub_coulmn) => (
+              element && element[sub_coulmn] !== undefined
+                ? element[sub_coulmn] : undefined), a);
+            bValue = sub_columns.reduce((element, sub_coulmn) => (
+              element && element[sub_coulmn] !== undefined
+                ? element[sub_coulmn] : undefined), b);
+          }
+          else {
+            aValue = a[column];
+            bValue = b[column];
+          }
+
+          if (aValue < bValue) {
+            result = sortDesc[index] ? 1 : -1;
+          } else if (aValue > bValue) {
+            result = sortDesc[index] ? -1 : 1;
+          }
+        });
+
+        return result;
       });
-      return _selectedChecker[prop];
+    },
+
+    getNestedTableContent(checkers, prop, descending) {
+      if (checkers && checkers.length > 0) {
+        if (prop === "enabledInAllRuns" ){
+          const selectedChecker = checkers.reduce((max_or_min, current) => {
+            return descending 
+              ? (current["enabledRunLength"] > max_or_min["enabledRunLength"]
+                ? current : max_or_min)
+              : (current["enabledRunLength"] < max_or_min["enabledRunLength"]
+                ? current : max_or_min);
+          });
+          return selectedChecker["enabledRunLength"];
+        }
+        else {
+          const selectedChecker = checkers.reduce((max_or_min, current) => {
+            return descending 
+              ? (current[prop] > max_or_min[prop] ? current : max_or_min) 
+              : (current[prop] < max_or_min[prop] ? current : max_or_min);
+          });
+          return selectedChecker[prop];
+        }
+      }
+      return prop === "name" ? "" : -1;
     }
   }
-  return prop === "name" ? "" : -1;
-}
+};
 </script>
 
 <style lang="scss" scoped>
-:deep(table) {
+::v-deep table {
   border: thin solid rgba(0, 0, 0, 0.12);
 }
 
-:deep(a) {
+::v-deep a {
   text-decoration: none;
 
   &:not(.severity):hover {

@@ -347,7 +347,6 @@ struct ReportData {
   // of custom labels that describe some properties of a report. For example the
   // timestamp in case of dynamic analyzers when the report was actually emitted.
   18: optional map<string, string> annotations,
-  19: optional BlameInfo blameInfo,    // Contains the git blame information of the report if it exists.
 }
 typedef list<ReportData> ReportDataList
 
@@ -405,12 +404,6 @@ struct ReportFilter {
   23: optional list<ReportStatus>  reportStatus, // Specifying the status of the filtered reports.
   // If set, report filter filters only the components where the whole report path is inside.
   24: optional bool fullReportPathInComponent,
-}
-
-struct FilterPreset {
-  1: i64          id,           // Unique ID of "FilterPreset".
-  2: string       name,         // Human readable name of preset.
-  3: ReportFilter reportFilter  // Uniquely configured ReportFilter.
 }
 
 struct RunReportCount {
@@ -573,11 +566,10 @@ struct Guideline {
 }
 
 struct Rule {
-  1: string ruleId,          // The identifier of the rule.
-  2: string title,           // The rule summary.
-  3: string url,             // The link of the rule page.
-  4: list<string> checkers,  // List of checker names.
-  5: optional string level,  // Level of severity that this rule indicates.
+  1: string ruleId,        // The identifier of the rule.
+  2: string title,         // The rule summary.
+  3: string url,           // The link of the rule page.
+  4: list<string> checkers // List of checker names
 }
 typedef map<string, list<Rule>> GuidelineRules
 
@@ -590,47 +582,6 @@ service codeCheckerDBAccess {
                          3: optional i64 offset,
                          4: optional RunSortMode sortMode)
                          throws (1: codechecker_api_shared.RequestFailed requestError),
-
-  //============================================
-  // Filter grouping api calls.
-  //============================================
-
-  // Stores the given FilterPreset with the given id
-  // If the preset exists with the given id, it overwrites the name, and all preset values
-  // If the preset does not exist yet, throws and error
-  // If the id is -1 a new preset filter is created and the id of the new preset is returned.
-  // If a preset with that name already existed, it throws an error. Thus the "FilterPreset" name must be unique.
-  // The encoding of the name must be unicode. (whitespaces allowed)
-  // Maximum "FilterPreset" name 50
-  // Returns: the id of the modified or created preset
-  // PERMISSION: PRODUCT_ADMIN
-  i64 storeFilterPreset(1: FilterPreset preset)
-                      throws (1: codechecker_api_shared.RequestFailed requestError);
-
-  // Returns: the id of the renamed preset
-  // Throws an error in case there is no preset with the given id
-  // PERMISSION: PRODUCT_ADMIN
-  i64 renameFilterPreset(1: i64 id
-                         2: string name)
-                      throws (1: codechecker_api_shared.RequestFailed requestError);
-
-  // Returns the "FilterPreset" identified by id
-  // Throws an error in case there is no preset with the given id
-  // PERMISSION: PRODUCT_VIEW
-  FilterPreset getFilterPreset(1: i64 id)
-                            throws (1: codechecker_api_shared.RequestFailed requestError);
-
-  // Removes the FilterPreset with the given id
-  // Returns the id of the "FilterPreset" removed
-  // Throws an error if the preset with the given id does not exist.
-  // PERMISSION: PRODUCT_ADMIN
-  i64 deleteFilterPreset(1: i64 id)
-                        throws (1: codechecker_api_shared.RequestFailed requestError);
-
-  // Returns all "FilterPreset"s stored for the product repository
-  // PERMISSION: PRODUCT_VIEW
-  list <FilterPreset> listFilterPreset()
-                                    throws (1: codechecker_api_shared.RequestFailed requestError);
 
   // Returns the number of available runs based on the run filter parameter.
   // PERMISSION: PRODUCT_VIEW

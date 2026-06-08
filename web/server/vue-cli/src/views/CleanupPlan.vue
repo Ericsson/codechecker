@@ -1,18 +1,20 @@
 <template>
   <v-container>
     <h1>Manage Cleanup Plans</h1>
-    <span
-      class="subtitle-1"
-    >
-      Use cleanup plans to track progress of reports in your product.
-    </span>
+    <cleanup-plan-subtitle />
 
     <list-cleanup-plans />
   </v-container>
 </template>
 
-<script setup>
+<script>
 import {
+  CleanupPlanSubtitle,
   ListCleanupPlans
 } from "@/components/Report/CleanupPlan";
+
+export default {
+  name: "CleanupPlan",
+  components: { CleanupPlanSubtitle, ListCleanupPlans }
+};
 </script>

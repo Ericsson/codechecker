@@ -1,55 +1,94 @@
 <template>
-  <ConfirmDialog
+  <v-dialog
     v-model="dialog"
     content-class="remove-comment-dialog"
     persistent
     max-width="600px"
-    title="Remove Comment"
-    confirm-btn-label="Remove"
-    confirm-btn-color="error"
-    @confirm="confirmCommentRemove"
   >
-    <template v-slot:content>
-      <v-container>
-        Are you sure you want to delete this comment?
+    <v-card>
+      <v-card-title
+        class="headline primary white--text"
+        primary-title
+      >
+        Remove comment
 
-        <!-- eslint-disable vue/no-v-html -->
-        <blockquote
-          class="blockquote"
-          v-html="message"
-        />
-      </v-container>
-    </template>
-  </ConfirmDialog>
+        <v-spacer />
+
+        <v-btn icon dark @click="dialog = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
+
+      <v-card-text class="pa-0">
+        <v-container>
+          Are you sure you want to delete this comment?
+
+          <!-- eslint-disable vue/no-v-html -->
+          <blockquote
+            class="blockquote"
+            v-html="message"
+          />
+        </v-container>
+      </v-card-text>
+
+      <v-divider />
+
+      <v-card-actions>
+        <v-spacer />
+
+        <v-btn
+          class="cancel-btn"
+          color="primary"
+          text
+          @click="dialog = false"
+        >
+          Cancel
+        </v-btn>
+
+        <v-btn
+          class="remove-btn"
+          color="error"
+          text
+          @click="confirmCommentRemove"
+        >
+          Remove
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed } from "vue";
-import ConfirmDialog from "@/components/ConfirmDialog";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  comment: { type: Object, default: () => null }
-});
+export default {
+  name: "RemoveCommentDialog",
+  props: {
+    value: { type: Boolean, default: false },
+    comment: { type: Object, default: () => null }
+  },
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
+      }
+    },
+    message() {
+      return this.comment ? this.comment.message : null;
+    }
+  },
 
-const emit = defineEmits([
-  "update:modelValue",
-  "on-confirm"
-]);
-
-const dialog = computed({
-  get: () => props.modelValue,
-  set: val => emit("update:modelValue", val)
-});
-
-const message = computed(() => props.comment ? props.comment.message : null);
-
-function confirmCommentRemove() {
-  ccService.getClient().removeComment(props.comment.id,
-    handleThriftError(() => {
-      emit("on-confirm");
-      dialog.value = false;
-    }));
-}
+  methods: {
+    confirmCommentRemove() {
+      ccService.getClient().removeComment(this.comment.id,
+        handleThriftError(() => {
+          this.$emit("on-confirm");
+          this.dialog = false;
+        }));
+    }
+  }
+};
 </script>

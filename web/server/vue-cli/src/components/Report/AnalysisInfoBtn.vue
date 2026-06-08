@@ -1,18 +1,17 @@
 <template>
   <v-btn
     class="show-analysis-info-btn"
-    title="Show analysis information"
     color="primary"
-    size="small"
-    icon="mdi-console"
-    variant="text"
+    outlined
+    small
     @click="$emit('click')"
   >
+    <v-icon
+      class="mr-1"
+      small
+    >
+      mdi-console
+    </v-icon>
     Analysis info
   </v-btn>
 </template>
-
-<script setup>
-defineEmits([ "click" ]);
-</script>
-

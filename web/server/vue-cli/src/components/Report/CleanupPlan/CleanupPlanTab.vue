@@ -2,7 +2,7 @@
   <v-container>
     <v-tabs v-model="tab">
       <v-tab
-        v-for="item in [ 'Open', 'Closed' ]"
+        v-for="item in ['Open', 'Closed']"
         :key="item"
         class="font-weight-bold subtitle-2 text-capitalize"
       >
@@ -10,29 +10,33 @@
       </v-tab>
     </v-tabs>
 
-    <v-window v-model="tab">
-      <v-window-item>
+    <v-tabs-items v-model="tab">
+      <v-tab-item>
         <slot name="open" />
-      </v-window-item>
+      </v-tab-item>
 
-      <v-window-item>
+      <v-tab-item>
         <slot name="closed" />
-      </v-window-item>
-    </v-window>
+      </v-tab-item>
+    </v-tabs-items>
   </v-container>
 </template>
 
-<script setup>
-import { computed } from "vue";
-
-const props = defineProps({
-  modelValue: { type: Number, default: 0 }
-});
-
-const emit = defineEmits([ "update:modelValue" ]);
-
-const tab = computed({
-  get: () => props.modelValue,
-  set: pos => emit("update:modelValue", pos)
-});
+<script>
+export default {
+  name: "CleanupPlanTab",
+  props: {
+    value: { type: Number, default: null }
+  },
+  computed: {
+    tab: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("input", val);
+      }
+    }
+  }
+};
 </script>

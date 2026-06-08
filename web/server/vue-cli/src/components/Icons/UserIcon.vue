@@ -1,6 +1,6 @@
 <template>
   <v-avatar
-    :color="color.strToColor(value)"
+    :color="strToColor(value)"
     :title="value"
     :size="size"
     class="my-1"
@@ -12,20 +12,22 @@
   </v-avatar>
 </template>
 
-<script setup>
-import { computed } from "vue";
-import { useStrToColor } from "@/composables/useStrToColor";
+<script>
+import { StrToColorMixin } from "@/mixins";
 
-const props = defineProps({
-  value: { type: String, required: true },
-  size: { type: Number, default: 48 },
-  tile: { type: Boolean, default: false },
-  txtClass: { type: String, default: "font-weight-bold white--text title" },
-});
-
-const color = useStrToColor();
-
-const userIconName = computed(
-  () => (props.value || "?").charAt(0).toUpperCase()
-);
+export default {
+  name: "UserIcon",
+  mixins: [ StrToColorMixin ],
+  props: {
+    value: { type: String, required: true },
+    size: { type: Number, default: 48 },
+    tile: { type: Boolean, default: false },
+    txtClass: { type: String, default: "font-weight-bold white--text title" },
+  },
+  computed: {
+    userIconName() {
+      return this.value.charAt(0).toUpperCase();
+    }
+  }
+};
 </script>

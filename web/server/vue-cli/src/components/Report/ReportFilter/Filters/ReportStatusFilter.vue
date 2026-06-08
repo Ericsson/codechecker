@@ -1,23 +1,21 @@
 <template>
   <select-option
-    :id="id.value"
+    :id="id"
     title="Report Status"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :loading="baseSelectOptionFilter.loading.value"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
-    :panel="baseSelectOptionFilter.panel.value"
-    @clear="baseSelectOptionFilter.clear(true)"
-    @input="baseSelectOptionFilter.setSelectedItems"
+    :loading="loading"
+    :selected-items="selectedItems"
+    :panel="panel"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon="{ item }">
       <report-status-icon :status="item.id" />
     </template>
 
     <template v-slot:append-toolbar-title>
-      <tooltip-help-icon
-        class="mr-2"
-      >
+      <tooltip-help-icon>
         Filter reports by the <b>latest</b> report status.<br><br>
 
         A report can be outstanding or closed.
@@ -50,112 +48,82 @@
       </tooltip-help-icon>
 
       <selected-toolbar-title-items
-        v-if="baseSelectOptionFilter.selectedItems.value"
-        :value="baseSelectOptionFilter.selectedItems.value"
+        v-if="selectedItems"
+        :value="selectedItems"
       />
     </template>
   </select-option>
 </template>
   
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { ref, toRef } from "vue";
 
-import { ReportStatusIcon } from "@/components/Icons";
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { ReportFilter, ReportStatus } from "@cc/report-server-types";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import { ReportStatusIcon } from "@/components/Icons";
+import { ReportStatusMixin } from "@/mixins";
 
-import { useBaseSelectOptionFilter }
-  from "@/composables/useBaseSelectOptionFilter";
-import { useReportStatus } from "@/composables/useReportStatus";
 import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "ReportStatusFilter",
+  components: {
+    SelectOption,
+    ReportStatusIcon,
+    SelectedToolbarTitleItems,
+    TooltipHelpIcon
+  },
+  mixins: [ BaseSelectOptionFilterMixin, ReportStatusMixin ],
 
-const emit = defineEmits([ "update:url" ]);
+  data() {
+    return {
+      id: "report-status"
+    };
+  },
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
-baseSelectOptionFilter.encodeValue.value = encodeValue;
-baseSelectOptionFilter.decodeValue.value = decodeValue;
+  methods: {
+    encodeValue(reportStatusId) {
+      return this.reportStatusFromCodeToString(reportStatusId);
+    },
 
-const id = ref("report-status");
-// eslint-disable-next-line vue/no-ref-object-reactivity-loss
-baseSelectOptionFilter.id.value = id.value;
+    decodeValue(reportStatusName) {
+      return this.reportStatusFromStringToCode(reportStatusName);
+    },
 
-const reportStatus = useReportStatus();
+    updateReportFilter() {
+      this.setReportFilter({
+        reportStatus: this.selectedItems.map(item => item.id)
+      });
+    },
 
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
+    onReportFilterChange(key) {
+      if (key === "reportStatus") return;
+      this.update();
+    },
 
-function encodeValue(reportStatusId) {
-  return reportStatus.reportStatusFromCodeToString(reportStatusId);
-}
+    fetchItems() {
+      this.loading = true;
 
-function decodeValue(reportStatusName) {
-  return reportStatus.reportStatusFromStringToCode(reportStatusName);
-}
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.reportStatus = null;
 
-function updateReportFilter() {
-  baseSelectOptionFilter.setReportFilter({
-    reportStatus:
-      baseSelectOptionFilter.selectedItems.value.map(item => item.id)
-  });
-}
-
-function onReportFilterChange(key) {
-  if (key === "reportStatus") return;
-  baseSelectOptionFilter.update();
-}
-
-function fetchItems() {
-  baseSelectOptionFilter.loading.value = true;
-
-  const _reportFilter = new ReportFilter(
-    baseSelectOptionFilter.reportFilter.value
-  );
-  _reportFilter.reportStatus = null;
-
-  return new Promise(resolve => {
-    ccService.getClient().getReportStatusCounts(
-      baseSelectOptionFilter.runIds.value,
-      _reportFilter,
-      baseSelectOptionFilter.cmpData.value,
-      handleThriftError(res => {
-        resolve(Object.keys(ReportStatus).map(status => {
-          const _id = ReportStatus[status];
-          return {
-            id: _id,
-            title: encodeValue(_id),
-            count: res[_id] !== undefined ? res[_id].toNumber() : 0
-          };
-        }));
-        baseSelectOptionFilter.loading.value = false;
-      }));
-  });
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  clear: baseSelectOptionFilter.clear,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-  initByUrl: baseSelectOptionFilter.initByUrl,
-  getUrlState: baseSelectOptionFilter.getUrlState,
-
-  id,
-  encodeValue,
-  decodeValue,
-  updateReportFilter,
-  onReportFilterChange,
-  fetchItems
-});
+      return new Promise(resolve => {
+        ccService.getClient().getReportStatusCounts(this.runIds, reportFilter,
+          this.cmpData, handleThriftError(res => {
+            resolve(Object.keys(ReportStatus).map(status => {
+              const id = ReportStatus[status];
+              return {
+                id: id,
+                title: this.encodeValue(id),
+                count: res[id] !== undefined ? res[id].toNumber() : 0
+              };
+            }));
+            this.loading = false;
+          }));
+      });
+    }
+  }
+};
 </script>
   

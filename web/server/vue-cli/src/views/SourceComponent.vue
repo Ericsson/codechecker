@@ -5,6 +5,11 @@
   </v-container>
 </template>
 
-<script setup>
+<script>
 import { ListSourceComponents } from "@/components/Report/SourceComponent";
+
+export default {
+  name: "SourceComponent",
+  components: { ListSourceComponents }
+};
 </script>

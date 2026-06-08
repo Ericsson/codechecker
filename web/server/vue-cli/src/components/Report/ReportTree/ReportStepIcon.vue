@@ -61,13 +61,21 @@
   </v-icon>
 </template>
 
-<script setup>
+<script>
 import ReportStepIconType from "./ReportStepIconType";
 
-defineProps({
-  value: {
-    required: true,
-    validator: v => typeof v === "number" || v === null
-  }
-});
+export default {
+  name: "ReportTreeIcon",
+  props: {
+    value: {
+      required: true,
+      validator: v => typeof v === "number" || v === null
+    }
+  },
+  data() {
+    return {
+      ReportStepIconType
+    };
+  },
+};
 </script>

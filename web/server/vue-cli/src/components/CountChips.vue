@@ -11,9 +11,10 @@
         color="success"
         :ripple="false"
         :title="goodText"
-        variant="outlined"
-        size="small"
-        @click="emit('showing-good-click')"
+        outlined
+        dark
+        small
+        @click="$emit('showing-good-click')"
       >
         <v-icon
           start
@@ -28,6 +29,7 @@
         v-if="showDividers &&
           ((showingGood && showingBad) || (showingGood && showingTotal))"
         class="mx-2 d-inline"
+        inset
         vertical
       />
 
@@ -36,9 +38,10 @@
         color="error"
         :ripple="false"
         :title="badText"
-        variant="outlined"
-        size="small"
-        @click="emit('showing-bad-click')"
+        outlined
+        dark
+        small
+        @click="$emit('showing-bad-click')"
       >
         <v-icon
           start
@@ -52,16 +55,17 @@
       <v-divider
         v-if="showDividers && showingBad && showingTotal"
         class="mx-2 d-inline"
+        inset
         vertical
       />
 
       <v-chip
         v-if="showingTotal"
-        color="grey-lighten-1"
+        color="grey lighten-1"
         :ripple="false"
         :title="totalText"
-        variant="elevated"
-        size="small"
+        elevated
+        small
       >
         <v-icon
           start
@@ -75,50 +79,53 @@
   </span>
 </template>
 
-<script setup>
-import { computed } from "vue";
-const props = defineProps({
-  tag: { type: String, default: "span" },
-  numGood: { type: Number, default: 0 },
-  numBad: { type: Number, default: 0 },
-  numTotal: { type: Number, default: 0 },
-  goodText: { type: String, default: "" },
-  badText: { type: String, default: "" },
-  totalText: { type: String, default: "" },
-  showDividers: { type: Boolean, default: true },
-  showZeroChips: { type: Boolean, default: false },
-  showTotal: { type: Boolean, default: false },
-  simplifyShowingIfAll: { type: Boolean, default: true }
-});
+<script>
+import { AnalyzerStatisticsIcon } from "@/components/Icons";
 
-const emit = defineEmits([ "showing-good-click", "showing-bad-click" ]);
-
-const total = computed(() => 
-  props.numTotal > 0 ? props.numTotal : (props.numGood + props.numBad)
-);
-
-const canSimplify = computed(() => 
-  props.simplifyShowingIfAll && 
-  (total.value === props.numGood || total.value === props.numBad)
-);
-
-const needToShowBothGoodAndBad = computed(() => 
-  !canSimplify.value && 
-  (props.showZeroChips || (props.numGood > 0 && props.numBad > 0))
-);
-
-const showingGood = computed(() => 
-  needToShowBothGoodAndBad.value || props.numGood > 0 ||
-  (canSimplify.value && total.value === props.numGood)
-);
-
-const showingBad = computed(() => 
-  needToShowBothGoodAndBad.value || props.numBad > 0 ||
-  (props.simplifyShowingIfAll && total.value === props.numBad)
-);
-
-const showingTotal = computed(() => 
-  props.showTotal && !canSimplify.value &&
-  (total.value > 0 || (total.value === 0 && props.showZeroChips))
-);
+export default {
+  name: "CountChips",
+  components: {
+    AnalyzerStatisticsIcon
+  },
+  props: {
+    tag: { type: String, default: "span" },
+    numGood: { type: Number, default: 0 },
+    numBad: { type: Number, default: 0 },
+    numTotal: { type: Number, default: 0 },
+    goodText: { type: String, default: "" },
+    badText: { type: String, default: "" },
+    totalText: { type: String, default: "" },
+    showDividers: { type: Boolean, default: true },
+    showZeroChips: { type: Boolean, default: false },
+    showTotal: { type: Boolean, default: false },
+    simplifyShowingIfAll: { type: Boolean, default: true }
+  },
+  computed: {
+    total() {
+      return (this.numTotal > 0
+        ? this.numTotal
+        : (this.numGood + this.numBad));
+    },
+    canSimplify() {
+      return this.simplifyShowingIfAll &&
+        (this.total === this.numGood || this.total === this.numBad);
+    },
+    needToShowBothGoodAndBad() {
+      return !this.canSimplify &&
+        (this.showZeroChips || (this.numGood > 0 && this.numBad > 0));
+    },
+    showingGood() {
+      return this.needToShowBothGoodAndBad || this.numGood > 0 ||
+        (this.canSimplify && this.total === this.numGood);
+    },
+    showingBad() {
+      return this.needToShowBothGoodAndBad || this.numBad > 0 ||
+        (this.simplifyShowingIfAll && this.total === this.numBad);
+    },
+    showingTotal() {
+      return this.showTotal && !this.canSimplify &&
+        (this.total > 0 || (this.total === 0 && this.showZeroChips));
+    }
+  }
+};
 </script>

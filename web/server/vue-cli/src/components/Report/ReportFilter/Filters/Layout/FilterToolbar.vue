@@ -1,76 +1,82 @@
 <template>
   <v-expansion-panels
-    v-model="panelOpen"
+    v-model="value"
+    flat
   >
-    <v-expansion-panel
-      eager
-    >
-      <v-expansion-panel-title
-        class="pa-0"
-        hide-actions
-      >
-        <template #default="{ expanded }">
-          <v-icon class="expansion-btn">
-            {{ expanded ? "mdi-chevron-up" : "mdi-chevron-down" }}
-          </v-icon>
+    <v-expansion-panel>
+      <v-expansion-panel-header class="pa-0" hide-actions>
+        <v-toolbar flat dense>
+          <v-toolbar-title class="font-weight-bold body-2">
+            <v-icon class="expansion-btn">
+              {{ value == 0 ? "mdi-chevron-up" : "mdi-chevron-down" }}
+            </v-icon>
+            {{ title }}
+
+            <slot name="append-toolbar-title" />
+          </v-toolbar-title>
 
           <slot name="prepend-toolbar-title" />
 
-          <span
-            class="
-              text-body-2
-              font-weight-semibold
-              mr-2
-              text-truncate"
-          >{{ title }}</span>
-
-          <slot name="append-toolbar-title" />
-
           <v-spacer />
 
-          <slot name="prepend-toolbar-items" />
+          <v-toolbar-items>
+            <slot name="prepend-toolbar-items" />
 
-          <v-btn
-            icon="mdi-delete"
-            size="small"
-            variant="plain"
-            @click.stop="emit('clear');"
-          />
+            <v-btn
+              icon
+              small
+              class="clear-btn"
+              @click.stop="clear"
+            >
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
 
-          <slot name="append-toolbar-items" />
-        </template>
-      </v-expansion-panel-title>
+            <slot name="append-toolbar-items" />
+          </v-toolbar-items>
+        </v-toolbar>
+      </v-expansion-panel-header>
 
-      <v-expansion-panel-text>
+      <v-expansion-panel-content>
         <slot />
-      </v-expansion-panel-text>
+      </v-expansion-panel-content>
     </v-expansion-panel>
   </v-expansion-panels>
 </template>
 
-<script setup>
-import { ref, watch } from "vue";
+<script>
+export default {
+  name: "FilterToolbar",
+  props: {
+    title: { type: String, required: true },
+    panel: { type: Boolean, default: false }
+  },
 
-const props = defineProps({
-  title: { type: String, required: true },
-  panelActive: { type: Boolean, default: false }
-});
+  data() {
+    return {
+      value: this.panel ? 0 : null
+    };
+  },
 
-const emit = defineEmits([ "clear" ]);
+  watch: {
+    panel() {
+      this.value = this.panel ? 0 : null;
+    }
+  },
 
-const panelOpen = ref(undefined);
-
-watch(() => props.panelActive, active => {
-  panelOpen.value = active ? 0 : undefined;
-}, { immediate: true });
+  methods: {
+    clear() {
+      this.$emit("clear");
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>
-:deep(.v-toolbar > .v-toolbar__content) {
+::v-deep .v-toolbar > .v-toolbar__content {
   padding: 0;
 }
 
-:deep(.selected-items) {
+::v-deep .selected-items {
   color: grey;
 }
 </style>

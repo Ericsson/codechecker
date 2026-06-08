@@ -50,6 +50,9 @@ class TestReportFilter(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
@@ -279,6 +282,30 @@ class TestReportFilter(unittest.TestCase):
         print(res)
         self.assertEqual(len(res), len(self.run1_files))
         self.assertDictEqual(res, self.run1_files)
+
+    def test_filter_by_file_and_source_component(self):
+        """
+        File and source component filter in getFileCounts().
+
+        Earlier this function resulted an SQL error due to an invalid SQL
+        statement (File table was ambiguously used, because it was joined
+        multiple times).
+
+        On the other hand we test here that getFileCounts() returns the number
+        of reports in all files regardless the filter fields. The reason is
+        that it wouldn't be possible on the GUI to display the options of the
+        file path filter which doesn't contain a report (i.e. their endpoint is
+        not in that file). In the future it would be enough to ignore the
+        filter only if "anywhere on bugpath" option is used (TODO?).
+        """
+        runid = self._runids[0]
+        run_filter = ReportFilter(
+            filepath="call*",
+            componentNames=["doesn't exist"])
+        file_counts = self._cc_client.getFileCounts(
+            [runid], run_filter, None, None, 0)
+
+        self.assertEqual(len(file_counts), len(self.run1_files))
 
     def test_run2_all_file(self):
         """

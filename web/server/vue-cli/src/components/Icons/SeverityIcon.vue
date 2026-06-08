@@ -1,76 +1,85 @@
 <template>
   <v-avatar
     v-if="status === Severity.UNSPECIFIED"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="Unspecified"
   >
-    <span class="text-white text-weight-bold">U</span>
+    <span class="white--text font-weight-bold">U</span>
   </v-avatar>
 
   <v-avatar
     v-else-if="status === Severity.STYLE"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="Style"
   >
-    <span class="text-white text-weight-bold">S</span>
+    <span class="white--text font-weight-bold">S</span>
   </v-avatar>
 
   <v-avatar
     v-else-if="status === Severity.LOW"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="Low"
   >
-    <span class="text-white text-weight-bold">L</span>
+    <span class="white--text font-weight-bold">L</span>
   </v-avatar>
 
   <v-avatar
     v-else-if="status === Severity.MEDIUM"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="Medium"
   >
-    <span class="text-white text-weight-bold">M</span>
+    <span class="white--text font-weight-bold">M</span>
   </v-avatar>
 
   <v-avatar
     v-else-if="status === Severity.HIGH"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="High"
   >
-    <span class="text-white text-weight-bold">H</span>
+    <span class="white--text font-weight-bold">H</span>
   </v-avatar>
 
   <v-avatar
     v-else-if="status === Severity.CRITICAL"
-    rounded="xs"
+    tile
     :color="color"
     :size="size"
     title="Critical"
   >
-    <span class="text-white text-weight-bold">C</span>
+    <span class="white--text font-weight-bold">C</span>
   </v-avatar>
 </template>
 
-<script setup>
-import { useSeverity } from "@/composables/useSeverity";
+<script>
 import { Severity } from "@cc/report-server-types";
-import { computed } from "vue";
+import { SeverityMixin } from "@/mixins";
 
-const props = defineProps({
-  status: { type: Number, required: true },
-  size: { type: Number, default: 24 }
-});
-
-const severity = useSeverity();
-
-const color = computed(() => severity.severityFromCodeToColor(props.status));
+export default {
+  name: "SeverityIcon",
+  mixins: [ SeverityMixin ],
+  props: {
+    status: { type: Number, required: true },
+    size: { type: Number, default: 24 }
+  },
+  data() {
+    return {
+      Severity
+    };
+  },
+  computed: {
+    color() {
+      return this.severityFromCodeToColor(this.status);
+    }
+  }
+};
 </script>

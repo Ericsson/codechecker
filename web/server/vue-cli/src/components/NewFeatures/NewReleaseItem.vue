@@ -1,21 +1,25 @@
 <template>
-  <v-card
-    :flat="false"
-  >
-    <v-card-title
-      :class="[`${color}`]"
-    >
+  <new-feature-item :color="color" :flat="false">
+    <template v-slot:title>
       <slot name="title" />
-    </v-card-title>
+    </template>
 
-    <v-card-text>
+    <template v-slot>
       <slot />
-    </v-card-text>
-  </v-card>
+    </template>
+  </new-feature-item>
 </template>
 
-<script setup>
-defineProps({
-  color: { type: String, default: "primary" }
-});
+<script>
+import NewFeatureItem from "./NewFeatureItem";
+
+export default {
+  name: "NewReleaseItem",
+  components: {
+    NewFeatureItem
+  },
+  props: {
+    color: { type: String, default: "primary" }
+  }
+};
 </script>

@@ -46,6 +46,9 @@ class RemoveRunResults(unittest.TestCase):
         self._codechecker_cfg = env.import_codechecker_cfg(test_workspace)
         self._test_dir = os.path.join(test_workspace, 'test_files')
 
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
+
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 

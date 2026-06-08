@@ -1,11 +1,23 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     content-class="edit-review-status-rule-dialog"
     scrollable
-    :title="dialogTitle"
     @confirm="saveReviewStatusRule"
   >
+    <template v-slot:title>
+      <span
+        v-if="rule"
+      >
+        Edit review status rule
+      </span>
+      <span
+        v-else
+      >
+        New review status rule
+      </span>
+    </template>
+
     <template v-slot:content>
       <v-form ref="form">
         <v-text-field
@@ -13,7 +25,7 @@
           class="report-hash mb-2"
           label="Report hash*"
           autofocus
-          variant="outlined"
+          outlined
           required
           :hide-details="true"
           :rules="rules.reportHash"
@@ -30,76 +42,75 @@
         <v-textarea
           v-model.trim="message"
           class="message pa-0"
-          variant="outlined"
+          solo
+          flat
+          outlined
           name="reviewStatusMessage"
           label="(Optionally) Explain the status change..."
           :hide-details="true"
         />
       </v-form>
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, ref, watch } from "vue";
 
 import { ConfirmDialog } from "@/components";
 import SelectReviewStatus from "./SelectReviewStatus";
 
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  rule: { type: Object, default: () => null },
-});
-const emit = defineEmits([
-  "update:modelValue",
-  "on:confirm"
-]);
-const reportHash = ref(null);
-const status = ref(null);
-const message = ref(null);
-const rules = ref({
-  reportHash: [ v => !!v || "Report hash is required" ],
-  selectReviewStatus: [ v => !!v || "Review status is required" ],
-});
-const form = ref(null);
-
-const dialog = computed({
-  get() {
-    return props.modelValue;
+export default {
+  name: "EditReviewStatusRuleDialog",
+  components: { ConfirmDialog, SelectReviewStatus },
+  props: {
+    value: { type: Boolean, default: false },
+    rule: { type: Object, default: () => null },
   },
-  set(val) {
-    emit("update:modelValue", val);
+  data() {
+    return {
+      reportHash: null,
+      status: null,
+      message: null,
+      rules: {
+        reportHash: [ v => !!v || "Report hash is required" ],
+        selectReviewStatus: [ v => !!v || "Review status is required" ],
+      }
+    };
+  },
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
+      }
+    }
+  },
+  watch: {
+    dialog() {
+      if (this.dialog) {
+        this.$refs.form?.resetValidation();
+      }
+    },
+    rule() {
+      this.reportHash = this.rule?.reportHash;
+      this.status = this.rule?.status;
+      this.message = this.rule?.message;
+    }
+  },
+  methods: {
+    async saveReviewStatusRule() {
+      if (!this.$refs.form.validate()) return;
+
+      ccService.getClient().addReviewStatusRule(
+        this.reportHash, this.status, this.message,
+        handleThriftError(async () => {
+          this.$emit("on:confirm");
+          this.dialog = false;
+        }));
+    }
   }
-});
-
-const dialogTitle = computed(() => {
-  return props.rule ? "Edit review status rule" : "New review status rule";
-});
-
-watch(dialog, newVal => {
-  if (newVal) {
-    form.value?.resetValidation();
-  }
-});
-
-watch(() => props.rule, newRule => {
-  reportHash.value = newRule?.reportHash;
-  status.value = newRule?.status;
-  message.value = newRule?.message;
-});
-
-async function saveReviewStatusRule() {
-  const { valid } = await form.value.validate();
-  if (!valid) return;
-
-  ccService.getClient().addReviewStatusRule(
-    reportHash.value,
-    status.value,
-    message.value,
-    handleThriftError(async () => {
-      emit("on:confirm");
-      dialog.value = false;
-    }));
-}
+};
 </script>

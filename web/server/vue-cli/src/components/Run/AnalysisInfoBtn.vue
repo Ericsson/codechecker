@@ -1,15 +1,19 @@
 <template>
   <v-btn
-    class="show-analysis-info-btn"
+    class="show-analysis-info"
     title="Show analysis information"
-    color="primary"
-    size="small"
-    icon="mdi-console"
-    variant="text"
-    @click="$emit('openDialog')"
-  />
+    color="grey darken-1"
+    small
+    text
+    icon
+    @click="$emit('click')"
+  >
+    <v-icon>mdi-console</v-icon>
+  </v-btn>
 </template>
 
-<script setup>
-defineEmits([ "openDialog" ]);
+<script>
+export default {
+  name: "AnalysisInfoBtn",
+};
 </script>

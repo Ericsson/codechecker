@@ -206,7 +206,6 @@ def remove_unused_analysis_info(product):
                 sqlalchemy.exc.ProgrammingError) as ex:
             LOG.error("[%s] Failed to remove dangling analysis info: %s",
                       product.endpoint, str(ex))
-            session.rollback()  # Reset transaction state
         finally:
             # Re-enable foreign key constraints
             if session.bind.dialect.name == "postgresql":

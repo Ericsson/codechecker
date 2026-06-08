@@ -8,8 +8,11 @@
   </v-container>
 </template>
 
-<script setup>
-defineProps({
-  color: { type: String, default: "orange" }
-});
+<script>
+export default {
+  name: "BulbMessage",
+  props: {
+    color: { type: String, default: "orange" }
+  }
+};
 </script>

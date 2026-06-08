@@ -1,3 +1,4 @@
+import Vue from "vue";
 import {
   TBufferedTransport,
   TJSONProtocol,
@@ -8,7 +9,7 @@ import {
 import router from "@/router";
 import store from "@/store";
 import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
-import tokenService from "./token.service";
+import authService from "./auth.service";
 
 // Host should be set explicitly to `hostname` because thrift will use
 // the value of `window.location.host` which will contain port number by
@@ -18,8 +19,7 @@ const port = parseInt(process.env.CC_SERVER_PORT, 10) ||
   parseInt(window.location.port, 10);
 const api = process.env.CC_API_VERSION;
 
-// Use native EventTarget for Vue 3 compliance
-const eventHub = new EventTarget();
+const eventHub = new Vue();
 
 class BaseService {
   constructor(serviceName, serviceClass) {
@@ -28,8 +28,8 @@ class BaseService {
     this._client = this.createClient();
 
     // Event which can be used to update client on route changes.
-    eventHub.addEventListener("update", event => {
-      this._client = this.createClient(event.detail);
+    eventHub.$on("update", endpoint => {
+      this._client = this.createClient(endpoint);
     });
   }
 
@@ -54,7 +54,7 @@ class BaseService {
       xreq.addEventListener("readystatechange", function () {
         if (this.readyState === 1) { // connection opened, headers not sent yet
           xreq.setRequestHeader("Authorization",
-            "Bearer " + tokenService.getToken());
+            "Bearer " + authService.getToken());
         } else if (this.readyState === 4) { // request finished
           if (this.status === 504) {
             store.commit(ADD_ERROR,

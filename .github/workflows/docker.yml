@@ -25,13 +25,13 @@ jobs:
 
       - name: Get the version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
 
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: .
+          context: ./web/docker/
           file: ./web/docker/Dockerfile
           tags: |
             codechecker/codechecker-web:latest

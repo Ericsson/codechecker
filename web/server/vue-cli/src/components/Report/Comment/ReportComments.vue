@@ -8,13 +8,13 @@
     </v-overlay>
 
     <edit-comment-dialog
-      v-model="editDialog"
+      :value.sync="editDialog"
       :comment="selected"
       @on-confirm="fetchComments"
     />
 
     <remove-comment-dialog
-      v-model="removeDialog"
+      :value.sync="removeDialog"
       :comment="selected"
       @on-confirm="fetchComments"
     />
@@ -23,23 +23,14 @@
       :comments="comments"
       :report="report"
       :bus="bus"
-      @new:comments="onNewComment"
     />
 
-    <v-container
-      fluid
-      class="px-0"
-    >
-      <v-row
-        class="ma-0"
-      >
-        <v-col
-          cols="auto"
-        >
+    <v-container fluid class="px-0">
+      <v-row class="ma-0">
+        <v-col cols="auto">
           <v-timeline
             v-if="comments.length"
-            density="compact"
-            color="primary"
+            dense
           >
             <template
               v-for="comment in comments"
@@ -48,8 +39,7 @@
                 v-if="comment.kind === CommentKind.USER"
                 :key="comment.id.toString()"
                 :comment="comment"
-                @update:comment="openEditCommentDialog"
-                @remove:comment="openRemoveCommentDialog"
+                :bus="bus"
               />
 
               <system-comment
@@ -65,79 +55,92 @@
   </v-container>
 </template>
 
-<script setup>
-import mitt from "mitt";
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+<script>
+import Vue from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
 import { CommentKind } from "@cc/report-server-types";
 
 import EditCommentDialog from "./EditCommentDialog";
 import NewComment from "./NewComment";
+import UserComment from "./UserComment";
 import RemoveCommentDialog from "./RemoveCommentDialog";
 import SystemComment from "./SystemComment";
-import UserComment from "./UserComment";
 
-const props = defineProps({
-  report: { type: Object, default: () => null }
-});
+export default {
+  name: "ReportComments",
+  components: {
+    EditCommentDialog,
+    NewComment,
+    UserComment,
+    RemoveCommentDialog,
+    SystemComment
+  },
+  props: {
+    report: { type: Object, default: () => null }
+  },
 
-const emit = defineEmits([ "update:commentCount" ]);
+  data() {
+    return {
+      CommentKind,
+      comments: [],
+      selected: null,
+      editDialog: false,
+      removeDialog: false,
+      loading: false,
+      bus: new Vue()
+    };
+  },
 
-const comments = ref([]);
-const selected = ref(null);
-const editDialog = ref(false);
-const removeDialog = ref(false);
-const loading = ref(false);
-const bus = mitt();
+  watch: {
+    report() {
+      this.fetchComments();
+    }
+  },
 
-function fetchComments() {
-  if (!props.report) return;
+  mounted() {
+    this.fetchComments();
 
-  loading.value = true;
-  ccService.getClient().getComments(props.report.reportId,
-    handleThriftError(_comments => {
-      comments.value = _comments;
-      loading.value = false;
-    }));
-}
+    this.bus.$on("update:comments", this.fetchComments);
 
-function onNewComment() {
-  emit("update:commentCount", props.report);
-  fetchComments();
-}
+    this.bus.$on("update:comment", comment => {
+      this.selected = comment;
+      this.editDialog = true;
+    });
 
-function openEditCommentDialog(comment) {
-  selected.value = comment;
-  editDialog.value = true;
-}
+    this.bus.$on("remove:comment", comment => {
+      this.selected = comment;
+      this.removeDialog = true;
+    });
+  },
 
-function openRemoveCommentDialog(comment) {
-  selected.value = comment;
-  removeDialog.value = true;
-}
+  methods: {
+    fetchComments() {
+      if (!this.report) return;
 
-watch(() => props.report, () => {
-  fetchComments();
-});
-
-onMounted(() => {
-  fetchComments();
-});
-
-onBeforeUnmount(() => {
-  bus.off("update:comments", fetchComments);
-  bus.off("update:comment");
-  bus.off("remove:comment");
-});
+      this.loading = true;
+      ccService.getClient().getComments(this.report.reportId,
+        handleThriftError(comments => {
+          this.comments = comments;
+          this.loading = false;
+        }));
+    }
+  }
+};
 </script>
 
-<style lang="scss">
-:deep(.v-timeline-item .v-timeline-item__dot) {
-  background-color: var(--v-theme-primary) !important;
+<style lang="scss" scoped>
+$width: 48px;
+
+::v-deep .v-timeline-item__divider {
+  min-width: $width;
 }
 
-:deep(.v-timeline-item .v-timeline-item__dot .v-icon) {
-  color: white !important;
+.v-timeline--dense ::v-deep .v-timeline-item__body {
+  max-width: calc(100% - #{$width});
+}
+
+.v-application--is-ltr .v-timeline--dense:not(.v-timeline--reverse):before {
+  left: calc((#{$width} / 2) - 1px)
 }
 </style>

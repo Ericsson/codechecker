@@ -36,20 +36,18 @@ def change_paths(string, path_modifier_fun):
     result = []
     i = 0
     while i < len(string):
-        # All strings that start with '/' (or './' or '../') and end with
-        # whitespace are recognized as paths. Additionally any string
-        # immediately after a '-I' option (no whitespace between option and path).
+        # Everything is a path which starts with a '/' and there is a
+        # whitespace after that.
         # Note, this supports only POSIX paths.
-        if string[i] == '/' or string[i:i + 2] == './' or\
-                string[i:i + 3] == '../' or string[i - 3:i] == ' -I':
+        if string[i] == '/':
             path, path_end = find_path_end(string, i)
-            path = path_modifier_fun(path)
             # Make sure that the prospective output folder exists.
             pattern = re.compile(r'[\s\S]*-o *\Z')
             if pattern.match(string[:i]):
-                out_dir = os.path.dirname(path)
+                out_dir = "./sources-root" + os.path.dirname(path)
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
+            path = path_modifier_fun(path)
             result += path
             i = path_end - 1
         else:
@@ -59,17 +57,10 @@ def change_paths(string, path_modifier_fun):
 
 
 class IncludePathModifier:
-    def __init__(self, sources_root, working_dir = '.'):
+    def __init__(self, sources_root):
         self.sources_root = sources_root
-        self.working_dir = working_dir
 
     def __call__(self, path):
-        if not os.path.isabs(path):
-            return os.path.normpath(
-                os.path.join(
-                    self.sources_root,
-                    self.working_dir.lstrip(os.path.sep),
-                    path))
         return os.path.join(
             self.sources_root,
             os.path.normpath(

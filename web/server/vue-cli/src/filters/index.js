@@ -3,11 +3,9 @@ import prettifyDate from "./prettify-date";
 import truncate from "./truncate";
 
 export default {
-  install(app) {
-    app.config.globalProperties.$filters = {
-      fromUnixTime,
-      prettifyDate,
-      truncate
-    };
+  install(Vue) {
+    Vue.filter("fromUnixTime", fromUnixTime);
+    Vue.filter("prettifyDate", prettifyDate);
+    Vue.filter("truncate", truncate);
   }
 };

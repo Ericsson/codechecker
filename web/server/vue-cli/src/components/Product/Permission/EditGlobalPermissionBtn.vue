@@ -1,43 +1,59 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     max-width="1000px"
-    title="Global Permissions"
     @confirm="confirmPermissionChange"
   >
-    <template v-slot:activator="{ props: activatorProps }">
+    <template v-slot:activator="{ on }">
       <v-btn
-        v-bind="activatorProps"
         id="edit-global-permissions-btn"
         color="primary"
         class="mr-2"
-        variant="outlined"
+        v-on="on"
       >
-        <template v-slot:prepend>
-          <v-icon>mdi-shield-key</v-icon>
-        </template>
+        <v-icon left>
+          mdi-shield-key
+        </v-icon>
         Edit global permission
       </v-btn>
     </template>
 
+    <template v-slot:title>
+      Global permissions
+    </template>
+
     <template v-slot:content>
-      <EditGlobalPermission
-        ref="editGlobalPermission"
+      <edit-global-permission
+        :bus="bus"
       />
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
-import { ref } from "vue";
+<script>
+import Vue from "vue";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditGlobalPermission from "./EditGlobalPermission";
 
-const dialog = ref(false);
-const editGlobalPermission = ref(null);
+export default {
+  name: "EditGlobalPermissionBtn",
+  components: {
+    ConfirmDialog,
+    EditGlobalPermission
+  },
 
-function confirmPermissionChange() {
-  editGlobalPermission.value.saveAll();
-}
+  data() {
+    return {
+      dialog: false,
+      bus: new Vue()
+    };
+  },
+
+  methods: {
+    confirmPermissionChange() {
+      this.bus.$emit("save");
+    }
+  }
+};
 </script>

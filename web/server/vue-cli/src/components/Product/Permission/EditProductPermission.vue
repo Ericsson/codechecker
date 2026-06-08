@@ -2,81 +2,65 @@
   <v-container fluid>
     <v-row justify="center">
       <v-col cols="auto">
-        <ProductUserPermission
-          ref="userPermission"
+        <product-user-permission
           :permissions="permissions"
           :auth-rights="userAuthRights"
+          :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="false"
           :success="success"
           :error="error"
-          @update:success="success => emit('update:success', success)"
-          @update:error="error => emit('update:error', error)"
-          @update:auth-rights="authRights => userAuthRights = authRights"
+          @update:success="(success) => $emit('update:success', success)"
+          @update:error="(error) => $emit('update:error', error)"
         />
       </v-col>
       <v-col cols="auto">
-        <ProductGroupPermission
-          ref="groupPermission"
+        <product-group-permission
           :permissions="permissions"
           :auth-rights="groupAuthRights"
+          :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="true"
           :success="success"
           :error="error"
-          @update:success="success => emit('update:success', success)"
-          @update:error="error => emit('update:error', error)"
-          @update:auth-rights="authRights => groupAuthRights = authRights"
+          @update:success="(success) => $emit('update:success', success)"
+          @update:error="(error) => $emit('update:error', error)"
         />
       </v-col>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
-import { usePopulatePermissions } from "@/composables/usePopulatePermissions";
-import {
-  computed,
-  onMounted,
-  ref
-} from "vue";
-import ProductGroupPermission from "./ProductGroupPermission";
+<script>
+import PopulatePermissionsMixin from "./PopulatePermissions.mixin";
 import ProductUserPermission from "./ProductUserPermission";
+import ProductGroupPermission from "./ProductGroupPermission";
 
-const props = defineProps({
-  product: { type: Object, required: true },
-  success: { type: Boolean, default: false },
-  error: { type: Boolean, default: false }
-});
-const emit = defineEmits([
-  "update:success",
-  "update:error"
-]);
-const userPermission = ref(null);
-const groupPermission = ref(null);
+export default {
+  name: "EditProductPermission",
+  components: {
+    ProductUserPermission,
+    ProductGroupPermission
+  },
+  mixins: [ PopulatePermissionsMixin ],
+  props: {
+    product: { type: Object, required: true },
+    bus: { type: Object, required: true },
+    success: { type: Boolean, default: false },
+    error: { type: Boolean, default: false }
+  },
 
-const {
-  populatePermissions,
-  userAuthRights,
-  groupAuthRights,
-  permissions
-} = usePopulatePermissions();
+  data() {
+    return {
+      scope: "PRODUCT",
+      extraParamsJSON: JSON.stringify({
+        productID: this.product.id.toNumber()
+      })
+    };
+  },
 
-const scope = "PRODUCT";
-const extraParamsJSON = computed(() => JSON.stringify(
-  { productID: props.product.id.toNumber() }
-));
-
-onMounted(() => {
-  populatePermissions(scope, extraParamsJSON.value);
-});
-
-function savePermissions() {
-  userPermission.value?.saveAll();
-  groupPermission.value?.saveAll();
-}
-
-defineExpose({
-  savePermissions
-});
+  mounted() {
+    this.populatePermissions(this.scope, this.extraParamsJSON);
+  }
+};
 </script>

@@ -6,33 +6,37 @@
   >
     <template v-slot:top>
       <edit-source-component-dialog
-        v-model="editDialog"
-        :source-component="selectedComponent"
+        :value.sync="editDialog"
+        :source-component="selected"
         @save:component="fetchSourceComponents"
       />
 
-      <v-toolbar
-        elevation="0"
-        class="mb-4"
-        color="transparent"
-      >
+      <remove-source-component-dialog
+        :value.sync="removeDialog"
+        :source-component="selected"
+        @on:confirm="fetchSourceComponents"
+      />
+
+      <v-toolbar flat class="mb-4">
         <v-row>
-          <v-col class="d-flex justify-end align-center">
+          <v-col>
             <v-btn
               color="primary"
               class="new-component-btn mr-2"
-              variant="outlined"
+              outlined
               @click="newSourceComponent"
             >
               New
             </v-btn>
 
             <v-btn
-              icon="mdi-refresh"
+              icon
               title="Reload components"
               color="primary"
               @click="fetchSourceComponents"
-            />
+            >
+              <v-icon>mdi-refresh</v-icon>
+            </v-btn>
           </v-col>
         </v-row>
       </v-toolbar>
@@ -46,13 +50,13 @@
         >
           <span
             v-if="value.startsWith('+')"
-            class="green-text"
+            class="green--text"
           >
             {{ value }}
           </span>
           <span
             v-else
-            class="error-text"
+            class="error--text"
           >
             {{ value }}
           </span>
@@ -61,90 +65,113 @@
     </template>
 
     <template v-slot:item.actions="{ item }">
-      <remove-source-component-dialog
-        :source-component="item"
-        @on:confirm="fetchSourceComponents"
-      />
+      <v-btn
+        class="remove-btn"
+        icon
+        color="error"
+        @click="removeSourceComponent(item)"
+      >
+        <v-icon>mdi-trash-can-outline</v-icon>
+      </v-btn>
 
       <v-btn
-        class="edit-btn ml-2"
-        icon="mdi-pencil"
+        class="edit-btn"
+        icon
         color="primary"
-        variant="tonal"
-        size="small"
         @click="editSourceComponent(item)"
-      />
+      >
+        <v-icon>mdi-pencil</v-icon>
+      </v-btn>
     </template>
   </v-data-table>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, onMounted, ref } from "vue";
 
 import EditSourceComponentDialog from "./EditSourceComponentDialog";
 import RemoveSourceComponentDialog from "./RemoveSourceComponentDialog";
 
-const components = ref([]);
-const loading = ref(false);
-const selectedComponent = ref(null);
-const editDialog = ref(false);
-
-const headers = [
-  {
-    title: "Name",
-    value: "name",
-    sortable: true
+export default {
+  name: "ListSourceComponents",
+  components: {
+    EditSourceComponentDialog,
+    RemoveSourceComponentDialog
   },
-  {
-    title: "Value",
-    value: "value",
-    sortable: true
-  },
-  {
-    title: "Description",
-    value: "description",
-    sortable: true
-  },
-  {
-    title: "Actions",
-    value: "actions",
-    sortable: false
-  },
-];
-
-const processedComponents = computed(function() {
-  return components.value.map(component => {
+  data() {
     return {
-      ...component,
-      $values: component.value.split(/\r|\n/)
+      components: [],
+      loading: false,
+      selected: null,
+      editDialog: false,
+      removeDialog: false,
+      headers: [
+        {
+          text: "Name",
+          value: "name",
+          sortable: true
+        },
+        {
+          text: "Value",
+          value: "value",
+          sortable: true
+        },
+        {
+          text: "Description",
+          value: "description",
+          sortable: true
+        },
+        {
+          text: "Actions",
+          value: "actions",
+          sortable: false
+        },
+      ]
     };
-  });
-});
+  },
 
-onMounted(function() {
-  fetchSourceComponents();
-});
+  computed: {
+    processedComponents() {
+      return this.components.map(component => {
+        return {
+          ...component,
+          $values: component.value.split(/\r|\n/)
+        };
+      });
+    },
+  },
 
-function fetchSourceComponents() {
-  loading.value = true;
-  ccService.getClient().getSourceComponents(null,
-    handleThriftError(_components => {
-      components.value = _components.filter(c =>
-        !c.name.includes("auto-generated"));
-      loading.value = false;
-    }));
-}
+  created() {
+    this.fetchSourceComponents();
+  },
 
-function editSourceComponent(component) {
-  selectedComponent.value = component;
-  editDialog.value = true;
-}
+  methods: {
+    fetchSourceComponents() {
+      this.loading = true;
+      ccService.getClient().getSourceComponents(null,
+        handleThriftError(components => {
+          this.components = components.filter(c =>
+            !c.name.includes("auto-generated"));
+          this.loading = false;
+        }));
+    },
 
-function newSourceComponent() {
-  selectedComponent.value = null;
-  editDialog.value = true;
-}
+    editSourceComponent(component) {
+      this.selected = component;
+      this.editDialog = true;
+    },
+
+    newSourceComponent() {
+      this.selected = null;
+      this.editDialog = true;
+    },
+
+    removeSourceComponent(component) {
+      this.selected = component;
+      this.removeDialog = true;
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

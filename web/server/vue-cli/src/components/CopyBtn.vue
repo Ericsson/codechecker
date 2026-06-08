@@ -5,11 +5,7 @@
     right
   >
     <template v-slot:activator="{}">
-      <v-btn
-        icon
-        size="x-small"
-        @click="copy"
-      >
+      <v-btn icon x-small @click="copy">
         <v-icon v-if="copyInProgress" color="green">
           mdi-check
         </v-icon>
@@ -23,22 +19,37 @@
   </v-tooltip>
 </template>
 
-<script setup>
-import { ref } from "vue";
+<script>
+function writeToClipboard(str) {
+  const el = document.createElement("textarea");
+  el.value = str;
 
-const props = defineProps({
-  value: { type: String, required: true }
-});
+  document.body.appendChild(el);
+  el.select();
 
-const copyInProgress = ref(false);
+  document.execCommand("copy");
 
-async function writeToClipboard(str) {
-  await navigator.clipboard.writeText(str);
+  document.body.removeChild(el);
 }
 
-async function copy() {
-  copyInProgress.value = true;
-  await writeToClipboard(props.value);
-  setTimeout(() => copyInProgress.value = false, 1000);
-}
+export default {
+  name: "CopyBtn",
+  props: {
+    value: { type: String, required: true }
+  },
+  data() {
+    return {
+      copyInProgress: false
+    };
+  },
+  methods: {
+    copy() {
+      this.copyInProgress = true;
+
+      writeToClipboard(this.value);
+
+      setTimeout(() => this.copyInProgress = false, 1000);
+    }
+  }
+};
 </script>

@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
-    class="edit-source-component-dialog"
+    content-class="edit-source-component-dialog"
     max-width="600px"
     scrollable
   >
@@ -9,34 +9,46 @@
       <slot />
     </template>
 
-    <v-card
-      :title="title"
-    >
-      <template v-slot:append>
-        <v-btn
-          class="close-btn"
-          icon="mdi-close"
-          @click="dialog = false"
-        />
-      </template>
+    <v-card>
+      <v-card-title
+        class="headline primary white--text"
+        primary-title
+      >
+        <span
+          v-if="sourceComponent"
+        >
+          Edit source component
+        </span>
+        <span
+          v-else
+        >
+          New source component
+        </span>
+
+        <v-spacer />
+
+        <v-btn class="close-btn" icon dark @click="dialog = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
 
       <v-card-text class="pa-0">
         <v-container>
           <v-form ref="form">
             <v-text-field
-              v-model="nameInput"
+              v-model.trim="component.name"
               class="component-name"
               label="Name*"
               autofocus
-              variant="outlined"
+              outlined
               required
               :rules="rules.name"
             />
 
             <v-textarea
-              v-model="componentInput"
+              v-model.trim="component.value"
               class="component-value value"
-              variant="outlined"
+              outlined
               required
               validate-on-blur
               label="Value"
@@ -45,10 +57,10 @@
             />
 
             <v-textarea
-              v-model="descriptionInput"
+              v-model.trim="component.description"
               class="component-description "
               label="Description"
-              variant="outlined"
+              outlined
             />
           </v-form>
         </v-container>
@@ -62,7 +74,7 @@
         <v-btn
           class="cancel-btn"
           color="error"
-          variant="text"
+          text
           @click="dialog = false"
         >
           Cancel
@@ -71,7 +83,7 @@
         <v-btn
           class="save-btn"
           color="primary"
-          variant="text"
+          text
           @click="saveSourceComponent"
         >
           Save
@@ -81,28 +93,15 @@
   </v-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, onMounted, ref } from "vue";
-
-const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  sourceComponent: { type: Object, default: () => null },
-});
-
-const emit = defineEmits([ "update:modelValue", "save:component" ]);
-
-const title = computed(() => {
-  return props.sourceComponent ?
-    "Edit source component" : "New source component";
-});
-
+import { SourceComponentData } from "@cc/report-server-types";
 
 function isValidComponentValue (value) {
-  const _lines = value.trim().split(/\r|\n/);
-  for (let _i = 0; _i < _lines.length; ++_i) {
-    if (!_lines[_i].startsWith("+") && !_lines[_i].startsWith("-") ||
-         _lines[_i].trim().length < 2
+  const lines = value.trim().split(/\r|\n/);
+  for (let i = 0; i < lines.length; ++i) {
+    if (!lines[i].startsWith("+") && !lines[i].startsWith("-") ||
+         lines[i].trim().length < 2
     ) {
       return false;
     }
@@ -111,66 +110,72 @@ function isValidComponentValue (value) {
   return true;
 }
 
-const form = ref(null);
-const nameInput = ref(null);
-const componentInput = ref(null);
-const descriptionInput = ref(null);
-
-const placeHolderValue = "Value of the source component.\nEach line must start "
+export default {
+  name: "NewSourceComponentDialog",
+  props: {
+    value: { type: Boolean, default: false },
+    sourceComponent: { type: Object, default: () => null },
+  },
+  data() {
+    return {
+      placeHolderValue: "Value of the source component.\nEach line must start "
                       + "with a \"+\" (results from this path should be "
                       + "listed) or a \"-\" (results from this path should "
                       + "not be listed) sign.\nFor whole directories, a "
                       + "trailing \"*\" must be added.\n"
-                      + "E.g.: +/a/b/x.cpp or -/a/b/*";
-
-const rules = {
-  name: [ v => !!v || "Name is required" ],
-  value: [
-    v => !!v || "Value is required",
-    v => isValidComponentValue(v) || "Component value format is "
-      + "invalid! Every line should start with + or - sign followed by "
-      + "one or more character."
-  ]
-};
-
-const dialog = computed({
-  get() {
-    return props.modelValue;
-  },
-  set(value) {
-    emit("update:modelValue", value);
-  }
-});
-
-onMounted(() => {
-  if (props.sourceComponent) {
-    nameInput.value = props.sourceComponent.name;
-    componentInput.value = props.sourceComponent.value;
-    descriptionInput.value = props.sourceComponent.description;
-  }
-});
-
-async function saveSourceComponent() {
-  const { valid } = await form.value.validate();
-  if (!valid) return;
-
-  if (props.sourceComponent &&
-    props.sourceComponent.name !== nameInput.value)
-  {
-    await ccService.getClient().removeSourceComponent(
-      props.sourceComponent.name, handleThriftError);
-  }
-  ccService.getClient().addSourceComponent(
-    nameInput.value,
-    componentInput.value,
-    descriptionInput.value,
-    handleThriftError(success => {
-      if (success) {
-        emit("save:component");
-        dialog.value = false;
+                      + "E.g.: +/a/b/x.cpp or -/a/b/*",
+      rules: {
+        name: [ v => !!v || "Name is required" ],
+        value: [
+          v => !!v || "Value is required",
+          v => isValidComponentValue(v) || "Component value format is "
+            + "invalid! Every line should start with + or - sign followed by "
+            + "one or more character."
+        ]
       }
-    }));
-}
+    };
+  },
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
+      }
+    },
+
+    component() {
+      return new SourceComponentData(this.sourceComponent);
+    }
+  },
+
+  methods: {
+    async saveSourceComponent() {
+      if (!this.$refs.form.validate()) return;
+
+      // Remove the original component because the user would like to change
+      // the name.
+      if (this.sourceComponent &&
+          this.sourceComponent.name !== this.component.name
+      ) {
+        await ccService.getClient().removeSourceComponent(
+          this.sourceComponent.name, handleThriftError);
+      }
+
+      const component = this.component;
+      ccService.getClient().addSourceComponent(component.name,
+        component.value, component.description,
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("save:component");
+            this.dialog = false;
+          }
+          // TODO: handle case when success is false.
+        }));
+    }
+  }
+};
 </script>
 
 <style lang="scss">

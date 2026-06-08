@@ -1,47 +1,27 @@
 <template>
-  <v-container
-    class="pa-0"
-    fluid
-  >
+  <v-container class="pa-0" fluid>
     <v-row>
       <v-col
         v-for="reportType in reportTypes"
         :key="reportType.label"
-        class="pa-2"
         md="12"
         lg="6"
       >
-        <v-card
-          :color="reportType.color"
-          class="pa-2"
-        >
-          <v-card-title
-            class="text-h5"
-          >
-            <v-icon
-              class="mr-2"
-            >
+        <v-card :color="reportType.color" dark>
+          <v-card-title class="text-h4">
+            <v-icon class="mr-2">
               {{ reportType.icon }}
             </v-icon>
             {{ reportType.label }}
 
-            <tooltip-help-icon
-              color="white"
-            >
-              <div
-                v-if="reportType.id === 'new'"
-                class="mb-2"
-              >
-                <p
-                  class="mb-2"
-                >
+            <tooltip-help-icon color="white">
+              <div v-if="reportType.id === 'new'" class="mb-2">
+                <p class="mb-2">
                   Shows the number of new outstanding reports since the last
                   <i>x</i> days. Clicking on each item will display
                   the corresponding reports in a list.
                 </p>
-                <p
-                  class="mb-2"
-                >
+                <p class="mb-2">
                   Closed reports: No longer detected by the analyzer or
                   identified as <b>false positive</b> or <b>intentional</b>
                   findings.
@@ -51,20 +31,13 @@
                     reflect the displayed figures.</b>
                 </p>
               </div>
-              <div
-                v-else
-                class="mb-2"
-              >
-                <p
-                  class="mb-2"
-                >
+              <div v-else class="mb-2">
+                <p class="mb-2">
                   Shows the number of reports which were closed in the last
                   <i>x</i> days. Clicking on each item will display the
                   corresponding reports in a list.
                 </p>
-                <p
-                  class="mb-2"
-                >
+                <p class="mb-2">
                   Closed reports: No longer detected by the analyzer or
                   identified as <b>false positive</b> or <b>intentional</b>
                   findings.
@@ -102,15 +75,12 @@
                     ...(reportType.id === 'new' ? {
                       'diff-type': 'New',
                       'newcheck': runName,
-                      'open-reports-date':
-                        dateUtils.dateTimeToStr(columnData.date[0]),
+                      'open-reports-date': dateTimeToStr(columnData.date[0]),
                       'compared-to-open-reports-date':
-                        dateUtils.dateTimeToStr(columnData.date[1]),
+                        dateTimeToStr(columnData.date[1]),
                     } : {
-                      'fixed-after':
-                        dateUtils.dateTimeToStr(columnData.date[0]),
-                      'fixed-before':
-                        dateUtils.dateTimeToStr(columnData.date[1])
+                      'fixed-after': dateTimeToStr(columnData.date[0]),
+                      'fixed-before': dateTimeToStr(columnData.date[1])
                     })
                   }
                 }"
@@ -122,14 +92,10 @@
                   :loading="columnData.loading"
                   flat
                 >
-                  <div
-                    class="text-h3 text-white"
-                  >
+                  <div class="text-h2">
                     {{ columnData.value }}
                   </div>
-                  <v-card-title
-                    class="justify-center text-white"
-                  >
+                  <v-card-title class="justify-center">
                     {{ columnData.label }}
                   </v-card-title>
                 </v-card>
@@ -142,116 +108,126 @@
   </v-container>
 </template>
 
-<script setup>
+<script>
 import {
   endOfToday,
   startOfToday,
   startOfYesterday,
   subDays
 } from "date-fns";
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-
-import { useDateUtils } from "@/composables/useDateUtils";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   CompareData,
   DateInterval,
   DiffType,
   ReportDate,
-  ReportFilter
+  ReportFilter,
+  ReviewStatus
 } from "@cc/report-server-types";
+import { DateMixin } from "@/mixins";
 
 import TooltipHelpIcon from "@/components/TooltipHelpIcon.vue";
 
-const props = defineProps({
-  bus: { type: Object, required: true },
-  runIds: {
-    required: true,
-    validator: _v => typeof _v === "object" || _v === null
+export default {
+  name: "Reports",
+  components: { TooltipHelpIcon },
+  mixins: [ DateMixin ],
+  props: {
+    bus: { type: Object, required: true },
+    runIds: {
+      required: true,
+      validator: v => typeof v === "object" || v === null
+    },
+    reportFilter: { type: Object, required: true },
   },
-  reportFilter: { type: Object, required: true },
-});
+  data() {
+    const last7Days = subDays(endOfToday(), 7);
+    const last31Days = subDays(endOfToday(), 31);
+    const runName = this.$router.currentRoute.query["run"];
 
-const router = useRouter();
-const dateUtils = useDateUtils();
+    const cols = [
+      { label: "Today",  date: [ startOfToday(), endOfToday() ] },
+      { label: "Yesterday", date: [ startOfYesterday(), endOfToday() ] },
+      { label: "Last 7 days", date: [ last7Days, endOfToday() ] },
+      { label: "Last 31 days", date: [ last31Days, endOfToday() ] }
+    ];
 
-const last7Days = subDays(endOfToday(), 7);
-const last31Days = subDays(endOfToday(), 31);
-const runName = router.currentRoute.value.query["run"];
-
-const cols = [
-  { label: "Today",  date: [ startOfToday(), endOfToday() ] },
-  { label: "Yesterday", date: [ startOfYesterday(), endOfToday() ] },
-  { label: "Last 7 days", date: [ last7Days, endOfToday() ] },
-  { label: "Last 31 days", date: [ last31Days, endOfToday() ] }
-];
-
-const reportTypes = ref([
-  {
-    id: "new",
-    label: "Number of new outstanding reports since",
-    color: "red",
-    icon: "mdi-arrow-up",
-    getValue: getNewReports,
-    cols: cols.map(_c => ({ ..._c, value: null, loading: null }))
+    return {
+      reportTypes: [
+        {
+          id: "new",
+          label: "Number of new outstanding reports since",
+          color: "red",
+          icon: "mdi-arrow-up",
+          getValue: this.getNewReports,
+          cols: cols.map(c => ({ ...c, value: null, loading: null }))
+        },
+        {
+          id: "resolved",
+          label: "Number of resolved reports since",
+          color: "green",
+          icon: "mdi-arrow-down",
+          getValue: this.getResolvedReports,
+          cols: cols.map(c => ({ ...c, value: null, loading: null }))
+        },
+      ],
+      activeReviewStatuses:
+        [ ReviewStatus.UNREVIEWED, ReviewStatus.CONFIRMED ],
+      resolvedReviewStatuses:
+        [ ReviewStatus.FALSE_POSITIVE, ReviewStatus.INTENTIONAL ],
+      runName,
+    };
   },
-  {
-    id: "resolved",
-    label: "Number of resolved reports since",
-    color: "green",
-    icon: "mdi-arrow-down",
-    getValue: getResolvedReports,
-    cols: cols.map(_c => ({ ..._c, value: null, loading: null }))
+  activated() {
+    this.bus.$on("refresh", () => this.fetchValues());
   },
-]);
+  methods: {
+    fetchValues() {
+      this.reportTypes.forEach(type =>
+        type.cols.forEach(column =>  type.getValue(column, column.date)));
+    },
 
-function fetchValues() {
-  reportTypes.value.forEach(_type =>
-    _type.cols.forEach(_column =>  _type.getValue(_column, _column.date)));
-}
+    getReportCount(column, runIds, reportFilter, cmpData) {
+      column.loading = "white";
 
-function getReportCount(column, runIds, reportFilter, cmpData) {
-  column.loading = "white";
+      ccService.getClient().getRunResultCount(runIds, reportFilter, cmpData,
+        handleThriftError(res => {
+          column.value = res.toNumber();
+          column.loading = null;
+        }));
+    },
 
-  ccService.getClient().getRunResultCount(runIds, reportFilter, cmpData,
-    handleThriftError(_res => {
-      column.value = _res.toNumber();
-      column.loading = null;
-    }));
-}
+    getNewReports(column, date) {
+      const rFilter = new ReportFilter(this.reportFilter);
+      rFilter.detectionStatus = null;
+      rFilter.reviewStatus = null;
+      rFilter.openReportsDate = this.getUnixTime(date[0]);
 
-function getNewReports(column, date) {
-  const _rFilter = new ReportFilter(props.reportFilter);
-  _rFilter.detectionStatus = null;
-  _rFilter.reviewStatus = null;
-  _rFilter.openReportsDate = dateUtils.getUnixTime(date[0]);
+      const cmpData = new CompareData({
+        runIds: this.runIds,
+        openReportsDate: this.getUnixTime(date[1]),
+        diffType: DiffType.NEW
+      });
 
-  const _cmpData = new CompareData({
-    runIds: props.runIds,
-    openReportsDate: dateUtils.getUnixTime(date[1]),
-    diffType: DiffType.NEW
-  });
+      this.getReportCount(column, this.runIds, rFilter, cmpData);
+    },
 
-  getReportCount(column, props.runIds, _rFilter, _cmpData);
-}
+    getResolvedReports(column, date) {
+      const rFilter = new ReportFilter(this.reportFilter);
+      rFilter.reviewStatus = null;
+      rFilter.detectionStatus = null;
+      rFilter.date = new ReportDate({
+        fixed: new DateInterval({
+          after: this.getUnixTime(date[0]),
+          before: this.getUnixTime(date[1])
+        })
+      });
 
-function getResolvedReports(column, date) {
-  const _rFilter = new ReportFilter(props.reportFilter);
-  _rFilter.reviewStatus = null;
-  _rFilter.detectionStatus = null;
-  _rFilter.date = new ReportDate({
-    fixed: new DateInterval({
-      after: dateUtils.getUnixTime(date[0]),
-      before: dateUtils.getUnixTime(date[1])
-    })
-  });
-
-  const _cmpData = null;
-  getReportCount(column, props.runIds, _rFilter, _cmpData);
-}
-
-defineExpose({ fetchValues });
+      const cmpData = null;
+      this.getReportCount(column, this.runIds, rFilter, cmpData);
+    },
+  }
+};
 </script>
 
 <style lang="scss" scoped>

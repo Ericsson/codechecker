@@ -2,164 +2,132 @@
   <select-option
     :id="id"
     title="File path"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :selected-items="selectedItems"
     :search="search"
-    :loading="baseSelectOptionFilter.loading.value"
-    :limit="baseSelectOptionFilter.defaultLimit.value"
-    :panel="baseSelectOptionFilter.panel.value"
-    @clear="baseSelectOptionFilter.clear(true)"
-    @input="baseSelectOptionFilter.setSelectedItems"
+    :loading="loading"
+    :limit="defaultLimit"
+    :panel="panel"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
+    <template v-slot:append-toolbar>
+      <AnywhereOnReportPath v-model="isAnywhere" />
+    </template>
+
     <template v-slot:icon>
       <v-icon color="grey">
         mdi-file-document-outline
       </v-icon>
     </template>
 
-    <template v-slot:append-toolbar>
-      <AnywhereOnReportPath v-model="isAnywhere" />
+    <template v-slot:title="{ item }">
+      <v-list-item-title
+        class="mr-1 filter-item-title"
+        :title="`\u200E${item.title}`"
+      >
+        &lrm;{{ item.title }}&lrm;
+      </v-list-item-title>
     </template>
   </select-option>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
-import { ref, toRef, watch } from "vue";
 
-import {
-  useBaseSelectOptionFilter
-} from "@/composables/useBaseSelectOptionFilter";
-import SelectOption from "./SelectOption/SelectOption";
-
-import { useRoute } from "vue-router";
 import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "FilePathFilter",
+  components: {
+    AnywhereOnReportPath,
+    SelectOption
+  },
+  mixins: [ BaseSelectOptionFilterMixin ],
 
-const emit = defineEmits([ "update:url" ]);
+  data() {
+    return {
+      id: "filepath",
+      anywhereId: "anywhere-filepath",
+      search: {
+        placeHolder: "Search for files (e.g.: */src/*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
+        filterItems: this.filterItems
+      },
+      isAnywhere: false
+    };
+  },
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+  watch: {
+    isAnywhere() {
+      this.updateReportFilter();
+      this.$emit("update:url");
+      this.update();
+    }
+  },
 
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+  methods: {
+    updateReportFilter() {
+      this.setReportFilter({
+        filepath: this.selectedItems.map(item => item.id),
+        fileMatchesAnyPoint: this.isAnywhere
+      });
+    },
 
-const id = "filepath";
-baseSelectOptionFilter.id.value = id;
+    onReportFilterChange(key) {
+      if (key === "filepath") return;
+      this.update();
+    },
 
-const isAnywhere = ref(false);
+    getUrlState() {
+      const state =
+        this.selectedItems.map(item => this.encodeValue(item.id));
 
-const anywhereId = "anywhere-filepath";
+      return {
+        [this.id]: state.length ? state : undefined,
+        [this.anywhereId]: this.isAnywhere || undefined
+      };
+    },
 
-const search = ref(
-  {
-    placeHolder: "Search for files (e.g.: */src/*)...",
-    regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
-    filterItems: baseSelectOptionFilter.filterItems
+    initByUrl() {
+      this.isAnywhere = !!this.$route.query[this.anywhereId];
+      this.initCheckOptionsByUrl();
+    },
+
+    fetchItems(opt={}) {
+      this.loading = true;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.filepath = opt.query;
+
+      const limit = opt.limit || this.defaultLimit;
+      const offset = null;
+
+      return new Promise(resolve => {
+        ccService.getClient().getFileCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+          // Order the results alphabetically.
+            resolve(Object.keys(res).sort((a, b) => {
+              if (a < b) return -1;
+              if (a > b) return 1;
+              return 0;
+            }).map(file => {
+              return {
+                id : file,
+                title: file,
+                count: res[file]?.toNumber() || 0
+              };
+            }));
+            this.loading = false;
+          }));
+      });
+    }
   }
-);
-const route = useRoute();
-
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
-
-watch(isAnywhere, () => {
-  // Update the global reportFilter object in baseFilter.
-  updateReportFilter();
-
-  // Emit update url trigger to ReportFilter.
-  emit("update:url");
-
-  // Fetch items based on the filter set.
-  baseSelectOptionFilter.update();
-});
-
-function updateReportFilter() {
-  baseSelectOptionFilter.setReportFilter({
-    filepath: baseSelectOptionFilter.selectedItems.value.map(item => item.id),
-    fileMatchesAnyPoint: isAnywhere.value
-  });
-}
-
-function onReportFilterChange(key) {
-  if (key === "filepath") return;
-  baseSelectOptionFilter.update();
-}
-
-function getUrlState() {
-  const state =
-    baseSelectOptionFilter.selectedItems.value.map(
-      item => baseSelectOptionFilter.encodeValue.value(item.id)
-    );
-
-  return {
-    [id]: state.length ? state : undefined,
-    [anywhereId]: isAnywhere.value || undefined
-  };
-}
-
-function initByUrl() {
-  isAnywhere.value = !!route.query[anywhereId];
-  baseSelectOptionFilter.initByUrl();
-}
-
-function fetchItems(opt={}) {
-  baseSelectOptionFilter.loading.value = true;
-
-  const _reportFilter = new ReportFilter(
-    baseSelectOptionFilter.reportFilter.value
-  );
-  _reportFilter.filepath = opt.query;
-
-  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
-  const _offset = 0;
-
-  return new Promise(resolve => {
-    ccService.getClient().getFileCounts(
-      baseSelectOptionFilter.runIds.value,
-      _reportFilter,
-      baseSelectOptionFilter.cmpData.value,
-      _limit,
-      _offset, 
-      handleThriftError(res => {
-      // Order the results alphabetically.
-        resolve(Object.keys(res).sort((a, b) => {
-          if (a < b) return -1;
-          if (a > b) return 1;
-          return 0;
-        }).map(file => {
-          return {
-            id : file,
-            title: file,
-            count: res[file]?.toNumber() || 0
-          };
-        }));
-        baseSelectOptionFilter.loading.value = false;
-      }));
-  });
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  clear: baseSelectOptionFilter.clear,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-
-  id,
-  updateReportFilter,
-  onReportFilterChange,
-  getUrlState,
-  initByUrl,
-  fetchItems
-});
+};
 </script>
 
 <style lang="scss" scoped>

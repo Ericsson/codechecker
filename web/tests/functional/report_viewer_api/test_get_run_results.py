@@ -11,26 +11,21 @@ Tests for getting the run results.
 """
 
 
-import json
 import logging
 import os
 import re
-import subprocess
-import tempfile
 import unittest
-import uuid
 import codecs
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Checker, \
-    Guideline, Order, ReportFilter, SortMode, SortType, RunFilter, \
-    RunSortMode, RunSortType
+    Guideline, Order, ReportFilter, SortMode, SortType, RunSortMode, \
+    RunSortType
 
 from codechecker_web.shared import convert
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 from libtest.result_compare import find_all
-from libtest import codechecker
 from libtest import env
 
 from . import setup_class_common, teardown_class_common
@@ -51,6 +46,9 @@ class RunResults(unittest.TestCase):
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
+
+        # Get the clang version which is tested.
+        self._clang_to_test = env.clang_to_test()
 
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
@@ -121,7 +119,8 @@ class RunResults(unittest.TestCase):
         self.assertIsNotNone(run_results)
         self.assertEqual(run_result_count, len(run_results))
 
-        test_project_results = self._testproject_data['reports']
+        test_project_results = self._testproject_data[
+            self._clang_to_test]['bugs']
         for r in test_project_results:
             print(r)
 
@@ -473,86 +472,3 @@ class RunResults(unittest.TestCase):
 
         self.assertEqual(con_54_cpp_rule.checkers,
                          ["bugprone-spuriously-wake-up-functions"])
-
-    def test_report_blame_info(self):
-        """
-        Get run results and check that blame info exists
-        when get_details is set.
-        """
-        runid = self._runid
-        simple_filter = ReportFilter()
-        run_results = self._cc_client.getRunResults([runid],
-                                                    100,
-                                                    0,
-                                                    None,
-                                                    simple_filter,
-                                                    None,
-                                                    True)
-
-        self.assertTrue(any(res.blameInfo for res in run_results))
-
-    def test_report_blame_info_for_simple_project(self):
-        """
-        Create a simple git-backed project, store it, and verify that
-        reports returned by getRunResults include blame info.
-        """
-        codechecker_cfg = env.import_codechecker_cfg(
-            os.environ['TEST_WORKSPACE'])
-        run_name = 'simple_project_blame_' + uuid.uuid4().hex
-
-        with tempfile.TemporaryDirectory() as proj_dir:
-            source_file_name = 'main.cpp'
-            src_file = os.path.join(proj_dir, source_file_name)
-
-            with open(src_file, 'w', encoding='utf-8', errors='ignore') \
-                    as source_file:
-                source_file.write('int main() { int x = 1 / 0; return x; }\n')
-
-            with open(os.path.join(proj_dir, 'project_info.json'), 'w',
-                      encoding='utf-8', errors='ignore') as project_info_file:
-                json.dump({
-                    'name': run_name,
-                    'clean_cmd': '',
-                    'build_cmd': f'clang++ -c {source_file_name} -o /dev/null'
-                }, project_info_file)
-
-            subprocess.check_call(['git', 'init'], cwd=proj_dir)
-            subprocess.check_call([
-                'git', 'remote', 'add', 'origin',
-                'https://example.com'
-            ], cwd=proj_dir)
-            subprocess.check_call(['git', 'add', source_file_name,
-                                   'project_info.json'], cwd=proj_dir)
-            subprocess.check_call([
-                'git', '-c', 'user.name=Test',
-                '-c', 'user.email=test@example.com',
-                'commit', '--no-verify', '-m', 'Add simple source file'
-            ], cwd=proj_dir)
-
-            ret = codechecker.check_and_store(
-                codechecker_cfg,
-                run_name,
-                proj_dir)
-            self.assertEqual(ret, 0)
-
-            run_filter = RunFilter(names=[run_name], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
-            self.assertEqual(len(runs), 1)
-            run_id = runs[0].runId
-
-            report_filter = ReportFilter(
-                checkerName=['*'],
-                filepath=[f'*{source_file_name}'])
-
-            run_results = self._cc_client.getRunResults(
-                [run_id], 100, 0, None, report_filter, None, True)
-            self.assertTrue(run_results)
-            self.assertTrue(any(res.blameInfo for res in run_results))
-            self.assertTrue(all(getattr(res, 'blameInfo', None)
-                                for res in run_results))
-
-            for r in run_results:
-                commit = next(iter(r.blameInfo.commits.values()))
-                self.assertEqual(commit.author.name, 'Test')
-                self.assertEqual(commit.author.email, 'test@example.com')
-                self.assertEqual(commit.summary, "Add simple source file")

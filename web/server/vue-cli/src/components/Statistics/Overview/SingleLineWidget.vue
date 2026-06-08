@@ -1,47 +1,24 @@
 <template>
-  <v-card
-    :loading="loading"
-    flat
-  >
+  <v-card :loading="loading" flat>
     <v-container>
-      <v-row
-        align="center"
-      >
-        <v-col
-          cols="auto"
-        >
-          <v-avatar
-            :color="color"
-            size="64"
-            rounded="0"
-            class="ma-2"
-          >
-            <v-icon
-              size="48"
-            >
+      <v-row>
+        <v-col cols="auto">
+          <v-avatar :color="color" size="64" tile>
+            <v-icon dark size="48">
               {{ icon }}
             </v-icon>
           </v-avatar>
         </v-col>
-        <v-col
-          class="text-center"
-        >
-          <div
-            class="text-subtitle-1 text-grey text-uppercase"
-          >
+        <v-col class="text-center">
+          <div class="subtitle grey--text text-uppercase">
             {{ label }}
 
             <tooltip-help-icon>
               <slot name="help" />
             </tooltip-help-icon>
           </div>
-          <div
-            class="text-h3 font-weight-bold"
-          >
-            <slot
-              name="value"
-              :value="value"
-            >
+          <div class="text-h3 font-weight-bold">
+            <slot name="value" :value="value">
               {{ value }}
             </slot>
 
@@ -53,19 +30,37 @@
   </v-card>
 </template>
 
-<script setup>
+<script>
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
-defineProps({
-  icon: { type: String, required: true },
-  color: { type: String, required: true },
-  label: { type: String, required: true },
-  helpMessage: { type: String, default: null },
-  bus: { type: Object, required: true },
-  value: { type: Array, required: true },
-  loading: { type: Boolean, default: false }
-});
-
+export default {
+  name: "SingleLineWidget",
+  components: { TooltipHelpIcon },
+  props: {
+    icon: { type: String, required: true },
+    color: { type: String, required: true },
+    label: { type: String, required: true },
+    helpMessage: { type: String, default: null },
+    bus: { type: Object, required: true },
+    getValue: { type: Function, required: true }
+  },
+  data() {
+    return {
+      loading: false,
+      value: null
+    };
+  },
+  activated() {
+    this.bus.$on("refresh", () => this.fetchValue());
+  },
+  methods: {
+    async fetchValue() {
+      this.loading = true;
+      this.value = await this.getValue();
+      this.loading = false;
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

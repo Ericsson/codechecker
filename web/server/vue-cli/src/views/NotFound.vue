@@ -14,7 +14,7 @@
         <v-btn
           :to="{ name: 'products' }"
           color="primary"
-          variant="outlined"
+          outlined
         >
           <v-icon left>
             mdi-briefcase-outline
@@ -25,3 +25,9 @@
     </v-row>
   </v-container>
 </template>
+
+<script>
+export default {
+  name: "NotFound"
+};
+</script>

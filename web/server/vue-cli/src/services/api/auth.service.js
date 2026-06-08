@@ -1,6 +1,7 @@
-import { Client as ServiceClient } from "@cc/auth";
+import ServiceClient from "@cc/auth";
 import { BaseService } from "./_base.service";
-import tokenService from "./token.service";
+
+const ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
 
 class AuthService extends BaseService {
   constructor() {
@@ -8,15 +9,15 @@ class AuthService extends BaseService {
   }
 
   getToken() {
-    return tokenService.getToken();
+    return localStorage.getItem(ID_TOKEN_KEY);
   }
 
   saveToken(token) {
-    tokenService.saveToken(token);
+    localStorage.setItem(ID_TOKEN_KEY, token);
   }
 
   destroyToken() {
-    tokenService.destroyToken();
+    localStorage.removeItem(ID_TOKEN_KEY);
   }
 }
 

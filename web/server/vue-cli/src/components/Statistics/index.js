@@ -6,15 +6,17 @@ import BaseStatistics from "./BaseStatistics";
 import BaseStatisticsTable from "./BaseStatisticsTable";
 import CheckerStatistics from "./Checker/CheckerStatistics";
 import CheckerStatisticsTable from "./Checker/CheckerStatisticsTable";
-import CheckerCoverageStatistics
-  from "./CheckerCoverage/CheckerCoverageStatistics";
-import CheckerCoverageStatisticsTable
-  from "./CheckerCoverage/CheckerCoverageStatisticsTable";
 import ComponentStatistics from "./Component/ComponentStatistics";
 import ComponentStatisticsTable from "./Component/ComponentStatisticsTable";
 import defaultStatisticsFilterValues from "./DefaultStatisticsFilterValues";
 import ReportDiffCount from "./ReportDiffCount";
 import SeverityStatistics from "./Severity/SeverityStatistics";
+import 
+CheckerCoverageStatistics 
+  from "./CheckerCoverage/CheckerCoverageStatistics";
+import 
+CheckerCoverageStatisticsTable
+  from "./CheckerCoverage/CheckerCoverageStatisticsTable";
 
 import {
   getCheckerStatistics,
@@ -25,16 +27,21 @@ import {
 } from "./StatisticsHelper";
 
 export {
+  UniqueStatWarning,
   BaseStatistics,
-  BaseStatisticsTable, CheckerCoverageStatistics,
-  CheckerCoverageStatisticsTable, CheckerStatistics,
+  BaseStatisticsTable,
+  CheckerStatistics,
   CheckerStatisticsTable,
   ComponentStatistics,
-  ComponentStatisticsTable, ReportDiffCount,
-  SeverityStatistics, UniqueStatWarning, defaultStatisticsFilterValues,
+  ComponentStatisticsTable,
+  defaultStatisticsFilterValues,
   getCheckerStatistics,
   getComponentStatistics,
   getComponents,
   getSeverityStatistics,
-  initDiffField
+  initDiffField,
+  ReportDiffCount,
+  SeverityStatistics,
+  CheckerCoverageStatistics,
+  CheckerCoverageStatisticsTable
 };

@@ -223,7 +223,7 @@ def upgrade():
             # a syntax error on the "FROM" in the "UPDATE" query), this
             # branching here needs to stay.
             if dialect == "sqlite":
-                db.execute(sa.text(f"""
+                db.execute(f"""
                     UPDATE reports
                     SET
                       checker_id = (
@@ -241,9 +241,9 @@ def upgrade():
                         LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                       )
                     ;
-                """))
+                """)
             else:
-                db.execute(sa.text(f"""
+                db.execute(f"""
                     UPDATE reports
                     SET
                       checker_id = checkers.id
@@ -259,7 +259,7 @@ def upgrade():
                         LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                       )
                     ;
-                """))
+                """)
             _print_progress(i + 1)
 
         db.commit()

@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Report hash filter"
-    :panel="baseFilter.panel"
+    :panel="panel"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -17,89 +17,80 @@
     <v-card-actions class="">
       <v-text-field
         :id="id"
-        :model-value="reportHash"
+        :value="reportHash"
         append-icon="mdi-magnify"
         label="Search for report hash (min 5 characters)..."
         single-line
         hide-details
-        variant="outlined"
+        outlined
+        solo
         clearable
-        density="compact"
-        @update:model-value="setReportHash"
+        flat
+        dense
+        @input="setReportHash"
       />
     </v-card-actions>
   </filter-toolbar>
 </template>
 
-<script setup>
-import { useBaseFilter } from "@/composables/useBaseFilter";
-import { ref, toRef } from "vue";
-import { useRoute } from "vue-router";
+<script>
+import BaseFilterMixin from "./BaseFilter.mixin";
 import FilterToolbar from "./Layout/FilterToolbar";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "ReportHashFilter",
+  components: {
+    FilterToolbar
+  },
+  mixins: [ BaseFilterMixin ],
 
-const emit = defineEmits([ "update:url" ]);
-const id = "report-hash";
-const reportHash = ref(null);
+  data() {
+    return {
+      id: "report-hash",
+      reportHash: null
+    };
+  },
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+  methods: {
+    setReportHash(reportHash, updateUrl=true) {
+      this.reportHash = reportHash;
+      this.updateReportFilter();
 
-const route = useRoute();
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
 
-function setReportHash(_reportHash, _updateUrl=true) {
-  reportHash.value = _reportHash;
-  updateReportFilter();
+    updateReportFilter() {
+      this.setReportFilter({
+        reportHash: this.reportHash ? [ `${this.reportHash}*` ] : null
+      });
+    },
 
-  if (_updateUrl) {
-    emit("update:url");
-  }
-}
+    getUrlState() {
+      return {
+        [this.id]: this.reportHash ? this.reportHash : undefined
+      };
+    },
 
-function updateReportFilter() {
-  baseFilter.setReportFilter({
-    reportHash: reportHash.value ? [ `${reportHash.value}*` ] : null
-  });
-}
+    initByUrl() {
+      return new Promise(resolve => {
+        const state = this.$route.query[this.id];
+        if (state) {
+          this.setReportHash(state, false);
+        }
 
-function getUrlState() {
-  return {
-    [id]: reportHash.value ? reportHash.value : undefined
-  };
-}
+        resolve();
+      });
+    },
 
-function initByUrl() {
-  return new Promise(resolve => {
-    const _state = route.query[id];
-    if (_state) {
-      setReportHash(_state, false);
+    initPanel() {
+      this.panel = this.reportHash !== null;
+    },
+
+    clear(updateUrl) {
+      this.setReportHash(null, updateUrl);
     }
-
-    resolve();
-  });
-}
-
-function initPanel() {
-  baseFilter.panel.value = reportHash.value !== null;
-}
-
-function clear(updateUrl) {
-  setReportHash(null, updateUrl);
-}
-
-defineExpose({
-  beforeInit: baseFilter.beforeInit,
-  afterInit: baseFilter.afterInit,
-  registerWatchers: baseFilter.registerWatchers,
-  unregisterWatchers: baseFilter.unregisterWatchers,
-
-  id,
-  updateReportFilter,
-  getUrlState,
-  initByUrl,
-  initPanel,
-  clear
-});
+  }
+};
 </script>

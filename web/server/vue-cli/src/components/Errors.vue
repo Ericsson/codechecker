@@ -10,14 +10,15 @@
       :key="idx"
       type="error"
       color="white"
-      density="compact"
-      variant="outlined"
+      dense
+      outlined
       text
     >
       {{ error }}
     </v-alert>
 
     <v-btn
+      dark
       text
       @click="clearErrors"
     >
@@ -26,14 +27,21 @@
   </v-snackbar>
 </template>
 
-<script setup>
+<script>
+import { mapGetters, mapMutations } from "vuex";
 import { CLEAR_ERRORS } from "@/store/mutations.type";
-import { computed } from "vue";
-import { useStore } from "vuex";
 
-const store = useStore();
-
-const errors = computed(() => store.getters.errors);
-
-const clearErrors = () => store.commit(CLEAR_ERRORS);
+export default {
+  name: "Errors",
+  computed: {
+    ...mapGetters([
+      "errors"
+    ])
+  },
+  methods: {
+    ...mapMutations([
+      CLEAR_ERRORS
+    ])
+  }
+};
 </script>

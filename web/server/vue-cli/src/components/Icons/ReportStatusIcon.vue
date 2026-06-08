@@ -18,11 +18,19 @@
   </v-icon>
 </template>
 
-<script setup>
+<script>
 import { ReportStatus } from "@cc/report-server-types";
 
-defineProps({
-  status: { type: Number, required: true },
-  size: { type: Number, default: null }
-});
+export default {
+  name: "ReportStatusIcon",
+  props: {
+    status: { type: Number, required: true },
+    size: { type: Number, default: null }
+  },
+  data() {
+    return {
+      ReportStatus
+    };
+  }
+};
 </script>

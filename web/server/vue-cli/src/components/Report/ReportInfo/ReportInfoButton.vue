@@ -1,18 +1,26 @@
 <template>
   <v-btn
-    v-bind="props"
-    color="primary"
     class="show-report-info-btn"
-    variant="outlined"
-    prepend-icon="mdi-help-circle-outline"
-    size="small"
+    color="primary"
+    outlined
+    small
+    v-on="on"
   >
+    <v-icon
+      class="mr-1"
+      small
+    >
+      mdi-help-circle-outline
+    </v-icon>
     Report info
   </v-btn>
 </template>
 
-<script setup>
-defineProps({
-  props: { type: Object, default: null }
-});
+<script>
+export default {
+  name: "ReportInfoButton",
+  props: {
+    on: { type: Object, default: null }
+  },
+};
 </script>

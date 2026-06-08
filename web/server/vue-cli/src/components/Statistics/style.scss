@@ -20,10 +20,11 @@ $darken: 2;
 $tr: 'tr:not(.v-data-table__expanded__content)';
 
 @mixin set-cells-color($cols...) {
-  #{$class-name} table {
-    @each $col in $cols {
-      th:nth-child(#{$col}),
-      td:nth-child(#{$col}) {
+  @each $col in $cols {
+    #{$class-name} > table {
+      & > thead > #{$tr} th:nth-child(#{$col}),
+      & > tbody > #{$tr}:not(:last-child) td:nth-child(#{$col}),
+      & > tbody > #{$tr}:last-child td:nth-child(#{$col - $colspan}) {
         @content;
       }
     }
@@ -38,35 +39,34 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
   }
 }
 
-@mixin set-bg-color($bg-color, $cols...) {
-  // Base color
-  @include set-cells-color($cols...) {
+@mixin set-bg-color($col, $bg-color) {
+  @include set-cells-color($col) {
     background-color: $bg-color;
   }
-
-  // Hover state
-  #{$class-name} table tbody tr:hover {
-    @each $col in $cols {
-      td:nth-child(#{$col}) {
-        background-color: darken($bg-color, 5%);
-      }
+  @include set-rows-color() {
+    &:hover td:nth-child(#{$col}) {
+      background-color: darken($bg-color, $darken);
     }
   }
 }
 
 // Set background color of outstanding report columns.
 @for $i from $unreviewed_col through $outstanding_reports_col {
-  @include set-bg-color($outstanding-bg-color, $i);
+  @include set-bg-color($i, $outstanding-bg-color);
 }
-
-@include set-bg-color(darken($outstanding-bg-color, $darken), $outstanding_reports_col);
+@include set-bg-color(
+  $outstanding_reports_col,
+  darken($outstanding-bg-color, $darken)
+);
 
 // Set background color of suppressed report columns.
 @for $i from $false_positive_col through $suppressed_reports_col {
-  @include set-bg-color($suppressed-bg-color, $i);
+  @include set-bg-color($i, $suppressed-bg-color);
 }
-
-@include set-bg-color(darken($suppressed-bg-color, $darken), $suppressed_reports_col);
+@include set-bg-color(
+  $suppressed_reports_col,
+  darken($suppressed-bg-color, $darken)
+);
 
 // Set border before some columns.
 @each $i in $border_before {
@@ -82,6 +82,6 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
   }
 }
 
-#{$class-name} .highlight-row {
+.highlight-row {
   background-color: $outstanding-bg-color !important;
 }

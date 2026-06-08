@@ -1,19 +1,21 @@
-import { useDetectionStatus } from "@/composables/useDetectionStatus";
-import { useReviewStatus } from "@/composables/useReviewStatus";
 import { DetectionStatus, ReviewStatus } from "@cc/report-server-types";
+import { DetectionStatusMixin, ReviewStatusMixin } from "@/mixins";
 
-const detectionStatus = useDetectionStatus();
-const reviewStatus = useReviewStatus();
+const reviewStatusToString =
+  ReviewStatusMixin.methods.reviewStatusFromCodeToString;
+
+const detectionStatusToString =
+DetectionStatusMixin.methods.detectionStatusFromCodeToString;
 
 const defaultReportFilterValues = {
   "review-status": [
-    reviewStatus.reviewStatusFromCodeToString(ReviewStatus.UNREVIEWED),
-    reviewStatus.reviewStatusFromCodeToString(ReviewStatus.CONFIRMED)
+    reviewStatusToString(ReviewStatus.UNREVIEWED),
+    reviewStatusToString(ReviewStatus.CONFIRMED)
   ],
   "detection-status": [
-    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.NEW),
-    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.REOPENED),
-    detectionStatus.detectionStatusFromCodeToString(DetectionStatus.UNRESOLVED)
+    detectionStatusToString(DetectionStatus.NEW),
+    detectionStatusToString(DetectionStatus.REOPENED),
+    detectionStatusToString(DetectionStatus.UNRESOLVED)
   ]
 };
 

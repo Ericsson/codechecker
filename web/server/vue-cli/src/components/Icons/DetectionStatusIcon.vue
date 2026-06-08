@@ -54,20 +54,31 @@
   </v-icon>
 </template>
 
-<script setup>
-import { useDetectionStatus } from "@/composables/useDetectionStatus";
+<script>
 import { DetectionStatus } from "@cc/report-server-types";
-import { computed } from "vue";
+import { DetectionStatusMixin } from "@/mixins";
 
-const props = defineProps({
-  status: { type: Number, required: true },
-  size: { type: String, default: undefined },
-  title: { type: String, default: null }
-});
+export default {
+  name: "DetectionStatusIcon",
+  mixins: [ DetectionStatusMixin ],
+  props: {
+    status: { type: Number, required: true },
+    size: { type: Number, default: null },
+    title: { type: String, default: null }
+  },
 
-const detectionStatus = useDetectionStatus();
+  data() {
+    return {
+      DetectionStatus
+    };
+  },
 
-const formattedTitle = computed(() => 
-  props.title || detectionStatus.detectionStatusFromCodeToString(props.status)
-);
+  computed: {
+    formattedTitle() {
+      if (this.title) return this.title;
+
+      return this.detectionStatusFromCodeToString(this.status);
+    }
+  }
+};
 </script>

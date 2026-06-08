@@ -17,59 +17,71 @@
   </v-container>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useStore } from "vuex";
-
+<script>
+import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 import Alerts from "@/components/Alerts.vue";
 
-const route = useRoute();
-const router = useRouter();
-const store = useStore();
 
-const success = ref(false);
-const error = ref(false);
-const errorMsg = ref(null);
+export default {
+  name: "OAuthLogin",
+  components: {
+    alerts: Alerts
+  },
 
-const isAuthenticated = computed(function() {
-  return store.getters["isAuthenticated"];
-});
+  data() {
+    return {
+      success: false,
+      error: false,
+      errorMsg: null,
+    };
+  },
 
-onMounted(function() {
-  if (isAuthenticated.value) {
-    router.replace({ name: "products" });
+  computed: {
+    ...mapGetters([
+      "isAuthenticated"
+    ])
+  },
+
+  created() {
+    if (this.isAuthenticated) {
+      this.$router.replace({ name: "products" });
+    }
+  },
+
+  mounted() {
+    this.detectCallback();
+  },
+
+  methods: {
+    detectCallback() {
+      const params = this.$route.query;
+      const url = window.location.href;
+      const provider = this.$route.params.provider;
+
+      if (params.code != null && params.state != null) {
+
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: provider,
+            url: url
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
+
+            const w = window.location;
+            window.location.href = w.origin + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+      }
+    },
   }
-  detectCallback();
-});
-
-function detectCallback() {
-  const _params = route.query;
-  const _url = window.location.href;
-  const _provider = route.params.provider;
-
-  if (_params.code != null && _params.state != null) {
-
-    store
-      .dispatch(LOGIN, {
-        type: "oauth",
-        provider: _provider,
-        url: _url
-      })
-      .then(() => {
-        success.value = true;
-        error.value = false;
-
-        const _w = window.location;
-        window.location.href = _w.origin + _w.pathname;
-      }).catch(_err => {
-        errorMsg.value = `Failed to log in! ${_err.message}`;
-        error.value = true;
-        router.replace({ name: "login" });
-      });
-  }
-}
+};
 </script>
 
 <style lang="scss" scoped>

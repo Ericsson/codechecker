@@ -3,7 +3,7 @@
     class="analyzer-checker-group-panel"
     :data-group-name="group"
   >
-    <v-expansion-panel-title
+    <v-expansion-panel-header
       class="pa-0 px-1"
     >
       <v-row
@@ -12,7 +12,7 @@
       >
         <v-col cols="auto">
           <v-chip
-            class="circle-chip"
+            class="mr-1 pa-1"
             :color="groupWideStatus"
             :ripple="false"
             :title="'Group \'' + group + '\' was' +
@@ -20,20 +20,25 @@
                 (groupEnabled ? '' : ' not')
               ) +
               ' enabled in this analysis'"
-            variant="outlined"
+            outlined
+            dark
+            small
           >
             <v-icon
               v-if="!needDetailedCounts && groupEnabled"
+              start
             >
               mdi-check
             </v-icon>
             <v-icon
               v-else-if="!needDetailedCounts && !groupEnabled"
+              start
             >
               mdi-close
             </v-icon>
             <v-icon
               v-else-if="needDetailedCounts"
+              start
             >
               mdi-tune
             </v-icon>
@@ -41,12 +46,12 @@
         </v-col>
         <v-col
           cols="auto"
-          class="pl-2 checker-group-name text-primary"
+          class="pl-2 checker-group-name primary--text"
         >
           {{ group }}
         </v-col>
         <v-col cols="auto">
-          <CountChips
+          <count-chips
             v-if="needDetailedCounts"
             :num-good="counts[CountKeys.Enabled]"
             :num-bad="counts[CountKeys.Disabled]"
@@ -62,48 +67,56 @@
           />
         </v-col>
       </v-row>
-    </v-expansion-panel-title>
-    <v-expansion-panel-text>
-      <CheckerRows
+    </v-expansion-panel-header>
+    <v-expansion-panel-content>
+      <checker-rows
         :checkers="checkers"
       />
-    </v-expansion-panel-text>
+    </v-expansion-panel-content>
   </v-expansion-panel>
 </template>
 
-<script setup>
+<script>
 import CountChips from "@/components/CountChips";
-import { CountKeys } from "@/composables/useAnalysisInfo";
-import { computed } from "vue";
 import CheckerRows from "./CheckerRows";
+import { CountKeys } from "@/mixins/api/analysis-info-handling.mixin";
 
-const props = defineProps({
-  group: { type: String, required: true },
-  checkers: { type: Array, required: true },
-  counts: { type: Array, required: true }
-});
-
-const numEnabled = computed(
-  () => props.counts[CountKeys.Enabled]
-);
-
-const numDisabled = computed(
-  () => props.counts[CountKeys.Disabled]
-);
-
-const needDetailedCounts = computed(() => 
-  numEnabled.value > 0 && numDisabled.value > 0
-);
-
-const groupWideStatus = computed(() => {
-  if (numEnabled.value > 0 && numDisabled.value === 0)
-    return "success";
-  if (numEnabled.value === 0 && numDisabled.value > 0)
-    return "error";
-  return "grey-darken-1";
-});
-
-const groupEnabled = computed(() => groupWideStatus.value === "success");
+export default {
+  name: "CheckerGroup",
+  components: {
+    CheckerRows,
+    CountChips,
+  },
+  props: {
+    group: { type: String, required: true },
+    checkers: { type: Array, required: true },
+    counts: { type: Array, required: true }
+  },
+  computed: {
+    numEnabled() {
+      return this.counts[this.CountKeys.Enabled];
+    },
+    numDisabled() {
+      return this.counts[this.CountKeys.Disabled];
+    },
+    needDetailedCounts() {
+      return this.numEnabled > 0 && this.numDisabled > 0;
+    },
+    groupWideStatus() {
+      if (this.numEnabled > 0 && this.numDisabled === 0)
+        return "success";
+      if (this.numEnabled === 0 && this.numDisabled > 0)
+        return "error";
+      return "grey darken-1";
+    },
+    groupEnabled() {
+      return this.groupWideStatus === "success";
+    },
+    CountKeys() {
+      return CountKeys;
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -112,15 +125,5 @@ const groupEnabled = computed(() => groupWideStatus.value === "success");
   font-size: 112.5%;
   font-style: italic;
   font-weight: medium;
-}
-
-.circle-chip {
-  width: 32px;
-  height: 32px;
-  border-radius: 50% !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
 }
 </style>

@@ -2,7 +2,7 @@
     "name": "suppress",
     "clean_cmd": "make clean",
     "build_cmd": "make",
-    "reports": {
+    "bugs": {
         "0c07579523063acece2d7aebd4357cac": [{ "line": 6, "review_status": 2, "review_status_comment": "foo1 simple" }],
         "1a7ddce6d69b031310dd7ad2ff330b53": [{ "line": 12, "review_status": 2, "review_status_comment": "foo2 simple" }],
         "2984230a8002149de7ab6b66d60508f8": [{ "line": 12, "review_status": 2, "review_status_comment": "foo2 simple" }],

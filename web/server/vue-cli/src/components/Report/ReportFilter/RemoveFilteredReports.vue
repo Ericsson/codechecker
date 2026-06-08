@@ -1,18 +1,17 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     max-width="600px"
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
     confirm-btn-color="error"
-    title="Remove filtered results"
     @confirm="confirmDelete"
   >
-    <template v-slot:activator="{ props }">
+    <template v-slot:activator="{ on }">
       <v-btn
-        v-bind="props"
-        variant="outlined"
+        outlined
         color="error"
+        v-on="on"
       >
         <v-icon left>
           mdi-delete
@@ -21,30 +20,41 @@
       </v-btn>
     </template>
 
+    <template v-slot:title>
+      Remove filtered resutlts
+    </template>
+
     <template v-slot:content>
       Are you sure you want to remove all filtered results?
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
-import ConfirmDialog from "@/components/ConfirmDialog";
-import { useBaseFilter } from "@/composables/useBaseFilter";
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { ref } from "vue";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import BaseFilterMixin from "./Filters/BaseFilter.mixin";
 
-const emit = defineEmits([ "update" ]);
-const baseFilter = useBaseFilter();
-const dialog = ref(false);
+export default {
+  name: "RemoveFileteredReports",
+  components: {
+    ConfirmDialog
+  },
+  mixins: [ BaseFilterMixin ],
+  data() {
+    return {
+      dialog: false
+    };
+  },
 
-function confirmDelete() {
-  ccService.getClient().removeRunReports(
-    baseFilter.runIds,
-    baseFilter.reportFilter,
-    baseFilter.cmpData,
-    handleThriftError(() => {
-      emit("update");
-      dialog.value = false;
-    }));
-}
+  methods: {
+    confirmDelete() {
+      ccService.getClient().removeRunReports(this.runIds, this.reportFilter,
+        this.cmpData, handleThriftError(() => {
+          this.$emit("update");
+          this.dialog = false;
+        }));
+    }
+  }
+};
 </script>

@@ -1,17 +1,17 @@
 <template>
   <select-option
-    :id="id.value"
+    :id="id"
     title="Analyzer name"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :selected-items="selectedItems"
     :search="search"
-    :loading="baseSelectOptionFilter.loading.value"
-    :panel="baseSelectOptionFilter.panel.value"
-    @clear="baseSelectOptionFilter.clear(true)"
-    @input="baseSelectOptionFilter.setSelectedItems"
+    :loading="loading"
+    :panel="panel"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
-    <template #icon>
+    <template v-slot:icon>
       <v-icon color="grey">
         mdi-crosshairs
       </v-icon>
@@ -19,103 +19,71 @@
   </select-option>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
-import { ref, toRef } from "vue";
 
-import {
-  useBaseSelectOptionFilter
-} from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "AnalyzerNameFilter",
+  components: {
+    SelectOption
+  },
+  mixins: [ BaseSelectOptionFilterMixin ],
 
-const emit = defineEmits([ "update:url" ]);
+  data() {
+    return {
+      id: "analyzer-name",
+      search: {
+        placeHolder: "Search for analyzer names (e.g.: clang*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: clang*)",
+        filterItems: this.filterItems
+      }
+    };
+  },
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+  methods: {
+    updateReportFilter() {
+      this.setReportFilter({
+        analyzerNames: this.selectedItems.map(item => item.id)
+      });
+    },
 
+    onReportFilterChange(key) {
+      if (key === "analyzerNames") return;
+      this.update();
+    },
 
-const id = ref("analyzer-name");
-// eslint-disable-next-line vue/no-ref-object-reactivity-loss
-baseSelectOptionFilter.id.value = id.value;
+    fetchItems(opt={}) {
+      this.loading = true;
 
-const search = ref({
-  placeHolder: "Search for analyzer names (e.g.: clang*)...",
-  regexLabel: "Filter by wildcard pattern (e.g.: clang*)",
-  filterItems: []
-});
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.analyzerNames = opt.query;
 
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
+      const limit = opt.limit || this.defaultLimit;
+      const offset = null;
 
-function updateReportFilter() {
-  baseSelectOptionFilter.setReportFilter({
-    analyzerNames:
-      baseSelectOptionFilter.selectedItems.value.map(item => item.id)
-  });
-}
-
-function onReportFilterChange(key) {
-  if (key === "analyzerNames") return;
-  baseSelectOptionFilter.update();
-}
-
-function fetchItems(opt={}) {
-  baseSelectOptionFilter.loading.value = true;
-
-  const _reportFilter = new ReportFilter(
-    baseSelectOptionFilter.reportFilter.value
-  );
-  _reportFilter.analyzerNames = opt.query;
-
-  const _limit = opt.limit || baseSelectOptionFilter.defaultLimit.value;
-  const _offset = 0;
-
-  return new Promise(resolve => {
-    ccService.getClient().getAnalyzerNameCounts(
-      baseSelectOptionFilter.runIds.value,
-      _reportFilter,
-      baseSelectOptionFilter.cmpData.value,
-      _limit,
-      _offset,
-      handleThriftError(res => {
-      // Order the results alphabetically.
-        resolve(Object.keys(res).sort((a, b) => {
-          if (a < b) return -1;
-          if (a > b) return 1;
-          return 0;
-        }).map(analyzerName => {
-          return {
-            id : analyzerName,
-            title: analyzerName,
-            count : res[analyzerName]
-          };
-        }));
-        baseSelectOptionFilter.loading.value = false;
-      }));
-  });
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  clear: baseSelectOptionFilter.clear,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-  initByUrl: baseSelectOptionFilter.initByUrl,
-  getUrlState: baseSelectOptionFilter.getUrlState,
-
-  id,
-  updateReportFilter,
-  onReportFilterChange,
-  fetchItems
-});
+      return new Promise(resolve => {
+        ccService.getClient().getAnalyzerNameCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+          // Order the results alphabetically.
+            resolve(Object.keys(res).sort((a, b) => {
+              if (a < b) return -1;
+              if (a > b) return 1;
+              return 0;
+            }).map(analyzerName => {
+              return {
+                id : analyzerName,
+                title: analyzerName,
+                count : res[analyzerName]
+              };
+            }));
+            this.loading = false;
+          }));
+      });
+    }
+  }
+};
 </script>

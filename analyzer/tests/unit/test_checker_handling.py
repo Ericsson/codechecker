@@ -52,7 +52,7 @@ class MockClangsaCheckerLabels:
             return ['alpha.core.BoolAssignment',
                     'alpha.core.TestAfterDivZero']
 
-        if labels[0] == 'guideline:sei-cert-c':
+        if labels[0] == 'guideline:sei-cert':
             return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
 
         if labels[0] == 'severity:LOW':
@@ -73,8 +73,8 @@ class MockClangsaCheckerLabels:
 
     def occurring_values(self, label):
         if label == 'guideline':
-            return ['sei-cert-c']
-        elif label == 'sei-cert-c':
+            return ['sei-cert']
+        elif label == 'sei-cert':
             return ['rule1', 'rule2']
         elif label == 'profile':
             return ['default',
@@ -197,7 +197,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 'security.FloatLoopCounter',
                 'deadcode.DeadStores']
 
-        # Checkers covering some "sei-cert-c" rules.
+        # Checkers covering some "sei-cert" rules.
         cert_guideline = [
                 'alpha.core.CastSize',
                 'alpha.core.CastToStruct']
@@ -310,35 +310,34 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), default_profile))
 
-        # Enable "sei-cert-c" guideline checkers with the "guideline:" label.
+        # Enable "sei-cert" guideline checkers with the "guideline:" label.
         # Using the "guideline" label is optional in this case, because the
-        # guideline name "sei-cert-c" does not conflict with any checker
+        # guideline name "sei-cert" does not conflict with any checker
         # prefix group names.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
-                                        [('guideline:sei-cert-c', True)])
+                                        [('guideline:sei-cert', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), cert_guideline))
 
-        # Enable "sei-cert-c" guideline checkers without the "guideline:"
-        # label.
+        # Enable "sei-cert" guideline checkers without the "guideline:" label.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
-                                        [('sei-cert-c', True)])
+                                        [('sei-cert', True)])
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), cert_guideline))
 
-        # Disable "sei-cert-c" guideline checkers.
+        # Disable "sei-cert" guideline checkers.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
-                                        [('guideline:sei-cert-c', False)])
+                                        [('guideline:sei-cert', False)])
         self.assertTrue(all_with_status(CheckerState.DISABLED)
                         (cfg_handler.checks(), cert_guideline))
 
-        # Disable "sei-cert-c" guideline checkers.
+        # Disable "sei-cert" guideline checkers.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
-                                        [('sei-cert-c', False)])
+                                        [('sei-cert', False)])
         self.assertTrue(all_with_status(CheckerState.DISABLED)
                         (cfg_handler.checks(), cert_guideline))
 
@@ -424,8 +423,8 @@ class MockClangTidyCheckerLabels:
 
     def occurring_values(self, label):
         if label == 'guideline':
-            return ['sei-cert-c']
-        elif label == 'sei-cert-c':
+            return ['sei-cert']
+        elif label == 'sei-cert':
             return ['rule1', 'rule2']
         elif label == 'profile':
             return ['default',
@@ -818,8 +817,8 @@ class MockCppcheckCheckerLabels:
 
     def occurring_values(self, label):
         if label == 'guideline':
-            return ['sei-cert-c']
-        elif label == 'sei-cert-c':
+            return ['sei-cert']
+        elif label == 'sei-cert':
             return ['rule1', 'rule2']
         elif label == 'profile':
             return ['default',

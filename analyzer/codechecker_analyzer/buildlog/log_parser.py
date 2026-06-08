@@ -22,7 +22,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
@@ -49,7 +49,7 @@ REPLACE_OPTIONS_MAP = {
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command.
 # These flags should be ignored only in case the original compiler is clang.
-IGNORED_OPTIONS_LIST_CLANG = [
+IGNORED_OPTIONS_CLANG = [
     # Clang gives different warnings than GCC. Thus if these flags are kept,
     # '-Werror', '-pedantic-errors' the analysis with Clang can fail even
     # if the compilation passes with GCC.
@@ -66,7 +66,7 @@ IGNORED_OPTIONS_LIST_CLANG = [
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command.
 # These flags should be ignored only in case the original compiler is gcc.
-IGNORED_OPTIONS_LIST_GCC = [
+IGNORED_OPTIONS_GCC = [
     # --- UNKNOWN BY CLANG --- #
     '-fallow-fetchr-insn',
     '-fcall-saved-',
@@ -191,8 +191,8 @@ IGNORED_OPTIONS_LIST_GCC = [
     '-mabi'
 ]
 
-IGNORED_OPTIONS_GCC = re.compile('|'.join(IGNORED_OPTIONS_LIST_GCC))
-IGNORED_OPTIONS_CLANG = re.compile('|'.join(IGNORED_OPTIONS_LIST_CLANG))
+IGNORED_OPTIONS_GCC = re.compile('|'.join(IGNORED_OPTIONS_GCC))
+IGNORED_OPTIONS_CLANG = re.compile('|'.join(IGNORED_OPTIONS_CLANG))
 
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command. These flags have further
@@ -218,7 +218,7 @@ IGNORED_PARAM_OPTIONS = {
 }
 
 
-COMPILE_OPTIONS_LIST = [
+COMPILE_OPTIONS = [
     '-nostdinc',
     r'-nostdinc\+\+',
     '-pedantic',
@@ -235,9 +235,9 @@ COMPILE_OPTIONS_LIST = [
     '-pthread'
 ]
 
-COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS_LIST))
+COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS))
 
-COMPILE_OPTIONS_LIST_MERGED = [
+COMPILE_OPTIONS_MERGED = [
     '--sysroot',
     '-sdkroot',
     '--include',
@@ -253,7 +253,7 @@ COMPILE_OPTIONS_LIST_MERGED = [
     '-iwithprefixbefore'
 ]
 
-INCLUDE_OPTIONS_LIST_MERGED = [
+INCLUDE_OPTIONS_MERGED = [
     '-iquote',
     '-[IF]',
     '-isystem',
@@ -271,10 +271,10 @@ XCLANG_FLAGS_TO_SKIP = ['-module-file-info',
                         '-rewrite-objc']
 
 COMPILE_OPTIONS_MERGED = \
-    re.compile('(' + '|'.join(COMPILE_OPTIONS_LIST_MERGED) + ')')
+    re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
 
 INCLUDE_OPTIONS_MERGED = \
-    re.compile('(' + '|'.join(INCLUDE_OPTIONS_LIST_MERGED) + ')')
+    re.compile('(' + '|'.join(INCLUDE_OPTIONS_MERGED) + ')')
 
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
@@ -327,7 +327,7 @@ class ImplicitCompilerInfo:
     class ImplicitInfoSpecifierKey:
         compiler: str
         language: str
-        compiler_flags: tuple[str]
+        compiler_flags: list[str]
 
         def __str__(self):
             return json.dumps([
@@ -344,14 +344,14 @@ class ImplicitCompilerInfo:
                 (self.compiler, self.language, tuple(self.compiler_flags)))
 
     compiler_info: Dict[ImplicitInfoSpecifierKey, dict] = {}
-    compiler_isexecutable: Dict[str, bool] = {}
+    compiler_isexecutable = {}
     # Store the already detected compiler version information.
     # If the value is False the compiler is not clang otherwise the value
     # should be a clang version information object.
-    compiler_versions: Dict[str, Any] = {}
+    compiler_versions = {}
 
     @staticmethod
-    def is_executable_compiler(compiler: str):
+    def is_executable_compiler(compiler):
         if compiler not in ImplicitCompilerInfo.compiler_isexecutable:
             ImplicitCompilerInfo.compiler_isexecutable[compiler] = \
                 which(compiler) is not None
@@ -405,7 +405,7 @@ class ImplicitCompilerInfo:
         start_mark = "#include <...> search starts here:"
         end_mark = "End of search list."
 
-        include_paths: List[str] = []
+        include_paths = []
         lines = ImplicitCompilerInfo.__get_compiler_err(compile_cmd)
 
         if not lines:
@@ -739,7 +739,7 @@ def __get_installed_dir(clang_binary) -> Optional[str]:
     if 'clang' not in clang_path.name:
         return None
 
-    return str(clang_path.parent) if clang_path.parent else None
+    return clang_path.parent
 
 
 def __collect_clang_compile_opts(flag_iterator, details):
@@ -1184,40 +1184,30 @@ def extend_compilation_database_entries(compilation_database):
             cmd = []
             source_files = []
             source_dir = entry['directory']
-            response_files = set()
 
             options = shlex.split(entry['command'])
             for opt in options:
                 if opt.startswith('@'):
                     response_file = os.path.join(source_dir, opt[1:])
-                    source_file = os.path.join(source_dir, opt)
-
-                    if os.path.exists(response_file):
-                        opts, sources = process_response_file(response_file)
-                        cmd.extend([shlex.quote(x) for x in opts])
-                        source_files.extend(sources)
-                        response_files.add(os.path.abspath(response_file))
-                    elif os.path.exists(source_file):
-                        cmd.append(shlex.quote(opt))
-                    else:
+                    if not os.path.exists(response_file):
                         LOG.warning("Response file '%s' does not exists.",
                                     response_file)
                         continue
+
+                    opts, sources = process_response_file(response_file)
+                    cmd.extend([shlex.quote(x) for x in opts])
+                    source_files.extend(sources)
                 else:
                     cmd.append(shlex.quote(opt))
 
             entry['command'] = ' '.join(cmd)
 
             if entry['file'].startswith('@'):
-                response_file = os.path.abspath(os.path.join(
-                    source_dir, entry['file'][1:]))
-
-                if response_file in response_files:
-                    for source_file in source_files:
-                        new_entry = dict(entry)
-                        new_entry['file'] = source_file
-                        yield new_entry
-                    continue
+                for source_file in source_files:
+                    new_entry = dict(entry)
+                    new_entry['file'] = source_file
+                    yield new_entry
+                continue
 
         yield entry
 

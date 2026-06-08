@@ -1,17 +1,20 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     content-class="remove-filtered-rules-dialog"
     confirm-btn-label="Remove"
-    title="Remove filtered review status rules"
     @confirm="removeReviewStatusRule"
   >
+    <template v-slot:title>
+      Remove filtered review status rules
+    </template>
+
     <template v-slot:content>
       <v-container>
         <v-alert
           class="mt-2"
           color="error"
-          border="start"
+          border="left"
           elevation="2"
           colored-border
           icon="mdi-alert-outline"
@@ -24,39 +27,42 @@
         </v-alert>
       </v-container>
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed } from "vue";
 
 import { ConfirmDialog } from "@/components";
 
-const props = defineProps({
-  value: { type: Boolean, default: false },
-  filter: { type: Object, default: null },
-  total: { type: Number, default: null },
-});
-
-const emit = defineEmits([ "update:value", "on:confirm" ]);
-
-const dialog = computed({
-  get() {
-    return props.value;
+export default {
+  name: "RemoveFilteredRulesDialog",
+  components: { ConfirmDialog },
+  props: {
+    value: { type: Boolean, default: false },
+    filter: { type: Object, default: null },
+    total: { type: Number, default: null },
   },
-  set(val) {
-    emit("update:value", val);
-  }
-});
-
-function removeReviewStatusRule() {
-  ccService.getClient().removeReviewStatusRules(props.filter,
-    handleThriftError(success => {
-      if (success) {
-        emit("on:confirm", props.rule);
-        dialog.value = false;
+  computed: {
+    dialog: {
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("update:value", val);
       }
-    }));
-}
+    },
+  },
+  methods: {
+    removeReviewStatusRule() {
+      ccService.getClient().removeReviewStatusRules(this.filter,
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("on:confirm", this.rule);
+            this.dialog = false;
+          }
+        }));
+    }
+  }
+};
 </script>

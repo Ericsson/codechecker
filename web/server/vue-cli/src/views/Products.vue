@@ -3,57 +3,58 @@
     <v-data-table
       :headers="headers"
       :items="products"
-      :loading="loading"
+      :options.sync="pagination"
       :footer-props="footerProps"
+      :page.sync="page"
+      :must-sort="true"
+      :loading="loading"
+      :mobile-breakpoint="1000"
       loading-text="Loading products..."
       item-key="endpoint"
-      :items-per-page="25"
     >
       <template v-slot:top>
-        <v-toolbar
-          flat
-          class="mb-4"
-          color="transparent"
-        >
+        <v-toolbar flat class="mb-4">
           <v-row>
-            <v-col align-self="center">
+            <v-col>
               <v-text-field
                 v-model="productNameSearch"
-                class="ml-4"
+                prepend-inner-icon="mdi-magnify"
                 label="Search for products..."
+                single-line
                 hide-details
-                variant="outlined"
-                clearable
-                density="compact"
+                outlined
+                solo
+                flat
+                dense
               />
             </v-col>
 
             <v-spacer />
 
             <v-col cols="auto" align="right">
-              <span>
-                <edit-announcement-btn
-                  v-if="isSuperUser"
-                />
+              <v-spacer />
 
-                <edit-global-permission-btn
-                  v-if="isSuperUser"
-                />
+              <span
+                v-if="isSuperUser"
+              >
+                <edit-announcement-btn />
+
+                <edit-global-permission-btn />
 
                 <new-product-btn
-                  v-if="isSuperUser"
                   :is-super-user="isSuperUser"
                   @on-complete="onCompleteNewProduct"
                 />
               </span>
 
               <v-btn
-                icon="mdi-refresh"
+                icon
                 title="Reload products"
                 color="primary"
-                class="mr-2"
                 @click="fetchProducts"
-              />
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
             </v-col>
           </v-row>
         </v-toolbar>
@@ -72,16 +73,12 @@
           <v-chip
             color="secondary"
             class="mr-2 my-1"
-            variant="outlined"
+            outlined
             :title="admin"
           >
-            <template v-slot:prepend>
-              <v-icon
-                class="mr-2"
-              >
-                mdi-account-circle
-              </v-icon>
-            </template>
+            <v-avatar>
+              <v-icon>mdi-account-circle</v-icon>
+            </v-avatar>
             {{ admin }}
           </v-chip>
         </span>
@@ -90,6 +87,7 @@
       <template #item.runCount="{ item }">
         <v-chip
           :color="getRunCountColor(item.runCount)"
+          dark
         >
           {{ item.runCount }}
         </v-chip>
@@ -100,20 +98,16 @@
           v-if="item.latestStoreToProduct"
           class="ma-2"
           color="primary"
-          variant="outlined"
+          outlined
         >
-          <template v-slot:prepend>
-            <v-icon
-              class="mr-2"
-            >
-              mdi-calendar-range
-            </v-icon>
-          </template>
-          {{ prettifyDate(item.latestStoreToProduct) }}
+          <v-icon left>
+            mdi-calendar-range
+          </v-icon>
+          {{ item.latestStoreToProduct | prettifyDate }}
         </v-chip>
       </template>
 
-      <template v-slot:item.actions="{ item }">
+      <template v-slot:item.action="{ item }">
         <div class="text-no-wrap">
           <edit-product-btn
             v-if="item.administrating"
@@ -121,6 +115,7 @@
             :is-super-user="isSuperUser"
             @on-complete="onCompleteEditProduct"
           />
+
           <delete-product-btn
             v-if="isSuperUser"
             :product="item"
@@ -132,20 +127,11 @@
   </v-container>
 </template>
 
-<script setup>
-import { computed, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-
-import { useDateUtils } from "@/composables/useDateUtils";
-
+<script>
 import _ from "lodash";
 
-const route = useRoute();
-const router = useRouter();
-const { prettifyDate } = useDateUtils();
-
 import { authService, handleThriftError, prodService } from "@cc-api";
-import { Permission } from "@cc/shared-types";
+import { DBStatus, Permission } from "@cc/shared-types";
 
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
 import {
@@ -156,214 +142,232 @@ import {
   ProductNameColumn
 } from "@/components/Product/";
 
-const itemsPerPageOptions = ref([ 25 ]);
-const sortBy = ref(null);
-const sortDesc = ref(null);
-const page = ref(null);
-const productNameSearch = ref(null);
-const loading = ref(null);
-const products = ref([]);
-const isSuperUser = ref(false);
-const isAdminOfAnyProduct = ref(false);
+export default {
+  name: "Products",
+  components: {
+    DeleteProductBtn,
+    EditAnnouncementBtn,
+    EditGlobalPermissionBtn,
+    EditProductBtn,
+    NewProductBtn,
+    ProductNameColumn
+  },
 
-const pagination = computed(() => ({
-  sortBy: sortBy.value ? [ sortBy.value ] : [ ],
-  sortDesc: sortDesc.value !== undefined ? [ !!sortDesc.value ] : [ ]
-}));
+  data() {
+    const itemsPerPageOptions = [ 25 ];
+    const sortBy = this.$router.currentRoute.query["sort-by"];
+    const sortDesc = this.$router.currentRoute.query["sort-desc"];
+    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
 
-const footerProps = computed(() => ({
-  itemsPerPageOptions: itemsPerPageOptions.value
-}));
+    return {
+      DBStatus,
+      productNameSearch: null,
+      loading: false,
+      pagination: {
+        sortBy: sortBy ? [ sortBy ] : [],
+        sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
+      },
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions
+      },
+      page,
+      headers: [
+        {
+          text: "Name",
+          value: "displayedName",
+          sortable: true
+        },
+        {
+          text: "Admins",
+          value: "admins",
+          sortable: false
+        },
+        {
+          text: "Number of runs",
+          value: "runCount",
+          align: "center",
+          sortable: true
+        },
+        {
+          text: "Latest store to product",
+          value: "latestStoreToProduct",
+          sortable: true
+        },
+        {
+          text: "Actions",
+          value: "action",
+          sortable: false
+        },
+      ],
+      products: [],
+      isSuperUser: false,
+      isAdminOfAnyProduct: false
+    };
+  },
 
-watch(pagination, () => {
-  const sortByValue = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDescValue = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+  watch: {
+    pagination: {
+      handler() {
+        const sortBy = this.pagination.sortBy.length
+          ? this.pagination.sortBy[0] : undefined;
+        const sortDesc = this.pagination.sortDesc.length
+          ? this.pagination.sortDesc[0] : undefined;
 
-  router.replace({
-    query: {
-      "sort-by": sortByValue,
-      "sort-desc": sortDescValue,
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "sort-by": sortBy,
+            "sort-desc": sortDesc,
+          }
+        }).catch(() => {});
+
+        this.products.sort(this.sortProducts);
+      },
+      deep: true
+    },
+
+    page() {
+      const page = this.page === 1 ? undefined : this.page;
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          "page": page
+        }
+      }).catch(() => {});
+    },
+
+    productNameSearch: _.debounce(function () {
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          "name": this.productNameSearch
+            ? this.productNameSearch : undefined
+        }
+      }).catch(() => {});
+
+      this.fetchProducts();
+    }, 500),
+  },
+
+  created() {
+    this.productNameSearch = this.$router.currentRoute.query["name"] || null;
+
+    authService.getClient().hasPermission(Permission.SUPERUSER, "",
+      handleThriftError(isSuperUser => {
+        this.isSuperUser = isSuperUser;
+
+        if (!isSuperUser) {
+          prodService.getClient().isAdministratorOfAnyProduct(
+            handleThriftError(isAdminOfAnyProduct => {
+              this.isAdminOfAnyProduct = isAdminOfAnyProduct;
+
+              // Remove action column from headers.
+              if (!isAdminOfAnyProduct) {
+                this.headers = this.headers.filter(header => {
+                  return header.value !== "action";
+                });
+              }
+            }));
+        }
+      }));
+
+    if (!this.productNameSearch) {
+      this.fetchProducts();
     }
-  }).catch(() => {});
-
-  products.value.sort(sortProducts);
-}, { deep: true });
-
-watch(page, () => {
-  const page = page === 1 ? undefined : page;
-  router.replace({
-    query: {
-      "page": page
-    }
-  }).catch(() => {});
-});
-
-const debouncedSearchHandler = _.debounce(() => {
-  router.replace({
-    query: {
-      "name": productNameSearch.value || undefined
-    }
-  }).catch(() => {});
-
-  fetchProducts();
-}, 500);
-
-watch(productNameSearch, debouncedSearchHandler);
-
-const headers = ref([
-  {
-    title: "Name",
-    value: "displayedName",
-    sortable: true
   },
-  {
-    title: "Admins",
-    value: "admins",
-    sortable: false
-  },
-  {
-    title: "Number of runs",
-    value: "runCount",
-    align: "center",
-    sortable: true
-  },
-  {
-    title: "Latest store to product",
-    value: "latestStoreToProduct",
-    sortable: true
-  },
-  {
-    title: "Actions",
-    value: "actions",
-    sortable: false
-  }, 
-]);
 
-onMounted(() => {
-  sortBy.value = route.query["sort-by"];
-  sortDesc.value = route.query["sort-desc"];
-  page.value = parseInt(route.query["page"]) || 1;
+  methods: {
+    fetchProducts() {
+      this.loading = true;
 
-  initializeComponent();
-});
+      const productNameFilter = this.productNameSearch
+        ? `*${this.productNameSearch}*` : null;
 
-function fetchProducts() {
-  loading.value = true;
+      prodService.getClient().getProducts(null, productNameFilter,
+        handleThriftError(products => {
+          this.products = products.map(product => {
+            const description = product.description_b64 ?
+              window.atob(product.description_b64) : null;
+            const displayedName = product.displayedName_b64 ?
+              window.atob(product.displayedName_b64) : null;
 
-  const productNameFilter = productNameSearch.value
-    ? `*${productNameSearch.value}*` : null;
+            return {
+              description,
+              displayedName,
+              ...product
+            };
+          }).sort(this.sortProducts);
 
-  prodService.getClient().getProducts(null, productNameFilter,
-    handleThriftError(_products => {
-      products.value = _products.map(product => {
-        const description = product.description_b64 ?
-          window.atob(product.description_b64) : null;
-        const displayedName = product.displayedName_b64 ?
-          window.atob(product.displayedName_b64) : null;
+          this.pagination.page = this.page;
 
-        return {
-          description,
-          displayedName,
-          ...product
-        };
-      }).sort(sortProducts);
+          this.loading = false;
+        }));
+    },
 
-      pagination.value.page = page.value;
+    sortProducts(p1, p2) {
+      const sortBy = this.pagination.sortBy.length
+        ? this.pagination.sortBy[0] : undefined;
+      const sortDesc = this.pagination.sortDesc.length
+        ? this.pagination.sortDesc[0] : undefined;
 
-      loading.value = false;
-    }));
-}
+      let p1Value = null;
+      let p2Value = null;
 
-function sortProducts(p1, p2) {
-  const sortBy = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDesc = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+      if (sortBy === undefined) {
+        // By default sort runs by displayed name and put products to the end
+        // of list which are not accessible by the current user.
+        if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
 
-  let p1Value = null;
-  let p2Value = null;
-
-  if (sortBy === undefined) {
-    // By default sort runs by displayed name and put products to the end
-    // of list which are not accessible by the current user.
-    if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
-
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "displayedName") {
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "runCount") {
-    p1Value = p1.runCount;
-    p2Value = p2.runCount;
-  } else if (sortBy === "latestStoreToProduct") {
-    p1Value = p1.latestStoreToProduct
-      ? new Date(p1.latestStoreToProduct)
-      : null;
-    p2Value = p2.latestStoreToProduct
-      ? new Date(p2.latestStoreToProduct)
-      : null;
-  } else {
-    console.warn("Invalid sort field: ", sortBy);
-  }
-
-  if (sortDesc) [ p1Value, p2Value ] = [ p2Value, p1Value ];
-
-  if (p1Value < p2Value) return -1;
-  if (p1Value > p2Value) return 1;
-
-  return 0;
-}
-
-function onCompleteNewProduct() {
-  fetchProducts();
-}
-
-function onCompleteEditProduct() {
-  fetchProducts();
-}
-
-function deleteProduct(product) {
-  products.value = products.value.filter(p => p.id !== product.id);
-}
-
-function getRunCountColor(runCount) {
-  if (runCount > 500) {
-    return "red";
-  } else if (runCount > 200) {
-    return "orange";
-  } else {
-    return "green";
-  }
-}
-
-function initializeComponent() {
-  productNameSearch.value = route.query["name"] || null;
-
-  authService.getClient().hasPermission(Permission.SUPERUSER, "",
-    handleThriftError(superUser => {
-      isSuperUser.value = superUser;
-
-      if (!superUser) {
-        prodService.getClient().isAdministratorOfAnyProduct(
-          handleThriftError(isAdmin => {
-            isAdminOfAnyProduct.value = isAdmin;
-
-            if (!isAdmin) {
-              headers.value.splice(
-                headers.value.findIndex(h => h.value === "actions"), 1
-              );
-            }
-          }));
+        p1Value = p1.displayedName.toLowerCase();
+        p2Value = p2.displayedName.toLowerCase();
+      } else if (sortBy === "displayedName") {
+        p1Value = p1.displayedName.toLowerCase();
+        p2Value = p2.displayedName.toLowerCase();
+      } else if (sortBy === "runCount") {
+        p1Value = p1.runCount;
+        p2Value = p2.runCount;
+      } else if (sortBy === "latestStoreToProduct") {
+        p1Value = p1.latestStoreToProduct
+          ? new Date(p1.latestStoreToProduct)
+          : null;
+        p2Value = p2.latestStoreToProduct
+          ? new Date(p2.latestStoreToProduct)
+          : null;
+      } else {
+        console.warn("Invalid sort field: ", sortBy);
       }
-    }));
 
-  if (!productNameSearch.value) {
-    fetchProducts();
+      if (sortDesc) [ p1Value, p2Value ] = [ p2Value, p1Value ];
+
+      if (p1Value < p2Value) return -1;
+      if (p1Value > p2Value) return 1;
+
+      return 0;
+    },
+
+    onCompleteNewProduct() {
+      this.fetchProducts();
+    },
+
+    onCompleteEditProduct() {
+      this.fetchProducts();
+    },
+
+    deleteProduct(product) {
+      this.products = this.products.filter(p => p.id !== product.id);
+    },
+
+    getRunCountColor(runCount) {
+      if (runCount > 500) {
+        return "red";
+      } else if (runCount > 200) {
+        return "orange";
+      } else {
+        return "green";
+      }
+    }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -375,7 +379,7 @@ function initializeComponent() {
   display: inline-block;
   max-width: 150px;
 
-  :deep(.v-chip__content) {
+  ::v-deep .v-chip__content {
     line-height: 32px;
     display: inline-block !important;
     white-space: nowrap;

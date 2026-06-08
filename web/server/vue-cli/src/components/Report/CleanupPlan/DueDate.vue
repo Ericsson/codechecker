@@ -1,19 +1,14 @@
 <template>
   <span :class="{ 'red--text': expired, 'font-weight-bold': expired }">
     <span v-if="expired">
-      <v-icon
-        size="small"
-        color="red"
-      >
+      <v-icon small color="red">
         mdi-alert-outline
       </v-icon>
       Past due by
     </span>
 
     <span v-else-if="!hideLabel">
-      <v-icon
-        size="small"
-      >
+      <v-icon small>
         mdi-calendar-blank
       </v-icon>
       Due by
@@ -23,21 +18,23 @@
   </span>
 </template>
 
-<script setup>
-import fromUnixTime from "@/filters/from-unix-time";
+<script>
 import { fromUnixTime as fromUnixTimestamp, startOfToday } from "date-fns";
-import { computed } from "vue";
+import fromUnixTime from "@/filters/from-unix-time";
 
-const props = defineProps({
-  value: { type: Number, required: true },
-  hideLabel: { type: Boolean, default: false }
-});
-
-const dueDate = computed(() => {
-  return fromUnixTime(props.value, "yyyy-MM-dd");
-});
-
-const expired = computed(() => {
-  return startOfToday() > fromUnixTimestamp(props.value);
-});
+export default {
+  name: "DueDate",
+  props: {
+    value: { type: Object, required: true },
+    hideLabel: { type: Boolean, default: false }
+  },
+  computed: {
+    dueDate() {
+      return fromUnixTime(this.value, "yyyy-MM-dd");
+    },
+    expired() {
+      return startOfToday() > fromUnixTimestamp(this.value);
+    }
+  }
+};
 </script>

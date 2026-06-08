@@ -11,7 +11,6 @@
 import argparse
 import logging
 import os
-import sys
 
 # If we run this script in an environment where
 # 'codechecker_statistics_collector' module is not available we should add the
@@ -21,7 +20,7 @@ import sys
 # dependencies.
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.dirname(current_dir))
+    os.sys.path.append(os.path.dirname(current_dir))
 
 from codechecker_statistics_collector import post_process_stats  # noqa
 

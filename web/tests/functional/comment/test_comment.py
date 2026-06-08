@@ -138,6 +138,8 @@ class TestComment(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
 
+        self._clang_to_test = env.clang_to_test()
+
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
         self.assertIsNotNone(self._testproject_data)
 

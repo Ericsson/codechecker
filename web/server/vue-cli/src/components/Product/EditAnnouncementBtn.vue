@@ -1,43 +1,46 @@
 <template>
-  <ConfirmDialog
+  <confirm-dialog
     v-model="dialog"
     confirm-btn-label="Change"
-    title="Change announcement"
     @confirm="confirmAnnouncementChange"
-    @cancel="resetValue"
   >
-    <template v-slot:activator="{ props }">
+    <template v-slot:activator="{ on }">
       <v-btn
-        v-bind="props"
         id="edit-announcement-btn"
         color="primary"
         class="mr-2"
-        variant="outlined"
+        v-on="on"
       >
-        <template v-slot:prepend>
-          <v-icon>mdi-bullhorn-outline</v-icon>
-        </template>
+        <v-icon left>
+          mdi-bullhorn-outline
+        </v-icon>
         Edit announcement
       </v-btn>
+    </template>
+
+    <template v-slot:title>
+      Change announcement
     </template>
 
     <template v-slot:content>
       <v-text-field
         v-model="value"
         append-icon="mdi-bullhorn-outline"
-        label="Announcement text"
+        label="Write your alert here..."
+        single-line
         hide-details
-        variant="outlined"
+        outlined
+        solo
         clearable
-        density="compact"
+        flat
+        dense
       />
     </template>
-  </ConfirmDialog>
+  </confirm-dialog>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from "vue";
-import { useStore } from "vuex";
+<script>
+import { mapActions, mapGetters, mapMutations } from "vuex";
 
 import { confService, handleThriftError } from "@cc-api";
 
@@ -46,38 +49,50 @@ import { SET_ANNOUNCEMENT } from "@/store/mutations.type";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-const store = useStore();
-const dialog = ref(false);
-const value = ref(null);
-const originalValue = ref(null);
+export default {
+  name: "EditAnnouncementBtn",
+  components: {
+    ConfirmDialog
+  },
 
-const announcement = computed(() => store.getters.announcement);
+  data() {
+    return {
+      dialog: false,
+      value: null
+    };
+  },
 
-onMounted(() => {
-  if (announcement.value) {
-    value.value = announcement.value;
-    originalValue.value = announcement.value;
-  } else {
-    store.dispatch(GET_ANNOUNCEMENT).then(result => {
-      value.value = result;
-      originalValue.value = result;
+  computed: {
+    ...mapGetters([
+      "announcement"
+    ])
+  },
+
+  mounted() {
+    this.getAnnouncement().then(announcement => {
+      this.value = announcement;
     });
+  },
+
+  methods: {
+    ...mapActions([
+      GET_ANNOUNCEMENT
+    ]),
+    ...mapMutations([
+      SET_ANNOUNCEMENT
+    ]),
+
+    // TODO: set announcement back to the original value on cancel.
+    confirmAnnouncementChange() {
+      const announcementB64 = this.value
+        ? window.btoa(this.value) : window.btoa("");
+
+      confService.getClient().setNotificationBannerText(announcementB64,
+        handleThriftError(() => {
+          this.dialog = false;
+          this.setAnnouncement(this.value);
+        }));
+    }
   }
-});
-
-function confirmAnnouncementChange() {
-  const announcementB64 = value.value
-    ? window.btoa(value.value) : window.btoa("");
-
-  confService.getClient().setNotificationBannerText(announcementB64,
-    handleThriftError(() => {
-      dialog.value = false;
-      store.commit(SET_ANNOUNCEMENT, value.value);
-    }));
-}
-
-function resetValue() {
-  dialog.value = false;
-  value.value = originalValue.value;
-}
+};
 </script>

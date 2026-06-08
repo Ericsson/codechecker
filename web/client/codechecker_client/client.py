@@ -111,19 +111,11 @@ def login_user(protocol, host, port, username, login=False):
     methods = auth_client.getAcceptedAuthMethods()
     # Attempt username-password auth first.
     if 'Username:Password' in str(methods):
+
         # Try to use a previously saved credential from configuration file if
         # autologin is enabled.
         saved_auth = None
-        if env.get_password_string():
-            # if CC_PASSWORD env var is defined use that
-            LOG.info("Using credentials from CC_PASSWORD env var to log in.")
-            if not username:
-                LOG.error("Cannot login. CC_PASSWORD env var is defined,"
-                          "but username is not provided!")
-                sys.exit(1)
-            saved_auth = f"{username}:{env.get_password_string()}"
-
-        if session.is_autologin_enabled() and not saved_auth:
+        if session.is_autologin_enabled():
             saved_auth = session.get_auth_string(host, port)
 
         if saved_auth:

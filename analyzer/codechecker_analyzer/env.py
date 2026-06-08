@@ -82,7 +82,7 @@ def get_log_env(logfile, original_env, use_absolute_ldpreload_path=False):
             new_env["LD_LIBRARY_PATH"],
         )
 
-    if "LD_PRELOAD" in new_env and new_env["LD_PRELOAD"].strip():
+    if "LD_PRELOAD" in new_env:
         new_env["LD_PRELOAD"] = new_env["LD_PRELOAD"] + " " + preload_value
     else:
         new_env["LD_PRELOAD"] = preload_value

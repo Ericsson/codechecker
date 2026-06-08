@@ -1,10 +1,10 @@
 <template>
   <span>
     <v-alert
-      v-if="success"
+      v-model="success"
       dismissible
       color="success"
-      border="start"
+      border="left"
       elevation="2"
       colored-border
       icon="mdi-check"
@@ -13,10 +13,10 @@
     </v-alert>
 
     <v-alert
-      v-if="error"
+      v-model="error"
       dismissible
       color="error"
-      border="start"
+      border="left"
       elevation="2"
       colored-border
       icon="mdi-alert-outline"
@@ -26,11 +26,14 @@
   </span>
 </template>
 
-<script setup>
-defineProps({
-  success: { type: Boolean, default: false },
-  error: { type: Boolean, default: false },
-  successMsg: { type: String, default: null },
-  errorMsg: { type: String, default: null },
-});
+<script>
+export default {
+  name: "Alerts",
+  props: {
+    success: { type: Boolean, default: false },
+    error: { type: Boolean, default: false },
+    successMsg: { type: String, default: null },
+    errorMsg: { type: String, default: null }
+  }
+};
 </script>

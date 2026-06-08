@@ -7,12 +7,12 @@
       v-if="numOfNewReports"
       color="red"
       label
-      size="x-small"
+      x-small
       text-color="white"
       class="px-2"
       title="Number of new reports"
       :to="{ name: 'reports', query: {
-        ...router.currentRoute.value.query,
+        ...$router.currentRoute.query,
         ...extraQueryParams,
         'diff-type': 'New'
       }}"
@@ -27,12 +27,12 @@
       v-if="numOfResolvedReports"
       color="green"
       label
-      size="x-small"
+      x-small
       text-color="white"
       class="px-2"
       title="Number of resolved reports"
       :to="{ name: 'reports', query: {
-        ...router.currentRoute.value.query,
+        ...$router.currentRoute.query,
         ...extraQueryParams,
         'diff-type': 'Resolved'
       }}"
@@ -45,14 +45,13 @@
   </span>
 </template>
 
-<script setup>
-import { useRouter } from "vue-router";
-
-defineProps({
-  numOfNewReports: { type: Number, default: null },
-  numOfResolvedReports: { type: Number, default: null },
-  extraQueryParams: { type: Object, default: () => {} }
-});
-
-const router = useRouter();
+<script>
+export default {
+  name: "ReportDiffCount",
+  props: {
+    numOfNewReports: { type: Number, default: null },
+    numOfResolvedReports: { type: Number, default: null },
+    extraQueryParams: { type: Object, default: () => {} }
+  }
+};
 </script>

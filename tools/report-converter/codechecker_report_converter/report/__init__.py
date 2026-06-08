@@ -14,8 +14,7 @@ import json
 import logging
 import os
 
-from typing import Callable, Dict, List, Optional, Protocol, Set, Tuple, \
-        Union, Any
+from typing import Callable, Dict, List, Optional, Protocol, Set, Tuple
 
 from .. import util
 
@@ -26,10 +25,6 @@ FakeChecker: Tuple[str, str] = ("__FAKE__", "__FAKE__")
 UnknownChecker: Tuple[str, str] = ("UNKNOWN", "NOT FOUND")
 
 
-# FIXME:
-# Why do we have 2 SkipListHandlers with the same interface?
-# - One defined here
-# - Another one in codechecker_common.skiplist_handler.SkipListHandlers
 class SkipListHandlers(Protocol):
     should_skip: Callable[[str], bool]
 
@@ -475,9 +470,7 @@ class Report:
         if self.__changed_files is None:
             self.__changed_files = changed_files
 
-    # FIXME: Remove Any typing once we only have 1 SkipListHandlers not 2
-    def skip(self, skip_handlers: Optional[Union[
-            SkipListHandlers, Any]]) -> bool:
+    def skip(self, skip_handlers: Optional[SkipListHandlers]) -> bool:
         """ True if the report should be skipped. """
         if not skip_handlers:
             return False

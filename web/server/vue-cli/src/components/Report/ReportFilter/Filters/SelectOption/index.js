@@ -19,8 +19,9 @@ function filterIsChanged(a, b) {
 }
 
 export {
-  filterIsChanged, Items,
+  Items,
   ItemsSelected,
   SelectedToolbarTitleItems,
-  SelectOption
+  SelectOption,
+  filterIsChanged
 };

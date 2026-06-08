@@ -1,17 +1,17 @@
 <template>
   <select-option
-    :id="id.value"
+    :id="id"
     title="Testcase"
-    :bus="baseSelectOptionFilter.bus"
+    :bus="bus"
     :fetch-items="fetchItems"
-    :selected-items="baseSelectOptionFilter.selectedItems.value"
+    :selected-items="selectedItems"
     :search="search"
-    :loading="baseSelectOptionFilter.loading.value"
-    :limit="baseSelectOptionFilter.defaultLimit.value"
+    :loading="loading"
+    :limit="defaultLimit"
     :multiple="true"
-    :panel="baseSelectOptionFilter.panel.value"
-    @clear="baseSelectOptionFilter.clear(true)"
-    @input="baseSelectOptionFilter.setSelectedItems"
+    :panel="panel"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -29,102 +29,74 @@
   </select-option>
 </template>
 
-<script setup>
+<script>
 import { ccService, handleThriftError } from "@cc-api";
 import { Pair, ReportFilter } from "@cc/report-server-types";
-import { ref, toRef } from "vue";
 
-import { useBaseSelectOptionFilter }
-  from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
+export default {
+  name: "TestcaseFilter",
+  components: {
+    SelectOption
+  },
+  mixins: [ BaseSelectOptionFilterMixin ],
 
-const emit = defineEmits([ "update:url" ]);
+  data() {
+    return {
+      id: "testcase",
+      search: {
+        placeHolder: "Search for testcase names...",
+        regexLabel: "Filter by wildcard pattern",
+        filterItems: this.filterItems
+      }
+    };
+  },
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
-baseSelectOptionFilter.fetchItems.value = fetchItems;
-baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
+  methods: {
+    updateReportFilter() {
+      this.setReportFilter({
+        annotations: this.selectedItems.length == 0
+          ? null : this.selectedItems.map(item => new Pair({
+            first: "testcase",
+            second: item.id
+          }))
+      });
+    },
 
-const id = ref("testcase");
-// eslint-disable-next-line vue/no-ref-object-reactivity-loss
-baseSelectOptionFilter.id.value = id.value;
+    onReportFilterChange(key) {
+      if (key === "testcaseName") return;
+      this.update();
+    },
 
-const search = ref({
-  placeHolder: "Search for testcase names...",
-  regexLabel: "Filter by wildcard pattern",
-  filterItems: baseSelectOptionFilter.filterItems
-});
+    fetchItems(opt={}) {
+      this.loading = true;
 
-baseSelectOptionFilter.bus.on("update:url", () => {
-  emit("update:url");
-});
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.annotations = opt.query ? opt.query.map(q => new Pair({
+        first: "testcase",
+        second: q
+      })) : [ new Pair({
+        first: "testcase",
+        second: null 
+      }) ];
 
-function updateReportFilter() {
-  baseSelectOptionFilter.setReportFilter({
-    annotations: baseSelectOptionFilter.selectedItems.value.length == 0
-      ? null : baseSelectOptionFilter.selectedItems.value.map(
-        item => new Pair({
-          first: "testcase",
-          second: item.id
-        })
-      )
-  });
-}
-
-function onReportFilterChange(key) {
-  if (key === "testcaseName") return;
-  baseSelectOptionFilter.update();
-}
-
-function fetchItems(opt={}) {
-  baseSelectOptionFilter.loading.value = true;
-
-  const _reportFilter =
-    new ReportFilter(baseSelectOptionFilter.reportFilter.value);
-  _reportFilter.annotations = opt.query ? opt.query.map(q => new Pair({
-    first: "testcase",
-    second: q
-  })) : [ new Pair({
-    first: "testcase",
-    second: null 
-  }) ];
-
-  return new Promise(resolve => {
-    ccService.getClient().getReportAnnotations(
-      baseSelectOptionFilter.runIds.value,
-      _reportFilter,
-      baseSelectOptionFilter.cmpData.value,
-      handleThriftError(res => {
-        resolve(res.map(annotation => {
-          return {
-            id: annotation,
-            title: annotation
-          };
-        }));
-        baseSelectOptionFilter.loading.value = false;
-      }));
-  });
-}
-
-defineExpose({
-  beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
-  clear: baseSelectOptionFilter.clear,
-  update: baseSelectOptionFilter.update,
-  registerWatchers: baseSelectOptionFilter.registerWatchers,
-  unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
-  initByUrl: baseSelectOptionFilter.initByUrl,
-  getUrlState: baseSelectOptionFilter.getUrlState,
-
-  id,
-  updateReportFilter,
-  onReportFilterChange,
-  fetchItems
-});
+      return new Promise(resolve => {
+        ccService.getClient().getReportAnnotations(this.runIds, reportFilter,
+          this.cmpData, handleThriftError(res => {
+            resolve(res.map(annotation => {
+              return {
+                id: annotation,
+                title: annotation
+              };
+            }));
+            this.loading = false;
+          }));
+      });
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

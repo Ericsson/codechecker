@@ -1,37 +1,58 @@
 <template>
-  <ConfirmDialog
+  <v-dialog
     v-model="dialog"
-    max-width="1000px"
-    title="Report Info"
-    :buttons="false"
+    content-class="report-info-dialog"
+    max-width="600px"
   >
-    <template v-slot:activator="{ props: activatorProps }">
-      <v-btn
-        v-bind="activatorProps"
-        id="report-info-btn"
-        color="primary"
-        variant="outlined"
-        size="small"
-        prepend-icon="mdi-help-circle-outline"
+    <template v-slot:activator="{ on }">
+      <v-container fluid class="px-0">
+        <v-row>
+          <v-col
+            cols="auto"
+            class="pa-0 mx-4"
+          >
+            <slot :on="on" />
+          </v-col>
+        </v-row>
+      </v-container>
+    </template>
+
+    <v-card>
+      <v-card-title
+        class="headline primary white--text"
+        primary-title
       >
-        Report Info
-      </v-btn>
-    </template>
-    <template v-slot:content>
-      <report-info :value="value" />
-    </template>
-  </ConfirmDialog>
+        Report info
+
+        <v-spacer />
+
+        <v-btn class="close-btn" icon dark @click="dialog = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
+
+      <v-card-text class="pa-0">
+        <v-container>
+          <report-info :value="value" />
+        </v-container>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
-<script setup>
-import { ref } from "vue";
-
-import ConfirmDialog from "@/components/ConfirmDialog";
+<script>
 import ReportInfo from "./ReportInfo";
 
-defineProps({
-  value: { type: Object, default: null }
-});
-
-const dialog = ref(false);
+export default {
+  name: "ShowReportInfoDialog",
+  components: { ReportInfo },
+  props: {
+    value: { type: Object, default: null }
+  },
+  data() {
+    return {
+      dialog: false
+    };
+  }
+};
 </script>

@@ -351,8 +351,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         result = []
         for cfg, doc in parse_checker_config(help_page):
-            checker, opt = cfg.split(':', 1)
-            result.append(analyzer_base.CheckerConfig(checker, opt, doc))
+            result.append(analyzer_base.CheckerConfig(*cfg.split(':', 1), doc))
 
         return result
 

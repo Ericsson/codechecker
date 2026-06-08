@@ -167,28 +167,26 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def __handle_readiness(self):
         """ Handle readiness probe. """
         try:
-            with DBSession(self.server.config_session) as cfg_sess:
-                try:
-                    cfg_sess.query(ORMConfiguration).count()
+            cfg_sess = self.server.config_session()
+            cfg_sess.query(ORMConfiguration).count()
 
-                    self.send_response(200)
-                    self.end_headers()
-                    self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
-                except Exception:
-                    self.send_response(500)
-                    self.end_headers()
-                    self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
-        except BrokenPipeError:
-            pass
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
+        except Exception:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
+        finally:
+            if cfg_sess:
+                cfg_sess.close()
+                cfg_sess.commit()
 
     def __handle_liveness(self):
         """ Handle liveness probe. """
-        try:
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
-        except BrokenPipeError:
-            pass
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
 
     def end_headers(self):
         """
@@ -469,7 +467,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == "Tasks":
                         task_handler = TaskHandler_v6(
                             self.server.config_session,
-                            self.server.manager,
                             self.server.task_manager,
                             self.auth_session)
                         processor = TaskAPI_v6.Processor(task_handler)
@@ -525,11 +522,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except BrokenPipeError as ex:
-            # This is considered normal. The client can close the TCP
-            # connection for various reasons and the server cannot
-            # write to a closed socket.
             LOG.warning("%s failed with BrokenPipeError: %s",
                         api_info, str(ex))
+            import traceback
+            traceback.print_exc()
         except Exception as ex:
             if isinstance(ex, ProductNotFoundError):
                 LOG.debug("%s failed with Exception: %s", api_info, str(ex))
@@ -865,10 +861,9 @@ class CCSimpleHttpServer(HTTPServer):
         # More on this:
         # https://github.com/Ericsson/codechecker/pull/3733#issuecomment-1235304179
         # https://github.com/PyCQA/pylint/issues/6005
-        with DBSession(prod.session_factory) as session:
-            orm_product.num_of_runs = \
-                session.query(func.count(Run.id)).one_or_none()[0] \
-                # pylint: disable=not-callable
+        orm_product.num_of_runs = \
+            prod.session_factory().query(func.count(Run.id)).one_or_none()[0] \
+            # pylint: disable=not-callable
 
         self.__products[prod.endpoint] = prod
 
@@ -930,7 +925,8 @@ class CCSimpleHttpServer(HTTPServer):
 
         # If the product doesn't find in the cache, try to get it from the
         # database.
-        with DBSession(self.config_session) as cfg_sess:
+        try:
+            cfg_sess = self.config_session()
             product = cfg_sess.query(ORMProduct) \
                 .filter(ORMProduct.endpoint == endpoint) \
                 .limit(1).one_or_none()
@@ -945,6 +941,10 @@ class CCSimpleHttpServer(HTTPServer):
             })
 
             return self.__products.get(endpoint, None)
+        finally:
+            if cfg_sess:
+                cfg_sess.close()
+                cfg_sess.commit()
 
     def get_only_product(self):
         """

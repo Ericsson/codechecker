@@ -29,18 +29,24 @@
   </v-alert>
 </template>
 
-<script setup>
-import { ref } from "vue";
-
-const color = ref("");
-const show = ref(false);
-const text = ref(false);
-
-function display() {
-  show.value = !show.value;
-  text.value = !text.value;
-  color.value = show.value ? "deep-orange" : "";
-}
+<script>
+export default {
+  name: "UniqueStatWarning",
+  data() {
+    return {
+      color: "",
+      show: false,
+      text: false
+    };
+  },
+  methods: {
+    display() {
+      this.show = !this.show;
+      this.text = !this.text;
+      this.color = this.show ? "deep-orange" : "";
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>

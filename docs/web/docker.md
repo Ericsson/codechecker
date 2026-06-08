@@ -23,13 +23,19 @@ sections.
 
 ## Build Docker image
 You can create a Docker image by running the following command in the root
-directory of the CodeChecker repository:
+directory of this repository:
 ```bash
-docker build -t codechecker-web:latest -f web/docker/Dockerfile .
+docker build -t codechecker-web:latest web/docker
 ```
 
 Multiple build-time variables can be specified:
 
+- `CC_REPO` (default: *https://github.com/Ericsson/CodeChecker.git*):
+repository which will be cloned from Git. Use it when you would like to build
+an image from a custom CodeChecker repository.
+- `CC_VERSION` (default: *master*): branch or tag version which will be cloned
+from Git. Use `master` if you would like to build an image from the latest
+CodeChecker.
 - `CC_UID` (default: *950*): id of the *codechecker* user which will be created
 during the image build and which will be used to start CodeChecker server.
 - `CC_GID` (default: *950*): id of the *codechecker* group which will be
@@ -46,7 +52,7 @@ Example:
 docker build \
   --build-arg INSTALL_AUTH=yes \
   --build-arg INSTALL_PSYCOPG2=yes \
-  --tag codechecker-web:latest -f web/docker/Dockerfile .
+  --tag codechecker-web:latest web/docker
 ```
 
 

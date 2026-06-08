@@ -1,7 +1,10 @@
-import { createRouter, createWebHistory } from "vue-router";
+import Vue from "vue";
+import Router from "vue-router";
 
-const router = createRouter({
-  history: createWebHistory(),
+Vue.use(Router);
+
+export default new Router({
+  mode: "history",
   routes: [
     {
       path: "/",
@@ -19,14 +22,14 @@ const router = createRouter({
       component: () => import("@/views/Login")
     },
     {
-      path: "/login/OAuthLogin/:provider",
+      path: "/login/oAuthlogin/:provider",
       name: "oauthlogin",
       component: () => import("@/views/OAuthLogin")
     },
     {
       path: "/userguide",
       name: "userguide",
-      component: () => import("@/views/Userguide"),
+      component: () => import("@/views/Userguide")
     },
     {
       path: "/new-features",
@@ -41,7 +44,7 @@ const router = createRouter({
     {
       // Should be kept in sync with the regex from is_valid_product_endpoint
       // on the backend.
-      path: "/:endpoint([A-Za-z0-9_-]+)?",
+      path: "/:endpoint([A-Za-z0-9_-]+)",
       meta: {
         requiresAuth: true
       },
@@ -59,48 +62,49 @@ const router = createRouter({
         },
         {
           path: "statistics",
-          name: "statistics",
-          redirect: { name: "product-overview" },
           component: () => import("@/views/Statistics"),
           children: [
+            {
+              path: "",
+              name: "statistics",
+              redirect: "overview"
+            },
             {
               path: "overview",
               name: "product-overview",
               component: () =>
-                import("@statistics/Overview/Overview"),
+                import("@/components/Statistics/Overview/Overview"),
             },
             {
               path: "checker",
               name: "checker-statistics",
               component: () =>
-                import("@statistics/Checker/CheckerStatistics"),
+                import("@/components/Statistics/Checker/CheckerStatistics"),
             },
             {
               path: "severity",
               name: "severity-statistics",
               component: () =>
-                import("@statistics/Severity/SeverityStatistics"),
+                import("@/components/Statistics/Severity/SeverityStatistics"),
             },
             {
               path: "component",
               name: "component-statistics",
               component: () => import(
-                "@statistics/Component/ComponentStatistics"),
+                "@/components/Statistics/Component/ComponentStatistics"),
             },
             {
               path: "coverage",
               name: "checker-coverage-statistics",
               component: () =>
-                import(
-                  "@statistics/CheckerCoverage/CheckerCoverageStatistics"
-                ),
+                import("@/components/Statistics/CheckerCoverage/\
+CheckerCoverageStatistics"),
             },
             {
               path: "guideline",
               name: "guideline-statistics",
               component: () => import(
-                "@/components/Statistics/Guideline/GuidelineStatistics"
-              ),
+                "@/components/Statistics/Guideline/GuidelineStatistics"),
             },
           ]
         },
@@ -137,5 +141,3 @@ const router = createRouter({
     }
   ]
 });
-
-export default router;

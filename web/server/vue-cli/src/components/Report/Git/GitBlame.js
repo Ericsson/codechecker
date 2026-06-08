@@ -1,9 +1,10 @@
+import Vue from "vue";
 import { parse } from "date-fns";
-import { createApp } from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
 
 import GitBlameLine from "./GitBlameLine";
+const GitBlameLineClass = Vue.extend(GitBlameLine);
 
 function getCommitColor(commit, minDate, maxDate) {
   const currTime = commit.committedDateTime;
@@ -105,18 +106,22 @@ export default {
           if (this.gutterMarkers[i])
             continue;
 
-          const container = document.createElement("div");
-          const app = createApp(GitBlameLine, {
-            number: i + 1,
-            commit,
-            color: lastCommitColor,
-            remoteUrl: this.sourceFile.remoteUrl,
-            trackingBranch: this.sourceFile.trackingBranch
+          const widget = new GitBlameLineClass({
+            propsData: {
+              number: i + 1,
+              commit,
+              color: lastCommitColor,
+              remoteUrl: this.sourceFile.remoteUrl,
+              trackingBranch: this.sourceFile.trackingBranch
+            }
           });
-          app.use(this.$vuetify);
-          app.mount(container);
 
-          this.editor.setGutterMarker(i, this.gutterID, container.firstChild);
+          // This is needed otherwise it will throw an error.
+          widget.$vuetify = this.$vuetify;
+
+          widget.$mount();
+
+          this.editor.setGutterMarker(i, this.gutterID, widget.$el);
           this.gutterMarkers[i] = true;
         }
       });

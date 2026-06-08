@@ -26,11 +26,6 @@ def get_default_workspace():
     return workspace
 
 
-def get_password_string():
-    """ Return the location of the CodeChecker password credential. """
-    return os.environ.get("CC_PASSWORD", None)
-
-
 def get_password_file():
     """ Return the location of the CodeChecker password file. """
     return os.environ.get("CC_PASS_FILE",
