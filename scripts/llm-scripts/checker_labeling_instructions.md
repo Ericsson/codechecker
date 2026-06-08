@@ -9,7 +9,7 @@ To complete a task use only those input sources which are listed as relevant in 
 We would like You to identify which SEI Rules that are corresponding to static analysis checkers.
 Checkers are implemented by static analyzer tools such as gcc or clang-tidy.
 There are multiple analyzer tools supported by CodeChecker.
-There is a `config` directory in CodeChecker which contains metadata about the supported analyzers and checkers.
+There is a [config](https://github.com/Ericsson/codechecker/tree/master/config/labels/analyzers) directory in CodeChecker which contains metadata about the supported analyzers and checkers.
 This metadata describes among other things the severity of the checkers, the profile of the checker, and any corresponding SEI-Cert-rule or other guideline rule. There might be checkers which do not have any corresponding sie-cert rule.
 
 This metadata is not complete and the corresponding sei-cert rule might be missing.
