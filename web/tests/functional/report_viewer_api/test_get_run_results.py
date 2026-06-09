@@ -426,11 +426,13 @@ class RunResults(unittest.TestCase):
             "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
             "#core-dividezero-c-c-objc",
             "guideline:sei-cert-c",
+            "guideline:sei-cert-cpp",
             "profile:default",
             "profile:extreme",
             "profile:security",
             "profile:sensitive",
             "sei-cert-c:int33-c",
+            "sei-cert-cpp:int33-c",
             "severity:HIGH"
         ])
 
