@@ -183,6 +183,7 @@
     "bugprone-assert-side-effect": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assert-side-effect.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -248,6 +249,7 @@
     "bugprone-command-processor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/command-processor.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "sei-cert-cpp:env33-c",
       "severity:MEDIUM"
@@ -343,6 +345,7 @@
     "bugprone-float-loop-counter": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/float-loop-counter.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -442,6 +445,7 @@
     "bugprone-macro-parentheses": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/macro-parentheses.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "sei-cert-c:pre02-c",
@@ -450,6 +454,7 @@
     "bugprone-macro-repeated-side-effects": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/macro-repeated-side-effects.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -522,6 +527,7 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/narrowing-conversions.html",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -655,6 +661,7 @@
     "bugprone-signed-char-misuse": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signed-char-misuse.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -673,6 +680,7 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-expression.html",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -758,6 +766,7 @@
     "bugprone-suspicious-memory-comparison": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memory-comparison.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -769,6 +778,7 @@
     "bugprone-suspicious-memset-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memset-usage.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
@@ -788,6 +798,7 @@
     "bugprone-suspicious-realloc-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-realloc-usage.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -872,6 +883,7 @@
     "bugprone-unchecked-string-to-number-conversion": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unchecked-string-to-number-conversion.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "sei-cert-c:err34-c",
       "severity:MEDIUM"
@@ -937,6 +949,7 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
@@ -976,6 +989,7 @@
     "bugprone-unused-return-value": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-return-value.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1019,6 +1033,7 @@
     "cert-dcl03-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl03-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -1028,6 +1043,7 @@
     "cert-dcl16-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl16-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -1081,6 +1097,7 @@
     "cert-env33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/env33-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
@@ -1096,6 +1113,7 @@
     "cert-err33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err33-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1106,6 +1124,7 @@
     "cert-err34-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err34-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -1154,6 +1173,7 @@
     "cert-flp30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/flp30-c.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1477,6 +1497,7 @@
     "clang-diagnostic-array-bounds-pointer-arithmetic": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-bounds-pointer-arithmetic",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -2587,6 +2608,7 @@
     "clang-diagnostic-double-promotion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdouble-promotion",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -2657,6 +2679,7 @@
     "clang-diagnostic-embedded-directive": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wembedded-directive",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -2861,6 +2884,7 @@
     "clang-diagnostic-float-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfloat-conversion",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -2891,6 +2915,7 @@
     "clang-diagnostic-format": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
@@ -2927,6 +2952,7 @@
     "clang-diagnostic-format-nonliteral": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-nonliteral",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
@@ -2938,6 +2964,7 @@
     "clang-diagnostic-format-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:mem35-c",
@@ -2946,6 +2973,7 @@
     "clang-diagnostic-format-overflow-non-kprintf": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow-non-kprintf",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:mem35-c",
@@ -2959,6 +2987,7 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-security",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -3385,6 +3414,7 @@
     "clang-diagnostic-implicit-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-conversion",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
@@ -3482,6 +3512,7 @@
     "clang-diagnostic-incompatible-function-pointer-types-strict": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-function-pointer-types-strict",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:exp37-c",
@@ -3636,6 +3667,7 @@
     "clang-diagnostic-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wint-conversion",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
@@ -4931,6 +4963,7 @@
     "clang-diagnostic-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wparentheses",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
@@ -5024,6 +5057,7 @@
     "clang-diagnostic-pointer-to-int-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpointer-to-int-cast",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
@@ -5743,6 +5777,7 @@
     "clang-diagnostic-static-in-inline": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstatic-in-inline",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -6058,6 +6093,7 @@
     "clang-diagnostic-thread-safety-pointer": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wthread-safety-pointer",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:sensitive",
       "sei-cert-c:msc54-c",
@@ -6744,6 +6780,7 @@
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "guideline:owasp-top-10-2021",
       "profile:security",
       "sei-cert-c:con33-c",
@@ -7360,6 +7397,7 @@
     "misc-assert-side-effect": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-assert-side-effect.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -7562,6 +7600,7 @@
     "misc-non-copyable-objects": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/non-copyable-objects.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -7611,6 +7650,7 @@
     "misc-sizeof-expression": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-sizeof-expression.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -8302,6 +8342,7 @@
     "readability-enum-initial-value": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/enum-initial-value.html",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",

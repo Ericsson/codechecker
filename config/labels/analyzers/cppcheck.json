@@ -299,6 +299,7 @@
       "cwe-top-25-2024:cwe-476",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:security",
       "sei-cert-c:exp34-c",
       "severity:HIGH"
@@ -432,8 +433,10 @@
       "severity:MEDIUM"
     ],
     "cppcheck-throwInEntryPoint": [
-      "severity:HIGH",
-      "sei-cert-c:err55-cpp"
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
     ],
     "cppcheck-fflushOnInputStream": [
       "severity:MEDIUM"
@@ -1496,6 +1499,7 @@
     "cppcheck-terminateStrncpy": [
       "guideline:memory-safety",
       "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1512,12 +1516,6 @@
     ],
     "cppcheck-thisUseAfterFree": [
       "severity:HIGH"
-    ],
-    "cppcheck-throwInEntryPoint": [
-      "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "severity:MEDIUM"
     ],
     "cppcheck-throwInNoexceptFunction": [
       "profile:default",
