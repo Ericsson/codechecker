@@ -252,6 +252,7 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
+      "sei-cert-c:env33-c",
       "sei-cert-cpp:env33-c",
       "severity:MEDIUM"
     ],
