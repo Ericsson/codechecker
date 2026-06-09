@@ -1286,6 +1286,105 @@ class TestAnalyze(unittest.TestCase):
         # Checkers of all 3 analyzers are disabled.
         self.assertEqual(out.count("No checkers enabled for"), 5)
 
+    def test_analyzer_gcc_warnings(self):
+        build_json = os.path.join(self.test_workspace, "build.json")
+        source_file = os.path.join(self.test_dir, "compiler_warning.c")
+
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file, "file": source_file}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "gcc",
+                       "-o", self.report_dir,
+                       "--disable-all",
+                       "--verbose", "debug_analyzer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        self.assertEqual(out.count("No checkers enabled for gcc"), 1)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "gcc",
+                       "-o", self.report_dir,
+                       "--enable", "gcc-diagnostic-div-by-zero",
+                       "--verbose", "debug_analyzer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        self.assertEqual(out.count("gcc: 1"), 1)
+        self.assertEqual(out.count("Wdiv-by-zero"), 2)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "gcc",
+                       "-o", self.report_dir,
+                       "--enable", "gcc-out-of-bounds",
+                       "--verbose", "debug_analyzer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        self.assertEqual(out.count("gcc: 1"), 1)
+        self.assertEqual(out.count("Wanalyzer-out-of-bounds"), 2)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "gcc",
+                       "-o", self.report_dir,
+                       "--enable", "gcc-diagnostic-comment",
+                       "--verbose", "debug_analyzer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        self.assertEqual(out.count("gcc: 1"), 1)
+        self.assertEqual(out.count("Wcomment"), 2)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "gcc",
+                       "-o", self.report_dir,
+                       "--enable-all",
+                       "--disable", "gcc-diagnostic-div-by-zero",
+                       "--disable", "gcc-out-of-bounds",
+                       "--disable", "gcc-diagnostic-comment",
+                       "--verbose", "debug_analyzer"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        self.assertEqual(out.count("Wno-div-by-zero"), 2)
+        self.assertEqual(out.count("Wno-analyzer-out-of-bounds"), 2)
+        self.assertEqual(out.count("Wno-comment"), 2)
+
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
