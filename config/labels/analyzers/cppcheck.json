@@ -302,6 +302,7 @@
       "guideline:sei-cert-cpp",
       "profile:security",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
       "severity:HIGH"
     ],
     "cppcheck-dangerousTypeCast": [
@@ -1506,6 +1507,7 @@
       "profile:sensitive",
       "memory-safety:cwe-170",
       "sei-cert-c:str32-c",
+      "sei-cert-cpp:str32-c",
       "severity:HIGH"
     ],
     "cppcheck-thisSubtraction": [

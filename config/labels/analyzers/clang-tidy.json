@@ -189,6 +189,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pre31-c",
+      "sei-cert-cpp:pre31-c",
       "severity:MEDIUM"
     ],
     "bugprone-assignment-in-if-condition": [
@@ -351,6 +352,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:flp30-c",
+      "sei-cert-cpp:flp30-c",
       "severity:MEDIUM"
     ],
     "bugprone-fold-init-type": [
@@ -449,6 +451,7 @@
       "profile:extreme",
       "profile:security",
       "sei-cert-c:pre02-c",
+      "sei-cert-cpp:pre02-c",
       "severity:MEDIUM"
     ],
     "bugprone-macro-repeated-side-effects": [
@@ -460,6 +463,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pre31-c",
+      "sei-cert-cpp:pre31-c",
       "severity:MEDIUM"
     ],
     "bugprone-misleading-setter-of-reference": [
@@ -512,7 +516,6 @@
       "profile:sensitive",
       "sei-cert-cpp:err51-cpp",
       "sei-cert-cpp:exp50-cpp",
-      "sei-cert-cpp:mem31-cpp",
       "sei-cert-cpp:mem51-cpp",
       "sei-cert-cpp:mem52-cpp",
       "severity:HIGH"
@@ -536,6 +539,10 @@
       "sei-cert-c:fio34-c",
       "sei-cert-c:flp34-c",
       "sei-cert-c:flp36-c",
+      "sei-cert-cpp:exp45-c",
+      "sei-cert-cpp:fio34-c",
+      "sei-cert-cpp:flp34-c",
+      "sei-cert-cpp:flp36-c",
       "severity:MEDIUM"
     ],
     "bugprone-no-escape": [
@@ -667,6 +674,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:str34-c",
+      "sei-cert-cpp:str34-c",
       "severity:MEDIUM"
     ],
     "bugprone-sizeof-container": [
@@ -687,6 +695,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-190",
       "sei-cert-c:mem35-c",
+      "sei-cert-cpp:mem35-c",
       "severity:HIGH"
     ],
     "bugprone-spuriously-wake-up-functions": [
@@ -773,6 +782,8 @@
       "profile:sensitive",
       "sei-cert-c:exp42-c",
       "sei-cert-c:flp37-c",
+      "sei-cert-cpp:exp42-c",
+      "sei-cert-cpp:flp37-c",
       "severity:MEDIUM"
     ],
     "bugprone-suspicious-memset-usage": [
@@ -785,6 +796,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:int31-c",
+      "sei-cert-cpp:int31-c",
       "owasp-top-10-2021:owasp-A04-2021",
       "severity:HIGH"
     ],
@@ -804,6 +816,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:err33-c",
+      "sei-cert-cpp:err33-c",
       "severity:HIGH"
     ],
     "bugprone-suspicious-semicolon": [
@@ -886,6 +899,7 @@
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "sei-cert-c:err34-c",
+      "sei-cert-cpp:err34-c",
       "severity:MEDIUM"
     ],
     "bugprone-undefined-memory-manipulation": [
@@ -959,6 +973,8 @@
       "cwe-top-25-2024:cwe-787",
       "sei-cert-c:msc24-c",
       "sei-cert-c:msc33-c",
+      "sei-cert-cpp:msc24-c",
+      "sei-cert-cpp:msc33-c",
       "owasp-top-10-2021:owasp-A04-2021",
       "severity:LOW"
     ],
@@ -995,6 +1011,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:err33-c",
+      "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
     ],
     "bugprone-use-after-move": [
@@ -1038,6 +1055,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:dcl03-c",
+      "sei-cert-cpp:dcl03-c",
       "severity:MEDIUM"
     ],
     "cert-dcl16-c": [
@@ -1048,6 +1066,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:dcl16-c",
+      "sei-cert-cpp:dcl16-c",
       "severity:STYLE"
     ],
     "cert-dcl21-cpp": [
@@ -1103,6 +1122,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:env33-c",
+      "sei-cert-cpp:env33-c",
       "owasp-top-10-2021:owasp-A03-2021",
       "severity:MEDIUM"
     ],
@@ -1119,6 +1139,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:err33-c",
+      "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
     ],
     "cert-err34-c": [
@@ -1129,6 +1150,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:err34-c",
+      "sei-cert-cpp:err34-c",
       "severity:LOW"
     ],
     "cert-err52-cpp": [
@@ -1179,6 +1201,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:flp30-c",
+      "sei-cert-cpp:flp30-c",
       "severity:HIGH"
     ],
     "cert-flp37-c": [
@@ -1503,6 +1526,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:arr39-c",
+      "sei-cert-cpp:arr39-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-array-compare": [
@@ -2614,6 +2638,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:flp34-c",
+      "sei-cert-cpp:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dtor-name": [
@@ -2685,6 +2710,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pre32-c",
+      "sei-cert-cpp:pre32-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-empty-body": [
@@ -2891,6 +2917,8 @@
       "profile:sensitive",
       "sei-cert-c:flp32-c",
       "sei-cert-c:flp34-c",
+      "sei-cert-cpp:flp32-c",
+      "sei-cert-cpp:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-float-equal": [
@@ -2922,6 +2950,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:fio47-c",
+      "sei-cert-cpp:fio47-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-extra-args": [
@@ -2959,6 +2988,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:fio30-c",
+      "sei-cert-cpp:fio30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-overflow": [
@@ -2968,6 +2998,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:mem35-c",
+      "sei-cert-cpp:mem35-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-format-overflow-non-kprintf": [
@@ -2977,6 +3008,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:mem35-c",
+      "sei-cert-cpp:mem35-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-format-pedantic": [
@@ -2994,6 +3026,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-20",
       "sei-cert-c:fio30-c",
+      "sei-cert-cpp:fio30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-signedness": [
@@ -3418,6 +3451,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
+      "sei-cert-cpp:int36-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit-int-conversion-on-negation": [
@@ -3516,6 +3550,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:exp37-c",
+      "sei-cert-cpp:exp37-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-library-redeclaration": [
@@ -3671,6 +3706,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
+      "sei-cert-cpp:int36-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-int-conversions": [
@@ -4970,6 +5006,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:exp45-c",
+      "sei-cert-cpp:exp45-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-parentheses-equality": [
@@ -5061,6 +5098,7 @@
       "label-tool-skip:severity",
       "profile:security",
       "sei-cert-c:int36-c",
+      "sei-cert-cpp:int36-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pointer-type-mismatch": [
@@ -5783,6 +5821,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc40-c",
+      "sei-cert-cpp:msc40-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-static-inline-explicit-instantiation": [
@@ -6097,6 +6136,7 @@
       "profile:extreme",
       "profile:sensitive",
       "sei-cert-c:msc54-c",
+      "sei-cert-cpp:msc54-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-thread-safety-precise": [
@@ -6237,11 +6277,13 @@
     "clang-diagnostic-unevaluated-expression": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunevaluated-expression",
       "guideline:sei-cert-cpp",
+      "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:exp44-cpp",
+      "sei-cert-cpp:exp44-c",
+      "sei-cert-c:exp44-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unguarded-availability": [
@@ -6437,11 +6479,13 @@
     "clang-diagnostic-unsequenced": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunsequenced",
       "guideline:sei-cert-cpp",
+      "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:exp30-cpp",
+      "sei-cert-c:exp30-c",
+      "sei-cert-cpp:exp30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unsupported-abi": [
@@ -6784,6 +6828,7 @@
       "guideline:owasp-top-10-2021",
       "profile:security",
       "sei-cert-c:con33-c",
+      "sei-cert-cpp:con33-c",
       "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
@@ -7403,6 +7448,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:pre31-c",
+      "sei-cert-cpp:pre31-c",
       "severity:MEDIUM"
     ],
     "misc-bool-pointer-implicit-conversion": [
@@ -7606,6 +7652,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:fio38-c",
+      "sei-cert-cpp:fio38-c",
       "severity:HIGH"
     ],
     "misc-non-private-member-variables-in-classes": [
@@ -7656,6 +7703,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:arr39-c",
+      "sei-cert-cpp:arr39-c",
       "severity:HIGH"
     ],
     "misc-static-assert": [
@@ -8347,6 +8395,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:int09-c",
+      "sei-cert-cpp:int09-c",
       "severity:LOW"
     ],
     "readability-function-cognitive-complexity": [

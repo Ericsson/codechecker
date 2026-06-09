@@ -269,6 +269,8 @@
       "cwe-top-25-2024:cwe-190",
       "sei-cert-c:int32-c",
       "sei-cert-c:int34-c",
+      "sei-cert-cpp:int32-c",
+      "sei-cert-cpp:int34-c",
       "severity:HIGH"
     ],
     "core.CallAndMessage": [
@@ -305,6 +307,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:int33-c",
+      "sei-cert-cpp:int33-c",
       "severity:HIGH"
     ],
     "core.DynamicTypePropagation": [
@@ -334,6 +337,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
       "severity:HIGH"
     ],
     "core.NonnilStringConstants": [
@@ -354,6 +358,7 @@
       "cwe-top-25-2024:cwe-476",
       "memory-safety:cwe-476",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
       "severity:HIGH"
     ],
     "core.NullPointerArithm": [
@@ -370,6 +375,8 @@
       "memory-safety:cwe-476",
       "sei-cert-c:arr30-c",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:arr30-c",
+      "sei-cert-cpp:exp34-c",
       "severity:HIGH"
     ],
     "core.StackAddrEscapeBase": [
@@ -622,6 +629,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:msc12-c",
+      "sei-cert-cpp:msc12-c",
       "severity:LOW"
     ],
     "debug.AnalysisOrder": [
@@ -742,6 +750,7 @@
       "profile:extreme",
       "profile:sensitive",
       "sei-cert-c:exp47-c",
+      "sei-cert-cpp:exp47-c",
       "severity:MEDIUM"
     ],
     "optin.cplusplus.UninitializedObject": [
@@ -797,6 +806,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:mem30-c",
+      "sei-cert-cpp:mem30-c",
       "severity:MEDIUM"
     ],
     "optin.taint.GenericTaint": [
@@ -955,6 +965,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:flp30-c",
+      "sei-cert-cpp:flp30-c",
       "severity:MEDIUM"
     ],
     "security.MmapWriteExec": [
@@ -1017,6 +1028,8 @@
       "profile:sensitive",
       "sei-cert-c:env31-c",
       "sei-cert-c:env34-c",
+      "sei-cert-cpp:env31-c",
+      "sei-cert-cpp:env34-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
@@ -1072,6 +1085,7 @@
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
       "sei-cert-c:str31-c",
+      "sei-cert-cpp:str31-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.mkstemp": [
@@ -1107,6 +1121,7 @@
       "profile:extreme",
       "profile:security",
       "sei-cert-c:str31-c",
+      "sei-cert-cpp:str31-c",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
@@ -1131,6 +1146,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:exp37-c",
+      "sei-cert-cpp:exp37-c",
       "severity:MEDIUM"
     ],
     "unix.BlockInCriticalSection": [
@@ -1160,6 +1176,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:err30-c",
+      "sei-cert-cpp:err30-c",
       "severity:HIGH"
     ],
     "unix.Malloc": [
@@ -1180,6 +1197,11 @@
       "sei-cert-c:mem34-c",
       "sei-cert-c:mem35-c",
       "sei-cert-c:mem36-c",
+      "sei-cert-cpp:mem30-c",
+      "sei-cert-cpp:mem31-c",
+      "sei-cert-cpp:mem34-c",
+      "sei-cert-cpp:mem35-c",
+      "sei-cert-cpp:mem36-c",
       "memory-safety:cwe-401",
       "memory-safety:cwe-415",
       "memory-safety:cwe-416",
@@ -1197,6 +1219,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-190",
       "sei-cert-c:mem35-c",
+      "sei-cert-cpp:mem35-c",
       "severity:MEDIUM"
     ],
     "unix.MismatchedDeallocator": [
@@ -1239,6 +1262,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-400",
       "sei-cert-c:fio42-c",
+      "sei-cert-cpp:fio42-c",
       "severity:MEDIUM"
     ],
     "unix.Vfork": [
@@ -1260,6 +1284,7 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert-c:str31-c",
+      "sei-cert-cpp:str31-c",
       "severity:MEDIUM"
     ],
     "unix.cstring.CStringModeling": [
@@ -1275,6 +1300,7 @@
       "profile:extreme",
       "profile:sensitive",
       "sei-cert-c:str31-c",
+      "sei-cert-cpp:str31-c",
       "severity:HIGH"
     ],
     "unix.cstring.NullArg": [
@@ -1288,6 +1314,7 @@
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
       "severity:HIGH"
     ],
     "valist.CopyToSelf": [
