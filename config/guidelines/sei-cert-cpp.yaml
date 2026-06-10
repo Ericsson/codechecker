@@ -1,6 +1,24 @@
 guideline: sei-cert-cpp
 guideline_title: SEI CERT Coding Standard (C++)
 rules:
+- rule_id: arr30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/arrays-arr/arr30-c/
+- rule_id: arr37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/arrays-arr/arr37-c/
+- rule_id: arr38-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/arrays-arr/arr38-c/
+- rule_id: arr39-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/arrays-arr/arr39-c/
+- rule_id: con33-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/concurrency-con/con33-c/
+- rule_id: con37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/concurrency-con/con37-c/
+- rule_id: con40-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/concurrency-con/con40-c/
+- rule_id: con41-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/concurrency-con/con41-c/
+- rule_id: con43-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/concurrency-con/con43-c/
 - rule_id: con50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/concurrency-con/con50-cpp/
 - rule_id: con51-cpp
@@ -33,6 +51,12 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/containers-ctr/ctr57-cpp/
 - rule_id: ctr58-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/containers-ctr/ctr58-cpp/
+- rule_id: dcl30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/declarations-and-initialization-dcl/dcl30-c/
+- rule_id: dcl39-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/declarations-and-initialization-dcl/dcl39-c/
+- rule_id: dcl40-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/declarations-and-initialization-dcl/dcl40-c/
 - rule_id: dcl50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/declarations-and-initialization-dcl/dcl50-cpp/
 - rule_id: dcl51-cpp
@@ -55,6 +79,24 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/declarations-and-initialization-dcl/dcl59-cpp/
 - rule_id: dcl60-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/declarations-and-initialization-dcl/dcl60-cpp/
+- rule_id: env30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/environment-env/env30-c/
+- rule_id: env31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/environment-env/env31-c/
+- rule_id: env32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/environment-env/env32-c/
+- rule_id: env33-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/environment-env/env33-c/
+- rule_id: env34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/environment-env/env34-c/
+- rule_id: err30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/error-handling-err/err30-c/
+- rule_id: err32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/error-handling-err/err32-c/
+- rule_id: err33-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/error-handling-err/err33-c/
+- rule_id: err34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/error-handling-err/err34-c/
 - rule_id: err50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/exceptions-and-error-handling-err/err50-cpp/
 - rule_id: err51-cpp
@@ -81,6 +123,24 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/exceptions-and-error-handling-err/err61-cpp/
 - rule_id: err62-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/exceptions-and-error-handling-err/err62-cpp/
+- rule_id: exp34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp34-c/
+- rule_id: exp35-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp35-c/
+- rule_id: exp36-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp36-c/
+- rule_id: exp37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp37-c/
+- rule_id: exp39-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp39-c/
+- rule_id: exp42-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp42-c/
+- rule_id: exp45-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp45-c/
+- rule_id: exp46-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp46-c/
+- rule_id: exp47-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/expressions-exp/exp47-c/
 - rule_id: exp50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/expressions-exp/exp50-cpp/
 - rule_id: exp51-cpp
@@ -109,12 +169,72 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/expressions-exp/exp62-cpp/
 - rule_id: exp63-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/expressions-exp/exp63-cpp/
+- rule_id: fio30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio30-c/
+- rule_id: fio32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio32-c/
+- rule_id: fio34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio34-c/
+- rule_id: fio37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio37-c/
+- rule_id: fio38-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio38-c/
+- rule_id: fio39-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio39-c/
+- rule_id: fio40-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio40-c/
+- rule_id: fio41-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio41-c/
+- rule_id: fio42-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio42-c/
+- rule_id: fio44-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio44-c/
+- rule_id: fio45-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio45-c/
+- rule_id: fio46-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio46-c/
+- rule_id: fio47-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/input-output-fio/fio47-c/
 - rule_id: fio50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/input-output-fio/fio50-cpp/
 - rule_id: fio51-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/input-output-fio/fio51-cpp/
+- rule_id: flp30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp30-c/
+- rule_id: flp32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp32-c/
+- rule_id: flp34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp34-c/
+- rule_id: flp36-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp36-c/
+- rule_id: flp37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp37-c/
+- rule_id: int30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int30-c/
+- rule_id: int31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int31-c/
+- rule_id: int32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int32-c/
+- rule_id: int33-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int33-c/
+- rule_id: int34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int34-c/
+- rule_id: int35-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int35-c/
+- rule_id: int36-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int36-c/
 - rule_id: int50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/integers-int/int50-cpp/
+- rule_id: mem30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/memory-management-mem/mem30-c/
+- rule_id: mem31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/memory-management-mem/mem31-c/
+- rule_id: mem34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/memory-management-mem/mem34-c/
+- rule_id: mem35-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/memory-management-mem/mem35-c/
+- rule_id: mem36-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/memory-management-mem/mem36-c/
 - rule_id: mem50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/memory-management-mem/mem50-cpp/
 - rule_id: mem51-cpp
@@ -131,6 +251,22 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/memory-management-mem/mem56-cpp/
 - rule_id: mem57-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/memory-management-mem/mem57-cpp/
+- rule_id: msc30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc30-c/
+- rule_id: msc32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc32-c/
+- rule_id: msc33-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc33-c/
+- rule_id: msc37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc37-c/
+- rule_id: msc38-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc38-c/
+- rule_id: msc39-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc39-c/
+- rule_id: msc40-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc40-c/
+- rule_id: msc41-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc41-c/
 - rule_id: msc50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/miscellaneous-msc/msc50-cpp/
 - rule_id: msc51-cpp
@@ -159,6 +295,30 @@ rules:
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/object-oriented-programming-oop/oop57-cpp/
 - rule_id: oop58-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/object-oriented-programming-oop/oop58-cpp/
+- rule_id: pre30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/preprocessor-pre/pre30-c/
+- rule_id: pre31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/preprocessor-pre/pre31-c/
+- rule_id: pre32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/preprocessor-pre/pre32-c/
+- rule_id: sig31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/signals-sig/sig31-c/
+- rule_id: sig34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/signals-sig/sig34-c/
+- rule_id: sig35-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/signals-sig/sig35-c/
+- rule_id: str30-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str30-c/
+- rule_id: str31-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str31-c/
+- rule_id: str32-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str32-c/
+- rule_id: str34-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str34-c/
+- rule_id: str37-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str37-c/
+- rule_id: str38-c
+  rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/characters-and-strings-str/str38-c/
 - rule_id: str50-cpp
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/characters-and-strings-str/str50-cpp/
 - rule_id: str51-cpp
