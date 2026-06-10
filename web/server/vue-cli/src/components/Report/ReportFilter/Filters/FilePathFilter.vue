@@ -54,7 +54,9 @@
             <span class="tree-item-label" @click.stop="toggleTreeItem(item)">
               {{ item.name }}
             </span>
-            <v-chip class="ml-2" size="x-small">{{ item.findings }}</v-chip>
+            <v-chip class="ml-2" size="x-small">
+              {{ item.findings }}
+            </v-chip>
           </template>
         </v-treeview>
 

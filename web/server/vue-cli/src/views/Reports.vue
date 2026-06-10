@@ -14,27 +14,30 @@
         v-model="checkerDocDialog"
         :checker="selectedChecker"
       />
-      <v-btn-toggle
-        v-model="viewMode"
-        mandatory
-        density="compact"
-        class="mb-2"
-      >
-        <v-btn
-          value="table"
-          size="small"
-          @click="setReportFilter({ filepath: null })"
+      <div class="d-flex align-center mb-2">
+        <span class="mr-2 text-body-2">View</span>
+        <v-btn-toggle
+          v-model="viewMode"
+          mandatory
+          density="compact"
+          variant="outlined"
         >
-          Report List
-        </v-btn>
-        <v-btn
-          value="tree"
-          size="small"
-          @click="setReportFilter({ filepath: null })"
-        >
-          File Tree
-        </v-btn>
-      </v-btn-toggle>
+          <v-btn
+            value="table"
+            size="small"
+            @click="setReportFilter({ filepath: null })"
+          >
+            Report List
+          </v-btn>
+          <v-btn
+            value="tree"
+            size="small"
+            @click="setReportFilter({ filepath: null })"
+          >
+            File Tree
+          </v-btn>
+        </v-btn-toggle>
+      </div>
 
       <v-data-table-server
         v-if="viewMode === 'table'"
@@ -227,16 +230,19 @@
           </span>
         </div>
         <v-treeview
+          v-model:opened="openedTreeItems"
           :items="treeItems"
           item-value="fullPath"
           open-on-click
           density="compact"
         >
           <template #prepend="{ item, isOpen }">
-            <v-icon v-if="item.children.length > 0">
+            <v-icon v-if="item.children && item.children.length > 0">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
-            <v-icon v-else>mdi-file</v-icon>
+            <v-icon v-else>
+              mdi-file
+            </v-icon>
           </template>
           <template #title="{ item }">
             <div class="tree-row">
@@ -418,6 +424,7 @@ const selectedChecker = ref(null);
 const expanded = ref([]);
 const expandedItemsHistory = ref({});
 const viewMode = ref("table");
+const openedTreeItems = ref([]);
 const allReportsFileCounts = ref({});
 const fileSeverities = ref({});
 const treeItems = ref([]);
@@ -624,14 +631,14 @@ function buildTreeItems() {
         } else {
           currentLevel.push({
             name: fileName, fullPath: filePath,
-            children: [], findings: count, stats: fileStats
+            findings: count, stats: fileStats
           });
         }
       }
     });
 
   function aggregate(node) {
-    if (node.children.length === 0) return node.findings;
+    if (!node.children || node.children.length === 0) return node.findings;
     node.findings = node.children.reduce(
       (sum, child) => sum + aggregate(child), 0
     );
