@@ -5,6 +5,8 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+import functools
+
 import sqlalchemy
 
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
@@ -46,4 +48,17 @@ def exc_to_thrift_reqfail(function):
             # pylint: disable=raise-missing-from
             raise RequestFailed(ErrorCode.GENERAL, msg)
 
+    return wrapper
+
+
+def requires_view(function):
+    """
+    Decorator for Thrift API methods that require view permission on the
+    current product. Calls into the handler's _require_view() helper
+    before invoking the wrapped method.
+    """
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        self._require_view()
+        return function(self, *args, **kwargs)
     return wrapper
