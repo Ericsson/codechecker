@@ -479,8 +479,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             error_msg = \
                                 "Requested CodeCheckerService on a " \
                                 f"nonexistent product: '{product_endpoint}'."
-                            LOG.error(error_msg)
-                            raise ValueError(error_msg)
+                            LOG.debug(error_msg)
+                            raise ProductNotFoundError(error_msg)
 
                         if product_endpoint:
                             # The current request came through a
@@ -501,9 +501,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     else:
                         LOG.debug("This API endpoint does not exist.")
                         error_msg = f"No API endpoint named '{self.path}'."
-                        raise ValueError(error_msg)
+                        raise ProductNotFoundError(error_msg)
                 else:
-                    raise ValueError(
+                    raise ProductNotFoundError(
                         f"API version {major_version} not supported")
 
             else:
