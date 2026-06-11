@@ -40,6 +40,7 @@ package:
 	# Install package in 'development mode'.
 	${PYTHON_BIN} setup.py develop
 
+.PHONY: build
 build:
 	${PYTHON_BIN} setup.py build --build-purelib $(MERGE_CLANG_EXTDEF_MAPS_DIR)
 
