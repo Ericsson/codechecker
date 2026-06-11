@@ -1135,6 +1135,34 @@ def __update_analysis_config_files(args):
             add_file_to_conf_dir(a_conf.value)
 
 
+def __update_analysis_config_files(args):
+    """
+    Copy analysis related configuration files (e.g. skipfile)
+    to report_dir/conf/.
+    This directory will be included in the ZIP file,
+    which will be stored on the server.
+    """
+    conf_dir = os.path.join(args.output_path, "conf")
+
+    # Remove any config files used during previous analysis
+    if os.path.isdir(conf_dir):
+        shutil.rmtree(conf_dir)
+
+    # Create a new conf directory
+    os.makedirs(conf_dir)
+
+    def add_file_to_conf_dir(file_path: str):
+        if not os.path.isfile(file_path):
+            return
+
+        file_path = os.path.abspath(file_path)
+        filename = os.path.basename(file_path)
+        shutil.copyfile(file_path, os.path.join(conf_dir, filename))
+
+    if 'skipfile' in args:
+        add_file_to_conf_dir(args.skipfile)
+
+
 def __cleanup_metadata(metadata_prev, metadata):
     """ Cleanup metadata.
 
