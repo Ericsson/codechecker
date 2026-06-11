@@ -48,7 +48,9 @@
             <v-icon v-if="item.children.length > 0" size="small">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
-            <v-icon v-else size="small">mdi-file</v-icon>
+            <v-icon v-else size="small">
+              mdi-file
+            </v-icon>
           </template>
           <template #title="{ item }">
             <span class="tree-item-label" @click.stop="toggleTreeItem(item)">
@@ -68,7 +70,9 @@
             color="grey"
             @click="clearAll(onApplyFinished)"
           >
-            <v-icon start>mdi-close-circle-outline</v-icon>
+            <v-icon start>
+              mdi-close-circle-outline
+            </v-icon>
             Clear All
           </v-btn>
           <v-btn
@@ -78,7 +82,9 @@
             :disabled="treeSelection.length === 0"
             @click="applyTreeSelection(onApplyFinished)"
           >
-            <v-icon start>mdi-check-circle-outline</v-icon>
+            <v-icon start>
+              mdi-check-circle-outline
+            </v-icon>
             Apply
           </v-btn>
         </v-card-actions>
