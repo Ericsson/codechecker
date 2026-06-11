@@ -93,8 +93,9 @@ def is_ignore_conflict_supported():
                             .get_env_for_bin(
                                 context.replacer_binary),
                             encoding="utf-8", errors="ignore")
-    out, _ = proc.communicate()
-    return '--ignore-insert-conflict' in out
+    out, err = proc.communicate()
+    help_output = out + err
+    return '--ignore-insert-conflict' in help_output
 
 
 def print_unsupported_analyzers(errored):
