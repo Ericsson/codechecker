@@ -1,4 +1,6 @@
-# Issue report guidelines
+# CodeChecker Contributing Guidelines
+
+## Issue report guidelines
 
 Please insert every possible information you can obtain that could help us
 reproduce and triage your issue. This usually includes:
@@ -210,3 +212,15 @@ Please execute `scripts/create_new_subcommand.py myfeature` to automatically
 generate the skeleton for `myfeature`. Already existing files, such as
 `codechecker_analyzer/cmd/log.py` give a nice overview on how entry-point
 handlers should be laid out.
+
+## Git Strategy
+
+Every contributor has to work on their own fork which then can be merged into the Ericsson CodeChecker repository via a Pull Request. Every Pull Request has to describe the exact change done and their reasons.
+
+### Commiting Rules
+
+Every related modification (which can be grouped together logically) should be in the same commit. This way one or more commits can be on a branch.
+
+### Pull Request
+
+After the Pull Request is opened, a CodeChecker team member will review the code and either accept and merge it or ask for certain changes. These changes has to be implemented via a fixup (`git commit --fixup=<commit hash>`) commit pointing to the parent it fixes for an easier change review. After everything have been fixed, the reviewer will ask the developer to squash their fixup! commits into their parent commits. This can be done easily with a simple rebase: `git rebase origin/master --autosquash`.
