@@ -17,6 +17,7 @@
 #    db            (Issues related to the database schema)
 #    doc           (Changes to documentation)
 #    gui           (Changes in the web GUI)
+#    git           (Changes in the git relates files)
 #    fix           (Bug fix)
 #    feat          (New feature)
 #    refactor      (Refactoring code)
