@@ -141,6 +141,11 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
+    def getFileCountsSummary(self, runIds, reportFilter, cmpData, limit,
+                             offset):
+        pass
+
+    @thrift_client_call
     def getCheckerCounts(self, base_run_ids, reportFilter, cmpData, limit,
                          offset):
         pass

@@ -1021,3 +1021,45 @@ class AnalyzeParseTestCase(
                  "for ldlogger.so library") in out_abs,
                 "Did not find success message for absolute path mode",
             )
+
+    def test_ld_preload(self):
+        """ Test the stripping of LD_PRELOAD if set but has no value """
+        environ = self.env.copy()
+        environ["LD_PRELOAD"] = ""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            simple_c = os.path.join(self.test_dir, "simple.c")
+            shutil.copy(simple_c, tmp_dir)
+
+            log_file = os.path.join(
+                tmp_dir, "compile_commands_normal.json")
+            cmd_normal = [
+                "CodeChecker",
+                "log",
+                "-b",
+                "gcc -c simple.c",
+                "-o",
+                log_file,
+                "--verbose",
+                "debug",
+            ]
+
+            out, err, returncode = call_command(
+                cmd_normal, cwd=tmp_dir, env=environ
+            )
+
+            self.assertEqual(
+                returncode, 0, f"CodeChecker log failed: {err}")
+
+            ld_preload_match = re.search(
+                r'LD_PRELOAD environment variable set to: "(.+?)"', out
+            )
+
+            self.assertIsNotNone(
+                ld_preload_match,
+                "LD_PRELOAD value not found in normal output"
+            )
+
+            ld_preload_value = ld_preload_match.group(1)
+
+            self.assertEqual("ldlogger.so", ld_preload_value,
+                             "LD_PRELOAD has an prepended empty space")

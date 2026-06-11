@@ -93,7 +93,7 @@ Scope of the search performed. (Valid values are: base, one, subtree)
 from contextlib import contextmanager
 
 import ldap
-from ldap.dn import escape_dn_chars
+from ldap.filter import escape_filter_chars
 
 from codechecker_common.logger import get_logger
 
@@ -329,7 +329,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         LOG.warning('Please configure one.')
         return False
 
-    username = escape_dn_chars(username)
+    username = escape_filter_chars(username)
     account_pattern = account_pattern.replace('$USN$', username)
 
     account_scope = ldap_config.get('accountScope', '')
@@ -393,6 +393,7 @@ def get_groups(ldap_config, username, credentials):
         LOG.error('Please configure one.')
         return False
 
+    username = escape_filter_chars(username)
     account_pattern = account_pattern.replace('$USN$', username)
 
     account_scope = ldap_config.get('accountScope', '')

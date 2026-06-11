@@ -30,7 +30,7 @@
     "@mdi/font": "^6.5.95",
     "chart.js": "^4.0.0",
     "chartjs-plugin-datalabels": "^2.0.0",
-    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.71.0.tgz",
+    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.72.0.tgz",
     "codemirror": "^6.0.2",
     "date-fns": "^2.28.0",
     "dompurify": "^3.3.1",

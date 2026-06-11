@@ -63,12 +63,12 @@ List checkers in "HIGH" severity:
     CodeChecker checkers --severity HIGH
 
 List checkers covering str34-c SEI-CERT rule:
-    CodeChecker checkers --label sei-cert:str-34-c
-    CodeChecker checkers --guideline sei-cert:str34-c
+    CodeChecker checkers --label sei-cert-c:str34-c
+    CodeChecker checkers --guideline sei-cert-c:str34-c
 
-List checkers covering all SEI-CERT rules:
-    CodeChecker checkers --label guideline:sei-cert
-    CodeChecker checkers --guideline sei-cert
+List checkers covering all SEI-CERT C rules:
+    CodeChecker checkers --label guideline:sei-cert-c
+    CodeChecker checkers --guideline sei-cert-c
 
 List available profiles, guidelines and severities:
     CodeChecker checkers --profile
@@ -195,9 +195,9 @@ def __guideline_to_label(
 ) -> str:
     """
     Transforms --guideline parameter as if they were given through --label.
-    For example "--guideline sei-cert" is equivalent with
-    "--label guideline:sei-cert" and "--guideline sei-cert:str38-c" is the same
-    as "--label sei-cert:str38-c".
+    For example "--guideline sei-cert-c" is equivalent with
+    "--label guideline:sei-cert-c" and "--guideline sei-cert-c:str38-c" is the
+    same as "--label sei-cert-c:str38-c".
     """
     guidelines = []
     for analyzer in args.analyzers:
