@@ -103,7 +103,7 @@ def create_analyzer_sa():
     action = {
         'file': 'main.cpp',
         'command': "g++ -o main main.cpp",
-        'directory': '/'}
+        'directory': os.path.abspath(os.sep)}
     build_action = log_parser.parse_options(action)
 
     return ClangSA(cfg_handler, build_action)
@@ -445,7 +445,7 @@ def create_analyzer_tidy(args=None):
     action = {
         'file': 'main.cpp',
         'command': "g++ -o main main.cpp",
-        'directory': '/'}
+        'directory': os.path.abspath(os.sep)}
     build_action = log_parser.parse_options(action)
 
     return ClangTidy(cfg_handler, build_action)
