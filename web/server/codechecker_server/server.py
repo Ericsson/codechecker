@@ -48,8 +48,9 @@ from codechecker_api.codeCheckerServersideTasks_v6 import \
     codeCheckerServersideTaskService as TaskAPI_v6
 
 from codechecker_common import util
-from codechecker_common.compatibility.multiprocessing import \
-    Pool, Process, Queue, Value, cpu_count, SyncManager
+from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import Process, Queue, Value, cpu_count  # type: ignore
+from multiprocess.managers import SyncManager  # type: ignore
 from codechecker_common.logger import get_logger, signal_log
 
 from codechecker_web.shared import database_status

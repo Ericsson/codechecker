@@ -18,7 +18,8 @@ from datetime import datetime
 import hashlib
 from typing import Optional
 
-from codechecker_common.compatibility.multiprocessing import cpu_count
+from multiprocess import cpu_count  # type: ignore
+
 from codechecker_common.logger import get_logger
 from codechecker_common.util import generate_random_token, load_json
 
