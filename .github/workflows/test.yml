@@ -231,6 +231,58 @@ jobs:
         working-directory: web
         run: make test_unit_cov
 
+  analyzer-windows:
+    name: Analyzer (Windows)
+    runs-on: windows-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        shell: bash
+        run: sh .github/workflows/install-deps-windows.sh
+
+      - name: Build the package
+        shell: bash
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
+      - name: Run analyzer unit tests
+        shell: bash
+        working-directory: analyzer
+        run: make test_unit
+
+  web-windows:
+    name: Web (Windows)
+    runs-on: windows-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        shell: bash
+        run: sh .github/workflows/install-deps-windows.sh
+
+      - name: Run tests
+        shell: bash
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
+          make -C web test_matrix_sqlite
+        env:
+          CC_TEST_API_WORKERS: "1"
+          CC_TEST_TASK_WORKERS: "1"
+
   gui:
     name: GUI
     runs-on: ubuntu-24.04
