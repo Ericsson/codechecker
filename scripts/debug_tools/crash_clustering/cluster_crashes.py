@@ -36,8 +36,10 @@ class FailZip:
                     ),
                     outer_filename,
                 )
-                with ZipFile(outer_zipfile.open(outer_filename)) as inner_zipfile:
-                    stderr = inner_zipfile.open("stderr").read().decode("utf-8")
+                inner_file = outer_zipfile.open(outer_filename)
+                with ZipFile(inner_file) as inner_zipfile:
+                    stderr = inner_zipfile.open(
+                        "stderr").read().decode("utf-8")
                     yield {
                         "project_name": parts["project_name"],
                         "run_name": parts["run_name"],
@@ -107,7 +109,8 @@ def plot_results(tsne_embedding, contexts):
 
     legend_handles = {}
 
-    # maintain a set of seen points, and if the new point is close, then do not annotate it
+    # maintain a set of seen points, and if the new point is close,
+    # then do not annotate it
     # this is to avoid cluttering the plot
     # FIXME: We should do a real clustering instead of this hack
     seen_points = []

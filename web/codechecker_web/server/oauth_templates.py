@@ -33,14 +33,16 @@ OAUTH_TEMPLATES = {
     },
     "ms_entra/v2.0": {
         "authorization_url":
-            "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/authorize",  # noqa
+            "https://login.microsoftonline.com"
+            "/{tenant_id}/oauth2/v2.0/authorize",
         "callback_url": "{host}/login/OAuthLogin/{provider}",
         "token_url":
             "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token",
         "user_groups_url":
             "https://graph.microsoft.com/v1.0/me/memberOf",
         "jwks_url":
-            "https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys",  # noqa
+            "https://login.microsoftonline.com"
+            "/{tenant_id}/discovery/v2.0/keys",
         "user_info_url": "https://graph.microsoft.com/v1.0/me",
         "scope": "User.Read email profile openid offline_access",
         "user_info_mapping": {
