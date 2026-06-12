@@ -9,6 +9,7 @@
 Run pre analysis, collect statistics or CTU data.
 """
 
+import logging
 import os
 import shlex
 import shutil
@@ -76,10 +77,13 @@ PROGRESS_CHECKED_NUM = None
 PROGRESS_ACTIONS = None
 
 
-def init_worker(checked_num, action_num):
+def init_worker(checked_num, action_num, log_level=None):
     global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS
     PROGRESS_CHECKED_NUM = checked_num
     PROGRESS_ACTIONS = action_num
+    if log_level:
+        from codechecker_common.logger import setup_logger
+        setup_logger(log_level)
 
 
 def pre_analyze(params):
@@ -167,9 +171,10 @@ def run_pre_analysis(actions, clangsa_config,
     processed_var = multiprocess.Value('i', 0)
     actions_num = multiprocess.Value('i', len(actions))
 
-    pool = multiprocess.Pool(jobs,
+    log_level = logging.getLevelName(LOG.getEffectiveLevel())
+    pool = multiprocess.Pool(jobs,  # pylint: disable=not-callable
                              initializer=init_worker,
-                             initargs=(processed_var, actions_num))
+                             initargs=(processed_var, actions_num, log_level))
 
     if statistics_data:
         # Statistics collection is enabled setup temporary

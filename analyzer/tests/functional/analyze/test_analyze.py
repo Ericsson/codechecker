@@ -13,6 +13,7 @@ Test case for the CodeChecker analyze command's direct functionality.
 
 import glob
 import json
+import sys
 import os
 import pathlib
 import re
@@ -1339,8 +1340,11 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        # Checkers of all 3 analyzers are disabled.
-        self.assertEqual(out.count("No checkers enabled for"), 5)
+        # Checkers of all available analyzers are disabled.
+        # Linux has 5 (clangsa, clang-tidy, cppcheck, gcc, infer),
+        # macOS has 4 (no infer binary available).
+        expected_count = 4 if sys.platform == "darwin" else 5
+        self.assertEqual(out.count("No checkers enabled for"), expected_count)
 
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""

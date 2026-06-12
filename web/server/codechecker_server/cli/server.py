@@ -30,8 +30,10 @@ from codechecker_api_shared.ttypes import DBStatus
 
 from codechecker_report_converter import twodim
 
+from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import cpu_count  # type: ignore
+
 from codechecker_common import arg, cmd_config, logger, process, util
-from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database

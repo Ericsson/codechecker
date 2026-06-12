@@ -47,9 +47,11 @@ from codechecker_api.ServerInfo_v6 import \
 from codechecker_api.codeCheckerServersideTasks_v6 import \
     codeCheckerServersideTaskService as TaskAPI_v6
 
+from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import Process, Queue, Value, cpu_count  # type: ignore
+from multiprocess.managers import SyncManager  # type: ignore
+
 from codechecker_common import util
-from codechecker_common.compatibility.multiprocessing import \
-    Pool, Process, Queue, Value, cpu_count, SyncManager
 from codechecker_common.logger import get_logger, signal_log
 
 from codechecker_web.shared import database_status
@@ -575,7 +577,8 @@ def _do_db_cleanup(context, check_env,
         return False, str(e)
 
 
-def _do_db_cleanups(config_database, context, check_env) \
+def _do_db_cleanups(config_database, context, check_env,
+                    workspace: str = "") \
         -> Tuple[bool, List[Tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -600,6 +603,12 @@ def _do_db_cleanups(config_database, context, check_env) \
     products = _get_products()
     if not products:
         return True, []
+
+    # Ensure cwd is valid before spawning worker processes. On macOS the
+    # default 'spawn' start method calls os.getcwd() during process creation
+    # which fails if the inherited cwd was deleted.
+    if workspace and os.path.isdir(workspace):
+        os.chdir(workspace)
 
     thr_count = util.clamp(1, len(products), cpu_count())
     overall_result, failures = True, []
@@ -651,7 +660,8 @@ class CCSimpleHttpServer(HTTPServer):
                  machine_id: str,
                  task_queue: Queue,
                  task_pipes,
-                 server_shutdown_flag: Value):
+                 server_shutdown_flag: Value,
+                 existing_socket=None):
 
         LOG.debug("Initializing HTTP server...")
 
@@ -697,9 +707,17 @@ class CCSimpleHttpServer(HTTPServer):
         cfg_sess.close()
 
         try:
-            HTTPServer.__init__(self, (self.address, self.port),
-                                RequestHandlerClass,
-                                bind_and_activate=True)
+            if existing_socket:
+                # Spawn worker: use pre-bound socket from main process.
+                HTTPServer.__init__(self, (self.address, self.port),
+                                    RequestHandlerClass,
+                                    bind_and_activate=False)
+                self.socket.close()
+                self.socket = existing_socket
+            else:
+                HTTPServer.__init__(self, (self.address, self.port),
+                                    RequestHandlerClass,
+                                    bind_and_activate=True)
             ssl_key_file = os.path.join(config_directory, "key.pem")
             ssl_cert_file = os.path.join(config_directory, "cert.pem")
 
@@ -988,6 +1006,66 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
         return f"[{str(self.address)}]:{self.port}"
 
 
+def _api_worker_main(http_server=None, *, server_init_args=None):
+    """Entry point for an API worker process.
+
+    On Linux (fork): receives http_server via inheritance.
+    On macOS/Windows (spawn): receives server_init_args dict and
+    reconstructs the server in the child process.
+    """
+    if http_server is None:
+        # Spawn path: reconstruct server in child.
+        http_server = _build_worker_server(server_init_args)
+    http_server.serve_forever_with_shutdown_handler()
+
+
+def _build_worker_server(args):
+    """Create server in a spawned worker from serializable config."""
+    from codechecker_server.database.database import SQLServer
+    from codechecker_server.database.config_db_model \
+        import IDENTIFIER as CONFIG_META
+
+    product_db_sql_server = SQLServer.from_connection_string(
+        args['db_connection_string'],
+        "config",
+        CONFIG_META,
+        args['migration_root'])
+
+    mgr = session_manager.SessionManager(
+        args['server_cfg_file'],
+        args['server_secrets_file'],
+        args['force_auth'],
+        args['api_handler_processes'],
+        args['task_worker_processes'])
+
+    # Recreate listening socket from transferred file descriptor.
+    fd = args['socket_dupfd'].detach()
+    sock = socket.socket(
+        args['socket_family'], socket.SOCK_STREAM, fileno=fd)
+
+    server_clazz = CCSimpleHttpServerIPv6 \
+        if ':' in args['listen_address'] else CCSimpleHttpServer
+
+    # Spawn workers detect shutdown via SIGINT, not shared flag.
+    local_shutdown_flag = Value('B', False)
+
+    return server_clazz(
+        (args['listen_address'], args['port']),
+        RequestHandler,
+        args['config_directory'],
+        args['workspace_directory'],
+        product_db_sql_server,
+        args['package_data'],
+        args['context'],
+        args['check_env'],
+        mgr,
+        args['machine_id'],
+        args['task_queue'],
+        args['task_pipes'],
+        local_shutdown_flag,
+        existing_socket=sock)
+
+
 def start_server(config_directory: str, workspace_directory: str,
                  package_data, port: int, config_sql_server,
                  listen_address: str, force_auth: bool,
@@ -1054,7 +1132,8 @@ def start_server(config_directory: str, workspace_directory: str,
     if not skip_db_cleanup:
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
-                                             check_env)
+                                             check_env,
+                                             workspace_directory)
         if not all_success:
             LOG.error("Failed to perform automatic cleanup on %d products! "
                       "Earlier logs might contain additional detailed "
@@ -1075,11 +1154,14 @@ def start_server(config_directory: str, workspace_directory: str,
     # Note that Queue under the hood uses OS-level primitives such as a socket
     # or a pipe, where the read-write buffers have a **LIMITED** capacity, and
     # are usually **NOT** backed by the full amount of available system memory.
-    bg_task_queue: Queue = Queue()
-    is_server_shutting_down = Value('B', False)
-
     sync_manager = SyncManager()
     sync_manager.start()
+
+    # Manager proxy for task queue (picklable for spawn workers).
+    bg_task_queue = sync_manager.Queue()
+    # Direct Value for shutdown flag - used in signal handlers (IPC-unsafe).
+    # Spawn workers don't need this: they detect shutdown via signals.
+    is_server_shutting_down = Value('B', False)
     task_pipes = sync_manager.dict()
 
     def _cleanup_incomplete_tasks(action: str) -> int:
@@ -1130,6 +1212,32 @@ def start_server(config_directory: str, workspace_directory: str,
                                bg_task_queue,
                                task_pipes,
                                is_server_shutting_down)
+
+    # Config needed by spawn workers to reconstruct the server.
+    _use_spawn = sys.platform != "linux"
+    server_init_args = None
+    if _use_spawn:
+        server_init_args = {
+            'socket_family': http_server.socket.family,
+            'listen_address': listen_address,
+            'port': http_server.port,
+            'db_connection_string':
+                config_sql_server.get_connection_string(),
+            'migration_root': config_sql_server.migration_root,
+            'config_directory': config_directory,
+            'workspace_directory': workspace_directory,
+            'package_data': package_data,
+            'context': context,
+            'check_env': check_env,
+            'server_cfg_file': server_cfg_file,
+            'server_secrets_file': server_secrets_file,
+            'force_auth': force_auth,
+            'api_handler_processes': api_handler_processes,
+            'task_worker_processes': task_worker_processes,
+            'machine_id': machine_id,
+            'task_queue': bg_task_queue,
+            'task_pipes': task_pipes,
+        }
 
     try:
         instance_manager.register(os.getpid(),
@@ -1192,9 +1300,20 @@ def start_server(config_directory: str, workspace_directory: str,
         nonlocal spawned_api_proc_count
         spawned_api_proc_count += 1
 
-        p = _start_process_with_no_signal_handling(
-            target=http_server.serve_forever_with_shutdown_handler,
-            name=f"CodeChecker-API-{spawned_api_proc_count}")
+        if _use_spawn:
+            from multiprocess.reduction import DupFd  # type: ignore
+            worker_args = dict(server_init_args)
+            worker_args['socket_dupfd'] = DupFd(
+                http_server.socket.fileno())
+            p = _start_process_with_no_signal_handling(
+                target=_api_worker_main,
+                kwargs={'server_init_args': worker_args},
+                name=f"CodeChecker-API-{spawned_api_proc_count}")
+        else:
+            p = _start_process_with_no_signal_handling(
+                target=_api_worker_main,
+                args=(http_server,),
+                name=f"CodeChecker-API-{spawned_api_proc_count}")
         api_processes[cast(int, p.pid)] = p
         signal_log(LOG, "DEBUG", f"API handler child process {p.pid} started!")
         return p
@@ -1317,8 +1436,6 @@ def start_server(config_directory: str, workspace_directory: str,
             finally:
                 del api_processes[pid]
 
-        bg_task_queue.close()
-        bg_task_queue.join_thread()
         for pid in bg_processes:
             try:
                 signal_log(LOG, "DEBUG", f"SIGHUP! Task child PID: {pid} ...")
@@ -1335,6 +1452,9 @@ def start_server(config_directory: str, workspace_directory: str,
                 pass
             finally:
                 del bg_processes[pid]
+
+        bg_task_queue.close()
+        bg_task_queue.join_thread()
 
     def reload_signal_handler(signum: int, _frame):
         """
