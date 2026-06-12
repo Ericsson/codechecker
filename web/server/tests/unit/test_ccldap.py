@@ -17,7 +17,8 @@ import pytest
 
 pytest.importorskip("ldap")
 
-from codechecker_server.auth import cc_ldap
+# pylint: disable=wrong-import-position
+from codechecker_server.auth import cc_ldap  # noqa: E402
 
 
 class MockLdap:
