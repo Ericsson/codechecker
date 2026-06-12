@@ -81,22 +81,43 @@
           </template>
         </DateTimePicker>
       </v-col>
-
       <v-spacer />
-
       <v-col cols="auto" align="right">
+        <v-btn
+          icon
+          class="reload-runs-btn"
+          title="Reload runs"
+          color="primary"
+          @click="update"
+        >
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+    <template #extension>
+      <div
+        class="mb-4
+          mt-3
+          ga-3
+          d-flex"
+        align="left"
+      >
+        <LoadMultipleRunsBtn
+          :selected="selected"
+          :disabled="!enoughRunsSelected"
+          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
+        />
         <DeleteRunBtn
           :selected="selected"
           variant="outlined"
           @on-confirm="update"
           @delete-complete="emit('delete-complete')"
         />
+      </div>
 
-        <LoadMultipleRunsBtn
-          :selected="selected"
-          :disabled="!enoughRunsSelected"
-          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
-        />
+      <v-spacer />
+
+      <div align="right">
         <v-btn
           variant="outlined"
           color="primary"
@@ -123,18 +144,8 @@
             </ul>
           </tooltip-help-icon>
         </v-btn>
-
-        <v-btn
-          icon
-          class="reload-runs-btn"
-          title="Reload runs"
-          color="primary"
-          @click="update"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </template>
   </v-toolbar>
 </template>
 

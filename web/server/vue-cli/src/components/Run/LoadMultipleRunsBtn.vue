@@ -13,7 +13,7 @@
     <v-icon left>
       mdi-vector-combine
     </v-icon>
-    LOAD MULTIPLE RUNS
+    LOAD SELECTED RUNS
   </v-btn>
 </template>
 
