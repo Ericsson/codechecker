@@ -15,7 +15,7 @@ TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 PYTHON_BIN ?= python3
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
-CC_TEST_WORKSPACE_ROOT ?= $(BUILD_DIR)/workspace
+CC_TEST_WORKSPACE_ROOT ?= $(ROOT)/build/workspace
 WOKSPACE_GLOBAL_AUTH_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_auth_server
 WOKSPACE_GLOBAL_SIMPLE_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_simple_server
 
@@ -56,7 +56,7 @@ pylint:
 pylint_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
-CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker
+CODECHECKER_CMD = $(ROOT)/build/CodeChecker/bin/CodeChecker
 SHUTDOWN_GLOBAL_SERVERS_CMD = \
   for TEST_ROOT in ${WOKSPACE_GLOBAL_AUTH_SERVER} ${WOKSPACE_GLOBAL_SIMPLE_SERVER}; do \
     if [ -d "$${TEST_ROOT}" ]; then \
