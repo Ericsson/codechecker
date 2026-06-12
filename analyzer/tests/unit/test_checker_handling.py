@@ -14,6 +14,7 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 from codechecker_common.util import strtobool
 import os
 import re
+import shutil
 import tempfile
 import unittest
 from argparse import Namespace
@@ -658,6 +659,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertNotIn("Wreserved-id-macro",
                          analyzer.config_handler.checks().keys())
 
+    @unittest.skipIf(
+        not shutil.which('g++') or
+        'clang' in os.popen('g++ --version 2>&1').read().lower(),
+        "gcc analyzer requires real g++, not Apple clang shim")
     def test_analyze_correct_analyzer_not_enabled(self):
         """
         This test checks if an analyzer is not enabled but a config
