@@ -13,6 +13,10 @@ Unit tests for LDAP.
 import unittest
 from unittest.mock import patch
 
+import pytest
+
+pytest.importorskip("ldap")
+
 from codechecker_server.auth import cc_ldap
 
 
