@@ -15,6 +15,7 @@ import shlex
 import stat
 import subprocess
 from subprocess import CalledProcessError
+import sys
 import time
 
 import multiprocess
@@ -23,8 +24,23 @@ from codechecker_api_shared.ttypes import Permission
 
 from codechecker_client.product import create_product_url
 
+
 from . import env
 from . import project
+
+
+def _codechecker_cmd():
+    """Return the command prefix to invoke CodeChecker.
+
+    On Windows, scripts without .exe cannot be executed directly by
+    CreateProcess. Use sys.executable to invoke the script via Python.
+    """
+    if sys.platform == 'win32':
+        import shutil
+        cc = shutil.which('CodeChecker')
+        if cc:
+            return [sys.executable, cc]
+    return ['CodeChecker']
 
 
 DEFAULT_USER_PERMISSIONS = [("cc", Permission.PRODUCT_STORE),
@@ -58,7 +74,6 @@ def call_command(cmd, cwd, environ):
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
         return out, err
     except OSError:
-        show(out, err)
         print('Failed to run: "' + ' '.join(cmd) + '"')
         raise
 
@@ -130,7 +145,7 @@ def login(codechecker_cfg, test_project_path, username, password,
     """
     print("Logging in")
     port = str(codechecker_cfg['viewer_port'])
-    login_cmd = ['CodeChecker', 'cmd', 'login', username,
+    login_cmd = [*_codechecker_cmd(), 'cmd', 'login', username,
                  '--url', protocol + '://' + 'localhost:' + port,
                  '--verbose', 'debug']
 
@@ -185,7 +200,7 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     """
     print("Logging out")
     port = str(codechecker_cfg['viewer_port'])
-    logout_cmd = ['CodeChecker', 'cmd', 'login',
+    logout_cmd = [*_codechecker_cmd(), 'cmd', 'login',
                   '--logout',
                   '--url', protocol + '://'+'localhost:' + port]
 
@@ -247,7 +262,7 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
         if ret:
             return ret
 
-    check_cmd = ['CodeChecker', 'check',
+    check_cmd = [*_codechecker_cmd(), 'check',
                  '-o', output_dir,
                  '-b', build_cmd,
                  '--quiet']
@@ -302,7 +317,7 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
         print("Failed to call:\n" + ' '.join(cerr.cmd))
         return cerr.returncode
 
-    store_cmd = ['CodeChecker', 'store', '-n', test_project_name,
+    store_cmd = [*_codechecker_cmd(), 'store', '-n', test_project_name,
                  output_dir,
                  '--url', env.parts_to_url(codechecker_cfg)]
 
@@ -344,7 +359,7 @@ def log(codechecker_cfg, test_project_path, clean_project=False):
         if ret:
             return ret
 
-    log_cmd = ['CodeChecker', 'log',
+    log_cmd = [*_codechecker_cmd(), 'log',
                '-o', build_json,
                '-b', "'" + build_cmd + "'",
                ]
@@ -376,7 +391,7 @@ def analyze(codechecker_cfg, test_project_path):
     """
     build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
 
-    analyze_cmd = ['CodeChecker', 'analyze',
+    analyze_cmd = [*_codechecker_cmd(), 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
                    '--analyzers', 'clangsa'
@@ -428,13 +443,13 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
         if ret:
             return ret
 
-    log_cmd = ['CodeChecker', 'log',
+    log_cmd = [*_codechecker_cmd(), 'log',
                '-o', build_json,
                '-b', "'" + build_cmd + "'",
                ]
 
     analyzers = codechecker_cfg.get('analyzers', ['clangsa'])
-    analyze_cmd = ['CodeChecker', 'analyze',
+    analyze_cmd = [*_codechecker_cmd(), 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
                    '--analyzers', *analyzers
@@ -489,7 +504,7 @@ def parse(codechecker_cfg):
     Parse the results of the analysis and return the output.
     """
 
-    parse_cmd = ['CodeChecker', 'parse', codechecker_cfg['reportdir']]
+    parse_cmd = [*_codechecker_cmd(), 'parse', codechecker_cfg['reportdir']]
 
     try:
         print("PARSE: " + ' '.join(parse_cmd))
@@ -522,7 +537,7 @@ def store(codechecker_cfg, test_project_name):
     if not isinstance(report_dirs, list):
         report_dirs = [report_dirs]
 
-    store_cmd = ['CodeChecker', 'store',
+    store_cmd = [*_codechecker_cmd(), 'store',
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--name', test_project_name,
                  *report_dirs]
@@ -562,11 +577,19 @@ def store(codechecker_cfg, test_project_name):
 
 def serv_cmd(workspace_dir, port, pg_config=None, serv_args=None):
 
-    server_cmd = ['CodeChecker', 'server',
+    server_cmd = [*_codechecker_cmd(), 'server',
                   '--workspace', workspace_dir]
 
     server_cmd.extend(['--host', 'localhost',
                        '--port', str(port)])
+
+    # Allow CI to override worker counts via env vars.
+    api_procs = os.environ.get('CC_TEST_API_WORKERS')
+    task_procs = os.environ.get('CC_TEST_TASK_WORKERS')
+    if api_procs:
+        server_cmd.extend(['--api-handler-processes', api_procs])
+    if task_procs:
+        server_cmd.extend(['--task-worker-processes', task_procs])
 
     server_cmd.extend(serv_args or [])
 
@@ -633,7 +656,7 @@ def start_or_get_server(auth_required=False):
                 encoding="utf-8",
                 errors="ignore")
 
-            wait_for_server_start(server_stdout)
+            wait_for_server_start(server_stdout, port=port)
 
         if pg_config:
             # The behaviour is that CodeChecker servers only configure a
@@ -656,7 +679,7 @@ def start_or_get_server(auth_required=False):
     }
 
 
-def wait_for_server_start(stdoutfile):
+def wait_for_server_start(stdoutfile, port=None):
     print("Waiting for server start reading file " + stdoutfile)
     n = 0
     server_start_timeout = timedelta(minutes=5)
@@ -671,6 +694,26 @@ def wait_for_server_start(stdoutfile):
                 # some error message.
                 if "usage: CodeChecker" in out:
                     return
+
+                # Fail fast if server crashed during startup.
+                if "Config database initialization failed" in out \
+                        or "Failed to create schema" in out:
+                    print(f"[DIAG] Server FATAL error after "
+                          f"{n}s. Output:")
+                    print(out[-2000:])
+
+        # Fallback: check if server can handle HTTP requests.
+        if port and n > 3:
+            import urllib.request
+            try:
+                urllib.request.urlopen(
+                    f"http://localhost:{port}/", timeout=1)
+            except urllib.error.HTTPError:
+                # Any HTTP response (even 404) means server is ready.
+                print(f"Server responding on port {port} after {n}s")
+                return
+            except (ConnectionRefusedError, OSError, urllib.error.URLError):
+                pass
 
         if n > server_start_timeout.total_seconds():
             print("[FATAL!] Server failed to start after "
@@ -732,7 +775,8 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
     server_proc.start()
     server_output_file = os.path.join(codechecker_cfg['workspace'],
                                       str(server_proc.pid) + ".out")
-    wait_for_server_start(server_output_file)
+    wait_for_server_start(server_output_file,
+                          port=codechecker_cfg['viewer_port'])
 
     return {
         'viewer_host': 'localhost',
@@ -768,7 +812,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                              str(server_data['viewer_port']),
                              '')
 
-    add_command = ['CodeChecker', 'cmd', 'products', 'add',
+    add_command = [*_codechecker_cmd(), 'cmd', 'products', 'add',
                    server_data['viewer_product'],
                    '--url', url,
                    '--name', os.path.basename(test_folder),
@@ -861,7 +905,7 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http',
     url = create_product_url(protocol, server_data['viewer_host'],
                              str(server_data['viewer_port']),
                              '')
-    del_command = ['CodeChecker', 'cmd', 'products', 'del',
+    del_command = [*_codechecker_cmd(), 'cmd', 'products', 'del',
                    product_to_remove, '--url', url]
 
     print(' '.join(del_command))

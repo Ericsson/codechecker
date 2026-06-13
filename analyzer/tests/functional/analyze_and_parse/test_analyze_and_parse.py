@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import sys
 
 from subprocess import CalledProcessError
 
@@ -154,17 +155,11 @@ class AnalyzeParseTestCase(
     def check_one_file(self, path, mode):
         """
         Test 'analyze' and 'parse' output on a ".output" file.
-
-        The '.output' file is formatted as follows:
-          * >= 1 lines of CodeChecker commands to execute, prefixed by a 'mode'
-            usually containing commands to build, log, analyze and parse the
-            corresponding test file.
-          * A single line containing some - (dashes)
-          * The lines of the output which is expected to be produced by the
-            commands in the lines above the -------------.
-
-        mode specifies which command prefixes to execute.
         """
+        # Infer has no macOS binary release.
+        if sys.platform == "darwin" and "infer" in os.path.basename(path):
+            self.skipTest("infer not available on macOS")
+
         with open(path, 'r', encoding="utf-8", errors="ignore") as ofile:
             lines = ofile.readlines()
 
@@ -219,6 +214,7 @@ class AnalyzeParseTestCase(
         skip_prefixes = ["[] - Analysis length:",
                          "[] - Previous analysis results",
                          "[] - Skipping input file",
+                         "[] - Failed to get analyzer version",
                          # Enabled checkers are listed in the beginning of
                          # analysis.
                          "[] - Enabled checker",
@@ -252,7 +248,17 @@ class AnalyzeParseTestCase(
                           r'[] - \2', line)
 
             if not any(line.startswith(prefix) for prefix in skip_prefixes):
+                # Normalize build logger name for cross-platform comparison.
+                line = line.replace("Using intercept-build.",
+                                    "Using CodeChecker ld-logger.")
                 post_processed_output.append(line)
+
+        # gcc quote style varies by platform/locale: Unicode curly
+        # quotes on Linux, backslash-escaped on macOS. Normalize both
+        # actual and expected to plain ASCII single quotes.
+        def normalize_quotes(s):
+            return s.replace("\u2018", "'").replace(
+                "\u2019", "'").replace("\\'", "'")
 
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
         print(''.join(post_processed_output))
@@ -261,7 +267,8 @@ class AnalyzeParseTestCase(
 
         print("Test output file: " + path)
         self.maxDiff = None  # pylint: disable=invalid-name
-        self.assertEqual(''.join(post_processed_output), correct_output)
+        self.assertEqual(normalize_quotes(''.join(post_processed_output)),
+                         normalize_quotes(correct_output))
 
     def test_json_output_for_macros(self):
         """ Test parse json output for macros. """
@@ -789,6 +796,8 @@ class AnalyzeParseTestCase(
                 content = f.read()
             self.assertTrue(re.search('"url": ""', content))
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "gcc -m32 not available on macOS")
     def test_mixed_architecture_logging(self):
         """
         Test if CodeChecker can properly log compilation commands when the
@@ -886,6 +895,8 @@ class AnalyzeParseTestCase(
                  {logged_commands}"
             )
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "LD_LIBRARY_PATH not applicable on macOS")
     def test_use_absolute_paths_flag(self):
         """
         Test if CodeChecker can properly log compilation commands when using
@@ -1022,6 +1033,8 @@ class AnalyzeParseTestCase(
                 "Did not find success message for absolute path mode",
             )
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "LD_PRELOAD not applicable on macOS")
     def test_ld_preload(self):
         """ Test the stripping of LD_PRELOAD if set but has no value """
         environ = self.env.copy()

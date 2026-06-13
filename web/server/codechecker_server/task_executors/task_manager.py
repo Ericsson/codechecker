@@ -18,7 +18,8 @@ from typing import Callable, Optional
 
 import sqlalchemy
 
-from codechecker_common.compatibility.multiprocessing import Pipe, Queue, Value
+from multiprocess import Pipe, Queue, Value  # type: ignore
+
 from codechecker_common.logger import get_logger, signal_log
 from codechecker_common.util import generate_random_token
 

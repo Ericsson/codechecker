@@ -185,7 +185,8 @@ class LogParserTest(unittest.TestCase):
         build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
-        self.assertEqual(build_action.source, r'/tmp/a.cpp')
+        self.assertEqual(build_action.source,
+                         os.path.realpath(r'/tmp/a.cpp'))
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
@@ -197,7 +198,8 @@ class LogParserTest(unittest.TestCase):
         build_actions, _ = log_parser.parse_unique_log(load_json(logfile))
         build_action = build_actions[0]
 
-        self.assertEqual(build_action.source, '/tmp/a b.cpp')
+        self.assertEqual(build_action.source,
+                         os.path.realpath('/tmp/a b.cpp'))
         self.assertEqual(build_action.lang, 'c++')
 
     def test_omit_preproc(self):
@@ -357,25 +359,27 @@ class LogParserTest(unittest.TestCase):
         Same skip file for pre analysis and analysis. Skip everything.
         Source file contains relative path.
         """
+        # Use realpath to handle macOS /tmp -> /private/tmp symlink.
+        tmp = os.path.realpath('/tmp')
         cmp_cmd_json = [
-            {"directory": "/tmp/lib1/Debug",
+            {"directory": f"{tmp}/lib1/Debug",
              "command": "g++ ../a.cpp",
              "file": "../a.cpp"},
-            {"directory": "/tmp/lib1/Debug/rel",
+            {"directory": f"{tmp}/lib1/Debug/rel",
              "command": "g++ ../../b.cpp",
              "file": "../../b.cpp"},
-            {"directory": "/tmp/lib1/Debug",
+            {"directory": f"{tmp}/lib1/Debug",
              "command": "g++ ../d.cpp",
              "file": "../d.cpp"},
-            {"directory": "/tmp/lib2/Debug",
+            {"directory": f"{tmp}/lib2/Debug",
              "command": "g++ ../a.cpp",
              "file": "../a.cpp"}]
 
-        skip_list = """
-        +/tmp/lib1/d.cpp
-        -*/lib1/Debug/rel/../../*
-        -*/lib1/a.cpp
-        -/tmp/lib2/a.cpp
+        skip_list = f"""
+        +{tmp}/lib1/d.cpp
+        -*lib1/Debug/rel/../../*
+        -*lib1/a.cpp
+        -{tmp}/lib2/a.cpp
         """
         analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
         pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
@@ -386,7 +390,8 @@ class LogParserTest(unittest.TestCase):
                              pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 1)
-        self.assertEqual(build_actions[0].source, '/tmp/lib1/d.cpp')
+        self.assertEqual(build_actions[0].source,
+                         f'{tmp}/lib1/d.cpp')
 
     def test_skip_all_in_pre_from_parse(self):
         """Pre analysis skips everything but keep build action for analysis."""
@@ -419,7 +424,8 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 1)
 
-        source_file = os.path.join(keep['directory'], keep['file'])
+        source_file = os.path.realpath(
+            os.path.join(keep['directory'], keep['file']))
         self.assertEqual(build_actions[0].source, source_file)
         self.assertEqual(build_actions[0].original_command, keep['command'])
 
@@ -629,7 +635,8 @@ class LogParserTest(unittest.TestCase):
             self.assertEqual(len(build_actions), 1)
 
             build_action = build_actions[0]
-            self.assertEqual(build_action.source, src_file_path)
+            self.assertEqual(build_action.source,
+                             os.path.realpath(src_file_path))
 
     def test_symlink(self):
         """

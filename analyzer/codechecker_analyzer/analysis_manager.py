@@ -8,6 +8,7 @@
 
 
 import glob
+import logging
 import os
 import shlex
 import shutil
@@ -118,10 +119,14 @@ PROGRESS_CHECKED_NUM = None
 PROGRESS_ACTIONS = None
 
 
-def init_worker(checked_num, action_num):
+def init_worker(checked_num, action_num, log_level=None):
     global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS
     PROGRESS_CHECKED_NUM = checked_num
     PROGRESS_ACTIONS = action_num
+    # With spawn, workers need explicit logger setup (no fork inheritance).
+    if log_level:
+        from codechecker_common.logger import setup_logger
+        setup_logger(log_level)
 
 
 def save_output(base_file_name, out, err):
@@ -704,9 +709,10 @@ def start_workers(actions_map, actions, analyzer_config_map,
     # Start checking parallel.
     checked_var = multiprocess.Value('i', 1)
     actions_num = multiprocess.Value('i', len(actions))
-    pool = multiprocess.Pool(jobs,
+    log_level = logging.getLevelName(LOG.getEffectiveLevel())
+    pool = multiprocess.Pool(jobs,  # pylint: disable=not-callable
                              initializer=init_worker,
-                             initargs=(checked_var, actions_num))
+                             initargs=(checked_var, actions_num, log_level))
     signal.signal(signal.SIGINT, signal_handler)
 
     # If the analysis has failed, we help debugging.

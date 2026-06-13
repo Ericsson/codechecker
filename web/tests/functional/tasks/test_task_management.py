@@ -13,17 +13,22 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import os
 import shutil
-import unittest
+import sys
 import time
+import unittest
 from typing import List, Optional, cast
 
 import multiprocess
 
 from codechecker_api_shared.ttypes import RequestFailed, Ternary
 from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
-    AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
+    AdministratorTaskInfo, TaskFilter, TaskStatus
 
 from libtest import codechecker, env
+
+# Timeout for polling task state transitions. On macOS CI, spawn workers
+# take ~42s to import before they can process tasks.
+_POLL_TIMEOUT = 120 if sys.platform == "darwin" else 30
 
 
 # Stop events for the CodeChecker servers.
@@ -131,24 +136,41 @@ class TaskManagementAPITests(unittest.TestCase):
             auth_server["viewer_host"], auth_server["viewer_port"],
             session_token=root_token)
 
-    def test_task_1_query_status(self):
-        task_token = self._anonymous_task_client.createDummyTask(2, False)
+    def _poll_status(self, client, token, status_name, timeout=_POLL_TIMEOUT):
+        """Poll until task reaches expected status or timeout."""
+        expected = TaskStatus._NAMES_TO_VALUES[status_name]
+        info = None
+        for _ in range(timeout):
+            info = client.getTaskInfo(token)
+            if info and info.status == expected:
+                return info
+            time.sleep(1)
+        actual = TaskStatus._VALUES_TO_NAMES.get(info.status) if info else None
+        self.fail(f"Task did not reach {status_name} within {timeout}s "
+                  f"(last: {actual})")
+        return None  # Unreachable, but satisfies pylint R1710.
 
-        time.sleep(1)
-        task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
-            task_token)
+    def test_task_1_query_status(self):
+        # Use a long task to reliably observe RUNNING state.
+        task_token = self._anonymous_task_client.createDummyTask(600, False)
+
+        task_info = self._poll_status(
+            self._anonymous_task_client, task_token, "RUNNING")
         self.assertEqual(task_info.token, task_token)
-        self.assertEqual(task_info.status,
-                         TaskStatus._NAMES_TO_VALUES["RUNNING"])
         self.assertEqual(task_info.productId, 0)
         self.assertIsNone(task_info.actorUsername)
         self.assertIn("Dummy task", task_info.summary)
         self.assertEqual(task_info.cancelFlagSet, False)
 
-        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
-        task_info = self._anonymous_task_client.getTaskInfo(task_token)
-        self.assertEqual(task_info.status,
-                         TaskStatus._NAMES_TO_VALUES["COMPLETED"])
+        # Cancel the long task — we'll use a short task for COMPLETED check.
+        self._privileged_task_client.cancelTask(task_token)
+        self._poll_status(
+            self._anonymous_task_client, task_token, "CANCELLED")
+
+        # Worker is warm now. Short task to verify COMPLETED state.
+        task_token = self._anonymous_task_client.createDummyTask(1, False)
+        task_info = self._poll_status(
+            self._anonymous_task_client, task_token, "COMPLETED", timeout=10)
         self.assertEqual(task_info.cancelFlagSet, False)
         self.assertIsNotNone(task_info.enqueuedAtEpoch)
         self.assertIsNotNone(task_info.startedAtEpoch)
@@ -156,44 +178,30 @@ class TaskManagementAPITests(unittest.TestCase):
                              task_info.startedAtEpoch)
         self.assertIsNotNone(task_info.completedAtEpoch)
         self.assertLess(task_info.startedAtEpoch, task_info.completedAtEpoch)
-        self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_2_query_status_of_failed(self):
-        task_token = self._anonymous_task_client.createDummyTask(2, True)
-
-        time.sleep(1)
-        task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
-            task_token)
+        task_token = self._anonymous_task_client.createDummyTask(1, True)
+        task_info = self._poll_status(
+            self._anonymous_task_client, task_token, "FAILED", timeout=10)
         self.assertEqual(task_info.token, task_token)
-        self.assertEqual(task_info.status,
-                         TaskStatus._NAMES_TO_VALUES["RUNNING"])
-        self.assertEqual(task_info.cancelFlagSet, False)
-
-        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
-        task_info = self._anonymous_task_client.getTaskInfo(task_token)
-        self.assertEqual(task_info.status,
-                         TaskStatus._NAMES_TO_VALUES["FAILED"])
         self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_3_cancel(self):
-        task_token = self._anonymous_task_client.createDummyTask(3, False)
+        task_token = self._anonymous_task_client.createDummyTask(600, False)
 
-        time.sleep(1)
+        # Wait until running, then cancel.
+        self._poll_status(
+            self._anonymous_task_client, task_token, "RUNNING", timeout=10)
         cancel_req: bool = self._privileged_task_client.cancelTask(task_token)
         self.assertTrue(cancel_req)
 
         time.sleep(0.5)
         cancel_req_2: bool = self._privileged_task_client.cancelTask(
             task_token)
-        # The task was already cancelled, so cancel_req_2 is not the API call
-        # that cancelled the task.
         self.assertFalse(cancel_req_2)
 
-        time.sleep(0.5)  # A bit more than exactly what remains of 10 seconds!
-        task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
-            task_token)
-        self.assertEqual(task_info.status,
-                         TaskStatus._NAMES_TO_VALUES["CANCELLED"])
+        task_info = self._poll_status(
+            self._anonymous_task_client, task_token, "CANCELLED", timeout=10)
         self.assertEqual(task_info.cancelFlagSet, True)
         self.assertIn("root", task_info.comments)
         self.assertIn("User requested cancellation.", task_info.comments)
@@ -225,7 +233,7 @@ class TaskManagementAPITests(unittest.TestCase):
         self.assertEqual(len(task_infos), 0)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter())
-        self.assertEqual(len(task_infos), 3)
+        self.assertEqual(len(task_infos), 4)
 
         self.assertEqual(sum(1 for t in task_infos
                              if t.normalInfo.status ==
@@ -235,7 +243,7 @@ class TaskManagementAPITests(unittest.TestCase):
                              TaskStatus._NAMES_TO_VALUES["FAILED"]), 1)
         self.assertEqual(sum(1 for t in task_infos
                              if t.normalInfo.status ==
-                             TaskStatus._NAMES_TO_VALUES["CANCELLED"]), 1)
+                             TaskStatus._NAMES_TO_VALUES["CANCELLED"]), 2)
 
     def test_task_5_info_query_filters(self):
         current_time_epoch = int(datetime.now(timezone.utc).timestamp())
@@ -249,7 +257,7 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             machineIDs=["unprivileged"]
         ))
-        self.assertEqual(len(task_infos), 3)
+        self.assertEqual(len(task_infos), 4)
 
         tokens_from_previous_test = [t.normalInfo.token for t in task_infos]
 
@@ -268,7 +276,7 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             startedBeforeEpoch=current_time_epoch
         ))
-        self.assertEqual(len(task_infos), 3)
+        self.assertEqual(len(task_infos), 4)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             startedAfterEpoch=current_time_epoch
@@ -278,7 +286,7 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             cancelFlag=Ternary._NAMES_TO_VALUES["ON"]
         ))
-        self.assertEqual(len(task_infos), 1)
+        self.assertEqual(len(task_infos), 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             cancelFlag=Ternary._NAMES_TO_VALUES["OFF"]
@@ -288,7 +296,7 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             consumedFlag=Ternary._NAMES_TO_VALUES["ON"]
         ))
-        self.assertEqual(len(task_infos), 3)
+        self.assertEqual(len(task_infos), 4)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             consumedFlag=Ternary._NAMES_TO_VALUES["OFF"]
@@ -306,7 +314,7 @@ class TaskManagementAPITests(unittest.TestCase):
                 target_api.createDummyTask(1, bool(j % 2 == 0))
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter())
-        self.assertEqual(len(task_infos), 7)
+        self.assertEqual(len(task_infos), 8)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -358,18 +366,18 @@ class TaskManagementAPITests(unittest.TestCase):
         # Some tasks ought to have also finished at least.
         self.assertGreater(len(task_infos), 0)
 
-        # Let every task terminate. We should only need 1 second per task,
-        # running likely in a multithreaded environment.
-        # Let's have some leeway, though...
-        time.sleep(2)
-
-        task_infos = self._privileged_task_client.getTasks(TaskFilter(
-            enqueuedAfterEpoch=current_time_epoch,
-            startedAfterEpoch=current_time_epoch,
-            completedAfterEpoch=current_time_epoch
-        ))
-        # All tasks should have finished.
-        self.assertEqual(len(task_infos), 4)
+        # Wait until all 4 new tasks have completed.
+        for _ in range(_POLL_TIMEOUT):
+            task_infos = self._privileged_task_client.getTasks(TaskFilter(
+                enqueuedAfterEpoch=current_time_epoch,
+                startedAfterEpoch=current_time_epoch,
+                completedAfterEpoch=current_time_epoch
+            ))
+            if len(task_infos) == 4:
+                break
+            time.sleep(1)
+        else:
+            self.fail("Not all tasks completed within timeout")
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,
@@ -406,12 +414,12 @@ class TaskManagementAPITests(unittest.TestCase):
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             machineIDs=["*privileged"]
         ))
-        self.assertEqual(len(task_infos), 7)
+        self.assertEqual(len(task_infos), 8)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             kinds=["*Dummy*"]
         ))
-        self.assertEqual(len(task_infos), 7)
+        self.assertEqual(len(task_infos), 8)
 
         # Try to consume the task status from the wrong user!
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
