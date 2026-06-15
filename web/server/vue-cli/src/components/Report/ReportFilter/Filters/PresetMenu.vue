@@ -27,7 +27,7 @@
             <v-btn
               v-if="canSeeActions"
               variant="text"
-              @click.stop="deletePreset(item.value)"
+              @click.stop="promptDelete(item.value)"
             >
               <v-icon
                 v-if="deletingId === item.value"
@@ -47,11 +47,26 @@
       </v-list-item>
     </template>
   </v-select>
+
+  <ConfirmDialog
+    v-model="showDeleteConfirmDialog"
+    max-width="400px"
+    cancel-btn-color="primary"
+    confirm-btn-label="Delete"
+    confirm-btn-color="error"
+    title="Delete Preset"
+    @confirm="confirmDelete"
+  >
+    <template v-slot:content>
+      Delete "<b>{{ pendingDeleteName }}</b>"? This action cannot be undone.
+    </template>
+  </ConfirmDialog>
 </template>
 
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import isEqual from "lodash/isEqual";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   authService,
   ccService,
@@ -73,6 +88,13 @@ const isAdminOfAnyProduct = ref(false);
 const activePresetId = ref(null);
 const querySnapshot = ref(null);
 const isModified = ref(false);
+const showDeleteConfirmDialog = ref(false);
+const pendingDeleteId = ref(null);
+
+const pendingDeleteName = computed(() => {
+  const preset = presets.value.find(p => p.id === pendingDeleteId.value);
+  return preset?.name || "";
+});
 
 const route = useRoute();
 
@@ -187,6 +209,19 @@ function clearPresetState() {
   activePresetId.value = null;
   querySnapshot.value = null;
   isModified.value = false;
+}
+
+function promptDelete(id) {
+  pendingDeleteId.value = id;
+  showDeleteConfirmDialog.value = true;
+}
+
+async function confirmDelete() {
+  showDeleteConfirmDialog.value = false;
+  if (pendingDeleteId.value !== null) {
+    await deletePreset(pendingDeleteId.value);
+    pendingDeleteId.value = null;
+  }
 }
 
 async function deletePreset(id) {
