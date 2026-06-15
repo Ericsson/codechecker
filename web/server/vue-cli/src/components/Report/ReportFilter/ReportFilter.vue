@@ -730,6 +730,13 @@ onBeforeUnmount(() => {
 async function savePreset(mode) {
   try {
     let result;
+
+    // Store selected run names in reportFilter.runName (not part of the
+    // standard filter state, but needed for preset serialization).
+    const presetReportFilter = structuredClone(reportFilter.value);
+    const runFilter = filters.value.find(f => f.id === "run");
+    presetReportFilter.runName = runFilter?.selectedItems?.map(i => i.id) ?? [];
+
     const activePresetId = presetMenuRef.value?.activePresetId;
     if (mode === "rename") {
       const new_name = presetName.value;
@@ -746,7 +753,7 @@ async function savePreset(mode) {
           ? activePresetId
           : -1,
         name: presetName.value,
-        reportFilter: reportFilter.value
+        reportFilter: presetReportFilter
       };
 
       result = await new Promise(resolve => {
