@@ -47,9 +47,8 @@ from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import \
     AnalysisInfo, AnalysisInfoChecker, AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, \
+    ReportPathData, \
     Checker, \
-    ExtendedReportData, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
     Run, RunLock as DBRunLock, RunHistory, \
@@ -61,7 +60,6 @@ from ..product import Product as ServerProduct
 from ..session_manager import SessionManager
 from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
-from .thrift_enum_helper import report_extended_data_type_str
 
 
 LOG = get_logger('server')
@@ -1270,44 +1268,91 @@ class MassStoreRun:
                 .update({"checker_id": chk_obj.id},
                         synchronize_session=False)
 
-    def __add_report_context(self, session, file_path_to_id):
+    def __add_report_context(
+        self,
+        session: DBSession,
+        file_path_to_id: Dict[str, int]
+    ):
         for db_report, report in self.__added_reports:
+            path_data = []
+            used_file_ids = set()
+
             LOG.debug("Storing bug path positions.")
-            for idx, path_pos in enumerate(report.bug_path_positions):
-                session.add(BugReportPoint(
-                    path_pos.range.start_line, path_pos.range.start_col,
-                    path_pos.range.end_line, path_pos.range.end_col,
-                    idx, file_path_to_id[path_pos.file.path], db_report.id))
+            for path_pos in report.bug_path_positions:
+                path_data.append({
+                    "from": {
+                        "row": path_pos.range.start_line,
+                        "col": path_pos.range.start_col
+                    },
+                    "to": {
+                        "row": path_pos.range.end_line,
+                        "col": path_pos.range.end_col
+                    },
+                    "type": "path",
+                    "fid": file_path_to_id[path_pos.file.path]
+                })
+                used_file_ids.add(file_path_to_id[path_pos.file.path])
 
             LOG.debug("Storing bug path events.")
-            for idx, event in enumerate(report.bug_path_events):
-                session.add(BugPathEvent(
-                    event.range.start_line, event.range.start_col,
-                    event.range.end_line, event.range.end_col,
-                    idx, event.message, file_path_to_id[event.file.path],
-                    db_report.id))
+            for event in report.bug_path_events:
+                path_data.append({
+                    "from": {
+                        "row": event.range.start_line,
+                        "col": event.range.start_col
+                    },
+                    "to": {
+                        "row": event.range.end_line,
+                        "col": event.range.end_col
+                    },
+                    "type": "event",
+                    "msg": event.message,
+                    "fid": file_path_to_id[event.file.path]
+                })
+                used_file_ids.add(file_path_to_id[event.file.path])
 
             LOG.debug("Storing notes.")
             for note in report.notes:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.NOTE)
-
-                session.add(ExtendedReportData(
-                    note.range.start_line, note.range.start_col,
-                    note.range.end_line, note.range.end_col,
-                    note.message, file_path_to_id[note.file.path],
-                    db_report.id, data_type))
+                path_data.append({
+                    "from": {
+                        "row": note.range.start_line,
+                        "col": note.range.start_col
+                    },
+                    "to": {
+                        "row": note.range.end_line,
+                        "col": note.range.end_col
+                    },
+                    "type": "note",
+                    "msg": note.message,
+                    "fid": file_path_to_id[note.file.path]
+                })
+                used_file_ids.add(file_path_to_id[note.file.path])
 
             LOG.debug("Storing macro expansions.")
             for macro in report.macro_expansions:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.MACRO)
+                path_data.append({
+                    "from": {
+                        "row": macro.range.start_line,
+                        "col": macro.range.start_col
+                    },
+                    "to": {
+                        "row": macro.range.end_line,
+                        "col": macro.range.end_col
+                    },
+                    "type": "macro",
+                    "msg": macro.message,
+                    "fid": file_path_to_id[macro.file.path]
+                })
+                used_file_ids.add(file_path_to_id[macro.file.path])
 
-                session.add(ExtendedReportData(
-                    macro.range.start_line, macro.range.start_col,
-                    macro.range.end_line, macro.range.end_col,
-                    macro.message, file_path_to_id[macro.file.path],
-                    db_report.id, data_type))
+            report_path_data = ReportPathData(db_report.id, path_data)
+            # TODO: Here we query the File objects with session.get() that runs
+            # an SQL SELECT statement, since these files are not cached by this
+            # session object. We should investigate whether it's possible to
+            # provide a session object that has the File objects already, in
+            # order to save extra query time.
+            report_path_data.files.extend(
+                map(lambda fid: session.get(File, fid), used_file_ids))
+            session.add(report_path_data)
 
             if report.annotations:
                 self.__validate_and_add_report_annotations(
