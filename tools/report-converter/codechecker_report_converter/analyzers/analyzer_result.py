@@ -164,7 +164,8 @@ class AnalyzerResultBase(metaclass=ABCMeta):
             out_file_name = f"{out_file_name}.{export_type}"
             out_file_path = os.path.join(output_dir, out_file_name)
 
-            LOG.info("Create/modify plist file: '%s'.", out_file_path)
+            LOG.info("Create/modify %s file: '%s'.",
+                     export_type, out_file_path)
             LOG.debug(file_reports)
 
             data = parser.convert(file_reports, analyzer_info)
