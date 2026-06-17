@@ -42,6 +42,7 @@ package:
 	# Install package in 'development mode'.
 	${PYTHON_BIN} setup.py develop
 
+.PHONY: build
 build:
 	${PYTHON_BIN} setup.py build --build-purelib $(COMPILE_COMMANDS_DIR)
 
