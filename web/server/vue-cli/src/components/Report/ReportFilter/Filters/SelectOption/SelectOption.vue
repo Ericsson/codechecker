@@ -62,6 +62,7 @@
             @apply="applyFilters"
             @apply:finished="closeMenu"
             @cancel="cancel"
+            @update:items="items = $event"
           >
             <template v-slot:append-toolbar>
               <slot name="append-toolbar" />

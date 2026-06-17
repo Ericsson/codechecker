@@ -48,7 +48,7 @@ baseSelectOptionFilter.id.value = id.value;
 const search = ref({
   placeHolder: "Search for analyzer names (e.g.: clang*)...",
   regexLabel: "Filter by wildcard pattern (e.g.: clang*)",
-  filterItems: []
+  filterItems: baseSelectOptionFilter.filterItems
 });
 
 baseSelectOptionFilter.bus.on("update:url", () => {
