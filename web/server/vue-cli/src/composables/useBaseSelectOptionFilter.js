@@ -98,6 +98,10 @@ export function useBaseSelectOptionFilter(namespaceRef) {
     });
   };
 
+  // Placeholder for fetchItems - needs to be implemented by specific filter
+  const fetchItems = ref(() => Promise.resolve([]));
+  const updateReportFilter = ref(() => {});
+
   const filterItems = value => {
     return fetchItems.value({ query: value ? [ `${value}*` ] : null });
   };
@@ -105,10 +109,6 @@ export function useBaseSelectOptionFilter(namespaceRef) {
   const clear = updateUrl => {
     setSelectedItems([], updateUrl);
   };
-
-  // Placeholder for fetchItems - needs to be implemented by specific filter
-  const fetchItems = ref(() => Promise.resolve([]));
-  const updateReportFilter = ref(() => {});
 
   return {
     ...baseFilter,

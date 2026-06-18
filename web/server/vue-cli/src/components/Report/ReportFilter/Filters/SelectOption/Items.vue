@@ -160,7 +160,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   "cancel",
-  "select",
   "update:items",
   "apply",
   "apply:finished"
@@ -184,16 +183,15 @@ const selectedRgx = computed({
       : null;
   },
   set: value => {
-    const selectedItems = [ ...props.selectedItems ];
-    const idx = selectedItems.findIndex(item => item.id === searchTxt.value);
+    const idx = localSelectedItems.value.findIndex(
+      item => item.id === searchTxt.value
+    );
     
     if (!value && idx !== -1) {
-      selectedItems.splice(idx, 1);
+      localSelectedItems.value.splice(idx, 1);
     } else if (value && idx === -1) {
-      selectedItems.push({ id: value, title: value });
+      localSelectedItems.value.push({ id: value, title: value });
     }
-    
-    emit("select", selectedItems);
   }
 });
 
