@@ -27,10 +27,10 @@
           >
             <v-text-field
               :id="minId"
-              :value="minBugPathLength"
+              :model-value="minBugPathLength"
               :rules="rules.bugPathLength"
               label="Min..."
-              @input="setMinBugPathLength"
+              @update:model-value="setMinBugPathLength"
             />
           </v-col>
 
@@ -42,10 +42,10 @@
           >
             <v-text-field
               :id="maxId"
-              :value="maxBugPathLength"
+              :model-value="maxBugPathLength"
               :rules="rules.bugPathLength"
               label="Max..."
-              @input="setMaxBugPathLength"
+              @update:model-value="setMaxBugPathLength"
             />
           </v-col>
         </v-row>
