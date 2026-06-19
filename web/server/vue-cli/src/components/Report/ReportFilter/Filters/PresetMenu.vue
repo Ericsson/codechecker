@@ -2,11 +2,12 @@
   <v-select
     v-model="activePresetId"
     clearable
-    :items="presets"
-    :hide-details="true"
+    clear-icon="mdi-delete"
     item-title="name"
     item-value="id"
     label="Presets"
+    :hide-details="true"
+    :items="presets"
     :loading="loadingList"
     :disabled="saving || settingPreset || deletingId !== null"
     @focus="fetchPresets"
@@ -37,9 +38,9 @@
               </v-icon>
               <v-icon
                 v-else
-                size="small"
+                size="large"
               >
-                mdi-delete
+                mdi-close-circle
               </v-icon>
             </v-btn>
           </v-list-item-action>
