@@ -14,12 +14,17 @@
         v-model="checkerDocDialog"
         :checker="selectedChecker"
       />
+      <set-cleanup-plan-btn
+        :selected-reports="selected"
+      />
+
       <v-data-table-server
         v-model="selected"
         v-model:page="page"
         v-model:items-per-page="itemsPerPage"
         v-model:sort-by="sortBy"
         v-model:expanded="expanded"
+        class="text-caption"
         :items-per-page-options="itemsPerPageOptions"
         :items-length="totalItems"
         :headers="tableHeaders"
@@ -31,21 +36,9 @@
         :mobile-breakpoint="1100"
         item-value="id"
         return-object
+        density="compact"
         @update:expanded="itemExpanded"
       >
-        <template v-slot:top>
-          <v-toolbar
-            flat
-            class="report-filter-toolbar"
-            density="compact"
-            color="transparent"
-          >
-            <div class="d-flex justify-end w-100">
-              <set-cleanup-plan-btn :selected-reports="selected" />
-            </div>
-          </v-toolbar>
-        </template>
-
         <template v-slot:expanded-row="{ item }">
           <td
             class="pa-0"
@@ -115,7 +108,7 @@
               'report-filepath': reportFilter.isUnique
                 ? `*${item.checkedFile}` : item.checkedFile
             }}"
-            class="file-name"
+            class="file-name text-body-small text-primary"
           >
             {{ item.checkedFile }}
             <span v-if="item.line">@&nbsp;Line&nbsp;{{ item.line }}</span>
@@ -124,7 +117,7 @@
 
         <template #item.checkerId="{ item }">
           <span
-            class="checker-name primary--text"
+            class="checker-name text-primary"
             @click="openCheckerDocDialog(item.checkerId, item.analyzerName)"
           >
             {{ item.checkerId }}

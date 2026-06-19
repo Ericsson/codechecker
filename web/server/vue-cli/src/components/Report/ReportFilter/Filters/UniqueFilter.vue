@@ -2,6 +2,7 @@
   <v-checkbox
     v-model="isUniqueModel"
     :hide-details="true"
+    density="compact"
   >
     <template v-slot:label>
       Unique reports
