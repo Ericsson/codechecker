@@ -1,5 +1,8 @@
 <template>
-  <v-list-item two-line>
+  <v-list-item
+    two-line
+    density="compact"
+  >
     <v-list-item-title>
       <router-link
         :to="{ name: 'reports',
@@ -8,7 +11,7 @@
                  ...reportFilterQuery
                }
         }"
-        class="name mr-2"
+        class="name mr-2 text-body-2"
       >
         <span>{{ name }}</span>
       </router-link>
@@ -25,45 +28,52 @@
     </v-list-item-title>
 
     <v-list-item-subtitle>
-      <show-statistics-btn
-        :extra-queries="statisticsFilterQuery"
-      />
-
-      <v-divider
-        class="mx-2 d-inline"
-        inset
-        vertical
-      />
-
-      <analysis-info-dialog
-        :run-id="runId"
-        :icon-only="true"
-        icon-size="default"
-      />
-
-      <v-divider
-        class="mx-2 d-inline"
-        inset
-        vertical
-      />
-
-      <v-btn
-        v-for="(value, status) in detectionStatusCount"
-        :key="status"
-        :to="{ name: 'reports', query: {
-          run: name,
-          'detection-status': detectionStatusFromCodeToString(status)
-        }}"
-        class="detection-status-count"
-        variant="text"
+      <v-btn-group
+        class="overflow-visible"
+        density="compact"
       >
-        <detection-status-icon
-          class="mr-1"
-          :status="parseInt(status)"
-          size="small"
+        <show-statistics-btn
+          :extra-queries="statisticsFilterQuery"
         />
-        ({{ value }})
-      </v-btn>
+
+        <v-divider
+          class="mx-2 d-inline"
+          length="20"
+          inset
+          vertical
+        />
+
+        <analysis-info-dialog
+          :run-id="runId"
+          :icon-only="true"
+          icon-size="default"
+        />
+
+        <v-divider
+          class="mx-2 d-inline"
+          length="20"
+          inset
+          vertical
+        />
+
+        <v-btn
+          v-for="(value, status) in detectionStatusCount"
+          :key="status"
+          :to="{ name: 'reports', query: {
+            run: name,
+            'detection-status': detectionStatusFromCodeToString(status)
+          }}"
+          class="detection-status-count"
+          variant="text"
+        >
+          <detection-status-icon
+            class="mr-1"
+            :status="parseInt(status)"
+            size="small"
+          />
+          ({{ value }})
+        </v-btn>
+      </v-btn-group>
     </v-list-item-subtitle>
   </v-list-item>
 </template>

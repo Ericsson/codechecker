@@ -1,22 +1,29 @@
 <template>
   <v-list-item
-    class="py-2"
+    class="pt-2"
     two-line
+    density="compact"
   >
     <template v-slot:prepend>
       <v-avatar
         :color="strToColor(product.endpoint)"
-        size="48"
+        size="42"
         class="my-1"
       >
-        <span class="white--text headline">
+        <span class="text-white headline">
           {{ getProductIconName(product.endpoint) }}
         </span>
       </v-avatar>
     </template>
 
-    <v-list-item-title>
-      <confidentiality-icon :value="product.confidentiality" small />
+    <v-list-item-title
+      class="text-body-2"
+    >
+      <confidentiality-icon
+        class="mr-1"
+        :value="product.confidentiality"
+        small
+      />
 
       <span
         v-if="product.databaseStatus !== DBStatus.OK || !product.accessible"
@@ -63,30 +70,37 @@
     <v-list-item-subtitle
       v-if="product.databaseStatus === DBStatus.OK && product.accessible"
     >
-      <span
-        v-for="link in links"
-        :key="link.name"
+      <v-btn-group
+        class="overflow-visible"
+        density="compact"
       >
-        <v-btn
-          :to="{
-            name: link.name,
-            params: { endpoint: product.endpoint },
-            query: link.query || {}
-          }"
-          :title="link.title"
-          :color="link.color"
-          size="small"
-          variant="text"
-          :icon="link.icon"
-        />
+        <template
+          v-for="link in links"
+          :key="link.name"
+        >
+          <v-btn
+            class="pa-0"
+            :min-width="0"
+            :to="{
+              name: link.name,
+              params: { endpoint: product.endpoint },
+              query: link.query || {}
+            }"
+            :title="link.title"
+            :color="link.color"
+            :icon="link.icon"
+            size="small"
+            variant="text"
+          />
 
-        <v-divider
-          v-if="link.divider"
-          class="mx-2 d-inline"
-          inset
-          vertical
-        />
-      </span>
+          <v-divider
+            v-if="link.divider"
+            class="mx-2 d-inline"
+            inset
+            vertical
+          />
+        </template>
+      </v-btn-group>
     </v-list-item-subtitle>
   </v-list-item>
 </template>

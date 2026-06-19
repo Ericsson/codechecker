@@ -59,7 +59,9 @@
           font-weight-semibold
           mr-2
           text-truncate"
-      >Filter Preset</span>
+      >
+        Filter Preset
+      </span>
       <tooltip-help-icon
         class="mr-2"
       >
@@ -186,7 +188,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider class="mt-2" />
+              <v-divider />
 
               <baseline-open-reports-date-filter
                 :ref="setFilterRef"
@@ -233,7 +235,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider class="mt-2" />
+              <v-divider />
 
               <compared-to-open-reports-date-filter
                 :ref="setFilterRef"
@@ -241,7 +243,7 @@
                 @update:url="updateUrl"
               />
 
-              <v-divider v-if="showDiffType" class="mt-2" />
+              <v-divider v-if="showDiffType" />
 
               <compared-to-diff-type-filter
                 v-if="showDiffType"
@@ -1143,11 +1145,12 @@ async function clearToolbarSilently() {
 
 .v-expansion-panel--active > .v-expansion-panel-title,
 .v-expansion-panel-title {
-  min-height: 40px;
+  min-height: 40px !important;
+  font-size: 0.875rem !important;
 }
 
-.v-expansion-panel-text > .v-expansion-panel-text__wrap {
-  padding: 0 4px 0 6px;
+.v-expansion-panel-text > .v-expansion-panel-text__wrapper {
+  padding: 0 4px 0 6px !important;
 }
 
 #baseline-filters,
@@ -1158,11 +1161,6 @@ async function clearToolbarSilently() {
 
 #compare-to-filters {
   border-top: 0;
-}
-
-.v-expansion-panel-title {
-  min-height: 48px !important;
-  font-size: 0.875rem !important;
 }
 
 .v-expansion-panel-title__icon {
