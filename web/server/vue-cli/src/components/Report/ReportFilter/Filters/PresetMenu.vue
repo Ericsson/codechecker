@@ -6,6 +6,7 @@
     item-title="name"
     item-value="id"
     label="Presets"
+    :menu-props="{ scrim: true, scrollStrategy: 'close' }"
     :hide-details="true"
     :items="presets"
     :loading="loadingList"
