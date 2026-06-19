@@ -3,7 +3,7 @@
     v-model="isDialogOpen"
   >
     <select-option
-      :id="id.value"
+      :id="id"
       title="Source component"
       :bus="baseSelectOptionFilter.bus"
       :fetch-items="fetchItems"
@@ -15,9 +15,18 @@
       @input="baseSelectOptionFilter.setSelectedItems"
     >
       <template v-slot:append-toolbar>
-        <ReportFilterModeSelector v-model="reportFilterMode" />
+        <ReportFilterModeSelector
+          v-model="reportFilterMode"
+          :filter-icon="filterIconNames"
+        />
       </template>
       <template v-slot:prepend-toolbar-items>
+        <v-icon
+          start
+          class="mr-1"
+        >
+          {{ filterIconNames[reportFilterMode] }}
+        </v-icon>
         <v-btn
           v-if="administrating"
           class="manage-components-btn"
@@ -74,13 +83,19 @@ const props = defineProps({
 
 const emit = defineEmits([ "update:url" ]);
 
-const id = ref("source-component");
+const id = "source-component";
 const anywhereId = ref("anywhere-sourcecomponent");
 const sameOriginId = ref("sameorigin-sourcecomponent");
 const isDialogOpen = ref(false);
 const reportFilterMode = ref(null);
 const isAnywhere = ref(false);
 const isSameOrigin = ref(false);
+
+const filterIconNames = ref({
+  "end": "mdi-ray-end",
+  "anywhere": "mdi-ray-start-vertex-end",
+  "single-origin": "mdi-ray-vertex"
+});
 
 const baseSelectOptionFilter =
   useBaseSelectOptionFilter(toRef(props, "namespace"));
@@ -150,7 +165,7 @@ function getUrlState() {
     );
 
   return {
-    [id.value]: _state.length ? _state : undefined,
+    [id]: _state.length ? _state : undefined,
     [anywhereId.value]: isAnywhere.value || undefined,
     [sameOriginId.value]: isSameOrigin.value || undefined
   };
