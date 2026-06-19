@@ -74,7 +74,8 @@ class TestFilterPresetAPI(unittest.TestCase):
         """
         report_filter = ttypes.ReportFilter(
             severity=[50, 40],  # CRITICAL, HIGH
-            checkerName=['clang*']
+            checkerName=['clang*'],
+            runName=['my_run', 'other_run']
         )
 
         preset = ttypes.FilterPreset(
@@ -90,6 +91,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(stored.name, "TestPreset")
         self.assertEqual(stored.reportFilter.severity, [50, 40])
         self.assertEqual(stored.reportFilter.checkerName, ['clang*'])
+        self.assertEqual(stored.reportFilter.runName, ['my_run', 'other_run'])
 
     def test_store_filter_preset_updates_existing(self):
         """
@@ -139,7 +141,8 @@ class TestFilterPresetAPI(unittest.TestCase):
             bugPathLength=ttypes.BugPathLengthRange(min=10, max=50),
             isUnique=True,
             componentNames=['component1'],
-            analyzerNames=['clangsa', 'clang-tidy']
+            analyzerNames=['clangsa', 'clang-tidy'],
+            runName=['run1', 'run2']
         )
 
         preset = ttypes.FilterPreset(-1, "ComplexPreset", report_filter)
@@ -152,6 +155,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(len(stored.reportFilter.severity), 3)
         self.assertEqual(len(stored.reportFilter.checkerName), 2)
         self.assertEqual(len(stored.reportFilter.filepath), 2)
+        self.assertEqual(stored.reportFilter.runName, ['run1', 'run2'])
 
     def test_store_filter_preset_with_empty_filter(self):
         """
@@ -281,7 +285,8 @@ class TestFilterPresetAPI(unittest.TestCase):
         report_filter = ttypes.ReportFilter(
             severity=[50],
             checkerName=['clang-tidy*'],
-            reviewStatus=[0, 1]
+            reviewStatus=[0, 1],
+            runName=['my_run']
         )
 
         preset = ttypes.FilterPreset(
@@ -302,6 +307,7 @@ class TestFilterPresetAPI(unittest.TestCase):
         self.assertEqual(stored_preset.reportFilter.checkerName,
                          ['clang-tidy*'])
         self.assertEqual(stored_preset.reportFilter.reviewStatus, [0, 1])
+        self.assertEqual(stored_preset.reportFilter.runName, ['my_run'])
 
     def test_get_filter_preset_returns_error_for_nonexistent(self):
         """
