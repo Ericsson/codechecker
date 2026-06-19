@@ -95,56 +95,46 @@
       </v-col>
     </v-row>
     <template #extension>
-      <div
-        class="mb-4
-          mt-3
-          ga-3
-          d-flex"
-        align="left"
-      >
-        <LoadMultipleRunsBtn
-          :selected="selected"
-          :disabled="!enoughRunsSelected"
-          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
-        />
-        <DeleteRunBtn
-          :selected="selected"
-          variant="outlined"
-          @on-confirm="update"
-          @delete-complete="emit('delete-complete')"
-        />
-      </div>
+      <LoadMultipleRunsBtn
+        :selected="selected"
+        :disabled="!enoughRunsSelected"
+        :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
+      />
+      <DeleteRunBtn
+        :selected="selected"
+        variant="outlined"
+        @on-confirm="update"
+        @delete-complete="emit('delete-complete')"
+      />
 
       <v-spacer />
 
-      <div align="right">
-        <v-btn
-          variant="outlined"
-          color="primary"
-          class="diff-runs-btn mr-2"
-          :to="diffTargetRoute"
-          :disabled="isDiffBtnDisabled"
-        >
-          <v-icon left>
-            mdi-select-compare
-          </v-icon>
-          Diff
-          <tooltip-help-icon>
-            Compare the set of <i>outstanding reports</i> in two run (or tag)
-            sets.<br>
-            A report is outstanding if <b> all of the following is true</b>:
-            <ul>
-              <li>
-                its detection status is <i>new</i>, <i>reopened</i>, or
-                <i>unresolved</i>,
-              </li>
-              <li>
-                its review status is <i>unreviewed</i> or <i>confirmed</i>.
-              </li>
-            </ul>
-          </tooltip-help-icon>
-        </v-btn>
-      </div>
+      <v-btn
+        variant="outlined"
+        color="primary"
+        class="diff-runs-btn mr-2"
+        :to="diffTargetRoute"
+        :disabled="isDiffBtnDisabled"
+      >
+        <v-icon left>
+          mdi-select-compare
+        </v-icon>
+        Diff
+        <tooltip-help-icon>
+          Compare the set of <i>outstanding reports</i> in two run (or tag)
+          sets.<br>
+          A report is outstanding if <b> all of the following is true</b>:
+          <ul>
+            <li>
+              its detection status is <i>new</i>, <i>reopened</i>, or
+              <i>unresolved</i>,
+            </li>
+            <li>
+              its review status is <i>unreviewed</i> or <i>confirmed</i>.
+            </li>
+          </ul>
+        </tooltip-help-icon>
+      </v-btn>
     </template>
   </v-toolbar>
 </template>
