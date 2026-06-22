@@ -302,7 +302,12 @@ import {
   keymap,
   lineNumbers
 } from "@codemirror/view";
-import { findNext, openSearchPanel, searchKeymap } from "@codemirror/search";
+import {
+  findNext,
+  highlightSelectionMatches,
+  openSearchPanel,
+  searchKeymap
+} from "@codemirror/search";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { cpp } from "@codemirror/lang-cpp";
 
@@ -393,7 +398,7 @@ const markField = StateField.define({
       }
 
       if (effect.is(addMarks)) {
-        const decoration = effect.value.map(item => 
+        const decoration = effect.value.map(item =>
           Decoration.mark({
             class: "checker-step",
             attributes: { markerid: item.markerId }
@@ -502,7 +507,7 @@ class AdvancedLineWidget extends WidgetType {
       this.data.index === other.data.index &&
       this.data.id === other.data.id;
   }
-  
+
   toDOM() {
     this.container = document.createElement("div");
     const vnode = h(ReportStepMessage, this.data);
@@ -532,6 +537,7 @@ onMounted(() => {
     parent: editorContainer.value,
     extensions: [
       lineNumbers(),
+      highlightSelectionMatches(),
       EditorState.readOnly.of(true),
       cpp(),
       keymap.of(searchKeymap),
