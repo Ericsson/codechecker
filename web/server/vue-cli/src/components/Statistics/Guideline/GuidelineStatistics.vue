@@ -157,7 +157,7 @@ import {
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
@@ -247,10 +247,6 @@ watch(() => baseStatistics.runIds, async () => {
 
 watch(selectedGuidelines, async () => {
   await fetchStatistics();
-});
-
-onMounted(() => {
-  fetchStatistics();
 });
 
 function checker_stat(stat) {
@@ -439,7 +435,6 @@ async function getRunData() {
 
 async function fetchStatistics() {
   loading.value = true;
-
   await fetchProblematicRuns();
 
   await getAllGuidelineRules();
@@ -448,7 +443,7 @@ async function fetchStatistics() {
 
   const checker_stat_result = await new Promise(resolve => {
     ccService.getClient().getCheckerStatusVerificationDetails(
-      baseStatistics.runIds,
+      baseStatistics.runIds.value,
       filter,
       handleThriftError(res => {
         resolve(res);
