@@ -302,8 +302,11 @@ import {
   keymap,
   lineNumbers
 } from "@codemirror/view";
-import { findNext, highlightSelectionMatches,
-  openSearchPanel, searchKeymap
+import {
+  findNext,
+  highlightSelectionMatches,
+  openSearchPanel,
+  searchKeymap
 } from "@codemirror/search";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { cpp } from "@codemirror/lang-cpp";
