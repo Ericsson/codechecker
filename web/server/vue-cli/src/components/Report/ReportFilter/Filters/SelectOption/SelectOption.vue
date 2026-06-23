@@ -162,6 +162,14 @@ watch(menu, async show => {
   }
 });
 
+watch(
+  () => props.selectedItems,
+  val => {
+    allSelectedItems.value = [ ...val ];
+  },
+  { deep: true }
+);
+
 onMounted(() => {
   props.bus.on("update", () => {
     reloadItems.value = true;
