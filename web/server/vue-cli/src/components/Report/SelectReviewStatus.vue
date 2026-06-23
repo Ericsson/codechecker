@@ -16,7 +16,7 @@
         <v-row>
           <v-col
             cols="auto"
-            class="pa-0 mx-4"
+            class="pa-0 mx-2"
           >
             <v-select
               :model-value="value.status"
@@ -24,7 +24,6 @@
               :hide-details="true"
               :menu-props="{ contentClass: 'select-review-status-menu' }"
               :disabled="isReviewStatusDisabled"
-              label="Set review status"
               item-title="label"
               item-value="id"
               class="select-review-status small"

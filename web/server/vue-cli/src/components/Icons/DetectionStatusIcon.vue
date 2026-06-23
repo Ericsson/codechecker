@@ -61,7 +61,7 @@ import { computed } from "vue";
 
 const props = defineProps({
   status: { type: Number, required: true },
-  size: { type: String, default: undefined },
+  size: { type: Number, default: undefined },
   title: { type: String, default: null }
 });
 

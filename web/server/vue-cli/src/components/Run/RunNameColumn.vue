@@ -69,7 +69,7 @@
           <detection-status-icon
             class="mr-1"
             :status="parseInt(status)"
-            size="small"
+            :size="16"
           />
           ({{ value }})
         </v-btn>

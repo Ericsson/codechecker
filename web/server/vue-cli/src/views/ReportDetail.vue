@@ -1,36 +1,35 @@
 <template>
   <v-container
     v-if="reportNotFound"
-    class="text-center"
+    class="d-flex align-center justify-center"
+    fluid
     fill-height
   >
-    <v-row align="center" justify="center">
-      <v-col class="error--text" cols="6">
-        <h1 class="display-2">
-          404 - Report not found!
-        </h1>
+    <v-col class="text-error text-center" cols="6">
+      <h1 class="display-2">
+        404 - Report not found!
+      </h1>
 
-        <v-alert
-          class="mt-4"
-          type="error"
-          density="compact"
-          variant="outlined"
-        >
-          The report (
-          report ID: <i>{{ route.query["report-id"] }}</i>,
-          report hash: <i>{{ route.query["report-hash"] }}</i>,
-          file path:
-          <i>"{{ route.query["report-filepath"] }}"</i>
-          ) was removed from the database.
+      <v-alert
+        class="mt-4"
+        type="error"
+        density="compact"
+        variant="outlined"
+      >
+        The report (
+        report ID: <i>{{ route.query["report-id"] }}</i>,
+        report hash: <i>{{ route.query["report-hash"] }}</i>,
+        file path:
+        <i>"{{ route.query["report-filepath"] }}"</i>
+        ) was removed from the database.
 
-          <span v-if="!route.query['report-hash']">
-            Unfortunately, your hyperlink was copied from an older version of
-            CodeChecker and the request does not contain the <i>report-hash</i>
-            parameter which could be used as a fallback mechanism.
-          </span>
-        </v-alert>
-      </v-col>
-    </v-row>
+        <span v-if="!route.query['report-hash']">
+          Unfortunately, your hyperlink was copied from an older version of
+          CodeChecker and the request does not contain the <i>report-hash</i>
+          parameter which could be used as a fallback mechanism.
+        </span>
+      </v-alert>
+    </v-col>
   </v-container>
 
   <splitpanes

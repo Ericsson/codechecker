@@ -1,5 +1,5 @@
 <template>
-  <span :data-id="item.id">
+  <span :data-id="item.id" class="text-caption">
     <span v-if="item.kind === ReportTreeKind.REPORT">
       L{{ item.report.line }} &ndash; {{ item.report.checkerId }}
       [{{ item.report.bugPathLength }}]

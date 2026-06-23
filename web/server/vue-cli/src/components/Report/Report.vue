@@ -122,7 +122,14 @@
             >
               <v-checkbox
                 v-model="showArrows"
-                class="show-arrows mx-2 my-0 align-center justify-center"
+                class="
+                  show-arrows
+                  mx-2
+                  my-0
+                  align-center
+                  justify-center
+                  text-caption
+                "
                 label="Show arrows"
                 density="compact"
                 hide-details
@@ -196,7 +203,7 @@
                     <span
                       v-if="sourceFile"
                       :title="`Tracking branch: ${trackingBranch}`"
-                      class="text-grey text-darken-3"
+                      class="text-grey text-darken-3 text-body-2"
                     >
                       <v-icon class="mr-0" small>mdi-source-branch</v-icon>
                       ({{ truncate(trackingBranch, 20) }})
@@ -219,10 +226,13 @@
                     class="file-path py-0 pl-1"
                     align-self="center"
                   >
-                    <copy-btn v-if="sourceFile" :value="sourceFile.filePath" />
+                    <copy-btn
+                      v-if="sourceFile"
+                      :value="sourceFile.filePath"
+                    />
                     <span
                       v-if="sourceFile"
-                      class="file-path"
+                      class="file-path text-body-2"
                       :title="`\u200E${sourceFile.filePath}`"
                     >
                       {{ sourceFile.filePath }}
@@ -449,6 +459,17 @@ const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
 );
 
+const compactTheme = EditorView.theme({
+  "&": {
+    fontSize: "12px",
+  },
+  ".cm-gutterElement": {
+    fontSize: "12px",
+    paddingLeft: "4px",
+    paddingRight: "4px"
+  }
+});
+
 watch(enableBlameView, async () => {
   if (enableBlameView.value) {
     await gitBlame.loadBlameView();
@@ -543,7 +564,8 @@ onMounted(() => {
       }),
       markField,
       lineWidgetField(parentAppContext),
-      gitBlame.blameCompartment.of([])
+      gitBlame.blameCompartment.of([]),
+      compactTheme
     ]
   });
 
@@ -1082,5 +1104,38 @@ function truncate(text, length) {
 .blame-gutter {
   width: 400px;
   background-color: #f7f7f7;
+}
+</style>
+
+<style lang="scss" scoped>
+:deep(.show-arrows .v-input__control .v-selection-control) {
+  min-height: 0;
+  max-height: 30px;
+}
+
+:deep(.select-review-status .v-input__control .v-field) {
+  min-height: 0;
+  max-height: 30px;
+}
+
+:deep(
+  .select-review-status
+  .v-input__control
+  .v-field
+  .v-field__field
+  .v-field__input
+  ) {
+  min-height: 0;
+  max-height: 30px;
+}
+
+:deep(.select-review-status .v-input__control .v-field .v-field__input) {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+:deep(.select-review-status .v-input__control .v-field .v-field__append-inner) {
+  min-height: 0;
+  max-height: 30px;
 }
 </style>
