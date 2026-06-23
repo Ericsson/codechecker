@@ -31,7 +31,7 @@
           <slot name="prepend-toolbar-items" />
 
           <v-btn
-            icon="mdi-delete"
+            icon="mdi-close-circle"
             size="small"
             variant="plain"
             @click.stop="emit('clear');"

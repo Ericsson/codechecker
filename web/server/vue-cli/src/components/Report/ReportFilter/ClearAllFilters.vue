@@ -3,7 +3,7 @@
     id="clear-all-filter-btn"
     color="primary"
     variant="outlined"
-    prepend-icon="mdi-delete"
+    prepend-icon="mdi-close-circle"
     @click="clearAllFilters"
   >
     Clear All Filters
