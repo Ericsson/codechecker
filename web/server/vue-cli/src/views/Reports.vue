@@ -279,7 +279,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
@@ -328,10 +328,10 @@ const itemsPerPage = ref(
 );
 
 const sortBy = ref(
-  route.query["sort-by"] 
-    ? [ { 
-      key: route.query["sort-by"], 
-      order: route.query["sort-desc"] === "true" ? "desc" : "asc" 
+  route.query["sort-by"]
+    ? [ {
+      key: route.query["sort-by"],
+      order: route.query["sort-desc"] === "true" ? "desc" : "asc"
     } ]
     : [ { key: "name", order: "asc" } ]
 );
@@ -428,9 +428,6 @@ const openedTreeItems = ref([]);
 const allReportsFileCounts = ref({});
 const fileSeverities = ref({});
 const treeItems = ref([]);
-const runIdsUnwatch = ref(null);
-const reportFilterUnwatch = ref(null);
-const cmpDataUnwatch = ref(null);
 
 const runIds = computed(function() {
   return store.getters[`${namespace}/getRunIds`];
@@ -816,37 +813,6 @@ function prettifyDate(date) {
 function getBugPathLenColor(length) {
   return bugPathLenColor.getBugPathLenColor(length);
 }
-
-function registerWatchers() {
-  unregisterWatchers();
-
-  runIdsUnwatch.value = watch(runIds, () => {
-    refresh();
-  });
-
-  reportFilterUnwatch.value = watch(reportFilter, () => {
-    refresh();
-  }, { deep: true });
-
-  cmpDataUnwatch.value = watch(cmpData, () => {
-    refresh();
-  }, { deep: true });
-}
-
-function unregisterWatchers() {
-  runIdsUnwatch.value?.();
-  reportFilterUnwatch.value?.();
-  cmpDataUnwatch.value?.();
-}
-
-onMounted(() => {
-  registerWatchers();
-  refresh();
-});
-
-onBeforeUnmount(() => {
-  unregisterWatchers();
-});
 </script>
 
 <style lang="scss">
