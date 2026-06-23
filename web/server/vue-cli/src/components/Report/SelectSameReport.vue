@@ -4,7 +4,6 @@
     :items="items"
     :hide-details="true"
     class="select-same-report small"
-    label="Found in"
     item-title="label"
     item-value="id"
     height="0"

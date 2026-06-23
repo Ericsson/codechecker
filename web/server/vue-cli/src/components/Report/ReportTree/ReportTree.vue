@@ -10,6 +10,8 @@
     item-value="id"
     open-on-click
     density="compact"
+    slim
+    fluid
     @update:activated="onClick"
   >
     <template v-slot:prepend="{ item }">
@@ -22,11 +24,15 @@
         &nbsp;
       </span>
 
-      <report-tree-icon :item="item" />
+      <report-tree-icon
+        :item="item"
+        size="22"
+      />
 
       <review-status-icon
         v-if="item.kind === ReportTreeKind.REPORT"
         :status="parseInt(item.report.reviewData.status)"
+        size="22"
       />
     </template>
 
@@ -284,11 +290,7 @@ function isTheReportFileChanged() {
 </script>
 
 <style lang="scss" scoped>
-:deep(.v-treeview-item) {
-  min-height: 25px;
-}
-
-:deep(.v-treeview-item__level) {
-  width: 18px;
+:deep(.v-list-item) {
+  min-height: 20px !important;
 }
 </style>
