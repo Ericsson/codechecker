@@ -264,6 +264,10 @@ function getProviders() {
 }
 
 function oauth(provider) {
+  const returnTo = route.query["return_to"];
+  if (returnTo) {
+    localStorage.setItem("return_to", returnTo);
+  }
   new Promise(resolve => {
     localStorage.setItem("oauth_provider", provider);
     authService.getClient().createLink(provider,

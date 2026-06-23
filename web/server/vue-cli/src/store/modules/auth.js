@@ -66,7 +66,7 @@ const actions = {
           "oauth", credentials.provider + "@" + credentials.url,
           handleThriftError(token => {
             context.commit(SET_AUTH, {
-              userName: "OAuth @" + credentials.provider,
+              userName: null,
               token: token
             });
             resolve(token);

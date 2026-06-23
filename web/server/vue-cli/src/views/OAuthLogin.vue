@@ -61,8 +61,9 @@ function detectCallback() {
         success.value = true;
         error.value = false;
 
-        const _w = window.location;
-        window.location.href = _w.origin + _w.pathname;
+        const returnTo = localStorage.getItem("return_to");
+        localStorage.removeItem("return_to");
+        router.replace(returnTo || { name: "products" });
       }).catch(_err => {
         errorMsg.value = `Failed to log in! ${_err.message}`;
         error.value = true;
