@@ -7,6 +7,7 @@ module.exports = {
   page_objects_path: [ "e2e/pages" ],
   custom_commands_path: [ "e2e/commands" ],
   output_folder: "e2e/output",
+  backwards_compatibility_mode: true,
 
   test_settings: {
     default: {
