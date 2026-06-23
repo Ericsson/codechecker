@@ -353,7 +353,7 @@ function updateUrl() {
   const _itemsPerPage =
     itemsPerPage.value === _defaultItemsPerPage
       ? undefined
-      : itemsPerPage;
+      : itemsPerPage.value;
 
   const _page = page.value === 1 ? undefined : page.value;
   const _sortBy = sortBy.value?.[0]?.key;
