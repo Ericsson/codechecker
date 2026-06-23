@@ -2,7 +2,6 @@
   <v-select
     v-model="activePresetId"
     clearable
-    clear-icon="mdi-delete"
     item-title="name"
     item-value="id"
     label="Presets"
@@ -41,7 +40,7 @@
                 v-else
                 size="large"
               >
-                mdi-close-circle
+                mdi-delete
               </v-icon>
             </v-btn>
           </v-list-item-action>
