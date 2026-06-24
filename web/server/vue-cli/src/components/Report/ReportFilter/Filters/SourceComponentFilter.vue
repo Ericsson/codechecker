@@ -21,12 +21,17 @@
         />
       </template>
       <template v-slot:prepend-toolbar-items>
-        <v-icon
-          start
-          class="mr-1"
+        <v-chip
+          color="grey"
+          variant="outlined"
+          size="small"
         >
-          {{ filterIconNames[reportFilterMode] }}
-        </v-icon>
+          <v-icon
+            :icon="filterIconNames[reportFilterMode]"
+            class="start"
+            color="text-grey-darken-1"
+          />
+        </v-chip>
         <v-btn
           v-if="administrating"
           class="manage-components-btn"

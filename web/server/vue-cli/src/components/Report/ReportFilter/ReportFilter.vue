@@ -847,24 +847,7 @@ function syncGroupPanels() {
   activeDatePanelId.value =
     detectionDateFilterRef.value.panel ||
     fixDateFilterRef.value.panel ? 0 : undefined;
-  console.error("detectionDateFilterRef=", detectionDateFilterRef.value.panel);
-  console.error("fixDateFilterRef=", fixDateFilterRef.value.panel);
-  console.error("activeDatePanelId=", activeDatePanelId.value);
 }
-/*function deletePreset(preset_id) {
-  new Promise(resolve => {
-    ccService.getClient().deleteFilterPreset(preset_id,
-      handleThriftError(deleted_pr_id => {
-        resolve(deleted_pr_id);
-      })
-    );
-  })
-    .then(deleted_pr_id => {
-      handleThriftError("OK", deleted_pr_id);
-      }).catch(err => {
-        handleThriftError("FAILURE", err);
-        });
-        }*/
 
 // helper functions
 function toTitleCase(word) {
@@ -1171,22 +1154,6 @@ async function clearToolbarSilently() {
   _filters.forEach(f => f.unregisterWatchers());
   await Promise.all(_filters.map(f => f.clear(false)));
 }
-
-/*function listFilterPreset() {
-  new Promise(
-    resolve => {
-      ccService.getClient().listFilterPreset(
-        handleThriftError(preset_list => {
-          resolve(preset_list);
-          })
-      );
-    })
-    .then(preset_list => {
-      handleThriftError("OK", preset_list);
-    }).catch(err => {
-      handleThriftError("FAILURE", err);
-    });
-}*/
 </script>
 
 <style lang="scss">
