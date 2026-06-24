@@ -41,7 +41,8 @@
             v-else-if="key === 'bugPathLength'"
             :color="bugPathLenColor.getBugPathLenColor(value[key])"
           >
-            {{ value[key] }}
+            <span v-if="value[key]">{{ value[key] }}</span>
+            <span v-else>-</span>
           </v-chip>
 
           <span v-else>
