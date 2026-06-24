@@ -134,6 +134,7 @@ function setSelectedItems(_selectedItems/*, updateUrl=true*/) {
 function setFromDateTime(_dateTime, _updateUrl=true) {
   fromDateTime.value = _dateTime;
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     baseSelectOptionFilter.selectedItems.value = [];
@@ -144,6 +145,7 @@ function setFromDateTime(_dateTime, _updateUrl=true) {
 function setToDateTime(_dateTime, _updateUrl=true) {
   toDateTime.value = _dateTime;
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     baseSelectOptionFilter.selectedItems.value = [];
@@ -232,12 +234,21 @@ function clear(updateUrl) {
   }
 }
 
+async function afterInit() {
+  baseSelectOptionFilter.registerWatchers({
+    onRunIdsChange: baseSelectOptionFilter.update,
+    onReportFilterChange: baseSelectOptionFilter.update
+  });
+  baseSelectOptionFilter.update();
+  initPanel();
+}
+
 defineExpose({
   beforeInit: baseSelectOptionFilter.beforeInit,
-  afterInit: baseSelectOptionFilter.afterInit,
   update: baseSelectOptionFilter.update,
   registerWatchers: baseSelectOptionFilter.registerWatchers,
   unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  panel: baseSelectOptionFilter.panel,
 
   setSelectedItems,
   getUrlState,
@@ -245,7 +256,8 @@ defineExpose({
   initPanel,
   clear,
   updateReportFilter,
-  fetchItems
+  fetchItems,
+  afterInit
 }
 );
 </script>

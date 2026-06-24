@@ -182,6 +182,7 @@ defineExpose({
   unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
   initByUrl: baseSelectOptionFilter.initByUrl,
   getUrlState: baseSelectOptionFilter.getUrlState,
+  panel: baseSelectOptionFilter.panel,
 
   id,
   encodeValue,

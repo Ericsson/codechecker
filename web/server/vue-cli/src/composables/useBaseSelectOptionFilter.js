@@ -18,6 +18,7 @@ export function useBaseSelectOptionFilter(namespaceRef) {
   const setSelectedItems = (items, updateUrl = true) => {
     selectedItems.value = items;
     updateReportFilter.value();
+    initPanel();
 
     if (updateUrl) {
       bus.emit("update:url");
