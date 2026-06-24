@@ -6,8 +6,8 @@
   >
     <template v-slot:activator="{}">
       <v-btn
-        icon
-        size="x-small"
+        size="small"
+        variant="text"
         @click="copy"
       >
         <v-icon v-if="copyInProgress" color="green">
@@ -15,7 +15,7 @@
         </v-icon>
 
         <v-icon v-else>
-          mdi-content-paste
+          mdi-content-copy
         </v-icon>    
       </v-btn>
     </template>

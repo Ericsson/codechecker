@@ -10,10 +10,14 @@
     >
       <div
         class="d-flex justify-center align-center w-100"
-        style="background-color: #ff9800; height: 24px; color: black;"
+        style="background-color: #ff9800; height: 24px; color: #573300;"
       >
-        <v-icon>mdi-bullhorn-outline</v-icon>
-        <span class="font-weight-semibold ml-2">
+        <v-icon
+          size="x-small"
+        >
+          mdi-bullhorn-outline
+        </v-icon>
+        <span class="font-weight-semibold ml-1 text-caption">
           {{ announcement }}
         </span>
       </div>

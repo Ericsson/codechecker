@@ -11,7 +11,7 @@
   <v-avatar
     v-else
     :color="color"
-    size="24"
+    :size="size"
   >
     <span class="text-caption text-white">{{ index }}</span>
   </v-avatar>
@@ -21,7 +21,8 @@
 import { computed } from "vue";
 const props = defineProps({
   type: { type: String, default: null },
-  index: { type: [ Number, String ], default: null }
+  index: { type: [ Number, String ], default: null },
+  size: { type: Number, default: 24 }
 });
 
 const color = computed(() => {

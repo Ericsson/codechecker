@@ -1,6 +1,7 @@
 <template>
   <v-expansion-panels
     v-model="panelOpen"
+    flat
   >
     <v-expansion-panel
       eager

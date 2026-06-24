@@ -143,6 +143,17 @@ const vuetify = createVuetify({
         }
       }
     }
+  },
+  defaults: {
+    VCard: {
+      density: "comfortable",
+    },
+    VTable: {
+      density: "compact",
+    },
+    VDataTableServer: {
+      density: "compact",
+    }
   }
 });
 
