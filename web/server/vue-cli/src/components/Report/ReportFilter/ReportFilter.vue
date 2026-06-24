@@ -183,7 +183,7 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <baseline-run-filter
-                :ref="setFilterRef"
+                :ref="setBaselineRunFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -191,7 +191,7 @@
               <v-divider />
 
               <baseline-open-reports-date-filter
-                :ref="setFilterRef"
+                :ref="setBaselineOpenReportsDateFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -230,7 +230,7 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <compared-to-run-filter
-                :ref="setFilterRef"
+                :ref="setComparedToRunFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -238,7 +238,7 @@
               <v-divider />
 
               <compared-to-open-reports-date-filter
-                :ref="setFilterRef"
+                :ref="setComparedToOpenReportsDateFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -247,7 +247,7 @@
 
               <compared-to-diff-type-filter
                 v-if="showDiffType"
-                :ref="setFilterRef"
+                :ref="setComparedToDiffTypeFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -385,7 +385,7 @@
             <v-expansion-panel-text class="pa-1">
               <detection-date-filter
                 id="detection-date-filter"
-                :ref="setFilterRef"
+                :ref="setDetectionDateFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -394,7 +394,7 @@
 
               <fix-date-filter
                 id="fix-date-filter"
-                :ref="setFilterRef"
+                :ref="setFixDateFilterRef"
                 :namespace="namespace"
                 @update:url="updateUrl"
               />
@@ -512,9 +512,50 @@ const props = defineProps({
 
 const emit = defineEmits([ "set-refresh-filter-state", "refresh" ]);
 
-const activeBaselinePanelId = ref(0);
-const activeCompareToPanelId = ref(0);
-const activeDatePanelId = ref(0);
+const activeBaselinePanelId = ref(undefined);
+const baselineRunFilterRef = ref(null);
+const setBaselineRunFilterRef = el => {
+  baselineRunFilterRef.value = el;
+  setFilterRef(el);
+};
+const baselineOpenReportsDateFilterRef = ref(null);
+const setBaselineOpenReportsDateFilterRef = el => {
+  baselineOpenReportsDateFilterRef.value = el;
+  setFilterRef(el);
+};
+
+const activeCompareToPanelId = ref(undefined);
+const comparedToRunFilterRef = ref(null);
+const setComparedToRunFilterRef = el => {
+  comparedToRunFilterRef.value = el;
+  setFilterRef(el);
+};
+
+const comparedToOpenReportsDateFilterRef = ref(null);
+const setComparedToOpenReportsDateFilterRef = el => {
+  comparedToOpenReportsDateFilterRef.value = el;
+  setFilterRef(el);
+};
+
+const comparedToDiffTypeFilterRef = ref(null);
+const setComparedToDiffTypeFilterRef = el => {
+  comparedToDiffTypeFilterRef.value = el;
+  setFilterRef(el);
+};
+
+const activeDatePanelId = ref(undefined);
+const detectionDateFilterRef = ref(null);
+const setDetectionDateFilterRef = el => {
+  detectionDateFilterRef.value = el;
+  setFilterRef(el);
+};
+
+const fixDateFilterRef = ref(null);
+const setFixDateFilterRef = el => {
+  fixDateFilterRef.value = el;
+  setFilterRef(el);
+};
+
 const filters = ref([]);
 const isInitializing = ref(false);
 const savePresetDialogOpen = ref(false);
@@ -590,9 +631,11 @@ function beforeInit() {
 function afterInit() {
   emit("refresh");
   registerWatchers();
+  syncGroupPanels();
 }
 
 function updateUrl() {
+  syncGroupPanels();
   const _filters = filters.value;
 
   if (!_filters?.length) {
@@ -670,18 +713,10 @@ async function initByUrl() {
       if (filter?.afterInit) filter?.afterInit?.();
     });
     afterInit();
-
-    preparePanelsOnInit();
   }).finally(() => {
     isInitializing.value = false;
   });
 
-}
-
-function preparePanelsOnInit() {
-  if (!reportFilter.value.date) {
-    activeDatePanelId.value = undefined;
-  }
 }
 
 async function clearAllFilters() {
@@ -797,6 +832,24 @@ function renamePresetDialog() {
   saveMode.value = "rename";
   savePresetDialogOpen.value = true;
   presetName.value = presetMenuRef.value.activePresetName;
+}
+
+function syncGroupPanels() {
+  activeBaselinePanelId.value =
+    baselineRunFilterRef.value.panel ||
+    baselineOpenReportsDateFilterRef.value.panel ? 0 : undefined;
+
+  activeCompareToPanelId.value =
+    comparedToRunFilterRef.value.panel ||
+    comparedToOpenReportsDateFilterRef.value.panel ||
+    comparedToDiffTypeFilterRef.value.panel ? 0 : undefined;
+
+  activeDatePanelId.value =
+    detectionDateFilterRef.value.panel ||
+    fixDateFilterRef.value.panel ? 0 : undefined;
+  console.error("detectionDateFilterRef=", detectionDateFilterRef.value.panel);
+  console.error("fixDateFilterRef=", fixDateFilterRef.value.panel);
+  console.error("activeDatePanelId=", activeDatePanelId.value);
 }
 /*function deletePreset(preset_id) {
   new Promise(resolve => {

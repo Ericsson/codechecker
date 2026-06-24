@@ -122,6 +122,7 @@ defineExpose({
   afterInit: baseFilter.afterInit,
   registerWatchers: baseFilter.registerWatchers,
   unregisterWatchers: baseFilter.unregisterWatchers,
+  panel: baseFilter.panel,
 
   id,
   updateReportFilter,
