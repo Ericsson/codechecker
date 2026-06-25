@@ -379,6 +379,7 @@ async function setSelectedItems(runItems, tagItems, updateUrl=true) {
   prevSelectedTagItems.value = tagItems;
 
   await updateReportFilter();
+  baseSelectOptionFilter.initPanel();
 
   if (updateUrl) {
     emit("update:url");
@@ -451,6 +452,7 @@ defineExpose({
   update: baseSelectOptionFilter.update,
   registerWatchers: baseSelectOptionFilter.registerWatchers,
   unregisterWatchers: baseSelectOptionFilter.unregisterWatchers,
+  panel: baseSelectOptionFilter.panel,
 
   id,
   initByUrl,
