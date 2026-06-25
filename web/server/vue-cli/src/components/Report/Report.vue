@@ -305,6 +305,7 @@ import {
 
 import { useRoute } from "vue-router";
 
+import { basicSetup } from "codemirror";
 import {
   Decoration,
   EditorView,
@@ -557,6 +558,7 @@ onMounted(() => {
   editor.value = new EditorView({
     parent: editorContainer.value,
     extensions: [
+      basicSetup,
       lineNumbers(),
       highlightSelectionMatches(),
       EditorState.readOnly.of(true),
