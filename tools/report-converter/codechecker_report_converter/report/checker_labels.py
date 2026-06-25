@@ -6,10 +6,12 @@
 #
 # -------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, Union
+from typing import Optional
 
 
 class CheckerLabels:
-    severity: Callable[[str], str]
-    label_of_checker: Callable[
-        [str, str, Optional[str]], Union[str, List[str]]]
+    def severity(self, a: str, b: Optional[str] = None) -> str:
+        raise NotImplementedError()
+
+    def label_of_checker(self, a: str, b: str, c: Optional[str] = None) -> str:
+        raise NotImplementedError()
