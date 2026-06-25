@@ -25,7 +25,7 @@
               :color="strToColor(commit.author.name)"
               size="15"
             >
-              <span class="white--text">
+              <span class="text-white">
                 {{ avatarLabel }}
               </span>
             </v-avatar>
@@ -48,7 +48,7 @@
               <v-avatar
                 :color="strToColor(commit.author.name)"
               >
-                <span class="white--text">
+                <span class="text-white">
                   {{ avatarLabel }}
                 </span>
               </v-avatar>

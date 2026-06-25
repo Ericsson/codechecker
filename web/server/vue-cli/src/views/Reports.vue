@@ -144,7 +144,7 @@
 
         <template #item.checkerId="{ item }">
           <span
-            class="checker-name text-primary"
+            class="checker-name text-primary text-decoration-underline"
             @click="openCheckerDocDialog(item.checkerId, item.analyzerName)"
           >
             {{ item.checkerId }}

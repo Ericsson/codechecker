@@ -5,7 +5,7 @@
   >
     <v-row align="center">
       <v-col>
-        <h1 class="display-2 primary--text">
+        <h1 class="display-2 text-primary">
           Whoops, 404
         </h1>
 

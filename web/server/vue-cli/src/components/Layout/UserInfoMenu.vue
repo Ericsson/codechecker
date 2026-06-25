@@ -17,7 +17,7 @@
           :value="currentUser"
           :size="24"
           class="mr-2"
-          txt-class="font-weight-bold white--text"
+          txt-class="font-weight-bold text-white"
         />
         {{ currentUser }}
       </v-btn>
