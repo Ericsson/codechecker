@@ -1,13 +1,15 @@
 <template>
-  <v-data-table
-    v-model:options="pagination"
+  <v-data-table-server
+    v-model:page="page"
+    v-model:items-per-page="itemsPerPage"
+    v-model:sort-by="sortBy"
+    v-model:items-per-page-options="itemsPerPageOptions"
     :headers="headers"
     :items="rules"
     :items-length="totalItems"
     :loading="loading"
-    :mobile-breakpoint="1000"
     loading-text="Loading review status rules..."
-    :items-per-page-options="itemsPerPageOptions"
+    :mobile-breakpoint="1000"
     item-key="reportHash"
   >
     <template v-slot:top>
@@ -144,7 +146,7 @@
         @click="editReviewStatusRule(item)"
       />
     </template>
-  </v-data-table>
+  </v-data-table-server>
 </template>
 
 <script setup>
@@ -196,7 +198,6 @@ const sortBy = ref(
 );
 
 const initialized = ref(false);
-
 const totalItems = ref(0);
 const rules = ref([]);
 const filter = ref(null);
