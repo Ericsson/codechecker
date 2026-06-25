@@ -319,8 +319,17 @@ import {
   openSearchPanel,
   searchKeymap
 } from "@codemirror/search";
-import { EditorState, StateEffect, StateField } from "@codemirror/state";
+import {
+  Compartment,
+  EditorState,
+  StateEffect,
+  StateField
+} from "@codemirror/state";
 import { cpp } from "@codemirror/lang-cpp";
+import { java } from "@codemirror/lang-java";
+import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
+import { go } from "@codemirror/lang-go";
 
 import mitt from "mitt";
 
@@ -388,6 +397,7 @@ const instance = getCurrentInstance();
 const parentAppContext = instance.appContext;
 
 const gitBlame = useGitBlame(editor, sourceFile);
+const languageCompartment = new Compartment();
 
 const vFillHeight = FillHeight;
 
@@ -552,6 +562,18 @@ class AdvancedLineWidget extends WidgetType {
   }
 }
 
+function getLanguageExtension(filePath) {
+  const ext = (filePath || "").split(".").pop().toLowerCase();
+  switch (ext) {
+  case "py": return python();
+  case "java": return java();
+  case "js": case "jsx": case "mjs": return javascript();
+  case "ts": case "tsx": return javascript({ typescript: true });
+  case "go": return go();
+  default: return cpp();
+  }
+}
+
 onMounted(() => {
   document.addEventListener("keydown", findText);
 
@@ -562,7 +584,7 @@ onMounted(() => {
       lineNumbers(),
       highlightSelectionMatches(),
       EditorState.readOnly.of(true),
-      cpp(),
+      languageCompartment.of(cpp()),
       keymap.of(searchKeymap),
       EditorView.updateListener.of(update => {
         if (update.viewportChanged) {
@@ -721,7 +743,10 @@ async function setSourceFileData(fileId) {
       from: 0,
       to: editor.value.state.doc.length,
       insert: _sourceFile.fileContent,
-    }
+    },
+    effects: languageCompartment.reconfigure(
+      getLanguageExtension(_sourceFile.filePath)
+    )
   });
 
   if (enableBlameView.value) {
