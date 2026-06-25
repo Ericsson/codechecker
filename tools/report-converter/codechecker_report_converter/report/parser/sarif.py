@@ -359,6 +359,25 @@ class Parser(BaseParser):
             }]
         }
 
+        # Set `suppressions` property.
+        if (rs := report.review_status) and rs.status != "unreviewed":
+            suppression = {}
+
+            if rs.in_source:
+                suppression["kind"] = "inSource"
+            else:
+                suppression["kind"] = "external"
+
+            if rs.status in ["suppress", "false_positive", "intentional"]:
+                suppression["status"] = "accepted"
+            elif rs.status == "confirmed":
+                suppression["status"] = "rejected"
+
+            suppression["justification"] = rs.message.decode('utf-8')
+
+            result["suppressions"] = [suppression]
+
+        # Set `codeFlows` property.
         locations = []
 
         if report.bug_path_events:
