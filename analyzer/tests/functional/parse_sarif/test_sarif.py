@@ -103,6 +103,29 @@ class TestParseSarif(unittest.TestCase):
 
         self.__run_cmd(analyze_cmd)
 
+    def test_parse_sarif_rules(self):
+        self.__log_and_analyze()
+
+        parse_sarif_cmd = [self._codechecker_cmd, "parse", self.report_dir,
+                           "-e", "sarif"]
+        out = self.__run_cmd(parse_sarif_cmd)
+        parsed_json = json.loads(out)
+
+        rules = parsed_json['runs'][0]['tool']['driver']['rules']
+        self.assertEqual(len(rules), 1)
+
+        self.assertEqual(rules[0], {
+            'id': 'core.DivideZero',
+            'fullDescription': {
+                'text': 'Division by zero'
+            },
+            # pylint: disable-next=line-too-long
+            'helpUri': 'https://clang.llvm.org/docs/analyzer/checkers.html#core-dividezero-c-c-objc',  # noqa
+            'defaultConfiguration': {
+                'level': 'error'
+            }
+        })
+
     def test_parse_sarif_suppression_source(self):
         self.__log_and_analyze()
 

@@ -310,16 +310,34 @@ class Parser(BaseParser):
         """ Converts the given reports to sarif format. """
         tool_name, tool_version = get_tool_info()
 
+        checker_labels = self._checker_labels
+
         rules = {}
         results = []
         for report in reports:
-            if report.checker_name not in rules:
-                rules[report.checker_name] = {
-                    "id": report.checker_name,
+            if (checker_name := report.checker_name) not in rules:
+                rules[checker_name] = {
+                    "id": checker_name,
                     "fullDescription": {
                         "text": report.message
                     }
                 }
+
+                if checker_labels:
+                    doc_url = checker_labels.label_of_checker(
+                            checker_name, "doc_url", report.analyzer_name)
+                    if doc_url:
+                        if isinstance(doc_url, list):
+                            doc_url = doc_url[0]
+                        rules[checker_name]["helpUri"] = doc_url
+
+                    severity = checker_labels.severity(
+                            checker_name,
+                            report.analyzer_name)  # type: ignore[call-arg]
+                    if severity:
+                        rules[checker_name]["defaultConfiguration"] = {
+                            "level": self._to_level(severity)
+                        }
 
             results.append(self._create_result(report))
 
@@ -457,6 +475,16 @@ class Parser(BaseParser):
                 }
             }
         }
+
+    def _to_level(self, severity: str) -> str:
+        """ Map severity label value to level (§3.50.3). """
+        if severity in ["STYLE", "LOW"]:
+            return "note"
+        elif severity == "MEDIUM":
+            return "warning"
+        elif severity in ["HIGH", "CRITICAL"]:
+            return "error"
+        return "warning"
 
     def write(self, data: Any, output_file_path: str):
         """ Creates an analyzer output file from the given data. """
