@@ -11,7 +11,7 @@
 
     <v-card>
       <v-card-title
-        class="headline primary white--text"
+        class="headline primary text-white"
         primary-title
       >
         Failed files

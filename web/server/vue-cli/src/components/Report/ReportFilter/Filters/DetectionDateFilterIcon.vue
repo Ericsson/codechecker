@@ -6,7 +6,7 @@
     size="24"
     tile
   >
-    <span class="white--text font-weight-bold">T</span>
+    <span class="text-white font-weight-bold">T</span>
   </v-avatar>
 
   <v-avatar
@@ -16,7 +16,7 @@
     size="24"
     tile
   >
-    <span class="white--text font-weight-bold">Y</span>
+    <span class="text-white font-weight-bold">Y</span>
   </v-avatar>
 
   <v-avatar
@@ -26,7 +26,7 @@
     size="24"
     tile
   >
-    <span class="white--text font-weight-bold">7</span>
+    <span class="text-white font-weight-bold">7</span>
   </v-avatar>
 
   <v-avatar
@@ -36,7 +36,7 @@
     size="24"
     tile
   >
-    <span class="white--text font-weight-bold">M</span>
+    <span class="text-white font-weight-bold">M</span>
   </v-avatar>
 
   <v-avatar
@@ -46,7 +46,7 @@
     size="24"
     tile
   >
-    <span class="white--text font-weight-bold">Y</span>
+    <span class="text-white font-weight-bold">Y</span>
   </v-avatar>
 </template>
 
