@@ -27,6 +27,10 @@
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-go": "^6.0.1",
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
     "@mdi/font": "^6.5.95",
     "chart.js": "^4.0.0",
     "chartjs-plugin-datalabels": "^2.0.0",
