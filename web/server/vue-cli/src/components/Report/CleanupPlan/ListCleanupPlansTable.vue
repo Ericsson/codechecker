@@ -2,6 +2,8 @@
   <v-data-table
     :headers="headers"
     :items="items"
+    :items-per-page="25"
+    :items-per-page-options="itemsPerPageOptions"
     :loading="loading"
     loading-text="Loading cleanup plans..."
     no-data-text="There aren't any cleanup plan that match."
@@ -84,6 +86,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits([ "remove", "close", "reopen", "edit" ]);
+
+const itemsPerPageOptions = [
+  { value: 25, title: "25" },
+  { value: 50, title: "50" },
+  { value: 100, title: "100" }
+];
 
 const headers = computed(() => [
   {

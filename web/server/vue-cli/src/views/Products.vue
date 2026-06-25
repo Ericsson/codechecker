@@ -4,7 +4,7 @@
       :headers="headers"
       :items="products"
       :loading="loading"
-      :footer-props="footerProps"
+      :items-per-page-options="itemsPerPageOptions"
       loading-text="Loading products..."
       item-key="endpoint"
       :items-per-page="25"
@@ -156,7 +156,12 @@ import {
   ProductNameColumn
 } from "@/components/Product/";
 
-const itemsPerPageOptions = ref([ 25 ]);
+const itemsPerPageOptions = [
+  { value: 25, title: "25" },
+  { value: 50, title: "50" },
+  { value: 100, title: "100" }
+];
+
 const sortBy = ref(null);
 const sortDesc = ref(null);
 const page = ref(null);
@@ -169,10 +174,6 @@ const isAdminOfAnyProduct = ref(false);
 const pagination = computed(() => ({
   sortBy: sortBy.value ? [ sortBy.value ] : [ ],
   sortDesc: sortDesc.value !== undefined ? [ !!sortDesc.value ] : [ ]
-}));
-
-const footerProps = computed(() => ({
-  itemsPerPageOptions: itemsPerPageOptions.value
 }));
 
 watch(pagination, () => {
