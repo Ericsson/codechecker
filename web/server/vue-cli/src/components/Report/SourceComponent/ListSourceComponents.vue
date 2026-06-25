@@ -2,6 +2,8 @@
   <v-data-table
     :headers="headers"
     :items="processedComponents"
+    :items-per-page="25"
+    :items-per-page-options="itemsPerPageOptions"
     :loading="loading"
   >
     <template v-slot:top>
@@ -89,6 +91,12 @@ const components = ref([]);
 const loading = ref(false);
 const selectedComponent = ref(null);
 const editDialog = ref(false);
+
+const itemsPerPageOptions = [
+  { value: 25, title: "25" },
+  { value: 50, title: "50" },
+  { value: 100, title: "100" }
+];
 
 const headers = [
   {
