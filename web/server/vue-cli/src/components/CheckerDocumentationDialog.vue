@@ -1,66 +1,50 @@
 <template>
-  <v-dialog
+  <ConfirmDialog
     v-model="dialog"
     content-class="documentation-dialog"
     max-width="600px"
+    title="Checker documentation"
+    :buttons="false"
   >
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
+    <template v-slot:content>
+      <p v-if="labels.length === 0" class="pt-4">
+        <strong>No documentation to this checker.</strong>
+      </p>
+      <v-row
+        v-for="val in formattedLabels"
+        v-else
+        :key="val[0]"
       >
-        Checker documentation
-
-        <v-spacer />
-
-        <v-btn
-          class="close-btn"
-          icon="mdi-close"
-          @click="dialog = false"
-        />
-      </v-card-title>
-
-      <v-card-text>
-        <v-container>
-          <p v-if="labels.length === 0" class="pt-4">
-            <strong>No documentation to this checker.</strong>
-          </p>
-          <v-row
-            v-for="val in formattedLabels"
-            v-else
-            :key="val[0]"
+        <v-col cols="4" align-self="center">
+          <strong>{{ formatLabel(val[0]) }}</strong>
+        </v-col>
+        <v-col>
+          <severity-icon
+            v-if="val[0] === 'severity'"
+            :status="val[1]"
+          />
+          <a
+            v-else-if="val[0] === 'doc_url' && val[1] !== 'Not available'"
+            :href="val[1]"
+            target="_blank"
           >
-            <v-col cols="4" align-self="center">
-              <strong>{{ formatLabel(val[0]) }}</strong>
-            </v-col>
-            <v-col>
-              <severity-icon
-                v-if="val[0] === 'severity'"
-                :status="val[1]"
-              />
-              <a
-                v-else-if="val[0] === 'doc_url' && val[1] !== 'Not available'"
-                :href="val[1]"
-                target="_blank"
-              >
-                {{ val[1] }}
-              </a>
-              <span v-else>
-                {{ val[1] }}
-              </span>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
+            {{ val[1] }}
+          </a>
+          <span v-else>
+            {{ val[1] }}
+          </span>
+        </v-col>
+      </v-row>
+    </template>
+  </ConfirmDialog>
 </template>
 
 <script setup>
+import { computed, ref, watch } from "vue";
 import { SeverityIcon } from "@/components/Icons";
 import { ccService, handleThriftError } from "@cc-api";
 import { Checker, Severity } from "@cc/report-server-types";
-import { computed, ref, watch } from "vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -104,13 +88,15 @@ const formattedLabels = computed(() => {
   return Object.entries(result).sort();
 });
 
-watch(() => props.modelValue, () => {
-  getCheckerDoc();
+watch(dialog, () => {
+  if (dialog.value) {
+    getCheckerDoc();
+  }
 });
 
 function getCheckerDoc() {
   ccService.getClient().getCheckerLabels([ props.checker ],
-    handleThriftError(labels => labels.value = labels[0]));
+    handleThriftError(result => labels.value = result[0]));
 }
 
 function formatLabel(key) {

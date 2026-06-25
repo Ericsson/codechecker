@@ -1,5 +1,5 @@
 <template>
-  <span :class="{ 'red--text': expired, 'font-weight-bold': expired }">
+  <span :class="{ 'text-red': expired, 'font-weight-bold': expired }">
     <span v-if="expired">
       <v-icon
         size="small"

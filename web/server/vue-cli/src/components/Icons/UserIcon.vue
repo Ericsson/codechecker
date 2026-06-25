@@ -20,7 +20,7 @@ const props = defineProps({
   value: { type: String, required: true },
   size: { type: Number, default: 48 },
   tile: { type: Boolean, default: false },
-  txtClass: { type: String, default: "font-weight-bold white--text title" },
+  txtClass: { type: String, default: "font-weight-bold text-white title" },
 });
 
 const color = useStrToColor();
