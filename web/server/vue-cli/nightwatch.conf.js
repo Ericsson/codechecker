@@ -13,30 +13,13 @@ module.exports = {
       launch_url: `http://${host}:${port}`,
       screenshots: {
         "path" : "e2e/screenshots"
-      }
-    },
-
-    selenium: {
-      selenium: {
-        start_process: true,
-        port: 4444,
-        host: "127.0.0.1",
-        server_path: require("selenium-server").path,
-        log_path: "e2e/output",
-        check_process_delay: 5000,
-        cli_args: {
-          "webdriver.gecko.driver": require("geckodriver").path,
-          // "webdriver.chrome.driver": require("chromedriver").path
-        }
       },
-
       webdriver: {
-        start_process: false
+        start_process: true
       }
     },
 
-    "selenium.chrome": {
-      extends: "selenium",
+    "chrome": {
       desiredCapabilities: {
         browserName: "chrome",
         chromeOptions : {
@@ -46,10 +29,17 @@ module.exports = {
       }
     },
 
-    "selenium.firefox": {
-      extends: "selenium",
+    "firefox": {
+      webdriver: {
+        start_process: true,
+        server_path: require("geckodriver").path
+      },
       desiredCapabilities: {
-        browserName: "firefox"
+        browserName: "firefox",
+        "moz:firefoxOptions": {
+          binary: "/bin/firefox-esr",
+          args: [ "--headless" ]
+        }
       }
     },
   }
