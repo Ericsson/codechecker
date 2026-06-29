@@ -38,7 +38,8 @@ def change_paths(string, path_modifier_fun):
     while i < len(string):
         # All strings that start with '/' (or './' or '../') and end with
         # whitespace are recognized as paths. Additionally any string
-        # immediately after a '-I' option (no whitespace between option and path).
+        # immediately after a '-I' option (no whitespace between
+        # option and path).
         # Note, this supports only POSIX paths.
         if string[i] == '/' or string[i:i + 2] == './' or\
                 string[i:i + 3] == '../' or string[i - 3:i] == ' -I':

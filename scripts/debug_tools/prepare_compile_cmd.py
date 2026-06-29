@@ -61,13 +61,17 @@ def prepare(compile_command_json, sources_root):
 
         cmd = entry['command']
         compiler, compiler_end = lib.find_path_end(cmd.lstrip(), 0)
-        entry['command'] = compiler +\
-            lib.change_paths(cmd[compiler_end:],
-                             lib.IncludePathModifier(sources_root_abs, working_dir))
+        entry['command'] = compiler + \
+            lib.change_paths(
+                cmd[compiler_end:],
+                lib.IncludePathModifier(
+                    sources_root_abs, working_dir))
 
-        entry['file'] =\
-            lib.change_paths(entry['file'],
-                             lib.IncludePathModifier(sources_root_abs, working_dir))
+        entry['file'] = \
+            lib.change_paths(
+                entry['file'],
+                lib.IncludePathModifier(
+                    sources_root_abs, working_dir))
 
         result_json.append(entry)
     return result_json
