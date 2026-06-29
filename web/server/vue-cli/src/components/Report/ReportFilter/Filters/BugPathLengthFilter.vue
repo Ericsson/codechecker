@@ -14,7 +14,7 @@
       </span>
     </template>
 
-    <v-form ref="form">
+    <v-form ref="formRef">
       <v-container
         class="py-0"
       >
@@ -27,9 +27,10 @@
           >
             <v-text-field
               :id="minId"
-              :model-value="minBugPathLength"
-              :rules="rules.bugPathLength"
+              v-model="minBugPathLength"
+              :rules="bugPathLengthMinRules"
               label="Min..."
+              type="number"
               @update:model-value="setMinBugPathLength"
             />
           </v-col>
@@ -42,9 +43,10 @@
           >
             <v-text-field
               :id="maxId"
-              :model-value="maxBugPathLength"
-              :rules="rules.bugPathLength"
+              v-model="maxBugPathLength"
+              :rules="bugPathLengthMaxRules"
               label="Max..."
+              type="number"
               @update:model-value="setMaxBugPathLength"
             />
           </v-col>
@@ -79,12 +81,19 @@ const minId = ref("min-bug-path-length");
 const maxId = ref("max-bug-path-length");
 const minBugPathLength = ref(null);
 const maxBugPathLength = ref(null);
-const rules = ref({
-  bugPathLength: [
-    v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
-  ]
-});
-const form = ref(null);
+const bugPathLengthMinRules = [
+  v => !v || Number(v) > 0 || "Must be positive!",
+  v => !v || !maxBugPathLength.value
+    || Number(v) <= Number(maxBugPathLength.value)
+    || "Min cannot be greater than Max"
+];
+const bugPathLengthMaxRules = [
+  v => !v || Number(v) > 0 || "Must be positive!",
+  v => !v || !minBugPathLength.value
+    || Number(v) >= Number(minBugPathLength.value)
+    || "Max cannot be less than Min"
+];
+const formRef = ref(null);
 
 const route = useRoute();
 
@@ -95,10 +104,16 @@ const selectedBugPathLengthTitle = computed(() => {
   ].join(", ");
 });
 
-function setMinBugPathLength(_bugPathLength, _updateUrl=true) {
-  if (form.value && !form.value.validate()) return;
+async function setMinBugPathLength(value, _updateUrl=true) {
+  if (!formRef.value) return;
 
-  minBugPathLength.value = _bugPathLength;
+  minBugPathLength.value = value;
+
+  const { valid } = await formRef.value.validate();
+  if (!valid) {
+    return;
+  }
+
   updateReportFilter();
 
   if (_updateUrl) {
@@ -106,10 +121,16 @@ function setMinBugPathLength(_bugPathLength, _updateUrl=true) {
   }
 }
 
-function setMaxBugPathLength(_bugPathLength, _updateUrl=true) {
-  if (form.value && !form.value.validate()) return;
+async function setMaxBugPathLength(value, _updateUrl=true) {
+  if (!formRef.value) return;
 
-  maxBugPathLength.value = _bugPathLength;
+  maxBugPathLength.value = value;
+
+  const { valid } = await formRef.value.validate();
+  if (!valid) {
+    return;
+  }
+
   updateReportFilter();
 
   if (_updateUrl) {
