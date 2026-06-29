@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Bug path length"
-    :panel="panel"
+    :panel-active="baseFilter.panel.value"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -74,8 +74,7 @@ const emit = defineEmits([
 ]);
 
 const baseFilter = useBaseFilter(toRef(props, "namespace"));
-
-const { panel, setReportFilter } = baseFilter;
+baseFilter.initPanel.value = initPanel;
 
 const minId = ref("min-bug-path-length");
 const maxId = ref("max-bug-path-length");
@@ -115,6 +114,7 @@ async function setMinBugPathLength(value, _updateUrl=true) {
   }
 
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     emit("update:url");
@@ -132,6 +132,7 @@ async function setMaxBugPathLength(value, _updateUrl=true) {
   }
 
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     emit("update:url");
@@ -162,8 +163,8 @@ function initByUrl() {
 }
 
 function initPanel() {
-  panel.value = minBugPathLength.value !== null ||
-    maxBugPathLength.value !== null;
+  baseFilter.panel.value =
+    minBugPathLength.value !== null || maxBugPathLength.value !== null;
 }
 
 function updateReportFilter() {
@@ -176,12 +177,13 @@ function updateReportFilter() {
     });
   }
 
-  setReportFilter({ bugPathLength: _bugPathLength });
+  baseFilter.setReportFilter({ bugPathLength: _bugPathLength });
 }
 
 function clear(updateUrl) {
   setMinBugPathLength(null, false);
   setMaxBugPathLength(null, false);
+  initPanel();
 
   if (updateUrl) {
     emit("update:url");

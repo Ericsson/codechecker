@@ -2,7 +2,7 @@
   <filter-toolbar
     :id="id"
     title="Outstanding reports on a given date"
-    :panel="baseFilter.panel"
+    :panel-active="baseFilter.panel.value"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -66,6 +66,7 @@ const date = ref(null);
 const { dateTimeToStr, getUnixTime } = useDateUtils();
 
 const baseFilter = useBaseFilter(toRef(props, "namespace"));
+baseFilter.initPanel.value = initPanel;
 
 const route = useRoute();
 
@@ -76,6 +77,7 @@ const selectedDateTitle = computed(() =>
 function setDateTime(_date, updateUrl=true) {
   date.value = _date;
   updateReportFilter();
+  initPanel();
 
   if (updateUrl) {
     emit("update:url");
@@ -115,6 +117,7 @@ function initPanel() {
 
 function clear(updateUrl) {
   setDateTime(null, updateUrl);
+  initPanel();
 }
 
 defineExpose({

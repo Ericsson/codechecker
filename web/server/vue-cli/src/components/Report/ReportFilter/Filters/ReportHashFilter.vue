@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Report hash filter"
-    :panel="baseFilter.panel"
+    :panel-active="baseFilter.panel.value"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -46,12 +46,14 @@ const id = "report-hash";
 const reportHash = ref(null);
 
 const baseFilter = useBaseFilter(toRef(props, "namespace"));
+baseFilter.initPanel.value = initPanel;
 
 const route = useRoute();
 
 function setReportHash(_reportHash, _updateUrl=true) {
   reportHash.value = _reportHash;
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     emit("update:url");
@@ -87,6 +89,7 @@ function initPanel() {
 
 function clear(updateUrl) {
   setReportHash(null, updateUrl);
+  initPanel();
 }
 
 defineExpose({
