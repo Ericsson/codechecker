@@ -52,24 +52,23 @@ export default defineConfig([
         "multiline": 1
       }],
       "vue/v-slot-style": "off",
-      "vue/valid-v-slot": "off",
+      "vue/valid-v-slot": ["error", { "allowModifiers": true }],
       "vue/multi-word-component-names": "off",
-      "vue/no-mutating-props": "error",
-      "vue/valid-next-tick": "off",
+      "vue/valid-next-tick": "error",
       "quotes": ["error", "double", {
         "avoidEscape": true
       }],
-      "vue/component-api-style": ["warn", ["script-setup"]], // TODO: error
-      "vue/block-order": ["warn", { // TODO: error
+      "vue/component-api-style": ["error", ["script-setup"]],
+      "vue/block-order": ["error", {
         "order": ["template", "script", "style"]
       }],
-      "vue/define-macros-order": ["warn", { // TODO: error
+      "vue/define-macros-order": ["error", {
         "order": ["defineProps", "defineEmits", "defineExpose"]
       }],
       "vue/no-ref-object-reactivity-loss": "warn",
       "vue/no-setup-props-reactivity-loss": "warn",
       "vue/prefer-define-options": "warn",
-      "vue/require-macro-variable-name": ["warn", { // TODO: error
+      "vue/require-macro-variable-name": ["error", {
         "defineProps": "props",
         "defineEmits": "emit",
         "defineSlots": "slots",
