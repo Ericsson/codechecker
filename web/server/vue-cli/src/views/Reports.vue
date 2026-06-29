@@ -162,7 +162,12 @@
         </template>
 
         <template #item.bugPathLength="{ item }">
-          <v-chip :color="getBugPathLenColor(item.bugPathLength)">
+          <v-chip
+            class="text-black"
+            :color="getBugPathLenColor(item.bugPathLength)"
+            size="small"
+            variant="flat"
+          >
             {{ item.bugPathLength }}
           </v-chip>
         </template>
@@ -288,7 +293,7 @@ import {
 } from "@cc/report-server-types";
 import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
-import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
+import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import {
   DetectionStatusIcon,
@@ -306,7 +311,7 @@ const namespace = "report";
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
-const bugPathLenColor = useBugPathLenColor();
+const gradientColor = useGradientColor();
 const detectionStatus = useDetectionStatus();
 
 const itemsPerPageOptions = [
@@ -804,7 +809,7 @@ function prettifyDate(date) {
 }
 
 function getBugPathLenColor(length) {
-  return bugPathLenColor.getBugPathLenColor(length);
+  return gradientColor.getGradientColor(length);
 }
 </script>
 

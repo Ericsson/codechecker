@@ -31,7 +31,7 @@
         </span>
         <v-chip
           class="text-black"
-          :color="bugPathLenColor.getBugPathLenColor(item.raw.bugPathLength)"
+          :color="gradientColor.getGradientColor(item.raw.bugPathLength)"
           label
           size="small"
           variant="flat"
@@ -64,7 +64,7 @@
         </span>
         <v-chip
           class="text-black"
-          :color="bugPathLenColor.getBugPathLenColor(item.raw.bugPathLength)"
+          :color="gradientColor.getGradientColor(item.raw.bugPathLength)"
           label
           size="small"
           variant="flat"
@@ -81,7 +81,7 @@ import { ccService } from "@cc-api";
 import { onMounted, ref, watch } from "vue";
 
 import { DetectionStatusIcon, ReviewStatusIcon } from "@/components/Icons";
-import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
+import { useGradientColor } from "@/composables/useGradientColor";
 
 const props = defineProps({
   report: { type: Object, default: null }
@@ -91,7 +91,7 @@ const emit = defineEmits([ "update:report" ]);
 
 const items = ref([]);
 const active = ref(null);
-const bugPathLenColor = useBugPathLenColor();
+const gradientColor = useGradientColor();
 
 watch(() => props.report, () => {
   init();
