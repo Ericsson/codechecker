@@ -1,6 +1,6 @@
 <template>
   <v-menu
-    v-model="menu"
+    v-model="menuOpen"
     :close-on-content-click="false"
     :nudge-right="40"
     transition="scale-transition"
@@ -10,9 +10,9 @@
     <template v-slot:activator="{ props: activatorProps }">
       <v-text-field
         v-bind="activatorProps"
-        :value="date"
+        v-model="date"
         label="Due date"
-        append-icon="mdi-calendar"
+        append-inner-icon="mdi-calendar"
         readonly
         variant="outlined"
       />
@@ -23,25 +23,26 @@
 </template>
 
 <script setup>
-import { format, fromUnixTime, getUnixTime, parse } from "date-fns";
+import { format, fromUnixTime, getUnixTime } from "date-fns";
 import { computed, ref } from "vue";
 
 const props = defineProps({
-  value: { type: Number, default: null },
+  modelValue: { type: Number, default: null },
 });
 
-const emit = defineEmits([ "update:value" ]);
+const emit = defineEmits([ "update:modelValue" ]);
 
-const menu = ref(false);
+const menuOpen = ref(false);
 const dateFormatStr = "yyyy-MM-dd";
 
 const date = computed({
   get() {
-    return format(fromUnixTime(props.value), dateFormatStr, new Date);
+    return props.modelValue ?
+      format(fromUnixTime(props.modelValue), dateFormatStr) : null;
   },
   set(val) {
-    emit("update:value", getUnixTime(parse(val, dateFormatStr, new Date)));
-    menu.value = false;
+    emit("update:modelValue", getUnixTime(val));
+    menuOpen.value = false;
   },
 });
 </script>

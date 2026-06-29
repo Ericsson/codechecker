@@ -32,7 +32,7 @@
             :rules="rules.name"
           />
 
-          <due-date-menu
+          <DueDateMenu
             v-model="dueDate"
           />
 
@@ -53,6 +53,7 @@ import { ccService, handleThriftError } from "@cc-api";
 import { computed, ref, watch } from "vue";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
+import DueDateMenu from "@/components/Report/CleanupPlan/DueDateMenu";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -69,7 +70,6 @@ const form = ref(null);
 const description = ref(null);
 const dueDate = ref(null);
 const name = ref(null);
-const dueDateMenu = ref(false);
 const rules = ref({
   name: [ v => !!v || "Name is required" ],
   value: [
@@ -100,8 +100,10 @@ async function saveCleanupPlan() {
   if (props.cleanupPlan) {
     // Edit an existing cleanup plan.
     ccService.getClient().updateCleanupPlan(
-      props.cleanupPlan.id, name.value,
-      description.value, dueDate.value,
+      props.cleanupPlan.id,
+      name.value,
+      description.value,
+      dueDate.value,
       handleThriftError(async success => {
         if (success) {
           emit("save:cleanup-plan");
@@ -111,7 +113,9 @@ async function saveCleanupPlan() {
   } else {
     // Add new cleanup plan.
     ccService.getClient().addCleanupPlan(
-      name.value, description.value, dueDate.value,
+      name.value,
+      description.value,
+      dueDate.value,
       handleThriftError(async () => {
         emit("save:cleanup-plan");
         dialog.value = false;
