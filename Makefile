@@ -65,6 +65,9 @@ package: package_dir_structure set_git_commit_template package_gerrit_skiplist
 	#	Copy CodeChecker binary.
 	cp $(ROOT)/bin/CodeChecker $(CC_BUILD_BIN_DIR)
 
+	# Allow lowercase codechecker command.
+	ln -fsv $(CC_BUILD_BIN_DIR)/CodeChecker $(CC_BUILD_BIN_DIR)/codechecker
+
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
