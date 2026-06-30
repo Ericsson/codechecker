@@ -12,6 +12,7 @@ Test environment setup and configuration helpers.
 
 import os
 import json
+import sys
 import tempfile
 import shutil
 import socket
@@ -344,15 +345,34 @@ def codechecker_package():
 def codechecker_env():
     checker_env = os.environ.copy()
     cc_bin = os.path.join(codechecker_package(), 'bin')
-    checker_env['PATH'] = cc_bin + ":" + checker_env['PATH']
+    checker_env['PATH'] = cc_bin + os.pathsep + checker_env['PATH']
     return checker_env
 
 
 def test_env(test_workspace):
     base_env = os.environ.copy()
     base_env['PATH'] = os.path.join(codechecker_package(), 'bin') + \
-        ':' + base_env['PATH']
+        os.pathsep + base_env['PATH']
     base_env['HOME'] = test_workspace
+    # The CodeChecker client locates its credential and session files relative
+    # to the user's home directory (os.path.expanduser("~")). On Windows that
+    # ignores the HOME variable set above (it uses USERPROFILE/HOMEPATH
+    # instead), so the throw-away credentials written by login() would not be
+    # found and the client would fall back to an interactive getpass() prompt
+    # that hangs forever. Point the password and session files explicitly into
+    # the test workspace; CC_PASS_FILE/CC_SESSION_FILE are honored first.
+    #
+    # This is only done on Windows: on POSIX, expanduser("~") honors HOME, so
+    # the HOME-based resolution already works. Setting these here on POSIX
+    # would break tests that switch workspaces by reassigning only HOME (e.g.
+    # the multi-server products/test_config_db_share), because the credential
+    # files would no longer follow HOME.
+    if sys.platform == 'win32':
+        base_env['CC_PASS_FILE'] = os.path.join(
+            test_workspace, '.codechecker.passwords.json')
+        base_env['CC_SESSION_FILE'] = os.path.join(
+            test_workspace, '.codechecker.session.json')
+
     return base_env
 
 

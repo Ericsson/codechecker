@@ -11,10 +11,10 @@ Helper commands to run CodeChecker in the tests easier.
 from datetime import timedelta
 import json
 import os
-import shlex
 import stat
 import subprocess
 from subprocess import CalledProcessError
+import sys
 import time
 
 import multiprocess
@@ -23,8 +23,22 @@ from codechecker_api_shared.ttypes import Permission
 
 from codechecker_client.product import create_product_url
 
+
 from . import env
 from . import project
+
+
+def _codechecker_cmd():
+    """Return the command prefix to invoke CodeChecker.
+
+    On Windows, scripts without .exe cannot be executed directly by
+    CreateProcess. Use sys.executable to invoke the script via Python.
+    """
+    if sys.platform == 'win32':
+        cc = env.codechecker_cmd()
+        if os.path.isfile(cc):
+            return [sys.executable, cc]
+    return ['CodeChecker']
 
 
 DEFAULT_USER_PERMISSIONS = [("cc", Permission.PRODUCT_STORE),
@@ -46,6 +60,7 @@ def call_command(cmd, cwd, environ):
     try:
         proc = subprocess.Popen(
             cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
@@ -58,7 +73,6 @@ def call_command(cmd, cwd, environ):
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
         return out, err
     except OSError:
-        show(out, err)
         print('Failed to run: "' + ' '.join(cmd) + '"')
         raise
 
@@ -123,6 +137,20 @@ def create_baseline_file(report_dir: str, cc_env=None) -> str:
     return baseline_file_path
 
 
+def _password_file(codechecker_cfg, test_project_path):
+    """
+    Return the credentials file path the CodeChecker client will read.
+
+    The client honors CC_PASS_FILE before falling back to the home directory,
+    so the test must write the throw-away credentials to the very same path
+    (this is what makes login work on Windows, where HOME is not honored by
+    os.path.expanduser).
+    """
+    return codechecker_cfg['check_env'].get(
+        'CC_PASS_FILE',
+        os.path.join(test_project_path, ".codechecker.passwords.json"))
+
+
 def login(codechecker_cfg, test_project_path, username, password,
           protocol='http'):
     """
@@ -130,13 +158,13 @@ def login(codechecker_cfg, test_project_path, username, password,
     """
     print("Logging in")
     port = str(codechecker_cfg['viewer_port'])
-    login_cmd = ['CodeChecker', 'cmd', 'login', username,
+    login_cmd = [*_codechecker_cmd(), 'cmd', 'login', username,
                  '--url', protocol + '://' + 'localhost:' + port,
                  '--verbose', 'debug']
 
     auth_creds = {'client_autologin': True,
                   'credentials': {}}
-    auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
+    auth_file = _password_file(codechecker_cfg, test_project_path)
     if not os.path.exists(auth_file):
         # Create a default authentication file for the user, which has
         # proper structure.
@@ -160,15 +188,18 @@ def login(codechecker_cfg, test_project_path, username, password,
     try:
         print(' '.join(login_cmd))
         out = subprocess.run(
-            shlex.split(
-                ' '.join(login_cmd)),
+            login_cmd,
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",
             errors="ignore",
             check=False,
             capture_output=True,
-            text=True
+            text=True,
+            # Never inherit the parent's stdin: if the client ever falls back
+            # to an interactive password prompt it must fail fast (EOF) instead
+            # of hanging the whole test run.
+            stdin=subprocess.DEVNULL
         )
         print(repr(out.stdout))
         return 0
@@ -185,11 +216,11 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     """
     print("Logging out")
     port = str(codechecker_cfg['viewer_port'])
-    logout_cmd = ['CodeChecker', 'cmd', 'login',
+    logout_cmd = [*_codechecker_cmd(), 'cmd', 'login',
                   '--logout',
                   '--url', protocol + '://'+'localhost:' + port]
 
-    auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
+    auth_file = _password_file(codechecker_cfg, test_project_path)
     if os.path.exists(auth_file):
         # Remove the credentials associated with the throw-away test server.
         with open(auth_file, 'r',
@@ -212,18 +243,48 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     try:
         print(' '.join(logout_cmd))
         out = subprocess.call(
-            shlex.split(
-                ' '.join(logout_cmd)),
+            logout_cmd,
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",
-            errors="ignore")
+            errors="ignore",
+            stdin=subprocess.DEVNULL)
         print(out)
         return 0
     except OSError as cerr:
         print("Failed to call:\n" + ' '.join(logout_cmd))
         print(str(cerr.errno) + ' ' + cerr.strerror)
         return cerr.errno
+
+
+def _generate_compile_commands(test_project_path):
+    """Generate compile_commands.json for a test project on Windows.
+
+    Scans for .cpp/.c files and creates entries using clang++ / clang.
+    Returns the path to the generated file.
+    """
+    import glob
+    import shutil
+
+    sources = glob.glob(os.path.join(test_project_path, '**', '*.cpp'),
+                        recursive=True)
+    sources += glob.glob(os.path.join(test_project_path, '**', '*.c'),
+                         recursive=True)
+
+    compiler = shutil.which('clang++') or 'clang++'
+    entries = []
+    for src in sources:
+        src_dir = os.path.dirname(src)
+        entries.append({
+            "directory": test_project_path,
+            "arguments": [compiler, "-c", src, "-I", src_dir, "-o", "nul"],
+            "file": src
+        })
+
+    cc_file = os.path.join(test_project_path, 'compile_commands.json')
+    with open(cc_file, 'w', encoding='utf-8') as f:
+        json.dump(entries, f)
+    return cc_file
 
 
 def check_and_store(codechecker_cfg, test_project_name, test_project_path,
@@ -240,17 +301,24 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
         if 'reportdir' in codechecker_cfg \
         else os.path.join(codechecker_cfg['workspace'], 'reports')
 
-    build_cmd = project.get_build_cmd(test_project_path)
-
     if clean_project:
         ret = project.clean(test_project_path)
         if ret:
             return ret
 
-    check_cmd = ['CodeChecker', 'check',
-                 '-o', output_dir,
-                 '-b', build_cmd,
-                 '--quiet']
+    if sys.platform == 'win32':
+        # Build logging (CodeChecker log / check -b) is not supported on
+        # Windows. Generate compile_commands.json and use analyze directly.
+        cc_file = _generate_compile_commands(test_project_path)
+        check_cmd = [*_codechecker_cmd(), 'analyze',
+                     cc_file,
+                     '-o', output_dir]
+    else:
+        build_cmd = project.get_build_cmd(test_project_path)
+        check_cmd = [*_codechecker_cmd(), 'check',
+                     '-o', output_dir,
+                     '-b', build_cmd,
+                     '--quiet']
 
     enabled_checkers = project.get_enabled_checkers(test_project_path)
     if enabled_checkers:
@@ -283,10 +351,12 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     check_cmd.extend(codechecker_cfg['checkers'])
 
     try:
-        print("RUNNING CHECK")
+        print("RUNNING CHECK" if sys.platform != 'win32' else
+              "RUNNING ANALYZE (Windows)")
         print(check_cmd)
         process = subprocess.Popen(
             check_cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=test_project_path,
@@ -294,15 +364,23 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
             encoding="utf-8",
             errors="ignore")
         out, err = process.communicate()
-        # errcode = process.returncode
         print(out)
         print(err)
+        if sys.platform == 'win32':
+            # Diagnostic: list generated report files
+            import glob as _glob
+            plists = _glob.glob(os.path.join(output_dir, '**', '*.plist'),
+                                recursive=True)
+            print(f"[DIAG] Reports dir: {output_dir}")
+            print(f"[DIAG] Plist files found: {len(plists)}")
+            for p in plists[:5]:
+                print(f"  {p}")
 
     except CalledProcessError as cerr:
         print("Failed to call:\n" + ' '.join(cerr.cmd))
         return cerr.returncode
 
-    store_cmd = ['CodeChecker', 'store', '-n', test_project_name,
+    store_cmd = [*_codechecker_cmd(), 'store', '-n', test_project_name,
                  output_dir,
                  '--url', env.parts_to_url(codechecker_cfg)]
 
@@ -316,17 +394,25 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
 
     description = codechecker_cfg.get('description')
     if description:
-        store_cmd.extend(['--description', "'" + description + "'"])
+        store_cmd.extend(['--description', description])
 
     try:
         print('STORE' + ' '.join(store_cmd))
-        subprocess.call(
-            shlex.split(
-                ' '.join(store_cmd)),
+        proc = subprocess.Popen(
+            store_cmd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",
             errors="ignore")
+        s_out, s_err = proc.communicate()
+        print(s_out)
+        if s_err:
+            print(s_err)
+        if proc.returncode != 0:
+            print(f"[DIAG] Store exited with code {proc.returncode}")
         return 0
 
     except CalledProcessError as cerr:
@@ -344,15 +430,14 @@ def log(codechecker_cfg, test_project_path, clean_project=False):
         if ret:
             return ret
 
-    log_cmd = ['CodeChecker', 'log',
+    log_cmd = [*_codechecker_cmd(), 'log',
                '-o', build_json,
-               '-b', "'" + build_cmd + "'",
+               '-b', build_cmd,
                ]
 
     try:
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(log_cmd)),
+            log_cmd,
             cwd=test_project_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -376,7 +461,7 @@ def analyze(codechecker_cfg, test_project_path):
     """
     build_json = os.path.join(codechecker_cfg['workspace'], "build.json")
 
-    analyze_cmd = ['CodeChecker', 'analyze',
+    analyze_cmd = [*_codechecker_cmd(), 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
                    '--analyzers', 'clangsa'
@@ -394,8 +479,7 @@ def analyze(codechecker_cfg, test_project_path):
     try:
         print('ANALYZE: ' + ' '.join(analyze_cmd))
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(analyze_cmd)),
+            analyze_cmd,
             cwd=test_project_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -428,13 +512,13 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
         if ret:
             return ret
 
-    log_cmd = ['CodeChecker', 'log',
+    log_cmd = [*_codechecker_cmd(), 'log',
                '-o', build_json,
-               '-b', "'" + build_cmd + "'",
+               '-b', build_cmd,
                ]
 
     analyzers = codechecker_cfg.get('analyzers', ['clangsa'])
-    analyze_cmd = ['CodeChecker', 'analyze',
+    analyze_cmd = [*_codechecker_cmd(), 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
                    '--analyzers', *analyzers
@@ -452,8 +536,7 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
     try:
         print("LOG: " + ' '.join(log_cmd))
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(log_cmd)),
+            log_cmd,
             cwd=test_project_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -465,10 +548,9 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
         print(err)
 
         print("ANALYZE:")
-        print(shlex.split(' '.join(analyze_cmd)))
+        print(analyze_cmd)
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(analyze_cmd)),
+            analyze_cmd,
             cwd=test_project_path,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -489,13 +571,12 @@ def parse(codechecker_cfg):
     Parse the results of the analysis and return the output.
     """
 
-    parse_cmd = ['CodeChecker', 'parse', codechecker_cfg['reportdir']]
+    parse_cmd = [*_codechecker_cmd(), 'parse', codechecker_cfg['reportdir']]
 
     try:
         print("PARSE: " + ' '.join(parse_cmd))
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(parse_cmd)),
+            parse_cmd,
             cwd=codechecker_cfg['workspace'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -522,7 +603,7 @@ def store(codechecker_cfg, test_project_name):
     if not isinstance(report_dirs, list):
         report_dirs = [report_dirs]
 
-    store_cmd = ['CodeChecker', 'store',
+    store_cmd = [*_codechecker_cmd(), 'store',
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--name', test_project_name,
                  *report_dirs]
@@ -542,8 +623,7 @@ def store(codechecker_cfg, test_project_name):
     try:
         print('STORE: ' + ' '.join(store_cmd))
         proc = subprocess.Popen(
-            shlex.split(
-                ' '.join(store_cmd)),
+            store_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=codechecker_cfg['check_env'],
@@ -562,7 +642,7 @@ def store(codechecker_cfg, test_project_name):
 
 def serv_cmd(workspace_dir, port, pg_config=None, serv_args=None):
 
-    server_cmd = ['CodeChecker', 'server',
+    server_cmd = [*_codechecker_cmd(), 'server',
                   '--workspace', workspace_dir]
 
     server_cmd.extend(['--host', 'localhost',
@@ -797,7 +877,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                              str(server_data['viewer_port']),
                              '')
 
-    add_command = ['CodeChecker', 'cmd', 'products', 'add',
+    add_command = [*_codechecker_cmd(), 'cmd', 'products', 'add',
                    server_data['viewer_product'],
                    '--url', url,
                    '--name', os.path.basename(test_folder),
@@ -834,7 +914,8 @@ def add_test_package_product(server_data, test_folder, check_env=None,
         add_command,
         env=check_env,
         encoding="utf-8",
-        errors="ignore")
+        errors="ignore",
+        stdin=subprocess.DEVNULL)
 
     pr_client = env.setup_product_client(test_folder,
                                          product=server_data['viewer_product'],
@@ -890,7 +971,7 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http',
     url = create_product_url(protocol, server_data['viewer_host'],
                              str(server_data['viewer_port']),
                              '')
-    del_command = ['CodeChecker', 'cmd', 'products', 'del',
+    del_command = [*_codechecker_cmd(), 'cmd', 'products', 'del',
                    product_to_remove, '--url', url]
 
     print(' '.join(del_command))
@@ -901,7 +982,8 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http',
         del_command,
         env=check_env,
         encoding="utf-8",
-        errors="ignore")
+        errors="ignore",
+        stdin=subprocess.DEVNULL)
     logout(server_data, test_folder, protocol)
 
     # If tests are running on postgres, we need to delete the database.
