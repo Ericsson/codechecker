@@ -39,7 +39,10 @@
 
           <v-chip
             v-else-if="key === 'bugPathLength'"
-            :color="bugPathLenColor.getBugPathLenColor(value[key])"
+            class="text-black"
+            :color="gradientColor.getGradientColor(value[key])"
+            size="small"
+            variant="flat"
           >
             <span v-if="value[key]">{{ value[key] }}</span>
             <span v-else>-</span>
@@ -60,7 +63,7 @@ import {
   ReviewStatusIcon,
   SeverityIcon
 } from "@/components/Icons";
-import { useBugPathLenColor } from "@/composables/useBugPathLenColor";
+import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 import { useSeverity } from "@/composables/useSeverity";
@@ -73,7 +76,7 @@ const props = defineProps({
 
 const runName = ref(null);
 
-const bugPathLenColor = useBugPathLenColor();
+const gradientColor = useGradientColor();
 const detectionStatus = useDetectionStatus();
 const reviewStatus = useReviewStatus();
 const severity = useSeverity();

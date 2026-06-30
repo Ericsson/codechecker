@@ -89,7 +89,10 @@
 
       <template #item.runCount="{ item }">
         <v-chip
-          :color="getRunCountColor(item.runCount)"
+          class="text-black"
+          :color="gradientColor.getGradientColor(item.runCount, 500)"
+          size="small"
+          variant="flat"
         >
           {{ item.runCount }}
         </v-chip>
@@ -137,12 +140,15 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useDateUtils } from "@/composables/useDateUtils";
+import { useGradientColor } from "@/composables/useGradientColor";
 
 import _ from "lodash";
 
 const route = useRoute();
 const router = useRouter();
+const gradientColor = useGradientColor();
 const { prettifyDate } = useDateUtils();
+
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
@@ -328,16 +334,6 @@ function onCompleteEditProduct() {
 
 function deleteProduct(product) {
   products.value = products.value.filter(p => p.id !== product.id);
-}
-
-function getRunCountColor(runCount) {
-  if (runCount > 500) {
-    return "red";
-  } else if (runCount > 200) {
-    return "orange";
-  } else {
-    return "green";
-  }
 }
 
 function initializeComponent() {

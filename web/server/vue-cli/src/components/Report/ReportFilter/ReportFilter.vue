@@ -836,17 +836,17 @@ function renamePresetDialog() {
 
 function syncGroupPanels() {
   activeBaselinePanelId.value =
-    baselineRunFilterRef.value.panel ||
-    baselineOpenReportsDateFilterRef.value.panel ? 0 : undefined;
+    baselineRunFilterRef.value?.panel ||
+    baselineOpenReportsDateFilterRef.value?.panel ? 0 : undefined;
 
   activeCompareToPanelId.value =
-    comparedToRunFilterRef.value.panel ||
-    comparedToOpenReportsDateFilterRef.value.panel ||
-    comparedToDiffTypeFilterRef.value.panel ? 0 : undefined;
+    comparedToRunFilterRef.value?.panel ||
+    comparedToOpenReportsDateFilterRef.value?.panel ||
+    comparedToDiffTypeFilterRef.value?.panel ? 0 : undefined;
 
   activeDatePanelId.value =
-    detectionDateFilterRef.value.panel ||
-    fixDateFilterRef.value.panel ? 0 : undefined;
+    detectionDateFilterRef.value?.panel ||
+    fixDateFilterRef.value?.panel ? 0 : undefined;
 }
 
 // helper functions
