@@ -13,6 +13,7 @@ import os
 import pathlib
 import shlex
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -20,6 +21,8 @@ from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.buildlog.build_action import BuildAction
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 "Option parser tests use Unix paths in compilation commands")
 class OptionParserTest(unittest.TestCase):
     """
     Test the option parser module which handles the

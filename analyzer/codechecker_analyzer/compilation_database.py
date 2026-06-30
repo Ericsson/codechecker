@@ -40,17 +40,17 @@ def find_closest_compilation_database(path: str) -> Optional[str]:
     contain a corresponding entry for the given source file in "path".
     """
     path = os.path.abspath(path)
-    root = os.path.abspath(os.sep)
 
     while True:
-        path = os.path.dirname(path)
-        compile_commands_json = os.path.join(path, COMPILATION_DATABASE)
+        parent = os.path.dirname(path)
+        compile_commands_json = os.path.join(parent, COMPILATION_DATABASE)
 
         if os.path.isfile(compile_commands_json):
             return compile_commands_json
 
-        if path == root:
+        if parent == path:
             break
+        path = parent
 
     return None
 
@@ -84,17 +84,17 @@ def find_all_compilation_databases(path: str) -> List[str]:
             dirs.append(os.path.join(root, COMPILATION_DATABASE))
 
     path = os.path.abspath(path)
-    root = os.path.abspath(os.sep)
 
     while True:
-        path = os.path.dirname(path)
-        compile_commands_json = os.path.join(path, COMPILATION_DATABASE)
+        parent = os.path.dirname(path)
+        compile_commands_json = os.path.join(parent, COMPILATION_DATABASE)
 
         if os.path.isfile(compile_commands_json):
             dirs.append(compile_commands_json)
 
-        if path == root:
+        if parent == path:
             break
+        path = parent
 
     return dirs
 

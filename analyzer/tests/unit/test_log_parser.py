@@ -12,6 +12,7 @@
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -21,6 +22,8 @@ from codechecker_common.skiplist_handler import SkipListHandler, \
 from codechecker_common.util import load_json
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 "Log parser tests use Unix-specific build log formats")
 class LogParserTest(unittest.TestCase):
     """
     Test the log parser which converts logfiles (JSON CCDBs) to build action

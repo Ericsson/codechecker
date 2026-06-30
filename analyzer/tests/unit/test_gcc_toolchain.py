@@ -11,11 +11,14 @@ Clang gcc-toolchain compiler option related tests.
 
 
 import shlex
+import sys
 import unittest
 
 from codechecker_analyzer import gcc_toolchain
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 "GCC toolchain detection is not applicable on Windows")
 class GCCToolchainTest(unittest.TestCase):
     """
     gcc toolchain detection tests.

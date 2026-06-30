@@ -330,7 +330,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             cls.__analyzer_checkers = checker_description
 
             return checker_description
-        except (subprocess.CalledProcessError, OSError):
+        except (subprocess.CalledProcessError, OSError) as e:
+            LOG.debug("Failed to get clang-tidy checkers: %s", e)
             return []
 
     @classmethod

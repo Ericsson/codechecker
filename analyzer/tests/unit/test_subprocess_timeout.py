@@ -14,6 +14,7 @@ Test if the subprocess timeout watcher works properly.
 import os
 import signal
 import subprocess
+import sys
 import unittest
 
 import psutil
@@ -21,6 +22,8 @@ import psutil
 from codechecker_analyzer.analysis_manager import setup_process_timeout
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 "Process groups (setpgrp) not available on Windows")
 class SubprocessTimeoutTest(unittest.TestCase):
     """
     Test the process timeout watcher functionality.
