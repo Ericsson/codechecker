@@ -45,7 +45,7 @@
           class="file-path-tree"
         >
           <template #prepend="{ item, isOpen }">
-            <v-icon v-if="item.children.length > 0" size="small">
+            <v-icon v-if="item.children?.length > 0" size="small">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
             <v-icon v-else size="small">
@@ -173,13 +173,13 @@ const treeItems = computed(() => {
         } else {
           currentLevel.push({
             name: fileName, fullPath: filePath,
-            children: [], findings: numCount
+            findings: numCount
           });
         }
       }
     });
   function aggregate(node) {
-    if (node.children.length === 0) return node.findings;
+    if (!node.children?.length) return node.findings;
     node.findings = node.children.reduce(
       (sum, child) => sum + aggregate(child), 0
     );
@@ -275,8 +275,8 @@ function applyTreeSelection(onApplyFinished) {
 function isDirectory(fullPath) {
   const find = nodes => {
     for (const n of nodes) {
-      if (n.fullPath === fullPath) return n.children.length > 0;
-      if (n.children.length) {
+      if (n.fullPath === fullPath) return (n.children?.length ?? 0) > 0;
+      if (n.children?.length) {
         const r = find(n.children);
         if (r !== null) return r;
       }
