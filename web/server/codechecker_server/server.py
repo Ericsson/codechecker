@@ -1039,9 +1039,17 @@ def _build_worker_server(args):
         args['task_worker_processes'])
 
     # Recreate listening socket from transferred file descriptor.
-    fd = args['socket_dupfd'].detach()
-    sock = socket.socket(
-        args['socket_family'], socket.SOCK_STREAM, fileno=fd)
+    if 'socket_queue' in args:
+        # Windows: receive socket data shared by parent via queue.
+        share_data = args['socket_queue'].get()
+        sock = socket.fromshare(share_data)
+    elif 'socket_dupfd' in args:
+        # macOS: reconstruct from duplicated fd.
+        fd = args['socket_dupfd'].detach()
+        sock = socket.socket(
+            args['socket_family'], socket.SOCK_STREAM, fileno=fd)
+    else:
+        raise RuntimeError("No socket transfer mechanism available")
 
     server_clazz = CCSimpleHttpServerIPv6 \
         if ':' in args['listen_address'] else CCSimpleHttpServer
@@ -1301,14 +1309,23 @@ def start_server(config_directory: str, workspace_directory: str,
         spawned_api_proc_count += 1
 
         if _use_spawn:
-            from multiprocess.reduction import DupFd  # type: ignore
             worker_args = dict(server_init_args)
-            worker_args['socket_dupfd'] = DupFd(
-                http_server.socket.fileno())
+            if sys.platform == 'win32':
+                # Windows: child receives socket via queue after start,
+                # using WSADuplicateSocket (socket.share/fromshare).
+                worker_args['socket_queue'] = Queue()
+            else:
+                from multiprocess.reduction import DupFd  # type: ignore
+                worker_args['socket_dupfd'] = DupFd(
+                    http_server.socket.fileno())
             p = _start_process_with_no_signal_handling(
                 target=_api_worker_main,
                 kwargs={'server_init_args': worker_args},
                 name=f"CodeChecker-API-{spawned_api_proc_count}")
+            if sys.platform == 'win32':
+                # Share the socket with the now-running child process.
+                worker_args['socket_queue'].put(
+                    http_server.socket.share(p.pid))
         else:
             p = _start_process_with_no_signal_handling(
                 target=_api_worker_main,
@@ -1436,10 +1453,16 @@ def start_server(config_directory: str, workspace_directory: str,
             finally:
                 del api_processes[pid]
 
-        for pid in bg_processes:
+        for pid, proc in bg_processes.items():
             try:
-                signal_log(LOG, "DEBUG", f"SIGHUP! Task child PID: {pid} ...")
-                os.kill(pid, signal.SIGHUP)
+                if hasattr(signal, 'SIGHUP'):
+                    signal_log(LOG, "DEBUG",
+                               f"SIGHUP! Task child PID: {pid} ...")
+                    os.kill(pid, signal.SIGHUP)
+                else:
+                    signal_log(LOG, "DEBUG",
+                               f"terminate() Task child PID: {pid} ...")
+                    proc.terminate()
             except (OSError, ValueError):
                 pass
         for pid in list(bg_processes.keys()):
