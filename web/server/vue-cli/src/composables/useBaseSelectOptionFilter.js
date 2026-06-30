@@ -75,12 +75,12 @@ export function useBaseSelectOptionFilter(namespaceRef) {
       onReportFilterChange: update
     });
     update();
-    initPanel();
   };
 
   const initPanel = () => {
     baseFilter.panel.value = selectedItems.value.length > 0;
   };
+  baseFilter.initPanel.value = initPanel;
 
   const update = async () => {
     bus.emit("update");

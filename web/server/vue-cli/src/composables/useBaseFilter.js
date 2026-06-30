@@ -16,6 +16,7 @@ export function useBaseFilter(namespaceRef) {
   const reportFilterUnwatch = ref(null);
   const runIdsUnwatch = ref(null);
   const cmpDataUnwatch = ref(null);
+  const initPanel = ref(() => {});
 
   const runIds = computed(() => store.state[namespaceRef.value]?.runIds);
   const reportFilter = computed(
@@ -81,7 +82,7 @@ export function useBaseFilter(namespaceRef) {
   
   const afterInit = (callbacks = {}) => {
     registerWatchers(callbacks);
-    callbacks.initPanel?.();
+    initPanel.value();
   };
   
   const getUrlState = () => ({});
@@ -120,6 +121,7 @@ export function useBaseFilter(namespaceRef) {
     updateReportFilter,
     fetchItems,
     clear,
-    update
+    update,
+    initPanel
   };
 }

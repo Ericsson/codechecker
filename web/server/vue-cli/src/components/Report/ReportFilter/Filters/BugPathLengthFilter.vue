@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Bug path length"
-    :panel="panel"
+    :panel-active="baseFilter.panel.value"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -14,7 +14,7 @@
       </span>
     </template>
 
-    <v-form ref="form">
+    <v-form ref="formRef">
       <v-container
         class="py-0"
       >
@@ -27,9 +27,10 @@
           >
             <v-text-field
               :id="minId"
-              :model-value="minBugPathLength"
-              :rules="rules.bugPathLength"
+              v-model="minBugPathLength"
+              :rules="bugPathLengthMinRules"
               label="Min..."
+              type="number"
               @update:model-value="setMinBugPathLength"
             />
           </v-col>
@@ -42,9 +43,10 @@
           >
             <v-text-field
               :id="maxId"
-              :model-value="maxBugPathLength"
-              :rules="rules.bugPathLength"
+              v-model="maxBugPathLength"
+              :rules="bugPathLengthMaxRules"
               label="Max..."
+              type="number"
               @update:model-value="setMaxBugPathLength"
             />
           </v-col>
@@ -72,19 +74,25 @@ const emit = defineEmits([
 ]);
 
 const baseFilter = useBaseFilter(toRef(props, "namespace"));
-
-const { panel, setReportFilter } = baseFilter;
+baseFilter.initPanel.value = initPanel;
 
 const minId = ref("min-bug-path-length");
 const maxId = ref("max-bug-path-length");
 const minBugPathLength = ref(null);
 const maxBugPathLength = ref(null);
-const rules = ref({
-  bugPathLength: [
-    v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
-  ]
-});
-const form = ref(null);
+const bugPathLengthMinRules = [
+  v => !v || Number(v) > 0 || "Must be positive!",
+  v => !v || !maxBugPathLength.value
+    || Number(v) <= Number(maxBugPathLength.value)
+    || "Min cannot be greater than Max"
+];
+const bugPathLengthMaxRules = [
+  v => !v || Number(v) > 0 || "Must be positive!",
+  v => !v || !minBugPathLength.value
+    || Number(v) >= Number(minBugPathLength.value)
+    || "Max cannot be less than Min"
+];
+const formRef = ref(null);
 
 const route = useRoute();
 
@@ -95,22 +103,36 @@ const selectedBugPathLengthTitle = computed(() => {
   ].join(", ");
 });
 
-function setMinBugPathLength(_bugPathLength, _updateUrl=true) {
-  if (form.value && !form.value.validate()) return;
+async function setMinBugPathLength(value, _updateUrl=true) {
+  if (!formRef.value) return;
 
-  minBugPathLength.value = _bugPathLength;
+  minBugPathLength.value = value;
+
+  const { valid } = await formRef.value.validate();
+  if (!valid) {
+    return;
+  }
+
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     emit("update:url");
   }
 }
 
-function setMaxBugPathLength(_bugPathLength, _updateUrl=true) {
-  if (form.value && !form.value.validate()) return;
+async function setMaxBugPathLength(value, _updateUrl=true) {
+  if (!formRef.value) return;
 
-  maxBugPathLength.value = _bugPathLength;
+  maxBugPathLength.value = value;
+
+  const { valid } = await formRef.value.validate();
+  if (!valid) {
+    return;
+  }
+
   updateReportFilter();
+  initPanel();
 
   if (_updateUrl) {
     emit("update:url");
@@ -141,8 +163,8 @@ function initByUrl() {
 }
 
 function initPanel() {
-  panel.value = minBugPathLength.value !== null ||
-    maxBugPathLength.value !== null;
+  baseFilter.panel.value =
+    minBugPathLength.value !== null || maxBugPathLength.value !== null;
 }
 
 function updateReportFilter() {
@@ -155,12 +177,13 @@ function updateReportFilter() {
     });
   }
 
-  setReportFilter({ bugPathLength: _bugPathLength });
+  baseFilter.setReportFilter({ bugPathLength: _bugPathLength });
 }
 
 function clear(updateUrl) {
   setMinBugPathLength(null, false);
   setMaxBugPathLength(null, false);
+  initPanel();
 
   if (updateUrl) {
     emit("update:url");
