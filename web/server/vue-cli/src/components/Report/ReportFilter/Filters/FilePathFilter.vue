@@ -40,6 +40,7 @@
           :items="treeItems"
           select-strategy="independent"
           item-value="fullPath"
+          open-on-click
           density="compact"
           class="file-path-tree"
         >
@@ -59,10 +60,7 @@
             </v-icon>
           </template>
           <template #title="{ item }">
-            <span
-              class="tree-item-label"
-              @click.stop="selectPath(item, onApplyFinished)"
-            >
+            <span class="tree-item-label">
               {{ item.name }}
             </span>
             <v-chip class="ml-2" size="x-small">
@@ -278,15 +276,6 @@ function applyTreeSelection(onApplyFinished) {
     return { id: filterId, title: filterId, count: "N/A" };
   });
   baseSelectOptionFilter.setSelectedItems(items);
-  if (onApplyFinished) onApplyFinished();
-}
-
-function selectPath(item, onApplyFinished) {
-  const filterId = isDirectory(item.fullPath)
-    ? item.fullPath + "/*" : item.fullPath;
-  baseSelectOptionFilter.setSelectedItems([ {
-    id: filterId, title: filterId, count: "N/A"
-  } ]);
   if (onApplyFinished) onApplyFinished();
 }
 
