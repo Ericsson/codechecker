@@ -476,11 +476,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     elif request_endpoint == "CodeCheckerService":
                         # This endpoint is a product's report_server.
                         if not product:
-                            error_msg = \
-                                "Requested CodeCheckerService on a " \
-                                f"nonexistent product: '{product_endpoint}'."
-                            LOG.debug(error_msg)
-                            raise ProductNotFoundError(error_msg)
+                            raise ProductNotFoundError(
+                                "Requested CodeCheckerService on a "
+                                f"nonexistent product: '{product_endpoint}'.")
 
                         if product_endpoint:
                             # The current request came through a
@@ -499,9 +497,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
                     else:
-                        LOG.debug("This API endpoint does not exist.")
-                        error_msg = f"No API endpoint named '{self.path}'."
-                        raise ProductNotFoundError(error_msg)
+                        raise ProductNotFoundError(
+                            f"No API endpoint named '{self.path}'.")
                 else:
                     raise ProductNotFoundError(
                         f"API version {major_version} not supported")
