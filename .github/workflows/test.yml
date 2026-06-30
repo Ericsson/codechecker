@@ -231,6 +231,129 @@ jobs:
         working-directory: web
         run: make test_unit_cov
 
+  analyzer-windows:
+    name: Analyzer (Windows)
+    runs-on: windows-latest
+    continue-on-error: true
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Cache LLVM and Cppcheck
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Program Files\LLVM
+            C:\Program Files\Cppcheck
+          key: win-llvm14-cppcheck-v1
+
+      - name: Install dependencies
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: bash
+        run: sh .github/workflows/install-deps-windows.sh
+
+      - name: Add tools to PATH
+        if: steps.cache-llvm.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          echo "C:\\Program Files\\LLVM\\bin" >> "$GITHUB_PATH"
+          echo "C:\\Program Files\\Cppcheck" >> "$GITHUB_PATH"
+
+      - name: Build the package
+        shell: bash
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
+      - name: Run analyzer unit tests
+        shell: bash
+        working-directory: analyzer
+        run: |
+          make test_unit \
+            EXTRA_PYTEST_ARGS="--timeout=120 --timeout-method=thread"
+
+  web-windows:
+    name: Web (Windows)
+    runs-on: windows-latest
+    continue-on-error: true
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Cache LLVM and Cppcheck
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Program Files\LLVM
+            C:\Program Files\Cppcheck
+          key: win-llvm14-cppcheck-v1
+
+      - name: Install dependencies
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: bash
+        run: sh .github/workflows/install-deps-windows.sh
+
+      - name: Add tools to PATH
+        if: steps.cache-llvm.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          echo "C:\\Program Files\\LLVM\\bin" >> "$GITHUB_PATH"
+          echo "C:\\Program Files\\Cppcheck" >> "$GITHUB_PATH"
+
+      - name: Build the package
+        shell: bash
+        run: |
+          make pip_dev_deps
+          pip3 install -r web/requirements_py/auth/requirements.txt
+          BUILD_UI_DIST=NO make package
+          python3 -m compileall -q build/CodeChecker/lib/python3 web/tests || true
+
+      - name: Run web unit tests
+        shell: bash
+        working-directory: web
+        run: |
+          # The server and client unit suites share the package name 'unit',
+          # so they must be collected in separate pytest sessions.
+          REPO_ROOT="$(cd .. && pwd)" \
+            pytest -v -c pytest.ini --timeout=300 --timeout-method=thread \
+              server server/tests/unit
+          REPO_ROOT="$(cd .. && pwd)" \
+            pytest -v -c pytest.ini --timeout=300 --timeout-method=thread \
+              client client/tests/unit
+
+      - name: Run web functional tests
+        shell: bash
+        working-directory: web
+        env:
+          CC_TEST_API_WORKERS: "1"
+          CC_TEST_TASK_WORKERS: "1"
+        run: |
+          # Build logging (CodeChecker log / check -b) is unsupported on
+          # Windows, so only functional suites that store results via
+          # check_and_store() (which uses CodeChecker analyze) can run. The
+          # two excluded tests need re-analysis/detection-status changes that
+          # depend on build logging.
+          REPO_ROOT="$(cd .. && pwd)" \
+          BUILD_DIR="$(cd .. && pwd)/build" \
+          TEST_CLANG_VERSION=stable \
+          TEST_PROJ="$(pwd)/tests/projects" \
+            pytest -v --tb=short --timeout=300 --timeout-method=thread \
+              tests/functional/db_cleanup \
+              tests/functional/run_tag \
+              tests/functional/review_status \
+              tests/functional/suppress \
+              -k "not test_review_and_detection_status_changes and not test_suppress_import"
+
   gui:
     name: GUI
     runs-on: ubuntu-24.04

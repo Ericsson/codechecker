@@ -3,6 +3,7 @@ psycopg2-binary~=2.9
 pg8000~=1.31
 pylint<3.3
 pytest<=7.3.1
+pytest-timeout~=2.1
 mkdocs~=1.0
 coverage<=5.5.0
 
