@@ -13,6 +13,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 from libtest import codechecker
 from libtest import env
@@ -21,6 +22,9 @@ import multiprocess
 
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocess.Event()
+
+# OAuth mock server process.
+__OAUTH_SERVER = None
 
 # Test workspace initialized at setup for authentication tests.
 TEST_WORKSPACE = None
@@ -66,9 +70,45 @@ def setup_class_common():
 
     codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
 
-    subprocess.Popen(["python3", "oauth_server.py"],
-                     cwd="tests/functional/authentication")
-    sleep(5)
+    subprocess.run(["pkill", "-f", "oauth_server.py"],
+                   capture_output=True, check=False)
+    sleep(1)
+
+    global __OAUTH_SERVER
+    oauth_log = os.path.join(TEST_WORKSPACE, "oauth_server.log")
+    oauth_out = open(oauth_log, "w", encoding="utf-8")
+    __OAUTH_SERVER = subprocess.Popen(
+        [sys.executable, "oauth_server.py"],
+        cwd="tests/functional/authentication",
+        stdout=oauth_out,
+        stderr=oauth_out)
+
+    # Wait for mock server to be ready (port 3000 open).
+    import socket
+    ready = False
+    for i in range(30):
+        try:
+            s = socket.create_connection(("127.0.0.1", 3000), timeout=1)
+            s.close()
+            ready = True
+            print(f"OAuth mock server ready after {i+1}s")
+            break
+        except (ConnectionRefusedError, OSError):
+            if __OAUTH_SERVER.poll() is not None:
+                oauth_out.flush()
+                with open(oauth_log, encoding="utf-8") as f:
+                    print(f"OAuth mock server DIED "
+                          f"(rc={__OAUTH_SERVER.returncode}): "
+                          f"{f.read()}")
+                break
+            sleep(1)
+
+    if not ready:
+        oauth_out.flush()
+        with open(oauth_log, encoding="utf-8") as f:
+            print(f"OAuth mock server NOT ready after 30s. "
+                  f"Log: {f.read()}")
+        print(f"OAuth server poll: {__OAUTH_SERVER.poll()}")
 
 
 def teardown_class_common():
@@ -76,6 +116,12 @@ def teardown_class_common():
     # TODO If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
+    global __OAUTH_SERVER
+
+    if __OAUTH_SERVER:
+        __OAUTH_SERVER.terminate()
+        __OAUTH_SERVER.wait()
+        __OAUTH_SERVER = None
 
     # Removing the product through this server requires credentials.
     codechecker_cfg = env.import_test_cfg(TEST_WORKSPACE)['codechecker_cfg']

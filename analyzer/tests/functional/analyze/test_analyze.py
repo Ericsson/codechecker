@@ -1283,8 +1283,10 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        # Checkers of all 3 analyzers are disabled.
-        self.assertEqual(out.count("No checkers enabled for"), 5)
+        # All 5 analyzers (clangsa, clang-tidy, cppcheck, gcc, infer) are
+        # expected on both Linux and macOS.
+        expected_count = 5
+        self.assertEqual(out.count("No checkers enabled for"), expected_count)
 
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
