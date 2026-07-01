@@ -201,7 +201,9 @@ const filter = _.debounce(async value => {
 }, 500);
 
 onMounted(() => {
-  localSelectedItems.value = props.selectedItems || [];
+  localSelectedItems.value = props.selectedItems
+    ? [ ...props.selectedItems ]
+    : [];
 });
 
 // Emit the `apply` event with the selected items.
