@@ -149,6 +149,11 @@ def main():
     """
     CodeChecker main command line.
     """
+    # Use spawn on macOS/Windows. Fork is unsafe on macOS (Obj-C runtime
+    # crashes in child processes) and unavailable on Windows.
+    if sys.platform != "linux":
+        import multiprocess  # type: ignore
+        multiprocess.set_start_method("spawn")
     configure_utf8_output()
 
     if not os.environ.get('CC_LIB_DIR'):

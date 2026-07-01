@@ -6,7 +6,7 @@ from git import Repo
 from git.exc import InvalidGitRepositoryError, GitCommandError
 from typing import Dict, Iterable, Optional
 
-from codechecker_common.compatibility.multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor as Pool
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
