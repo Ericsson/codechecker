@@ -160,4 +160,20 @@ function showDocumentation() {
   opacity: 1;
   font-weight: bold;
 }
+
+.current[type="error"] {
+  border: 2px dashed #a94442 !important;
+}
+
+.current[type="fixit"] {
+  border: 2px dashed #8a6d3b !important;
+}
+
+.current[type="macro"] {
+  border: 2px dashed #4f5c6d !important;
+}
+
+.current[type="note"] {
+  border: 2px dashed #4f5c6d !important;
+}
 </style>
