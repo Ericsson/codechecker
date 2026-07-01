@@ -83,7 +83,7 @@
 
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -142,8 +142,8 @@ const dialog = computed({
   }
 });
 
-onMounted(() => {
-  if (props.sourceComponent) {
+watch(dialog, opened => {
+  if (opened && props.sourceComponent) {
     nameInput.value = props.sourceComponent.name;
     componentInput.value = props.sourceComponent.value;
     descriptionInput.value = props.sourceComponent.description;
