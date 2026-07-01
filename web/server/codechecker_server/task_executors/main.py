@@ -16,7 +16,8 @@ import signal
 
 from sqlalchemy.orm import sessionmaker
 
-from codechecker_common.compatibility.multiprocessing import Queue, Value
+from multiprocess import Queue, Value  # type: ignore
+
 from codechecker_common.logger import get_logger, signal_log
 
 from ..database.config_db_model import BackgroundTask as DBTask
