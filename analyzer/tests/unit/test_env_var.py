@@ -11,6 +11,7 @@ Tests for environmental variables recognized by CodeChecker.
 """
 
 
+import sys
 import unittest
 import tempfile
 import os
@@ -95,6 +96,9 @@ class EnvVarTest(unittest.TestCase):
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
 
+    @unittest.skipIf(
+        sys.platform == "darwin",
+        "LD_LIBRARY_PATH is not used on macOS")
     def test_cc_analyzer_internal_env(self):
         """
         Check whether the ld_library_path is extended with the internal

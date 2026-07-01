@@ -11,6 +11,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -79,6 +80,8 @@ class BuildCmdTest(unittest.TestCase):
         ret_val = build_manager.execute_buildcmd(cmd)
         self.assertEqual(ret_val, 0)
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     "Unix shell quoting not applicable on Windows")
     def test_analyzer_exec_double_quote(self):
         """
         Test the process execution by the analyzer,
@@ -91,7 +94,12 @@ class BuildCmdTest(unittest.TestCase):
             parse_unique_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
-            cmd = [self.compiler]
+            # The test only verifies that the (escaped) command compiles;
+            # linking is irrelevant here and is not always possible in CI
+            # (e.g. clang cannot link against the host SDK on some macOS
+            # runners). '-fsyntax-only' keeps the check faithful to the
+            # docstring ("the source file will not compile") on every platform.
+            cmd = [self.compiler, '-fsyntax-only']
             cmd.extend(comp_action.analyzer_options)
             cmd.append(str(comp_action.source))
             cwd = comp_action.directory
@@ -106,6 +114,8 @@ class BuildCmdTest(unittest.TestCase):
             print(stderr)
             self.assertEqual(ret_val, 0)
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     "Unix shell quoting not applicable on Windows")
     def test_analyzer_ansic_double_quote(self):
         """
         Test the process execution by the analyzer with ansi-C like
@@ -117,7 +127,12 @@ class BuildCmdTest(unittest.TestCase):
             parse_unique_log(self.__get_cmp_json(compile_cmd))
 
         for comp_action in comp_actions:
-            cmd = [self.compiler]
+            # The test only verifies that the (escaped) command compiles;
+            # linking is irrelevant here and is not always possible in CI
+            # (e.g. clang cannot link against the host SDK on some macOS
+            # runners). '-fsyntax-only' keeps the check faithful to the
+            # docstring ("the source file will not compile") on every platform.
+            cmd = [self.compiler, '-fsyntax-only']
             cmd.extend(comp_action.analyzer_options)
             cmd.append(str(comp_action.source))
             cwd = comp_action.directory
