@@ -568,6 +568,14 @@ def serv_cmd(workspace_dir, port, pg_config=None, serv_args=None):
     server_cmd.extend(['--host', 'localhost',
                        '--port', str(port)])
 
+    # Allow CI to override worker counts via env vars.
+    api_procs = os.environ.get('CC_TEST_API_WORKERS')
+    task_procs = os.environ.get('CC_TEST_TASK_WORKERS')
+    if api_procs:
+        server_cmd.extend(['--api-handler-processes', api_procs])
+    if task_procs:
+        server_cmd.extend(['--task-worker-processes', task_procs])
+
     server_cmd.extend(serv_args or [])
 
     # server_cmd.extend(['--verbose', 'debug'])
@@ -633,7 +641,7 @@ def start_or_get_server(auth_required=False):
                 encoding="utf-8",
                 errors="ignore")
 
-            wait_for_server_start(server_stdout)
+            wait_for_server_start(server_stdout, port=port)
 
         if pg_config:
             # The behaviour is that CodeChecker servers only configure a
@@ -656,7 +664,7 @@ def start_or_get_server(auth_required=False):
     }
 
 
-def wait_for_server_start(stdoutfile):
+def wait_for_server_start(stdoutfile, port=None):
     print("Waiting for server start reading file " + stdoutfile)
     n = 0
     server_start_timeout = timedelta(minutes=5)
@@ -671,6 +679,26 @@ def wait_for_server_start(stdoutfile):
                 # some error message.
                 if "usage: CodeChecker" in out:
                     return
+
+                # Fail fast if server crashed during startup.
+                if "Config database initialization failed" in out \
+                        or "Failed to create schema" in out:
+                    print(f"[DIAG] Server FATAL error after "
+                          f"{n}s. Output:")
+                    print(out[-2000:])
+
+        # Fallback: check if server can handle HTTP requests.
+        if port and n > 3:
+            import urllib.request
+            try:
+                urllib.request.urlopen(
+                    f"http://localhost:{port}/", timeout=1)
+            except urllib.error.HTTPError:
+                # Any HTTP response (even 404) means server is ready.
+                print(f"Server responding on port {port} after {n}s")
+                return
+            except (ConnectionRefusedError, OSError, urllib.error.URLError):
+                pass
 
         if n > server_start_timeout.total_seconds():
             print("[FATAL!] Server failed to start after "
@@ -732,7 +760,8 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
     server_proc.start()
     server_output_file = os.path.join(codechecker_cfg['workspace'],
                                       str(server_proc.pid) + ".out")
-    wait_for_server_start(server_output_file)
+    wait_for_server_start(server_output_file,
+                          port=codechecker_cfg['viewer_port'])
 
     return {
         'viewer_host': 'localhost',
