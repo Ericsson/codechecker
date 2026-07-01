@@ -246,7 +246,9 @@ def __analyzer_action_hash(build_action: CompileAction) -> str:
     source_file = os.path.normpath(
         os.path.join(build_action['directory'], build_action['file']))
 
-    args = shlex.split(build_action['command'])
+    cmd = build_action.get('command') or shlex.join(
+        build_action.get('arguments') or [])  # type: ignore[arg-type]
+    args = shlex.split(cmd)
     indices = [idx for idx, v in enumerate(args) if v.startswith('-o')]
 
     for idx in reversed(indices):
@@ -417,6 +419,12 @@ def zip_tu_files(
     else:
         compilation_database = compilation_db
 
+    # Normalize: compile_commands.json may have 'arguments' (list) instead
+    # of 'command' (string). Ensure 'command' exists for all entries.
+    for entry in compilation_database:
+        if 'command' not in entry and 'arguments' in entry:
+            entry['command'] = shlex.join(entry['arguments'])
+
     no_sources = 'no-sources'
     tu_files: Set[str] = set()
     error_messages = ''
@@ -479,8 +487,11 @@ def get_dependent_sources(
     """ Get dependencies for each files in each translation unit. """
     dependencies = collections.defaultdict(set)
     for build_action in compilation_db:
+        command = build_action.get('command') or shlex.join(
+            build_action.get('arguments')  # type: ignore[arg-type]
+            or [])
         files, _ = get_dependent_headers(
-            build_action['command'],
+            command,
             build_action['directory'])
 
         source_file = os.path.join(build_action['directory'],
@@ -585,6 +596,9 @@ used to generate a log file on the fly.""")
     if args.logfile:
         with open(args.logfile, encoding="utf-8", errors="ignore") as f:
             compilation_db = json.load(f)
+        for entry in compilation_db:
+            if 'command' not in entry and 'arguments' in entry:
+                entry['command'] = shlex.join(entry['arguments'])
     else:
         compilation_db = [{
             'file': '',
