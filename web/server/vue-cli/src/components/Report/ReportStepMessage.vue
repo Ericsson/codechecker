@@ -1,16 +1,15 @@
 <template>
-  <v-chip
+  <v-card
     size="small"
     variant="flat"
-    class="report-step-msg"
+    class="report-step-msg px-2"
     :color="color"
     :step-id="id"
     :type="type"
     :style="{ 'margin-left': marginLeft, color: textColor }"
-    :title="value"
     rounded="xs"
   >
-    <div class="d-flex align-center ga-2">
+    <v-card-text class="pa-0 d-flex align-center">
       <report-step-enum-icon
         class="report-step-enum mr-1"
         :type="type"
@@ -26,9 +25,14 @@
         @click="showPrevReport"
       />
 
-      <div>
-        <div>{{ value }}</div>
-        <div v-if="!hideDocUrl && type === 'error'">
+      <div class="flex-grow-1 flex-shrink-1 mx-3" style="min-width: 0;">
+        <div class="text-body-2 text-wrap text-break">
+          {{ value }}
+        </div>
+        <div
+          v-if="!hideDocUrl && type === 'error'"
+          class="text-caption"
+        >
           <p v-if="docUrl" class="mb-0 text-caption">
             For more information see the
             <a
@@ -56,8 +60,8 @@
         density="compact"
         @click="showNextReport"
       />
-    </div>
-  </v-chip>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup>
