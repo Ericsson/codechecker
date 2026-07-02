@@ -6,10 +6,12 @@ import ExpandedRun from "./ExpandedRun";
 import RunDescription from "./RunDescription";
 import RunFilterToolbar from "./RunFilterToolbar";
 import RunNameColumn from "./RunNameColumn";
+import LoadMultipleRunsBtn from "./LoadMultipleRunsBtn.vue";
 
 export {
   AnalysisInfoBtn, AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog, DeleteRunBtn,
   ExpandedRun,
-  RunDescription, RunFilterToolbar, RunNameColumn
+  RunDescription, RunFilterToolbar, RunNameColumn,
+  LoadMultipleRunsBtn
 };
