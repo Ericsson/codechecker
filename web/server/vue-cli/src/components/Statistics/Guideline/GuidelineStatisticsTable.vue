@@ -5,11 +5,11 @@
     :items="itemsWithUuid"
     :loading="loading"
     :mobile-breakpoint="1000"
-    :item-class="getRowClass"
     loading-text="Loading guideline statistics..."
-    no-data-text="No guideline statistics available"
     item-key="uuid"
     :sort-by="[{ key: 'checkers.severity', order: 'desc' }]"
+    :item-class="getRowClass"
+    no-data-text="No guideline statistics available"
     @enabled-click="enabledClick"
   />
 </template>

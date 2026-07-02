@@ -1,11 +1,9 @@
 <template>
-  <v-container
-    fluid
-  >
-    <v-row>
-      <v-col>
+  <v-container fluid>
+    <v-col>
+      <v-row class="ma-0 mb-4">
         <h3
-          class="text-h5 text-primary mb-2"
+          class="text-h5 text-primary"
         >
           <v-btn
             color="primary"
@@ -23,21 +21,17 @@
             @click="fetchStatistics"
           />
         </h3>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col>
+      </v-row>
+      <v-row class="ma-0">
         <checker-statistics-table
           :items="baseStats.statistics.value"
           :loading="loading"
         />
-
         <unique-stat-warning
           v-if="baseStats.reportFilter.value.isUnique"
         />
-      </v-col>
-    </v-row>
+      </v-row>
+    </v-col>
   </v-container>
 </template>
 

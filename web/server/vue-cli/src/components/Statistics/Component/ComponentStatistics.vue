@@ -1,10 +1,8 @@
 <template>
   <v-container fluid>
-    <v-row>
-      <v-col>
-        <h3
-          class="title text-primary mb-2"
-        >
+    <v-col>
+      <v-row class="ma-0 mb-4">
+        <h3 class="title text-primary">
           <v-btn
             color="primary"
             variant="outlined"
@@ -21,19 +19,21 @@
             @click="fetchStatistics"
           />
         </h3>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        <component-statistics-table
-          :items="statistics"
-          :loading="loading"
-          :filters="statisticsFilters"
-        />
-
+      </v-row>
+      <v-row class="ma-0 mb-6">
+        <v-col
+          cols="12"
+          class="pa-0"
+        >
+          <component-statistics-table
+            :items="statistics"
+            :loading="loading"
+            :filters="statisticsFilters"
+          />
+        </v-col>
         <unique-stat-warning v-if="baseStats.reportFilter.value.isUnique" />
-      </v-col>
-    </v-row>
+      </v-row>
+    </v-col>
   </v-container>
 </template>
 

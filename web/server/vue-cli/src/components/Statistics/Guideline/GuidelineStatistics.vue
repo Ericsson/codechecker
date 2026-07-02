@@ -1,7 +1,5 @@
 <template>
-  <v-container
-    fluid
-  >
+  <v-container fluid>
     <statistics-dialog
       v-if="type"
       v-model="showRuns[type]"
@@ -9,11 +7,9 @@
       :type="type"
       :run-data="runData"
     />
-    <v-row>
-      <v-col>
-        <h3
-          class="title text-primary mb-2"
-        >
+    <v-col>
+      <v-row class="ma-0 mb-4">
+        <h3 class="title text-primary">
           <v-btn
             color="primary"
             variant="outlined"
@@ -44,19 +40,21 @@
             natively with <strong>CodeChecker 6.24</strong> and above.
           </tooltip-help-icon>
         </h3>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
+      </v-row>
+      <v-row class="ma-0 mb-6">
         <v-alert
           icon="mdi-information"
-          class="mt-2"
         >
           In this statistics only the "Run / Tag Filter"
           and the "Unique reports" are effective.
         </v-alert>
-
-        <div v-if="!problematicRuns.length">
+      </v-row>
+      <v-row class="ma-0">
+        <v-col
+          v-if="!problematicRuns.length"
+          cols="12"
+          class="pa-0"
+        >
           <v-row align="center">
             <v-col cols="6">
               <v-select
@@ -89,8 +87,12 @@
             :loading="loading"
             @enabled-click="showingRuns"
           />
-        </div>
-        <div v-else>
+        </v-col>
+        <v-col
+          v-else
+          cols="12"
+          class="pa-0"
+        >
           <v-alert
             v-if="noProperRun"
             icon="mdi-alert"
@@ -134,9 +136,9 @@
             :items="[]"
             :loading="loading"
           />
-        </div>
-      </v-col>
-    </v-row>
+        </v-col>
+      </v-row>
+    </v-col>
   </v-container>
 </template>
 
