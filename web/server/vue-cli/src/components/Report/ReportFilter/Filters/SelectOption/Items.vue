@@ -111,7 +111,7 @@
       v-if="limit"
       class="text-center text-secondary"
     >
-      <span v-if="limit === items.length">Only the first</span>
+      <span v-if="limit === items.length">Only the first </span>
       <i>{{ items.length }}</i> item(s) shown.
     </div>
 
