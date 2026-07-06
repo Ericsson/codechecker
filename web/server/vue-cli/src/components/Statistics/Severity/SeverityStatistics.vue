@@ -1,12 +1,8 @@
 <template>
-  <v-container
-    fluid
-  >
-    <v-row>
-      <v-col>
-        <h3
-          class="title text-primary mb-2"
-        >
+  <v-container fluid>
+    <v-col>
+      <v-row class="ma-0 mb-4">
+        <h3 class="title text-primary">
           <v-btn
             color="primary"
             variant="outlined"
@@ -23,46 +19,45 @@
             @click="fetchStatistics"
           />
         </h3>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        <div class="text-h6 mb-4">
-          Severity statistics
-          <tooltip-help-icon>
-            This table shows severity statistics for the product.
-            <br><br>
-            The following filters don't affect these values:
-            <ul>
-              <li><b>Severity</b> filter.</li>
-              <li><b>Source component</b> filter.</li>
-            </ul>
-          </tooltip-help-icon>
-        </div>
-        <div class="d-flex justify-center">
+      </v-row>
+      <v-row class="ma-0 mb-6">
+        <v-col
+          cols="12"
+          class="pa-0"
+        >
+          <div class="text-h6 mb-4">
+            Severity statistics
+            <tooltip-help-icon>
+              This table shows severity statistics for the product.
+              <br><br>
+              The following filters don't affect these values:
+              <ul>
+                <li><b>Severity</b> filter.</li>
+                <li><b>Source component</b> filter.</li>
+              </ul>
+            </tooltip-help-icon>
+          </div>
           <severity-statistics-table
             :items="statistics"
             :loading="loading"
           />
-
           <unique-stat-warning
             v-if="baseStats.reportFilter.value.isUnique"
           />
-        </div>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        <v-card
-          flat
+        </v-col>
+      </v-row>
+      <v-row class="ma-0">
+        <v-col
+          cols="12"
+          class="pa-0"
         >
           <component-severity-statistics
             :bus="bus"
             :namespace="namespace"
           />
-        </v-card>
-      </v-col>
-    </v-row>
+        </v-col>
+      </v-row>
+    </v-col>
   </v-container>
 </template>
 

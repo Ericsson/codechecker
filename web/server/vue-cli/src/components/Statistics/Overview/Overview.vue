@@ -1,7 +1,5 @@
 <template>
-  <v-container
-    fluid
-  >
+  <v-container fluid>
     <reports
       ref="reportsRef"
       :bus="bus"

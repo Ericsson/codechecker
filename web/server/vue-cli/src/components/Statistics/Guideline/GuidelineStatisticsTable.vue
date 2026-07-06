@@ -5,11 +5,11 @@
     :items="itemsWithUuid"
     :loading="loading"
     :mobile-breakpoint="1000"
-    :item-class="getRowClass"
     loading-text="Loading guideline statistics..."
-    no-data-text="No guideline statistics available"
     item-key="uuid"
     :sort-by="[{ key: 'checkers.severity', order: 'desc' }]"
+    :item-class="getRowClass"
+    no-data-text="No guideline statistics available"
     @enabled-click="enabledClick"
   />
 </template>
@@ -26,6 +26,33 @@ const props = defineProps({
 });
 
 const emit = defineEmits([ "enabled-click" ]);
+
+function getNestedSortValue(checkers, prop) {
+  if (!checkers || checkers.length === 0) {
+    return prop === "name" ? "" : -1;
+  }
+
+  if (prop === "enabledInAllRuns") {
+    return checkers.reduce((max, current) =>
+      current.enabledRunLength > max.enabledRunLength ? current : max
+    ).enabledRunLength;
+  }
+
+  return checkers.reduce((max, current) =>
+    current[prop] > max[prop] ? current : max
+  )[prop];
+}
+
+function checkersSortRaw(prop) {
+  return (a, b) => {
+    const aVal = getNestedSortValue(a.checkers, prop);
+    const bVal = getNestedSortValue(b.checkers, prop);
+
+    if (aVal < bVal) return -1;
+    if (aVal > bVal) return 1;
+    return 0;
+  };
+}
 
 const headers = [
   {
@@ -46,27 +73,32 @@ const headers = [
   },
   {
     title: "Related Checker(s)",
-    key: "checkers.name"
+    key: "checkers.name",
+    sortRaw: checkersSortRaw("name")
   },
   {
     title: "Checker Severity",
     key: "checkers.severity",
-    align: "center"
+    align: "center",
+    sortRaw: checkersSortRaw("severity")
   },
   {
     title: "Checker Status",
     key: "checkers.enabledInAllRuns",
-    align: "center"
+    align: "center",
+    sortRaw: checkersSortRaw("enabledInAllRuns")
   },
   {
     title: "Closed Reports",
     key: "checkers.closed",
-    align: "center"
+    align: "center",
+    sortRaw: checkersSortRaw("closed")
   },
   {
     title: "Outstanding Reports",
     key: "checkers.outstanding",
-    align: "center"
+    align: "center",
+    sortRaw: checkersSortRaw("outstanding")
   },
 ];
 
@@ -82,9 +114,9 @@ const tableHeaders = computed(function() {
   if (!headers) return;
 
   return headers.filter(_header => {
-    if (_header.value === "guidelineRuleTitle") {
+    if (_header.key === "guidelineRuleTitle") {
       return hasTitle.value;
-    } else if (_header.value === "guidelineLevel") {
+    } else if (_header.key === "guidelineLevel") {
       return hasLevel.value;
     }
 
