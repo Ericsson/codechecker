@@ -7,7 +7,7 @@
     <template v-slot:append-toolbar-title>
       <slot name="append-toolbar-title">
         <SelectedToolbarTitleItems
-          :value="selectedItems"
+          :value="allSelectedItems"
         />
       </slot>
     </template>
@@ -48,14 +48,14 @@
         <slot
           name="menu-content"
           :items="items"
-          :prev-selected-items="props.selectedItems"
+          :prev-selected-items="allSelectedItems"
           :apply="applyFilters"
           :on-apply-finished="closeMenu"
           :cancel="cancel"
         >
           <Items
             :items="items"
-            :selected-items="props.selectedItems"
+            :selected-items="allSelectedItems"
             :search="search"
             :multiple="multiple"
             :limit="limit"
@@ -83,7 +83,7 @@
 
     <slot :update-selected-items="emitInput">
       <items-selected
-        :selected-items="selectedItems"
+        :selected-items="allSelectedItems"
         :multiple="multiple"
         @update:select="emitInput"
       >
@@ -170,22 +170,23 @@ watch(
   { deep: true }
 );
 
-onMounted(() => {
-  props.bus.on("update", () => {
-    reloadItems.value = true;
-  });
+const onUpdate = () => { reloadItems.value = true; };
+const onSelect = predicate => {
+  const item = items.value.find(predicate);
+  if (item && !allSelectedItems.value.some(i => i.id === item.id)) {
+    allSelectedItems.value.push(item);
+  }
+};
 
-  props.bus.on("select", predicate => {
-    const item = items.value.find(predicate);
-    if (item && !allSelectedItems.value.some(i => i.id === item.id)) {
-      allSelectedItems.value.push(item);
-    }
-  });
+onMounted(() => {
+  props.bus.on("update", onUpdate);
+  props.bus.on("select", onSelect);
 });
 
 onUnmounted(() => {
-  props.bus.off("update", () => {});
-  props.bus.off("select", () => {});
+  props.bus.off("update", onUpdate);
+  props.bus.off("select", onSelect);
+
 });
 
 function closeMenu() {
@@ -204,7 +205,7 @@ function filterIsChanged(_selectedItems) {
   const newSelection = _selectedItems.map(item => item.title).sort();
   const baseSelection = allSelectedItems.value.map(item => item.title).sort();
 
-  if (_.xor(newSelection, baseSelection)) {
+  if (_.xor(newSelection, baseSelection).length > 0) {
     return true;
   }
 

@@ -10,7 +10,7 @@
     :limit="baseSelectOptionFilter.defaultLimit.value"
     :panel="baseSelectOptionFilter.panel.value"
     @clear="baseSelectOptionFilter.clear(true)"
-    @input="setSelectedItems"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
