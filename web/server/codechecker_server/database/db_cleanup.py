@@ -22,10 +22,10 @@ from codechecker_common.logger import get_logger
 from .database import DBSession
 from .run_db_model import \
     AnalysisInfo, \
-    BugPathEvent, BugReportPoint, \
     Comment, Checker, \
     File, FileContent, \
-    Report, ReportAnalysisInfo, RunHistoryAnalysisInfo, RunLock
+    Report, ReportAnalysisInfo, ReportPathDataFile, RunHistoryAnalysisInfo, \
+    RunLock
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
@@ -88,19 +88,16 @@ def remove_unused_files(product):
         LOG.debug("[%s] Garbage collection of dangling files started...",
                   product.endpoint)
         try:
-            bpe_files = session.query(BugPathEvent.file_id) \
-                .group_by(BugPathEvent.file_id)
-            brp_files = session.query(BugReportPoint.file_id) \
-                .group_by(BugReportPoint.file_id)
+            files = session.query(ReportPathDataFile.c.file_id) \
+                .group_by(ReportPathDataFile.c.file_id)
 
             files_to_delete = session.query(File.id) \
-                .filter(File.id.notin_(bpe_files), File.id.notin_(brp_files))
+                .filter(File.id.notin_(files))
             files_to_delete = map(lambda x: x[0], files_to_delete)
 
             total_count = 0
             for chunk in util.chunks(iter(files_to_delete), chunk_size):
-                q = session.query(File) \
-                    .filter(File.id.in_(chunk))
+                q = session.query(File).filter(File.id.in_(chunk))
                 count = q.delete(synchronize_session=False)
                 if count:
                     total_count += count

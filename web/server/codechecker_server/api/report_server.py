@@ -34,7 +34,7 @@ import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
-    BlameData, BlameInfo, BugPathPos, \
+    BlameData, BlameInfo, \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
     CommentData, \
     DetectionStatus, DiffType, \
@@ -66,12 +66,11 @@ from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
     AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
     AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, \
     CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
-    ExtendedReportData, \
     File, FileContent, \
-    Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
-    Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
+    Report, ReportAnnotations, ReportAnalysisInfo, \
+    ReportPathData, ReportPathDataFile, \
+    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
 from .common import exc_to_thrift_reqfail
@@ -554,57 +553,43 @@ def get_source_component_file_query(
 
 
 def get_reports_by_bugpath_filter_for_single_origin(
-    session,
+    session: DBSession,
     file_filter_q
 ) -> Set[int]:
     """
     This function returns a query for report IDs that are fully contained
     within the files specified by the file_filter_q query."""
 
-    LOG.info("get_reports_by_bugpath_filter file_filter_q: %s", file_filter_q)
     q_report = session.query(Report.id) \
         .join(File, File.id == Report.file_id) \
         .filter(file_filter_q)
 
-    q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id == BugPathEvent.file_id) \
+    q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id == ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
-    q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id == BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id == ExtendedReportData.file_id) \
+    neg_q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id != ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
     neg_q_report = session.query(Report.id) \
         .join(File, File.id != Report.file_id) \
         .filter(file_filter_q)
 
-    neg_q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id != BugPathEvent.file_id) \
-        .filter(file_filter_q)
-
-    neg_q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id != BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    neg_q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id != ExtendedReportData.file_id) \
-        .filter(file_filter_q)
-
-    return q_report.union(
-        q_bugpathevent,
-        q_bugreportpoint,
-        q_extendedreportdata).except_(
-        neg_q_report,
-        neg_q_bugpathevent,
-        neg_q_bugreportpoint,
-        neg_q_extendedreportdata)
+    return q_report.union(q_reportpathdata) \
+        .except_(neg_q_report, neg_q_reportpathdata)
 
 
-def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
+def get_reports_by_bugpath_filter(
+    session: DBSession,
+    file_filter_q
+) -> Set[int]:
     """
     This function returns a query for report IDs that are related to any file
     described by the query in the second parameter, either because their bug
@@ -615,22 +600,14 @@ def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
         .join(File, File.id == Report.file_id) \
         .filter(file_filter_q)
 
-    q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id == BugPathEvent.file_id) \
+    q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id == ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
-    q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id == BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id == ExtendedReportData.file_id) \
-        .filter(file_filter_q)
-
-    return q_report.union(
-        q_bugpathevent,
-        q_extendedreportdata,
-        q_bugreportpoint)
+    return q_report.union(q_reportpathdata)
 
 
 def get_reports_by_components(session,
@@ -890,52 +867,38 @@ def process_run_filter(session, query, run_filter):
     return query
 
 
-def get_report_details(session, report_ids):
+def get_report_details(
+    session: DBSession,
+    report_ids: List[int]
+) -> Dict[int, ReportDetails]:
     """
     Returns report details for the given report ids.
     """
     details = {}
 
-    # Get bug path events.
-    bug_path_events = session.query(BugPathEvent, File.filepath) \
-        .filter(BugPathEvent.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == BugPathEvent.file_id) \
-        .order_by(BugPathEvent.report_id, BugPathEvent.order)
-
     bug_events_list = defaultdict(list)
-    for event, file_path in bug_path_events:
-        report_id = event.report_id
-        event = bugpathevent_db_to_api(event)
-        event.filePath = file_path
-        bug_events_list[report_id].append(event)
-
-    # Get bug report points.
-    bug_report_points = session.query(BugReportPoint, File.filepath) \
-        .filter(BugReportPoint.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == BugReportPoint.file_id) \
-        .order_by(BugReportPoint.report_id, BugReportPoint.order)
-
     bug_point_list = defaultdict(list)
-    for bug_point, file_path in bug_report_points:
-        report_id = bug_point.report_id
-        bug_point = bugreportpoint_db_to_api(bug_point)
-        bug_point.filePath = file_path
-        bug_point_list[report_id].append(bug_point)
-
-    # Get extended report data.
     extended_data_list = defaultdict(list)
-    q = session.query(ExtendedReportData, File.filepath) \
-        .filter(ExtendedReportData.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == ExtendedReportData.file_id)
 
-    for data, file_path in q:
-        report_id = data.report_id
-        extended_data = extended_data_db_to_api(data)
-        extended_data.filePath = file_path
-        extended_data_list[report_id].append(extended_data)
+    report_path_data = session.query(ReportPathData) \
+        .filter(ReportPathData.report_id.in_(report_ids))
+
+    for rpd in report_path_data:
+        files = {f.id: f.filepath for f in rpd.files}
+
+        for pd in rpd.path_data:
+            if pd["type"] == "event":
+                event = bugpathevent_db_to_api(pd)
+                event.filePath = files[pd["fid"]]
+                bug_events_list[rpd.report_id].append(event)
+            elif pd["type"] == "path":
+                bug_point = bugreportpoint_db_to_api(pd)
+                bug_point.filePath = files[pd["fid"]]
+                bug_point_list[rpd.report_id].append(bug_point)
+            else:
+                extended_data = extended_data_db_to_api(pd)
+                extended_data.filePath = files[pd["fid"]]
+                extended_data_list[rpd.report_id].append(extended_data)
 
     # Get Comments for report data
     comment_data_list = defaultdict(list)
@@ -958,34 +921,34 @@ def get_report_details(session, report_ids):
     return details
 
 
-def bugpathevent_db_to_api(bpe):
+def bugpathevent_db_to_api(bpe: Dict) -> ttypes.BugPathEvent:
     return ttypes.BugPathEvent(
-        startLine=bpe.line_begin,
-        startCol=bpe.col_begin,
-        endLine=bpe.line_end,
-        endCol=bpe.col_end,
-        msg=bpe.msg,
-        fileId=bpe.file_id)
+        startLine=bpe["from"]["row"],
+        startCol=bpe["from"]["col"],
+        endLine=bpe["to"]["row"],
+        endCol=bpe["to"]["col"],
+        msg=bpe["msg"],
+        fileId=bpe["fid"])
 
 
-def bugreportpoint_db_to_api(brp):
-    return BugPathPos(
-        startLine=brp.line_begin,
-        startCol=brp.col_begin,
-        endLine=brp.line_end,
-        endCol=brp.col_end,
-        fileId=brp.file_id)
+def bugreportpoint_db_to_api(brp: Dict) -> ttypes.BugPathPos:
+    return ttypes.BugPathPos(
+        startLine=brp["from"]["row"],
+        startCol=brp["from"]["col"],
+        endLine=brp["to"]["row"],
+        endCol=brp["to"]["col"],
+        fileId=brp["fid"])
 
 
-def extended_data_db_to_api(erd):
+def extended_data_db_to_api(erd: Dict) -> ttypes.ExtendedReportData:
     return ttypes.ExtendedReportData(
-        type=report_extended_data_type_enum(erd.type),
-        startLine=erd.line_begin,
-        startCol=erd.col_begin,
-        endLine=erd.line_end,
-        endCol=erd.col_end,
-        message=erd.message,
-        fileId=erd.file_id)
+        type=report_extended_data_type_enum(erd["type"]),
+        startLine=erd["from"]["row"],
+        startCol=erd["from"]["col"],
+        endLine=erd["to"]["row"],
+        endCol=erd["to"]["col"],
+        message=erd["msg"],
+        fileId=erd["fid"])
 
 
 def comment_data_db_to_api(comm):
