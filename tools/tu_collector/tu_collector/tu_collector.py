@@ -28,6 +28,7 @@ import string
 import subprocess
 import sys
 import zipfile
+from multiprocessing import Pool
 from shutil import which
 
 from pathlib import Path
@@ -473,22 +474,34 @@ def zip_tu_files(
                          json.dumps(compilation_database, indent=2))
 
 
+def __get_dependent_headers_for_build_action(build_action: CompileAction
+                                             ) -> Tuple[str, Set[str]]:
+    """ Return the source file and dependent headers for a build action. """
+    files, _ = get_dependent_headers(
+        build_action['command'],
+        build_action['directory'])
+
+    source_file = os.path.join(build_action['directory'],
+                               build_action['file'])
+    return source_file, files
+
+
 def get_dependent_sources(
     compilation_db: CompilationDB,
     header_path: Optional[str] = None,
     dependencies: Optional[Dependencies] = None,
+    jobs: Optional[int] = None
 ) -> Set[str]:
     """ Get dependencies for each files in each translation unit. """
     if dependencies is None:
         dependencies = collections.defaultdict(set)
+    if jobs is None:
+        jobs = 1
     if not dependencies:
-        for build_action in compilation_db:
-            files, _ = get_dependent_headers(
-                build_action['command'],
-                build_action['directory'])
-
-            source_file = os.path.join(build_action['directory'],
-                                       build_action['file'])
+        with Pool(jobs) as p:
+            results = list(p.map(__get_dependent_headers_for_build_action,
+                                 compilation_db))
+        for source_file, files in results:
             for f in files:
                 dependencies[f].add(source_file)
 
