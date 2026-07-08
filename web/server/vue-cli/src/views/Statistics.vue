@@ -133,7 +133,12 @@ const reportFilter = computed(function() {
   return store.getters[`${namespace}/getReportFilter`];
 });
 
-watch(() => tab.value, async () => {
+watch(() => tab.value, async (value, oldValue) => {
+  // Don't refresh on page reload!
+  // When the ReportFilter is loaded
+  // from the URL it will trigger refresh.
+  if (!oldValue)
+    return;
   if (tab.value == null) return;
 
   const currentTab = tabs[tab.value];
