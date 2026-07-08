@@ -30,6 +30,22 @@
           />
         </v-toolbar>
 
+        <v-list-item
+          v-if="treeFilter"
+          density="compact"
+          class="pattern-item"
+        >
+          <template #prepend>
+            <v-checkbox-btn
+              v-model="patternSelected"
+              density="compact"
+            />
+          </template>
+          <v-list-item-title class="text-body-2">
+            Filter by wildcard pattern: <b>{{ treeFilter }}</b>
+          </v-list-item-title>
+        </v-list-item>
+
         <AnywhereOnReportPath v-model="isAnywhere" />
 
         <v-divider v-if="treeItems.length > 0" class="my-1" />
@@ -79,7 +95,8 @@
             variant="text"
             class="apply-btn"
             color="primary"
-            :disabled="treeSelection.length === 0"
+            :disabled="treeSelection.length === 0 &&
+              !(patternSelected && treeFilter)"
             @click="applyTreeSelection(onApplyFinished)"
           >
             <v-icon start>
@@ -126,7 +143,12 @@ const anywhereId = "anywhere-filepath";
 const allFileCounts = ref({});
 const treeSelection = ref([]);
 const treeFilter = ref("");
+const patternSelected = ref(false);
 const route = useRoute();
+
+watch(treeFilter, () => {
+  patternSelected.value = false;
+});
 
 const filteredFileCounts = computed(() => {
   if (!treeFilter.value) return allFileCounts.value;
@@ -258,17 +280,27 @@ function fetchAllFileCounts() {
 
 function clearAll(onApplyFinished) {
   treeSelection.value = [];
+  patternSelected.value = false;
   baseSelectOptionFilter.clear(true);
   if (onApplyFinished) onApplyFinished();
 }
 
 function applyTreeSelection(onApplyFinished) {
-  if (!treeSelection.value.length) return;
   const items = treeSelection.value.map(fp => {
     const filterId = isDirectory(fp) ? fp + "/*" : fp;
     return { id: filterId, title: filterId, count: "N/A" };
   });
+
+  if (patternSelected.value && treeFilter.value) {
+    items.push({
+      id: treeFilter.value, title: treeFilter.value, count: "N/A"
+    });
+  }
+
+  if (!items.length) return;
+
   baseSelectOptionFilter.setSelectedItems(items);
+  patternSelected.value = false;
   if (onApplyFinished) onApplyFinished();
 }
 
