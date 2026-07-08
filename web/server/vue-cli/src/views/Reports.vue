@@ -421,8 +421,14 @@ const checkerDocDialog = ref(false);
 const selectedChecker = ref(null);
 const expanded = ref([]);
 const expandedItemsHistory = ref({});
-const viewMode = ref("table");
-const openedTreeItems = ref([]);
+const viewMode = ref(route.query["view"] === "tree" ? "tree" : "table");
+const openedTreeItems = ref(
+  route.query["tree-open"]
+    ? (Array.isArray(route.query["tree-open"])
+      ? route.query["tree-open"]
+      : [ route.query["tree-open"] ])
+    : []
+);
 const allReportsFileCounts = ref({});
 const fileSeverities = ref({});
 const treeItems = ref([]);
@@ -528,6 +534,14 @@ watch(
 watch(allReportsFileCounts, () => {
   buildTreeItems();
 }, { deep: true });
+
+watch(
+  [ viewMode, openedTreeItems ],
+  () => {
+    updateUrl();
+  },
+  { deep: true }
+);
 
 function setReportFilter(params) {
   store.commit(`${namespace}/${SET_REPORT_FILTER}`, params);
@@ -726,6 +740,10 @@ function updateUrl() {
   const _page = page.value === 1 ? undefined : page.value;
   const _sortBy = sortBy.value?.[0]?.key;
   const _sortDesc = sortBy.value?.[0]?.order === "desc";
+  const _view = viewMode.value === "tree" ? "tree" : undefined;
+  const _treeOpen = openedTreeItems.value.length
+    ? openedTreeItems.value
+    : undefined;
 
   router.replace({
     query: {
@@ -734,6 +752,8 @@ function updateUrl() {
       "page": _page,
       "sort-by": _sortBy,
       "sort-desc": _sortDesc,
+      "view": _view,
+      "tree-open": _treeOpen,
     }
   }).catch(() => {});
 }
