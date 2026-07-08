@@ -249,24 +249,64 @@
                 class="tree-item-label clickable"
                 @click.stop="onTreeItemClick(item)"
               >{{ item.name }}</span>
-              <span class="tree-stat-cell">{{ item.findings }}</span>
-              <span class="tree-stat-cell">{{ item.stats.style || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.low || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.medium || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.high || '' }}</span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.findings }"
+                @click.stop="onTreeStatClick(item, 'all')"
+              >{{ item.findings }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.style }"
+                @click.stop="onTreeStatClick(item, 'style')"
+              >{{ item.stats.style || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.low }"
+                @click.stop="onTreeStatClick(item, 'low')"
+              >{{ item.stats.low || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.medium }"
+                @click.stop="onTreeStatClick(item, 'medium')"
+              >{{ item.stats.medium || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.high }"
+                @click.stop="onTreeStatClick(item, 'high')"
+              >{{ item.stats.high || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.critical }"
+                @click.stop="onTreeStatClick(item, 'critical')"
+              >
                 {{ item.stats.critical || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.unreviewed }"
+                @click.stop="onTreeStatClick(item, 'unreviewed')"
+              >
                 {{ item.stats.unreviewed || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.confirmed }"
+                @click.stop="onTreeStatClick(item, 'confirmed')"
+              >
                 {{ item.stats.confirmed || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.false_positive }"
+                @click.stop="onTreeStatClick(item, 'false_positive')"
+              >
                 {{ item.stats.false_positive || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.intentional }"
+                @click.stop="onTreeStatClick(item, 'intentional')"
+              >
                 {{ item.stats.intentional || '' }}
               </span>
             </div>
@@ -287,6 +327,7 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
   Order,
+  ReviewStatus,
   Severity,
   SortMode,
   SortType
@@ -533,10 +574,44 @@ function setReportFilter(params) {
   store.commit(`${namespace}/${SET_REPORT_FILTER}`, params);
 }
 
-function onTreeItemClick(item) {
+const SEVERITY_STAT_KEYS = {
+  style: Severity.STYLE,
+  low: Severity.LOW,
+  medium: Severity.MEDIUM,
+  high: Severity.HIGH,
+  critical: Severity.CRITICAL
+};
+
+const REVIEW_STATUS_STAT_KEYS = {
+  unreviewed: ReviewStatus.UNREVIEWED,
+  confirmed: ReviewStatus.CONFIRMED,
+  false_positive: ReviewStatus.FALSE_POSITIVE,
+  intentional: ReviewStatus.INTENTIONAL
+};
+
+function getTreeItemFilePattern(item) {
   const isDir = item.children && item.children.length > 0;
-  const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
-  setReportFilter({ filepath: [ pattern ] });
+  return isDir ? item.fullPath + "/*" : item.fullPath;
+}
+
+function onTreeItemClick(item) {
+  setReportFilter({ filepath: [ getTreeItemFilePattern(item) ] });
+  viewMode.value = "table";
+}
+
+function onTreeStatClick(item, statKey) {
+  const count = statKey === "all" ? item.findings : item.stats[statKey];
+  if (!count) return;
+
+  const params = { filepath: [ getTreeItemFilePattern(item) ] };
+
+  if (statKey in SEVERITY_STAT_KEYS) {
+    params.severity = [ SEVERITY_STAT_KEYS[statKey] ];
+  } else if (statKey in REVIEW_STATUS_STAT_KEYS) {
+    params.reviewStatus = [ REVIEW_STATUS_STAT_KEYS[statKey] ];
+  }
+
+  setReportFilter(params);
   viewMode.value = "table";
 }
 
@@ -898,6 +973,15 @@ body {
   text-align: center;
   flex-shrink: 0;
   font-size: 0.8em;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: rgb(var(--v-theme-primary));
+    }
+  }
 }
 
 .v-data-table {
