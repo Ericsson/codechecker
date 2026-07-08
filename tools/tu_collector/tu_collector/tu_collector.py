@@ -31,7 +31,7 @@ import zipfile
 from shutil import which
 
 from pathlib import Path
-from typing import Iterable, Iterator, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -56,6 +56,7 @@ class CompileAction(TypedDict):
 
 
 CompilationDB = List[CompileAction]
+Dependencies = Dict[str, Set[str]]
 
 
 def __random_string(length: int) -> str:
@@ -474,19 +475,22 @@ def zip_tu_files(
 
 def get_dependent_sources(
     compilation_db: CompilationDB,
-    header_path: Optional[str] = None
+    header_path: Optional[str] = None,
+    dependencies: Optional[Dependencies] = None,
 ) -> Set[str]:
     """ Get dependencies for each files in each translation unit. """
-    dependencies = collections.defaultdict(set)
-    for build_action in compilation_db:
-        files, _ = get_dependent_headers(
-            build_action['command'],
-            build_action['directory'])
+    if dependencies is None:
+        dependencies = collections.defaultdict(set)
+    if not dependencies:
+        for build_action in compilation_db:
+            files, _ = get_dependent_headers(
+                build_action['command'],
+                build_action['directory'])
 
-        source_file = os.path.join(build_action['directory'],
-                                   build_action['file'])
-        for f in files:
-            dependencies[f].add(source_file)
+            source_file = os.path.join(build_action['directory'],
+                                       build_action['file'])
+            for f in files:
+                dependencies[f].add(source_file)
 
     pattern = None
     if header_path:

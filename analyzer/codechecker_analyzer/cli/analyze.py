@@ -1019,6 +1019,7 @@ def get_affected_file_paths(
     with the same file path expression.
     """
     file_paths = []  # Use list to keep the order of the file paths.
+    dependencies: tu_collector.Dependencies = collections.defaultdict(set)
     for file_filter in file_filters:
         file_paths.append(str(Path(file_filter).resolve())
                           if '*' not in file_filter else file_filter)
@@ -1027,7 +1028,7 @@ def get_affected_file_paths(
                 file_filter.endswith(header_file_extensions):
             LOG.info("Get dependent source files for '%s'...", file_filter)
             dependent_sources = tu_collector.get_dependent_sources(
-                compile_commands, file_filter)
+                compile_commands, file_filter, dependencies)
 
             LOG.info("Get dependent source files for '%s' done.", file_filter)
             LOG.debug("Dependent source files: %s",
