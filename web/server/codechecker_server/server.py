@@ -72,6 +72,8 @@ from .task_executors.main import executor as background_task_executor
 from .task_executors.task_manager import \
     TaskManager as BackgroundTaskManager
 
+from .session_manager import _Session
+
 
 LOG = get_logger('server')
 
@@ -85,6 +87,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
+    server: "CCSimpleHttpServer"
     auth_session = None
 
     def __init__(self, request, client_address, server):
@@ -114,7 +117,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(result)
 
-    def __check_session_header(self):
+    def __check_session_header(self) -> Optional[_Session]:
         """
         Check the CodeChecker privileged access cookie in the request headers.
 
@@ -147,10 +150,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     session = self.server.manager.get_session(values[1])
 
         if session and session.is_alive:
-            # If a valid bearer token was found and it can still be used,
-            # mark that the user's last access to the server was the
-            # request that resulted in the execution of this function.
-            session.revalidate()
             return session
         else:
             # If the user's token is no longer usable (invalid),
