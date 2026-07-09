@@ -2624,7 +2624,7 @@ Several source code comment types are allowed:
     indication for developers to deal with this report. Such a report is
     considered outstanding.
 
-You can read more about review status [here](https://codechecker.readthedocs.io/en/latest/web/user_guide/#review-status)
+You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#export-comments-and-review-statuses-export)
 
 #### Change review status of a specific checker result
 ```cpp
