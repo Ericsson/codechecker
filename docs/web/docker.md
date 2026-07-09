@@ -76,7 +76,7 @@ environment.
 #### Sqlite setup
 To run a simple CodeChecker server with SQLite database you have to
 write a compose file similar to
-[this](../../web/docker/services/docker-compose.sqlite.yml).
+[this](https://github.com/Ericsson/codechecker/blob/master/web/docker/services/docker-compose.sqlite.yml).
 
 #### PostgreSQL setup
 
@@ -85,24 +85,24 @@ Follow the instructions [here](postgresql_setup.md) for the general database set
 #### PostgreSQL (no authentication)
 To run a CodeChecker server and a PostgreSQL database cluster which does not
 require authentication you have to write a compose file similar to
-[this](../../web/docker/services/docker-compose.psql.yml).
+[this](https://github.com/Ericsson/codechecker/blob/master/web/docker/services/docker-compose.psql.yml).
 
 #### PostgreSQL (authentication)
 To run a CodeChecker server and a PostgreSQL database cluster which requires
 authentication you have write a compose file which should be similar to
-[this](../../web/docker/services/docker-compose.psql.auth.yml).
+[this](https://github.com/Ericsson/codechecker/blob/master/web/docker/services/docker-compose.psql.auth.yml).
 
-[Docker secrets]((https://docs.docker.com/engine/swarm/secrets/)) can be used
+[Docker secrets](https://docs.docker.com/engine/swarm/secrets/) can be used
 to define the superuser password in the PostgreSQL instance and to define a
 `.pgpass` file in the CodeChecker server container for database connections:
 
-- [`postgres-passwd`](../../web/docker/services/secrets/postgres-passwd): this
+- [`postgres-passwd`](https://github.com/Ericsson/codechecker/blob/master/web/docker/services/secrets/postgres-passwd): this
 file will contain the superuser password which will be used in the `initdb`
 script during initial container startup. For more information see
 `Docker Secrets` section of the official
 [readme](https://hub.docker.com/_/postgres).
 
-- [`pgpass`](../../web/docker/services/secrets/pgpass): this file can contain
+- [`pgpass`](https://github.com/Ericsson/codechecker/blob/master/web/docker/services/secrets/pgpass): this file can contain
 passwords to be used if the connection requires a password. This file should
 contain lines of the following format:
 `hostname:port:database:username:password`. For more information
@@ -152,7 +152,7 @@ Compose starts and runs your entire app.
 
 CodeChecker supports to configure liveness, readiness and startup probes for
 containers when using
-[Kubernetes]( https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+[Kubernetes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 
 If your server is running on `my.company.org` at `8080` port then two URL
 endpoints will be available for you:

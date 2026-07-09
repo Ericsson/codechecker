@@ -56,7 +56,7 @@ usage of CodeChecker. The document is a mini course with simple examples that
 guides the developer how he/she can apply CodeChecker in his/her daily routine
 to make his/her code more robust.
 
-There is a simple [example](examples) program in this repository what will be
+There is a simple [example](https://github.com/Ericsson/codechecker/tree/master/docs/examples) program in this repository what will be
 used in the later sections to show CodeChecker usage.
 
 ## Step 0: Setup CodeChecker environment

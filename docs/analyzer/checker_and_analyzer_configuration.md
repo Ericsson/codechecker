@@ -229,7 +229,7 @@ CodeChecker check -l ./compile_commands.json \
   Addon checkers can be used, but their reports severity will be displayed as
   `Unspecified`.
 * The Cppcheck categorization of checkers is not yet introduced into the
-  Cppcheck label [file](../../config/labels/analyzers/cppcheck.json). To enable
+  Cppcheck label [file](https://github.com/Ericsson/codechecker/blob/master/config/labels/analyzers/cppcheck.json). To enable
   a whole category, each individual checker needs to be enabled with the
   `--enable` flag.
 * All Cppcheck Errors and Warnings are enabled by default.
