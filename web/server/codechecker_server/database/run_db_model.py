@@ -186,8 +186,15 @@ RunHistoryAnalysisInfo = Table(
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -376,8 +383,15 @@ ReportAnalysisInfo = Table(
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
