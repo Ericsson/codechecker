@@ -822,6 +822,7 @@ def handle_list_results(args):
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         rows = []
+        header = []
         max_msg_len = 50
         for res in all_results:
             bug_line = res.line

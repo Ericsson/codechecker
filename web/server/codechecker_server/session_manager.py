@@ -847,7 +847,7 @@ class SessionManager:
         return False
 
     def __create_local_session(self, token, user_name, groups, is_root,
-                               last_access=None):
+                               last_access=None) -> _Session:
         """
         Returns a new local session object initalized by the given parameters.
         """
@@ -1051,7 +1051,7 @@ class SessionManager:
         """ Get keepalive max probe count. """
         return self.__keepalive_config.get('max_probe')
 
-    def __get_local_session_from_db(self, token):
+    def __get_local_session_from_db(self, token) -> Optional[_Session]:
         """
         Creates a local session if a valid session token can be found in the
         database.
@@ -1087,7 +1087,7 @@ class SessionManager:
 
         return None
 
-    def get_session(self, token):
+    def get_session(self, token) -> Optional[_Session]:
         """
         Retrieves the session for the given session cookie token from the
         server's memory backend, if such session exists or creates and returns
