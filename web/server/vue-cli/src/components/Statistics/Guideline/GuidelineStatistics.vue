@@ -64,8 +64,11 @@
                 item-value="value"
                 label="Select guidelines"
                 variant="outlined"
-                multiple
                 density="comfortable"
+                multiple
+                clearable
+                chips
+                closable-chips
               >
                 <template v-slot:selection="{ item }">
                   <div class="selection-item">
