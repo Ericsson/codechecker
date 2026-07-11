@@ -41,6 +41,9 @@ from codechecker_report_converter.report.hash import HashType, \
     get_report_path_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
+from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import cpu_count  # type: ignore
+
 try:
     from codechecker_client.blame_info import assemble_blame_info
 except ImportError:
@@ -55,7 +58,6 @@ from codechecker_client import client as libclient, product
 from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import format_size, load_json, strtobool

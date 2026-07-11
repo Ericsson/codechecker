@@ -17,6 +17,8 @@ import shutil
 import sys
 import tempfile
 
+from multiprocess import cpu_count  # type: ignore
+
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
@@ -33,7 +35,6 @@ from codechecker_analyzer.cli.parse import \
     EPILOG_ENV_VAR as parse_epilog_env_var
 
 from codechecker_common import arg, cmd_config, logger
-from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
 

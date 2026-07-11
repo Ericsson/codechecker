@@ -18,7 +18,7 @@ from authlib.oauth2.rfc7636 import create_s256_code_challenge as hash_s256
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Server config
-HOSTNAME = "0.0.0.0"
+HOSTNAME = "127.0.0.1"
 SERVERPORT = int(os.getenv("PORT")) if os.getenv("PORT") else 3000
 
 
@@ -220,7 +220,8 @@ class OauthServer(BaseHTTPRequestHandler):
 
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
-# print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}")
+print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}",
+      flush=True)
 
 webServer.serve_forever()
 webServer.server_close()

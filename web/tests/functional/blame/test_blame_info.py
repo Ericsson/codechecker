@@ -154,63 +154,67 @@ class TestBlameInfo(unittest.TestCase):
             # easily.
             old_pwd = os.getcwd()
             os.chdir(proj_dir)
+            # A failing assertion must not leave later tests running from
+            # this temporary project directory.
+            try:
+                run_name = "update_blame_info"
+                codechecker.check_and_store(
+                    self._codechecker_cfg, run_name, proj_dir)
 
-            run_name = "update_blame_info"
-            codechecker.check_and_store(
-                self._codechecker_cfg, run_name, proj_dir)
+                run_filter = RunFilter(names=[run_name], exactMatch=True)
+                runs = self._cc_client.getRunData(run_filter, None, 0, None)
+                run_id = runs[0].runId
 
-            run_filter = RunFilter(names=[run_name], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
-            run_id = runs[0].runId
+                report_filter = ReportFilter(
+                    checkerName=['*'],
+                    filepath=[f'*{source_file_name}'])
 
-            report_filter = ReportFilter(
-                checkerName=['*'],
-                filepath=[f'*{source_file_name}'])
+                run_results = get_all_run_results(
+                    self._cc_client, run_id, [], report_filter)
+                self.assertIsNotNone(run_results)
 
-            run_results = get_all_run_results(
-                self._cc_client, run_id, [], report_filter)
-            self.assertIsNotNone(run_results)
+                report = run_results[0]
 
-            report = run_results[0]
+                # Get source file data.
+                file_data = self._cc_client.getSourceFileData(
+                    report.fileId, True, None)
+                self.assertIsNotNone(file_data)
+                self.assertFalse(file_data.hasBlameInfo)
+                self.assertFalse(file_data.remoteUrl)
+                self.assertFalse(file_data.trackingBranch)
 
-            # Get source file data.
-            file_data = self._cc_client.getSourceFileData(
-                report.fileId, True, None)
-            self.assertIsNotNone(file_data)
-            self.assertFalse(file_data.hasBlameInfo)
-            self.assertFalse(file_data.remoteUrl)
-            self.assertFalse(file_data.trackingBranch)
+                # Get blame information
+                blame_info = self._cc_client.getBlameInfo(report.fileId)
+                self.assertIsNotNone(blame_info)
+                self.assertFalse(blame_info.commits)
+                self.assertFalse(blame_info.blame)
 
-            # Get blame information
-            blame_info = self._cc_client.getBlameInfo(report.fileId)
-            self.assertIsNotNone(blame_info)
-            self.assertFalse(blame_info.commits)
-            self.assertFalse(blame_info.blame)
+                # Create a .git structure that is as bare as possible,
+                # without getting interference from the user's
+                # configuration.
+                subprocess.Popen(['git', 'init', proj_dir,
+                                  "--template",
+                                  "/usr/share/git-core/templates"
+                                  ]).communicate()
 
-            # Create a .git structure that is as bare as possible, without
-            # getting interference from the user's configuration.
-            subprocess.Popen(['git', 'init', proj_dir,
-                              "--template", "/usr/share/git-core/templates"
-                              ]).communicate()
+                subprocess.Popen([
+                    'git',
+                    'remote',
+                    'add',
+                    'origin',
+                    'https://myurl.com']).communicate()
+                subprocess.Popen(['git', 'add', src_file]).communicate()
+                subprocess.Popen([
+                    'git',
+                    '-c', 'user.name=hello',
+                    '-c', 'user.email=world',
+                    'commit',
+                    '--no-verify',
+                    '--message', 'message']).communicate()
 
-            subprocess.Popen([
-                'git',
-                'remote',
-                'add',
-                'origin',
-                'https://myurl.com']).communicate()
-            subprocess.Popen(['git', 'add', src_file]).communicate()
-            subprocess.Popen([
-                'git',
-                '-c', 'user.name=hello',
-                '-c', 'user.email=world',
-                'commit',
-                '--no-verify',
-                '--message', 'message']).communicate()
-
-            codechecker.store(self._codechecker_cfg, run_name)
-
-            os.chdir(old_pwd)
+                codechecker.store(self._codechecker_cfg, run_name)
+            finally:
+                os.chdir(old_pwd)
 
             # Get source file data.
             file_data = self._cc_client.getSourceFileData(
@@ -250,12 +254,14 @@ class TestBlameInfo(unittest.TestCase):
             # easily.
             old_pwd = os.getcwd()
             os.chdir(proj_dir)
-
-            run_name = "no_blame_info"
-            codechecker.check_and_store(
-                self._codechecker_cfg, run_name, proj_dir)
-
-            os.chdir(old_pwd)
+            # A failing assertion must not leave later tests running from
+            # this temporary project directory.
+            try:
+                run_name = "no_blame_info"
+                codechecker.check_and_store(
+                    self._codechecker_cfg, run_name, proj_dir)
+            finally:
+                os.chdir(old_pwd)
 
             run_filter = RunFilter(names=[run_name], exactMatch=True)
             runs = self._cc_client.getRunData(run_filter, None, 0, None)
