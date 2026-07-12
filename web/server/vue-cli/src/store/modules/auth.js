@@ -2,8 +2,7 @@ import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
   LOGIN,
-  LOGOUT,
-  SSO_LOGIN
+  LOGOUT
 } from "../actions.type";
 
 import {
@@ -97,18 +96,27 @@ const actions = {
             reject(err);
           }));
       }
+      else if (credentials.type === "sso") {
+        if (!credentials.code) {
+          reject(new Error("Missing SSO login code."));
+          return;
+        }
+
+        authService.getClient().performLogin("sso", credentials.code,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: null,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+      }
       else {
         reject("Unknown option provided");
       }
     });
-  },
-
-  [SSO_LOGIN](context, credentials) {
-    const creds = {
-      userName: credentials.username,
-      token: credentials.token
-    };
-    context.commit(SET_AUTH, creds);
   },
 
   [LOGOUT](context) {

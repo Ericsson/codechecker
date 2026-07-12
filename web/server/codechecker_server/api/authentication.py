@@ -510,6 +510,28 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "Session creation error: %s.", str(ex))
 
+        elif auth_method == "sso":
+            if not self.__manager.is_sso_enabled():
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "SSO authentication is not enabled.")
+
+            session_token = self.__manager.redeem_sso_exchange_code(
+                auth_string)
+            if not session_token:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Invalid or expired SSO login code.")
+
+            session = self.__manager.get_session(session_token)
+            if not session or not session.is_alive:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "SSO session is no longer valid.")
+
+            LOG.info("'%s' logged in via SSO.", session.user)
+            return session.token
+
         LOG.error("Could not negotiate via common authentication method.")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,

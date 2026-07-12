@@ -209,7 +209,7 @@ const showOtherLoginOptions = computed(() =>
 
 const ssoButtonText = computed(() => {
   return providers.value.length === 1 ?
-    `Login with ${providers.value[0]}` : "SSO Login";
+    `Login with ${providers.value[0]}` : "OAuth Login";
 });
 
 watch(username, () => {

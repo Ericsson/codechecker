@@ -110,7 +110,8 @@
       "redirect_uri" : null,
       "client_id" : null,
       "client_secret" : null,
-      "admin_group": []
+      "admin_group": [],
+      "username_claim": null
     }
   }
 }

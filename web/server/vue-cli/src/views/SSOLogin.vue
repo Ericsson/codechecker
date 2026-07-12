@@ -10,7 +10,7 @@ import { onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 
-import { SSO_LOGIN } from "@/store/actions.type";
+import { GET_LOGGED_IN_USER, LOGIN } from "@/store/actions.type";
 import { SET_REDIRECT } from "@/store/mutations.type";
 
 const route = useRoute();
@@ -22,12 +22,20 @@ onMounted(() => {
 });
 
 function login() {
-  const username = route.query["username"];
-  const token = route.query["token"];
+  const code = route.query["code"];
   const redirect = localStorage.getItem(SET_REDIRECT);
 
+  if (!code) {
+    router.replace({
+      name: "login",
+      query: { error: "Failed to log in! Missing SSO login code." }
+    });
+    return;
+  }
+
   store
-    .dispatch(SSO_LOGIN, { username, token })
+    .dispatch(LOGIN, { type: "sso", code })
+    .then(() => store.dispatch(GET_LOGGED_IN_USER))
     .then(() => {
       router.replace(redirect || { name: "products" });
       localStorage.removeItem(SET_REDIRECT);

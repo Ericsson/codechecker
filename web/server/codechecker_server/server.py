@@ -24,7 +24,7 @@ import ssl
 import sys
 import time
 from typing import Dict, List, Optional, Tuple, cast
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, urlencode
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -57,6 +57,7 @@ from codechecker_web.shared import database_status
 from codechecker_web.shared.version import get_version_str
 
 from . import instance_manager, permissions, routing, session_manager
+from .auth.cc_sso import SSO_SCOPE
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
@@ -190,6 +191,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         except BrokenPipeError:
             pass
 
+    def __send_sso_auth_failure(self, message="Authentication failed."):
+        """Send a user-facing SSO authentication failure response."""
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(message.encode('utf-8'))
+
     def end_headers(self):
         """
         Headers in this section are based on the OWASP Secure Headers Project.
@@ -307,15 +315,30 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.path.startswith("/sso-login") and \
                 self.server.manager.is_sso_enabled():
             sso_config = self.server.manager.get_sso_config()
-            sso_server = sso_config.get("sso_server", None)
-            client_id = sso_config.get("client_id", None)
-            redirect_uri = sso_config.get("redirect_uri", None)
+            sso_server = sso_config.get("sso_server")
+            client_id = sso_config.get("client_id")
+            redirect_uri = sso_config.get("redirect_uri")
+            if not sso_server or not client_id or not redirect_uri:
+                LOG.error("SSO is enabled but configuration is incomplete")
+                self.__send_sso_auth_failure()
+                return
+
+            state = self.server.manager.create_sso_state()
+            if not state:
+                self.__send_sso_auth_failure()
+                return
+
+            authorize_params = urlencode({
+                "response_type": "code",
+                "client_id": client_id,
+                "scope": SSO_SCOPE,
+                "redirect_uri": redirect_uri,
+                "state": state,
+            })
             self.send_response(302)
             self.send_header(
                 'Location',
-                f'{sso_server}/authorize?response_type=code&'
-                f'client_id={client_id}&scope=openid%20profile&'
-                f'redirect_uri={redirect_uri}')
+                f'{sso_server}/authorize?{authorize_params}')
             self.end_headers()
             return
 
@@ -325,20 +348,52 @@ class RequestHandler(SimpleHTTPRequestHandler):
             query_string = url_components.query
             query_params = parse_qs(query_string)
             LOG.info("Query parameters: %s", query_params)
-            code = query_params.get('code')[0]
-            response = self.server.manager.create_session(f"auth:{code}")
+
+            if query_params.get('error'):
+                error_description = query_params.get('error_description',
+                                                     query_params.get('error'))
+                LOG.error("SSO callback returned an error: %s",
+                          error_description)
+                self.__send_sso_auth_failure()
+                return
+
+            codes = query_params.get('code')
+            states = query_params.get('state')
+            if not codes or not states:
+                LOG.error("SSO callback is missing required parameters")
+                self.__send_sso_auth_failure()
+                return
+
+            code = codes[0]
+            state = states[0]
+            if not self.server.manager.validate_and_consume_sso_state(state):
+                LOG.error("SSO callback state validation failed")
+                self.__send_sso_auth_failure()
+                return
+
+            try:
+                response = self.server.manager.create_session(f"auth:{code}")
+            except Exception as exc:
+                LOG.exception("SSO session creation failed: %s", exc)
+                self.__send_sso_auth_failure()
+                return
+
             if not response:
-                self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-                self.wfile.write(b"Authentication failed.")
-            else:
-                self.send_response(302)
-                self.send_header(
-                    'Location',
-                    f'/sso-login-callback?username={response.user}&'
-                    f'token={response.token}')
-                self.end_headers()
+                self.__send_sso_auth_failure()
+                return
+
+            exchange_code = self.server.manager.create_sso_exchange_code(
+                response.token)
+            if not exchange_code:
+                self.__send_sso_auth_failure()
+                return
+
+            redirect_params = urlencode({"code": exchange_code})
+            self.send_response(302)
+            self.send_header(
+                'Location',
+                f'/sso-login-callback?{redirect_params}')
+            self.end_headers()
             return
 
         product_endpoint, _ = routing.split_client_GET_request(self.path)

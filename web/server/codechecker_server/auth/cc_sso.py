@@ -10,13 +10,16 @@
 import base64
 import json
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+from urllib.parse import urlencode
 
 import requests
 
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('server')
+
+SSO_SCOPE = "openid profile email"
 
 
 class AuthError(PermissionError):
@@ -33,7 +36,7 @@ class AuthError(PermissionError):
         self.auth_code = auth_code
 
 
-class DUOAuthError(AuthError):
+class SSOAuthError(AuthError):
 
     def __init__(self, *args: Any) -> None:
         super().__init__(*args, auth_code=104)
@@ -46,38 +49,53 @@ def get_base64_encoded_str(string: str) -> str:
     return base64_string
 
 
-def _request_auth(data: dict, config: Dict[str, Any]) -> Dict[str, Any]:
+def _request_auth(data: dict, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    url = data.pop("url", None)
+    if not url:
+        LOG.error("Auth request URL is missing")
+        return None
+
     auth_string = f'{config.get("client_id")}:{config.get("client_secret")}'
     header = {
         "Authorization": "Basic " + get_base64_encoded_str(auth_string),
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    url = data.pop("url", None)
-    payload = "&".join([f"{key}={value}" for key, value in data.items()])
-    response = requests.request(method="POST", url=url, headers=header, data=data)
+    form_data = urlencode(data)
+
+    try:
+        response = requests.post(
+            url=url, headers=header, data=form_data, timeout=30)
+    except requests.RequestException as exc:
+        LOG.error("Auth request failed for %s: %s", url, exc)
+        return None
+
     if response is not None and response.status_code < 300:
         try:
-            response = json.loads(s=response.text)
-            return response
-        except Exception:
-            LOG.error("Auth malformed response for {}".format(data))
-    else:
-        if response.status_code == 302 or response.status_code == 307:
-            redirect_url = response.headers["Location"]
-            LOG.info("Redirect Url Location Header: {}".format(redirect_url))
-            try:
-                response = requests.request(
-                    method="POST", url=redirect_url, headers=header, data=payload)
-                response = json.loads(s=response.text)
-                return response
-            except Exception:
-                LOG.exception(
-                    "Auth REDIRECT failed {} for {}".format(
-                        response.status_code, data))
-        if response is not None:
-            LOG.error("Auth failed {} for {}".format(response.status_code, data))
-            LOG.error(response.text)
+            return json.loads(s=response.text)
+        except json.JSONDecodeError:
+            LOG.error("Auth malformed response for %s", url)
+            return None
+
+    if response is not None:
+        if response.status_code in (302, 307):
+            redirect_url = response.headers.get("Location")
+            if redirect_url:
+                LOG.info("Redirect Url Location Header: %s", redirect_url)
+                try:
+                    redirect_response = requests.post(
+                        url=redirect_url, headers=header, data=form_data,
+                        timeout=30)
+                    if redirect_response.status_code < 300:
+                        return json.loads(s=redirect_response.text)
+                except (requests.RequestException, json.JSONDecodeError):
+                    LOG.exception(
+                        "Auth redirect failed for %s", redirect_url)
+
+        LOG.error("Auth failed %s for %s", response.status_code, url)
+        LOG.error(response.text)
+
     LOG.error("Failed request to Auth Server")
+    return None
 
 
 def get_user_info(access_token: str, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -88,37 +106,49 @@ def get_user_info(access_token: str, config: Dict[str, Any]) -> Dict[str, Any]:
     """
     if not access_token:
         LOG.error("No valid access token")
-        raise DUOAuthError("No valid access token")
-    response = requests.get(
-        f'{config.get("sso_server")}/userinfo',
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
+        raise SSOAuthError("No valid access token")
+
+    sso_server = config.get("sso_server")
+    if not sso_server:
+        raise SSOAuthError("SSO server URL is not configured")
+
+    try:
+        response = requests.get(
+            f'{sso_server}/userinfo',
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=30)
+    except requests.RequestException as exc:
+        LOG.error("SSO userinfo request failed: %s", exc)
+        raise SSOAuthError("SSO userinfo request failed") from exc
 
     if response is not None and response.status_code < 300:
         try:
-            response = json.loads(s=response.text)
+            user_info = json.loads(s=response.text)
             LOG.info("get_user_info - Response: %s",
-                     json.dumps(response, indent=4))
-            return response
-        except Exception:
+                     json.dumps(user_info, indent=4))
+            return user_info
+        except json.JSONDecodeError as exc:
             LOG.error("Malformed response from SSO when getting user info.")
-            raise DUOAuthError(
-                "Malformed response from SSO when getting user info.")
-    else:
-        if response is not None:
-            LOG.error(
-                "OAuth service error {} for getting user info".format(
-                    response.status_code))
-            raise DUOAuthError(
-                f"OAuth service error {response.status_code} "
-                f"for getting user info")
-        else:
-            LOG.error("Unknown DUO Auth service error")
-            raise DUOAuthError("Unknown DUO Auth service error")
+            raise SSOAuthError(
+                "Malformed response from SSO when getting user info.") from exc
+
+    if response is not None:
+        LOG.error(
+            "OAuth service error %s for getting user info",
+            response.status_code)
+        raise SSOAuthError(
+            f"OAuth service error {response.status_code} "
+            f"for getting user info")
+
+    LOG.error("Unknown SSO Auth service error")
+    raise SSOAuthError("Unknown SSO Auth service error")
 
 
 def _parse_sso_groups(raw_groups) -> list:
     groups_name = []
+    if not raw_groups:
+        return groups_name
+
     for group in raw_groups:
         if isinstance(group, str):
             match = re.search(r"CN=([^,]+)", group)
@@ -131,31 +161,46 @@ def _parse_sso_groups(raw_groups) -> list:
     return groups_name
 
 
+def _resolve_username(user_info: dict, config: Dict[str, Any]) -> str:
+    username_claim = config.get("username_claim")
+    if username_claim:
+        username = user_info.get(username_claim)
+        if username:
+            return str(username)
+
+    for claim in ("preferred_username", "email", "sub"):
+        username = user_info.get(claim)
+        if username:
+            return str(username)
+
+    return ""
+
+
 def process_user_info(user_info: dict, config: Dict[str, Any]):
     raw_groups = user_info.pop("group", user_info.pop("groups", []))
     user_info["groups"] = _parse_sso_groups(raw_groups)
+    user_info["username"] = _resolve_username(user_info, config)
     return user_info
 
 
 def validate_token(token: str, config: Dict[str, Any]) -> Dict[str, Any]:
-    data = {}
-    data["token_hint"] = "access_token"
-    data["token"] = token
-    data["url"] = f'{config.get("sso_server")}/token_introspection'
-    res = _request_auth(data, config)
-    LOG.info("validate_token - Response: %s", json.dumps(res, indent=4))
-    return process_user_info(get_user_info(token, config), config)
+    user_info = get_user_info(token, config)
+    return process_user_info(user_info, config)
 
 
 def auth_user(code: str, config: Dict[str, Any]) -> Dict[str, Any]:
-    data = {
-        "code": code
-    }
+    if not code:
+        raise SSOAuthError("Authorization code is missing")
 
-    data["grant_type"] = "authorization_code"
-    data["scope"] = "openid profile email"
-    data["redirect_uri"] = config.get("redirect_uri")
-    data["url"] = f'{config.get("sso_server")}/token'
+    data = {
+        "code": code,
+        "grant_type": "authorization_code",
+        "scope": SSO_SCOPE,
+        "redirect_uri": config.get("redirect_uri"),
+        "url": f'{config.get("sso_server")}/token',
+    }
     res = _request_auth(data, config)
-    access_token = res["access_token"]
-    return validate_token(access_token, config)
+    if not res or not res.get("access_token"):
+        raise SSOAuthError("SSO token exchange failed")
+
+    return validate_token(res["access_token"], config)
