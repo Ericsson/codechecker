@@ -24,6 +24,7 @@ import ssl
 import sys
 import time
 from typing import Dict, List, Optional, Tuple, cast
+from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -300,6 +301,44 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if self.path == '/ready':
             self.__handle_readiness()
+            return
+
+        if not self.path.startswith("/sso-login-callback") and \
+                self.path.startswith("/sso-login") and \
+                self.server.manager.is_sso_enabled():
+            sso_config = self.server.manager.get_sso_config()
+            sso_server = sso_config.get("sso_server", None)
+            client_id = sso_config.get("client_id", None)
+            redirect_uri = sso_config.get("redirect_uri", None)
+            self.send_response(302)
+            self.send_header(
+                'Location',
+                f'{sso_server}/authorize?response_type=code&'
+                f'client_id={client_id}&scope=openid%20profile&'
+                f'redirect_uri={redirect_uri}')
+            self.end_headers()
+            return
+
+        if self.path.startswith('/sso-callback') and \
+                self.server.manager.is_sso_enabled():
+            url_components = urlparse(self.path)
+            query_string = url_components.query
+            query_params = parse_qs(query_string)
+            LOG.info("Query parameters: %s", query_params)
+            code = query_params.get('code')[0]
+            response = self.server.manager.create_session(f"auth:{code}")
+            if not response:
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(b"Authentication failed.")
+            else:
+                self.send_response(302)
+                self.send_header(
+                    'Location',
+                    f'/sso-login-callback?username={response.user}&'
+                    f'token={response.token}')
+                self.end_headers()
             return
 
         product_endpoint, _ = routing.split_client_GET_request(self.path)

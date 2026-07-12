@@ -99,7 +99,7 @@ class ThriftAuthHandler:
 
     @timeit
     def getAcceptedAuthMethods(self):
-        return ["Username:Password", "oauth"]
+        return self.__manager.get_enabled_auth_methods()
 
     @timeit
     def getAccessControl(self):

@@ -45,6 +45,11 @@ try:
 except ImportError:
     UNSUPPORTED_METHODS.append('pam')
 
+try:
+    from .auth import cc_sso
+except ImportError:
+    UNSUPPORTED_METHODS.append('sso')
+
 
 LOG = get_logger("server")
 SESSION_COOKIE_NAME = _SCN
@@ -275,6 +280,16 @@ class SessionManager:
                                 "no OAuth provider was enabled"
                                 "... Disabling OAuth authentication.")
                     self.__auth_config['method_oauth']['enabled'] = False
+
+            if 'method_sso' in self.__auth_config and \
+                    self.__auth_config['method_sso'].get('enabled'):
+                if 'sso' not in UNSUPPORTED_METHODS:
+                    found_auth_method = True
+                else:
+                    LOG.warning("SSO authentication was enabled but "
+                                "prerequisites are NOT installed on the system"
+                                "... Disabling SSO authentication.")
+                    self.__auth_config['method_sso']['enabled'] = False
 
             if not found_auth_method:
                 if force_auth:
@@ -567,6 +582,70 @@ class SessionManager:
         """
         self.__database_connection = connection
 
+    def get_sso_config(self):
+        return self.__auth_config.get('method_sso', {})
+
+    def __is_sso_admin(self, groups):
+        admin_groups = self.get_sso_config().get('admin_group') or []
+        if not admin_groups:
+            return False
+        return bool(set(groups) & set(admin_groups))
+
+    def __grant_superuser(self, user_name):
+        """Grant SUPERUSER in permissions_system for the given user."""
+        if not self.__database_connection:
+            return
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            existing = transaction.query(SystemPermission) \
+                .filter(SystemPermission.name == user_name) \
+                .filter(SystemPermission.permission == SUPERUSER.name) \
+                .filter(SystemPermission.is_group.is_(False)) \
+                .limit(1).one_or_none()
+
+            if not existing:
+                transaction.add(SystemPermission(
+                    SUPERUSER.name, user_name, is_group=False))
+                transaction.commit()
+                LOG.info("Granted SUPERUSER to SSO admin user '%s'",
+                         user_name)
+        except Exception as e:
+            LOG.error("Couldn't grant SUPERUSER to '%s': %s", user_name, e)
+            if transaction:
+                transaction.rollback()
+        finally:
+            if transaction:
+                transaction.close()
+
+    def is_sso_enabled(self):
+        return self.__auth_config.get('enabled') and \
+            self.__is_method_enabled('sso')
+
+    def get_enabled_auth_methods(self):
+        """Return the list of enabled authentication method identifiers."""
+        if not self.is_enabled:
+            return []
+
+        methods = []
+        if self.__is_method_enabled('dictionary') or \
+                self.__is_method_enabled('pam') or \
+                self.__is_method_enabled('ldap'):
+            methods.append('Username:Password')
+
+        if self.__auth_config.get('method_oauth', {}).get('enabled'):
+            for provider in self.__auth_config['method_oauth'] \
+                    .get('providers', {}).values():
+                if provider.get('enabled'):
+                    methods.append('oauth')
+                    break
+
+        if self.is_sso_enabled():
+            methods.append('sso')
+
+        return methods
+
     def __handle_validation(self, auth_string):
         """
         Validate an oncoming authorization request
@@ -580,15 +659,16 @@ class SessionManager:
         validation = self.__try_personal_access_token(auth_string) \
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+            or self.__try_auth_ldap(auth_string) \
+            or self.__try_auth_sso(auth_string)
         if not validation:
             return False
 
         # If a validation method is enabled and regex_groups is enabled too,
         # we will extend the 'groups'.
-        extra_groups = self.__try_regex_groups(validation['username'])
+        extra_groups = self.__try_regex_groups(validation.get('username', ''))
         if extra_groups:
-            already_groups = set(validation['groups'])
+            already_groups = set(validation.get('groups', []))
             validation['groups'] = list(already_groups | extra_groups)
 
         LOG.debug('User validation details: %s', str(validation))
@@ -749,6 +829,24 @@ class SessionManager:
                     )
                     return {'username': username, 'groups': groups}
 
+        return False
+
+    def __try_auth_sso(self, auth_string):
+        if self.__is_method_enabled('sso'):
+            _, code = auth_string.split(':', 1)
+            response = cc_sso.auth_user(
+                code, self.__auth_config.get('method_sso', {}))
+            username = response.get("username")
+            groups = response.get("groups", [])
+            if self.__is_sso_admin(groups):
+                self.__grant_superuser(username)
+                response['root'] = True
+            LOG.info(
+                "SSO login for '%s': assigned %d CodeChecker group(s)",
+                username, len(groups))
+            self.__update_groups(username, groups)
+            self.__update_personal_access_token_groups(username, groups)
+            return response
         return False
 
     def __update_personal_access_token_groups(self, user_name, groups):

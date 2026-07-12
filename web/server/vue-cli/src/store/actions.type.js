@@ -3,6 +3,7 @@ export const GET_LOGGED_IN_USER = "getLoggedInUser";
 export const LOGIN = "login";
 export const LOGOUT = "logout";
 export const OAUTH = "oauth";
+export const SSO_LOGIN = "ssoLogin";
 
 export const GET_CURRENT_PRODUCT = "getCurrentProduct";
 export const GET_CURRENT_PRODUCT_CONFIG = "getCurrentProductConfig";

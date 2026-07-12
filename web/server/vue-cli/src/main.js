@@ -32,7 +32,11 @@ import {
   GET_CURRENT_PRODUCT,
   GET_CURRENT_PRODUCT_CONFIG
 } from "@/store/actions.type";
-import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
+import {
+  CLEAR_QUERIES,
+  SET_QUERIES,
+  SET_REDIRECT
+} from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import fromUnixTime from "./filters/from-unix-time";
@@ -80,11 +84,17 @@ router.beforeResolve((to, from, next) => {
         (!store.getters.authParams.sessionStillActive ||
          !store.getters.isAuthenticated)
       ) {
+        const methods = store.getters.authMethods;
+        const returnTo = to.fullPath;
+        if (methods.length === 1 && methods[0] === "sso") {
+          localStorage.setItem(SET_REDIRECT, returnTo);
+          return next({ name: "sso-login" });
+        }
         // Redirect the user to the login page but keep the original path to
         // redirect the user back once logged in.
         return next({
           name: "login",
-          query: { "return_to": to.fullPath }
+          query: { "return_to": returnTo }
         });
       }
     }

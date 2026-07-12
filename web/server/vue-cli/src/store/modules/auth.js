@@ -2,12 +2,14 @@ import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
   LOGIN,
-  LOGOUT
+  LOGOUT,
+  SSO_LOGIN
 } from "../actions.type";
 
 import {
   PURGE_AUTH,
   SET_AUTH,
+  SET_AUTH_METHODS,
   SET_AUTH_PARAMS,
   SET_LOGGED_IN_USER
 } from "../mutations.type";
@@ -17,6 +19,7 @@ const state = {
   currentUser: "",
   isAuthenticated: false, // Will be set properly in getter
   authParams: null,
+  authMethods: [],
   packageVersion: undefined
 };
 
@@ -30,6 +33,9 @@ const getters = {
   },
   authParams(state) {
     return state.authParams;
+  },
+  authMethods(state) {
+    return state.authMethods;
   }
 };
 
@@ -39,7 +45,11 @@ const actions = {
       authService.getClient().getAuthParameters(
         handleThriftError(params => {
           commit(SET_AUTH_PARAMS, params);
-          resolve(params);
+          authService.getClient().getAcceptedAuthMethods(
+            handleThriftError(methods => {
+              commit(SET_AUTH_METHODS, methods);
+              resolve(params);
+            }));
         }));
     });
   },
@@ -93,6 +103,14 @@ const actions = {
     });
   },
 
+  [SSO_LOGIN](context, credentials) {
+    const creds = {
+      userName: credentials.username,
+      token: credentials.token
+    };
+    context.commit(SET_AUTH, creds);
+  },
+
   [LOGOUT](context) {
     return new Promise((resolve, reject) => {
       authService.getClient().destroySession(
@@ -116,6 +134,9 @@ const mutations = {
   },
   [SET_AUTH_PARAMS](state, params) {
     state.authParams = params;
+  },
+  [SET_AUTH_METHODS](state, methods) {
+    state.authMethods = methods;
   },
   [SET_LOGGED_IN_USER](state, userName) {
     state.currentUser = userName;
