@@ -49,7 +49,8 @@ def get_base64_encoded_str(string: str) -> str:
     return base64_string
 
 
-def _request_auth(data: dict, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _request_auth(data: dict,
+                  config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     url = data.pop("url", None)
     if not url:
         LOG.error("Auth request URL is missing")
