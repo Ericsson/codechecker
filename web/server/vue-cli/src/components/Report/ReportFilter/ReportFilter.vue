@@ -655,17 +655,21 @@ function registerWatchers() {
 
   reportFilterUnwatch.value = store.watch(
     state => state[props.namespace].reportFilter, () => {
-      emit("refresh");
+      if (!isInitializing.value)
+        emit("refresh");
+
     }, { deep: true });
 
   runIdsUnwatch.value = store.watch(
     state => state[props.namespace].runIds, () => {
-      emit("refresh");
+      if (!isInitializing.value)
+        emit("refresh");
     });
 
   cmpDataUnwatch.value = store.watch(
     state => state[props.namespace].cmpData, () => {
-      emit("refresh");
+      if (!isInitializing.value)
+        emit("refresh");
     }, { deep: true });
 }
 
@@ -751,7 +755,6 @@ function updateAllFilters() {
   if (!_filters?.length) return;
 
   _filters.forEach(filter => filter?.update?.() );
-
   emit("refresh");
 }
 

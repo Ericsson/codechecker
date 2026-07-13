@@ -241,6 +241,7 @@ const filteredStatistics = computed(() => {
   return statistics.value;
 });
 
+// Refresh the data on ReportFilter changes
 baseStatistics.setupRefreshListener(fetchStatistics);
 
 watch(() => baseStatistics.runIds, async () => {
@@ -459,7 +460,6 @@ async function fetchStatistics() {
 
 async function fetchProblematicRuns() {
   loading.value = true;
-
   const _runs = await getRunData();
   problematicRuns.value = (await Promise.all(
     _runs.map(async runData => {
@@ -476,7 +476,6 @@ async function fetchProblematicRuns() {
         return null;
       }
     }))).filter(element => element !== null);
-
   runs.value = _runs;
   loading.value = false;
 }
