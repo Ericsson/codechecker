@@ -52,8 +52,6 @@
         :key="item.name"
         :to="{
           name: item.route,
-          params: $route.params.endpoint ?
-            { endpoint: $route.params.endpoint } : {},
           query: queries[item.query_namespace] === undefined
             ? item.query || {}
             : queries[item.query_namespace]
@@ -94,11 +92,7 @@
         <v-list-item
           v-for="item in configureMenuItems"
           :key="item.title"
-          :to="{ 
-            name: item.route,
-            params: $route.params.endpoint ?
-              { endpoint: $route.params.endpoint } : {}
-          }"
+          :to="{ name: item.route }"
           exact
         >
           <template v-slot:prepend>
