@@ -13,7 +13,12 @@ Unit tests for LDAP.
 import unittest
 from unittest.mock import patch
 
-from codechecker_server.auth import cc_ldap
+import pytest
+
+pytest.importorskip("ldap")
+
+# pylint: disable=wrong-import-position
+from codechecker_server.auth import cc_ldap  # noqa: E402
 
 
 class MockLdap:

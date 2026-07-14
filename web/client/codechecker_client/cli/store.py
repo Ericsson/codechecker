@@ -41,6 +41,9 @@ from codechecker_report_converter.report.hash import HashType, \
     get_report_path_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
+from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import cpu_count  # type: ignore
+
 try:
     from codechecker_client.blame_info import assemble_blame_info
 except ImportError:
@@ -55,7 +58,6 @@ from codechecker_client import client as libclient, product
 from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.compatibility.multiprocessing import Pool, cpu_count
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import format_size, load_json, strtobool
@@ -629,7 +631,14 @@ def assemble_zip(inputs,
             if h in necessary_hashes:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
-                file_path = os.path.join('root', f.lstrip('/'))
+                # Mirror the server's `path_for_fake_root()` reconstruction
+                # (`os.path.relpath(f, '/')`) so the zip member name matches
+                # what the server looks for. A plain `f.lstrip('/')` breaks on
+                # Windows: drive-absolute paths (e.g. 'D:\\a\\f.h') keep their
+                # leading separator/drive, and `os.path.join('root', ...)`
+                # then discards the 'root' prefix, so the server cannot find
+                # the file content in the ZIP.
+                file_path = os.path.join('root', os.path.relpath(f, '/'))
                 collected_file_paths.add(f)
                 stats.num_of_source_files += 1
                 try:
@@ -1010,16 +1019,27 @@ def main(args):
         LOG.info("Storing results to the server ...")
 
         if strtobool(os.environ.get('CC_FORCE_SYNC_STORE', 'no')):
+            def _sync_store():
+                client.massStoreRun(args.name,
+                                    args.tag if 'tag' in args else None,
+                                    str(context.version),
+                                    b64zip,
+                                    'force' in args,
+                                    trim_path_prefixes,
+                                    description)
+
+            # The store watchdog relies on signal.SIGUSR1, which does not exist
+            # on Windows. Where the signal is unavailable, fall back to a plain
+            # synchronous store without the (best-effort, temporary) timeout
+            # safety net.
+            watchdog_signal = getattr(signal, 'SIGUSR1', None)
             try:
-                with _timeout_watchdog(timedelta(hours=1),
-                                       signal.SIGUSR1):
-                    client.massStoreRun(args.name,
-                                        args.tag if 'tag' in args else None,
-                                        str(context.version),
-                                        b64zip,
-                                        'force' in args,
-                                        trim_path_prefixes,
-                                        description)
+                if watchdog_signal is None:
+                    _sync_store()
+                else:
+                    with _timeout_watchdog(timedelta(hours=1),
+                                           watchdog_signal):
+                        _sync_store()
             except WatchdogError as we:
                 LOG.warning("%s", str(we))
 

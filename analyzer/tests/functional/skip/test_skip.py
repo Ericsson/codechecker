@@ -267,6 +267,7 @@ class TestSkip(unittest.TestCase):
         except subprocess.CalledProcessError as cerr:
             print("Failed to run: " + ' '.join(cerr.cmd))
             print(cerr.output)
+            self.fail(f"tu_collector failed: {cerr}")
 
         skip_file = os.path.join(self.test_workspace, "skipfile")
         with open(skip_file, 'w', encoding="utf-8", errors="ignore") as skip_f:
@@ -440,8 +441,9 @@ class TestSkip(unittest.TestCase):
         with open(build_json, encoding='utf-8') as f:
             build_actions = json.load(f)
             for ba in build_actions:
-                ba['arguments'] = shlex.split(ba['command'])
-                del ba['command']
+                if 'command' in ba:
+                    ba['arguments'] = shlex.split(ba['command'])
+                    del ba['command']
 
         build_json = os.path.join(self.test_workspace, "build_intercept.json")
 

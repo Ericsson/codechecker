@@ -11,6 +11,7 @@ Tests for environmental variables recognized by CodeChecker.
 """
 
 
+import sys
 import unittest
 import tempfile
 import os
@@ -57,6 +58,8 @@ class EnvVarTest(unittest.TestCase):
         analyzer = create_analyzer_gcc()
         return analyzer.analyzer_binary()
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     "gcc/g++ not available on Windows CI")
     def test_cc_analyzer_bin(self):
         """
         Test whether GCC runs the appropriate binary when CC_ANALYZER_BIN is
@@ -76,6 +79,8 @@ class EnvVarTest(unittest.TestCase):
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
 
+    @unittest.skipIf(sys.platform == 'win32',
+                     "gcc/g++ not available on Windows CI")
     def test_cc_analyzer_bin_overrides_cc_analyzers_from_path(self):
         """
         Check whether CC_ANALYZER_BIN overrides CC_ANALYZERS_FROM_PATH (which
@@ -95,6 +100,9 @@ class EnvVarTest(unittest.TestCase):
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
 
+    @unittest.skipIf(
+        sys.platform != "linux",
+        "LD_LIBRARY_PATH is only used on Linux")
     def test_cc_analyzer_internal_env(self):
         """
         Check whether the ld_library_path is extended with the internal

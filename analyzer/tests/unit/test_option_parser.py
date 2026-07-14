@@ -13,6 +13,7 @@ import os
 import pathlib
 import shlex
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -20,6 +21,8 @@ from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.buildlog.build_action import BuildAction
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 "Option parser tests use Unix paths in compilation commands")
 class OptionParserTest(unittest.TestCase):
     """
     Test the option parser module which handles the
@@ -63,7 +66,7 @@ class OptionParserTest(unittest.TestCase):
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue('/tmp/main.cpp' == res.source)
+        self.assertEqual(os.path.realpath('/tmp/main.cpp'), res.source)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_compile_onefile(self):
@@ -77,7 +80,7 @@ class OptionParserTest(unittest.TestCase):
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue('/tmp/main.cpp' == res.source)
+        self.assertEqual(os.path.realpath('/tmp/main.cpp'), res.source)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_nasm_action(self):
@@ -92,7 +95,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
         self.assertIsNone(res.lang)
-        self.assertEqual(res.source, '/tmp/main.asm')
+        self.assertEqual(res.source, os.path.realpath('/tmp/main.asm'))
         self.assertEqual(res.analyzer_type, -1)
 
     def test_preprocess_onefile(self):
@@ -107,7 +110,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('/tmp/main.c' == res.source)
+        self.assertEqual(os.path.realpath('/tmp/main.c'), res.source)
         self.assertEqual(BuildAction.PREPROCESS, res.action_type)
 
     def test_compile_lang(self):
@@ -123,7 +126,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('/tmp/main.c' == res.source)
+        self.assertEqual(os.path.realpath('/tmp/main.c'), res.source)
         self.assertEqual('c', res.lang)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -149,7 +152,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('/tmp/main.c' == res.source)
+        self.assertEqual(os.path.realpath('/tmp/main.c'), res.source)
         self.assertEqual(arch['c'], res.arch)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -285,7 +288,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
-        self.assertEqual(res.source, '/tmp/main.cpp')
+        self.assertEqual(res.source, os.path.realpath('/tmp/main.cpp'))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     @unittest.skipUnless(
@@ -392,7 +395,7 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
-        self.assertEqual(res.source, '/tmp/main.cpp')
+        self.assertEqual(res.source, os.path.realpath('/tmp/main.cpp'))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_keep_clang_flags(self):

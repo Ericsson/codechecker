@@ -16,7 +16,8 @@ import signal
 
 from sqlalchemy.orm import sessionmaker
 
-from codechecker_common.compatibility.multiprocessing import Queue, Value
+from multiprocess import Queue, Value  # type: ignore
+
 from codechecker_common.logger import get_logger, signal_log
 
 from ..database.config_db_model import BackgroundTask as DBTask
@@ -50,22 +51,25 @@ def executor(queue: Queue,
 
     kill_flag = Value('B', False)
 
-    def executor_hangup_handler(signum: int, _frame):
-        """
-        Handle SIGHUP (1) to do a graceful shutdown of the background worker.
-        """
-        if signum not in [signal.SIGHUP]:
-            signal_log(LOG, "ERROR", "Signal "
-                       f"<{signal.Signals(signum).name} ({signum})> "
-                       "handling attempted by 'executor_hangup_handler'!")
-            return
+    if hasattr(signal, 'SIGHUP'):
+        def executor_hangup_handler(signum: int, _frame):
+            """
+            Handle SIGHUP (1) to do a graceful shutdown of the background
+            worker.
+            """
+            if signum not in [signal.SIGHUP]:
+                signal_log(LOG, "ERROR", "Signal "
+                           f"<{signal.Signals(signum).name} ({signum})> "
+                           "handling attempted by "
+                           "'executor_hangup_handler'!")
+                return
 
-        signal_log(LOG, "DEBUG", f"{os.getpid()}: Received "
-                   f"{signal.Signals(signum).name} ({signum}), preparing for "
-                   "shutdown ...")
-        kill_flag.value = True
+            signal_log(LOG, "DEBUG", f"{os.getpid()}: Received "
+                       f"{signal.Signals(signum).name} ({signum}), "
+                       "preparing for shutdown ...")
+            kill_flag.value = True
 
-    signal.signal(signal.SIGHUP, executor_hangup_handler)
+        signal.signal(signal.SIGHUP, executor_hangup_handler)
 
     config_db_engine = config_db_sql_server.create_engine()
     tm = TaskManager(queue, task_pipes, sessionmaker(bind=config_db_engine),

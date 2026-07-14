@@ -33,3 +33,7 @@ exclude = [
   # Ignore build directories
   "/build/",
 ]
+
+[[tool.mypy.overrides]]
+module = "multiprocess.*"
+ignore_missing_imports = true

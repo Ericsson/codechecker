@@ -1,4 +1,5 @@
 pytest<=7.3.1
+pytest-timeout~=2.1
 pycodestyle<=2.12.0
 pylint<3.3
 mkdocs<=1.5.3

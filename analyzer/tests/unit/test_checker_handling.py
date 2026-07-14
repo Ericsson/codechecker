@@ -14,12 +14,15 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 from codechecker_common.util import strtobool
 import os
 import re
+import shutil
+import sys
 import tempfile
 import unittest
 from argparse import Namespace
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
-from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
+from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy, \
+    get_diagtool_bin
 from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
@@ -102,7 +105,7 @@ def create_analyzer_sa():
     action = {
         'file': 'main.cpp',
         'command': "g++ -o main main.cpp",
-        'directory': '/'}
+        'directory': os.path.abspath(os.sep)}
     build_action = log_parser.parse_options(action)
 
     return ClangSA(cfg_handler, build_action)
@@ -437,14 +440,29 @@ class MockClangTidyCheckerLabels:
         return []
 
 
+def _diagtool_available():
+    """
+    The clang-diagnostic-* checkers are enumerated through the 'diagtool'
+    binary, which is not shipped with every LLVM distribution (most notably the
+    official Windows release does not include it). When it is missing these
+    checkers cannot be listed, so the tests that rely on them are skipped
+    instead of failing.
+    """
+    try:
+        return get_diagtool_bin() is not None
+    except Exception:  # pylint: disable=broad-except
+        return False
+
+
 def create_analyzer_tidy(args=None):
     cfg_handler = ClangTidy.construct_config_handler(
         create_analyze_argparse(args))
 
+    compiler = "clang++" if sys.platform == 'win32' else "g++"
     action = {
         'file': 'main.cpp',
-        'command': "g++ -o main main.cpp",
-        'directory': '/'}
+        'command': f"{compiler} -o main main.cpp",
+        'directory': os.path.abspath(os.sep)}
     build_action = log_parser.parse_options(action)
 
     return ClangTidy(cfg_handler, build_action)
@@ -516,6 +534,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         """
         Test initialize_checkers() function.
         """
+        if not _diagtool_available():
+            self.skipTest("diagtool is not available; clang-diagnostic "
+                          "checkers cannot be enumerated.")
+
         def all_with_status(status):
             def f(checks, checkers):
                 result = set(check for check, data in checks.items()
@@ -658,6 +680,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertNotIn("Wreserved-id-macro",
                          analyzer.config_handler.checks().keys())
 
+    @unittest.skipIf(
+        not shutil.which('g++') or
+        'clang' in os.popen('g++ --version 2>&1').read().lower(),
+        "gcc analyzer requires real g++, not Apple clang shim")
     def test_analyze_correct_analyzer_not_enabled(self):
         """
         This test checks if an analyzer is not enabled but a config
@@ -745,6 +771,10 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         """
         Test that the default checks are not disabled in Clang Tidy.
         """
+        if not _diagtool_available():
+            self.skipTest("diagtool is not available; clang-diagnostic "
+                          "checkers cannot be enumerated.")
+
         checker_labels = MockClangTidyCheckerLabels()
 
         for checker in checker_labels.checkers_by_labels(['profile:default']):
@@ -762,6 +792,9 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         """
         Test that clang-diagnostic-* checkers are enabled as compiler warnings.
         """
+        if not _diagtool_available():
+            self.skipTest("diagtool is not available; clang-diagnostic "
+                          "checkers cannot be enumerated.")
 
         analyzer = create_analyzer_tidy([
             # This should enable -Wvla and -Wvla-extension.

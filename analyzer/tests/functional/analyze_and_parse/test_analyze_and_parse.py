@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import sys
 
 from subprocess import CalledProcessError
 
@@ -219,6 +220,7 @@ class AnalyzeParseTestCase(
         skip_prefixes = ["[] - Analysis length:",
                          "[] - Previous analysis results",
                          "[] - Skipping input file",
+                         "[] - Failed to get analyzer version",
                          # Enabled checkers are listed in the beginning of
                          # analysis.
                          "[] - Enabled checker",
@@ -252,7 +254,26 @@ class AnalyzeParseTestCase(
                           r'[] - \2', line)
 
             if not any(line.startswith(prefix) for prefix in skip_prefixes):
+                # Normalize build logger name for cross-platform comparison.
+                line = line.replace("Using intercept-build.",
+                                    "Using CodeChecker ld-logger.")
                 post_processed_output.append(line)
+
+        # gcc quote style varies by platform/locale: Unicode curly
+        # quotes on Linux, backslash-escaped on macOS. Normalize both
+        # actual and expected to plain ASCII single quotes.
+        def normalize_quotes(s):
+            s = s.replace("\u2018", "'").replace(
+                "\u2019", "'").replace("\\'", "'")
+            # Infer v1.3 backtick-quotes identifiers in diagnostics
+            # (e.g. `&b`), older versions do not.
+            return s.replace('`', '')
+
+        # Infer v1.3+ includes type info in diagnostics (e.g.
+        # "&b (type int)"), older versions do not. Strip it for
+        # cross-version comparison.
+        def normalize_infer_type(s):
+            return re.sub(r'\s*\(type\s+\w+(?:\s*\*)*\)', '', s)
 
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
         print(''.join(post_processed_output))
@@ -261,7 +282,10 @@ class AnalyzeParseTestCase(
 
         print("Test output file: " + path)
         self.maxDiff = None  # pylint: disable=invalid-name
-        self.assertEqual(''.join(post_processed_output), correct_output)
+        actual = normalize_infer_type(
+            normalize_quotes(''.join(post_processed_output)))
+        expected = normalize_infer_type(normalize_quotes(correct_output))
+        self.assertEqual(actual, expected)
 
     def test_json_output_for_macros(self):
         """ Test parse json output for macros. """
@@ -789,6 +813,8 @@ class AnalyzeParseTestCase(
                 content = f.read()
             self.assertTrue(re.search('"url": ""', content))
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "gcc -m32 not available on macOS")
     def test_mixed_architecture_logging(self):
         """
         Test if CodeChecker can properly log compilation commands when the
@@ -886,6 +912,8 @@ class AnalyzeParseTestCase(
                  {logged_commands}"
             )
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "LD_LIBRARY_PATH not applicable on macOS")
     def test_use_absolute_paths_flag(self):
         """
         Test if CodeChecker can properly log compilation commands when using
@@ -1022,6 +1050,8 @@ class AnalyzeParseTestCase(
                 "Did not find success message for absolute path mode",
             )
 
+    @unittest.skipIf(sys.platform == "darwin",
+                     "LD_PRELOAD not applicable on macOS")
     def test_ld_preload(self):
         """ Test the stripping of LD_PRELOAD if set but has no value """
         environ = self.env.copy()
