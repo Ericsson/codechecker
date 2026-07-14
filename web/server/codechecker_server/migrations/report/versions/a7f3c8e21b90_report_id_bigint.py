@@ -168,8 +168,7 @@ def upgrade():
             'id',
             existing_type=sa.Integer(),
             type_=sa.BigInteger(),
-            existing_nullable=False,
-            autoincrement=True)
+            existing_nullable=False)
         op.execute(sa.text('ALTER SEQUENCE reports_id_seq AS BIGINT'))
         _tighten_association_tables_postgresql()
     elif dialect == 'sqlite':
@@ -189,8 +188,7 @@ def downgrade():
             'id',
             existing_type=sa.BigInteger(),
             type_=sa.Integer(),
-            existing_nullable=False,
-            autoincrement=True)
+            existing_nullable=False)
         op.execute(sa.text('ALTER SEQUENCE reports_id_seq AS INTEGER'))
     elif dialect == 'sqlite':
         _relax_association_tables_sqlite()
