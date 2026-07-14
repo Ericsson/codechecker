@@ -28,15 +28,17 @@
       </v-btn>
     </template>
     <template v-slot:content>
+      <span>Analysis command</span>
       <div class="pa-0 pt-2">
         <!-- eslint-disable vue/no-v-html -->
         <div
           v-for="cmd in highlightedCmds"
           :key="cmd"
-          class="analyze-command mb-2"
+          class="analyze-command mb-2 pa-2 rounded bg-grey-card"
           v-html="cmd"
         />
       </div>
+      <span>Checker statistics</span>
       <v-expansion-panels
         v-if="postProcessedAnalysisInfoReady &&
           analysisInfo.checkerInfoAvailability
@@ -81,7 +83,7 @@
                   :total-text="'Number of checkers available'"
                   :simplify-showing-if-all="true"
                   :show-total="true"
-                  :show-dividers="false"
+                  :show-dividers="true"
                   :show-zero-chips="false"
                 />
               </v-col>
@@ -260,26 +262,27 @@ async function getAnalysisInfo() {
 
 <style lang="scss">
 .analyze-command {
-  border: 1px solid grey;
-  padding: 4px;
-
   .param {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgba(0, 0, 0, 0.25);
     font-weight: bold;
     padding-left: 2px;
     padding-right: 2px;
+    border-radius: 4px;
   }
 
   .enabled-checkers {
-    background-color: rgba(0, 142, 0, 0.15);
+    background-color: rgba(0, 142, 0, 0.25);
+    border-radius: 4px;
   }
 
   .disabled-checkers {
-    background-color: rgba(142, 0, 0, 0.15);
+    background-color: rgba(142, 0, 0, 0.25);
+    border-radius: 4px;
   }
 
   .ctu, .statistics {
-    background-color: rgba(0, 0, 142, 0.15);
+    background-color: rgba(0, 0, 142, 0.25);
+    border-radius: 4px;
   }
 
   .analyzer-name {
