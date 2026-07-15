@@ -2,8 +2,8 @@
   <v-row class="ga-2">
     <v-col class="d-flex flex-column">
       <v-card
-        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height"
-        variant="tonal"
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
       >
         <v-card-title class="text-body-1 text-uppercase">
           Run & Report Information
@@ -36,8 +36,8 @@
     </v-col>
     <v-col class="d-flex flex-column">
       <v-card
-        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height"
-        variant="tonal"
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
       >
         <v-card-title class="text-body-1 text-uppercase">
           Analyzer & Checker Information
@@ -71,8 +71,8 @@
     </v-col>
   </v-row>
   <v-card
-    class="pa-2 rounded-lg mb-2"
-    variant="tonal"
+    class="pa-2 rounded-lg mb-2 bg-grey-card"
+    variant="flat"
   >
     <v-card-title class="text-body-1 text-uppercase">
       File & Location
@@ -104,8 +104,8 @@
   <v-row class="ga-2">
     <v-col class="d-flex flex-column">
       <v-card
-        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height"
-        variant="tonal"
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
       >
         <v-card-title class="text-body-1 text-uppercase">
           Bug Path Length & Severity Information
@@ -140,8 +140,8 @@
     </v-col>
     <v-col class="d-flex flex-column">
       <v-card
-        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height"
-        variant="tonal"
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
       >
         <v-card-title class="text-body-1 text-uppercase">
           Detection & Review Status
@@ -182,8 +182,8 @@
     </v-col>
   </v-row>
   <v-card
-    class="pa-2 rounded-lg mb-2"
-    variant="tonal"
+    class="pa-2 rounded-lg mb-2 bg-grey-card"
+    variant="flat"
   >
     <v-card-title class="text-body-1 text-uppercase">
       Detection & Fix Date
