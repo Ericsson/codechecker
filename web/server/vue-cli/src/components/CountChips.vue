@@ -12,15 +12,10 @@
         :ripple="false"
         :title="goodText"
         variant="outlined"
-        size="small"
+        size="x-small"
+        prepend-icon="mdi-check"
         @click="emit('showing-good-click')"
       >
-        <v-icon
-          start
-          class="mr-1"
-        >
-          mdi-check
-        </v-icon>
         {{ numGood }}
       </v-chip>
 
@@ -37,15 +32,10 @@
         :ripple="false"
         :title="badText"
         variant="outlined"
-        size="small"
+        size="x-small"
+        prepend-icon="mdi-close"
         @click="emit('showing-bad-click')"
       >
-        <v-icon
-          start
-          class="mr-1"
-        >
-          mdi-close
-        </v-icon>
         {{ numBad }}
       </v-chip>
 
@@ -61,14 +51,9 @@
         :ripple="false"
         :title="totalText"
         variant="elevated"
-        size="small"
+        size="x-small"
+        prepend-icon="mdi-sigma"
       >
-        <v-icon
-          start
-          class="mr-1"
-        >
-          mdi-sigma
-        </v-icon>
         {{ numTotal }}
       </v-chip>
     </component>
