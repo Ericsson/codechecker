@@ -103,6 +103,15 @@
       "groups" : {
         "admins_custom_group" : [ "^admin$", "^admin_", "_admin$" ]
       }
+    },
+    "method_sso": {
+      "enabled" : false,
+      "sso_server" : null,
+      "redirect_uri" : null,
+      "client_id" : null,
+      "client_secret" : null,
+      "admin_group": [],
+      "username_claim": null
     }
   }
 }

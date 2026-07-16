@@ -94,6 +94,7 @@ import { Permission } from "@cc/shared-types";
 import { UserIcon } from "@/components/Icons";
 import PersonalAccessTokenBtn from "@/components/Layout/PersonalAccessTokenBtn";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
+import { SET_REDIRECT } from "@/store/mutations.type";
 
 const menu = ref(false);
 const systemPermissions = ref([]);
@@ -108,6 +109,7 @@ const permissions = computed(() => {
 
 const currentUser = computed(() => store.getters.currentUser);
 const currentProduct = computed(() => store.getters.currentProduct);
+const authMethods = computed(() => store.getters.authMethods);
 
 watch(currentProduct, () => {
   if (!currentProduct.value) {
@@ -153,7 +155,14 @@ function permissionFromCodeToString(permission) {
 
 function logOut() {
   store.dispatch(LOGOUT).then(() => {
-    router.push({ name: "login" });
+    const loginRoute = authMethods.value.length === 1 &&
+      authMethods.value[0] === "sso"
+      ? { name: "sso-login" }
+      : { name: "login" };
+    if (loginRoute.name === "sso-login") {
+      localStorage.setItem(SET_REDIRECT, router.currentRoute.value.fullPath);
+    }
+    router.push(loginRoute);
     menu.value = false;
   });
 }

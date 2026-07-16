@@ -14,7 +14,7 @@ import os
 import re
 import uuid
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 from typing import Optional
 
@@ -27,12 +27,19 @@ from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 from codechecker_web.server.oauth_templates import OAUTH_TEMPLATES
 
 from .database.config_db_model import Session as SessionRecord
+from .database.config_db_model import OAuthSession
 from .database.config_db_model import OAuthToken
 from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
 
 import codechecker_api_shared
+
+
+SSO_PROVIDER = 'sso'
+SSO_EXCHANGE_PROVIDER = 'sso_exchange'
+SSO_STATE_LIFETIME_MINUTES = 15
+SSO_EXCHANGE_LIFETIME_MINUTES = 2
 
 
 UNSUPPORTED_METHODS = []
@@ -46,6 +53,11 @@ try:
     from .auth import cc_pam
 except ImportError:
     UNSUPPORTED_METHODS.append('pam')
+
+try:
+    from .auth import cc_sso
+except ImportError:
+    UNSUPPORTED_METHODS.append('sso')
 
 
 LOG = get_logger("server")
@@ -277,6 +289,16 @@ class SessionManager:
                                 "no OAuth provider was enabled"
                                 "... Disabling OAuth authentication.")
                     self.__auth_config['method_oauth']['enabled'] = False
+
+            if 'method_sso' in self.__auth_config and \
+                    self.__auth_config['method_sso'].get('enabled'):
+                if 'sso' not in UNSUPPORTED_METHODS:
+                    found_auth_method = True
+                else:
+                    LOG.warning("SSO authentication was enabled but "
+                                "prerequisites are NOT installed on the system"
+                                "... Disabling SSO authentication.")
+                    self.__auth_config['method_sso']['enabled'] = False
 
             if not found_auth_method:
                 if force_auth:
@@ -569,6 +591,191 @@ class SessionManager:
         """
         self.__database_connection = connection
 
+    def get_sso_config(self):
+        return self.__auth_config.get('method_sso', {})
+
+    def __is_sso_admin(self, groups):
+        admin_groups = self.get_sso_config().get('admin_group') or []
+        if not admin_groups:
+            return False
+        return bool(set(groups) & set(admin_groups))
+
+    def __grant_superuser(self, user_name):
+        """Grant SUPERUSER in permissions_system for the given user."""
+        if not self.__database_connection:
+            return
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            existing = transaction.query(SystemPermission) \
+                .filter(SystemPermission.name == user_name) \
+                .filter(SystemPermission.permission == SUPERUSER.name) \
+                .filter(SystemPermission.is_group.is_(False)) \
+                .limit(1).one_or_none()
+
+            if not existing:
+                transaction.add(SystemPermission(
+                    SUPERUSER.name, user_name, is_group=False))
+                transaction.commit()
+                LOG.info("Granted SUPERUSER to SSO admin user '%s'",
+                         user_name)
+        except Exception as e:
+            LOG.error("Couldn't grant SUPERUSER to '%s': %s", user_name, e)
+            if transaction:
+                transaction.rollback()
+        finally:
+            if transaction:
+                transaction.close()
+
+    def is_sso_enabled(self):
+        return self.__auth_config.get('enabled') and \
+            self.__is_method_enabled('sso')
+
+    def __purge_expired_oauth_sessions(self, transaction):
+        transaction.query(OAuthSession) \
+            .filter(OAuthSession.expires_at < datetime.now()) \
+            .delete(synchronize_session=False)
+
+    def create_sso_state(self):
+        """Create and persist an OAuth state value for the SSO login flow."""
+        if not self.__database_connection:
+            LOG.error("Cannot create SSO state without database connection")
+            return None
+
+        state = generate_random_token(32)
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            self.__purge_expired_oauth_sessions(transaction)
+            transaction.add(OAuthSession(
+                provider=SSO_PROVIDER,
+                state=state,
+                code_verifier=generate_random_token(32),
+                expires_at=datetime.now() + timedelta(
+                    minutes=SSO_STATE_LIFETIME_MINUTES)))
+            transaction.commit()
+            return state
+        except Exception as exc:
+            LOG.error("Failed to create SSO state: %s", exc)
+            if transaction:
+                transaction.rollback()
+            return None
+        finally:
+            if transaction:
+                transaction.close()
+
+    def validate_and_consume_sso_state(self, state):
+        """Validate the OAuth state and delete it to prevent replay."""
+        if not state or not self.__database_connection:
+            return False
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            self.__purge_expired_oauth_sessions(transaction)
+            oauth_session = transaction.query(OAuthSession) \
+                .filter(OAuthSession.state == state) \
+                .filter(OAuthSession.provider == SSO_PROVIDER) \
+                .one_or_none()
+
+            if not oauth_session or oauth_session.expires_at < datetime.now():
+                transaction.commit()
+                return False
+
+            transaction.delete(oauth_session)
+            transaction.commit()
+            return True
+        except Exception as exc:
+            LOG.error("Failed to validate SSO state: %s", exc)
+            if transaction:
+                transaction.rollback()
+            return False
+        finally:
+            if transaction:
+                transaction.close()
+
+    def create_sso_exchange_code(self, session_token):
+        """Create a short-lived one-time code for SPA session redemption."""
+        if not session_token or not self.__database_connection:
+            return None
+
+        exchange_code = generate_random_token(32)
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            self.__purge_expired_oauth_sessions(transaction)
+            transaction.add(OAuthSession(
+                provider=SSO_EXCHANGE_PROVIDER,
+                state=exchange_code,
+                code_verifier=session_token,
+                expires_at=datetime.now() + timedelta(
+                    minutes=SSO_EXCHANGE_LIFETIME_MINUTES)))
+            transaction.commit()
+            return exchange_code
+        except Exception as exc:
+            LOG.error("Failed to create SSO exchange code: %s", exc)
+            if transaction:
+                transaction.rollback()
+            return None
+        finally:
+            if transaction:
+                transaction.close()
+
+    def redeem_sso_exchange_code(self, exchange_code):
+        """Exchange a one-time code for a privileged session token."""
+        if not exchange_code or not self.__database_connection:
+            return None
+
+        transaction = None
+        try:
+            transaction = self.__database_connection()
+            self.__purge_expired_oauth_sessions(transaction)
+            oauth_session = transaction.query(OAuthSession) \
+                .filter(OAuthSession.state == exchange_code) \
+                .filter(OAuthSession.provider == SSO_EXCHANGE_PROVIDER) \
+                .one_or_none()
+
+            if not oauth_session or oauth_session.expires_at < datetime.now():
+                transaction.commit()
+                return None
+
+            session_token = oauth_session.code_verifier
+            transaction.delete(oauth_session)
+            transaction.commit()
+            return session_token
+        except Exception as exc:
+            LOG.error("Failed to redeem SSO exchange code: %s", exc)
+            if transaction:
+                transaction.rollback()
+            return None
+        finally:
+            if transaction:
+                transaction.close()
+
+    def get_enabled_auth_methods(self):
+        """Return the list of enabled authentication method identifiers."""
+        if not self.is_enabled:
+            return []
+
+        methods = []
+        if self.__is_method_enabled('dictionary') or \
+                self.__is_method_enabled('pam') or \
+                self.__is_method_enabled('ldap'):
+            methods.append('Username:Password')
+
+        if self.__auth_config.get('method_oauth', {}).get('enabled'):
+            for provider in self.__auth_config['method_oauth'] \
+                    .get('providers', {}).values():
+                if provider.get('enabled'):
+                    methods.append('oauth')
+                    break
+
+        if self.is_sso_enabled():
+            methods.append('sso')
+
+        return methods
+
     def __handle_validation(self, auth_string):
         """
         Validate an oncoming authorization request
@@ -582,15 +789,16 @@ class SessionManager:
         validation = self.__try_personal_access_token(auth_string) \
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+            or self.__try_auth_ldap(auth_string) \
+            or self.__try_auth_sso(auth_string)
         if not validation:
             return False
 
         # If a validation method is enabled and regex_groups is enabled too,
         # we will extend the 'groups'.
-        extra_groups = self.__try_regex_groups(validation['username'])
+        extra_groups = self.__try_regex_groups(validation.get('username', ''))
         if extra_groups:
-            already_groups = set(validation['groups'])
+            already_groups = set(validation.get('groups', []))
             validation['groups'] = list(already_groups | extra_groups)
 
         LOG.debug('User validation details: %s', str(validation))
@@ -757,6 +965,36 @@ class SessionManager:
                     return {'username': username, 'groups': groups}
 
         return False
+
+    def __try_auth_sso(self, auth_string):
+        if not self.__is_method_enabled('sso'):
+            return False
+
+        try:
+            _, code = auth_string.split(':', 1)
+            response = cc_sso.auth_user(
+                code, self.__auth_config.get('method_sso', {}))
+            username = response.get("username")
+            if not username:
+                LOG.error("SSO login failed: username claim is missing")
+                return False
+
+            groups = response.get("groups", [])
+            if self.__is_sso_admin(groups):
+                self.__grant_superuser(username)
+                response['root'] = True
+            LOG.info(
+                "SSO login for '%s': assigned %d CodeChecker group(s)",
+                username, len(groups))
+            self.__update_groups(username, groups)
+            self.__update_personal_access_token_groups(username, groups)
+            return response
+        except cc_sso.SSOAuthError as exc:
+            LOG.error("SSO authentication failed: %s", exc)
+            return False
+        except Exception as exc:
+            LOG.exception("Unexpected SSO authentication error: %s", exc)
+            return False
 
     def __update_personal_access_token_groups(self, user_name, groups):
         """

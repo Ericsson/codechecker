@@ -7,7 +7,7 @@ import {
 
 import router from "@/router";
 import store from "@/store";
-import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
+import { ADD_ERROR, PURGE_AUTH, SET_REDIRECT } from "@/store/mutations.type";
 import tokenService from "./token.service";
 
 // Host should be set explicitly to `hostname` because thrift will use
@@ -95,10 +95,18 @@ const handleThriftError = function (cb, onError) {
       if (msg.indexOf("Error code 401:") !== -1) {
         store.commit(PURGE_AUTH);
 
-        router.push({
-          name: "login",
-          query: { "return_to": router.currentRoute.fullPath }
-        }).catch(() => { });
+        const methods = store.getters.authMethods;
+        const returnTo = router.currentRoute.value.fullPath;
+        localStorage.setItem(SET_REDIRECT, returnTo);
+
+        if (methods.length === 1 && methods[0] === "sso") {
+          router.push({ name: "sso-login" }).catch(() => { });
+        } else {
+          router.push({
+            name: "login",
+            query: { "return_to": returnTo }
+          }).catch(() => { });
+        }
 
         if (onError) onError(err);
         return;

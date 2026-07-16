@@ -8,6 +8,7 @@ import {
 import {
   PURGE_AUTH,
   SET_AUTH,
+  SET_AUTH_METHODS,
   SET_AUTH_PARAMS,
   SET_LOGGED_IN_USER
 } from "../mutations.type";
@@ -17,6 +18,7 @@ const state = {
   currentUser: "",
   isAuthenticated: false, // Will be set properly in getter
   authParams: null,
+  authMethods: [],
   packageVersion: undefined
 };
 
@@ -30,6 +32,9 @@ const getters = {
   },
   authParams(state) {
     return state.authParams;
+  },
+  authMethods(state) {
+    return state.authMethods;
   }
 };
 
@@ -39,7 +44,11 @@ const actions = {
       authService.getClient().getAuthParameters(
         handleThriftError(params => {
           commit(SET_AUTH_PARAMS, params);
-          resolve(params);
+          authService.getClient().getAcceptedAuthMethods(
+            handleThriftError(methods => {
+              commit(SET_AUTH_METHODS, methods);
+              resolve(params);
+            }));
         }));
     });
   },
@@ -87,6 +96,23 @@ const actions = {
             reject(err);
           }));
       }
+      else if (credentials.type === "sso") {
+        if (!credentials.code) {
+          reject(new Error("Missing SSO login code."));
+          return;
+        }
+
+        authService.getClient().performLogin("sso", credentials.code,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: null,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+      }
       else {
         reject("Unknown option provided");
       }
@@ -116,6 +142,9 @@ const mutations = {
   },
   [SET_AUTH_PARAMS](state, params) {
     state.authParams = params;
+  },
+  [SET_AUTH_METHODS](state, methods) {
+    state.authMethods = methods;
   },
   [SET_LOGGED_IN_USER](state, userName) {
     state.currentUser = userName;

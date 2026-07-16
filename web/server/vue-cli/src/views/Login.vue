@@ -39,11 +39,23 @@
             </v-container>
           </v-card-title>
           <v-card-actions
-            v-if="providers.length !== 0"
+            v-if="providers.length !== 0 || ssoEnabled"
             id="btn-container"
             class="d-flex justify-center flex-column"
           >
             <v-btn
+              v-if="ssoEnabled"
+              class="text-uppercase"
+              block
+              size="x-large"
+              color="primary"
+              variant="flat"
+              @click="ssoLogin"
+            >
+              SSO Login
+            </v-btn>
+            <v-btn
+              v-if="providers.length !== 0"
               class="text-uppercase"
               block
               size="x-large"
@@ -54,6 +66,7 @@
               {{ ssoButtonText }}
             </v-btn>
             <a
+              v-if="providers.length !== 0 || showOtherLoginOptions"
               href="#"
               class="text-button text-no-wrap"
               @click.prevent="toggleOtherLoginOptions"
@@ -167,6 +180,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
 import { LOGIN } from "@/store/actions.type";
+import { SET_REDIRECT } from "@/store/mutations.type";
 import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
 
@@ -188,10 +202,14 @@ const optionsShow = ref(false);
 
 const authParams = computed(() => store.getters.authParams);
 const isAuthenticated = computed(() => store.getters.isAuthenticated);
+const authMethods = computed(() => store.getters.authMethods);
+const ssoEnabled = computed(() => authMethods.value.includes("sso"));
+const showOtherLoginOptions = computed(() =>
+  authMethods.value.includes("Username:Password"));
 
 const ssoButtonText = computed(() => {
   return providers.value.length === 1 ?
-    `Login with ${providers.value[0]}` : "SSO Login";
+    `Login with ${providers.value[0]}` : "OAuth Login";
 });
 
 watch(username, () => {
@@ -205,6 +223,14 @@ watch(password, () => {
 onMounted(() => {
   fixAutocomplete();
   getProviders();
+  if (route.query.error) {
+    errorMsg.value = route.query.error;
+    error.value = true;
+    optionsShow.value = true;
+  }
+  if (!ssoEnabled.value && providers.value.length === 0) {
+    optionsShow.value = showOtherLoginOptions.value;
+  }
   if (isAuthenticated.value && authParams.value?.sessionStillActive) {
     const returnTo = route.query["return_to"];
     router.replace(returnTo || { name: "products" });
@@ -223,6 +249,14 @@ function toggleOtherLoginOptions() {
 function ssoButtonHandleClickEvent() {
   return providers.value.length === 1 ?
     oauth(providers.value[0]) : openModal();
+}
+
+function ssoLogin() {
+  const returnTo = route.query["return_to"];
+  if (returnTo) {
+    localStorage.setItem(SET_REDIRECT, returnTo);
+  }
+  window.location.href = "/sso-login";
 }
 
 function login() {
@@ -256,7 +290,9 @@ function getProviders() {
     if (_providers) {
       providers.value = _providers;
     }
-    optionsShow.value = providers.value.length === 0;
+    if (providers.value.length === 0 && showOtherLoginOptions.value) {
+      optionsShow.value = true;
+    }
   }).catch(err => {
     errorMsg.value = `Providers list was passed incorrectly. ${err.message}`;
     error.value = true;
