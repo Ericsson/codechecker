@@ -32,6 +32,8 @@ from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
 
+import codechecker_api_shared
+
 
 UNSUPPORTED_METHODS = []
 
@@ -652,7 +654,12 @@ class SessionManager:
             return False
 
         if personal_access_token.expiration < datetime.now():
-            return False
+            LOG.info("User '%s' tried to login with an expired "
+                     "Personal Access Token.",
+                     personal_access_token.user_name)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "Personal Access Token is expired!")
 
         return {
             'username': personal_access_token.user_name,
