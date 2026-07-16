@@ -5,7 +5,7 @@
 # to let users select a specific compatible version.
 
 lxml~=6.0
-lxml-stubs~=0.5.0
+types-lxml~=2026.2.0
 portalocker~=3.0
 psutil~=7.0
 PyYAML~=6.0
