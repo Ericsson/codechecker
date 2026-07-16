@@ -22,19 +22,15 @@
 <script setup>
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { useBaseFilter } from "@/composables/useBaseFilter";
-import { ref, toRef, watch } from "vue";
+import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
-
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
 
 const emit = defineEmits([ "update:url" ]);
 const id = ref("is-unique");
 const defaultValue = ref(false);
 const isUniqueModel = ref(false);
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+const baseFilter = useBaseFilter();
 
 const route = useRoute();
 

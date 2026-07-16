@@ -48,8 +48,7 @@ import { useToCSV } from "@/composables/useToCSV";
 import CheckerStatisticsTable from "./CheckerStatisticsTable";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const severity = useSeverity();

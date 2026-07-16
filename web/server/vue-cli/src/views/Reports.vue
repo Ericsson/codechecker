@@ -4,7 +4,6 @@
   >
     <pane size="20" :style="{ 'min-width': '320px' }">
       <ReportFilter
-        :namespace="namespace"
         :report-count="totalItems"
         @refresh="refresh"
       />
@@ -408,8 +407,6 @@ import CheckerDocumentationDialog from
 import { ReportFilter } from "@/components/Report/ReportFilter";
 import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 
-const namespace = "report";
-
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
@@ -532,15 +529,15 @@ const treeSortKey = ref(null);
 const treeSortOrder = ref(null);
 
 const runIds = computed(function() {
-  return store.getters[`${namespace}/getRunIds`];
+  return store.getters.getRunIds;
 });
 
 const reportFilter = computed(function() {
-  return store.getters[`${namespace}/getReportFilter`];
+  return store.getters.getReportFilter;
 });
 
 const cmpData = computed(function() {
-  return store.getters[`${namespace}/getCmpData`];
+  return store.getters.getCmpData;
 });
 
 const tableHeaders = computed(function() {
@@ -665,7 +662,7 @@ watch(allReportsFileCounts, () => {
 }, { deep: true });
 
 function setReportFilter(params) {
-  store.commit(`${namespace}/${SET_REPORT_FILTER}`, params);
+  store.commit(SET_REPORT_FILTER, params);
 }
 
 function onTreeItemClick(item) {

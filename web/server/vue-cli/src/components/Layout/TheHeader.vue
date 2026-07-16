@@ -167,7 +167,7 @@ const menuButtons = ref([
   },
   {
     name: "Reports",
-    query_namespace: "report_filter",
+    query_namespace: "reports_filter",
     icon: "mdi-bug",
     route: "reports",
     active: [ "reports" ],
@@ -177,7 +177,7 @@ const menuButtons = ref([
   },
   {
     name: "Statistics",
-    query_namespace: "report_filter",
+    query_namespace: "statistics_filter",
     icon: "mdi-chart-line",
     route: "statistics",
     active: [ "statistics" ],
