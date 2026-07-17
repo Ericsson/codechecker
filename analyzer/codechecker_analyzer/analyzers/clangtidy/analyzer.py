@@ -699,16 +699,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                         'key': f"{cfg.checker}.{cfg.option}",
                         'value': cfg.value})
             analyzer_config['CheckOptions'] = check_options
-        else:
-            try:
-                with open(args.tidy_config, 'r',
-                          encoding='utf-8', errors='ignore') as tidy_config:
-                    handler.checker_config = tidy_config.read()
-            except IOError as ioerr:
-                LOG.debug(ioerr)
-            except AttributeError as aerr:
-                # No clang tidy config file was given in the command line.
-                LOG.debug(aerr)
 
         handler.analyzer_config = analyzer_config
 
