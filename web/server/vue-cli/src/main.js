@@ -106,16 +106,15 @@ router.afterEach(to => {
     store.commit(CLEAR_QUERIES, { except: [ "products" ] });
 
   let query_namespace = to.name;
-  if (to.name === "reports") {
-    query_namespace = "reports_filter";
-  } else if (to.name === "product-overview"
+  if (to.name === "reports"
+    || to.name === "product-overview"
     || to.name === "checker-statistics"
     || to.name === "severity-statistics"
     || to.name === "component-statistics"
     || to.name === "checker-coverage-statistics"
     || to.name === "guideline-statistics"
   ) {
-    query_namespace = "statistics_filter";
+    query_namespace = "report_filter";
   }
 
   store.commit(SET_QUERIES, { location: query_namespace, query: to.query });

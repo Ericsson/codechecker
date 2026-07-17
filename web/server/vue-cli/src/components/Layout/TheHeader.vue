@@ -139,7 +139,6 @@ import { useStore } from "vuex";
 import { GET_ANNOUNCEMENT, GET_PACKAGE_VERSION } from "@/store/actions.type";
 
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
 import HeaderMenuItems from "./HeaderMenuItems";
 import UserInfoMenu from "./UserInfoMenu";
 
@@ -167,7 +166,7 @@ const menuButtons = ref([
   },
   {
     name: "Reports",
-    query_namespace: "reports_filter",
+    query_namespace: "report_filter",
     icon: "mdi-bug",
     route: "reports",
     active: [ "reports" ],
@@ -177,12 +176,12 @@ const menuButtons = ref([
   },
   {
     name: "Statistics",
-    query_namespace: "statistics_filter",
+    query_namespace: "report_filter",
     icon: "mdi-chart-line",
     route: "statistics",
     active: [ "statistics" ],
     exact: false,
-    query: defaultStatisticsFilterValues,
+    query: defaultReportFilterValues,
     hide: [ "products", "login", "404" ]
   }
 ]);

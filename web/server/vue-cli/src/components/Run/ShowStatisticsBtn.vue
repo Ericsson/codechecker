@@ -2,7 +2,6 @@
   <v-btn
     :to="{ name: 'statistics',
            query: {
-             ...defaultStatisticsFilterValues,
              ...extraQueries
            }}"
     class="show-statistics"
@@ -15,7 +14,6 @@
 </template>
 
 <script setup>
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
 defineProps({
   extraQueries: { type: Object, default: () => {} }
