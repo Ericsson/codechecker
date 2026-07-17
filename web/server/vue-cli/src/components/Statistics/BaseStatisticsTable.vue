@@ -313,6 +313,7 @@
           @showing-bad-click="$emit('enabled-click', 'disabled', item.checker)"
         />
       </div>
+      {{ item.unknownRunLength }}
     </template>
 
     <template #item.closed="{ item }">
@@ -355,14 +356,14 @@
 
     <template #item.guidelineRules="{ item }">
       <div v-if="item.guidelineRules.length">
-        <div 
+        <div
           v-for="guidelineRule in item.guidelineRules"
           :key="guidelineRule.type"
         >
           <span class="type">
             {{ guidelineRule.type }}:
           </span>
-          <span 
+          <span
             v-for="rule in guidelineRule.rules"
             :key="rule"
             :style="getRuleStyle(guidelineRule)"
@@ -372,7 +373,7 @@
         </div>
       </div>
     </template>
-    
+
     <template #item.guidelineRule="{ item }">
       <a
         :href="item.guidelineUrl"
@@ -382,10 +383,10 @@
       </a>
     </template>
 
-    <template 
+    <template
       #item.checkers.name="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
       >
         none
@@ -409,10 +410,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.severity="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -429,10 +430,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.enabledInAllRuns="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -475,6 +476,15 @@
                   @showing-bad-click="$emit(
                     'enabled-click', 'disabled', checker.name)"
                 />
+                <br>
+                <count-chips
+                  :num-bad="checker.unknownRunLength"
+                  :bad-text="'Number of runs where checker was unknown'"
+                  :show-dividers="false"
+                  :show-zero-chips="false"
+                  @showing-bad-click="$emit(
+                    'enabled-click', 'unknown', checker.name)"
+                />
               </div>
             </td>
           </tr>
@@ -482,10 +492,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.outstanding="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -518,10 +528,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.closed="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -721,7 +731,7 @@ function getNestedTableContent(checkers, prop, descending) {
   if (checkers && checkers.length > 0) {
     if (prop === "enabledInAllRuns" ){
       const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
+        return descending
           ? (current["enabledRunLength"] > max_or_min["enabledRunLength"]
             ? current : max_or_min)
           : (current["enabledRunLength"] < max_or_min["enabledRunLength"]
@@ -731,8 +741,8 @@ function getNestedTableContent(checkers, prop, descending) {
     }
     else {
       const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
-          ? (current[prop] > max_or_min[prop] ? current : max_or_min) 
+        return descending
+          ? (current[prop] > max_or_min[prop] ? current : max_or_min)
           : (current[prop] < max_or_min[prop] ? current : max_or_min);
       });
       return _selectedChecker[prop];

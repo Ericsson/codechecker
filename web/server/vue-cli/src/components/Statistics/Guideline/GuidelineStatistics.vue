@@ -147,10 +147,6 @@
 
 <script setup>
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
-import {
-  CheckerInfoAvailability,
-  useAnalysisInfo
-} from "@/composables/useAnalysisInfo";
 import { useBaseStatistics } from "@/composables/useBaseStatistics";
 import { useSeverity } from "@/composables/useSeverity";
 import { useToCSV } from "@/composables/useToCSV";
@@ -177,7 +173,7 @@ const route = useRoute();
 const severity = useSeverity();
 const toCSV = useToCSV();
 const baseStatistics = useBaseStatistics(props, null);
-const analysisInfoComp = useAnalysisInfo();
+//const analysisInfoComp = useAnalysisInfo();
 
 const guidelineOptions = ref([
   {
@@ -279,6 +275,7 @@ function checker_stat(stat) {
                     : 0,
                   enabledRunLength: stat[checkerId].enabled.length,
                   disabledRunLength: stat[checkerId].disabled.length,
+                  unknownRunLength: stat[checkerId].unknown.length,
                   closed: stat[checkerId].closed.toNumber(),
                   outstanding: stat[checkerId].outstanding.toNumber(),
                 };
@@ -357,36 +354,15 @@ async function getAllGuidelineRules() {
             });
           });
 
-          const _checkers_with_severity = await new Promise(resolve => {
-            ccService.getClient().getCheckerLabels(
-              _all_checkers, handleThriftError(labels => {
-                resolve(
-                  labels.map((label, i) => {
-                    const severityLabels = label.filter(param =>
-                      param.startsWith("severity")
-                    );
-                    return severityLabels.length
-                      ? {
-                        checkerName: _all_checkers[i].checkerId,
-                        severity: severityLabels[0].split("severity:")[1]
-                      }
-                      : {
-                        checkerName: _all_checkers[i].checkerId,
-                        severity: null
-                      };
-                  })
-                );
-              })
-            );
-          });
-
           guidelines[guideline] = rules.map(rule => {
             return {
               ruleId: rule.ruleId,
               title: rule.title,
               url: rule.url,
-              checkers: _checkers_with_severity.filter(
-                cws => rule.checkers.includes(cws.checkerName)),
+              checkers: rule.checkers.map(
+                str =>
+                  ({ checkerName:str, severity:null })
+              ),
               level: rule.level
             };
           });
@@ -446,6 +422,7 @@ async function fetchStatistics() {
 
   const filter = new ReportFilter(baseStatistics.reportFilter.value);
 
+  console.error(filter);
   const checker_stat_result = await new Promise(resolve => {
     ccService.getClient().getCheckerStatusVerificationDetails(
       baseStatistics.runIds.value,
@@ -463,21 +440,6 @@ async function fetchStatistics() {
 async function fetchProblematicRuns() {
   loading.value = true;
   const _runs = await getRunData();
-  problematicRuns.value = (await Promise.all(
-    _runs.map(async runData => {
-      var _analysisInfo = await analysisInfoComp.loadAnalysisInfo(
-        runData.runId, null, null);
-
-      if (_analysisInfo.checkerInfoAvailability !=
-      CheckerInfoAvailability.Available) {
-        return {
-          ...runData,
-          analysisInfo: _analysisInfo
-        };
-      } else {
-        return null;
-      }
-    }))).filter(element => element !== null);
   runs.value = _runs;
   loading.value = false;
 }
