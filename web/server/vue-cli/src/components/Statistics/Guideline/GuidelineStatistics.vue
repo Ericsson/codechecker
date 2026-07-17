@@ -445,7 +445,7 @@ async function fetchStatistics() {
 
   await getAllGuidelineRules();
 
-  const filter = new ReportFilter(baseStatistics.reportFilter);
+  const filter = new ReportFilter(baseStatistics.reportFilter.value);
 
   const checker_stat_result = await new Promise(resolve => {
     ccService.getClient().getCheckerStatusVerificationDetails(
