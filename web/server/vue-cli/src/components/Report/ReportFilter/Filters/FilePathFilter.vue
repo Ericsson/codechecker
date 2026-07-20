@@ -10,6 +10,7 @@
     :panel="baseSelectOptionFilter.panel.value"
     @clear="baseSelectOptionFilter.clear(true)"
     @input="baseSelectOptionFilter.setSelectedItems"
+    @on-menu-show="syncFromSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -34,17 +35,45 @@
           v-if="treeFilter"
           density="compact"
           class="pattern-item"
+          @click="togglePattern(treeFilter)"
         >
           <template #prepend>
             <v-checkbox-btn
-              v-model="patternSelected"
+              :model-value="isPatternSelected(treeFilter)"
               density="compact"
+              @click.stop="togglePattern(treeFilter)"
             />
           </template>
           <v-list-item-title class="text-body-2">
             Filter by wildcard pattern: <b>{{ treeFilter }}</b>
           </v-list-item-title>
         </v-list-item>
+
+        <v-list v-if="selectedPatterns.length" density="compact">
+          <v-list-item
+            v-for="pattern in selectedPatterns"
+            :key="pattern"
+            density="compact"
+            class="pattern-item"
+          >
+            <template #prepend>
+              <v-icon size="small">
+                mdi-asterisk
+              </v-icon>
+            </template>
+            <v-list-item-title class="text-body-2">
+              {{ pattern }}
+            </v-list-item-title>
+            <template #append>
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                size="x-small"
+                @click="togglePattern(pattern)"
+              />
+            </template>
+          </v-list-item>
+        </v-list>
 
         <AnywhereOnReportPath v-model="isAnywhere" />
 
@@ -96,7 +125,7 @@
             class="apply-btn"
             color="primary"
             :disabled="treeSelection.length === 0 &&
-              !(patternSelected && treeFilter)"
+              selectedPatterns.length === 0"
             @click="applyTreeSelection(onApplyFinished)"
           >
             <v-icon start>
@@ -143,12 +172,28 @@ const anywhereId = "anywhere-filepath";
 const allFileCounts = ref({});
 const treeSelection = ref([]);
 const treeFilter = ref("");
-const patternSelected = ref(false);
+const selectedPatterns = ref([]);
 const route = useRoute();
 
-watch(treeFilter, () => {
-  patternSelected.value = false;
+const allFullPaths = computed(() => {
+  const paths = new Set();
+  Object.keys(allFileCounts.value || {}).forEach(filePath => {
+    if (!filePath) return;
+    paths.add(filePath);
+    let currentPath = "";
+    filePath.split("/").slice(0, -1).forEach(part => {
+      if (part === "") return;
+      currentPath += "/" + part;
+      paths.add(currentPath);
+    });
+  });
+  return paths;
 });
+
+function isKnownPath(id) {
+  if (allFullPaths.value.has(id)) return true;
+  return id.endsWith("/*") && allFullPaths.value.has(id.slice(0, -2));
+}
 
 const filteredFileCounts = computed(() => {
   if (!treeFilter.value) return allFileCounts.value;
@@ -280,7 +325,7 @@ function fetchAllFileCounts() {
 
 function clearAll(onApplyFinished) {
   treeSelection.value = [];
-  patternSelected.value = false;
+  selectedPatterns.value = [];
   baseSelectOptionFilter.clear(true);
   if (onApplyFinished) onApplyFinished();
 }
@@ -291,17 +336,45 @@ function applyTreeSelection(onApplyFinished) {
     return { id: filterId, title: filterId, count: "N/A" };
   });
 
-  if (patternSelected.value && treeFilter.value) {
-    items.push({
-      id: treeFilter.value, title: treeFilter.value, count: "N/A"
-    });
-  }
+  selectedPatterns.value.forEach(pattern => {
+    items.push({ id: pattern, title: pattern, count: "N/A" });
+  });
 
   if (!items.length) return;
 
   baseSelectOptionFilter.setSelectedItems(items);
-  patternSelected.value = false;
   if (onApplyFinished) onApplyFinished();
+}
+
+// Restore the currently applied filters into the tree/pattern selection
+// state so re-opening the menu doesn't drop previously applied filters.
+function syncFromSelectedItems() {
+  const pathIds = [];
+  const patterns = [];
+
+  baseSelectOptionFilter.selectedItems.value.forEach(item => {
+    if (isKnownPath(item.id)) {
+      pathIds.push(
+        item.id.endsWith("/*") ? item.id.slice(0, -2) : item.id
+      );
+    } else {
+      patterns.push(item.id);
+    }
+  });
+
+  treeSelection.value = pathIds;
+  selectedPatterns.value = patterns;
+}
+
+function isPatternSelected(pattern) {
+  return selectedPatterns.value.includes(pattern);
+}
+
+function togglePattern(pattern) {
+  if (!pattern) return;
+  selectedPatterns.value = isPatternSelected(pattern)
+    ? selectedPatterns.value.filter(p => p !== pattern)
+    : [ ...selectedPatterns.value, pattern ];
 }
 
 function isDirectory(fullPath) {
