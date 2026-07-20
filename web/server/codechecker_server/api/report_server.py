@@ -3360,176 +3360,130 @@ class ThriftRequestHandler:
     def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
         self.__require_view()
 
-        #Queries for all checkers available in CodeCecker
+        # Queries for all checkers available in CodeChecker
         with DBSession(self._Session) as session:
             max_run_histories = session.query(
                 RunHistory.run_id,
                 func.max(RunHistory.id).label('max_run_history_id'),
-            ) \
-                .filter(RunHistory.run_id.in_(run_ids) if run_ids else True) \
-                .group_by(RunHistory.run_id)
+            ).filter(
+                RunHistory.run_id.in_(run_ids) if run_ids else True
+            ).group_by(RunHistory.run_id)
 
-<<<<<<< HEAD
-            run_id_expression = get_run_id_expression(session, report_filter)
-
-            subquery = (
+            checker_list = (
                 session.query(
-                    run_id_expression,
+                    Checker.id.label("checker_id"),
+                    Checker.checker_name,
+                    Checker.severity,
+                    Checker.analyzer_name
+                )
+                .select_from(Checker)
+            )
+
+            checker_stats = {}
+            for checker_id, checker_name, severity, analyzer_name \
+                    in checker_list.all():
+                checker_stat = CheckerStatusVerificationDetail(
+                    checkerName=checker_name,
+                    analyzerName=analyzer_name,
+                    enabled=set(),
+                    disabled=set(),
+                    unknown=set(),
+                    severity=severity,
+                    closed=0,
+                    outstanding=0
+                )
+                checker_stats[checker_id] = checker_stat
+
+            # Queries if the checkers were enabled/disabled in the
+            # selected runs. With older CodeChecker clients, the
+            # enable/disable status is unknown.
+            run_group_func =  func.string_agg(
+                cast(Run.id, sqlalchemy.String).distinct(),
+                ',').label("run_id") if session.bind.dialect.name \
+                    == "postgresql" \
+                    else func.group_concat(Run.id.distinct()).label("run_id")
+            checker_status_query = (
+                session.query(
                     Checker.id.label("checker_id"),
                     Checker.checker_name,
                     Checker.analyzer_name,
                     Checker.severity,
-                    Report.bug_id,
-                    Report.detection_status,
-                    Report.review_status,
+                    run_group_func,
+                    DB_AnalysisInfoChecker.enabled.label(
+                        "checker_enabled")
                 )
-                .join(RunHistory)
-                .join(AnalysisInfo, RunHistory.analysis_info)
-                .join(CheckerSetItem, (
-                    (AnalysisInfo.checker_set_id ==
-                     CheckerSetItem.checker_set_id)
-                    & (CheckerSetItem.enabled.is_(True))))
-                .join(Checker,
-                      CheckerSetItem.checker_id == Checker.id)
-                .outerjoin(Report, ((Checker.id == Report.checker_id)
-                                    & (Run.id == Report.run_id)))
-                .filter(RunHistory.id == max_run_histories.subquery()
-                        .c.max_run_history_id)
-            )
-
-            if report_filter.isUnique:
-                subquery = subquery.group_by(
-                    Checker.id,
-                    Checker.checker_name,
-                    Checker.analyzer_name,
-                    Checker.severity,
-                    Report.bug_id,
-                    Report.detection_status,
-                    Report.review_status
-                )
-
-            subquery = subquery.subquery()
-
-            query = (
-                session.query(
-                    subquery.c.checker_id,
-                    subquery.c.checker_name,
-                    subquery.c.analyzer_name,
-                    subquery.c.severity,
-                    subquery.c.run_id,
-                    subquery.c.detection_status,
-                    subquery.c.review_status,
-                    func.count(subquery.c.bug_id)
-                )
+                .select_from(Run)
+                .join(RunHistory, (RunHistory.run_id == Run.id))
+                .filter(
+                    RunHistory.id
+                    == max_run_histories.subquery()
+                    .c.max_run_history_id)
+                .outerjoin(AnalysisInfo, RunHistory.analysis_info)
+                .outerjoin(DB_AnalysisInfoChecker)
+                .outerjoin(Checker, (
+                    Checker.id
+                    == DB_AnalysisInfoChecker.checker_id))
                 .group_by(
-                    subquery.c.checker_id,
-                    subquery.c.checker_name,
-                    subquery.c.analyzer_name,
-                    subquery.c.severity,
-                    subquery.c.run_id,
-                    subquery.c.detection_status,
-                    subquery.c.review_status
-                )
-=======
-            checker_list = (
-                    session.query(
-                        Checker.id.label("checker_id"),
-                        Checker.checker_name,
-                        Checker.severity,
-                        Checker.analyzer_name
-                    )
-                    .select_from(Checker)
->>>>>>> bb2b40158 (Add uknown checker status to guidelinestatistics)
+                    Checker.id, DB_AnalysisInfoChecker.enabled)
             )
 
-            checker_stats = {}
-            for checker_id, checker_name, severity, analyzer_name in checker_list.all():
-                checker_stat = CheckerStatusVerificationDetail(
-                        checkerName=checker_name,
-                        analyzerName=analyzer_name,
-                        enabled=set(),
-                        disabled=set(),
-                        unknown=set(),
-                        severity=severity,
-                        closed=0,
-                        outstanding=0
-                        )
-                checker_stats[checker_id] = checker_stat
-
-            # Queries if the checkers were enabled/disabled in the selected runs
-            # With older CodeChecker clients, the enable/disable status is unknown
-            checker_status_query = (
-                    session.query(
-                        Checker.id.label("checker_id"),
-                        Checker.checker_name,
-                        Checker.analyzer_name,
-                        Checker.severity,
-                        func.group_concat(Run.id.distinct()).label("run_ids"),
-                        Run.name.label("run_name"),
-                        DB_AnalysisInfoChecker.enabled.label("checker_enabled")
-                    )
-                    .select_from(Run)
-                    .join(RunHistory, (RunHistory.run_id == Run.id))
-                    .filter(RunHistory.id == max_run_histories.subquery()
-                            .c.max_run_history_id)
-                    .outerjoin(AnalysisInfo, RunHistory.analysis_info)
-                    .outerjoin(DB_AnalysisInfoChecker)
-                    .outerjoin(Checker, (Checker.id == DB_AnalysisInfoChecker.checker_id))
-                    .group_by(Checker.id, DB_AnalysisInfoChecker.enabled)
-                )
-
-            runs_unknown_checker_status={}
-            resultcount=0
-            for     checker_id, \
-                    checker_name, \
-                    analyzer_name, \
-                    severity, \
-                    run_id_list, \
-                    run_name, \
-                    checker_enabled in checker_status_query.all():
+            runs_unknown_checker_status = {}
+            resultcount = 0
+            for (checker_id, checker_name, analyzer_name,
+                 severity, run_id_list,
+                 checker_enabled) in checker_status_query.all():
                 if checker_id:
                     resultcount += 1
                     checker_stat = checker_stats[checker_id]
 
                     if checker_enabled:
-                        checker_stat.enabled.update(map(int, run_id_list.split(",")))
+                        checker_stat.enabled.update(
+                            map(int, run_id_list.split(",")))
                     else:
-                        checker_stat.disabled.update(map(int, run_id_list.split(",")))
+                        checker_stat.disabled.update(
+                            map(int, run_id_list.split(",")))
                 else:
-                    runs_unknown_checker_status=set(map(int, run_id_list.split(",")))
+                    runs_unknown_checker_status = set(
+                        map(int, run_id_list.split(",")))
 
+            for checker_id, checker_stat in checker_stats.items():
+                checker_stat.unknown = \
+                    list(runs_unknown_checker_status)
+                checker_stat.enabled = list(checker_stat.enabled)
+                checker_stat.disabled = list(checker_stat.disabled)
 
-            for checker_id in checker_stats:
-                checker_stats[checker_id].unknown = list(runs_unknown_checker_status)
-                checker_stats[checker_id].enabled = list(checker_stats[checker_id].enabled)
-                checker_stats[checker_id].disabled = list(checker_stats[checker_id].disabled)
-
-
-            #Count the outstanding and closed reports
+            # Count the outstanding and closed reports.
             if report_filter.isUnique:
-                counter = func.count(Report.bug_id.distinct()).label("report_count")
+                counter = func.count(
+                    Report.bug_id.distinct()
+                ).label("report_count")
             else:
-                counter = func.count(Report.bug_id).label("report_count")
+                counter = func.count(
+                    Report.bug_id).label("report_count")
             report_counts_query = (
                 session.query(
                     Checker.id.label("checker_id"),
                     counter,
                     Report.is_open
-                ) \
+                )
                 .join(Checker,
-                      Report.checker_id == Checker.id) \
-                .filter(Report.run_id.in_(run_ids) if run_ids else True) \
+                      Report.checker_id == Checker.id)
+                .filter(
+                    Report.run_id.in_(run_ids)
+                    if run_ids else True)
                 .group_by(Checker.id, Report.is_open)
             )
 
-            for checker_id, report_count, is_open in report_counts_query.all():
-                if (is_open):
-                    checker_stats[checker_id].outstanding = report_count
+            for checker_id, report_count, is_open \
+                    in report_counts_query.all():
+                if is_open:
+                    checker_stats[checker_id].outstanding = \
+                        report_count
                 else:
-                    checker_stats[checker_id].closed = report_count
+                    checker_stats[checker_id].closed = \
+                        report_count
 
         return checker_stats
-
 
     @exc_to_thrift_reqfail
     @timeit
