@@ -453,16 +453,15 @@ class Report(Base):
 
     detected_at = Column(DateTime, nullable=False)
 
-
     @hybrid_property
     def is_open(self):
         # Python-side logic
         return self.fixed_at is None
 
     @is_open.expression
-    def is_open(cls):
+    def is_open(self):
         return case(
-            (cls.fixed_at.is_(None), True),
+            (self.fixed_at.is_(None), True),
             else_=False
         )
 

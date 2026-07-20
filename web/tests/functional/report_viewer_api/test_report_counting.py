@@ -725,3 +725,78 @@ class TestReportFilter(unittest.TestCase):
             all_report_counts += rc.reportCount
 
         self.assertEqual(separate_report_counts, all_report_counts)
+
+    def test_checker_status_verification_details_single_run(self):
+        """
+        Get checker status verification details for run1 and verify
+        that outstanding report counts match the expected run1_checkers.
+        """
+        runid = self._runids[0]
+
+        details = self._cc_client.getCheckerStatusVerificationDetails(
+            [runid], ReportFilter())
+
+        self.assertIsInstance(details, dict)
+        self.assertGreater(len(details), 0)
+
+        # Build a mapping from checker name to outstanding count.
+        outstanding_by_name = {
+            detail.checkerName: detail.outstanding
+            for detail in details.values()
+        }
+
+        # Verify that each checker in run1_checkers has the exact
+        # expected outstanding count.
+        for checker_name, expected_count in self.run1_checkers.items():
+            self.assertIn(
+                checker_name, outstanding_by_name,
+                f"Checker '{checker_name}' not found in "
+                f"status verification details.")
+            self.assertEqual(
+                outstanding_by_name[checker_name], expected_count,
+                f"Outstanding count mismatch for '{checker_name}': "
+                f"expected {expected_count}, "
+                f"got {outstanding_by_name[checker_name]}")
+
+    def test_checker_status_verification_details_enabled_disabled(self):
+        """
+        Get checker status verification details for run1 and verify that
+        checkers in run1_checkers are enabled (run id present in the
+        enabled list), and all other checkers are disabled (run id present
+        in the disabled list).
+        """
+        runid = self._runids[0]
+
+        details = self._cc_client.getCheckerStatusVerificationDetails(
+            [runid], ReportFilter())
+
+        self.assertIsInstance(details, dict)
+        self.assertGreater(len(details), 0)
+
+        run1_checker_names = set(self.run1_checkers.keys())
+
+        for _, detail in details.items():
+            if detail.checkerName in run1_checker_names:
+                # Checkers that produced reports in run1 should be enabled.
+                self.assertIn(
+                    runid, detail.enabled,
+                    f"Checker '{detail.checkerName}' should be enabled "
+                    f"in run1 (run id {runid}), but enabled list is "
+                    f"{detail.enabled}")
+                self.assertNotIn(
+                    runid, detail.disabled,
+                    f"Checker '{detail.checkerName}' should not be "
+                    f"disabled in run1 (run id {runid})")
+            else:
+                # All other checkers should be disabled in run1.
+                if detail.checkerName in ("__FAKE__", "NOT FOUND"):
+                    continue
+                self.assertIn(
+                    runid, detail.disabled,
+                    f"Checker '{detail.checkerName}' should be disabled "
+                    f"in run1 (run id {runid}), but disabled list is "
+                    f"{detail.disabled}")
+                self.assertNotIn(
+                    runid, detail.enabled,
+                    f"Checker '{detail.checkerName}' should not be "
+                    f"enabled in run1 (run id {runid})")

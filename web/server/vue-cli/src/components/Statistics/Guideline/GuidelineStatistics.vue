@@ -422,7 +422,6 @@ async function fetchStatistics() {
 
   const filter = new ReportFilter(baseStatistics.reportFilter.value);
 
-  console.error(filter);
   const checker_stat_result = await new Promise(resolve => {
     ccService.getClient().getCheckerStatusVerificationDetails(
       baseStatistics.runIds.value,
