@@ -155,6 +155,7 @@ class PersonalAccessToken(Base):
     # List of group names separated by semicolons.
     groups = Column(String)
 
+    creation_date = Column(DateTime, nullable=False)
     last_access = Column(DateTime, nullable=False)
     expiration = Column(DateTime)
 
@@ -176,7 +177,8 @@ class PersonalAccessToken(Base):
         self.token = token
         self.description = description
         self.groups = groups
-        self.last_access = datetime.now()
+        self.creation_date = datetime.now()
+        self.last_access = self.creation_date
         self.expiration = self.last_access + timedelta(days=expiration)
 
 
@@ -277,7 +279,7 @@ class BackgroundTask(Base):
         # The job never started, or its execution was terminated due to a
         # system-level reason (such as the server's foced shutdown).
         "dropped",
-        ),
+        name="background_task_statuses"),
                     nullable=False,
                     default="enqueued",
                     index=True)
