@@ -422,16 +422,6 @@ def get_reports(
     reports = report_file.get_reports(
         analyzer_result_file_path, checker_labels)
 
-    # CppCheck generates a '0' value for the report hash. In case all of the
-    # reports in a result file contain only a hash with '0' value, overwrite
-    # the hash values in the report files with a context free hash value.
-    if all(r.report_hash == '0' for r in reports):
-        report_file.replace_report_hash(
-            analyzer_result_file_path, HashType.CONTEXT_FREE)
-
-        reports = report_file.get_reports(
-            analyzer_result_file_path, checker_labels)
-
     return reports
 
 
