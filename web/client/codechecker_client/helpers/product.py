@@ -35,11 +35,19 @@ class ThriftProductHelper(BaseClientHelper):
 
     # -----------------------------------------------------------------------
     @thrift_client_call
-    def getProducts(self, product_endpoint_filter, product_name_filter):
+    def getProducts(self,
+                    product_endpoint_filter,
+                    product_name_filter,
+                    limit,
+                    offset):
         pass
 
     @thrift_client_call
     def getCurrentProduct(self):
+        pass
+
+    @thrift_client_call
+    def getProductCount(self):
         pass
 
     @thrift_client_call

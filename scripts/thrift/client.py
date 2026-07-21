@@ -138,7 +138,7 @@ Python client to communicate with a CodeChecker server.""",
     try:
         print("Get products...")
         products = cli_product.getProducts(
-            product_endpoint_filter, product_name_filter)
+            product_endpoint_filter, product_name_filter, None, None)
         print(f"Products: {products}\n")
     except TApplicationException as ex:
         print(f"Failed to get products with the following exception: {ex}")

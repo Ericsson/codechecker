@@ -147,7 +147,8 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Check if the main server's product is visible on the second server.
         self.assertEqual(
-            self._pr_client_2.getProducts(self.product_name, None)[0].endpoint,
+            self._pr_client_2.getProducts(self.product_name, None,
+                                          None, None)[0].endpoint,
             self.product_name,
             "Main server's product was not loaded by the secondary server.")
 
@@ -180,18 +181,22 @@ class TestProductConfigShare(unittest.TestCase):
             self._pr_client_2.addProduct(product_cfg)
 
         # Product name full string match.
-        products = self._pr_client_2.getProducts('producttest_second', None)
+        products = self._pr_client_2.getProducts('producttest_second', None,
+                                                 None, None)
         self.assertEqual(len(products), 1)
 
         # Product endpoint full string match.
-        products = self._pr_client_2.getProducts(None, 'producttest_second')
+        products = self._pr_client_2.getProducts(None, 'producttest_second',
+                                                 None, None)
         self.assertEqual(len(products), 1)
 
         # Product name substring match.
-        products = self._pr_client_2.getProducts('producttest_second*', None)
+        products = self._pr_client_2.getProducts('producttest_second*', None,
+                                                 None, None)
         self.assertEqual(len(products), 1)
 
-        products = self._pr_client_2.getProducts(None, 'producttest_second*')
+        products = self._pr_client_2.getProducts(None, 'producttest_second*',
+                                                 None, None)
         self.assertEqual(len(products), 1)
 
         # Use the same CodeChecker config that was used on the main server,
@@ -218,8 +223,10 @@ class TestProductConfigShare(unittest.TestCase):
                          "connected through the main server.")
 
         # Remove the product through the main server.
-        p_id = self._root_client.getProducts('producttest_second', None)[0].id
-        p_id2 = self._pr_client_2.getProducts('producttest_second', None)[0].id
+        p_id = self._root_client.getProducts('producttest_second', None,
+                                             None, None)[0].id
+        p_id2 = self._pr_client_2.getProducts('producttest_second', None,
+                                              None, None)[0].id
         self.assertIsNotNone(p_id)
         self.assertEqual(p_id, p_id2,
                          "The products have different ID across the two "
@@ -228,7 +235,8 @@ class TestProductConfigShare(unittest.TestCase):
         self.assertTrue(self._root_client.removeProduct(p_id),
                         "Main server reported error while removing product.")
 
-        self.assertEqual(len(self._pr_client_2.getProducts('_second', None)),
+        self.assertEqual(len(self._pr_client_2.getProducts('_second', None,
+                                                           None, None)),
                          0,
                          "Secondary server still sees the removed product.")
 

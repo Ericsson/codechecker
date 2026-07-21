@@ -76,11 +76,16 @@ service codeCheckerProductService {
   // filters specified.
   // PERMISSION: PRODUCT_VIEW
   Products getProducts(1: string productEndpointFilter,
-                       2: string productNameFilter)
+                       2: string productNameFilter,
+                       3: optional i64 limit,
+                       4: optional i64 offset)
                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
   Product getCurrentProduct()
                             throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  i64 getProductCount()
+                      throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // *** Handling the add-modify-remove of registered products *** //
 
