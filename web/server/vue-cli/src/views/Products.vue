@@ -1,13 +1,16 @@
 <template>
   <v-container fluid>
-    <v-data-table
+    <v-data-table-server
+      v-model:page="page"
+      v-model:items-per-page="itemsperpage"
       :headers="headers"
       :items="products"
       :loading="loading"
       :items-per-page-options="itemsPerPageOptions"
+      :items-length="itemsLength"
       loading-text="Loading products..."
       item-key="endpoint"
-      :items-per-page="25"
+      @update:options="fetchProducts"
     >
       <template v-slot:top>
         <v-toolbar
@@ -131,7 +134,7 @@
           />
         </div>
       </template>
-    </v-data-table>
+    </v-data-table-server>
   </v-container>
 </template>
 
@@ -143,6 +146,10 @@ import { useDateUtils } from "@/composables/useDateUtils";
 import { useGradientColor } from "@/composables/useGradientColor";
 
 import _ from "lodash";
+
+const props = defineProps({
+  itemsPerPage: { type: Number, default: 25 },
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -171,11 +178,13 @@ const itemsPerPageOptions = [
 const sortBy = ref(null);
 const sortDesc = ref(null);
 const page = ref(null);
+const itemsperpage = ref(25);
 const productNameSearch = ref(null);
 const loading = ref(null);
 const products = ref([]);
 const isSuperUser = ref(false);
 const isAdminOfAnyProduct = ref(false);
+const itemsLength = ref(0);
 
 const pagination = computed(() => ({
   sortBy: sortBy.value ? [ sortBy.value ] : [ ],
@@ -245,16 +254,26 @@ const headers = ref([
     title: "Actions",
     value: "actions",
     sortable: false
-  }, 
+  },
 ]);
 
 onMounted(() => {
   sortBy.value = route.query["sort-by"];
   sortDesc.value = route.query["sort-desc"];
   page.value = parseInt(route.query["page"]) || 1;
+  itemsperpage.value = props.itemsPerPage;
 
+  getTotalProducts();
   initializeComponent();
 });
+
+function getTotalProducts() {
+  prodService.getClient().getProductCount(
+    handleThriftError(count => {
+      itemsLength.value = count;
+    })
+  );
+}
 
 function fetchProducts() {
   loading.value = true;
@@ -262,7 +281,11 @@ function fetchProducts() {
   const productNameFilter = productNameSearch.value
     ? `*${productNameSearch.value}*` : null;
 
-  prodService.getClient().getProducts(null, productNameFilter,
+  prodService.getClient().getProducts(
+    null,
+    productNameFilter,
+    itemsperpage.value,
+    itemsperpage.value * (page.value - 1),
     handleThriftError(_products => {
       products.value = _products.map(product => {
         const description = product.description_b64 ?

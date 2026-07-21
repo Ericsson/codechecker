@@ -186,7 +186,8 @@ class ThriftProductHandler:
             return False
 
     @timeit
-    def getProducts(self, product_endpoint_filter, product_name_filter):
+    def getProducts(self, product_endpoint_filter, product_name_filter,
+                    limit, offset):
         """
         Get the list of products configured on the server.
         """
@@ -194,7 +195,11 @@ class ThriftProductHandler:
         result = []
 
         with DBSession(self.__session) as session:
-            prods = session.query(Product)
+            if limit is None and offset is None:
+                prods = session.query(Product)
+            else:
+                prods = session.query(Product).order_by(
+                    Product.id).offset(offset).limit(limit)
 
             num_all_products = prods.count()  # prods get filtered later.
             if num_all_products < self.__server.num_products:
@@ -258,6 +263,16 @@ class ThriftProductHandler:
             _, ret = self.__get_product(session, prod)
             LOG.debug(ret)
             return ret
+
+    @timeit
+    def getProductCount(self):
+        """
+        Get total number of products to display on products page.
+        Needed for server side pagination.
+        """
+        with DBSession(self.__session) as session:
+            num = session.query(Product).count()
+            return num
 
     @timeit
     def getProductConfiguration(self, product_id):
