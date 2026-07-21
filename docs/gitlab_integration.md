@@ -45,7 +45,7 @@ code_quality:
 `expire_in` allows you to specify how long artifacts should live before they
 expire and are therefore deleted. You can set it to a lower or a higher value.
 For more information
-[see](https://docs.gitlab.com/ee/ci/yaml/README.html#artifactsexpire_in).
+[see](https://docs.gitlab.com/ee/ci/yaml/#artifactsexpire_in).
 
 Script is a shell script which will be executed by the Runner.
 
@@ -131,7 +131,7 @@ That is the case when you add the Code Quality job in your `.gitlab-ci.yml`
 for the very first time.
 
 For more information
-[see](https://docs.gitlab.com/ee/user/project/merge_requests/code_quality.html).
+[see](https://docs.gitlab.com/ee/ci/testing/code_quality.html).
 
 # Possible errors
 ## Runner is outdated

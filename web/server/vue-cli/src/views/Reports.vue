@@ -199,38 +199,140 @@
       <div v-else class="tree-view-container">
         <div class="tree-header">
           <span class="tree-header-name">Name</span>
-          <span class="tree-header-cell">All</span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('all')"
+          >
+            All
+            <v-icon
+              v-if="treeSortKey === 'all'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
+          </span>
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('style')"
+          >
             <severity-icon :status="Severity.STYLE" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'style'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('low')"
+          >
             <severity-icon :status="Severity.LOW" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'low'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('medium')"
+          >
             <severity-icon :status="Severity.MEDIUM" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'medium'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('high')"
+          >
             <severity-icon :status="Severity.HIGH" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'high'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('critical')"
+          >
             <severity-icon :status="Severity.CRITICAL" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'critical'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('unreviewed')"
+          >
             <review-status-icon :status="0" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'unreviewed'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('confirmed')"
+          >
             <review-status-icon :status="1" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'confirmed'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('false_positive')"
+          >
             <review-status-icon :status="2" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'false_positive'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
-          <span class="tree-header-cell">
+          <span
+            class="tree-header-cell sortable"
+            @click="toggleTreeSort('intentional')"
+          >
             <review-status-icon :status="3" :size="14" />
+            <v-icon
+              v-if="treeSortKey === 'intentional'"
+              size="12"
+              class="sort-icon"
+            >
+              {{ treeSortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
           </span>
         </div>
         <v-treeview
           v-model:opened="openedTreeItems"
-          :items="treeItems"
+          :items="sortedTreeItems"
           item-value="fullPath"
           open-on-click
           density="compact"
@@ -426,6 +528,8 @@ const openedTreeItems = ref([]);
 const allReportsFileCounts = ref({});
 const fileSeverities = ref({});
 const treeItems = ref([]);
+const treeSortKey = ref(null);
+const treeSortOrder = ref(null);
 
 const runIds = computed(function() {
   return store.getters[`${namespace}/getRunIds`];
@@ -500,6 +604,37 @@ const formattedReports = computed(function() {
   });
 });
 
+function getTreeStatValue(item, statKey) {
+  return statKey === "all" ? (item.findings || 0) : (item.stats[statKey] || 0);
+}
+
+function sortTreeNodes(nodes) {
+  if (!nodes) return [];
+
+  const _sorted = nodes.map(node => ({ ...node }));
+  _sorted.forEach(node => {
+    if (node.children && node.children.length > 0) {
+      node.children = sortTreeNodes(node.children);
+    }
+  });
+
+  if (treeSortKey.value && treeSortOrder.value) {
+    _sorted.sort((a, b) => {
+      const _aVal = getTreeStatValue(a, treeSortKey.value);
+      const _bVal = getTreeStatValue(b, treeSortKey.value);
+      return treeSortOrder.value === "desc"
+        ? _bVal - _aVal
+        : _aVal - _bVal;
+    });
+  }
+
+  return _sorted;
+}
+
+const sortedTreeItems = computed(function() {
+  return sortTreeNodes(treeItems.value);
+});
+
 watch(
   [ page, itemsPerPage, sortBy ],
   () => {
@@ -538,6 +673,18 @@ function onTreeItemClick(item) {
   const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
   setReportFilter({ filepath: [ pattern ] });
   viewMode.value = "table";
+}
+
+function toggleTreeSort(statKey) {
+  if (treeSortKey.value !== statKey) {
+    treeSortKey.value = statKey;
+    treeSortOrder.value = "desc";
+  } else if (treeSortOrder.value === "desc") {
+    treeSortOrder.value = "asc";
+  } else {
+    treeSortKey.value = null;
+    treeSortOrder.value = null;
+  }
 }
 
 function i64ToNum(val) {
@@ -867,6 +1014,19 @@ body {
   width: 50px;
   text-align: center;
   flex-shrink: 0;
+
+  &.sortable {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      color: rgb(var(--v-theme-primary));
+    }
+  }
+
+  .sort-icon {
+    vertical-align: middle;
+  }
 }
 
 .tree-row {

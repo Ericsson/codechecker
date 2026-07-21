@@ -221,7 +221,7 @@ function getNumberOfFailedFiles() {
     ccService.getClient().getFailedFilesCount(
       baseStats.runIds.value,
       handleThriftError(_res => {
-        _resolve(_res);
+        _resolve(_res.toNumber());
       }));
   });
 }

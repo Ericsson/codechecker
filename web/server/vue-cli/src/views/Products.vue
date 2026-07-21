@@ -70,7 +70,7 @@
           class="v-chip-max-width-wrapper"
         >
           <v-chip
-            color="secondary"
+            color="primary"
             class="mr-2 my-1"
             variant="outlined"
             :title="admin"

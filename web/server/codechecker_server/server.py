@@ -72,6 +72,8 @@ from .task_executors.main import executor as background_task_executor
 from .task_executors.task_manager import \
     TaskManager as BackgroundTaskManager
 
+from .session_manager import _Session
+
 
 LOG = get_logger('server')
 
@@ -85,6 +87,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Handle thrift and browser requests
     Simply modified and extended version of SimpleHTTPRequestHandler
     """
+    server: "CCSimpleHttpServer"
     auth_session = None
 
     def __init__(self, request, client_address, server):
@@ -114,7 +117,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(result)
 
-    def __check_session_header(self):
+    def __check_session_header(self) -> Optional[_Session]:
         """
         Check the CodeChecker privileged access cookie in the request headers.
 
@@ -147,10 +150,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     session = self.server.manager.get_session(values[1])
 
         if session and session.is_alive:
-            # If a valid bearer token was found and it can still be used,
-            # mark that the user's last access to the server was the
-            # request that resulted in the execution of this function.
-            session.revalidate()
             return session
         else:
             # If the user's token is no longer usable (invalid),
@@ -644,11 +643,15 @@ class CCSimpleHttpServer(HTTPServer):
                  pckg_data,
                  context,
                  check_env,
-                 manager: session_manager.SessionManager,
                  machine_id: str,
                  task_queue: Queue,
                  task_pipes,
-                 server_shutdown_flag: Value):
+                 server_shutdown_flag: Value,
+                 server_cfg_file,
+                 server_secrets_file,
+                 force_auth,
+                 api_handler_processes,
+                 task_worker_processes):
 
         LOG.debug("Initializing HTTP server...")
 
@@ -659,7 +662,6 @@ class CCSimpleHttpServer(HTTPServer):
         self.version = pckg_data['version']
         self.context = context
         self.check_env = check_env
-        self.manager = manager
         self.address, self.port = server_address
         self.__products = {}
 
@@ -667,7 +669,24 @@ class CCSimpleHttpServer(HTTPServer):
         LOG.debug("Creating database engine for CONFIG DATABASE...")
         self.__engine = product_db_sql_server.create_engine()
         self.config_session = sessionmaker(bind=self.__engine)
-        self.manager.set_database_connection(self.config_session)
+
+        try:
+            self.manager = session_manager.SessionManager(
+                self.config_session,
+                server_cfg_file,
+                server_secrets_file,
+                force_auth,
+                api_handler_processes,
+                task_worker_processes)
+
+        except IOError as ioerr:
+            LOG.debug(ioerr)
+            LOG.error("The server's configuration file "
+                      "is missing or can not be read!")
+            sys.exit(1)
+        except ValueError as verr:
+            LOG.error(verr)
+            sys.exit(1)
 
         self.__task_queue = task_queue
         self.task_manager = BackgroundTaskManager(
@@ -1031,23 +1050,6 @@ def start_server(config_directory: str, workspace_directory: str,
 
     server_secrets_file = os.path.join(config_directory, 'server_secrets.json')
 
-    try:
-        manager = session_manager.SessionManager(
-            server_cfg_file,
-            server_secrets_file,
-            force_auth,
-            api_handler_processes,
-            task_worker_processes)
-
-    except IOError as ioerr:
-        LOG.debug(ioerr)
-        LOG.error("The server's configuration file "
-                  "is missing or can not be read!")
-        sys.exit(1)
-    except ValueError as verr:
-        LOG.error(verr)
-        sys.exit(1)
-
     if not skip_db_cleanup:
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
@@ -1062,13 +1064,6 @@ def start_server(config_directory: str, workspace_directory: str,
     else:
         LOG.debug("Skipping db_cleanup, as requested.")
 
-    api_processes: Dict[int, Process] = {}
-    requested_api_threads = cast(int, manager.worker_processes) \
-        or cpu_count()
-
-    bg_processes: Dict[int, Process] = {}
-    requested_bg_threads = cast(int,
-                                manager.background_worker_processes)
     # Note that Queue under the hood uses OS-level primitives such as a socket
     # or a pipe, where the read-write buffers have a **LIMITED** capacity, and
     # are usually **NOT** backed by the full amount of available system memory.
@@ -1122,11 +1117,20 @@ def start_server(config_directory: str, workspace_directory: str,
                                package_data,
                                context,
                                check_env,
-                               manager,
                                machine_id,
                                bg_task_queue,
                                task_pipes,
-                               is_server_shutting_down)
+                               is_server_shutting_down,
+                               server_cfg_file,
+                               server_secrets_file,
+                               force_auth,
+                               api_handler_processes,
+                               task_worker_processes)
+
+    api_processes: Dict[int, Process] = {}
+    bg_processes: Dict[int, Process] = {}
+    requested_api_threads = http_server.manager.worker_processes
+    requested_bg_threads = http_server.manager.background_worker_processes
 
     try:
         instance_manager.register(os.getpid(),
@@ -1346,7 +1350,7 @@ def start_server(config_directory: str, workspace_directory: str,
         signal_log(LOG, "INFO",
                    "Received signal to reload server configuration ...")
 
-        manager.reload_config()
+        http_server.manager.reload_config()
 
         signal_log(LOG, "INFO", "Server configuration reload: Done.")
 

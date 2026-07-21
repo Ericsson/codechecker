@@ -1,74 +1,224 @@
 <template>
-  <v-container>
-    <v-row
-      v-for="key in fields"
-      :key="key"
-    >
-      <v-col class="pt-0" cols="4" align-self="center">
-        <strong>{{ formatLabel(key) }}:</strong>
-      </v-col>
-      <v-col class="pt-0">
-        <component
-          v-bind="{ to: links[key] }"
-          :is="links[key] ? 'router-link' : 'span'"
-          :class="key"
-        >
-          <severity-icon
-            v-if="key === 'severity'"
-            :status="value[key]"
+  <v-row class="ga-2">
+    <v-col class="d-flex flex-column">
+      <v-card
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
+      >
+        <v-card-title class="text-body-1 text-uppercase">
+          Run & Report Information
+        </v-card-title>
+        <v-card-text>
+          <v-col>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('runName')"
+                :value="runName"
+                :query="links['runName']"
+              />
+            </v-row>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('reportId')"
+                :value="value['reportId']"
+              />
+            </v-row>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('bugHash')"
+                :value="value['bugHash']"
+                :query="links['bugHash']"
+              />
+            </v-row>
+          </v-col>
+        </v-card-text>
+      </v-card>
+    </v-col>
+    <v-col class="d-flex flex-column">
+      <v-card
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
+      >
+        <v-card-title class="text-body-1 text-uppercase">
+          Analyzer & Checker Information
+        </v-card-title>
+        <v-card-text>
+          <v-col>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('analyzerName')"
+                :value="value['analyzerName']"
+                :query="links['analyzerName']"
+              />
+            </v-row>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('checkerId')"
+                :value="value['checkerId']"
+                :query="links['checkerId']"
+              />
+            </v-row>
+            <v-row>
+              <report-info-item
+                :title="formatLabel('checkerMsg')"
+                :value="value['checkerMsg']"
+                :query="links['checkerMsg']"
+              />
+            </v-row>
+          </v-col>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+  <v-card
+    class="pa-2 rounded-lg mb-2 bg-grey-card"
+    variant="flat"
+  >
+    <v-card-title class="text-body-1 text-uppercase">
+      File & Location
+    </v-card-title>
+    <v-card-text>
+      <v-row>
+        <v-col>
+          <report-info-item
+            :title="formatLabel('checkedFile')"
+            :value="value['checkedFile']"
+            :query="links['checkedFile']"
           />
-
-          <detection-status-icon
-            v-else-if="key === 'detectionStatus'"
-            :status="value[key]"
+        </v-col>
+        <v-col>
+          <report-info-item
+            :title="formatLabel('line')"
+            :value="value['line']"
           />
-
-          <review-status-icon
-            v-else-if="key === 'reviewData'"
-            :status="value[key].status"
+        </v-col>
+        <v-col>
+          <report-info-item
+            :title="formatLabel('column')"
+            :value="value['column']"
           />
-
-          <span v-else-if="key === 'fixedAt'">
-            <span v-if="value[key]">{{ value[key] }}</span>
-            <span v-else>-</span>
-          </span>
-
-          <span v-else-if="key === 'runName'">
-            {{ runName }}
-          </span>
-
-          <v-chip
-            v-else-if="key === 'bugPathLength'"
-            class="text-black"
-            :color="gradientColor.getGradientColor(value[key])"
-            size="small"
-            variant="flat"
-          >
-            <span v-if="value[key]">{{ value[key] }}</span>
-            <span v-else>-</span>
-          </v-chip>
-
-          <span v-else>
-            {{ value[key] }}
-          </span>
-        </component>
-      </v-col>
-    </v-row>
-  </v-container>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
+  <v-row class="ga-2">
+    <v-col class="d-flex flex-column">
+      <v-card
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
+      >
+        <v-card-title class="text-body-1 text-uppercase">
+          Bug Path Length & Severity Information
+        </v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col>
+              <report-info-item
+                :title="formatLabel('bugPathLength')"
+                :value="value['bugPathLength']"
+                :query="links['bugPathLength']"
+                chip
+              />
+            </v-col>
+            <v-col>
+              <report-info-item
+                :title="formatLabel('severity')"
+                :value="value['severity']"
+                :query="links['severity']"
+                icon-shown
+              >
+                <template #icon>
+                  <severity-icon
+                    :status="value['severity']"
+                  />
+                </template>
+              </report-info-item>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-col>
+    <v-col class="d-flex flex-column">
+      <v-card
+        class="pa-2 rounded-lg mb-2 d-flex flex-column fill-height bg-grey-card"
+        variant="flat"
+      >
+        <v-card-title class="text-body-1 text-uppercase">
+          Detection & Review Status
+        </v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col>
+              <report-info-item
+                :title="formatLabel('detectionStatus')"
+                :value="value['detectionStatus']"
+                :query="links['detectionStatus']"
+                icon-shown
+              >
+                <template #icon>
+                  <detection-status-icon
+                    :status="value['detectionStatus']"
+                  />
+                </template>
+              </report-info-item>
+            </v-col>
+            <v-col>
+              <report-info-item
+                :title="formatLabel('reviewData')"
+                :value="value['reviewData']"
+                :query="links['reviewData']"
+                icon-shown
+              >
+                <template #icon>
+                  <review-status-icon
+                    :status="value['reviewData'].status"
+                  />
+                </template>
+              </report-info-item>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+  <v-card
+    class="pa-2 rounded-lg mb-2 bg-grey-card"
+    variant="flat"
+  >
+    <v-card-title class="text-body-1 text-uppercase">
+      Detection & Fix Date
+    </v-card-title>
+    <v-card-text>
+      <v-row>
+        <v-col>
+          <report-info-item
+            :title="formatLabel('detectedAt')"
+            :value="value['detectedAt']"
+          />
+        </v-col>
+        <v-col>
+          <report-info-item
+            :title="formatLabel('fixedAt')"
+            :value="value['fixedAt']"
+          />
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup>
+import { computed, onMounted, ref, watch } from "vue";
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
   SeverityIcon
 } from "@/components/Icons";
-import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 import { useSeverity } from "@/composables/useSeverity";
 import { ccService } from "@cc-api";
-import { computed, onMounted, ref, watch } from "vue";
+import ReportInfoItem from "@/components/Report/ReportInfo/ReportInfoItem";
 
 const props = defineProps({
   value: { type: Object, default: null }
@@ -76,18 +226,9 @@ const props = defineProps({
 
 const runName = ref(null);
 
-const gradientColor = useGradientColor();
 const detectionStatus = useDetectionStatus();
 const reviewStatus = useReviewStatus();
 const severity = useSeverity();
-
-const fields = computed(function() {
-  return [
-    "runName", "reportId", "bugHash", "checkedFile", "line",
-    "column", "analyzerName", "checkerId", "checkerMsg", "bugPathLength",
-    "severity", "detectionStatus", "reviewData", "detectedAt", "fixedAt"
-  ];
-});
 
 const links = computed(function() {
   return {
