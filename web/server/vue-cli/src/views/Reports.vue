@@ -6,7 +6,9 @@
       <ReportFilter
         :namespace="namespace"
         :report-count="totalItems"
+        :refresh-filter="refreshFilterState"
         @refresh="refresh"
+        @set-refresh-filter-state="setRefreshFilterState"
       />
     </pane>
     <pane>
@@ -336,6 +338,8 @@ import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
 import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
+import { useSeverity } from "@/composables/useSeverity";
+import { useReviewStatus } from "@/composables/useReviewStatus";
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
@@ -354,6 +358,9 @@ const router = useRouter();
 const store = useStore();
 const gradientColor = useGradientColor();
 const detectionStatus = useDetectionStatus();
+const severity = useSeverity();
+const reviewStatus = useReviewStatus();
+const refreshFilterState = ref(false);
 
 const itemsPerPageOptions = [
   { value: 25, title: "25" },
@@ -594,9 +601,37 @@ function getTreeItemFilePattern(item) {
   return isDir ? item.fullPath + "/*" : item.fullPath;
 }
 
-function onTreeItemClick(item) {
-  setReportFilter({ filepath: [ getTreeItemFilePattern(item) ] });
+function setRefreshFilterState(state) {
+  refreshFilterState.value = state;
+}
+
+// Push the given filter values into the URL and let ReportFilter's
+// initByUrl() (triggered via the refresh-filter prop) apply them to the
+// individual filter components and the store, instead of writing to the
+// store directly and leaving the URL/filters out of sync.
+async function applyTreeFilter(params) {
+  const query = { ...route.query };
+
+  if (params.filepath) {
+    query["filepath"] = params.filepath;
+  }
+  if (params.severity) {
+    query["severity"] =
+      params.severity.map(s => severity.severityFromCodeToString(s));
+  }
+  if (params.reviewStatus) {
+    query["review-status"] = params.reviewStatus.map(
+      s => reviewStatus.reviewStatusFromCodeToString(s)
+    );
+  }
+
+  await router.replace({ query }).catch(() => {});
+  setRefreshFilterState(true);
   viewMode.value = "table";
+}
+
+function onTreeItemClick(item) {
+  applyTreeFilter({ filepath: [ getTreeItemFilePattern(item) ] });
 }
 
 function onTreeStatClick(item, statKey) {
@@ -611,8 +646,7 @@ function onTreeStatClick(item, statKey) {
     params.reviewStatus = [ REVIEW_STATUS_STAT_KEYS[statKey] ];
   }
 
-  setReportFilter(params);
-  viewMode.value = "table";
+  applyTreeFilter(params);
 }
 
 function i64ToNum(val) {
