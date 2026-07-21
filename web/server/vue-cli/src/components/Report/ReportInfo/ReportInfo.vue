@@ -56,6 +56,7 @@
                 :title="formatLabel('checkerId')"
                 :value="value['checkerId']"
                 :query="links['checkerId']"
+                :doc-url="docUrl"
               />
             </v-row>
             <v-row>
@@ -217,8 +218,9 @@ import {
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 import { useSeverity } from "@/composables/useSeverity";
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import ReportInfoItem from "@/components/Report/ReportInfo/ReportInfoItem";
+import { Checker } from "@cc/report-server-types";
 
 const props = defineProps({
   value: { type: Object, default: null }
@@ -258,12 +260,16 @@ const links = computed(function() {
   };
 });
 
+const docUrl = ref(null);
+
 watch(() => props.value, function() {
   fetchRunName();
+  fetchDocUrl();
 });
 
 onMounted(function() {
   fetchRunName();
+  fetchDocUrl();
 });
 
 async function fetchRunName() {
@@ -306,6 +312,27 @@ function formatLabel(key) {
   default:
     return key;
   }
+}
+
+async function fetchDocUrl() {
+  const checker = new Checker({
+    analyzerName: props.value.analyzerName,
+    checkerId: props.value.checkerId
+  });
+
+  await new Promise(resolve => {
+    ccService.getClient().getCheckerLabels(
+      [ checker ],
+      handleThriftError(labels => {
+        const docUrlLabels = labels[0].filter(
+          param => param.startsWith("doc_url")
+        );
+        docUrl.value = docUrlLabels.length ?
+          docUrlLabels[0].split("doc_url:")[1] : null;
+        resolve(docUrl.value);
+      })
+    );
+  });
 }
 </script>
 
