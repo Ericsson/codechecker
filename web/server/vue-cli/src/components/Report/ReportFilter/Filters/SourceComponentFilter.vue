@@ -67,7 +67,7 @@
 
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, ref, toRef, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 
 import {
@@ -82,14 +82,9 @@ import ReportFilterModeSelector
   from "./SelectOption/ReportFilterModeSelector.vue";
 import SelectOption from "./SelectOption/SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([ "update:url" ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 

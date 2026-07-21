@@ -103,7 +103,7 @@
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
-import { computed, ref, toRef, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 import {
   useBaseSelectOptionFilter
@@ -113,14 +113,9 @@ import SelectOption from "./SelectOption/SelectOption";
 import { useRoute } from "vue-router";
 import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([ "update:url" ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;

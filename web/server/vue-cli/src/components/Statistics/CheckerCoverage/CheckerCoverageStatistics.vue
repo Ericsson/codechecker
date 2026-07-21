@@ -137,8 +137,7 @@ import StatisticsDialog from "../StatisticsDialog";
 import CheckerCoverageStatisticsTable from "./CheckerCoverageStatisticsTable";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const emit = defineEmits([ "refresh-filter" ]);

@@ -168,8 +168,7 @@ import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const emit = defineEmits([ "refresh-filter" ]);

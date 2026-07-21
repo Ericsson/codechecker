@@ -8,7 +8,6 @@
     >
       <div v-fill-height>
         <ReportFilter
-          :namespace="namespace"
           :show-remove-filtered-reports="false"
           :report-count="reportCount"
           :show-diff-type="false"
@@ -46,7 +45,6 @@
               :is="Component"
               :key="$route.name"
               :bus="bus"
-              :namespace="namespace"
               @refresh-filter="setRefreshFilterState(true)"
             />
           </keep-alive>
@@ -72,8 +70,6 @@ const vFillHeight = FillHeight;
 
 const router = useRouter();
 const store = useStore();
-
-const namespace = "statistics";
 
 const tabs = [
   {
@@ -130,11 +126,11 @@ const refreshTabs = tabs.reduce((map, _tab) => {
 }, {});
 
 const runIds = computed(function() {
-  return store.getters[`${namespace}/getRunIds`];
+  return store.getters.getRunIds;
 });
 
 const reportFilter = computed(function() {
-  return store.getters[`${namespace}/getReportFilter`];
+  return store.getters.getReportFilter;
 });
 
 watch(() => tab.value, async (value, oldValue) => {
