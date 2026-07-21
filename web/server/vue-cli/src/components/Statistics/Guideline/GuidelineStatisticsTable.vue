@@ -143,7 +143,7 @@ function getRowClass(item) {
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
+@use "@/components/Statistics/highlight-rows" with (
   $class-name: ".guideline-statistics-table"
 );
 </style>

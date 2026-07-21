@@ -1,4 +1,4 @@
-$class-name: '' !default;
+$class-name: "" !default;
 $unreviewed_col: 3 !default;
 $colspan: 1 !default;
 
@@ -13,39 +13,50 @@ $border_before: (
   $suppressed_reports_col + 1
 ) !default;
 
+// The total row uses colspan to merge the leading columns into one cell,
+// so nth-child indices are shifted by (colspan - 1).
+$total-row-offset: $unreviewed_col - 2;
+
 $outstanding-bg-color: #fef5f6;
 $suppressed-bg-color: #f2f6eb;
 $darken: 2;
 
-$tr: 'tr:not(.v-data-table__expanded__content)';
+$tr: "tr:not(.v-data-table__expanded__content):not(.total-row)";
 
 @mixin set-cells-color($cols...) {
   #{$class-name} table {
     @each $col in $cols {
       th:nth-child(#{$col}),
-      td:nth-child(#{$col}) {
+      tbody #{$tr} td:nth-child(#{$col}) {
         @content;
       }
     }
   }
 }
 
-@mixin set-rows-color() {
-  #{$class-name} > table {
-    & > tbody > #{$tr} {
-      @content;
+@mixin set-total-row-color($cols...) {
+  #{$class-name} table tbody tr.total-row {
+    @each $col in $cols {
+      td:nth-child(#{$col - $total-row-offset}) {
+        @content;
+      }
     }
   }
 }
 
 @mixin set-bg-color($bg-color, $cols...) {
-  // Base color
+  // Header and regular body rows
   @include set-cells-color($cols...) {
     background-color: $bg-color;
   }
 
-  // Hover state
-  #{$class-name} table tbody tr:hover {
+  // Total row (shifted indices due to colspan)
+  @include set-total-row-color($cols...) {
+    background-color: $bg-color;
+  }
+
+  // Hover state for regular rows
+  #{$class-name} table tbody #{$tr}:hover {
     @each $col in $cols {
       td:nth-child(#{$col}) {
         background-color: darken($bg-color, 5%);
@@ -54,14 +65,14 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
   }
 }
 
-// Set background color of outstanding report columns.
+// Set background color of outstanding report columns (red).
 @for $i from $unreviewed_col through $outstanding_reports_col {
   @include set-bg-color($outstanding-bg-color, $i);
 }
 
 @include set-bg-color(darken($outstanding-bg-color, $darken), $outstanding_reports_col);
 
-// Set background color of suppressed report columns.
+// Set background color of suppressed report columns (green).
 @for $i from $false_positive_col through $suppressed_reports_col {
   @include set-bg-color($suppressed-bg-color, $i);
 }
@@ -76,12 +87,8 @@ $tr: 'tr:not(.v-data-table__expanded__content)';
 }
 
 #{$class-name} > table {
-  & > thead > #{$tr}:not(:last-child) > th:not(.v-data-table__mobile-row),
-  & > tbody > #{$tr}:not(:last-child) > td:not(.v-data-table__mobile-row) {
+  & > thead > tr:not(:last-child) > th:not(.v-data-table__mobile-row),
+  & > tbody > tr:not(:last-child) > td:not(.v-data-table__mobile-row) {
     border-bottom: thin solid rgba(0, 0, 0, 0.12);
   }
-}
-
-#{$class-name} .highlight-row {
-  background-color: $outstanding-bg-color !important;
 }
