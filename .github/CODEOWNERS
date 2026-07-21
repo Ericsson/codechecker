@@ -1,14 +1,14 @@
 # Lines starting with '#' are comments.
 # Each line is a file pattern followed by one or more owners.
 
-# Any CODEOWNERS file modifications must be approved by repository owner.
-/.github/CODEOWNERS @dkrupp
-
 # These owners will be the default owners for everything in the repo.
-*      @bruntib @Vodorok
+* @bruntib
 
 # Documentations.
-/docs @dkrupp
+/docs @bruntib @dkrupp
 
 # Frontend.
-/web/server/vue-cli @gulyasgergely902
+/web/server/vue-cli @bruntib @gulyasgergely902
+
+# Any CODEOWNERS file modifications must be approved by repository owner.
+/.github/CODEOWNERS @dkrupp

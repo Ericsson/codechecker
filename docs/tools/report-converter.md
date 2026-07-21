@@ -269,7 +269,7 @@ CodeChecker store ./codechecker_cppcheck_reports -n cppcheck
 CppCheck: `analysis statistics`, `analysis duration`, `cppcheck command` etc.
 
 For more information about logging checkout the log section in the
-[user guide](/docs/usage.md).
+[user guide](../usage.md).
 
 ### GNU GCC Static Analyzer
 [GCC Static Analyzer](https://gcc.gnu.org/wiki/StaticAnalyzer) introduces a

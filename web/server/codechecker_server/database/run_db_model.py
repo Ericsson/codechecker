@@ -13,8 +13,9 @@ from math import ceil
 import os
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
-    LargeBinary, MetaData, String, UniqueConstraint, Table, Text, JSON
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
+    ForeignKey, Integer, LargeBinary, MetaData, String, UniqueConstraint, \
+    Table, Text, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
@@ -185,8 +186,15 @@ RunHistoryAnalysisInfo = Table(
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -277,9 +285,9 @@ class BugPathEvent(Base):
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True,
                        primary_key=True)
 
@@ -307,9 +315,9 @@ class BugReportPoint(Base):
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True,
                        primary_key=True)
 
@@ -331,9 +339,9 @@ class ExtendedReportData(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
 
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True)
 
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
@@ -370,13 +378,20 @@ ReportAnalysisInfo = Table(
     Base.metadata,
     Column(
         'report_id',
-        Integer,
+        BigInteger,
         ForeignKey('reports.id',
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -391,7 +406,7 @@ ReviewStatusType = Enum(
 class Report(Base):
     __tablename__ = 'reports'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
+    id = Column(BigInteger, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'),
@@ -497,7 +512,7 @@ class ReportAnnotations(Base):
         self.value = value
 
     report_id = Column(
-        Integer,
+        BigInteger,
         ForeignKey("reports.id", ondelete="CASCADE"),
         primary_key=True,
         index=True)

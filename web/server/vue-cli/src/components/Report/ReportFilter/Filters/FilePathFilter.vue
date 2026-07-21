@@ -45,6 +45,13 @@
           class="file-path-tree"
         >
           <template #prepend="{ item, isOpen }">
+            <v-checkbox-btn
+              :model-value="treeSelection.includes(item.fullPath)"
+              density="compact"
+              class="mr-1"
+              @update:model-value="toggleTreeItem(item)"
+              @click.stop
+            />
             <v-icon v-if="item.children?.length > 0" size="small">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
@@ -53,7 +60,7 @@
             </v-icon>
           </template>
           <template #title="{ item }">
-            <span class="tree-item-label" @click.stop="toggleTreeItem(item)">
+            <span class="tree-item-label">
               {{ item.name }}
             </span>
             <v-chip class="ml-2" size="x-small">
@@ -272,6 +279,15 @@ function applyTreeSelection(onApplyFinished) {
   if (onApplyFinished) onApplyFinished();
 }
 
+function toggleTreeItem(item) {
+  const idx = treeSelection.value.indexOf(item.fullPath);
+  if (idx === -1) {
+    treeSelection.value = [ ...treeSelection.value, item.fullPath ];
+  } else {
+    treeSelection.value = treeSelection.value.filter(p => p !== item.fullPath);
+  }
+}
+
 function isDirectory(fullPath) {
   const find = nodes => {
     for (const n of nodes) {
@@ -286,14 +302,6 @@ function isDirectory(fullPath) {
   return !!find(treeItems.value);
 }
 
-function toggleTreeItem(item) {
-  const idx = treeSelection.value.indexOf(item.fullPath);
-  if (idx === -1) {
-    treeSelection.value = [ ...treeSelection.value, item.fullPath ];
-  } else {
-    treeSelection.value = treeSelection.value.filter(p => p !== item.fullPath);
-  }
-}
 
 function getUrlState() {
   const state =

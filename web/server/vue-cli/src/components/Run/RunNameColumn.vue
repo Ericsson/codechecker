@@ -97,7 +97,6 @@ defineProps({
   versionTag: { type: String, default: null },
   detectionStatusCount: { type: Object, default: () => {} },
   showRunHistory: { type: Boolean, default: true },
-  openAnalysisInfoDialog: { type: Function, default: () => {} },
   reportFilterQuery: { type: Object, default: () => {} },
   statisticsFilterQuery: { type: Object, default: () => {} },
 });

@@ -114,6 +114,7 @@ def login_user(protocol, host, port, username, login=False):
         # Try to use a previously saved credential from configuration file if
         # autologin is enabled.
         saved_auth = None
+        pwd = None
         if env.get_password_string():
             # if CC_PASSWORD env var is defined use that
             LOG.info("Using credentials from CC_PASSWORD env var to log in.")
@@ -127,11 +128,13 @@ def login_user(protocol, host, port, username, login=False):
             saved_auth = session.get_auth_string(host, port)
 
         if saved_auth:
-            LOG.info("Logging in using preconfigured credentials...")
-            username = saved_auth.split(":")[0]
-            pwd = saved_auth.split(":")[1]
-            check_preconfigured_username(username, host, port)
-        else:
+            saved_username = saved_auth.split(":")[0]
+            check_preconfigured_username(saved_username, host, port)
+            if saved_username == username:
+                LOG.info("Logging in using preconfigured credentials...")
+                pwd = saved_auth.split(":")[1]
+
+        if not pwd:
             LOG.info("Logging in using credentials from command line...")
             pwd = getpass.getpass(
                 f"Please provide password for user '{username}': ")

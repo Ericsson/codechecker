@@ -418,17 +418,6 @@ used to generate a log file on the fly.""")
                                     "clang-tidy:cc-verbatim-args-file="
                                     "<filepath>")
 
-    analyzer_opts.add_argument('--tidy-config',
-                               dest='tidy_config',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. "
-                                    "A file in YAML format containing the "
-                                    "configuration of clang-tidy checkers. "
-                                    "The file can be dumped by "
-                                    "'CodeChecker analyzers --dump-config "
-                                    "clang-tidy' command.")
-
     analyzer_opts.add_argument('--analyzer-config',
                                type=analyzer_config,
                                dest='analyzer_config',
