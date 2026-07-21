@@ -66,7 +66,7 @@ const headers = [
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
+@use "@/components/Statistics/colored-columns" with (
   $class-name: ".severity-statistics",
   $unreviewed_col: 2,
   $colspan: 0
