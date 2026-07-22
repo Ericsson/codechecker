@@ -796,7 +796,7 @@ def create_analyzer_cppcheck(args, workspace):
 
 
 class MockCppcheckCheckerLabels:
-    def checkers_by_labels(self, labels):
+    def checkers_by_labels(self, labels, _=None):
         if labels[0] == 'profile:default':
             return [
                 'cppcheck-argumentSize',
