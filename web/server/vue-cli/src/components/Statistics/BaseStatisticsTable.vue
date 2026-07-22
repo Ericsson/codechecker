@@ -292,28 +292,20 @@
     </template>
 
     <template #item.enabledInAllRuns="{ item }">
-      <div v-if="item.enabledInAllRuns">
-        <count-chips
-          :num-good="item.enabledRunLength"
-          :good-text="'Number of runs where checker was enabled'"
-          :show-dividers="false"
-          :show-zero-chips="false"
-          @showing-good-click="$emit('enabled-click', 'enabled', item.checker)"
-        />
-      </div>
-      <div v-else>
+      <div>
         <count-chips
           :num-good="item.enabledRunLength"
           :num-bad="item.disabledRunLength"
+          :num-unknown="item.unknownRunLength"
           :good-text="'Number of runs where checker was enabled'"
           :bad-text="'Number of runs where checker was disabled'"
-          :show-dividers="false"
-          :show-zero-chips="false"
+          :unknown-text="'Number of runs where checker was unknown'"
           @showing-good-click="$emit('enabled-click', 'enabled', item.checker)"
           @showing-bad-click="$emit('enabled-click', 'disabled', item.checker)"
+          @showing-unknown-click="$emit('enabled-click',
+                                        'unknown', item.checker)"
         />
       </div>
-      {{ item.unknownRunLength }}
     </template>
 
     <template #item.closed="{ item }">
@@ -443,46 +435,19 @@
         <table>
           <tr v-for="checker in item.checkers" :key="checker.name">
             <td>
-              <div v-if="checker.enabledInAllRuns">
-                <count-chips
-                  :num-good="checker.enabledRunLength"
-                  :good-text="'Number of runs where checker was enabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
-                  @showing-good-click="$emit(
-                    'enabled-click', 'enabled', checker.name)"
-                />
-              </div>
-              <div v-else-if="checker.enabledRunLength">
+              <div>
                 <count-chips
                   :num-good="checker.enabledRunLength"
                   :num-bad="checker.disabledRunLength"
+                  :num-unknown="checker.unknownRunLength"
                   :good-text="'Number of runs where checker was enabled'"
                   :bad-text="'Number of runs where checker was disabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
+                  :unknown-text="'Number of runs where checker was unknown'"
                   @showing-good-click="$emit(
                     'enabled-click', 'enabled', checker.name)"
                   @showing-bad-click="$emit(
                     'enabled-click', 'disabled', checker.name)"
-                />
-              </div>
-              <div v-else>
-                <count-chips
-                  :num-bad="checker.disabledRunLength"
-                  :bad-text="'Number of runs where checker was disabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
-                  @showing-bad-click="$emit(
-                    'enabled-click', 'disabled', checker.name)"
-                />
-                <br>
-                <count-chips
-                  :num-bad="checker.unknownRunLength"
-                  :bad-text="'Number of runs where checker was unknown'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
-                  @showing-bad-click="$emit(
+                  @showing-unknown-click="$emit(
                     'enabled-click', 'unknown', checker.name)"
                 />
               </div>

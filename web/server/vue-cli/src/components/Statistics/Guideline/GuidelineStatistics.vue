@@ -214,6 +214,7 @@ const selectedGuidelineIndexes = ref([ 0, 1, 2, 3, 4 ]);
 const showRuns = ref({
   enabled: false,
   disabled: false,
+  unknown: false,
   problematic: false
 });
 const statistics = ref([]);
