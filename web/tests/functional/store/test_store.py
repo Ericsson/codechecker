@@ -264,6 +264,8 @@ class TestStore(unittest.TestCase):
         cfg['reportdir'] = report_dir1
         cfg['checkers'] = [
             '-d', 'core.DivideZero', '-e', 'deadcode.DeadStores']
+        cfg['skip_file'] = os.path.join(self._divide_zero_workspace,
+                                        'skipfile')
         codechecker.analyze(cfg, self._divide_zero_workspace)
 
         with open(os.path.join(report_dir1, 'metadata.json'), 'r+',
@@ -278,6 +280,7 @@ class TestStore(unittest.TestCase):
         cfg['reportdir'] = report_dir2
         cfg['checkers'] = [
             '-e', 'core.DivideZero', '-d', 'deadcode.DeadStores']
+        cfg.pop('skip_file')
         codechecker.analyze(cfg, self._divide_zero_workspace)
 
         def store_multiple_report_dirs(report_dirs):
@@ -323,11 +326,27 @@ class TestStore(unittest.TestCase):
             analysis_info_filter = AnalysisInfoFilter(runId=report['runId'])
             analysis_info = self._cc_client.getAnalysisInfo(
                 analysis_info_filter, limit, offset)
+
             self.assertEqual(len(analysis_info), 2)
             self.assertTrue(
                 any(report_dir1 in i.analyzerCommand for i in analysis_info))
             self.assertTrue(
                 any(report_dir2 in i.analyzerCommand for i in analysis_info))
+
+            # Skip file content
+            skip_file_info = "skipfile:\n-*.txt"
+
+            # During the analysis of report_dir1, we used a skipfile,
+            # and the skipfile content should appear in the analyzer command.
+            self.assertTrue(all(skip_file_info in
+                                i.analyzerCommand for i in analysis_info
+                                if report_dir1 in i.analyzerCommand))
+
+            # No skipfile was used during the analysis of report_dir2,
+            # so we shouldn't see skipfile content in this case.
+            self.assertFalse(any(skip_file_info in
+                                 i.analyzerCommand for i in analysis_info
+                                 if report_dir2 in i.analyzerCommand))
 
             self.assertTrue(all(
                 '<' not in i.analyzerCommand for i in analysis_info))
