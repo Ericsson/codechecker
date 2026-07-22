@@ -13,7 +13,7 @@ void test1(int z) {
     int x = 1 / z; // warn
 }
 
-void test2{
+void test2(){
   int x = 1;
-  div(x)
+  div(x);
 }

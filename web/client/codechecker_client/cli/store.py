@@ -37,8 +37,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
     reports as reports_helper, statistics as report_statistics
-from codechecker_report_converter.report.hash import HashType, \
-    get_report_path_hash
+from codechecker_report_converter.report.hash import get_report_path_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
 try:
@@ -421,7 +420,15 @@ def get_reports(
     """ Get reports from the given analyzer result file. """
     reports = report_file.get_reports(
         analyzer_result_file_path, checker_labels)
-
+    # If CppCheck is ran natively (without CodeChecker), it generates a '0'
+    # value for the report hash by default. We used to correct this during the
+    # store operation, but we no longer accept plists that are not compliant
+    # with out plist specification in docs/tools/plist.md.
+    if all(r.report_hash == '0' for r in reports):
+        LOG.error("All bug hashes are 0 in the report file, which is no "
+                  "longer supported. Please re-analyze the project using "
+                  "CodeChecker!")
+        sys.exit(1);
     return reports
 
 
