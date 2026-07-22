@@ -44,7 +44,7 @@
         <v-alert
           icon="mdi-information"
         >
-          In this statistics only the "Run / Tag Filter" 
+          In this statistics only the "Run / Tag Filter"
           and the "Unique reports" are effective.
         </v-alert>
       </v-row>
@@ -84,7 +84,7 @@
             color="deep-orange"
             variant="outlined"
           >
-            The Checker coverage statistics is not available 
+            The Checker coverage statistics is not available
             for
             <span
               style="cursor: pointer; text-decoration: underline;"
@@ -219,7 +219,7 @@ function downloadCSV() {
 async function getRunData() {
   const _limit = MAX_QUERY_SIZE;
   let _offset = 0;
-  
+
   const _filter = new RunFilter({
     ids: baseStats.runIds.value
   });
@@ -246,7 +246,7 @@ async function getRunData() {
     });
     _runs.push(..._limitedRuns);
   }
-   
+
   return _runs;
 }
 
@@ -307,7 +307,7 @@ async function fetchStatistics() {
           : null;
       });
   }
-  
+
   checker_stat.value = _checker_stat;
   loading.value = false;
 }
@@ -331,7 +331,7 @@ async function fetchProblematicRuns() {
         return null;
       }
     }))).filter(_element => _element !== null);
-  
+
   runs.value = _runs;
   loading.value = false;
 }
