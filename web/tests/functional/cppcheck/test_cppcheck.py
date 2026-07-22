@@ -104,7 +104,7 @@ class CppCheck(unittest.TestCase):
                         ('divide_zero_cppcheck.plist'))
 
         report_file = os.path.join(temp_workspace,
-                                    'divide_zero_codechecker.plist')
+                                   'divide_zero_codechecker.plist')
         # Convert file paths to absolute in the report.
         plist_test.prefix_file_path(report_file, temp_workspace)
 
@@ -150,7 +150,7 @@ class CppCheck(unittest.TestCase):
         shutil.copytree(report_dir, temp_workspace)
 
         report_file = os.path.join(temp_workspace,
-                                    'divide_zero_cppcheck.plist')
+                                   'divide_zero_cppcheck.plist')
         # Convert file paths to absolute in the report.
         plist_test.prefix_file_path(report_file, temp_workspace)
 
@@ -163,5 +163,5 @@ class CppCheck(unittest.TestCase):
         # behaviour is to terminate with error code 1.
         result = subprocess.run(
             store_cmd, encoding="utf-8",
-              errors="ignore", check=False)
+            errors="ignore", check=False)
         self.assertEqual(result.returncode, 1)
