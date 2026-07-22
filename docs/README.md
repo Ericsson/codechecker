@@ -253,7 +253,12 @@ sudo apt-get install libpq-dev
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
 # following commands. For more information see the official docs:
 # https://nodejs.org/en/download/package-manager/
-curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# https://github.com/nodesource/distributions
+sudo apt-get install -y gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+sudo apt-get update
 sudo apt-get install -y nodejs
 
 # Check out CodeChecker source code.
