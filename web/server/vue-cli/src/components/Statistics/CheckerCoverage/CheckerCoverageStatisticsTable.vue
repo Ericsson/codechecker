@@ -59,7 +59,7 @@ function enabledClick(_type, _checker_name) {
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
+@use "@/components/Statistics/base-table" with (
   $class-name: ".analysis-statistics"
 );
 </style>

@@ -1,7 +1,7 @@
 <template>
   <base-statistics-table
     v-model:expanded="expanded"
-    class="component-statistics"
+    class="component-severity-statistics"
     :headers="headers"
     :items="items"
     :loading="loading"
@@ -125,6 +125,8 @@ async function itemExpanded(expandedItem) {
 }
 </script>
 
-<style lang="scss" scoped>
-// This section is needed to override the default inherited style.
+<style lang="scss">
+@use "@/components/Statistics/base-table" with (
+  $class-name: ".component-severity-statistics"
+);
 </style>

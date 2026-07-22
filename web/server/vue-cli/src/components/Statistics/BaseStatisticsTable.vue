@@ -1,6 +1,7 @@
 <template>
   <v-data-table
     v-bind="{ ...$props }"
+    :row-props="getRowProps"
     :disable-pagination="true"
     :hide-default-footer="true"
     :custom-sort="customSort"
@@ -554,7 +555,7 @@
     </template>
 
     <template v-if="necessaryTotal" v-slot:body.append>
-      <tr>
+      <tr class="total-row">
         <td class="text-center" :colspan="colspan">
           <strong>Total</strong>
         </td>
@@ -606,7 +607,8 @@ const props = defineProps({
     default: () => [ "unreviewed", "confirmed", "outstanding",
       "falsePositive", "intentional", "suppressed","reports" ]
   },
-  necessaryTotal: { type: Boolean, default: false }
+  necessaryTotal: { type: Boolean, default: false },
+  itemClass: { type: Function, default: null }
 });
 
 defineEmits([ "enabled-click" ]);
@@ -615,6 +617,12 @@ const route = useRoute();
 const reportStatus = useReportStatus();
 const reviewStatus = useReviewStatus();
 const severity = useSeverity();
+
+function getRowProps({ item }) {
+  if (!props.itemClass) return {};
+  const className = props.itemClass(item);
+  return className ? { class: className } : {};
+}
 
 const severityFromCodeToString = computed(function() {
   return severity.severityFromCodeToString;
