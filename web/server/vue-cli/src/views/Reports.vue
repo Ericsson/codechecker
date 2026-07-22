@@ -5,7 +5,9 @@
     <pane size="20" :style="{ 'min-width': '320px' }">
       <ReportFilter
         :report-count="totalItems"
+        :refresh-filter="refreshFilterState"
         @refresh="refresh"
+        @set-refresh-filter-state="setRefreshFilterState"
       />
     </pane>
     <pane>
@@ -350,24 +352,64 @@
                 class="tree-item-label clickable"
                 @click.stop="onTreeItemClick(item)"
               >{{ item.name }}</span>
-              <span class="tree-stat-cell">{{ item.findings }}</span>
-              <span class="tree-stat-cell">{{ item.stats.style || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.low || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.medium || '' }}</span>
-              <span class="tree-stat-cell">{{ item.stats.high || '' }}</span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.findings }"
+                @click.stop="onTreeStatClick(item, 'all')"
+              >{{ item.findings }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.style }"
+                @click.stop="onTreeStatClick(item, 'style')"
+              >{{ item.stats.style || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.low }"
+                @click.stop="onTreeStatClick(item, 'low')"
+              >{{ item.stats.low || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.medium }"
+                @click.stop="onTreeStatClick(item, 'medium')"
+              >{{ item.stats.medium || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.high }"
+                @click.stop="onTreeStatClick(item, 'high')"
+              >{{ item.stats.high || '' }}</span>
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.critical }"
+                @click.stop="onTreeStatClick(item, 'critical')"
+              >
                 {{ item.stats.critical || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.unreviewed }"
+                @click.stop="onTreeStatClick(item, 'unreviewed')"
+              >
                 {{ item.stats.unreviewed || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.confirmed }"
+                @click.stop="onTreeStatClick(item, 'confirmed')"
+              >
                 {{ item.stats.confirmed || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.false_positive }"
+                @click.stop="onTreeStatClick(item, 'false_positive')"
+              >
                 {{ item.stats.false_positive || '' }}
               </span>
-              <span class="tree-stat-cell">
+              <span
+                class="tree-stat-cell"
+                :class="{ clickable: item.stats.intentional }"
+                @click.stop="onTreeStatClick(item, 'intentional')"
+              >
                 {{ item.stats.intentional || '' }}
               </span>
             </div>
@@ -388,6 +430,7 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
   Order,
+  ReviewStatus,
   Severity,
   SortMode,
   SortType
@@ -396,6 +439,8 @@ import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
 import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
+import { useSeverity } from "@/composables/useSeverity";
+import { useReviewStatus } from "@/composables/useReviewStatus";
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
@@ -412,6 +457,9 @@ const router = useRouter();
 const store = useStore();
 const gradientColor = useGradientColor();
 const detectionStatus = useDetectionStatus();
+const severity = useSeverity();
+const reviewStatus = useReviewStatus();
+const refreshFilterState = ref(false);
 
 const itemsPerPageOptions = [
   { value: 25, title: "25" },
@@ -665,11 +713,72 @@ function setReportFilter(params) {
   store.commit(SET_REPORT_FILTER, params);
 }
 
-function onTreeItemClick(item) {
+const SEVERITY_STAT_KEYS = {
+  style: Severity.STYLE,
+  low: Severity.LOW,
+  medium: Severity.MEDIUM,
+  high: Severity.HIGH,
+  critical: Severity.CRITICAL
+};
+
+const REVIEW_STATUS_STAT_KEYS = {
+  unreviewed: ReviewStatus.UNREVIEWED,
+  confirmed: ReviewStatus.CONFIRMED,
+  false_positive: ReviewStatus.FALSE_POSITIVE,
+  intentional: ReviewStatus.INTENTIONAL
+};
+
+function getTreeItemFilePattern(item) {
   const isDir = item.children && item.children.length > 0;
-  const pattern = isDir ? item.fullPath + "/*" : item.fullPath;
-  setReportFilter({ filepath: [ pattern ] });
+  return isDir ? item.fullPath + "/*" : item.fullPath;
+}
+
+function setRefreshFilterState(state) {
+  refreshFilterState.value = state;
+}
+
+// Push the given filter values into the URL and let ReportFilter's
+// initByUrl() (triggered via the refresh-filter prop) apply them to the
+// individual filter components and the store, instead of writing to the
+// store directly and leaving the URL/filters out of sync.
+async function applyTreeFilter(params) {
+  const query = { ...route.query };
+
+  if (params.filepath) {
+    query["filepath"] = params.filepath;
+  }
+  if (params.severity) {
+    query["severity"] =
+      params.severity.map(s => severity.severityFromCodeToString(s));
+  }
+  if (params.reviewStatus) {
+    query["review-status"] = params.reviewStatus.map(
+      s => reviewStatus.reviewStatusFromCodeToString(s)
+    );
+  }
+
+  await router.replace({ query }).catch(() => {});
+  setRefreshFilterState(true);
   viewMode.value = "table";
+}
+
+function onTreeItemClick(item) {
+  applyTreeFilter({ filepath: [ getTreeItemFilePattern(item) ] });
+}
+
+function onTreeStatClick(item, statKey) {
+  const count = statKey === "all" ? item.findings : item.stats[statKey];
+  if (!count) return;
+
+  const params = { filepath: [ getTreeItemFilePattern(item) ] };
+
+  if (statKey in SEVERITY_STAT_KEYS) {
+    params.severity = [ SEVERITY_STAT_KEYS[statKey] ];
+  } else if (statKey in REVIEW_STATUS_STAT_KEYS) {
+    params.reviewStatus = [ REVIEW_STATUS_STAT_KEYS[statKey] ];
+  }
+
+  applyTreeFilter(params);
 }
 
 function toggleTreeSort(statKey) {
@@ -1055,6 +1164,15 @@ body {
   text-align: center;
   flex-shrink: 0;
   font-size: 0.8em;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      color: rgb(var(--v-theme-primary));
+    }
+  }
 }
 
 .v-data-table {
