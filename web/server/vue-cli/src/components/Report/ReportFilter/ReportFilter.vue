@@ -43,7 +43,6 @@
       class="mt-2 mb-2 d-flex align-center justify-space-between w-100 p-1"
     >
       <ClearAllFilters
-        :namespace="namespace"
         @clear="clearAllFilters"
       />
       <ReportCount :value="reportCount" />
@@ -144,7 +143,6 @@
     <div>
       <unique-filter
         :ref="setFilterRef"
-        :namespace="namespace"
         @update:url="updateUrl"
       />
     </div>
@@ -184,7 +182,6 @@
             <v-expansion-panel-text class="pa-1">
               <baseline-run-filter
                 :ref="setBaselineRunFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
@@ -192,7 +189,6 @@
 
               <baseline-open-reports-date-filter
                 :ref="setBaselineOpenReportsDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -231,7 +227,6 @@
             <v-expansion-panel-text class="pa-1">
               <compared-to-run-filter
                 :ref="setComparedToRunFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
@@ -239,7 +234,6 @@
 
               <compared-to-open-reports-date-filter
                 :ref="setComparedToOpenReportsDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
@@ -248,7 +242,6 @@
               <compared-to-diff-type-filter
                 v-if="showDiffType"
                 :ref="setComparedToDiffTypeFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -259,7 +252,6 @@
       <v-list-item class="pl-1">
         <file-path-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -269,7 +261,6 @@
       <v-list-item class="pl-1">
         <checker-name-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -279,7 +270,6 @@
       <v-list-item class="pl-1">
         <severity-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -289,7 +279,6 @@
       <v-list-item class="pl-1">
         <report-status-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -302,7 +291,6 @@
       >
         <review-status-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -312,7 +300,6 @@
       <v-list-item class="pl-1">
         <detection-status-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -322,7 +309,6 @@
       <v-list-item class="pl-1">
         <analyzer-name-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -332,7 +318,6 @@
       <v-list-item class="pl-1">
         <source-component-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -342,7 +327,6 @@
       <v-list-item class="pl-1">
         <cleanup-plan-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -352,7 +336,6 @@
       <v-list-item class="pl-1">
         <checker-message-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -386,7 +369,6 @@
               <detection-date-filter
                 id="detection-date-filter"
                 :ref="setDetectionDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
@@ -395,7 +377,6 @@
               <fix-date-filter
                 id="fix-date-filter"
                 :ref="setFixDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -407,7 +388,6 @@
         <report-hash-filter
           id="report-hash-filter"
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -418,7 +398,6 @@
         <bug-path-length-filter
           id="bug-path-length-filter"
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -428,7 +407,6 @@
       <v-list-item class="pl-1">
         <testcase-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -442,7 +420,6 @@
     >
       <remove-filtered-reports
         class="mt-4 w-100"
-        :namespace="namespace"
         @update="updateAllFilters"
       />
     </div>
@@ -456,7 +433,6 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  toRef,
   watch
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -501,7 +477,6 @@ import {
 import { Permission } from "@cc/shared-types";
 
 const props = defineProps({
-  namespace: { type: String, required: true },
   showCompareTo: { type: Boolean, default: true },
   showReviewStatus: { type: Boolean, default: true },
   showRemoveFilteredReports: { type: Boolean, default: true },
@@ -575,13 +550,13 @@ const {
   reportFilterUnwatch,
   runIdsUnwatch,
   cmpDataUnwatch
-} = useBaseFilter(toRef(props, "namespace"));
+} = useBaseFilter();
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
-const reportFilter = computed(() => store.state[props.namespace].reportFilter);
+const reportFilter = computed(() => store.state.reportFilter);
 const canSeeActions = computed(() => {
   return isSuperUser.value || isAdminOfAnyProduct.value;
 });
@@ -654,18 +629,22 @@ function registerWatchers() {
   unregisterWatchers();
 
   reportFilterUnwatch.value = store.watch(
-    state => state[props.namespace].reportFilter, () => {
-      emit("refresh");
+    state => state.reportFilter, () => {
+      if (!isInitializing.value)
+        emit("refresh");
+
     }, { deep: true });
 
   runIdsUnwatch.value = store.watch(
-    state => state[props.namespace].runIds, () => {
-      emit("refresh");
+    state => state.runIds, () => {
+      if (!isInitializing.value)
+        emit("refresh");
     });
 
   cmpDataUnwatch.value = store.watch(
-    state => state[props.namespace].cmpData, () => {
-      emit("refresh");
+    state => state.cmpData, () => {
+      if (!isInitializing.value)
+        emit("refresh");
     }, { deep: true });
 }
 
@@ -751,7 +730,6 @@ function updateAllFilters() {
   if (!_filters?.length) return;
 
   _filters.forEach(filter => filter?.update?.() );
-
   emit("refresh");
 }
 

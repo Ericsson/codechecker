@@ -40,7 +40,10 @@
       <v-progress-linear v-if="confirmInProgress" indeterminate />
 
       <v-card-text class="pa-0">
-        <v-container fluid>
+        <v-container
+          class="pa-4 pt-1"
+          fluid
+        >
           <slot name="content" />
         </v-container>
       </v-card-text>
@@ -112,3 +115,8 @@ function cancelDialog() {
   dialog.value = false;
 }
 </script>
+<style scoped>
+:deep(.v-card-item) {
+  padding: 16px 16px 8px 16px !important;
+}
+</style>

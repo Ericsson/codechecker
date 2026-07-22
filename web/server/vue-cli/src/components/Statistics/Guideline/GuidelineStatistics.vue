@@ -64,8 +64,11 @@
                 item-value="value"
                 label="Select guidelines"
                 variant="outlined"
-                multiple
                 density="comfortable"
+                multiple
+                clearable
+                chips
+                closable-chips
               >
                 <template v-slot:selection="{ item }">
                   <div class="selection-item">
@@ -165,8 +168,7 @@ import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const emit = defineEmits([ "refresh-filter" ]);
@@ -241,6 +243,7 @@ const filteredStatistics = computed(() => {
   return statistics.value;
 });
 
+// Refresh the data on ReportFilter changes
 baseStatistics.setupRefreshListener(fetchStatistics);
 
 watch(() => baseStatistics.runIds, async () => {
@@ -441,7 +444,7 @@ async function fetchStatistics() {
 
   await getAllGuidelineRules();
 
-  const filter = new ReportFilter(baseStatistics.reportFilter);
+  const filter = new ReportFilter(baseStatistics.reportFilter.value);
 
   const checker_stat_result = await new Promise(resolve => {
     ccService.getClient().getCheckerStatusVerificationDetails(
@@ -459,7 +462,6 @@ async function fetchStatistics() {
 
 async function fetchProblematicRuns() {
   loading.value = true;
-
   const _runs = await getRunData();
   problematicRuns.value = (await Promise.all(
     _runs.map(async runData => {
@@ -476,7 +478,6 @@ async function fetchProblematicRuns() {
         return null;
       }
     }))).filter(element => element !== null);
-
   runs.value = _runs;
   loading.value = false;
 }

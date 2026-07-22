@@ -8,7 +8,7 @@ import {
 } from "@/store/mutations.type";
 import { CompareData, ReportFilter } from "@cc/report-server-types";
 
-export function useBaseFilter(namespaceRef) {
+export function useBaseFilter() {
   const store = useStore();
   
   const defaultLimit = ref(10);
@@ -18,11 +18,11 @@ export function useBaseFilter(namespaceRef) {
   const cmpDataUnwatch = ref(null);
   const initPanel = ref(() => {});
 
-  const runIds = computed(() => store.state[namespaceRef.value]?.runIds);
+  const runIds = computed(() => store.state.runIds);
   const reportFilter = computed(
-    () => store.state[namespaceRef.value]?.reportFilter
+    () => store.state.reportFilter
   );
-  const cmpData = computed(() => store.state[namespaceRef.value]?.cmpData);
+  const cmpData = computed(() => store.state.cmpData);
   
   const reportFilterModel = computed(() =>
     new ReportFilter(reportFilter.value));
@@ -32,12 +32,12 @@ export function useBaseFilter(namespaceRef) {
     cmpData.value ? new CompareData(cmpData.value) : null);
   
   const setRunIds = payload =>
-    store.commit(`${namespaceRef.value}/${SET_RUN_IDS}`, payload);
+    store.commit(SET_RUN_IDS, payload);
   const setReportFilter = payload => {
-    store.commit(`${namespaceRef.value}/${SET_REPORT_FILTER}`, payload);
+    store.commit(SET_REPORT_FILTER, payload);
   };
   const setCmpData = payload =>
-    store.commit(`${namespaceRef.value}/${SET_CMP_DATA}`, payload);
+    store.commit(SET_CMP_DATA, payload);
   
   const registerWatchers = (callbacks = {}) => {
     unregisterWatchers();
@@ -105,7 +105,6 @@ export function useBaseFilter(namespaceRef) {
     reportFilterModel,
     runIdsModel,
     cmpDataModel,
-    namespaceRef,
     reportFilterUnwatch,
     runIdsUnwatch,
     cmpDataUnwatch,

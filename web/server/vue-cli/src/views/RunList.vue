@@ -9,12 +9,6 @@
       :run-history-id="selectedRunHistoryId"
     />
 
-    <AnalysisInfoDialog
-      v-model="analysisInfoDialog"
-      :run-id="selectedRunId"
-      :run-history-id="selectedRunHistoryId"
-    />
-
     <v-data-table-server
       v-model="selected"
       v-model:page="page"
@@ -59,7 +53,6 @@
               v-model:selected-compared-to-tags="selectedComparedToTags"
               :histories="item.$history.values"
               :run="item"
-              :open-analysis-info-dialog="openAnalysisInfoDialog"
               :open-analyzer-statistics-dialog="openAnalyzerStatisticsDialog"
             >
               <v-btn
@@ -85,7 +78,6 @@
           :detection-status-count="item.detectionStatusCount"
           :report-filter-query="getReportFilterQuery(item)"
           :statistics-filter-query="getStatisticsFilterQuery(item)"
-          :open-analysis-info-dialog="openAnalysisInfoDialog"
         />
       </template>
 
@@ -204,7 +196,6 @@ const sortBy = ref(
 );
 
 const initialized = ref(false);
-const analysisInfoDialog = ref(false);
 const totalItems = ref(0);
 const loading = ref(false);
 const selected = ref([]);
@@ -507,12 +498,6 @@ async function fetchRuns() {
         _resolve(runs);
       }));
   });
-}
-
-function openAnalysisInfoDialog(runId, runHistoryId=null) {
-  selectedRunId.value = runId;
-  selectedRunHistoryId.value = runHistoryId;
-  analysisInfoDialog.value = true;
 }
 
 function openAnalyzerStatisticsDialog(report, history=null) {

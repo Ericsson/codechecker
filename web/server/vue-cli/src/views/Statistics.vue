@@ -6,17 +6,17 @@
       size="20"
       :style="{ 'min-width': '300px' }"
     >
-      <ReportFilter
-        v-fill-height
-        :namespace="namespace"
-        :show-remove-filtered-reports="false"
-        :report-count="reportCount"
-        :show-diff-type="false"
-        :show-compare-to="showCompareTo"
-        :refresh-filter="refreshFilterState"
-        @refresh="refresh"
-        @set-refresh-filter-state="setRefreshFilterState"
-      />
+      <div v-fill-height>
+        <ReportFilter
+          :show-remove-filtered-reports="false"
+          :report-count="reportCount"
+          :show-diff-type="false"
+          :show-compare-to="showCompareTo"
+          :refresh-filter="refreshFilterState"
+          @refresh="refresh"
+          @set-refresh-filter-state="setRefreshFilterState"
+        />
+      </div>
     </pane>
     <pane>
       <div v-fill-height>
@@ -39,14 +39,16 @@
           </v-tab>
         </v-tabs>
 
-        <keep-alive>
-          <router-view
-            :key="$route.name"
-            :bus="bus"
-            :namespace="namespace"
-            @refresh-filter="setRefreshFilterState(true)"
-          />
-        </keep-alive>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component
+              :is="Component"
+              :key="$route.name"
+              :bus="bus"
+              @refresh-filter="setRefreshFilterState(true)"
+            />
+          </keep-alive>
+        </router-view>
       </div>
     </pane>
   </splitpanes>
@@ -68,8 +70,6 @@ const vFillHeight = FillHeight;
 
 const router = useRouter();
 const store = useStore();
-
-const namespace = "statistics";
 
 const tabs = [
   {
@@ -126,14 +126,19 @@ const refreshTabs = tabs.reduce((map, _tab) => {
 }, {});
 
 const runIds = computed(function() {
-  return store.getters[`${namespace}/getRunIds`];
+  return store.getters.getRunIds;
 });
 
 const reportFilter = computed(function() {
-  return store.getters[`${namespace}/getReportFilter`];
+  return store.getters.getReportFilter;
 });
 
-watch(() => tab.value, async () => {
+watch(() => tab.value, async (value, oldValue) => {
+  // Don't refresh on page reload!
+  // When the ReportFilter is loaded
+  // from the URL it will trigger refresh.
+  if (!oldValue)
+    return;
   if (tab.value == null) return;
 
   const currentTab = tabs[tab.value];

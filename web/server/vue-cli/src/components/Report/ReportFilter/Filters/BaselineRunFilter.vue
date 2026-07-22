@@ -100,7 +100,6 @@
           flat
         >
           <baseline-tag-items
-            :namespace="namespace"
             :selected-items="prevSelectedTagItems"
             :run-id="selectTagForRun.runIds[0]"
             :limit="defaultLimit"
@@ -140,7 +139,7 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { ccService, extractTagWithRunName, handleThriftError } from "@cc-api";
@@ -161,17 +160,12 @@ import {
   filterIsChanged
 } from "./SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([
   "update:url",
   "select"
 ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 

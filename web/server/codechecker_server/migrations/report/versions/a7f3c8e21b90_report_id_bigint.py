@@ -65,22 +65,26 @@ def _cleanup_association_tables(dialect):
     for table_info in ASSOCIATION_TABLES:
         table = table_info['name']
         columns = table_info['columns']
+        grouped_columns = ', '.join(columns)
         null_condition = " OR ".join(f"{column} IS NULL" for column in columns)
+
         op.execute(sa.text(
             f"DELETE FROM {table} WHERE {null_condition}"))
 
-        col_a = " AND ".join(
-            f"a.{column} IS NOT DISTINCT FROM b.{column}"
-            for column in columns)
         if dialect == 'postgresql':
             op.execute(sa.text(f"""
-                DELETE FROM {table} AS a
-                USING {table} AS b
-                WHERE a.ctid < b.ctid
-                  AND {col_a}
+                WITH to_remove AS MATERIALIZED (
+                    SELECT ctid FROM {table}
+                    EXCEPT
+                    SELECT MIN(ctid) FROM {table} GROUP BY {grouped_columns}
+                )
+                DELETE FROM {table}
+                WHERE ctid IN (
+                    SELECT * FROM to_remove
+                )
             """))
         else:
-            grouped_columns = ", ".join(columns)
+            # In old SQLite versions materialized CTEs are not supported.
             op.execute(sa.text(f"""
                 DELETE FROM {table}
                 WHERE rowid NOT IN (
@@ -168,8 +172,7 @@ def upgrade():
             'id',
             existing_type=sa.Integer(),
             type_=sa.BigInteger(),
-            existing_nullable=False,
-            autoincrement=True)
+            existing_nullable=False)
         op.execute(sa.text('ALTER SEQUENCE reports_id_seq AS BIGINT'))
         _tighten_association_tables_postgresql()
     elif dialect == 'sqlite':
@@ -189,8 +192,7 @@ def downgrade():
             'id',
             existing_type=sa.BigInteger(),
             type_=sa.Integer(),
-            existing_nullable=False,
-            autoincrement=True)
+            existing_nullable=False)
         op.execute(sa.text('ALTER SEQUENCE reports_id_seq AS INTEGER'))
     elif dialect == 'sqlite':
         _relax_association_tables_sqlite()
