@@ -1001,13 +1001,15 @@ def is_checker_config_valid(
 
 def get_affected_file_paths(
     file_filters: List[str],
-    compile_commands: tu_collector.CompilationDB
+    compile_commands: tu_collector.CompilationDB,
+    jobs: int
 ) -> List[str]:
     """
     Returns a list of source files for existing header file otherwise returns
     with the same file path expression.
     """
     file_paths = []  # Use list to keep the order of the file paths.
+    dependencies: tu_collector.Dependencies = collections.defaultdict(set)
     for file_filter in file_filters:
         file_paths.append(str(Path(file_filter).resolve())
                           if '*' not in file_filter else file_filter)
@@ -1016,7 +1018,7 @@ def get_affected_file_paths(
                 file_filter.endswith(header_file_extensions):
             LOG.info("Get dependent source files for '%s'...", file_filter)
             dependent_sources = tu_collector.get_dependent_sources(
-                compile_commands, file_filter)
+                compile_commands, file_filter, dependencies, jobs)
 
             LOG.info("Get dependent source files for '%s' done.", file_filter)
             LOG.debug("Dependent source files: %s",
@@ -1035,7 +1037,7 @@ def __get_skip_handlers(args, compile_commands) -> SkipListHandlers:
     skip_handlers = SkipListHandlers()
     if 'files' in args:
         source_file_paths = get_affected_file_paths(
-            args.files, compile_commands)
+            args.files, compile_commands, args.jobs)
 
         # Creates a skip file where all source files will be skipped except
         # the given source files and all the header files.
