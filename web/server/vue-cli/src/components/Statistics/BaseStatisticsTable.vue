@@ -292,25 +292,18 @@
     </template>
 
     <template #item.enabledInAllRuns="{ item }">
-      <div v-if="item.enabledInAllRuns">
-        <count-chips
-          :num-good="item.enabledRunLength"
-          :good-text="'Number of runs where checker was enabled'"
-          :show-dividers="false"
-          :show-zero-chips="false"
-          @showing-good-click="$emit('enabled-click', 'enabled', item.checker)"
-        />
-      </div>
-      <div v-else>
+      <div>
         <count-chips
           :num-good="item.enabledRunLength"
           :num-bad="item.disabledRunLength"
+          :num-unknown="item.unknownRunLength"
           :good-text="'Number of runs where checker was enabled'"
           :bad-text="'Number of runs where checker was disabled'"
-          :show-dividers="false"
-          :show-zero-chips="false"
+          :unknown-text="'Number of runs where checker was unknown'"
           @showing-good-click="$emit('enabled-click', 'enabled', item.checker)"
           @showing-bad-click="$emit('enabled-click', 'disabled', item.checker)"
+          @showing-unknown-click="$emit('enabled-click',
+                                        'unknown', item.checker)"
         />
       </div>
     </template>
@@ -355,14 +348,14 @@
 
     <template #item.guidelineRules="{ item }">
       <div v-if="item.guidelineRules.length">
-        <div 
+        <div
           v-for="guidelineRule in item.guidelineRules"
           :key="guidelineRule.type"
         >
           <span class="type">
             {{ guidelineRule.type }}:
           </span>
-          <span 
+          <span
             v-for="rule in guidelineRule.rules"
             :key="rule"
             :style="getRuleStyle(guidelineRule)"
@@ -372,7 +365,7 @@
         </div>
       </div>
     </template>
-    
+
     <template #item.guidelineRule="{ item }">
       <a
         :href="item.guidelineUrl"
@@ -382,10 +375,10 @@
       </a>
     </template>
 
-    <template 
+    <template
       #item.checkers.name="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
       >
         none
@@ -409,10 +402,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.severity="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -429,10 +422,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.enabledInAllRuns="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -442,38 +435,20 @@
         <table>
           <tr v-for="checker in item.checkers" :key="checker.name">
             <td>
-              <div v-if="checker.enabledInAllRuns">
-                <count-chips
-                  :num-good="checker.enabledRunLength"
-                  :good-text="'Number of runs where checker was enabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
-                  @showing-good-click="$emit(
-                    'enabled-click', 'enabled', checker.name)"
-                />
-              </div>
-              <div v-else-if="checker.enabledRunLength">
+              <div>
                 <count-chips
                   :num-good="checker.enabledRunLength"
                   :num-bad="checker.disabledRunLength"
+                  :num-unknown="checker.unknownRunLength"
                   :good-text="'Number of runs where checker was enabled'"
                   :bad-text="'Number of runs where checker was disabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
+                  :unknown-text="'Number of runs where checker was unknown'"
                   @showing-good-click="$emit(
                     'enabled-click', 'enabled', checker.name)"
                   @showing-bad-click="$emit(
                     'enabled-click', 'disabled', checker.name)"
-                />
-              </div>
-              <div v-else>
-                <count-chips
-                  :num-bad="checker.disabledRunLength"
-                  :bad-text="'Number of runs where checker was disabled'"
-                  :show-dividers="false"
-                  :show-zero-chips="false"
-                  @showing-bad-click="$emit(
-                    'enabled-click', 'disabled', checker.name)"
+                  @showing-unknown-click="$emit(
+                    'enabled-click', 'unknown', checker.name)"
                 />
               </div>
             </td>
@@ -482,10 +457,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.outstanding="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -518,10 +493,10 @@
       </div>
     </template>
 
-    <template 
+    <template
       #item.checkers.closed="{ item }"
     >
-      <div 
+      <div
         v-if="item.checkers && item.checkers.length === 0"
         class="text-center"
       >
@@ -721,7 +696,7 @@ function getNestedTableContent(checkers, prop, descending) {
   if (checkers && checkers.length > 0) {
     if (prop === "enabledInAllRuns" ){
       const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
+        return descending
           ? (current["enabledRunLength"] > max_or_min["enabledRunLength"]
             ? current : max_or_min)
           : (current["enabledRunLength"] < max_or_min["enabledRunLength"]
@@ -731,8 +706,8 @@ function getNestedTableContent(checkers, prop, descending) {
     }
     else {
       const _selectedChecker = checkers.reduce((max_or_min, current) => {
-        return descending 
-          ? (current[prop] > max_or_min[prop] ? current : max_or_min) 
+        return descending
+          ? (current[prop] > max_or_min[prop] ? current : max_or_min)
           : (current[prop] < max_or_min[prop] ? current : max_or_min);
       });
       return _selectedChecker[prop];

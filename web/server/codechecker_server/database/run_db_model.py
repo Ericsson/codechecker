@@ -15,9 +15,10 @@ from typing import Optional
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
     ForeignKey, Integer, LargeBinary, MetaData, String, UniqueConstraint, \
-    Table, Text, JSON
+    Table, Text, JSON, case
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import true, false
 
 CC_META = MetaData(naming_convention={
@@ -451,6 +452,18 @@ class Report(Base):
         Boolean, nullable=False, server_default=false())
 
     detected_at = Column(DateTime, nullable=False)
+
+    @hybrid_property
+    def is_open(self):
+        # Python-side logic
+        return self.fixed_at is None
+
+    @is_open.expression
+    def is_open(self):
+        return case(
+            (self.fixed_at.is_(None), True),
+            else_=False
+        )
 
     # A report is considered as "fixed" when it is not found in the project
     # anymore either based on its detection status or its review status is set
