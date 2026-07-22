@@ -132,6 +132,7 @@ import { useRoute, useRouter } from "vue-router";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { useBaseStatistics } from "@/composables/useBaseStatistics";
 import { ccService, handleThriftError } from "@cc-api";
+import { MAX_QUERY_SIZE } from "@cc/report-server-types";
 
 import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
@@ -231,7 +232,7 @@ function getNumberOfActiveCheckers() {
     reportFilter: _reportFilter,
     cmpData: _cmpData
   } = baseStats.getStatisticsFilters();
-  const _limit = null;
+  const _limit = MAX_QUERY_SIZE;
   const _offset = 0;
 
   return new Promise(_resolve => {

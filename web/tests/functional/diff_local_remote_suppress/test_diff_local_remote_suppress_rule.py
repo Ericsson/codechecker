@@ -20,6 +20,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter, \
     RunFilter, ReviewStatus
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import env
 from libtest.codechecker import get_diff_results
@@ -82,12 +83,13 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
         project_orig_run_name = \
             self._test_cfg['codechecker_cfg']['run_names']['test_project_orig']
         run_filter = RunFilter(names=[project_orig_run_name])
-        project_orig_run = \
-            self._cc_client.getRunData(run_filter, None, None, None)[0]
+        project_orig_run = self._cc_client.getRunData(
+            run_filter, MAX_QUERY_SIZE, None, None)[0]
 
         report_filter = ReportFilter(checkerName=[checker_name])
         reports = self._cc_client.getRunResults(
-            [project_orig_run.runId], 500, 0, None, report_filter, None, False)
+            [project_orig_run.runId], MAX_QUERY_SIZE, 0, None, report_filter,
+            None, False)
 
         for report in reports:
             self._cc_client.addReviewStatusRule(

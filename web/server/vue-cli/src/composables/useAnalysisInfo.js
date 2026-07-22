@@ -39,14 +39,13 @@ function decideNegativeCheckerStatusAvailability(
     const filter = new RunFilter({
       ids: [ runId ]
     });
-    ccService.getClient().getRunData(filter, null, null, null,
-      handleThriftError(runDataList => {
-        if (runDataList.length !== 1) return;
+    ccService.getRunData(filter).then(runDataList => {
+      if (runDataList.length !== 1) return;
 
-        setCheckerStatusUnavailableDueToVersion(
-          analysisInfo,
-          runDataList[0].codeCheckerVersion);
-      }));
+      setCheckerStatusUnavailableDueToVersion(
+        analysisInfo,
+        runDataList[0].codeCheckerVersion);
+    });
   } else if (runId && runHistoryId) {
     const filter = new RunHistoryFilter({
       tagNames: [],

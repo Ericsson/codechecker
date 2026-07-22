@@ -22,6 +22,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     DetectionStatus, \
     Order, \
     ReportFilter, RunFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from . import setup_class_common, teardown_class_common
 
@@ -56,7 +57,7 @@ class TestRunData(unittest.TestCase):
         if run_name_filter is not None:
             run_filter.names = [run_name_filter]
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         return [run for run in runs if run.name in self._run_names]
 
     def test_filter_run_names(self):
@@ -126,14 +127,14 @@ class TestRunData(unittest.TestCase):
         """
         # Sort runs in ascending order.
         sort_mode = RunSortMode(RunSortType.DURATION, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
             self.assertTrue(runs[i].duration <= runs[i + 1].duration)
 
         # Sort runs in descending order.
         sort_mode = RunSortMode(RunSortType.DURATION, Order.DESC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
             self.assertTrue(runs[i].duration >= runs[i + 1].duration)
@@ -144,14 +145,14 @@ class TestRunData(unittest.TestCase):
         """
         # Sort runs by number of unresolved reports field.
         sort_mode = RunSortMode(RunSortType.UNRESOLVED_REPORTS, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
             self.assertTrue(runs[i].resultCount <= runs[i + 1].resultCount)
 
         # Sort runs by date field.
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
             date1 = datetime.strptime(runs[i].runDate,
@@ -162,7 +163,7 @@ class TestRunData(unittest.TestCase):
 
         # Sort runs by CodeChecker version field.
         sort_mode = RunSortMode(RunSortType.CC_VERSION, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
             cc_version1 = runs[i].codeCheckerVersion
@@ -173,7 +174,7 @@ class TestRunData(unittest.TestCase):
         # code because Python and SQL compare strings differently if it
         # contains special characters.
         sort_mode = RunSortMode(RunSortType.NAME, Order.ASC)
-        self._cc_client.getRunData(None, None, 0, sort_mode)
+        self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
     def test_analysis_info(self):
         """

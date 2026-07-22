@@ -116,23 +116,17 @@ def comment_kind_to_thrift_type(kind):
     assert False, f"Unknown CommentKindValue: {kind}"
 
 
-def verify_limit_range(limit):
+def verify_limit_range(limit: Optional[int]):
     """Verify limit value for the queries.
 
-    Query limit should not be larger than the max allowed value.
-    Max is returned if the value is larger than max.
+    Query limit should not be larger than the max allowed value because may
+    result too much memory consumption and performance degradation on server
+    side. It would be a potential attack against the server.
     """
-    max_query_limit = constants.MAX_QUERY_SIZE
-    if not limit:
-        return max_query_limit
-    if limit > max_query_limit:
-        LOG.warning('Query limit %d was larger than max query limit %d, '
-                    'setting limit to %d',
-                    limit,
-                    max_query_limit,
-                    max_query_limit)
-        limit = max_query_limit
-    return limit
+    if not limit or limit not in range(constants.MAX_QUERY_SIZE + 1):
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+            f'Limit must be between 1-{constants.MAX_QUERY_SIZE}')
 
 
 def slugify(text):
@@ -1548,7 +1542,7 @@ class ThriftRequestHandler:
     def getRunData(self, run_filter, limit, offset, sort_mode):
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         with DBSession(self._Session) as session:
 
@@ -1973,7 +1967,7 @@ class ThriftRequestHandler:
     def getRunHistory(self, run_ids, limit, offset, run_history_filter):
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         with DBSession(self._Session) as session:
 
@@ -2183,7 +2177,7 @@ class ThriftRequestHandler:
                       report_filter, cmp_data, get_details):
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         with DBSession(self._Session) as session:
             results = []
@@ -2574,7 +2568,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = []
 
@@ -3294,7 +3288,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = []
         with DBSession(self._Session) as session:
@@ -3500,7 +3494,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = {}
         with DBSession(self._Session) as session:
@@ -3615,7 +3609,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = {}
         with DBSession(self._Session) as session:
@@ -3784,7 +3778,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = {}
         with DBSession(self._Session) as session:
@@ -3838,7 +3832,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = {}
         with DBSession(self._Session) as session:
@@ -3923,7 +3917,7 @@ class ThriftRequestHandler:
         """
         self.__require_view()
 
-        limit = verify_limit_range(limit)
+        verify_limit_range(limit)
 
         results = []
         with DBSession(self._Session) as session:

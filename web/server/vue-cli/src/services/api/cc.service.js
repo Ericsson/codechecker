@@ -42,8 +42,10 @@ class CodeCheckerService extends BaseService {
       this.getClient().getRunResults(null, MAX_QUERY_SIZE, 0,
         [ sortMode ], reportFilter, null, false,
         handleThriftError(reports => {
-          const runIds = reports.map(report => report.runId);
-          this.getRuns(runIds).then(runs => {
+          const runFilter = new RunFilter({
+            ids: reports.map(report => report.runId)
+          });
+          this.getRuns(runFilter).then(runs => {
             resolve(reports.map(report => {
               const run =
                 runs.find(run => run.runId.equals(report.runId)) || {};
@@ -58,33 +60,38 @@ class CodeCheckerService extends BaseService {
     });
   }
 
-  getRuns(runIds) {
-    const runFilter = new RunFilter({ ids: runIds });
+  async getRuns(runFilter, sortMode) {
+    const runs = [];
+    let offset = 0;
 
-    return new Promise(resolve => {
-      this.getClient().getRunData(runFilter, null, 0, null,
-        handleThriftError(res => {
-          resolve(res);
-        }));
-    });
+    while (true) {
+      const r = await new Promise(resolve => {
+        this.getClient().getRunData(
+          runFilter, MAX_QUERY_SIZE, offset, sortMode,
+          handleThriftError(res => {
+            resolve(res);
+          }));
+      });
+
+      runs.push(...r);
+
+      if (r.length < MAX_QUERY_SIZE)
+        break;
+
+      offset += MAX_QUERY_SIZE;
+    }
+
+    return runs;
   }
 
-  getRunIds(runName) {
+  async getRunIds(runName) {
     const runFilter = new RunFilter({ names: [ runName ] });
-    const limit = null;
-    const offset = null;
-    const sortMode = null;
-
-    return new Promise(resolve => {
-      this.getClient().getRunData(runFilter, limit, offset, sortMode,
-        handleThriftError(runs => {
-          resolve(runs.map(run => run.runId.toNumber() ));
-        }));
-    });
+    const runs = await this.getRuns(runFilter);
+    return runs.map(run => run.runId.toNumber());
   }
 
   async getTags(runIds, tagIds, tagNames, stored) {
-    const limit = null;
+    const limit = MAX_QUERY_SIZE;
     const offset = 0;
 
     const runHistoryFilter = new RunHistoryFilter({

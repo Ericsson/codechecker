@@ -20,6 +20,7 @@ import uuid
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
   ReportFilter, RunFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 from libtest.thrift_client_to_db import get_all_run_results
 
 from libtest import codechecker
@@ -129,7 +130,8 @@ class TestBlameInfo(unittest.TestCase):
         self.assertIsNotNone(self._cc_client)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        self.test_runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        self.test_runs = \
+            self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
     def test_update_blame_info(self):
         with tempfile.TemporaryDirectory() as proj_dir:
@@ -160,7 +162,8 @@ class TestBlameInfo(unittest.TestCase):
                 self._codechecker_cfg, run_name, proj_dir)
 
             run_filter = RunFilter(names=[run_name], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            runs = self._cc_client.getRunData(
+                run_filter, MAX_QUERY_SIZE, 0, None)
             run_id = runs[0].runId
 
             report_filter = ReportFilter(
@@ -258,7 +261,8 @@ class TestBlameInfo(unittest.TestCase):
             os.chdir(old_pwd)
 
             run_filter = RunFilter(names=[run_name], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            runs = self._cc_client.getRunData(
+                run_filter, MAX_QUERY_SIZE, 0, None)
             run_id = runs[0].runId
 
             report_filter = ReportFilter(

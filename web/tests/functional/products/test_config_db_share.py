@@ -25,6 +25,7 @@ from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_web.shared import convert
 
@@ -101,7 +102,7 @@ class TestProductConfigShare(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(self.test_workspace_main)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
         test_runs = [run for run in runs if run.name in run_names]
 
         self.assertEqual(len(test_runs), 1,
@@ -209,13 +210,16 @@ class TestProductConfigShare(unittest.TestCase):
         self.assertEqual(store_res, 0, "Storing the test project failed.")
 
         cc_client_2 = env.setup_viewer_client(self.test_workspace_secondary)
-        self.assertEqual(len(cc_client_2.getRunData(None, None, 0, None)), 1,
-                         "There should be a run present in the new server.")
+        self.assertEqual(
+            len(cc_client_2.getRunData(None, MAX_QUERY_SIZE, 0, None)),
+            1,
+            "There should be a run present in the new server.")
 
-        self.assertEqual(len(self._cc_client.getRunData(None, None, 0, None)),
-                         1,
-                         "There should be a run present in the database when "
-                         "connected through the main server.")
+        self.assertEqual(
+            len(self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)),
+            1,
+            "There should be a run present in the database when "
+            "connected through the main server.")
 
         # Remove the product through the main server.
         p_id = self._root_client.getProducts('producttest_second', None)[0].id

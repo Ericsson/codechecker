@@ -16,6 +16,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
     ReportFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env
@@ -144,7 +145,7 @@ int main()
         codechecker.check_and_store(self._codechecker_cfg,
                                     run_name, self._test_dir)
 
-    def __get_run_tag_counts(self, run_id, limit=None, offset=0):
+    def __get_run_tag_counts(self, run_id, limit=MAX_QUERY_SIZE, offset=0):
         """
         Get run history tag for the given run.
         """
@@ -201,7 +202,7 @@ int main()
         # Get the run names which belong to this test
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
         test_run_ids = [run.runId for run in runs]
 
         self.assertEqual(len(test_run_ids), 2)

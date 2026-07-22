@@ -429,6 +429,7 @@ import { Pane, Splitpanes } from "splitpanes";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
+  MAX_QUERY_SIZE,
   Order,
   ReviewStatus,
   Severity,
@@ -806,7 +807,7 @@ function i64ToNum(val) {
 }
 
 function fetchFileSeverities() {
-  const PAGE = 500;
+  const PAGE = MAX_QUERY_SIZE;
   const allStats = {};
 
   const fetchPage = offset => {

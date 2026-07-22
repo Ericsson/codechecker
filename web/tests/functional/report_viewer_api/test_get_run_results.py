@@ -24,6 +24,7 @@ import codecs
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Checker, \
     Guideline, Order, ReportFilter, SortMode, SortType, RunFilter, \
     RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_web.shared import convert
 
@@ -62,7 +63,7 @@ class RunResults(unittest.TestCase):
         run_names = env.get_run_names(test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -538,7 +539,8 @@ class RunResults(unittest.TestCase):
             self.assertEqual(ret, 0)
 
             run_filter = RunFilter(names=[run_name], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            runs = self._cc_client.getRunData(
+                run_filter, MAX_QUERY_SIZE, 0, None)
             self.assertEqual(len(runs), 1)
             run_id = runs[0].runId
 
