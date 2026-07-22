@@ -18,6 +18,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
         ReviewStatus, DiffType, ReportFilter, DetectionStatus
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_client.cmd_line_client import \
     get_diff_local_dirs, get_diff_remote_run_local_dir, \
@@ -102,7 +103,8 @@ class TestDiffFromCmdLine(unittest.TestCase):
     # ===-----------------------------------------------------------------=== #
 
     def __remove_all_runs(self):
-        for run_data in self._cc_client.getRunData(None, None, 0, None):
+        for run_data in self._cc_client.getRunData(
+                None, MAX_QUERY_SIZE, 0, None):
             ret = self._cc_client.removeRun(run_data.runId, None)
             self.assertTrue(ret)
             print(f"Successfully removed run '{run_data.name}'.")
