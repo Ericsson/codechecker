@@ -90,16 +90,12 @@ class SANParser(BaseParser):
             return None
 
         file_path = file_match.group('path')
-        if file_path and os.path.exists(file_path):
-            col = file_match.group('column')
-            return BugPathEvent(
-                line.rstrip(),
-                get_or_create_file(
-                    os.path.abspath(file_path), self._file_cache),
-                int(file_match.group('line')),
-                int(col) if col else 0)
-
-        return None
+        col = file_match.group('column')
+        return BugPathEvent(
+            line.rstrip(),
+            get_or_create_file(os.path.abspath(file_path), self._file_cache),
+            int(file_match.group('line')),
+            int(col) if col else 0)
 
     def create_report(
         self,
