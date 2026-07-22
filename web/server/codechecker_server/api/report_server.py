@@ -2080,7 +2080,14 @@ class ThriftRequestHandler:
         # based on the client's version. We are having access to the Thrift
         # API version here. The behavior change happend in Thrift API version
         # 6.50.
-        client_version = tuple(map(int, self.__client_version.split('.')))
+        #
+        # The client version string comes from the URL path (e.g. "6.72")
+        # as parsed by routing.split_client_POST_request(). It is always in
+        # MAJOR.MINOR format (see versioning strategy in
+        # codechecker_web.shared.version). We parse it into a tuple for
+        # lexicographic comparison against the threshold version (6, 50).
+        version_parts = self.__client_version.split('.')
+        client_version = (int(version_parts[0]), int(version_parts[1]))
 
         if not skip_detection_statuses:
             skip_detection_statuses = [ttypes.DetectionStatus.RESOLVED,

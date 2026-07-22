@@ -7,6 +7,10 @@ const ESLintPlugin = require("eslint-webpack-plugin");
 const { join } = require("path");
 
 const codeCheckerApi = require("codechecker-api/package.json");
+// The npm package uses a 3-part semver (e.g. "6.72.0") because npm requires
+// it, but the CodeChecker API versioning scheme only uses MAJOR.MINOR.
+// The patch component is always 0 and is never part of API URL paths.
+// See: web/codechecker_web/shared/version.py for the full versioning strategy.
 const apiVersion = codeCheckerApi.version.split(".").slice(0, 2).join(".");
 
 const helpers = require("./helpers");
