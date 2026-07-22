@@ -25,6 +25,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
     DetectionStatus, Order, ReviewStatus, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunFilter
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import env, codechecker, plist_test, project
 from libtest.thrift_client_to_db import get_all_run_results
@@ -128,7 +129,7 @@ class TestReviewStatus(unittest.TestCase):
         # get the current run data
         run_filter = RunFilter(names=run_names, exactMatch=True)
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -341,7 +342,7 @@ class TestReviewStatus(unittest.TestCase):
         # Run data for the run created by this test case.
         run_filter = RunFilter(names=[test_project_name], exactMatch=True)
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         run = runs[0]
         runid = run.runId
         logging.debug('Get all run results from the db for runid: %s',
@@ -534,7 +535,7 @@ class TestReviewStatus(unittest.TestCase):
         # should match the ones in project_info.json.
 
         run_filter = RunFilter(names=[test_project_name1], exactMatch=True)
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         runid1 = next(r.runId for r in runs if r.name == test_project_name1)
 
         reports1 = get_all_run_results(self._cc_client, runid1)
@@ -647,7 +648,7 @@ class TestReviewStatus(unittest.TestCase):
             review_status_rule_after.reviewData.date)
 
         run_filter = RunFilter(names=[test_project_name2], exactMatch=True)
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         runid2 = next(r.runId for r in runs if r.name == test_project_name2)
 
         reports2 = get_all_run_results(self._cc_client, runid2)
@@ -802,7 +803,8 @@ int main() {
             """
             run_filter = RunFilter(
                 names=["review_and_detection_status"], exactMatch=True)
-            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            runs = self._cc_client.getRunData(
+                run_filter, MAX_QUERY_SIZE, 0, None)
             runid = next(
                 r.runId for r in runs
                 if r.name == "review_and_detection_status")

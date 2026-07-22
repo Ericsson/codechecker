@@ -23,6 +23,7 @@ from libtest import project
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     Order, Pair, ReportFilter, SortMode, SortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 
 class DynamicResults(unittest.TestCase):
@@ -100,14 +101,15 @@ class DynamicResults(unittest.TestCase):
         Test if the reports can be sorted by their "timestamp" attribute.
         """
         results = self._cc_client.getRunResults(
-            None, 500, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
 
         self.assertEqual(len(results), 6)
 
         sort_timestamp = SortMode(SortType.TIMESTAMP, Order.ASC)
 
         results = self._cc_client.getRunResults(
-            None, 500, 0, [sort_timestamp], ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, [sort_timestamp], ReportFilter(),
+            None, False)
 
         # At least one report has a timestamp.
         # Needed for the next sorting test.
@@ -132,7 +134,7 @@ class DynamicResults(unittest.TestCase):
             second='TC-1')])
 
         results = self._cc_client.getRunResults(
-            None, 500, 0, None, testcase_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False)
 
         self.assertEqual(len(results), 3)
 
@@ -145,7 +147,7 @@ class DynamicResults(unittest.TestCase):
             second='TC-*')])
 
         results = self._cc_client.getRunResults(
-            None, 500, 0, None, testcase_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False)
 
         self.assertEqual(len(results), 5)
 
@@ -175,7 +177,7 @@ class DynamicResults(unittest.TestCase):
         """Test that the unique path hash is calculated when two reports differ
         only in their annotations."""
         results = self._cc_client.getRunResults(
-            None, 500, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
 
         # The main.c_lang-tidy<blabla>.plist test file contains three
         # bugprone-sizeof-expression reports. Two of them differ in their

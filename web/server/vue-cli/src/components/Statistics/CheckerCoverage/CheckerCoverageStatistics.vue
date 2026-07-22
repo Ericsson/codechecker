@@ -44,7 +44,7 @@
         <v-alert
           icon="mdi-information"
         >
-          In this statistics only the "Run / Tag Filter" 
+          In this statistics only the "Run / Tag Filter"
           and the "Unique reports" are effective.
         </v-alert>
       </v-row>
@@ -84,7 +84,7 @@
             color="deep-orange"
             variant="outlined"
           >
-            The Checker coverage statistics is not available 
+            The Checker coverage statistics is not available
             for
             <span
               style="cursor: pointer; text-decoration: underline;"
@@ -129,7 +129,6 @@ import { useToCSV } from "@/composables/useToCSV";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
-  MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
@@ -167,7 +166,7 @@ const type = ref(null);
 const actualRunNames = computed(function() {
   return runs.value.filter(_run => !problematicRuns.value.map(
     _problematicRun => _problematicRun.runId
-  ).includes(_run.runId)).map(_run => _run.runName);
+  ).includes(_run.runId)).map(_run => _run.name);
 });
 
 watch(checker_stat, function(_stat) {
@@ -214,40 +213,6 @@ function downloadCSV() {
   ];
 
   csv.toCSV(_data, "codechecker_checker_coverage_statistics.csv");
-}
-
-async function getRunData() {
-  const _limit = MAX_QUERY_SIZE;
-  let _offset = 0;
-  
-  const _filter = new RunFilter({
-    ids: baseStats.runIds.value
-  });
-
-  const _runCount = await new Promise(_resolve => {
-    ccService.getClient().getRunCount(
-      _filter, handleThriftError(_runCnt => {
-        _resolve(_runCnt.toNumber());
-      }));
-  });
-
-  const _runs = [];
-
-  for ( _offset; _offset <= _runCount; _offset+=_limit ) {
-    const _limitedRuns = await new Promise(_resolve => {
-      ccService.getClient().getRunData(
-        _filter, _limit, _offset, null, handleThriftError(_runDataList => {
-          _resolve(_runDataList.map(_runData => ({
-            runId: _runData.runId,
-            runName: _runData.name,
-            codeCheckerVersion: _runData.codeCheckerVersion
-          })));
-        }));
-    });
-    _runs.push(..._limitedRuns);
-  }
-   
-  return _runs;
 }
 
 async function fetchStatistics() {
@@ -307,7 +272,7 @@ async function fetchStatistics() {
           : null;
       });
   }
-  
+
   checker_stat.value = _checker_stat;
   loading.value = false;
 }
@@ -315,7 +280,12 @@ async function fetchStatistics() {
 async function fetchProblematicRuns() {
   loading.value = true;
 
-  const _runs = await getRunData();
+  const _filter = new RunFilter({
+    ids: baseStats.runIds.value
+  });
+
+  const _runs = await ccService.getRuns(_filter);
+
   problematicRuns.value = (await Promise.all(
     _runs.map(async _runData => {
       var _analysisInfo = await analysisInfo.loadAnalysisInfo(
@@ -331,7 +301,7 @@ async function fetchProblematicRuns() {
         return null;
       }
     }))).filter(_element => _element !== null);
-  
+
   runs.value = _runs;
   loading.value = false;
 }

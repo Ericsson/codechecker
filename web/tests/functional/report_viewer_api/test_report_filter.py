@@ -19,6 +19,7 @@ import unittest
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, \
     DateInterval, DetectionStatus, ReportFilter, ReviewStatus, Severity, \
     ReportDate, RunSortMode, RunSortType, Order
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import env
 
@@ -61,7 +62,7 @@ class TestReportFilter(unittest.TestCase):
         run_names = env.get_run_names(test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
         self._runids = [r.runId for r in test_runs]
@@ -119,10 +120,8 @@ class TestReportFilter(unittest.TestCase):
             sev = get_severity_level(severity)
             sev_f = ReportFilter(severity=[sev])
 
-            run_result_count = self._cc_client.getRunResultCount(
-                [runid], sev_f, None)
             run_results = self._cc_client.getRunResults(
-                [runid], run_result_count, 0, sort_types, sev_f, None,
+                [runid], MAX_QUERY_SIZE, 0, sort_types, sev_f, None,
                 False)
             self.assertIsNotNone(run_results)
             self.assertEqual(test_result_count, len(run_results))
@@ -142,7 +141,7 @@ class TestReportFilter(unittest.TestCase):
                 cid_f = ReportFilter(checkerName=[checker_id_filter])
 
                 run_results = self._cc_client.getRunResults([runid],
-                                                            500,
+                                                            MAX_QUERY_SIZE,
                                                             0,
                                                             sort_types,
                                                             cid_f,
@@ -267,7 +266,7 @@ class TestReportFilter(unittest.TestCase):
                     [runid], s_f, None)
 
                 run_results = self._cc_client.getRunResults([runid],
-                                                            run_result_count,
+                                                            MAX_QUERY_SIZE,
                                                             0,
                                                             sort_types,
                                                             s_f,
@@ -288,14 +287,14 @@ class TestReportFilter(unittest.TestCase):
 
         # Get unique results.
         run_results = self._cc_client.getRunResults(
-            None, 500, 0, sort_types, unique_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, sort_types, unique_filter, None, False)
         unique_result_count = self._cc_client.getRunResultCount(
             None, unique_filter, None)
         unique_bughash = set(res.bugHash for res in run_results)
 
         # Get simple results.
         run_results = self._cc_client.getRunResults(
-            None, 500, 0, sort_types, simple_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, sort_types, simple_filter, None, False)
         simple_result_count = self._cc_client.getRunResultCount(
             None, simple_filter, None)
         simple_bughash = set(res.bugHash for res in run_results)
@@ -341,7 +340,7 @@ class TestReportFilter(unittest.TestCase):
             f = ReportFilter(bugPathLength=bug_path_len_filter)
 
             run_results = self._cc_client.getRunResults(self._runids,
-                                                        None,
+                                                        MAX_QUERY_SIZE,
                                                         0,
                                                         sort_types,
                                                         f,
@@ -372,16 +371,15 @@ class TestReportFilter(unittest.TestCase):
         detected = DateInterval(before=int(before), after=int(after))
         report_filter = ReportFilter(date=ReportDate(detected=detected))
 
-        run_results = self._cc_client.getRunResults(self._runids, None, 0,
-                                                    None, report_filter, None,
-                                                    False)
+        run_results = self._cc_client.getRunResults(
+            self._runids, MAX_QUERY_SIZE, 0, None, report_filter, None, False)
         self.assertEqual(len(run_results), 47)
 
     def test_fix_date_filters(self):
         """ Filter by fix dates. """
         report_filter = ReportFilter(
             detectionStatus=[DetectionStatus.OFF])
-        run_results = self._cc_client.getRunResults(None, None, 0,
+        run_results = self._cc_client.getRunResults(None, MAX_QUERY_SIZE, 0,
                                                     None, report_filter, None,
                                                     False)
         self.assertNotEqual(len(run_results), 0)
@@ -395,7 +393,7 @@ class TestReportFilter(unittest.TestCase):
         fixed = DateInterval(before=int(before), after=int(after))
         report_filter = ReportFilter(date=ReportDate(fixed=fixed))
 
-        run_results = self._cc_client.getRunResults(None, None, 0,
+        run_results = self._cc_client.getRunResults(None, MAX_QUERY_SIZE, 0,
                                                     None, report_filter, None,
                                                     False)
         self.assertNotEqual(len(run_results), 0)
@@ -416,7 +414,7 @@ class TestReportFilter(unittest.TestCase):
                 an_f = ReportFilter(analyzerNames=[analyzer_name_filter])
 
                 run_results = self._cc_client.getRunResults([runid],
-                                                            500,
+                                                            MAX_QUERY_SIZE,
                                                             0,
                                                             sort_types,
                                                             an_f,

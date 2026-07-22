@@ -16,6 +16,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
     Encoding, ReportFilter
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env
@@ -97,7 +98,7 @@ class TestDetectionStatus(unittest.TestCase):
         self.assertIsNotNone(self._cc_client)
 
         # Remove all runs before the test cases.
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
         if runs:
             run_id = max(map(lambda run: run.runId, runs))
             self._cc_client.removeRun(run_id, None)
@@ -199,7 +200,7 @@ int main()
         self._create_source_file(0)
         self._check_source_file(self._codechecker_cfg)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
         run_id = max(run.runId for run in runs)
 
         reports = self._cc_client.getRunResults([run_id],
@@ -358,7 +359,7 @@ int main()
 
         codechecker.store(self._codechecker_cfg, 'hello')
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
         run_id = max(run.runId for run in runs)
 
         reports = self._cc_client.getRunResults([run_id],

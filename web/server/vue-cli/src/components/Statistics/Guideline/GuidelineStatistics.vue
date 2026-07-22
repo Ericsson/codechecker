@@ -158,7 +158,6 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
   Guideline,
-  MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
@@ -227,7 +226,7 @@ const hideNotOutstanding = ref(false);
 const actualRunNames = computed(() => {
   return runs.value.filter(run => !problematicRuns.value.map(
     problematicRun => problematicRun.runId
-  ).includes(run.runId)).map(run => run.runName);
+  ).includes(run.runId)).map(run => run.name);
 });
 
 const selectedGuidelines = computed(() => selectedGuidelineIndexes.value.map(
@@ -398,46 +397,6 @@ async function getAllGuidelineRules() {
   });
 }
 
-async function getRunData() {
-  const _filter = new RunFilter({
-    ids: baseStatistics.runIds.value
-  });
-
-  const _runCount = await new Promise(resolve => {
-    ccService.getClient().getRunCount(
-      _filter,
-      handleThriftError(runCnt => {
-        resolve(runCnt.toNumber());
-      })
-    );
-  });
-
-  const _runs = [];
-  const _limit = MAX_QUERY_SIZE;
-  for (let _offset = 0; _offset <= _runCount; _offset+=_limit) {
-    const _limitedRuns = await new Promise(resolve => {
-      ccService.getClient().getRunData(
-        _filter,
-        _limit,
-        _offset,
-        null,
-        handleThriftError(runDataList => {
-          resolve(
-            runDataList.map(runData => ({
-              runId: runData.runId,
-              runName: runData.name,
-              codeCheckerVersion: runData.codeCheckerVersion
-            }))
-          );
-        })
-      );
-    });
-    _runs.push(..._limitedRuns);
-  }
-
-  return _runs;
-}
-
 async function fetchStatistics() {
   loading.value = true;
   await fetchProblematicRuns();
@@ -462,7 +421,13 @@ async function fetchStatistics() {
 
 async function fetchProblematicRuns() {
   loading.value = true;
-  const _runs = await getRunData();
+
+  const _filter = new RunFilter({
+    ids: baseStatistics.runIds.value
+  });
+
+  const _runs = await ccService.getRuns(_filter);
+
   problematicRuns.value = (await Promise.all(
     _runs.map(async runData => {
       var _analysisInfo = await analysisInfoComp.loadAnalysisInfo(

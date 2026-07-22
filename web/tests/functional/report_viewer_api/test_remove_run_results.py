@@ -18,6 +18,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
     ReportFilter, RunFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env
@@ -56,7 +57,7 @@ class RemoveRunResults(unittest.TestCase):
         run_names = env.get_run_names(test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -78,7 +79,8 @@ class RemoveRunResults(unittest.TestCase):
 
         run_filter = RunFilter(names=['remove_run_results'], exactMatch=True)
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(run_filter, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(
+            run_filter, MAX_QUERY_SIZE, 0, sort_mode)
         self.assertEqual(len(runs), 1)
 
         run_id = runs[0].runId

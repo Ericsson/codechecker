@@ -19,6 +19,7 @@ from shutil import copytree, rmtree
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
     ReportFilter, ReviewStatus, RunFilter, Severity
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 from codechecker_common.checker_labels import CheckerLabels
 
 from libtest import codechecker
@@ -151,7 +152,7 @@ int f(int x) { return 1 / x; }
         run_filter.names = [run_name]
         run_filter.exactMatch = True
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         return runs[0].runId
 
     def __get_files_in_report(self, run_name):
@@ -187,7 +188,7 @@ int f(int x) { return 1 / x; }
         run_filter.names = [run_name]
         run_filter.exactMatch = True
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         run_id = runs[0].runId
 
         reports = self._cc_client.getRunResults(
