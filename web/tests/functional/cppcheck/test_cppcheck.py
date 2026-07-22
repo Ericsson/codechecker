@@ -99,9 +99,12 @@ class CppCheck(unittest.TestCase):
         temp_workspace = os.path.join(codechecker_cfg['workspace'],
                                       'test_proj_code')
 
-        shutil.copytree(report_dir, temp_workspace,ignore=shutil.ignore_patterns('divide_zero_cppcheck.plist'))
+        shutil.copytree(report_dir, temp_workspace,
+                        ignore=shutil.ignore_patterns
+                        ('divide_zero_cppcheck.plist'))
 
-        report_file = os.path.join(temp_workspace, 'divide_zero_codechecker.plist')
+        report_file = os.path.join(temp_workspace,
+                                    'divide_zero_codechecker.plist')
         # Convert file paths to absolute in the report.
         plist_test.prefix_file_path(report_file, temp_workspace)
 
@@ -146,7 +149,8 @@ class CppCheck(unittest.TestCase):
 
         shutil.copytree(report_dir, temp_workspace)
 
-        report_file = os.path.join(temp_workspace, 'divide_zero_cppcheck.plist')
+        report_file = os.path.join(temp_workspace,
+                                    'divide_zero_cppcheck.plist')
         # Convert file paths to absolute in the report.
         plist_test.prefix_file_path(report_file, temp_workspace)
 
@@ -155,9 +159,9 @@ class CppCheck(unittest.TestCase):
                      # Use the 'Default' product.
                      '--url', env.parts_to_url(codechecker_cfg),
                      temp_workspace]
-        # As the plist file contains 0 as Hash the expected behaviour is to terminate with error code 1.
+        # As the plist file contains 0 as Hash the expected
+        # behaviour is to terminate with error code 1.
         result = subprocess.run(
-            store_cmd, encoding="utf-8", errors="ignore")
+            store_cmd, encoding="utf-8",
+              errors="ignore", check=False)
         self.assertEqual(result.returncode, 1)
-        
-

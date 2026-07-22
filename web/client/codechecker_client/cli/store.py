@@ -428,7 +428,7 @@ def get_reports(
         LOG.error("All bug hashes are 0 in the report file, which is no "
                   "longer supported. Please re-analyze the project using "
                   "CodeChecker!")
-        sys.exit(1);
+        sys.exit(1)
     return reports
 
 
