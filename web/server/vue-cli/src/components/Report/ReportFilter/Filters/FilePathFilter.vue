@@ -148,7 +148,7 @@
 
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter } from "@cc/report-server-types";
+import { MAX_QUERY_SIZE, ReportFilter } from "@cc/report-server-types";
 import { computed, ref, watch } from "vue";
 
 import {
@@ -309,12 +309,12 @@ function fetchAllFileCounts() {
     const fetchPage = offset => {
       ccService.getClient().getFileCounts(
         baseSelectOptionFilter.runIds.value, reportFilter,
-        baseSelectOptionFilter.cmpData.value, 500, offset,
+        baseSelectOptionFilter.cmpData.value, MAX_QUERY_SIZE, offset,
         handleThriftError(res => {
           const keys = Object.keys(res || {});
           keys.forEach(fp => { allCounts[fp] = res[fp]; });
-          if (keys.length >= 500) {
-            fetchPage(offset + 500);
+          if (keys.length >= MAX_QUERY_SIZE) {
+            fetchPage(offset + MAX_QUERY_SIZE);
           } else {
             allFileCounts.value = Object.assign({}, allCounts);
             resolve();
@@ -437,7 +437,7 @@ function fetchItems(opt={}) {
       _reportFilter,
       baseSelectOptionFilter.cmpData.value,
       _limit,
-      _offset, 
+      _offset,
       handleThriftError(res => {
       // Order the results alphabetically.
         resolve(Object.keys(res).sort((a, b) => {

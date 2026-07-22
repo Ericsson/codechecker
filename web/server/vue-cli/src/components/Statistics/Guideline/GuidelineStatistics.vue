@@ -104,7 +104,6 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
   Guideline,
-  MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
@@ -312,49 +311,14 @@ async function getAllGuidelineRules() {
   });
 }
 
-async function getRunData() {
+async function fetchStatistics() {
+  loading.value = true;
+
   const _filter = new RunFilter({
     ids: baseStatistics.runIds.value
   });
 
-  const _runCount = await new Promise(resolve => {
-    ccService.getClient().getRunCount(
-      _filter,
-      handleThriftError(runCnt => {
-        resolve(runCnt.toNumber());
-      })
-    );
-  });
-
-  const _runs = [];
-  const _limit = MAX_QUERY_SIZE;
-  for (let _offset = 0; _offset <= _runCount; _offset+=_limit) {
-    const _limitedRuns = await new Promise(resolve => {
-      ccService.getClient().getRunData(
-        _filter,
-        _limit,
-        _offset,
-        null,
-        handleThriftError(runDataList => {
-          resolve(
-            runDataList.map(runData => ({
-              runId: runData.runId,
-              runName: runData.name,
-              codeCheckerVersion: runData.codeCheckerVersion
-            }))
-          );
-        })
-      );
-    });
-    _runs.push(..._limitedRuns);
-  }
-
-  return _runs;
-}
-
-async function fetchStatistics() {
-  loading.value = true;
-  await fetchRuns();
+  runs.value = await ccService.getRuns(_filter);
 
   await getAllGuidelineRules();
 
@@ -371,13 +335,6 @@ async function fetchStatistics() {
 
   checker_stats.value = checker_stat_result;
   checker_stat(checker_stat_result);
-  loading.value = false;
-}
-
-async function fetchRuns() {
-  loading.value = true;
-  const _runs = await getRunData();
-  runs.value = _runs;
   loading.value = false;
 }
 

@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
     DiffType, Order, ReportFilter, ReviewStatus, RunHistoryFilter, \
     RunSortMode, RunSortType, Severity
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_report_converter.report import InvalidFileContentMsg
 
@@ -315,7 +316,7 @@ class DiffRemote(unittest.TestCase):
         run_names = env.get_run_names(self.test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
         self._test_runs = [run for run in runs if run.name in run_names]
 
         # There should be at least two runs for this test.
@@ -345,7 +346,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     ReportFilter(),
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -366,7 +367,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -401,7 +402,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getRunResults([base_run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  ReportFilter(),
@@ -421,7 +422,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.RESOLVED)
 
         diff_res = self._cc_client.getRunResults([base_run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  ReportFilter(),
@@ -443,7 +444,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -462,7 +463,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getRunResults([base_run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  ReportFilter(),
@@ -483,7 +484,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     report_filter,
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -564,7 +565,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     ReportFilter(),
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -675,7 +676,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
                                                     ReportFilter(),
                                                     cmp_data,
-                                                    None,
+                                                    MAX_QUERY_SIZE,
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -697,7 +698,7 @@ class DiffRemote(unittest.TestCase):
             self._cc_client.getCheckerCounts([base_run_id],
                                              ReportFilter(),
                                              cmp_data,
-                                             None,
+                                             MAX_QUERY_SIZE,
                                              0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -727,7 +728,7 @@ class DiffRemote(unittest.TestCase):
                     self._cc_client.getCheckerCounts([base_run_id],
                                                      checker_filter,
                                                      cmp_data,
-                                                     None,
+                                                     MAX_QUERY_SIZE,
                                                      0)
                 diff_dict = dict((res.name, res.count) for res in diff_res)
 
@@ -817,8 +818,8 @@ class DiffRemote(unittest.TestCase):
 
         def get_run_tags(tag_name):
             run_history_filter = RunHistoryFilter(tagNames=[tag_name])
-            return self._cc_client.getRunHistory([run_id], None, None,
-                                                 run_history_filter)
+            return self._cc_client.getRunHistory(
+                [run_id], MAX_QUERY_SIZE, None, run_history_filter)
 
         get_all_tags = get_run_tags('t*')
         self.assertEqual(len(get_all_tags), 3)
@@ -837,7 +838,7 @@ class DiffRemote(unittest.TestCase):
                                runTag=[new_tag_id])
 
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,
@@ -850,7 +851,7 @@ class DiffRemote(unittest.TestCase):
 
         cmp_data.diffType = DiffType.RESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,
@@ -863,7 +864,7 @@ class DiffRemote(unittest.TestCase):
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,
@@ -877,8 +878,8 @@ class DiffRemote(unittest.TestCase):
         """
         d = datetime(1992, 1, 1)
         tag_filter = ReportFilter(openReportsDate=int(d.timestamp()))
-        res = self._cc_client.getRunResults(None, 500, 0, [], tag_filter,
-                                            None, False)
+        res = self._cc_client.getRunResults(
+            None, MAX_QUERY_SIZE, 0, [], tag_filter, None, False)
 
         self.assertEqual(len(res), 0)
 
@@ -888,8 +889,8 @@ class DiffRemote(unittest.TestCase):
 
         def get_run_tags(tag_name):
             run_history_filter = RunHistoryFilter(tagNames=[tag_name])
-            return self._cc_client.getRunHistory([run_id], None, None,
-                                                 run_history_filter)
+            return self._cc_client.getRunHistory(
+                [run_id], MAX_QUERY_SIZE, None, run_history_filter)
 
         get_all_tags = get_run_tags('t*')
         self.assertEqual(len(get_all_tags), 3)
@@ -910,7 +911,7 @@ class DiffRemote(unittest.TestCase):
                                openReportsDate=new_tag_timestamp)
 
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,
@@ -923,7 +924,7 @@ class DiffRemote(unittest.TestCase):
 
         cmp_data.diffType = DiffType.RESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,
@@ -936,7 +937,7 @@ class DiffRemote(unittest.TestCase):
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
-                                                 500,
+                                                 MAX_QUERY_SIZE,
                                                  0,
                                                  [],
                                                  tag_filter,

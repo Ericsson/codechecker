@@ -19,6 +19,7 @@ from libtest import env
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
     LinesInFilesRequested, Order, ReportFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_web.shared import convert
 
@@ -51,7 +52,7 @@ class TestGetLinesInFile(unittest.TestCase):
         run_names = env.get_run_names(test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
-        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
 
