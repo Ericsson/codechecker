@@ -424,7 +424,7 @@ def get_reports(
     # value for the report hash by default. We used to correct this during the
     # store operation, but we no longer accept plists that are not compliant
     # with out plist specification in docs/tools/plist.md.
-    if all(r.report_hash == '0' for r in reports):
+    if reports and all(r.report_hash == '0' for r in reports):
         LOG.error("All bug hashes are 0 in the report file, which is no "
                   "longer supported. Please re-analyze the project using "
                   "CodeChecker!")
