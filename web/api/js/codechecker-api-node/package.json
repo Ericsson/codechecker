@@ -23,6 +23,6 @@
     "api"
   ],
   "dependencies": {
-    "thrift": "0.22.0"
+    "thrift": "0.23.0"
   }
 }
