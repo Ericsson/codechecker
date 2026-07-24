@@ -59,6 +59,19 @@ struct Product {
 }
 typedef list<Product> Products
 
+/* Mutually-exclusive ordering modes for the product list. Each mode maps to a
+ * single server-side ORDER BY (with the product id as a deterministic
+ * tie-breaker), so ordering is applied to the whole set before pagination. */
+enum ProductSortMode {
+  ACCESSRIGHT,          // Accessible-to-current-user products first (default).
+  NAMES_ASC,
+  NAMES_DESC,
+  RUNS_ASC,
+  RUNS_DESC,
+  LATEST_STORE_ASC,
+  LATEST_STORE_DESC
+}
+
 service codeCheckerProductService {
 
   // Returns the CodeChecker version that is running on the server.
@@ -78,7 +91,8 @@ service codeCheckerProductService {
   Products getProducts(1: string productEndpointFilter,
                        2: string productNameFilter,
                        3: optional i64 limit,
-                       4: optional i64 offset)
+                       4: optional i64 offset,
+                       5: optional ProductSortMode sortingMode)
                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
   Product getCurrentProduct()

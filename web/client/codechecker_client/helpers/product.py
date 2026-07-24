@@ -39,7 +39,8 @@ class ThriftProductHelper(BaseClientHelper):
                     product_endpoint_filter,
                     product_name_filter,
                     limit,
-                    offset):
+                    offset,
+                    sorting_mode=None):
         pass
 
     @thrift_client_call
