@@ -3,6 +3,7 @@
     <v-data-table-server
       v-model:page="page"
       v-model:items-per-page="itemsperpage"
+      v-model:sort-by="sortBy"
       :headers="headers"
       :items="products"
       :loading="loading"
@@ -139,7 +140,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useDateUtils } from "@/composables/useDateUtils";
@@ -159,6 +160,7 @@ const { prettifyDate } = useDateUtils();
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
+import { ProductSortMode } from "@cc/prod-types";
 
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
 import {
@@ -175,8 +177,7 @@ const itemsPerPageOptions = [
   { value: 100, title: "100" }
 ];
 
-const sortBy = ref(null);
-const sortDesc = ref(null);
+const sortBy = ref([]);
 const page = ref(null);
 const itemsperpage = ref(25);
 const productNameSearch = ref(null);
@@ -186,25 +187,15 @@ const isSuperUser = ref(false);
 const isAdminOfAnyProduct = ref(false);
 const itemsLength = ref(0);
 
-const pagination = computed(() => ({
-  sortBy: sortBy.value ? [ sortBy.value ] : [ ],
-  sortDesc: sortDesc.value !== undefined ? [ !!sortDesc.value ] : [ ]
-}));
-
-watch(pagination, () => {
-  const sortByValue = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDescValue = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+watch(sortBy, () => {
+  const sort = sortBy.value?.[0];
 
   router.replace({
     query: {
-      "sort-by": sortByValue,
-      "sort-desc": sortDescValue,
+      "sort-by": sort?.key,
+      "sort-desc": sort ? sort.order === "desc" : undefined,
     }
   }).catch(() => {});
-
-  products.value.sort(sortProducts);
 }, { deep: true });
 
 watch(page, () => {
@@ -231,35 +222,39 @@ watch(productNameSearch, debouncedSearchHandler);
 const headers = ref([
   {
     title: "Name",
-    value: "displayedName",
+    key: "displayedName",
     sortable: true
   },
   {
     title: "Admins",
-    value: "admins",
+    key: "admins",
     sortable: false
   },
   {
     title: "Number of runs",
-    value: "runCount",
+    key: "runCount",
     align: "center",
     sortable: true
   },
   {
     title: "Latest store to product",
-    value: "latestStoreToProduct",
+    key: "latestStoreToProduct",
     sortable: true
   },
   {
     title: "Actions",
-    value: "actions",
+    key: "actions",
     sortable: false
   },
 ]);
 
 onMounted(() => {
-  sortBy.value = route.query["sort-by"];
-  sortDesc.value = route.query["sort-desc"];
+  if (route.query["sort-by"]) {
+    sortBy.value = [ {
+      key: route.query["sort-by"],
+      order: route.query["sort-desc"] === "true" ? "desc" : "asc"
+    } ];
+  }
   page.value = parseInt(route.query["page"]) || 1;
   itemsperpage.value = props.itemsPerPage;
 
@@ -286,6 +281,7 @@ function fetchProducts() {
     productNameFilter,
     itemsperpage.value,
     itemsperpage.value * (page.value - 1),
+    getSortingMode(),
     handleThriftError(_products => {
       products.value = _products.map(product => {
         const description = product.description_b64 ?
@@ -298,53 +294,29 @@ function fetchProducts() {
           displayedName,
           ...product
         };
-      }).sort(sortProducts);
-
-      pagination.value.page = page.value;
+      });
 
       loading.value = false;
     }));
 }
 
-function sortProducts(p1, p2) {
-  const sortBy = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDesc = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+function getSortingMode() {
+  const sort = sortBy.value?.[0];
+  const desc = sort?.order === "desc";
 
-  let p1Value = null;
-  let p2Value = null;
-
-  if (sortBy === undefined) {
-    // By default sort runs by displayed name and put products to the end
-    // of list which are not accessible by the current user.
-    if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
-
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "displayedName") {
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "runCount") {
-    p1Value = p1.runCount;
-    p2Value = p2.runCount;
-  } else if (sortBy === "latestStoreToProduct") {
-    p1Value = p1.latestStoreToProduct
-      ? new Date(p1.latestStoreToProduct)
-      : null;
-    p2Value = p2.latestStoreToProduct
-      ? new Date(p2.latestStoreToProduct)
-      : null;
-  } else {
-    console.warn("Invalid sort field: ", sortBy);
+  switch (sort?.key) {
+  case "displayedName":
+    return desc ? ProductSortMode.NAMES_DESC : ProductSortMode.NAMES_ASC;
+  case "runCount":
+    return desc ? ProductSortMode.RUNS_DESC : ProductSortMode.RUNS_ASC;
+  case "latestStoreToProduct":
+    return desc
+      ? ProductSortMode.LATEST_STORE_DESC
+      : ProductSortMode.LATEST_STORE_ASC;
+  default:
+    // No column selected -> accessible-to-current-user products first.
+    return ProductSortMode.ACCESSRIGHT;
   }
-
-  if (sortDesc) [ p1Value, p2Value ] = [ p2Value, p1Value ];
-
-  if (p1Value < p2Value) return -1;
-  if (p1Value > p2Value) return 1;
-
-  return 0;
 }
 
 function onCompleteNewProduct() {
@@ -373,7 +345,7 @@ function initializeComponent() {
 
             if (!isAdmin) {
               headers.value.splice(
-                headers.value.findIndex(h => h.value === "actions"), 1
+                headers.value.findIndex(h => h.key === "actions"), 1
               );
             }
           }));

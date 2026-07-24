@@ -148,7 +148,7 @@ class TestProductConfigShare(unittest.TestCase):
         # Check if the main server's product is visible on the second server.
         self.assertEqual(
             self._pr_client_2.getProducts(self.product_name, None,
-                                          None, None)[0].endpoint,
+                                          None, None, None)[0].endpoint,
             self.product_name,
             "Main server's product was not loaded by the secondary server.")
 
@@ -182,21 +182,21 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Product name full string match.
         products = self._pr_client_2.getProducts('producttest_second', None,
-                                                 None, None)
+                                                 None, None, None)
         self.assertEqual(len(products), 1)
 
         # Product endpoint full string match.
         products = self._pr_client_2.getProducts(None, 'producttest_second',
-                                                 None, None)
+                                                 None, None, None)
         self.assertEqual(len(products), 1)
 
         # Product name substring match.
         products = self._pr_client_2.getProducts('producttest_second*', None,
-                                                 None, None)
+                                                 None, None, None)
         self.assertEqual(len(products), 1)
 
         products = self._pr_client_2.getProducts(None, 'producttest_second*',
-                                                 None, None)
+                                                 None, None, None)
         self.assertEqual(len(products), 1)
 
         # Use the same CodeChecker config that was used on the main server,

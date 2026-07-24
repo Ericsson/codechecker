@@ -263,7 +263,8 @@ def _build_filter(args: Namespace,
             try:
                 products: List[Product] = cast(
                     List[Product],
-                    get_product_api().getProducts(endpoint, None, None, None))
+                    get_product_api().getProducts(endpoint, None, None, None,
+                                                  None))
                 # Endpoints substring-match.
                 product = next(p for p in products if p.endpoint == endpoint)
                 p_id = cast(int, product.id)
@@ -362,7 +363,8 @@ def _transform_product_ids_to_endpoints(
             product_id_to_endpoint = {
                 product.id: product.endpoint
                 for product
-                in get_product_api().getProducts(None, None, None, None)}
+                in get_product_api().getProducts(None, None, None, None,
+                                                 None)}
             ti["productEndpoint"] = product_id_to_endpoint[ti["productId"]]
         del ti["productId"]
 
