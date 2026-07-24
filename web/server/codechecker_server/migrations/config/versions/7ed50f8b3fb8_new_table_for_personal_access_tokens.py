@@ -81,7 +81,7 @@ def downgrade():
         'auth_sessions',
         sa.Column('can_expire',
                   sa.Boolean(),
-                  server_default=sa.text('true'),
+                  server_default=sa.true(),
                   nullable=True))
 
     op.drop_table('personal_access_tokens')
