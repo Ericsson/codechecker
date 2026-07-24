@@ -34,7 +34,7 @@
     "@mdi/font": "^6.9.96",
     "chart.js": "^4.5.1",
     "chartjs-plugin-datalabels": "^2.2.0",
-    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.72.0.tgz",
+    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.73.0.tgz",
     "codemirror": "^6.0.2",
     "date-fns": "^2.30.0",
     "dompurify": "^3.4.11",
