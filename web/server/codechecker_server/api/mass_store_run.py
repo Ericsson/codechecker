@@ -46,9 +46,9 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import \
-    AnalysisInfo, AnalysisInfoChecker, AnalyzerStatistic, \
+    AnalysisInfo, AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
-    Checker, \
+    Checker, CheckerSet, CheckerSetItem, \
     ExtendedReportData, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
@@ -62,6 +62,8 @@ from ..session_manager import SessionManager
 from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
 from .thrift_enum_helper import report_extended_data_type_str
+
+from sqlalchemy.orm import Session as SA_Session
 
 
 LOG = get_logger('server')
@@ -1002,7 +1004,7 @@ class MassStoreRun:
 
     def __store_analysis_info(
         self,
-        session: DBSession,
+        session: SA_Session,
         run_history: RunHistory
     ):
         """ Store analysis info for the given run history. """
@@ -1012,38 +1014,64 @@ class MassStoreRun:
                     analyzer_command.encode("utf-8"),
                     zlib.Z_BEST_COMPRESSION)
 
-                analysis_info_rows = session \
-                    .query(AnalysisInfo) \
-                    .filter(AnalysisInfo.analyzer_command == cmd) \
-                    .all()
+                enabled_checkers: List[int] = []
+                disabled_checkers: List[int] = []
+                for analyzer in mip.analyzers:
+                    q = session \
+                        .query(Checker) \
+                        .filter(Checker.analyzer_name == analyzer)
+                    db_checkers = {r.checker_name: r for r in q.all()}
 
-                if analysis_info_rows:
-                    # It is possible when multiple runs are stored
-                    # simultaneously to the server with the same analysis
-                    # command that multiple entries are stored into the
-                    # database. In this case we will select the first one.
-                    analysis_info = analysis_info_rows[0]
-                else:
-                    analysis_info = AnalysisInfo(analyzer_command=cmd)
+                    for chk, is_enabled in \
+                            mip.checkers.get(analyzer, {}).items():
+                        if is_enabled:
+                            enabled_checkers.append(db_checkers[chk].id)
+                        else:
+                            disabled_checkers.append(db_checkers[chk].id)
 
-                    # Obtain the ID eagerly to be able to use the M-to-N table.
-                    session.add(analysis_info)
-                    session.flush()
-                    session.refresh(analysis_info, ["id"])
+                # Check if the CheckerSet was already used before.
+                checker_set_hash = CheckerSet.compute_hash(enabled_checkers,
+                                                           disabled_checkers)
+                checker_set = session.query(CheckerSet) \
+                    .filter(CheckerSet.hash_digest == checker_set_hash) \
+                    .first()
 
-                    for analyzer in mip.analyzers:
-                        q = session \
-                            .query(Checker) \
-                            .filter(Checker.analyzer_name == analyzer)
-                        db_checkers = {r.checker_name: r for r in q.all()}
+                # If not, create a new CheckerSet and insert to db
+                if not checker_set:
+                    try:
+                        with session.begin_nested():
+                            checker_set = CheckerSet(checker_set_hash)
+                            # Obtain CheckerSet id eagerly.
+                            session.add(checker_set)
+                            session.flush()
+                            session.refresh(checker_set, ["id"])
+                            LOG.info(
+                                "[%s] Created new CheckerSet with hash '%s'",
+                                self._name, checker_set_hash)
 
-                        connection_rows = [AnalysisInfoChecker(
-                            analysis_info, db_checkers[chk], is_enabled)
-                            for chk, is_enabled
-                            in mip.checkers.get(analyzer, {}).items()]
-                        for r in connection_rows:
-                            session.add(r)
+                            # Insert checkers as elements of this newly
+                            # created CheckerSet
+                            for e in enabled_checkers:
+                                session.add(CheckerSetItem(checker_set.id,
+                                                           e, True))
+                            for d in disabled_checkers:
+                                session.add(CheckerSetItem(checker_set.id,
+                                                           d, False))
+                    except Exception:
+                        # Meanwhile, another store operation already
+                        # inserted this CheckerSet, query the existing
+                        # one from db
+                        checker_set = session.query(CheckerSet) \
+                            .filter(
+                                CheckerSet.hash_digest == checker_set_hash) \
+                            .first()
 
+                if not checker_set:
+                    raise RuntimeError(
+                        "Failed to query CheckerSet from database!")
+
+                analysis_info = AnalysisInfo(analyzer_command=cmd,
+                                             checker_set_id=checker_set.id)
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
 

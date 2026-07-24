@@ -64,10 +64,10 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
+    AnalysisInfo, \
     AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
-    CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
+    CleanupPlan, CleanupPlanReportHash, Checker, CheckerSetItem, Comment, \
     ExtendedReportData, \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
@@ -1949,11 +1949,11 @@ class ThriftRequestHandler:
                     checkers_q = session \
                         .query(Checker.analyzer_name,
                                Checker.checker_name,
-                               DB_AnalysisInfoChecker.enabled) \
-                        .join(Checker, DB_AnalysisInfoChecker.checker_id ==
+                               CheckerSetItem.enabled) \
+                        .join(Checker, CheckerSetItem.checker_id ==
                               Checker.id) \
-                        .filter(DB_AnalysisInfoChecker.
-                                analysis_info_id == cmd.id)
+                        .filter(CheckerSetItem.checker_set_id ==
+                                cmd.checker_set_id)
 
                     checkers: Dict[str, Dict[str, API_AnalysisInfoChecker]] = \
                         defaultdict(dict)
@@ -3383,12 +3383,12 @@ class ThriftRequestHandler:
                 )
                 .join(RunHistory)
                 .join(AnalysisInfo, RunHistory.analysis_info)
-                .join(DB_AnalysisInfoChecker, (
-                    (AnalysisInfo.id ==
-                     DB_AnalysisInfoChecker.analysis_info_id)
-                    & (DB_AnalysisInfoChecker.enabled.is_(True))))
+                .join(CheckerSetItem, (
+                    (AnalysisInfo.checker_set_id ==
+                     CheckerSetItem.checker_set_id)
+                    & (CheckerSetItem.enabled.is_(True))))
                 .join(Checker,
-                      DB_AnalysisInfoChecker.checker_id == Checker.id)
+                      CheckerSetItem.checker_id == Checker.id)
                 .outerjoin(Report, ((Checker.id == Report.checker_id)
                                     & (Run.id == Report.run_id)))
                 .filter(RunHistory.id == max_run_histories.subquery()
