@@ -18,6 +18,18 @@
       >
         {{ isCopied ? 'mdi-check' : 'mdi-content-copy' }}
       </v-icon>
+      <v-chip
+        v-if="value && docUrl"
+        class="ml-2"
+        size="x-small"
+        color="primary"
+        :ripple="false"
+        append-icon="mdi-open-in-new"
+        :href="props.docUrl"
+        target="_blank"
+      >
+        Documentation
+      </v-chip>
     </div>
     <div
       class="text-body-1 font-weight-medium"
@@ -54,7 +66,8 @@ const props = defineProps({
   value: { type: Object, default: null },
   query: { type: Object, default: null },
   chip: { type: Boolean, default: false },
-  iconShown: { type: Boolean, default: false }
+  iconShown: { type: Boolean, default: false },
+  docUrl: { type: String, default: null }
 });
 
 const gradientColor = useGradientColor();

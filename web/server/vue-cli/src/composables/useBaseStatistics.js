@@ -8,15 +8,15 @@ export function useBaseStatistics(props, getStatisticsFunction) {
   const statistics = ref([]);
 
   const runIds = computed(function() {
-    return store.getters[`${props.namespace}/getRunIds`];
+    return store.getters.getRunIds;
   });
 
   const reportFilter = computed(function() {
-    return store.getters[`${props.namespace}/getReportFilter`];
+    return store.getters.getReportFilter;
   });
 
   const cmpData = computed(function() {
-    return store.getters[`${props.namespace}/getCmpData`];
+    return store.getters.getCmpData;
   });
 
   function updateCalculatedFields(oldValues, newValues, type) {

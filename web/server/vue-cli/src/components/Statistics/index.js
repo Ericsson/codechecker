@@ -12,7 +12,6 @@ import CheckerCoverageStatisticsTable
   from "./CheckerCoverage/CheckerCoverageStatisticsTable";
 import ComponentStatistics from "./Component/ComponentStatistics";
 import ComponentStatisticsTable from "./Component/ComponentStatisticsTable";
-import defaultStatisticsFilterValues from "./DefaultStatisticsFilterValues";
 import ReportDiffCount from "./ReportDiffCount";
 import SeverityStatistics from "./Severity/SeverityStatistics";
 
@@ -31,7 +30,7 @@ export {
   CheckerStatisticsTable,
   ComponentStatistics,
   ComponentStatisticsTable, ReportDiffCount,
-  SeverityStatistics, UniqueStatWarning, defaultStatisticsFilterValues,
+  SeverityStatistics, UniqueStatWarning,
   getCheckerStatistics,
   getComponentStatistics,
   getComponents,

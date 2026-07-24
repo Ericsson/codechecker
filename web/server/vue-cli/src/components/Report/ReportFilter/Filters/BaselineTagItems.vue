@@ -59,12 +59,7 @@
 
 <script setup>
 import { endOfDay, parse } from "date-fns";
-import {
-  onMounted,
-  ref,
-  toRef,
-  watch
-} from "vue";
+import { onMounted, ref, watch } from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
 import { DateInterval, ReportFilter } from "@cc/report-server-types";
@@ -77,7 +72,6 @@ import { useDateUtils } from "@/composables/useDateUtils";
 import Items from "./SelectOption/Items";
 
 const props = defineProps({
-  namespace: { type: String, required: true },
   runId: { type: Number, required: true },
   selectedItems: { type: Array, default: null },
   limit: { type: Number, required: true }
@@ -97,9 +91,7 @@ const filterOpt = ref({});
 
 const { getUnixTime, prettifyDate } = useDateUtils();
 
-const baseSelectOptionFilter = useBaseSelectOptionFilter(
-  toRef(props, "namespace")
-);
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 
 watch(() => props.runId, async () => {
   tags.value = await fetchTags(filterOpt.value);

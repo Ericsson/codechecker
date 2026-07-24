@@ -111,8 +111,11 @@ router.afterEach(to => {
     || to.name === "checker-statistics"
     || to.name === "severity-statistics"
     || to.name === "component-statistics"
-  )
+    || to.name === "checker-coverage-statistics"
+    || to.name === "guideline-statistics"
+  ) {
     query_namespace = "report_filter";
+  }
 
   store.commit(SET_QUERIES, { location: query_namespace, query: to.query });
 });
