@@ -1370,20 +1370,6 @@ def get_rs_rule_query(
     return q
 
 
-def get_run_id_expression(session, report_filter):
-    """
-    Get run id or concatenated run id list by the unique mode and the DB type
-    """
-    if report_filter.isUnique:
-        if session.bind.dialect.name == "postgresql":
-            return func.string_agg(
-                cast(Run.id, sqlalchemy.String).distinct(),
-                ','
-            ).label("run_id")
-        return func.group_concat(Run.id.distinct()).label("run_id")
-    return Run.id.label("run_id")
-
-
 def remove_reports(session: DBSession,
                    report_ids: Collection,
                    chunk_size: int = SQLITE_MAX_VARIABLE_NUMBER):
@@ -3428,12 +3414,10 @@ class ThriftRequestHandler:
             )
 
             runs_unknown_checker_status = {}
-            resultcount = 0
             for (checker_id, checker_name, analyzer_name,
                  severity, run_id_list,
                  checker_enabled) in checker_status_query.all():
                 if checker_id:
-                    resultcount += 1
                     checker_stat = checker_stats[checker_id]
 
                     if checker_enabled:

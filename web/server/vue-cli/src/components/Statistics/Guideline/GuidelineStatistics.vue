@@ -51,7 +51,6 @@
       </v-row>
       <v-row class="ma-0">
         <v-col
-          v-if="!problematicRuns.length"
           cols="12"
           class="pa-0"
         >
@@ -91,55 +90,6 @@
             @enabled-click="showingRuns"
           />
         </v-col>
-        <v-col
-          v-else
-          cols="12"
-          class="pa-0"
-        >
-          <v-alert
-            v-if="noProperRun"
-            icon="mdi-alert"
-            class="mt-2"
-            color="deep-orange"
-            variant="outlined"
-          >
-            There is no proper run for <strong>guideline</strong>
-            statistics. Please create a new run first that analysed
-            natively with <strong>6.24</strong>
-            or above version of CodeChecker!
-          </v-alert>
-          <v-alert
-            v-else
-            icon="mdi-alert"
-            class="mt-2"
-            color="deep-orange"
-            variant="outlined"
-          >
-            The guideline statistics is not available
-            for
-            <span
-              style="cursor: pointer; text-decoration: underline;"
-              @click="showingRuns('problematic', null)"
-            >
-              <strong>some of</strong>
-            </span>
-            the selected runs.
-            <br>
-            Please modify the run filter or click the
-            <span
-              style="cursor: pointer; text-decoration: underline;"
-              @click="cleanRunList"
-            >
-              <strong>restrict selection</strong>
-            </span>
-            button to get relevant statistics.
-            <br>
-          </v-alert>
-          <guideline-statistics-table
-            :items="[]"
-            :loading="loading"
-          />
-        </v-col>
       </v-row>
     </v-col>
   </v-container>
@@ -159,7 +109,6 @@ import {
   RunFilter
 } from "@cc/report-server-types";
 import { computed, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import StatisticsDialog from "../StatisticsDialog";
 import GuidelineStatisticsTable from "./GuidelineStatisticsTable";
 
@@ -167,13 +116,9 @@ const props = defineProps({
   bus: { type: Object, required: true }
 });
 
-const emit = defineEmits([ "refresh-filter" ]);
-const router = useRouter();
-const route = useRoute();
 const severity = useSeverity();
 const toCSV = useToCSV();
 const baseStatistics = useBaseStatistics(props, null);
-//const analysisInfoComp = useAnalysisInfo();
 
 const guidelineOptions = ref([
   {
@@ -206,7 +151,6 @@ const all_guideline_rules = ref({});
 const checker_stats = ref({});
 const loading = ref(false);
 const noProperRun = ref(false);
-const problematicRuns = ref([]);
 const runs = ref(null);
 const runData = ref([]);
 const selectedCheckerName = ref(null);
@@ -215,17 +159,10 @@ const showRuns = ref({
   enabled: false,
   disabled: false,
   unknown: false,
-  problematic: false
 });
 const statistics = ref([]);
 const type = ref(null);
 const hideNotOutstanding = ref(false);
-
-const actualRunNames = computed(() => {
-  return runs.value.filter(run => !problematicRuns.value.map(
-    problematicRun => problematicRun.runId
-  ).includes(run.runId)).map(run => run.runName);
-});
 
 const selectedGuidelines = computed(() => selectedGuidelineIndexes.value.map(
   idx => new Guideline({ guidelineName: guidelineOptions.value[idx].id })
@@ -417,7 +354,7 @@ async function getRunData() {
 
 async function fetchStatistics() {
   loading.value = true;
-  await fetchProblematicRuns();
+  await fetchRuns();
 
   await getAllGuidelineRules();
 
@@ -437,7 +374,7 @@ async function fetchStatistics() {
   loading.value = false;
 }
 
-async function fetchProblematicRuns() {
+async function fetchRuns() {
   loading.value = true;
   const _runs = await getRunData();
   runs.value = _runs;
@@ -447,44 +384,26 @@ async function fetchProblematicRuns() {
 function showingRuns(_type, _checker_name) {
   type.value = _type;
   selectedCheckerName.value = _checker_name;
-  if ( _type === "problematic" ) {
-    runData.value = problematicRuns.value;
+
+  const _checker_id = Object.keys(checker_stats.value).find(_checker_id =>
+    checker_stats.value[_checker_id].checkerName === _checker_name
+  );
+
+  if (_checker_id) {
+    runData.value = checker_stats.value[_checker_id][_type].map(
+      run_id => runs.value.find(
+        runData => runData.runId.toNumber() === run_id.toNumber()
+      )
+    );
   }
   else {
-    const _checker_id = Object.keys(checker_stats.value).find(_checker_id =>
-      checker_stats.value[_checker_id].checkerName === _checker_name
-    );
-
-    if (_checker_id) {
-      runData.value = checker_stats.value[_checker_id][_type].map(
-        run_id => runs.value.find(
-          runData => runData.runId.toNumber() === run_id.toNumber()
-        )
-      );
-    }
-    else {
-      runData.value = runs.value;
-    }
+    runData.value = runs.value;
   }
+
 
   showRuns.value[_type] = true;
 }
 
-function cleanRunList() {
-  if ( actualRunNames.value.length ){
-    router.replace({
-      query: {
-        ...route.query,
-        "run": actualRunNames.value
-      }
-    }).then(() => {
-      emit("refresh-filter");
-    }).catch(() => {});
-  }
-  else {
-    noProperRun.value = true;
-  }
-}
 </script>
 
 <style>
