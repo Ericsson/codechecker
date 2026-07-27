@@ -57,7 +57,7 @@ const props = defineProps({
   numTotal: { type: Number, default: 0 },
   goodText: { type: String, default: "" },
   badText: { type: String, default: "" },
-  unkownText: { type: String, default: "" },
+  unknownText: { type: String, default: "" },
   showZeroChips: { type: Boolean, default: false },
 });
 
