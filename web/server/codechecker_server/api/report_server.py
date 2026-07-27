@@ -3397,11 +3397,11 @@ class ThriftRequestHandler:
             # Queries if the checkers were enabled/disabled in the
             # selected runs. With older CodeChecker clients, the
             # enable/disable status is unknown.
-            run_group_func =  func.string_agg(
+            run_group_func = func.string_agg(
                 cast(Run.id, sqlalchemy.String).distinct(),
                 ',').label("run_id") if session.bind.dialect.name \
-                    == "postgresql" \
-                    else func.group_concat(Run.id.distinct()).label("run_id")
+                == "postgresql" \
+                else func.group_concat(Run.id.distinct()).label("run_id")
             checker_status_query = (
                 session.query(
                     Checker.id.label("checker_id"),
