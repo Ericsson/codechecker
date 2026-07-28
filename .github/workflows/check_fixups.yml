@@ -1,0 +1,30 @@
+name: Git Fixup Commit Check
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  check_fixups:
+    name: Check for fixup commits
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify commit messages
+        run: |
+          echo "Checking commit messages for fixup commits... "
+          FIXUPS=$(git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} --oneline | grep -E "^[a-f0-9]+ fixup!" || true)
+          if [ -n "$FIXUPS" ]; then
+            echo "ERROR: Found 'fixup!' commits in this pull request. Please squash them before merging!"
+            echo "Found items:"
+            echo "$FIXUPS"
+            exit 1
+          fi
+
+          echo "No fixup! commits found!"
