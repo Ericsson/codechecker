@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-data-table-server
       v-model:page="page"
-      v-model:items-per-page="itemsperpage"
+      v-model:items-per-page="itemsPerPage"
       v-model:sort-by="sortBy"
       :headers="headers"
       :items="products"
@@ -148,10 +148,6 @@ import { useGradientColor } from "@/composables/useGradientColor";
 
 import _ from "lodash";
 
-const props = defineProps({
-  itemsPerPage: { type: Number, default: 25 },
-});
-
 const route = useRoute();
 const router = useRouter();
 const gradientColor = useGradientColor();
@@ -179,7 +175,9 @@ const itemsPerPageOptions = [
 
 const sortBy = ref([]);
 const page = ref(null);
-const itemsperpage = ref(25);
+const itemsPerPage = ref(
+  parseInt(route.query["items-per-page"]) || itemsPerPageOptions[0].value
+);
 const productNameSearch = ref(null);
 const loading = ref(null);
 const products = ref([]);
@@ -187,29 +185,28 @@ const isSuperUser = ref(false);
 const isAdminOfAnyProduct = ref(false);
 const itemsLength = ref(0);
 
-watch(sortBy, () => {
+function updateUrl() {
+  const defaultItemsPerPage = itemsPerPageOptions[0].value;
   const sort = sortBy.value?.[0];
 
   router.replace({
     query: {
+      ...route.query,
+      "page": page.value === 1 ? undefined : page.value,
+      "items-per-page": itemsPerPage.value === defaultItemsPerPage
+        ? undefined : itemsPerPage.value,
       "sort-by": sort?.key,
       "sort-desc": sort ? sort.order === "desc" : undefined,
     }
   }).catch(() => {});
-}, { deep: true });
+}
 
-watch(page, () => {
-  const page = page === 1 ? undefined : page;
-  router.replace({
-    query: {
-      "page": page
-    }
-  }).catch(() => {});
-});
+watch([ page, itemsPerPage, sortBy ], updateUrl, { deep: true });
 
 const debouncedSearchHandler = _.debounce(() => {
   router.replace({
     query: {
+      ...route.query,
       "name": productNameSearch.value || undefined
     }
   }).catch(() => {});
@@ -256,7 +253,6 @@ onMounted(() => {
     } ];
   }
   page.value = parseInt(route.query["page"]) || 1;
-  itemsperpage.value = props.itemsPerPage;
 
   getTotalProducts();
   initializeComponent();
@@ -279,8 +275,8 @@ function fetchProducts() {
   prodService.getClient().getProducts(
     null,
     productNameFilter,
-    itemsperpage.value,
-    itemsperpage.value * (page.value - 1),
+    itemsPerPage.value,
+    itemsPerPage.value * (page.value - 1),
     getSortingMode(),
     handleThriftError(_products => {
       products.value = _products.map(product => {

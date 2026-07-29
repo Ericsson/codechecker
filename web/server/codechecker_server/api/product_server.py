@@ -13,12 +13,10 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
-from sqlalchemy import text
+
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import exists, or_, func, nullslast
-
-
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, text, exists, or_, \
+    func, nullslast
 from sqlalchemy.engine.url import URL
 
 import codechecker_api_shared
@@ -44,15 +42,8 @@ LOG = get_logger('server')
 
 def _product_view_permission_names():
     """
-    Names of all product-scope permissions that grant PRODUCT_VIEW
-    (transitively), derived from the permission inheritance graph so the set
-    cannot silently drift if the permission definitions change.
-
-    Today this resolves to
-    {PRODUCT_VIEW, PRODUCT_ACCESS, PRODUCT_ADMIN, PRODUCT_STORE}. SUPERUSER is
-    auto-injected into every inheritance chain but is dropped here because it
-    is a system-scope permission (stored in permissions_system) and can never
-    match a permissions_product row.
+    Return the set of product-scope permission names that grant PRODUCT_VIEW,
+    transitively, derived from the permission inheritance graph.
     """
     granting = set()
     stack = [permissions.PRODUCT_VIEW]
@@ -63,6 +54,9 @@ def _product_view_permission_names():
         granting.add(perm)
         stack.extend(perm.inherited_from)
 
+    # Keep only product-scope permissions: SUPERUSER is injected into every
+    # inheritance chain but is system-scope and never matches a
+    # permissions_product row.
     return {p.name for p in granting
             if isinstance(p, permissions.ProductPermission)}
 
@@ -268,7 +262,6 @@ class ThriftProductHandler:
                 endpoints = [e for (e,) in session.query(Product.endpoint)]
                 self.__server.remove_products_except(endpoints)
 
-            # 1) Filter the full set.
             if product_endpoint_filter:
                 prods = prods.filter(Product.endpoint.ilike(
                     conv(escape_like(product_endpoint_filter, '\\')),
@@ -279,12 +272,9 @@ class ThriftProductHandler:
                     conv(escape_like(product_name_filter, '\\')),
                     escape='\\'))
 
-            # 2) Sort the full filtered set (id is the tie-breaker), so
-            #    ordering is meaningful across pages.
             prods = prods.order_by(*self.__product_order(session,
                                                          sorting_mode))
 
-            # 3) Paginate last, slicing the already-ordered result.
             if limit is not None or offset is not None:
                 prods = prods.offset(offset).limit(limit)
 
