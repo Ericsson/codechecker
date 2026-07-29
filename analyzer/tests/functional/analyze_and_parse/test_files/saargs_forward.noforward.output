@@ -23,6 +23,7 @@ Found no defects in saargs_forward.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 0 │
 └───────────────────────────────────────────┴───┘
 ----=================----

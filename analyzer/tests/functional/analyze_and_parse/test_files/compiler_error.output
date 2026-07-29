@@ -27,6 +27,7 @@ Found 1 defect(s) in compiler_error.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
+├──────────┼───────────────────┤
 │ CRITICAL │ 1                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -34,6 +35,7 @@ Found 1 defect(s) in compiler_error.cpp
 ----==== Checker Statistics ====----
 ┌────────────────────────┬──────────┬───────────────────┐
 │ Checker name           │ Severity │ Number of reports │
+├────────────────────────┼──────────┼───────────────────┤
 │ clang-diagnostic-error │ CRITICAL │ 1                 │
 └────────────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -41,6 +43,7 @@ Found 1 defect(s) in compiler_error.cpp
 ----==== File Statistics ====----
 ┌────────────────────┬───────────────────┐
 │ File name          │ Number of reports │
+├────────────────────┼───────────────────┤
 │ compiler_error.cpp │ 1                 │
 └────────────────────┴───────────────────┘
 ----=================----
@@ -48,6 +51,7 @@ Found 1 defect(s) in compiler_error.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 1 │
 └───────────────────────────────────────────┴───┘
 ----=================----

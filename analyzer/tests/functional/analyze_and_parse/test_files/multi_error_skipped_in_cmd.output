@@ -41,6 +41,7 @@ Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
+├──────────┼───────────────────┤
 │ HIGH     │ 3                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -48,6 +49,7 @@ Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
 ----==== Checker Statistics ====----
 ┌────────────────────────────┬──────────┬───────────────────┐
 │ Checker name               │ Severity │ Number of reports │
+├────────────────────────────┼──────────┼───────────────────┤
 │ bugprone-sizeof-expression │ HIGH     │ 3                 │
 └────────────────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -55,6 +57,7 @@ Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
 ----==== File Statistics ====----
 ┌────────────────────────────────┬───────────────────┐
 │ File name                      │ Number of reports │
+├────────────────────────────────┼───────────────────┤
 │ multi_error_skipped_in_cmd.HPP │ 1                 │
 │ multi_error_skipped_in_cmd.cpp │ 1                 │
 │ multi_error_skipped_in_cmd.h   │ 1                 │
@@ -64,6 +67,7 @@ Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 3 │
 └───────────────────────────────────────────┴───┘
 ----=================----

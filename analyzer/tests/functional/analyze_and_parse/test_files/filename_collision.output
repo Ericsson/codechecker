@@ -32,6 +32,7 @@ Found 1 defect(s) in f.cpp
 ----==== Summary ====----
 ┌──────────┬──────────────┐
 │ Filename │ Report count │
+├──────────┼──────────────┤
 │ f.cpp    │ 1            │
 │ f.cpp    │ 1            │
 │ Severity │ Report count │

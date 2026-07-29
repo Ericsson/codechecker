@@ -28,6 +28,7 @@ Found 1 defect(s) in multi_error_suppress_cstyle.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
+├──────────┼───────────────────┤
 │ HIGH     │ 1                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -35,6 +36,7 @@ Found 1 defect(s) in multi_error_suppress_cstyle.cpp
 ----==== Checker Statistics ====----
 ┌─────────────────┬──────────┬───────────────────┐
 │ Checker name    │ Severity │ Number of reports │
+├─────────────────┼──────────┼───────────────────┤
 │ core.DivideZero │ HIGH     │ 1                 │
 └─────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -42,6 +44,7 @@ Found 1 defect(s) in multi_error_suppress_cstyle.cpp
 ----==== File Statistics ====----
 ┌─────────────────────────────────┬───────────────────┐
 │ File name                       │ Number of reports │
+├─────────────────────────────────┼───────────────────┤
 │ multi_error_suppress_cstyle.cpp │ 1                 │
 └─────────────────────────────────┴───────────────────┘
 ----=================----
@@ -49,6 +52,7 @@ Found 1 defect(s) in multi_error_suppress_cstyle.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 1 │
 └───────────────────────────────────────────┴───┘
 ----=================----

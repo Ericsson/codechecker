@@ -33,6 +33,7 @@ Found 2 defect(s) in multi_error_suppress_typo.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
+├──────────┼───────────────────┤
 │ HIGH     │ 1                 │
 │ LOW      │ 1                 │
 └──────────┴───────────────────┘
@@ -41,6 +42,7 @@ Found 2 defect(s) in multi_error_suppress_typo.cpp
 ----==== Checker Statistics ====----
 ┌─────────────────────┬──────────┬───────────────────┐
 │ Checker name        │ Severity │ Number of reports │
+├─────────────────────┼──────────┼───────────────────┤
 │ core.DivideZero     │ HIGH     │ 1                 │
 │ deadcode.DeadStores │ LOW      │ 1                 │
 └─────────────────────┴──────────┴───────────────────┘
@@ -49,6 +51,7 @@ Found 2 defect(s) in multi_error_suppress_typo.cpp
 ----==== File Statistics ====----
 ┌───────────────────────────────┬───────────────────┐
 │ File name                     │ Number of reports │
+├───────────────────────────────┼───────────────────┤
 │ multi_error_suppress_typo.cpp │ 2                 │
 └───────────────────────────────┴───────────────────┘
 ----=================----
@@ -56,6 +59,7 @@ Found 2 defect(s) in multi_error_suppress_typo.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 2 │
 └───────────────────────────────────────────┴───┘
 ----=================----

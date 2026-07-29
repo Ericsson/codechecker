@@ -34,6 +34,7 @@ Found 2 defect(s) in source_code_comments.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
+├──────────┼───────────────────┤
 │ HIGH     │ 2                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -41,6 +42,7 @@ Found 2 defect(s) in source_code_comments.cpp
 ----==== Checker Statistics ====----
 ┌────────────────────────────┬──────────┬───────────────────┐
 │ Checker name               │ Severity │ Number of reports │
+├────────────────────────────┼──────────┼───────────────────┤
 │ bugprone-sizeof-expression │ HIGH     │ 2                 │
 └────────────────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -48,6 +50,7 @@ Found 2 defect(s) in source_code_comments.cpp
 ----==== File Statistics ====----
 ┌──────────────────────────┬───────────────────┐
 │ File name                │ Number of reports │
+├──────────────────────────┼───────────────────┤
 │ source_code_comments.cpp │ 2                 │
 └──────────────────────────┴───────────────────┘
 ----=================----
@@ -55,6 +58,7 @@ Found 2 defect(s) in source_code_comments.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 2 │
 └───────────────────────────────────────────┴───┘
 ----=================----
