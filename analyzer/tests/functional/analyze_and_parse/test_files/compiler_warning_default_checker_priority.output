@@ -28,7 +28,6 @@ Found 1 defect(s) in compiler_warning.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
-├──────────┼───────────────────┤
 │ MEDIUM   │ 1                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -36,7 +35,6 @@ Found 1 defect(s) in compiler_warning.cpp
 ----==== Checker Statistics ====----
 ┌──────────────────────────────────┬──────────┬───────────────────┐
 │ Checker name                     │ Severity │ Number of reports │
-├──────────────────────────────────┼──────────┼───────────────────┤
 │ clang-diagnostic-unused-variable │ MEDIUM   │ 1                 │
 └──────────────────────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -44,7 +42,6 @@ Found 1 defect(s) in compiler_warning.cpp
 ----==== File Statistics ====----
 ┌──────────────────────┬───────────────────┐
 │ File name            │ Number of reports │
-├──────────────────────┼───────────────────┤
 │ compiler_warning.cpp │ 1                 │
 └──────────────────────┴───────────────────┘
 ----=================----
@@ -52,7 +49,6 @@ Found 1 defect(s) in compiler_warning.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
-├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 1 │
 └───────────────────────────────────────────┴───┘
 ----=================----

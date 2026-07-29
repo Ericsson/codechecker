@@ -28,7 +28,6 @@ Found 1 defect(s) in cppcheck_multiple.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
-├──────────┼───────────────────┤
 │ MEDIUM   │ 1                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -36,7 +35,6 @@ Found 1 defect(s) in cppcheck_multiple.cpp
 ----==== Checker Statistics ====----
 ┌─────────────────────────────────┬──────────┬───────────────────┐
 │ Checker name                    │ Severity │ Number of reports │
-├─────────────────────────────────┼──────────┼───────────────────┤
 │ cppcheck-incorrectLogicOperator │ MEDIUM   │ 1                 │
 └─────────────────────────────────┴──────────┴───────────────────┘
 ----=================----
@@ -44,7 +42,6 @@ Found 1 defect(s) in cppcheck_multiple.cpp
 ----==== File Statistics ====----
 ┌───────────────────────┬───────────────────┐
 │ File name             │ Number of reports │
-├───────────────────────┼───────────────────┤
 │ cppcheck_multiple.cpp │ 1                 │
 └───────────────────────┴───────────────────┘
 ----=================----
@@ -52,7 +49,6 @@ Found 1 defect(s) in cppcheck_multiple.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
-├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 1 │
 └───────────────────────────────────────────┴───┘
 ----=================----

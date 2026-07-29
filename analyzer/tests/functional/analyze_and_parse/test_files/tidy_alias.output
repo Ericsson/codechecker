@@ -32,7 +32,6 @@ Found 2 defect(s) in tidy_alias.cpp
 ----==== Severity Statistics ====----
 ┌──────────┬───────────────────┐
 │ Severity │ Number of reports │
-├──────────┼───────────────────┤
 │ STYLE    │ 2                 │
 └──────────┴───────────────────┘
 ----=================----
@@ -40,7 +39,6 @@ Found 2 defect(s) in tidy_alias.cpp
 ----==== Checker Statistics ====----
 ┌───────────────────────────────────────┬──────────┬───────────────────┐
 │ Checker name                          │ Severity │ Number of reports │
-├───────────────────────────────────────┼──────────┼───────────────────┤
 │ cppcoreguidelines-avoid-magic-numbers │ STYLE    │ 1                 │
 │ readability-magic-numbers             │ STYLE    │ 1                 │
 └───────────────────────────────────────┴──────────┴───────────────────┘
@@ -49,7 +47,6 @@ Found 2 defect(s) in tidy_alias.cpp
 ----==== File Statistics ====----
 ┌────────────────┬───────────────────┐
 │ File name      │ Number of reports │
-├────────────────┼───────────────────┤
 │ tidy_alias.cpp │ 2                 │
 └────────────────┴───────────────────┘
 ----=================----
@@ -57,7 +54,6 @@ Found 2 defect(s) in tidy_alias.cpp
 ----======== Summary ========----
 ┌───────────────────────────────────────────┬───┐
 │ Number of processed analyzer result files │ 1 │
-├───────────────────────────────────────────┼───┤
 │ Number of analyzer reports                │ 2 │
 └───────────────────────────────────────────┴───┘
 ----=================----
