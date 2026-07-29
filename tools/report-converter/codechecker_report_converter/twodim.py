@@ -15,6 +15,8 @@ import json
 from operator import itemgetter
 from typing import Iterable, List, Optional
 
+from prettytable import PrettyTable, SINGLE_BORDER
+
 
 def to_str(
     format_name: str,
@@ -100,53 +102,36 @@ def to_table(
     separate_footer=False
 ) -> str:
     """
-    Pretty-prints the given two-dimensional array's lines.
+    Pretty-prints the given two-dimensional array's lines using PrettyTable.
+    Produces clean, properly-aligned tables that handle long lines gracefully.
+    The first row is used as the header when separate_head is True.
     """
-
-    str_parts = []
-
-    # It is possible that one of the item in the line is None which will
-    # raise an exception when passed to the format function below. So this is
-    # the reason why we need to convert None values to valid strings here.
     lns: List[List[str]] = [
-        ['' if e is None else e for e in line] for line in lines]
+        ['' if e is None else str(e) for e in line] for line in lines]
 
-    # Count the column width.
-    widths: List[int] = []
-    for line in lns:
-        for i, size in enumerate([len(str(x)) for x in line]):
-            while i >= len(widths):
-                widths.append(0)
-            if size > widths[i]:
-                widths[i] = size
-
-    # Generate the format string to pad the columns.
-    print_string = ""
-    for i, width in enumerate(widths):
-        print_string += "{" + str(i) + ":" + str(width) + "} | "
-
-    if not print_string:
+    if not lns:
         return ''
 
-    print_string = print_string[:-3]
+    table = PrettyTable()
+    table.set_style(SINGLE_BORDER)
 
-    # Print the actual data.
-    str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
-    for i, line in enumerate(lns):
-        try:
-            str_parts.append(print_string.format(*line))
-        except IndexError:
-            # pylint: disable=raise-missing-from
-            raise TypeError("One of the rows have a different number of "
-                            "columns than the others")
-        if i == 0 and separate_head:
-            str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
-        if separate_footer and i == len(lns) - 2:
-            str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    if separate_head:
+        table.field_names = lns[0]
+        data_rows = lns[1:]
+    else:
+        # No header: use unique placeholder names and hide the header row
+        table.field_names = [str(i) for i in range(len(lns[0]))]
+        table.header = False
+        data_rows = lns
 
-    str_parts.append("-" * (sum(widths) + 3 * (len(widths) - 1)))
+    for row in data_rows:
+        table.add_row(row)
 
-    return '\n'.join(str_parts)
+    # Align all columns to the left for consistency with the old format
+    for field in table.field_names:
+        table.align[field] = 'l'
+
+    return table.get_string()
 
 
 def to_csv(lines: Iterable[str]) -> str:

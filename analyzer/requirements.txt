@@ -16,3 +16,4 @@ setuptools~=80.0
 types-setuptools~=80.0
 semver~=3.0
 argcomplete~=3.0
+prettytable~=3.0
