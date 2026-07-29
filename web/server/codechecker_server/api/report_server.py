@@ -67,8 +67,8 @@ from ..database.run_db_model import \
     AnalysisInfo, \
     AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
-    CleanupPlan, CleanupPlanReportHash, Checker, CheckerSetItem, Comment, \
-    ExtendedReportData, \
+    CleanupPlan, CleanupPlanReportHash, Checker, \
+    CheckerSetItem, Comment, ExtendedReportData, \
     File, FileContent, \
     Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
@@ -3395,7 +3395,7 @@ class ThriftRequestHandler:
                     Checker.analyzer_name,
                     Checker.severity,
                     run_group_func,
-                    DB_AnalysisInfoChecker.enabled.label(
+                    CheckerSetItem.enabled.label(
                         "checker_enabled")
                 )
                 .select_from(Run)
@@ -3405,18 +3405,25 @@ class ThriftRequestHandler:
                     == max_run_histories.subquery()
                     .c.max_run_history_id)
                 .outerjoin(AnalysisInfo, RunHistory.analysis_info)
-                .outerjoin(DB_AnalysisInfoChecker)
+                .outerjoin(CheckerSetItem, AnalysisInfo.checker_set_id ==
+                           CheckerSetItem.checker_set_id)
                 .outerjoin(Checker, (
                     Checker.id
-                    == DB_AnalysisInfoChecker.checker_id))
+                    == CheckerSetItem.checker_id))
                 .group_by(
-                    Checker.id, DB_AnalysisInfoChecker.enabled)
+                    Checker.id, CheckerSetItem.enabled)
             )
+
+            LOG.info(checker_status_query)
 
             runs_unknown_checker_status = {}
             for (checker_id, checker_name, analyzer_name,
                  severity, run_id_list,
                  checker_enabled) in checker_status_query.all():
+                LOG.info("checker_id:"+str(checker_id))
+                LOG.info("checker_name:"+str(checker_name))
+                LOG.info("checker_enabled:"+str(checker_enabled))
+                LOG.info("run_id_list:"+str(run_id_list))
                 if checker_id:
                     checker_stat = checker_stats[checker_id]
 
