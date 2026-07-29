@@ -35,7 +35,7 @@ Please visit our [official documentation](https://codechecker.readthedocs.io/en/
 
 ## Requirements
 
-- Python >= 3.8
+- Python >= 3.9
 
 ## License
 

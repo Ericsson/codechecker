@@ -1,0 +1,742 @@
+---
+MainSourceFile:  '/local/test_projects/tinyxml2/tinyxml2.cpp'
+Diagnostics:
+  - DiagnosticName:  clang-diagnostic-format-nonliteral
+    DiagnosticMessage:
+      Message:         format string is not a string literal
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      3108
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      3108
+          Length:          6
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16049
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16049
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16176
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16176
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16299
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16299
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16560
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16560
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  clang-diagnostic-double-promotion
+    DiagnosticMessage:
+      Message:         'implicit conversion increases floating-point precision: ''float'' to ''double'''
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16604
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      16604
+          Length:          1
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16687
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16687
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      16878
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      16878
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      17095
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      17095
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      62212
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      62212
+          Length:          12
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      62212
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      62321
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      62321
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      62501
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      62501
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      62650
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      62650
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_FSEEK'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      3643
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      64351
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      64351
+          Length:          12
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      64351
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      66195
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      66195
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      66429
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      66429
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_SNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2959
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      66554
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_VSNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2994
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      66554
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_VSNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2994
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  clang-diagnostic-format-nonliteral
+    DiagnosticMessage:
+      Message:         format string is not a string literal
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      66603
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      66603
+          Length:          6
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      69271
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      69271
+          Length:          27
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      69271
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  clang-diagnostic-format-nonliteral
+    DiagnosticMessage:
+      Message:         format string is not a string literal
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      69286
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      69286
+          Length:          6
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      69679
+      Replacements:    []
+      Ranges:
+        - FilePath:        ''
+          FileOffset:      0
+          Length:          0
+    Notes:
+      - Message:         'expanded from macro ''TIXML_VSNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2994
+        Replacements:    []
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      69679
+        Replacements:    []
+      - Message:         'expanded from macro ''TIXML_VSNPRINTF'''
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      2994
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  clang-diagnostic-format-nonliteral
+    DiagnosticMessage:
+      Message:         format string is not a string literal
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      69706
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      69706
+          Length:          6
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      69840
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      69840
+          Length:          40
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      69840
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+      FileOffset:      70140
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+          FileOffset:      70140
+          Length:          16
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+        FileOffset:      70140
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLElement'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3614
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3614
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          43326
+            Length:          198
+            ReplacementText: "public:\nXMLElement::~XMLElement() noexcept {\n    while (this->_rootAttribute)\n        {\n            XMLAttribute *next = this->_rootAttribute->_next;\n            DeleteAttribute(this->_rootAttribute);\n            this->_rootAttribute = next;\n        }\n}\nprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3614
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          43326
+            Length:          198
+            ReplacementText: "protected:\nXMLElement::~XMLElement() noexcept {\n    while (this->_rootAttribute)\n        {\n            XMLAttribute *next = this->_rootAttribute->_next;\n            DeleteAttribute(this->_rootAttribute);\n            this->_rootAttribute = next;\n        }\n}\nprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLComment'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3654
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3654
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          36439
+            Length:          12
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLText'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3673
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3673
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30061
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLDeclaration'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3689
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3689
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          37519
+            Length:          16
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLUnknown'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3712
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3712
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          38696
+            Length:          12
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  bugprone-sizeof-expression
+    DiagnosticMessage:
+      Message:         'suspicious usage of ''sizeof(A*)''; pointer to aggregate'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      8207
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+          FileOffset:      8207
+          Length:          9
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLNode'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      19312
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      19312
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          23561
+            Length:          9
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLText'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      29261
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      29261
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30061
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLComment'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      30376
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      30376
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          36439
+            Length:          12
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLDeclaration'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      31479
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      31479
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          37519
+            Length:          16
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLUnknown'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      32556
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      32556
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          38696
+            Length:          12
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLAttribute'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      33565
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      33565
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          36748
+            Length:          26
+            ReplacementText: "public:\nvirtual ~XMLAttribute() noexcept {\n}\nprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      33565
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          36748
+            Length:          26
+            ReplacementText: "protected:\n~XMLAttribute() noexcept {\n}\nprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLElement'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      37395
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      37395
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          43326
+            Length:          198
+            ReplacementText: "public:\nXMLElement::~XMLElement() noexcept {\n    while (this->_rootAttribute)\n        {\n            XMLAttribute *next = this->_rootAttribute->_next;\n            DeleteAttribute(this->_rootAttribute);\n            this->_rootAttribute = next;\n        }\n}\nprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      37395
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.cpp'
+            Offset:          43326
+            Length:          198
+            ReplacementText: "protected:\nXMLElement::~XMLElement() noexcept {\n    while (this->_rootAttribute)\n        {\n            XMLAttribute *next = this->_rootAttribute->_next;\n            DeleteAttribute(this->_rootAttribute);\n            this->_rootAttribute = next;\n        }\n}\nprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+...

@@ -1,0 +1,14 @@
+[
+  {
+    "directory": "/local/test_projects/tinyxml2/build",
+    "command": "/bin/c++ -D_FILE_OFFSET_BITS=64 -I/local/test_projects/tinyxml2 -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles/tinyxml2.dir/tinyxml2.cpp.o -c /local/test_projects/tinyxml2/tinyxml2.cpp",
+    "file": "/local/test_projects/tinyxml2/tinyxml2.cpp",
+    "output": "CMakeFiles/tinyxml2.dir/tinyxml2.cpp.o"
+  },
+  {
+    "directory": "/local/test_projects/tinyxml2/build",
+    "command": "/bin/c++ -D_FILE_OFFSET_BITS=64 -I/local/test_projects/tinyxml2 -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles/xmltest.dir/xmltest.cpp.o -c /local/test_projects/tinyxml2/xmltest.cpp",
+    "file": "/local/test_projects/tinyxml2/xmltest.cpp",
+    "output": "CMakeFiles/xmltest.dir/xmltest.cpp.o"
+  }
+]
