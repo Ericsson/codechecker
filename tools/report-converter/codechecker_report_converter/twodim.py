@@ -15,7 +15,7 @@ import json
 from operator import itemgetter
 from typing import Iterable, List, Optional
 
-from prettytable import PrettyTable, SINGLE_BORDER
+from prettytable import PrettyTable, TableStyle
 
 
 def to_str(
@@ -116,7 +116,7 @@ def to_table(
 
     def _make_table(field_names, data_rows, show_header):
         table = PrettyTable()
-        table.set_style(SINGLE_BORDER)
+        table.set_style(TableStyle.SINGLE_BORDER)
         table.field_names = field_names
         table.header = show_header
         for row in data_rows:
