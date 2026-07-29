@@ -15,7 +15,7 @@ import json
 from operator import itemgetter
 from typing import Iterable, List, Optional
 
-from prettytable import PrettyTable, TableStyle
+from prettytable import HRuleStyle, PrettyTable, TableStyle
 
 
 def to_str(
@@ -114,11 +114,13 @@ def to_table(
     if not lns:
         return ''
 
-    def _make_table(field_names, data_rows, show_header):
+    def _make_table(field_names, data_rows, show_header,
+                    hrules=HRuleStyle.FRAME):
         table = PrettyTable()
         table.set_style(TableStyle.SINGLE_BORDER)
         table.field_names = field_names
         table.header = show_header
+        table.hrules = hrules
         for row in data_rows:
             table.add_row(row)
         table.align = 'l'
@@ -134,9 +136,8 @@ def to_table(
         show_header = False
 
     if separate_footer and len(data_rows) > 1:
-        main_table = _make_table(field_names, data_rows[:-1], show_header)
-        footer_table = _make_table(field_names, [data_rows[-1]], False)
-        return main_table + '\n' + footer_table
+        return _make_table(field_names, data_rows, show_header,
+                           hrules=HRuleStyle.ALL)
 
     return _make_table(field_names, data_rows, show_header)
 
