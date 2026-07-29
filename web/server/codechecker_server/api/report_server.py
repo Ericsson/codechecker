@@ -3451,14 +3451,14 @@ class ThriftRequestHandler:
                 session.query(
                     Checker.id.label("checker_id"),
                     counter,
-                    Report.is_open
+                    Report.is_open.label("is_open_case")
                 )
                 .join(Checker,
                       Report.checker_id == Checker.id)
                 .filter(
                     Report.run_id.in_(run_ids)
                     if run_ids else True)
-                .group_by(Checker.id, Report.is_open)
+                .group_by(Checker.id, "is_open_case")
             )
 
             for checker_id, report_count, is_open \
