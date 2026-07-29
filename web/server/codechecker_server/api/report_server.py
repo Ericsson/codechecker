@@ -3420,10 +3420,6 @@ class ThriftRequestHandler:
             for (checker_id, checker_name, analyzer_name,
                  severity, run_id_list,
                  checker_enabled) in checker_status_query.all():
-                LOG.info("checker_id:"+str(checker_id))
-                LOG.info("checker_name:"+str(checker_name))
-                LOG.info("checker_enabled:"+str(checker_enabled))
-                LOG.info("run_id_list:"+str(run_id_list))
                 if checker_id:
                     checker_stat = checker_stats[checker_id]
 
