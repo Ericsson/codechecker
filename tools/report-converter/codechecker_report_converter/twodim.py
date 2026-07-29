@@ -121,8 +121,7 @@ def to_table(
         table.header = show_header
         for row in data_rows:
             table.add_row(row)
-        for field in table.field_names:
-            table.align[field] = 'l'
+        table.align = 'l'
         return table.get_string()
 
     if separate_head:
