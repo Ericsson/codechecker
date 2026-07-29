@@ -105,6 +105,8 @@ def to_table(
     Pretty-prints the given two-dimensional array's lines using PrettyTable.
     Produces clean, properly-aligned tables that handle long lines gracefully.
     The first row is used as the header when separate_head is True.
+    When separate_footer is True, the last data row is visually separated
+    from the rest by printing it as a second table below a divider.
     """
     lns: List[List[str]] = [
         ['' if e is None else str(e) for e in line] for line in lines]
@@ -112,26 +114,32 @@ def to_table(
     if not lns:
         return ''
 
-    table = PrettyTable()
-    table.set_style(SINGLE_BORDER)
+    def _make_table(field_names, data_rows, show_header):
+        table = PrettyTable()
+        table.set_style(SINGLE_BORDER)
+        table.field_names = field_names
+        table.header = show_header
+        for row in data_rows:
+            table.add_row(row)
+        for field in table.field_names:
+            table.align[field] = 'l'
+        return table.get_string()
 
     if separate_head:
-        table.field_names = lns[0]
+        field_names = lns[0]
         data_rows = lns[1:]
+        show_header = True
     else:
-        # No header: use unique placeholder names and hide the header row
-        table.field_names = [str(i) for i in range(len(lns[0]))]
-        table.header = False
+        field_names = [str(i) for i in range(len(lns[0]))]
         data_rows = lns
+        show_header = False
 
-    for row in data_rows:
-        table.add_row(row)
+    if separate_footer and len(data_rows) > 1:
+        main_table = _make_table(field_names, data_rows[:-1], show_header)
+        footer_table = _make_table(field_names, [data_rows[-1]], False)
+        return main_table + '\n' + footer_table
 
-    # Align all columns to the left for consistency with the old format
-    for field in table.field_names:
-        table.align[field] = 'l'
-
-    return table.get_string()
+    return _make_table(field_names, data_rows, show_header)
 
 
 def to_csv(lines: Iterable[str]) -> str:
