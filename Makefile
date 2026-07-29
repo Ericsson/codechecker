@@ -41,7 +41,10 @@ mkdocs_build:
 package_gerrit_skiplist: package_dir_structure
 	cp -p scripts/gerrit_changed_files_to_skipfile.py $(CC_BUILD_BIN_DIR)
 
-package: package_dir_structure set_git_commit_template package_gerrit_skiplist
+package_memory_safety_reporter: package_dir_structure
+	cp -p tools/memory-safety-reporter/memory_safety_reporter.py $(CC_BUILD_BIN_DIR)/memory_safety_reporter
+
+package: package_dir_structure set_git_commit_template package_gerrit_skiplist package_memory_safety_reporter
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
