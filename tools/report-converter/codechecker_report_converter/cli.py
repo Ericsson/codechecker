@@ -63,9 +63,9 @@ class PrintExampleCmdAction(argparse.Action):
     """
 
     def __call__(self, parser, namespace, values, option_string=None):
-        analyzer_result = supported_converters[values]
+        analyzer_parser = supported_converters[values]
 
-        if not analyzer_result.EXAMPLE_CMD:
+        if not analyzer_parser.EXAMPLE_CMD:
             LOG.warning(
                 "No usage example is available yet for '%s'. Please see "
                 "docs/tools/report-converter.md for more information.",
@@ -73,7 +73,7 @@ class PrintExampleCmdAction(argparse.Action):
         else:
             print(f"Example commands to produce a '{values}' output which "
                   "'report-converter' can parse:\n")
-            print(analyzer_result.EXAMPLE_CMD)
+            print(analyzer_parser.EXAMPLE_CMD)
 
         parser.exit()
 
