@@ -35,6 +35,15 @@ class AnalyzerResultBase(metaclass=ABCMeta):
     # Link to the official analyzer website.
     URL: str = ''
 
+    # An example shell command (or short sequence of commands) showing how
+    # to produce an analyzer result file that this parser can consume, and
+    # how to feed it to 'report-converter'. Every new parser MUST provide
+    # this so that usage instructions live next to the code and can't
+    # silently drift out of sync with docs/tools/report-converter.md (see
+    # https://github.com/Ericsson/codechecker/issues/4992). Users can view
+    # it directly with 'report-converter --example <TOOL_NAME>'.
+    EXAMPLE_CMD: str = ''
+
     def transform(
         self,
         analyzer_result_file_paths: Iterable[str],

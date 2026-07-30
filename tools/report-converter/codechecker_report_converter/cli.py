@@ -53,6 +53,31 @@ class RawDescriptionDefaultHelpFormatter(
     descriptions. """
 
 
+class PrintExampleCmdAction(argparse.Action):
+    """
+    Argparse action which immediately prints a usage example for the given
+    analyzer TYPE and exits - similarly to the built-in '--version'/'--help'
+    actions, this bypasses this program's other required arguments (input,
+    --output, --type), since the user is only asking for documentation, not
+    actually running a conversion.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        analyzer_result = supported_converters[values]
+
+        if not analyzer_result.EXAMPLE_CMD:
+            LOG.warning(
+                "No usage example is available yet for '%s'. Please see "
+                "docs/tools/report-converter.md for more information.",
+                values)
+        else:
+            print(f"Example commands to produce a '{values}' output which "
+                  "'report-converter' can parse:\n")
+            print(analyzer_result.EXAMPLE_CMD)
+
+        parser.exit()
+
+
 # Load supported converters dynamically.
 supported_converters = {}
 analyzers_dir_path = os.path.join(os.path.dirname(
@@ -263,6 +288,17 @@ Supported analyzers:
                          for tool_name in sorted(supported_converters)])),
         formatter_class=RawDescriptionDefaultHelpFormatter
     )
+
+    parser.add_argument('--example',
+                        action=PrintExampleCmdAction,
+                        metavar='TYPE',
+                        choices=supported_converters,
+                        default=argparse.SUPPRESS,
+                        help="Print an example command showing how to "
+                             "produce an analyzer result file of the given "
+                             "TYPE that 'report-converter' can parse, then "
+                             "exit. Currently supported types are: " +
+                             ', '.join(sorted(supported_converters)) + ".")
     __add_arguments_to_parser(parser)
 
     args = parser.parse_args()
