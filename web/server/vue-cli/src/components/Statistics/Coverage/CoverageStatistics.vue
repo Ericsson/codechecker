@@ -127,6 +127,21 @@
               </v-col>
             </v-row>
 
+            <!-- File Search -->
+            <v-row class="mb-2">
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="searchQuery"
+                  prepend-inner-icon="mdi-magnify"
+                  label="Filter by file or directory name"
+                  clearable
+                  dense
+                  outlined
+                  hide-details
+                />
+              </v-col>
+            </v-row>
+
             <!-- Main Coverage Table -->
             <v-row>
               <v-col cols="12">
@@ -167,7 +182,7 @@
                     </thead>
                     <tbody>
                       <tr
-                        v-for="(item, index) in coverageItems"
+                        v-for="(item, index) in filteredCoverageItems"
                         :key="index"
                         class="coverage-row"
                       >
@@ -278,7 +293,6 @@
 
 <script>
 import { ccService, handleThriftError } from "@cc-api";
-import { Encoding } from "@cc/report-server-types";
 import { BaseStatistics } from "@/components/Statistics";
 
 export default {
@@ -291,6 +305,7 @@ export default {
   data() {
     return {
       loading: false,
+      searchQuery: "",
       fetchedCoverageData: [],
       fetchedSummary: null,
       allFileData: [],
@@ -348,6 +363,14 @@ export default {
 
       // Get items for current path
       return this.getItemsForPath(this.currentPath);
+    },
+    filteredCoverageItems() {
+      if (!this.searchQuery) {
+        return this.coverageItems;
+      }
+      const q = this.searchQuery.toLowerCase();
+      return this.coverageItems.filter(item =>
+        item.name.toLowerCase().includes(q));
     },
     displayTestDate() {
       if (this.fetchedSummary && this.fetchedSummary.testDate) {
@@ -422,147 +445,62 @@ export default {
       try {
         const client = ccService.getClient();
 
-        // Check if API is available
         if (typeof client.getFilesWithCoverage !== "function") {
-          console.debug("getFilesWithCoverage API not available");
           this.loading = false;
           return;
         }
 
-        // Get all files with coverage with timeout
-        const files = await Promise.race([
-          new Promise((resolve, reject) => {
-            client.getFilesWithCoverage(
-              handleThriftError(
-                result => resolve(result),
-                error => reject(error)
-              )
-            );
-          }),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Timeout: API call took too long")),
-              30000))
-        ]);
+        const files = await new Promise((resolve, reject) => {
+          client.getFilesWithCoverage(
+            handleThriftError(
+              result => resolve(result),
+              error => reject(error)
+            )
+          );
+        });
 
         if (!files || files.length === 0) {
-          console.warn(
-            "No files with coverage data found. " +
-            "Coverage data must be generated using 'CodeChecker coverage' " +
-            "and included in the reports directory as 'coverage.json' " +
-            "when storing reports.");
           this.loading = false;
-          // Set empty summary to show UI properly
           this.fetchedSummary = {
             testDate: new Date().toLocaleString(),
-            linesCoverage: 0,
-            linesTotal: 0,
-            linesHit: 0,
-            functionsCoverage: 0,
-            functionsTotal: 0,
-            functionsHit: 0
+            linesCoverage: 0, linesTotal: 0, linesHit: 0,
+            functionsCoverage: 0, functionsTotal: 0, functionsHit: 0
           };
           return;
         }
 
-        console.debug(`Found ${files.length} files with coverage data`);
-
-        // Process each file to get coverage data
-        const fileCoverageData = await Promise.allSettled(
-          files.map(async file => {
-            try {
-              // Get covered lines for this file with timeout
-              const coveredLines = await Promise.race([
-                new Promise((resolve, reject) => {
-                  client.getTestCoverage(
-                    file.fileId,
-                    handleThriftError(
-                      result => resolve(result),
-                      error => reject(error)
-                    )
-                  );
-                }),
-                new Promise((_, reject) =>
-                  setTimeout(
-                    () => reject(new Error("Timeout getting test coverage")),
-                    10000))
-              ]);
-
-              // Get source file content to count total lines with timeout
-              const sourceFile = await Promise.race([
-                new Promise((resolve, reject) => {
-                  client.getSourceFileData(
-                    file.fileId,
-                    true,
-                    Encoding.DEFAULT,
-                    handleThriftError(
-                      result => resolve(result),
-                      error => reject(error)
-                    )
-                  );
-                }),
-                new Promise((_, reject) =>
-                  setTimeout(
-                    () => reject(new Error("Timeout getting source file")),
-                    10000))
-              ]);
-
-              // Calculate executable lines (GCOV-style: only count executable)
-              const lines = sourceFile.fileContent
-                ? sourceFile.fileContent.split("\n")
-                : [];
-              
-              // Count total executable lines
-              const totalExecutableLines = lines.filter(line =>
-                this.isExecutableLine(line)).length;
-              
-              // Count hit lines: only covered lines that are executable
-              const coveredSet = new Set(
-                coveredLines ? coveredLines.map(l => Number(l)) : []);
-              let hitExecutableLines = 0;
-              lines.forEach((line, index) => {
-                const lineNum = index + 1;
-                if (this.isExecutableLine(line) && coveredSet.has(lineNum)) {
-                  hitExecutableLines++;
-                }
-              });
-              
-              // Coverage rate based on executable lines only (GCOV logic)
-              const lineRate = totalExecutableLines > 0
-                ? (hitExecutableLines / totalExecutableLines) * 100
-                : 0;
-
-              // Calculate function coverage
-              const functionStats = this.calculateFunctionCoverage(
-                sourceFile.fileContent, coveredLines);
-
-              // Extract directory from file path
-              const dir = file.filePath.substring(
-                0, file.filePath.lastIndexOf("/")) || "/";
-
-              return {
-                fileId: file.fileId,
-                filePath: file.filePath,
-                directory: dir,
-                lineTotal: totalExecutableLines, // Only executable lines
-                lineHit: hitExecutableLines, // Only covered executable lines
-                lineRate: Math.round(lineRate * 10) / 10,
-                functionTotal: functionStats.total,
-                functionHit: functionStats.hit,
-                functionRate: functionStats.rate
-              };
-            } catch (error) {
-              console.error("Error processing file:", file.filePath, error);
-              return null;
-            }
-          })
-        );
-
-        // Filter out failed and null results
-        const validCoverageData = fileCoverageData
-          .filter(result =>
-            result.status === "fulfilled" && result.value !== null)
-          .map(result => result.value);
+        // fileContent carries "hit/total", remoteUrl carries "fnf/fnh"
+        const validCoverageData = files.map(file => {
+          let lineHit = 0;
+          let lineTotal = 0;
+          if (file.fileContent) {
+            const lp = file.fileContent.split("/");
+            lineHit = parseInt(lp[0], 10) || 0;
+            lineTotal = parseInt(lp[1], 10) || lineHit;
+          }
+          let fnFound = 0;
+          let fnHit = 0;
+          if (file.remoteUrl) {
+            const parts = file.remoteUrl.split("/");
+            fnFound = parseInt(parts[0], 10) || 0;
+            fnHit = parseInt(parts[1], 10) || 0;
+          }
+          const dir = file.filePath.substring(
+            0, file.filePath.lastIndexOf("/")) || "/";
+          return {
+            fileId: file.fileId,
+            filePath: file.filePath,
+            directory: dir,
+            lineHit,
+            lineTotal,
+            lineRate: lineTotal > 0
+              ? Math.round((lineHit / lineTotal) * 1000) / 10 : 0,
+            functionTotal: fnFound,
+            functionHit: fnHit,
+            functionRate: fnFound > 0
+              ? Math.round((fnHit / fnFound) * 1000) / 10 : 0
+          };
+        });
 
         // Group by directory
         const directoryMap = new Map();
@@ -572,14 +510,9 @@ export default {
           if (!directoryMap.has(dir)) {
             directoryMap.set(dir, {
               directory: dir + (dir !== "/" ? "/" : ""),
-              lineRate: 0,
-              lineTotal: 0,
-              lineHit: 0,
-              functionRate: 0,
-              functionTotal: 0,
-              functionHit: 0,
-              fileCount: 0,
-              files: []
+              lineRate: 0, lineTotal: 0, lineHit: 0,
+              functionRate: 0, functionTotal: 0, functionHit: 0,
+              fileCount: 0, files: []
             });
           }
 
@@ -630,30 +563,29 @@ export default {
           this.fileDataMap.set(fileData.filePath, fileData);
         });
 
-        // Calculate summary statistics
-        const totalLines = this.fetchedCoverageData.reduce(
-          (sum, d) => sum + d.lineTotal, 0);
-        const totalHitLines = this.fetchedCoverageData.reduce(
-          (sum, d) => sum + d.lineHit, 0);
-        const totalFunctions = this.fetchedCoverageData.reduce(
-          (sum, d) => sum + d.functionTotal, 0);
-        const totalHitFunctions = this.fetchedCoverageData.reduce(
-          (sum, d) => sum + d.functionHit, 0);
+        // Summary from aggregated data
+        const totalHit = validCoverageData.reduce(
+          (s, d) => s + d.lineHit, 0);
+        const totalLines = validCoverageData.reduce(
+          (s, d) => s + d.lineTotal, 0);
+        const totalFnFound = validCoverageData.reduce(
+          (s, d) => s + d.functionTotal, 0);
+        const totalFnHit = validCoverageData.reduce(
+          (s, d) => s + d.functionHit, 0);
 
         this.fetchedSummary = {
           testDate: new Date().toLocaleString(),
           linesCoverage: totalLines > 0
-            ? Math.round((totalHitLines / totalLines) * 1000) / 10
-            : 0,
+            ? Math.round((totalHit / totalLines) * 1000) / 10 : 0,
           linesTotal: totalLines,
-          linesHit: totalHitLines,
-          functionsCoverage: totalFunctions > 0
-            ? Math.round((totalHitFunctions / totalFunctions) * 1000) / 10
-            : 0,
-          functionsTotal: totalFunctions,
-          functionsHit: totalHitFunctions
+          linesHit: totalHit,
+          functionsCoverage: totalFnFound > 0
+            ? Math.round((totalFnHit / totalFnFound) * 1000) / 10 : 0,
+          functionsTotal: totalFnFound,
+          functionsHit: totalFnHit
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Could not load coverage data:", error);
         // Set empty data to show the UI properly
         this.fetchedCoverageData = [];

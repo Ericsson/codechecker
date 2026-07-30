@@ -52,7 +52,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
     Run, RunLock as DBRunLock, RunHistory, \
-    TestCoverage
+    TestCoverage, TestCoverageSummary
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_annotations import report_annotation_types
@@ -1611,80 +1611,108 @@ class MassStoreRun:
             skipped_count = 0
             duplicate_count = 0
             
-            for file_path, lines in data.items():
+            for file_path, entry in data.items():
+                # Support both old format (list) and new format (dict)
+                if isinstance(entry, list):
+                    lines = entry
+                    uncovered = []
+                    fnf = 0
+                    fnh = 0
+                else:
+                    lines = entry.get("lines", [])
+                    uncovered = entry.get("uncovered", [])
+                    fnf = entry.get("functions_found", 0)
+                    fnh = entry.get("functions_hit", 0)
+
                 file_id = None
                 
                 # Strategy 1: Try exact match in current store operation
                 if file_path in file_path_to_id:
                     file_id = file_path_to_id[file_path]
                 else:
-                    # Strategy 2: Try trimmed path match in current store operation
+                    # Strategy 2: Try trimmed path match
                     trimmed_path = trim_path_prefixes(
                         file_path, self._trim_path_prefixes)
                     if trimmed_path in file_path_to_id:
                         file_id = file_path_to_id[trimmed_path]
                     else:
-                        # Strategy 3: Query database for exact path match
+                        # Strategy 3: DB exact path
                         file_record = session.query(File) \
                             .filter(File.filepath == file_path) \
                             .first()
                         if file_record:
                             file_id = file_record.id
-                            LOG.debug(
-                                "Matched coverage file '%s' to database file "
-                                "by exact path (file_id: %d)",
-                                file_path, file_id)
                         else:
-                            # Strategy 4: Query database for trimmed path match
+                            # Strategy 4: DB trimmed path
                             file_record = session.query(File) \
                                 .filter(File.filepath == trimmed_path) \
                                 .first()
                             if file_record:
                                 file_id = file_record.id
-                                LOG.debug(
-                                    "Matched coverage file '%s' to database file "
-                                    "by trimmed path '%s' (file_id: %d)",
-                                    file_path, trimmed_path, file_id)
                             else:
-                                # Strategy 5: Try filename match in current store
+                                # Strategy 5: filename match in store
                                 file_name = os.path.basename(file_path)
-                                for stored_path, stored_id in file_path_to_id.items():
-                                    if os.path.basename(stored_path) == file_name:
+                                for stored_path, stored_id \
+                                        in file_path_to_id.items():
+                                    if os.path.basename(stored_path) \
+                                            == file_name:
                                         file_id = stored_id
-                                        LOG.debug(
-                                            "Matched coverage file '%s' to stored "
-                                            "file '%s' by filename",
-                                            file_path, stored_path)
                                         break
                                 
-                                # Strategy 6: Query database for filename match
+                                # Strategy 6: DB filename match
                                 if file_id is None:
                                     file_record = session.query(File) \
-                                        .filter(File.filename == file_name) \
+                                        .filter(
+                                            File.filename == file_name) \
                                         .first()
                                     if file_record:
                                         file_id = file_record.id
-                                        LOG.debug(
-                                            "Matched coverage file '%s' to database file "
-                                            "by filename '%s' (file_id: %d)",
-                                            file_path, file_name, file_id)
                 
+                if file_id is None:
+                    # Try to store the source file if it exists on disk
+                    if os.path.isfile(file_path):
+                        try:
+                            with open(file_path, 'rb') as sf:
+                                content = sf.read()
+                            content_hash = sha256(
+                                content).hexdigest()
+                            if not session.query(FileContent) \
+                                    .filter(
+                                        FileContent.content_hash
+                                        == content_hash) \
+                                    .first():
+                                session.add(FileContent(
+                                    content_hash, content, None))
+                                session.flush()
+                            file_record = File(
+                                file_path, content_hash,
+                                None, None)
+                            session.add(file_record)
+                            session.flush()
+                            file_id = file_record.id
+                            LOG.info(
+                                "Stored source file '%s' for "
+                                "coverage data.", file_path)
+                        except Exception as ex:
+                            LOG.warning(
+                                "Failed to store source file "
+                                "'%s': %s", file_path, ex)
+
                 if file_id is None:
                     LOG.warning(
                         "Could not match coverage file '%s' to any "
-                        "stored file in database. Skipping coverage data for "
-                        "this file.",
-                        file_path)
+                        "stored file in database. Skipping coverage data "
+                        "for this file.", file_path)
                     skipped_count += 1
                     continue
                 
                 matched_count += 1
                 
-                # Get existing coverage lines for this file to avoid duplicates
+                # Get existing coverage lines to avoid duplicates
                 existing_lines = set(
-                    row[0] for row in session.query(TestCoverage.covered_lines)
-                    .filter(TestCoverage.file_id == file_id)
-                    .all()
+                    row[0] for row in
+                    session.query(TestCoverage.covered_lines)
+                    .filter(TestCoverage.file_id == file_id).all()
                 )
                 
                 new_lines = []
@@ -1694,16 +1722,33 @@ class MassStoreRun:
                     else:
                         duplicate_count += 1
                 
-                # Add only new coverage lines
                 for line in new_lines:
-                    coverage = TestCoverage(file_id, line)
-                    session.add(coverage)
-                
+                    session.add(TestCoverage(file_id, line))
+
+                # Store uncovered lines as negative values
+                for uline in uncovered:
+                    if -uline not in existing_lines:
+                        session.add(TestCoverage(file_id, -uline))
+
+                # Store function coverage summary
+                if fnf > 0:
+                    existing = session.query(TestCoverageSummary) \
+                        .filter(
+                            TestCoverageSummary.file_id == file_id) \
+                        .first()
+                    if existing:
+                        existing.functions_found = fnf
+                        existing.functions_hit = fnh
+                    else:
+                        session.add(TestCoverageSummary(
+                            file_id, fnf, fnh))
+
                 if new_lines:
                     LOG.debug(
                         "Added %d new coverage lines for file '%s' "
                         "(%d duplicates skipped)",
-                        len(new_lines), file_path, len(lines) - len(new_lines))
+                        len(new_lines), file_path,
+                        len(lines) - len(new_lines))
             
             if matched_count > 0:
                 session.commit()

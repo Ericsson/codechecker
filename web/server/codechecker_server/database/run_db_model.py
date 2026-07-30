@@ -613,6 +613,21 @@ class TestCoverage(Base):
         self.covered_lines = covererd_lines
 
 
+class TestCoverageSummary(Base):
+    __tablename__ = "test_coverage_summary"
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
+    initially="DEFERRED",
+    ondelete='CASCADE'), index=True, unique=True)
+    functions_found = Column(Integer, default=0)
+    functions_hit = Column(Integer, default=0)
+
+    def __init__(self, file_id, functions_found, functions_hit):
+        self.file_id = file_id
+        self.functions_found = functions_found
+        self.functions_hit = functions_hit
+
+
 IDENTIFIER = {
     'identifier': "RunDatabase",
     'orm_meta': CC_META

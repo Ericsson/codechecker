@@ -65,3 +65,4 @@ compile_cmd.json
 metadata.json
 unique_compile_commands.json
 compiler_info.json
+.venv/

@@ -51,14 +51,17 @@
           <v-card-text>
             <v-row v-if="!fileIdFromRoute">
               <v-col cols="12" md="6">
-                <v-select
+                <v-autocomplete
                   v-model="selectedFile"
                   :items="fileList"
                   :loading="loading"
-                  label="Select file from coverage"
+                  :search-input.sync="fileSearchQuery"
+                  :filter="filterFiles"
+                  label="Search and select file"
                   item-text="name"
                   item-value="fileId"
                   return-object
+                  clearable
                   @change="loadFile"
                 >
                   <template v-slot:item="{ item }">
@@ -71,7 +74,7 @@
                       </v-list-item-subtitle>
                     </v-list-item-content>
                   </template>
-                </v-select>
+                </v-autocomplete>
               </v-col>
             </v-row>
             <!-- Coverage Summary Table (LCOV style) -->
@@ -244,13 +247,13 @@
                         {{ formatLineNumber(index + 1) }}
                       </span>
                       <span
-                        :class="getLineDataClass(index + 1, line)"
+                        :class="getLineDataClass(index + 1)"
                         class="line-data"
                       >
-                        {{ getLineDataText(index + 1, line) }}
+                        {{ getLineDataText(index + 1) }}
                       </span>
                       <span
-                        :class="getLineSourceClass(index + 1, line)"
+                        :class="getLineSourceClass(index + 1)"
                         class="line-source"
                       >
                         {{ escapeHtml(line) }}
@@ -311,6 +314,7 @@ export default {
       fileList: [],
       coveredLines: [],
       loading: false,
+      fileSearchQuery: "",
       currentFilePath: "",
       sourceLines: []
     };
@@ -434,53 +438,28 @@ export default {
       return crumbs;
     },
     lineCoverage() {
-      if (!this.sourceFile || !this.coveredLines) {
+      if (!this.coveredLines || this.coveredLines.length === 0) {
         return 0;
       }
-      const lines = this.sourceFile.fileContent
-        ? this.sourceFile.fileContent.split("\n")
-        : [];
-      const executableLines = lines.filter(line =>
-        this.isExecutableLine(line));
-      const totalExecutable = executableLines.length;
-      if (totalExecutable === 0) {
-        return 0;
-      }
-      const coveredSet = new Set(this.coveredLines);
-      let hitCount = 0;
-      lines.forEach((line, index) => {
-        if (this.isExecutableLine(line) &&
-            coveredSet.has(index + 1)) {
-          hitCount++;
-        }
-      });
-      return Math.round((hitCount / totalExecutable) * 1000) / 10;
+      const covered = this.coveredLines.filter(l => l > 0).length;
+      const uncovered = this.coveredLines.filter(l => l < 0).length;
+      const total = covered + uncovered;
+      return total > 0
+        ? Math.round((covered / total) * 1000) / 10 : 0;
     },
     lineTotal() {
-      if (!this.sourceFile) {
+      if (!this.coveredLines) {
         return 0;
       }
-      const lines = this.sourceFile.fileContent
-        ? this.sourceFile.fileContent.split("\n")
-        : [];
-      return lines.filter(line => this.isExecutableLine(line)).length;
+      const covered = this.coveredLines.filter(l => l > 0).length;
+      const uncovered = this.coveredLines.filter(l => l < 0).length;
+      return covered + uncovered;
     },
     lineHit() {
-      if (!this.sourceFile || !this.coveredLines) {
+      if (!this.coveredLines) {
         return 0;
       }
-      const lines = this.sourceFile.fileContent
-        ? this.sourceFile.fileContent.split("\n")
-        : [];
-      const coveredSet = new Set(this.coveredLines);
-      let hitCount = 0;
-      lines.forEach((line, index) => {
-        if (this.isExecutableLine(line) &&
-            coveredSet.has(index + 1)) {
-          hitCount++;
-        }
-      });
-      return hitCount;
+      return this.coveredLines.filter(l => l > 0).length;
     },
     functionCoverage() {
       // Calculate function coverage
@@ -532,6 +511,11 @@ export default {
         name: "code-coverage-statistics",
         query: path ? { path } : {}
       });
+    },
+    filterFiles(item, queryText) {
+      const q = (queryText || "").toLowerCase();
+      return item.name.toLowerCase().includes(q) ||
+        item.path.toLowerCase().includes(q);
     },
     async loadFileList() {
       this.loading = true;
@@ -643,6 +627,7 @@ export default {
         // Apply coverage highlights
         await this.applyCoverageHighlights();
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.debug("Error loading file:", error);
       } finally {
         this.loading = false;
@@ -689,6 +674,7 @@ export default {
           ? sourceFile.fileContent.split("\n")
           : [];
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.debug("Error loading file:", error);
       } finally {
         this.loading = false;
@@ -737,20 +723,22 @@ export default {
       // Everything else is considered executable
       return true;
     },
-    getLineCoverageStatus(lineNum, lineContent) {
-      const coveredSet = new Set(this.coveredLines);
-      const isCovered = coveredSet.has(lineNum);
-      const isExecutable = this.isExecutableLine(lineContent);
+    getLineCoverageStatus(lineNum) {
+      // Positive line numbers = covered (green)
+      // Negative line numbers = uncovered/executable (red)
+      // Absent = non-executable (white)
+      const coveredSet = new Set(
+        this.coveredLines.filter(l => l > 0));
+      const uncoveredSet = new Set(
+        this.coveredLines.filter(l => l < 0).map(l => -l));
 
-      if (!isExecutable) {
-        return "none"; // Not executable - no color
+      if (coveredSet.has(lineNum)) {
+        return "covered";
       }
-
-      if (isCovered) {
-        return "covered"; // Green - covered
+      if (uncoveredSet.has(lineNum)) {
+        return "uncovered";
       }
-
-      return "uncovered"; // Red - uncovered but should be covered
+      return "none";
     },
     async applyCoverageHighlights() {
       if (!this.editor || !this.sourceFile || !this.coveredLines) {
@@ -761,14 +749,12 @@ export default {
       this.clearCoverageHighlights();
 
       const totalLines = this.editor.lineCount();
-      const lines = this.sourceFile.fileContent.split("\n");
 
-      // Apply line highlights based on GCOV logic
+      // Apply line highlights based on LCOV data
       this.editor.operation(() => {
         for (let i = 0; i < totalLines; i++) {
           const lineNum = i + 1;
-          const lineContent = lines[i] || "";
-          const status = this.getLineCoverageStatus(lineNum, lineContent);
+          const status = this.getLineCoverageStatus(lineNum);
 
           // Only highlight executable lines
           if (status === "covered") {
@@ -818,54 +804,47 @@ export default {
       // Format line number to match LCOV style (right-aligned, 8 spaces)
       return String(lineNum).padStart(8, " ");
     },
-    getLineDataText(lineNum, lineContent) {
-      const coveredSet = new Set(this.coveredLines);
-      const isExecutable = this.isExecutableLine(lineContent);
-      
-      if (!isExecutable) {
-        // LCOV format: non-executable lines show only spaces and colon
-        return "         :";
-      }
-      
+    getLineDataText(lineNum) {
+      const coveredSet = new Set(
+        this.coveredLines.filter(l => l > 0));
+      const uncoveredSet = new Set(
+        this.coveredLines.filter(l => l < 0).map(l => -l));
+
       if (coveredSet.has(lineNum)) {
-        // LCOV format: covered lines show execution count
-        // (right-aligned, 9 chars)
-        // Since we don't have actual execution counts, use "1"
-        // Format: ">     1 :" (right-aligned count with ">" prefix)
         return ">     1 :";
-      } else {
-        // LCOV format: uncovered executable lines show "0"
-        // (right-aligned, 9 chars)
+      }
+      if (uncoveredSet.has(lineNum)) {
         return "        0 :";
       }
+      return "         :";
     },
-    getLineDataClass(lineNum, lineContent) {
-      const coveredSet = new Set(this.coveredLines);
-      const isExecutable = this.isExecutableLine(lineContent);
-      
-      if (!isExecutable) {
-        return "";
-      }
-      
+    getLineDataClass(lineNum) {
+      const coveredSet = new Set(
+        this.coveredLines.filter(l => l > 0));
+      const uncoveredSet = new Set(
+        this.coveredLines.filter(l => l < 0).map(l => -l));
+
       if (coveredSet.has(lineNum)) {
-        return "line-data-covered"; // LCOV: tlaGNC style
-      } else {
-        return "line-data-uncovered"; // LCOV: tlaUNC style
+        return "line-data-covered";
       }
+      if (uncoveredSet.has(lineNum)) {
+        return "line-data-uncovered";
+      }
+      return "";
     },
-    getLineSourceClass(lineNum, lineContent) {
-      const coveredSet = new Set(this.coveredLines);
-      const isExecutable = this.isExecutableLine(lineContent);
-      
-      if (!isExecutable) {
-        return "";
-      }
-      
+    getLineSourceClass(lineNum) {
+      const coveredSet = new Set(
+        this.coveredLines.filter(l => l > 0));
+      const uncoveredSet = new Set(
+        this.coveredLines.filter(l => l < 0).map(l => -l));
+
       if (coveredSet.has(lineNum)) {
-        return "line-source-covered"; // LCOV: covered style
-      } else {
-        return "line-source-uncovered"; // LCOV: uncovered style
+        return "line-source-covered";
       }
+      if (uncoveredSet.has(lineNum)) {
+        return "line-source-uncovered";
+      }
+      return "";
     },
     escapeHtml(text) {
       const div = document.createElement("div");
