@@ -14,7 +14,7 @@ from codechecker_analyzer.cli import analyze
 from libtest.cmd_line import create_analyze_argparse
 
 
-def create_analyzer_sa(args=None):
+def create_analyzer_sa(args=None, command="g++ -o main main.cpp"):
     parser = argparse.ArgumentParser()
     analyze.add_arguments_to_parser(parser)
     cfg_handler = ClangSA.construct_config_handler(
@@ -22,7 +22,7 @@ def create_analyzer_sa(args=None):
 
     action = {
         'file': 'main.cpp',
-        'command': "g++ -o main main.cpp",
+        'command': command,
         'directory': '/'}
     build_action = log_parser.parse_options(action)
 
@@ -73,3 +73,35 @@ class AnalyzerCommandClangSATest(unittest.TestCase):
         result_handler = create_result_handler(analyzer)
         cmd = analyzer.construct_analyzer_cmd(result_handler)
         self.assertNotIn('-analyzer-opt-analyze-headers', cmd)
+
+    def test_no_duplicate_std_flag_double_dash(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4926
+
+        When the original build command already specifies a standard
+        version with the double-dash spelling (--std=...), the implicit
+        default standard must not also be appended - the analyzer command
+        should contain the user's flag exactly once, with no implicit
+        '-std=...' added alongside it.
+        """
+        analyzer = create_analyzer_sa(
+            command="g++ --std=c++23 -o main main.cpp")
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        std_flags = [x for x in cmd if x.startswith(('-std=', '--std='))]
+        self.assertEqual(std_flags, ['--std=c++23'])
+
+    def test_implicit_std_flag_still_added_when_missing(self):
+        """
+        Sanity check accompanying the regression test above: when the
+        original build command has no standard-version flag at all, the
+        implicit default standard should still be added exactly once.
+        """
+        analyzer = create_analyzer_sa(command="g++ -o main main.cpp")
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        std_flags = [x for x in cmd if x.startswith(('-std=', '--std='))]
+        self.assertEqual(len(std_flags), 1)
