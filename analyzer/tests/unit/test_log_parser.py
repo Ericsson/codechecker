@@ -287,6 +287,38 @@ class LogParserTest(unittest.TestCase):
         filtered = log_parser.filter_compiler_includes_extra_args(flags)
         self.assertEqual(filtered, ["-m64", "-stdlib=libc++", "-std=c++17"])
 
+    def test_compiler_implicit_include_flags_double_dash_std(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4926
+
+        GCC accepts both '-std=' and '--std=' (and likewise '-stdlib='/
+        '--stdlib=') as equivalent spellings. Previously only the
+        single-dash form was recognized, so '--std=' was silently dropped
+        instead of being forwarded to the analyzer.
+        """
+
+        flags = ["-I", "/usr/include", "-m64", "--stdlib=libc++",
+                 "--std=c++23"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["-m64", "--stdlib=libc++", "--std=c++23"])
+
+    def test_compile_options_matches_double_dash_std(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4926
+
+        The COMPILE_OPTIONS pattern (used to decide which flags get
+        forwarded from the original build command to the analyzer
+        invocation) must recognize '--std=' and '--stdlib=', not just the
+        single-dash forms.
+        """
+
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("--std=c++23"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("-std=c++23"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("--stdlib=libc++"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("-stdlib=libc++"))
+
     def test_compiler_implicit_include_flags_sysroot(self):
         """sysroot flags should be kept."""
 
