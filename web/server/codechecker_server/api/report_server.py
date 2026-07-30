@@ -3414,8 +3414,6 @@ class ThriftRequestHandler:
                     Checker.id, CheckerSetItem.enabled)
             )
 
-            LOG.info(checker_status_query)
-
             runs_unknown_checker_status = {}
             for (checker_id, checker_name, analyzer_name,
                  severity, run_id_list,
