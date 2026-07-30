@@ -224,9 +224,9 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Remove the product through the main server.
         p_id = self._root_client.getProducts('producttest_second', None,
-                                             None, None)[0].id
+                                             None, None, None)[0].id
         p_id2 = self._pr_client_2.getProducts('producttest_second', None,
-                                              None, None)[0].id
+                                              None, None, None)[0].id
         self.assertIsNotNone(p_id)
         self.assertEqual(p_id, p_id2,
                          "The products have different ID across the two "
@@ -236,7 +236,7 @@ class TestProductConfigShare(unittest.TestCase):
                         "Main server reported error while removing product.")
 
         self.assertEqual(len(self._pr_client_2.getProducts('_second', None,
-                                                           None, None)),
+                                                           None, None, None)),
                          0,
                          "Secondary server still sees the removed product.")
 
