@@ -11,6 +11,7 @@ Contains functions to format and pretty-print data from two-dimensional arrays.
 
 
 import json
+import shutil
 
 from operator import itemgetter
 from typing import Iterable, List, Optional
@@ -96,6 +97,142 @@ def to_rows(lines: Iterable[str]) -> str:
     return '\n'.join(str_parts)
 
 
+def _fit_table_to_width(
+    table: PrettyTable,
+    field_names: List[str],
+    data_rows: List[List[str]],
+    show_header: bool,
+    terminal_width: int
+) -> str:
+    """
+    Render ``table`` so that it fits within ``terminal_width`` columns.
+
+    The algorithm avoids hard-coding column types by computing natural widths
+    from the actual data.  Short columns (those that already fit their share of
+    the available space) keep their full natural width; only the longer columns
+    are shortened, proportionally to their natural width.
+
+    The iteration is a fixpoint loop:
+
+    1. Each unassigned column gets a *proportional share* of the remaining
+       content budget (based on its natural width relative to the total of all
+       unassigned columns).
+    2. Any column whose natural width fits within its share is *locked in* at
+       that natural width, freeing up space for the others.
+    3. Repeat until no more columns can be locked.
+    4. Distribute the residual budget among whatever columns are still
+       unassigned.
+    5. Apply ``max_table_width`` as a final safety net to absorb any rounding
+       error.
+
+    The per-column border/padding overhead for SINGLE_BORDER style is
+    3 characters per column (space + content + space + border) plus 1 for
+    the leading border: ``overhead = num_cols * 3 + 1``.
+    """
+    num_cols = len(field_names)
+    # SINGLE_BORDER layout: │ c1 │ c2 │ … │ cn │
+    # overhead = 1 (left border) + num_cols * (1 space + content + 1 space + 1 border)
+    #          = 1 + num_cols * 3
+    overhead = num_cols * 3 + 1
+
+    # Compute natural content width of each column (max of header and data).
+    nat_widths: List[int] = (
+        [len(str(h)) for h in field_names] if show_header
+        else [0] * num_cols
+    )
+    for row in data_rows:
+        for i, cell in enumerate(row):
+            nat_widths[i] = max(nat_widths[i], len(str(cell)))
+
+    total_natural = sum(nat_widths) + overhead
+
+    # If the table already fits, render it without any truncation.
+    if total_natural <= terminal_width:
+        return table.get_string()
+
+    # Minimum content width per column (must show at least a few characters).
+    MIN_COL_WIDTH = 4
+
+    # Available content budget (total content widths must sum to at most this).
+    available = max(terminal_width - overhead, num_cols * MIN_COL_WIDTH)
+
+    # --- Iterative fixpoint ---
+    # assigned[i] holds the final max_width for column i once it is locked.
+    assigned: List[Optional[int]] = [None] * num_cols
+    unassigned = list(range(num_cols))
+    remaining = available
+
+    # Each iteration tries to lock columns whose natural width fits their
+    # proportional share.  We repeat until nothing new can be locked.
+    for _ in range(num_cols + 1):
+        if not unassigned:
+            break
+
+        nat_sum = sum(nat_widths[i] for i in unassigned)
+        locked_this_round = []
+
+        for i in unassigned:
+            if nat_sum > 0:
+                share = max(MIN_COL_WIDTH,
+                            int(nat_widths[i] / nat_sum * remaining))
+            else:
+                share = max(MIN_COL_WIDTH,
+                            remaining // len(unassigned))
+
+            if nat_widths[i] <= share:
+                locked_this_round.append((i, nat_widths[i]))
+
+        if not locked_this_round:
+            break  # Nothing new was locked; exit early.
+
+        for i, w in locked_this_round:
+            assigned[i] = w
+            remaining -= w
+            unassigned.remove(i)
+
+    # Distribute the remaining budget among columns that are still unassigned
+    # (i.e. those that need to be truncated), proportionally to their natural
+    # widths.
+    if unassigned:
+        nat_sum = sum(nat_widths[i] for i in unassigned)
+        for i in unassigned:
+            if nat_sum > 0:
+                share = max(MIN_COL_WIDTH,
+                            int(nat_widths[i] / nat_sum * remaining))
+            else:
+                share = max(MIN_COL_WIDTH,
+                            remaining // len(unassigned))
+            assigned[i] = share
+
+    # Apply per-column max_width constraints.
+    for i, fn in enumerate(field_names):
+        table.max_width[fn] = assigned[i]  # type: ignore[index]
+
+    # Apply max_table_width as a safety net to absorb integer-division
+    # rounding errors that might push the rendered width over the limit.
+    table.max_table_width = terminal_width
+
+    return table.get_string()
+
+
+def _make_table(
+    field_names: List[str],
+    data_rows: List[List[str]],
+    show_header: bool,
+    hrules: HRuleStyle = HRuleStyle.FRAME
+) -> PrettyTable:
+    """Build and return a configured PrettyTable (without rendering it)."""
+    table = PrettyTable()
+    table.set_style(TableStyle.SINGLE_BORDER)
+    table.field_names = field_names
+    table.header = show_header
+    table.hrules = hrules
+    table.align = 'l'
+    for row in data_rows:
+        table.add_row(row)
+    return table
+
+
 def to_table(
     lines: Iterable[str],
     separate_head=True,
@@ -103,10 +240,16 @@ def to_table(
 ) -> str:
     """
     Pretty-prints the given two-dimensional array's lines using PrettyTable.
-    Produces clean, properly-aligned tables that handle long lines gracefully.
-    The first row is used as the header when separate_head is True.
-    When separate_footer is True, the last data row is visually separated
-    from the rest by printing it as a second table below a divider.
+
+    The output automatically fits within the current terminal width so that
+    wide result sets no longer break across multiple screen lines.  Column
+    widths are computed from the actual data: short columns (ones that already
+    fit their proportional share of the available space) keep their full
+    natural width; only the wider columns are shortened, proportionally.
+
+    The first row is used as the header when ``separate_head`` is True.
+    When ``separate_footer`` is True, the last data row is visually separated
+    from the rest by drawing a horizontal rule between every row.
     """
     lns: List[List[str]] = [
         ['' if e is None else str(e) for e in line] for line in lines]
@@ -114,17 +257,9 @@ def to_table(
     if not lns:
         return ''
 
-    def _make_table(field_names, data_rows, show_header,
-                    hrules=HRuleStyle.FRAME):
-        table = PrettyTable()
-        table.set_style(TableStyle.SINGLE_BORDER)
-        table.field_names = field_names
-        table.header = show_header
-        table.hrules = hrules
-        for row in data_rows:
-            table.add_row(row)
-        table.align = 'l'
-        return table.get_string()
+    # Detect the current terminal width; fall back to 80 columns when stdout
+    # is redirected to a file/pipe (which is the common case in tests).
+    terminal_width = shutil.get_terminal_size(fallback=(80, 24)).columns
 
     if separate_head:
         field_names = lns[0]
@@ -136,10 +271,13 @@ def to_table(
         show_header = False
 
     if separate_footer and len(data_rows) > 1:
-        return _make_table(field_names, data_rows, show_header,
-                           hrules=HRuleStyle.ALL)
+        table = _make_table(field_names, data_rows, show_header,
+                            hrules=HRuleStyle.ALL)
+    else:
+        table = _make_table(field_names, data_rows, show_header)
 
-    return _make_table(field_names, data_rows, show_header)
+    return _fit_table_to_width(table, field_names, data_rows,
+                               show_header, terminal_width)
 
 
 def to_csv(lines: Iterable[str]) -> str:
