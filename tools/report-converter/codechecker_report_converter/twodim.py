@@ -169,7 +169,8 @@ def _fit_table_to_width(
 
     # --- Iterative fixpoint ---
     # assigned[i] holds the final max_width for column i once locked.
-    assigned: List[Optional[int]] = [None] * num_cols
+    # Initialised to 0; every entry is guaranteed to be set before use.
+    assigned: List[int] = [0] * num_cols
     unassigned = list(range(num_cols))
     remaining = available
 
@@ -235,7 +236,7 @@ def _make_table(
     table.field_names = field_names
     table.header = show_header
     table.hrules = hrules
-    table.align = 'l'
+    table.align = 'l'  # type: ignore[assignment]
     for row in data_rows:
         table.add_row(row)
     return table
