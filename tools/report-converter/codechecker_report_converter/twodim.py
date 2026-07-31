@@ -97,52 +97,63 @@ def to_rows(lines: Iterable[str]) -> str:
     return '\n'.join(str_parts)
 
 
-def _fit_table_to_width(
-    table: PrettyTable,
+def _compute_natural_widths(
     field_names: List[str],
     data_rows: List[List[str]],
     show_header: bool,
-    terminal_width: int
+) -> List[int]:
+    """
+    Return the natural content width of each column (no truncation applied).
+
+    The natural width is the maximum of the header length (when shown) and
+    the length of every data cell in that column.
+    """
+    widths: List[int] = (
+        [len(str(h)) for h in field_names] if show_header
+        else [0] * len(field_names)
+    )
+    for row in data_rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(str(cell)))
+    return widths
+
+
+def _fit_table_to_width(
+    table: PrettyTable,
+    nat_widths: List[int],
+    terminal_width: int,
 ) -> str:
     """
     Render ``table`` so that it fits within ``terminal_width`` columns.
 
-    The algorithm avoids hard-coding column types by computing natural widths
-    from the actual data.  Short columns (those that already fit their share of
-    the available space) keep their full natural width; only the longer columns
-    are shortened, proportionally to their natural width.
+    The algorithm avoids hard-coding column types by working from the
+    pre-computed natural widths of each column.  Short columns (those that
+    already fit their share of the available space) keep their full natural
+    width; only the longer columns are shortened, proportionally.
 
     The iteration is a fixpoint loop:
 
     1. Each unassigned column gets a *proportional share* of the remaining
-       content budget (based on its natural width relative to the total of all
-       unassigned columns).
-    2. Any column whose natural width fits within its share is *locked in* at
-       that natural width, freeing up space for the others.
+       content budget (based on its natural width relative to the total of
+       all unassigned columns).
+    2. Any column whose natural width fits within its share is *locked in*
+       at that natural width, freeing up space for the others.
     3. Repeat until no more columns can be locked.
     4. Distribute the residual budget among whatever columns are still
        unassigned.
-    5. Apply ``max_table_width`` as a final safety net to absorb any rounding
-       error.
+    5. Apply ``max_table_width`` as a final safety net to absorb rounding
+       errors.
 
     The per-column border/padding overhead for SINGLE_BORDER style is
     3 characters per column (space + content + space + border) plus 1 for
     the leading border: ``overhead = num_cols * 3 + 1``.
     """
-    num_cols = len(field_names)
+    num_cols = len(nat_widths)
     # SINGLE_BORDER layout: │ c1 │ c2 │ … │ cn │
-    # overhead = 1 (left border) + num_cols * (1 space + content + 1 space + 1 border)
+    # overhead = 1 (left border) + num_cols *
+    #            (1 space + content + 1 space + 1 border)
     #          = 1 + num_cols * 3
     overhead = num_cols * 3 + 1
-
-    # Compute natural content width of each column (max of header and data).
-    nat_widths: List[int] = (
-        [len(str(h)) for h in field_names] if show_header
-        else [0] * num_cols
-    )
-    for row in data_rows:
-        for i, cell in enumerate(row):
-            nat_widths[i] = max(nat_widths[i], len(str(cell)))
 
     total_natural = sum(nat_widths) + overhead
 
@@ -151,19 +162,19 @@ def _fit_table_to_width(
         return table.get_string()
 
     # Minimum content width per column (must show at least a few characters).
-    MIN_COL_WIDTH = 4
+    min_col_width = 4
 
-    # Available content budget (total content widths must sum to at most this).
-    available = max(terminal_width - overhead, num_cols * MIN_COL_WIDTH)
+    # Available content budget (sum of column widths must be <= this).
+    available = max(terminal_width - overhead, num_cols * min_col_width)
 
     # --- Iterative fixpoint ---
-    # assigned[i] holds the final max_width for column i once it is locked.
+    # assigned[i] holds the final max_width for column i once locked.
     assigned: List[Optional[int]] = [None] * num_cols
     unassigned = list(range(num_cols))
     remaining = available
 
-    # Each iteration tries to lock columns whose natural width fits their
-    # proportional share.  We repeat until nothing new can be locked.
+    # Each iteration locks columns whose natural width fits their proportional
+    # share, freeing up the remaining budget for the wider columns.
     for _ in range(num_cols + 1):
         if not unassigned:
             break
@@ -173,11 +184,10 @@ def _fit_table_to_width(
 
         for i in unassigned:
             if nat_sum > 0:
-                share = max(MIN_COL_WIDTH,
+                share = max(min_col_width,
                             int(nat_widths[i] / nat_sum * remaining))
             else:
-                share = max(MIN_COL_WIDTH,
-                            remaining // len(unassigned))
+                share = max(min_col_width, remaining // len(unassigned))
 
             if nat_widths[i] <= share:
                 locked_this_round.append((i, nat_widths[i]))
@@ -190,22 +200,20 @@ def _fit_table_to_width(
             remaining -= w
             unassigned.remove(i)
 
-    # Distribute the remaining budget among columns that are still unassigned
-    # (i.e. those that need to be truncated), proportionally to their natural
-    # widths.
+    # Distribute remaining budget among columns still unassigned
+    # (those that need truncation), proportionally to natural widths.
     if unassigned:
         nat_sum = sum(nat_widths[i] for i in unassigned)
         for i in unassigned:
             if nat_sum > 0:
-                share = max(MIN_COL_WIDTH,
+                share = max(min_col_width,
                             int(nat_widths[i] / nat_sum * remaining))
             else:
-                share = max(MIN_COL_WIDTH,
-                            remaining // len(unassigned))
+                share = max(min_col_width, remaining // len(unassigned))
             assigned[i] = share
 
     # Apply per-column max_width constraints.
-    for i, fn in enumerate(field_names):
+    for i, fn in enumerate(table.field_names):
         table.max_width[fn] = assigned[i]  # type: ignore[index]
 
     # Apply max_table_width as a safety net to absorb integer-division
@@ -276,8 +284,8 @@ def to_table(
     else:
         table = _make_table(field_names, data_rows, show_header)
 
-    return _fit_table_to_width(table, field_names, data_rows,
-                               show_header, terminal_width)
+    nat_widths = _compute_natural_widths(field_names, data_rows, show_header)
+    return _fit_table_to_width(table, nat_widths, terminal_width)
 
 
 def to_csv(lines: Iterable[str]) -> str:
@@ -317,8 +325,8 @@ def to_csv(lines: Iterable[str]) -> str:
 def to_dictlist(key_list, lines):
     """
     Pretty-print the given two-dimensional array's lines into a JSON
-    object list. The key_list acts as the "header" of the table, specifying the
-    keys to use in the resulting object.
+    object list. The key_list acts as the "header" of the table, specifying
+    the keys to use in the resulting object.
 
     This function expects values to be the same number as the length of
     key_list, and that the order of values in a line corresponds to the order
