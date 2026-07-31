@@ -536,18 +536,9 @@ class TestAnalyze(unittest.TestCase):
         # The key bug: with --generate-reproducer, postprocessing was skipped
         # so parse would show 0 processed files. After the fix, it should
         # show 1 processed file.
-        # The table uses Unicode box-drawing characters as column separators,
-        # so we check that the label and the value "1" appear on the same line.
-        found = any(
-            "Number of processed analyzer result files" in line
-            and "1" in line.split()
-            for line in out.splitlines()
-        )
-        self.assertTrue(
-            found,
-            "Expected 'Number of processed analyzer result files' with "
-            "value '1' in output:\n" + out
-        )
+        # PrettyTable uses │ (U+2502) as column separator instead of ASCII |.
+        self.assertIn(
+            "Number of processed analyzer result files │ 1", out)
 
         shutil.rmtree(reproducer_dir)
 
