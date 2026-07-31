@@ -174,31 +174,26 @@ def _fit_table_to_width(
     unassigned = list(range(num_cols))
     remaining = available
 
-    # Each iteration locks columns whose natural width fits their proportional
-    # share, freeing up the remaining budget for the wider columns.
+    # Each iteration locks columns whose natural width is <= the equal
+    # share they would receive if the remaining budget were split evenly
+    # among the still-unassigned columns.  This guarantees that short
+    # columns always keep their full natural width, and only the genuinely
+    # wide columns are shortened.
     for _ in range(num_cols + 1):
         if not unassigned:
             break
 
-        nat_sum = sum(nat_widths[i] for i in unassigned)
-        locked_this_round = []
-
-        for i in unassigned:
-            if nat_sum > 0:
-                share = max(min_col_width,
-                            int(nat_widths[i] / nat_sum * remaining))
-            else:
-                share = max(min_col_width, remaining // len(unassigned))
-
-            if nat_widths[i] <= share:
-                locked_this_round.append((i, nat_widths[i]))
+        equal_share = remaining // len(unassigned)
+        locked_this_round = [
+            i for i in unassigned if nat_widths[i] <= equal_share
+        ]
 
         if not locked_this_round:
             break  # Nothing new was locked; exit early.
 
-        for i, w in locked_this_round:
-            assigned[i] = w
-            remaining -= w
+        for i in locked_this_round:
+            assigned[i] = nat_widths[i]
+            remaining -= nat_widths[i]
             unassigned.remove(i)
 
     # Distribute remaining budget among columns still unassigned
