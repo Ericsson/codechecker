@@ -266,9 +266,15 @@ def to_table(
     if not lns:
         return ''
 
-    # Detect the current terminal width; fall back to 80 columns when stdout
-    # is redirected to a file/pipe (which is the common case in tests).
-    terminal_width = shutil.get_terminal_size(fallback=(80, 24)).columns
+    # Detect the current terminal width. honour the COLUMNS environment
+    # variable first (allows the user to override), then fall back to the
+    # OS-reported terminal size, and finally to 80 columns when stdout is
+    # redirected to a file or pipe.
+    import os  # pylint: disable=import-outside-toplevel
+    try:
+        terminal_width = int(os.environ['COLUMNS'])
+    except (KeyError, ValueError):
+        terminal_width = shutil.get_terminal_size(fallback=(80, 24)).columns
 
     if separate_head:
         field_names = lns[0]
