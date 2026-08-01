@@ -11,6 +11,7 @@ Contains functions to format and pretty-print data from two-dimensional arrays.
 
 
 import json
+import os
 import shutil
 
 from operator import itemgetter
@@ -120,7 +121,9 @@ def _compute_natural_widths(
 
 def _fit_table_to_width(
     table: PrettyTable,
-    nat_widths: List[int],
+    field_names: List[str],
+    data_rows: List[List[str]],
+    show_header: bool,
     terminal_width: int,
 ) -> str:
     """
@@ -148,6 +151,7 @@ def _fit_table_to_width(
     3 characters per column (space + content + space + border) plus 1 for
     the leading border: ``overhead = num_cols * 3 + 1``.
     """
+    nat_widths = _compute_natural_widths(field_names, data_rows, show_header)
     num_cols = len(nat_widths)
     # SINGLE_BORDER layout: │ c1 │ c2 │ … │ cn │
     # overhead = 1 (left border) + num_cols *
@@ -261,11 +265,10 @@ def to_table(
     if not lns:
         return ''
 
-    # Detect the current terminal width. honour the COLUMNS environment
+    # Detect the current terminal width. Honour the COLUMNS environment
     # variable first (allows the user to override), then fall back to the
     # OS-reported terminal size, and finally to 80 columns when stdout is
     # redirected to a file or pipe.
-    import os  # pylint: disable=import-outside-toplevel
     try:
         terminal_width = int(os.environ['COLUMNS'])
     except (KeyError, ValueError):
@@ -286,8 +289,8 @@ def to_table(
     else:
         table = _make_table(field_names, data_rows, show_header)
 
-    nat_widths = _compute_natural_widths(field_names, data_rows, show_header)
-    return _fit_table_to_width(table, nat_widths, terminal_width)
+    return _fit_table_to_width(
+        table, field_names, data_rows, show_header, terminal_width)
 
 
 def to_csv(lines: Iterable[str]) -> str:
