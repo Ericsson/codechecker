@@ -536,9 +536,7 @@ class TestAnalyze(unittest.TestCase):
         # The key bug: with --generate-reproducer, postprocessing was skipped
         # so parse would show 0 processed files. After the fix, it should
         # show 1 processed file.
-        # PrettyTable uses │ (U+2502) as column separator instead of ASCII |.
-        self.assertIn(
-            "Number of processed analyzer result files │ 1", out)
+        self.assertIn("Number of processed analyzer result files │ 1", out)
 
         shutil.rmtree(reproducer_dir)
 

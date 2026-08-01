@@ -511,6 +511,4 @@ class TestStore(unittest.TestCase):
         _, out, _ = _call_cmd(store_cmd)
         # There are 9 individual reports, but only 6 unique.
         # The statistics should only print the unique ones.
-        # PrettyTable uses │ (U+2502) as column separator and pads columns
-        # with spaces, so we match flexibly with a regex.
         self.assertRegex(out, r"Number of analyzer reports\s+│\s+6\s+│")
