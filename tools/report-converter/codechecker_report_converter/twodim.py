@@ -98,32 +98,8 @@ def to_rows(lines: Iterable[str]) -> str:
     return '\n'.join(str_parts)
 
 
-def _compute_natural_widths(
-    field_names: List[str],
-    data_rows: List[List[str]],
-    show_header: bool,
-) -> List[int]:
-    """
-    Return the natural content width of each column (no truncation applied).
-
-    The natural width is the maximum of the header length (when shown) and
-    the length of every data cell in that column.
-    """
-    widths: List[int] = (
-        [len(str(h)) for h in field_names] if show_header
-        else [0] * len(field_names)
-    )
-    for row in data_rows:
-        for i, cell in enumerate(row):
-            widths[i] = max(widths[i], len(str(cell)))
-    return widths
-
-
 def _fit_table_to_width(
     table: PrettyTable,
-    field_names: List[str],
-    data_rows: List[List[str]],
-    show_header: bool,
     terminal_width: int,
 ) -> str:
     """
@@ -151,7 +127,18 @@ def _fit_table_to_width(
     3 characters per column (space + content + space + border) plus 1 for
     the leading border: ``overhead = num_cols * 3 + 1``.
     """
-    nat_widths = _compute_natural_widths(field_names, data_rows, show_header)
+    field_names = table.field_names
+    data_rows = table._rows  # type: ignore[attr-defined]
+    show_header = table.header
+
+    widths: List[int] = (
+        [len(str(h)) for h in field_names] if show_header
+        else [0] * len(field_names)
+    )
+    for row in data_rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(str(cell)))
+    nat_widths = widths
     num_cols = len(nat_widths)
     # SINGLE_BORDER layout: │ c1 │ c2 │ … │ cn │
     # overhead = 1 (left border) + num_cols *
@@ -289,8 +276,7 @@ def to_table(
     else:
         table = _make_table(field_names, data_rows, show_header)
 
-    return _fit_table_to_width(
-        table, field_names, data_rows, show_header, terminal_width)
+    return _fit_table_to_width(table, terminal_width)
 
 
 def to_csv(lines: Iterable[str]) -> str:
