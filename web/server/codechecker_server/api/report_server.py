@@ -1131,6 +1131,15 @@ def filter_unresolved_reports(q):
             .filter(Report.review_status.notin_(skip_review_statuses))
 
 
+def get_run_ids_for_filter(session, run_filter):
+    """
+    Resolve a RunFilter to the concrete list of run ids it currently
+    matches in the database.
+    """
+    return [r[0] for r in
+            process_run_filter(session, session.query(Run.id), run_filter)]
+
+
 def check_remove_runs_lock(session, run_ids):
     """
     Check if there is an existing lock on the given runs, which has not
@@ -4165,10 +4174,20 @@ class ThriftRequestHandler:
 
         # Remove the whole run.
         with DBSession(self._Session) as session:
-            check_remove_runs_lock(session, [run_id])
-
             if not run_filter:
                 run_filter = RunFilter(ids=[run_id])
+
+            # Resolve which runs are actually going to be deleted before
+            # checking for active locks. 'run_id' alone is not enough here:
+            # callers (e.g. the CLI's "CodeChecker cmd del" command) commonly
+            # pass 'run_id=None' and select the runs to remove purely via
+            # 'run_filter' (e.g. by name). Checking locks against
+            # '[run_id]' in that case previously meant checking against
+            # '[None]', which never matches any run and silently bypassed
+            # the lock check entirely (see #1445).
+            matched_run_ids = get_run_ids_for_filter(session, run_filter)
+            if matched_run_ids:
+                check_remove_runs_lock(session, matched_run_ids)
 
             q = process_run_filter(session, session.query(Run), run_filter)
 
