@@ -31,36 +31,37 @@ Found 2 defect(s) in multi_error_suppress_typo.cpp
 [] - multi_error_suppress_typo.cpp contains misspelled review status comment @9: // codechecker_suppressssss [all] some comment
 
 ----==== Severity Statistics ====----
-----------------------------
-Severity | Number of reports
-----------------------------
-HIGH     |                 1
-LOW      |                 1
-----------------------------
+┌──────────┬───────────────────┐
+│ Severity │ Number of reports │
+├──────────┼───────────────────┤
+│ HIGH     │ 1                 │
+│ LOW      │ 1                 │
+└──────────┴───────────────────┘
 ----=================----
 
 ----==== Checker Statistics ====----
---------------------------------------------------
-Checker name        | Severity | Number of reports
---------------------------------------------------
-core.DivideZero     | HIGH     |                 1
-deadcode.DeadStores | LOW      |                 1
---------------------------------------------------
+┌─────────────────────┬──────────┬───────────────────┐
+│ Checker name        │ Severity │ Number of reports │
+├─────────────────────┼──────────┼───────────────────┤
+│ core.DivideZero     │ HIGH     │ 1                 │
+│ deadcode.DeadStores │ LOW      │ 1                 │
+└─────────────────────┴──────────┴───────────────────┘
 ----=================----
 
 ----==== File Statistics ====----
--------------------------------------------------
-File name                     | Number of reports
--------------------------------------------------
-multi_error_suppress_typo.cpp |                 2
--------------------------------------------------
+┌───────────────────────────────┬───────────────────┐
+│ File name                     │ Number of reports │
+├───────────────────────────────┼───────────────────┤
+│ multi_error_suppress_typo.cpp │ 2                 │
+└───────────────────────────────┴───────────────────┘
 ----=================----
 
 ----======== Summary ========----
----------------------------------------------
-Number of processed analyzer result files | 1
-Number of analyzer reports                | 2
----------------------------------------------
+┌───────────────────────────────────────────┬───┐
+│ Number of processed analyzer result files │ 1 │
+├───────────────────────────────────────────┼───┤
+│ Number of analyzer reports                │ 2 │
+└───────────────────────────────────────────┴───┘
 ----=================----
 [] - ----==== Summary ====----
 [] - Up-to-date analysis results

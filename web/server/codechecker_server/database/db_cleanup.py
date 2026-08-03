@@ -23,6 +23,7 @@ from .database import DBSession
 from .run_db_model import \
     AnalysisInfo, \
     BugPathEvent, BugReportPoint, \
+    CheckerSet, \
     Comment, Checker, \
     File, FileContent, \
     Report, ReportAnalysisInfo, RunHistoryAnalysisInfo, RunLock
@@ -42,6 +43,7 @@ def remove_unused_data(product):
     remove_unused_files(product)
     remove_unused_comments(product)
     remove_unused_analysis_info(product)
+    remove_unused_checker_sets(product)
 
 
 def update_contextual_data(product, context):
@@ -216,6 +218,29 @@ def remove_unused_analysis_info(product):
                 add_foreign_keys(session,
                                  ReportAnalysisInfo.name,
                                  rep_ai_foreign_keys)
+
+
+def remove_unused_checker_sets(product):
+    with DBSession(product.session_factory) as session:
+        LOG.debug("[%s] Garbage collection of checker sets started...",
+                  product.endpoint)
+        try:
+            used_checker_sets = session.query(AnalysisInfo.checker_set_id) \
+                .filter(AnalysisInfo.checker_set_id.is_not(None)) \
+                .group_by(AnalysisInfo.checker_set_id)
+
+            session.query(CheckerSet) \
+                .filter(CheckerSet.id.notin_(used_checker_sets)) \
+                .delete(synchronize_session=False)
+
+            session.commit()
+
+            LOG.debug("[%s] Garbage collection of dangling checker sets "
+                      "finished.", product.endpoint)
+        except (sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.ProgrammingError) as ex:
+            LOG.error("[%s] Failed to remove checker sets: %s",
+                      product.endpoint, str(ex))
 
 
 def upgrade_severity_levels(product, checker_labels):

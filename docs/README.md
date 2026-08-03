@@ -143,7 +143,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 
 ## Web based report management
 * [Webserver User Guide](web/user_guide.md)
-* [WEB GUI User Guide](/web/server/vue-cli/src/assets/userguide/userguide.md)
+* [WEB GUI User Guide](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md)
 * [Command line and WEB UI Feature overview](feature_comparison.md)
 * Security configuration
   * [Configuring Authentication](web/authentication.md)
@@ -170,37 +170,37 @@ The following tools are supported:
 | **C/C++**      | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)                    |
 |                | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)                       |
 |                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)             |
-|                | [Cppcheck](/docs/tools/report-converter.md#cppcheck)                         |
-|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)             |
-|                | [Coccinelle](/docs/tools/report-converter.md#coccinelle)                     |
-|                | [Smatch](/docs/tools/report-converter.md#smatch)                             |
-|                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)                     |
-|                | [Sparse](/docs/tools/report-converter.md#sparse)                             |
-|                | [cpplint](/docs/tools/report-converter.md#cpplint)                           |
-| **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli) |
-| **Java**       | [SpotBugs](/docs/tools/report-converter.md#spotbugs)                         |
-|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)                    |
-| **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)                             |
-|                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)                         |
-| **JavaScript** | [ESLint](/docs/tools/report-converter.md#eslint)                             |
-| **TypeScript** | [TSLint](/docs/tools/report-converter.md#tslint)                             |
-| **Go**         | [Golint](/docs/tools/report-converter.md#golint)                             |
-| **Markdown**   | [Markdownlint](/docs/tools/report-converter.md#markdownlint)                 |
-|                | [Sphinx](/docs/tools/report-converter.md#sphinx)                             |
+|                | [Cppcheck](tools/report-converter.md#cppcheck)                         |
+|                | [Facebook Infer](tools/report-converter.md#facebook-infer)             |
+|                | [Coccinelle](tools/report-converter.md#coccinelle)                     |
+|                | [Smatch](tools/report-converter.md#smatch)                             |
+|                | [Kernel-Doc](tools/report-converter.md#kernel-doc)                     |
+|                | [Sparse](tools/report-converter.md#sparse)                             |
+|                | [cpplint](tools/report-converter.md#cpplint)                           |
+| **C#**         | [Roslynator.DotNet.Cli](tools/report-converter.md#roslynatordotnetcli) |
+| **Java**       | [SpotBugs](tools/report-converter.md#spotbugs)                         |
+|                | [Facebook Infer](tools/report-converter.md#facebook-infer)                    |
+| **Python**     | [Pylint](tools/report-converter.md#pylint)                             |
+|                | [Pyflakes](tools/report-converter.md#pyflakes)                         |
+| **JavaScript** | [ESLint](tools/report-converter.md#eslint)                             |
+| **TypeScript** | [TSLint](tools/report-converter.md#tslint)                             |
+| **Go**         | [Golint](tools/report-converter.md#golint)                             |
+| **Markdown**   | [Markdownlint](tools/report-converter.md#markdownlint)                 |
+|                | [Sphinx](tools/report-converter.md#sphinx)                             |
 
 
 For details see
 [supported code analyzers](supported_code_analyzers.md) documentation and the
-[Report Converter Tool](/docs/tools/report-converter.md).
+[Report Converter Tool](tools/report-converter.md).
 
 ## Common Tools
 Useful tools that can also be used outside CodeChecker.
 
-* [Build Logger (to generate JSON Compilation Database from your builds)](/analyzer/tools/build-logger/README.md)
-* [Plist/Sarif to HTML converter (to generate HTML files from the given plist or sarif files)](/docs/tools/report-converter.md#plist-to-html-tool)
-* [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/docs/tools/report-converter.md)
-* [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/docs/tools/tu_collector.md)
-* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/report-converter.md#report-hash-generation-module)
+* [Build Logger (to generate JSON Compilation Database from your builds)](https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/build-logger/README.md)
+* [Plist/Sarif to HTML converter (to generate HTML files from the given plist or sarif files)](tools/report-converter.md#plist-to-html-tool)
+* [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](tools/report-converter.md)
+* [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](tools/tu_collector.md)
+* [Report Hash generator (to generate unique hash identifiers for reports)](tools/report-converter.md#report-hash-generation-module)
 
 ## Helper Scripts
 * [Helper Scripts for daily analysis](script_daily.md)
@@ -416,7 +416,7 @@ you should be greeted with a web application showing you the analysis results.
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
-* [Sample CodeChecker Command Line Client](/scripts/thrift/README.md)
+* [Sample CodeChecker Command Line Client](https://github.com/Ericsson/codechecker/blob/master/scripts/thrift/README.md)
 * [Package and integration tests](tests.md)
 * [Server-side background tasks](web/background_tasks.md)
 

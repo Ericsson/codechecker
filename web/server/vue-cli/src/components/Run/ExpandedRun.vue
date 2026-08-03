@@ -160,7 +160,6 @@ import VersionTag from "./VersionTag";
 const props = defineProps({
   histories: { type: Array, required: true },
   run: { type: Object, required: true },
-  openAnalysisInfoDialog: { type: Function, default: () => {} },
   openAnalyzerStatisticsDialog: { type: Function, default: () => {} },
   selectedBaselineTags: { type: Array, required: true },
   selectedComparedToTags: { type: Array, required: true }

@@ -9,8 +9,8 @@ From the outlook, diff sounds like a very simple feature (and it is!), but it al
 
 The term "diff" means the comparison in between the _outstanding_ reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets. Results are displayed in the same 
 format as `CodeChecker cmd results`. A report is _outstanding_ if all of the following is true:
-* its [detection status](../../web/server/vue-cli/src/assets/userguide/userguide.md#detection-status) is _new_, _reopened_ or _unresolved_,
-* its [review status](../../web/server/vue-cli/src/assets/userguide/userguide.md#review-status) is _unreviewed_ or _confirmed_.
+* its [detection status](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md#detection-status) is _new_, _reopened_ or _unresolved_,
+* its [review status](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md#review-status) is _unreviewed_ or _confirmed_.
 In a nutshell, outstanding reports are those that should be fixed: they are either still detected in the codebase, are unreviewed or confirmed to be true positives. Every other report is considered _closed_.
 
 :warning: Note: When comparing timestamps/tags, we check these conditions at the time of the timestamp/tag (see [here](#diff-on-tags-or-timestamps-branch-history-analysis)).
@@ -331,7 +331,7 @@ You can also compare runs on the web GUI one [stored](https://github.com/Ericsso
 
 ![image](https://github.com/Szelethus/codechecker/assets/23276031/d93d7a73-5071-49df-a00e-5cf932c10c16)
 
-Read more [here](../../web/server/vue-cli/src/assets/userguide/userguide.md#compare-runs).
+Read more [here](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md#compare-runs).
 
 ## Diff Example
 
@@ -628,7 +628,7 @@ In this image, showing the set of oustanding reports in each analysis, you can s
 
 ## Review status rules and diffs
 
-Similarly to source code suppressions, you can set the review status of reports [on the GUI](../..//web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. [having the same hash](../analyzer/report_identification.md)), _regardless_ whether the rule was created before or after the report was stored, making it easy to mark a report false positive in all runs at the same time. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
+Similarly to source code suppressions, you can set the review status of reports [on the GUI](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. [having the same hash](../analyzer/report_identification.md)), _regardless_ whether the rule was created before or after the report was stored, making it easy to mark a report false positive in all runs at the same time. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
 
 :warning: Note: Review status rules act differently when runs are compared as opposed to when tags or dates are compared (see [below](#diff-on-tags-or-timestamps)).
 

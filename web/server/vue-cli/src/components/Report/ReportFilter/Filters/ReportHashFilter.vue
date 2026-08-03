@@ -33,19 +33,15 @@
 
 <script setup>
 import { useBaseFilter } from "@/composables/useBaseFilter";
-import { ref, toRef } from "vue";
+import { ref } from "vue";
 import { useRoute } from "vue-router";
 import FilterToolbar from "./Layout/FilterToolbar";
-
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
 
 const emit = defineEmits([ "update:url" ]);
 const id = "report-hash";
 const reportHash = ref(null);
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+const baseFilter = useBaseFilter();
 baseFilter.initPanel.value = initPanel;
 
 const route = useRoute();

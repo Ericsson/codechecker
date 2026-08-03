@@ -139,8 +139,7 @@ import Reports from "./Reports";
 import SingleLineWidget from "./SingleLineWidget";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const route = useRoute();
@@ -221,7 +220,7 @@ function getNumberOfFailedFiles() {
     ccService.getClient().getFailedFilesCount(
       baseStats.runIds.value,
       handleThriftError(_res => {
-        _resolve(_res);
+        _resolve(_res.toNumber());
       }));
   });
 }

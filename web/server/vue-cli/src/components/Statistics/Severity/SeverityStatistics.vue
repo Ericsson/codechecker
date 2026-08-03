@@ -53,7 +53,6 @@
         >
           <component-severity-statistics
             :bus="bus"
-            :namespace="namespace"
           />
         </v-col>
       </v-row>
@@ -78,8 +77,7 @@ import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
 import SeverityStatisticsTable from "./SeverityStatisticsTable";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const severity = useSeverity();

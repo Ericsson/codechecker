@@ -3,8 +3,7 @@ import { useBaseStatistics } from "@/composables/useBaseStatistics";
 import { onMounted } from "vue";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const baseStats = useBaseStatistics(props, getStatistics);

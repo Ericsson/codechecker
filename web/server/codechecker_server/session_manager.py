@@ -18,6 +18,8 @@ from datetime import datetime, timedelta
 import hashlib
 from typing import Optional
 
+from sqlalchemy.orm import sessionmaker
+
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.logger import get_logger
 from codechecker_common.util import generate_random_token, load_json
@@ -32,6 +34,8 @@ from .database.config_db_model import OAuthToken
 from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
+
+import codechecker_api_shared
 
 
 SSO_PROVIDER = 'sso'
@@ -183,7 +187,8 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, secrets_file, force_auth=False,
+    def __init__(self, config_db_sessionmaker: sessionmaker,
+                 configuration_file, secrets_file, force_auth=False,
                  api_handler_processes: Optional[int] = None,
                  task_worker_processes: Optional[int] = None):
         """
@@ -194,7 +199,7 @@ class SessionManager:
         :param force_auth: If True, the manager will be enabled even if the
             configuration file disables authentication.
         """
-        self.__database_connection = None
+        self.__config_db_sessionmaker = config_db_sessionmaker
         self.__logins_since_prune = 0
         self.__sessions = []
         self.__configuration_file = configuration_file
@@ -808,15 +813,12 @@ class SessionManager:
             self.__auth_config['method_' + method].get('enabled')
 
     def __try_auth_token(self, auth_string):
-        if not self.__database_connection:
-            return None
-
         user_name, token = auth_string.split(':', 1)
 
         transaction = None
         try:
             # Try the database, if it is connected.
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             auth_session = transaction.query(SessionRecord.token) \
                 .filter(SessionRecord.user_name == user_name) \
                 .filter(SessionRecord.token == token) \
@@ -836,15 +838,12 @@ class SessionManager:
         return None
 
     def __try_personal_access_token(self, auth_string):
-        if not self.__database_connection:
-            return None
-
         user_name, token = auth_string.split(':', 1)
         personal_access_token = None
 
         transaction = None
         try:
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             personal_access_token = transaction.query(PersonalAccessToken) \
                 .filter(PersonalAccessToken.user_name == user_name) \
                 .filter(PersonalAccessToken.token == token) \
@@ -860,7 +859,12 @@ class SessionManager:
             return False
 
         if personal_access_token.expiration < datetime.now():
-            return False
+            LOG.info("User '%s' tried to login with an expired "
+                     "Personal Access Token.",
+                     personal_access_token.user_name)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "Personal Access Token is expired!")
 
         return {
             'username': personal_access_token.user_name,
@@ -993,12 +997,9 @@ class SessionManager:
         """
         Update the groups assigned to a personal access token.
         """
-        if not self.__database_connection:
-            return None
-
         transaction = None
         try:
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             transaction.query(PersonalAccessToken) \
                 .filter(PersonalAccessToken.user_name == user_name) \
                 .update({PersonalAccessToken.groups: ';'.join(groups)})
@@ -1018,13 +1019,10 @@ class SessionManager:
         """
         Updates group field of the users tokens.
         """
-        if not self.__database_connection:
-            return None
-
         transaction = None
         try:
             # Try the database, if it is connected.
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             transaction.query(SessionRecord) \
                 .filter(SessionRecord.user_name == user_name) \
                 .update({SessionRecord.groups: ';'.join(groups)})
@@ -1069,7 +1067,7 @@ class SessionManager:
         transaction = None
         try:
             # Try the database, if it is connected.
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             system_permission = transaction.query(SystemPermission) \
                 .filter(SystemPermission.name == user_name) \
                 .filter(SystemPermission.permission == SUPERUSER.name) \
@@ -1094,7 +1092,7 @@ class SessionManager:
         return _Session(
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
-            self.__refresh_time, is_root, self.__database_connection,
+            self.__refresh_time, is_root, self.__config_db_sessionmaker,
             last_access)
 
     def create_session(self, auth_string):
@@ -1134,20 +1132,19 @@ class SessionManager:
 
         # Store the session in the database.
         transaction = None
-        if self.__database_connection:
-            try:
-                transaction = self.__database_connection()
-                record = SessionRecord(token, user_name,
-                                       ';'.join(groups))
-                transaction.add(record)
-                transaction.commit()
-            except Exception as e:
-                LOG.error("Couldn't store or update login record in "
-                          "database:")
-                LOG.error(str(e))
-            finally:
-                if transaction:
-                    transaction.close()
+        try:
+            transaction = self.__config_db_sessionmaker()
+            record = SessionRecord(token, user_name,
+                                   ';'.join(groups))
+            transaction.add(record)
+            transaction.commit()
+        except Exception as e:
+            LOG.error("Couldn't store or update login record in "
+                      "database:")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
         return local_session
 
@@ -1205,37 +1202,36 @@ class SessionManager:
 
         # Store the session in the database.
         transaction = None
-        if self.__database_connection:
-            try:
-                transaction = self.__database_connection()
+        try:
+            transaction = self.__config_db_sessionmaker()
 
-                # Store the new session.
-                record = SessionRecord(codechecker_session_token,
-                                       user_data.get('username'),
-                                       ';'.join(user_data.get('groups')))
-                transaction.add(record)
-                # Store oauth token data
-                session_id = transaction.query(SessionRecord.id) \
-                    .filter(SessionRecord.user_name ==
-                            user_data.get('username')) \
-                    .first()
+            # Store the new session.
+            record = SessionRecord(codechecker_session_token,
+                                   user_data.get('username'),
+                                   ';'.join(user_data.get('groups')))
+            transaction.add(record)
+            # Store oauth token data
+            session_id = transaction.query(SessionRecord.id) \
+                .filter(SessionRecord.user_name ==
+                        user_data.get('username')) \
+                .first()
 
-                oauth_token_session = OAuthToken(
-                                                 access_token=access_token,
-                                                 expires_at=token_expires_at,
-                                                 refresh_token=refresh_token,
-                                                 auth_session_id=session_id[0]
-                                                 )
-                transaction.add(oauth_token_session)
-                transaction.commit()
+            oauth_token_session = OAuthToken(
+                                             access_token=access_token,
+                                             expires_at=token_expires_at,
+                                             refresh_token=refresh_token,
+                                             auth_session_id=session_id[0]
+                                             )
+            transaction.add(oauth_token_session)
+            transaction.commit()
 
-            except Exception as e:
-                LOG.error("Couldn't store or update login record in "
-                          "database:")
-                LOG.error(str(e))
-            finally:
-                if transaction:
-                    transaction.close()
+        except Exception as e:
+            LOG.error("Couldn't store or update login record in "
+                      "database:")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
 
         return local_session
 
@@ -1294,13 +1290,9 @@ class SessionManager:
         Creates a local session if a valid session token can be found in the
         database.
         """
-
-        if not self.__database_connection:
-            return None
-
         transaction = None
         try:
-            transaction = self.__database_connection()
+            transaction = self.__config_db_sessionmaker()
             db_record = transaction.query(SessionRecord) \
                 .filter(SessionRecord.token == token) \
                 .limit(1).one_or_none()
@@ -1376,15 +1368,13 @@ class SessionManager:
         try:
             self.invalidate_local_session(token)
 
-            transaction = self.__database_connection() \
-                if self.__database_connection else None
+            transaction = self.__config_db_sessionmaker()
 
             # Remove sessions from the database.
-            if transaction:
-                transaction.query(SessionRecord) \
-                    .filter(SessionRecord.token == token) \
-                    .delete()
-                transaction.commit()
+            transaction.query(SessionRecord) \
+                .filter(SessionRecord.token == token) \
+                .delete()
+            transaction.commit()
 
             return True
         except Exception as e:

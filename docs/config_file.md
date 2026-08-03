@@ -18,7 +18,7 @@ CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
 ```
 
 then the analyzer parameters from the
-[`codechecker.json`](../../config/config_files/codechecker.json) configuration
+[`codechecker.json`](https://github.com/Ericsson/codechecker/blob/master/config/config_files/codechecker.json) configuration
 file will be emplaced as command line arguments:
 
 ```sh

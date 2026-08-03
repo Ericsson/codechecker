@@ -133,9 +133,8 @@ def ldap_error_handler():
     except ldap.FILTER_ERROR as ex:
         LOG.error("Filter error: %s", str(ex))
 
-    except ldap.SERVER_DOWN:
-        LOG.error("Can't connect to LDAP server,"
-                  " or LDAPS certificate verification failed")
+    except ldap.SERVER_DOWN as ex:
+        LOG.error("Can't connect to LDAP server: %s", str(ex))
 
     except ldap.LDAPError as err:
         LOG.error("Exception ldap.%s (%s)",

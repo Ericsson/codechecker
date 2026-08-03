@@ -67,7 +67,7 @@ def upgrade():
         sa.Column('name', sa.String(), nullable=True),
         sa.Column('version', sa.String(), nullable=True),
         sa.Column('command', sa.String(), nullable=True),
-        sa.Column('can_delete', sa.Boolean(), server_default=sa.text('true'),
+        sa.Column('can_delete', sa.Boolean(), server_default=sa.true(),
                   nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_runs')),
         sa.UniqueConstraint('name', name=op.f('uq_runs_name'))

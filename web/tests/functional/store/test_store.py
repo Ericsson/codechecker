@@ -511,5 +511,4 @@ class TestStore(unittest.TestCase):
         _, out, _ = _call_cmd(store_cmd)
         # There are 9 individual reports, but only 6 unique.
         # The statistics should only print the unique ones.
-        self.assertIn("Number of analyzer reports                       | 6",
-                      out)
+        self.assertRegex(out, r"Number of analyzer reports\s+│\s+6\s+│")
