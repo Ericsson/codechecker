@@ -570,6 +570,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         # A line mentioning a file in Clang-Tidy's output looks like this:
         # /home/.../.cpp:L:C: warning: foobar.
+        # With the UseColor option enabled Clang-Tidy wraps the diagnostics
+        # in ANSI escape sequences, so they have to be removed first,
+        # otherwise they would become part of the matched path.
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+
         regex = re.compile(
             # File path followed by a ':'.
             r'^(?P<path>[\S ]+?):'
@@ -581,7 +586,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         paths = []
 
         for line in output.splitlines():
-            match = re.match(regex, line)
+            match = re.match(regex, ansi_escape.sub('', line))
             if match:
                 paths.append(match.group('path'))
 

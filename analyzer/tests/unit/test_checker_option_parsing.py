@@ -11,6 +11,7 @@ Test the parsing of checker options reported by the analyzers
 """
 
 import unittest
+from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.clangtidy.analyzer \
     import parse_checker_config as clangtidy_parse_checker_config
 
@@ -88,3 +89,34 @@ CheckOptions:
         self.assertIn(
             ["readability-suspicious-call-argument:PrefixSimilarAbove", "30"],
             result)
+
+
+class ClangTidyMentionedFilesTest(unittest.TestCase):
+    """
+    Test that the files mentioned in clang-tidy's output are collected
+    correctly.
+    """
+
+    def test_plain_output(self):
+        """
+        Test collecting the mentioned files from an uncolored output.
+        """
+        output = \
+            "/path/to/main.cpp:64:9: error: variable name 'i' is too short"
+
+        self.assertEqual(
+            ClangTidy.get_analyzer_mentioned_files(None, output),
+            {"/path/to/main.cpp"})
+
+    def test_colored_output(self):
+        """
+        Test collecting the mentioned files when the UseColor option is
+        enabled, so the diagnostics are wrapped in ANSI escape sequences.
+        """
+        output = \
+            "\x1b[1m/path/to/main.cpp:64:9: \x1b[0m\x1b[0;1;31merror: " \
+            "\x1b[0mvariable name 'i' is too short"
+
+        self.assertEqual(
+            ClangTidy.get_analyzer_mentioned_files(None, output),
+            {"/path/to/main.cpp"})
