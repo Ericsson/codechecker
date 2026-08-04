@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 
@@ -108,6 +108,7 @@ const permissions = computed(() => {
 
 const currentUser = computed(() => store.getters.currentUser);
 const currentProduct = computed(() => store.getters.currentProduct);
+const isAuthenticated = computed(() => store.getters.isAuthenticated);
 
 watch(currentProduct, () => {
   if (!currentProduct.value) {
@@ -133,9 +134,9 @@ watch(currentUser, () => {
   fetchPermissions();
 }, { immediate: true });
 
-onMounted(async () => {
-  await getLoggedInUser();
-});
+watch(isAuthenticated, val => {
+  if (val) getLoggedInUser();
+}, { immediate: true });
 
 function fetchPermissions() {
   authService.getClient().getPermissionsForUser("SYSTEM",

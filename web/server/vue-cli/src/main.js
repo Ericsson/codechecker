@@ -32,7 +32,11 @@ import {
   GET_CURRENT_PRODUCT,
   GET_CURRENT_PRODUCT_CONFIG
 } from "@/store/actions.type";
-import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
+import {
+  CLEAR_QUERIES,
+  PURGE_AUTH,
+  SET_QUERIES
+} from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import fromUnixTime from "./filters/from-unix-time";
@@ -80,6 +84,8 @@ router.beforeResolve((to, from, next) => {
         (!store.getters.authParams.sessionStillActive ||
          !store.getters.isAuthenticated)
       ) {
+        store.commit(PURGE_AUTH);
+
         // Redirect the user to the login page but keep the original path to
         // redirect the user back once logged in.
         return next({
