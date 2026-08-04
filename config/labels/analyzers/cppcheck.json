@@ -1182,6 +1182,8 @@
     ],
     "cppcheck-redundantContinue": [
       "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "cppcheck-redundantCopy": [

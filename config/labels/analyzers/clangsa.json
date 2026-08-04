@@ -58,7 +58,8 @@
       "severity:HIGH"
     ],
     "alpha.core.StdVariant": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c"
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c",
+      "severity:HIGH"
     ],
     "alpha.core.StoreToImmutable": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-storetoimmutable",
@@ -97,7 +98,12 @@
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.MisusedMovedObject": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c"
+      "cwe-top-25-2024:cwe-416",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c",
+      "guideline:cwe-top-25-2024",
+      "guideline:sei-cert-cpp",
+      "sei-cert-cpp:exp63-cpp",
+      "severity:HIGH"
     ],
     "alpha.cplusplus.PlacementNew": [
       "severity:HIGH"
@@ -317,9 +323,9 @@
       "severity:MEDIUM"
     ],
     "core.FixedAddressDereference": [
-      "cwe-top25:cwe-119",
+      "cwe-top-25-2024:cwe-119",
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-fixedaddressdereference-c-c-objc",
-      "guideline:cwe-top25-2024",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -530,6 +536,7 @@
       "severity:HIGH"
     ],
     "cplusplus.Move": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-move-c",
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-cpp",
       "profile:default",
@@ -734,12 +741,12 @@
     ],
     "optin.core.FixedAddressDereference": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-fixedaddressdereference-c-c-objc",
-      "guideline:cwe-top25-2024",
+      "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
-      "cwe-top25:cwe-119",
+      "cwe-top-25-2024:cwe-119",
       "severity:HIGH"
     ],
     "optin.core.UnconditionalVAArg": [

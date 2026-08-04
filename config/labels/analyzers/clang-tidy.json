@@ -1034,7 +1034,7 @@
     ],
     "cert-arr39-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/arr39-c.html",
-      "severtiy:HIGH"
+      "severity:HIGH"
     ],
     "cert-con36-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con36-c.html",
