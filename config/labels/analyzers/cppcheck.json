@@ -377,7 +377,6 @@
       "sei-cert-c:mem56-cpp"
     ],
     "cppcheck-duplInheritedMember": [
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"

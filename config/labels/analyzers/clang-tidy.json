@@ -242,7 +242,6 @@
     ],
     "bugprone-chained-comparison": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/chained-comparison.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -670,7 +669,6 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signed-char-misuse.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -849,7 +847,6 @@
     ],
     "bugprone-switch-missing-default-case": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/switch-missing-default-case.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -1135,10 +1132,8 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err33-c.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:err33-c",
       "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
@@ -2149,7 +2144,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wconditional-uninitialized",
       "guideline:sei-cert-c",
       "label-tool-skip:severity",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -2634,10 +2628,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdouble-promotion",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:flp34-c",
       "sei-cert-cpp:flp34-c",
       "severity:MEDIUM"
@@ -2912,10 +2904,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfloat-conversion",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:flp32-c",
       "sei-cert-c:flp34-c",
       "sei-cert-cpp:flp32-c",
@@ -4280,9 +4270,7 @@
     ],
     "clang-diagnostic-missing-field-initializers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmissing-field-initializers",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-format-attribute": [
@@ -5435,10 +5423,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-identifier",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:dcl37-c",
       "sei-cert-cpp:dcl51-cpp",
       "severity:MEDIUM"
@@ -5447,7 +5433,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-macro-identifier",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -5700,9 +5685,7 @@
     ],
     "clang-diagnostic-sign-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-compare",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-conversion": [
@@ -6640,9 +6623,7 @@
     ],
     "clang-diagnostic-unused-parameter": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-parameter",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-private-field": [

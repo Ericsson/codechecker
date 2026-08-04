@@ -222,6 +222,8 @@
     ],
     "alpha.unix.cstring.UninitializedRead": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
+      "guideline:sei-cert-c",
+      "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
     "alpha.webkit.ForwardDeclChecker": [
@@ -631,7 +633,6 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#deadcode-deadstores-c",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -1127,6 +1128,7 @@
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
+      "profile:sensitive",
       "sei-cert-c:str31-c",
       "sei-cert-cpp:str31-c",
       "cwe-top-25-2024:cwe-119",
@@ -1322,6 +1324,16 @@
       "cwe-top-25-2024:cwe-476",
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
+      "severity:HIGH"
+    ],
+    "unix.cstring.UninitializedRead": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-uninitializedread-c",
+      "guideline:sei-cert-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
     "valist.CopyToSelf": [
