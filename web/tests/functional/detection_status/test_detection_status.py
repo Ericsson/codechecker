@@ -38,7 +38,8 @@ class TestDetectionStatus(unittest.TestCase):
             'skip_list_file': None,
             'check_env': env.test_env(TEST_WORKSPACE),
             'workspace': TEST_WORKSPACE,
-            'checkers': ['-d', 'clang-diagnostic'],
+            'checkers': ['-d', 'clang-diagnostic',
+                         '-e', 'deadcode.DeadStores'],
             'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
             'test_project': 'hello',
             'analyzers': ['clangsa', 'clang-tidy']
@@ -398,7 +399,10 @@ int main()
                            if r.detectionStatus == DetectionStatus.UNAVAILABLE]
         self.assertEqual(len(unavail_reports), 0)
 
-        cfg['checkers'] = ['-d', 'core.DivideZero']
+        # Keep deadcode.DeadStores enabled, so core.DivideZero is the only
+        # checker that goes from on to off between the two analyses.
+        cfg['checkers'] = ['-d', 'core.DivideZero',
+                           '-e', 'deadcode.DeadStores']
 
         self._create_source_file(1)
         self._check_source_file(cfg)

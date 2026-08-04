@@ -82,7 +82,7 @@ class TestSkip(unittest.TestCase):
             'skip_file': skip_list_file,
             'check_env': test_env,
             'workspace': TEST_WORKSPACE,
-            'checkers': [],
+            'checkers': ['-e', 'deadcode.DeadStores'],
             'analyzers': ['clangsa']
         }
 

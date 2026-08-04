@@ -86,7 +86,8 @@ class DiffLocal(unittest.TestCase):
                                                     'reports')
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
                                        '-d', 'core.NullDereference',
-                                       '-d', 'clang-diagnostic']
+                                       '-d', 'clang-diagnostic',
+                                       '-e', 'deadcode.DeadStores']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_base)
         if ret:
@@ -97,7 +98,8 @@ class DiffLocal(unittest.TestCase):
                                                     'reports')
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
                                        '-e', 'core.NullDereference',
-                                       '-d', 'clang-diagnostic']
+                                       '-d', 'clang-diagnostic',
+                                       '-e', 'deadcode.DeadStores']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_new)
         if ret:

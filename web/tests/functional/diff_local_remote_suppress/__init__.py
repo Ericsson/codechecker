@@ -84,7 +84,7 @@ def setup_class_common(workspace_name):
         'skip_list_file': None,
         'check_env': env.test_env(test_workspace),
         'workspace': test_workspace,
-        'checkers': [],
+        'checkers': ['-e', 'deadcode.DeadStores'],
         'analyzers': ['clangsa'],
         'run_names': {}
     }
@@ -139,7 +139,8 @@ def setup_class_common(workspace_name):
     # Log, analyze and store project 1.
     # Modifications:
     #   - Suppress a core.CallAndMessage report.
-    #   - Options: "-e core.CallAndMessage -d core.NullDereference"
+    #   - Options: "-e core.CallAndMessage -d core.NullDereference
+    #               -e deadcode.DeadStores"
 
     project.insert_suppression(
         os.path.join(test_proj_path_1, "call_and_message.cpp"))
@@ -147,7 +148,8 @@ def setup_class_common(workspace_name):
     codechecker_cfg['workspace'] = test_proj_path_1
     codechecker_cfg['reportdir'] = os.path.join(test_proj_path_1, 'reports')
     codechecker_cfg['checkers'] = [
-        '-e', 'core.CallAndMessage', '-d', 'core.NullDereference']
+        '-e', 'core.CallAndMessage', '-d', 'core.NullDereference',
+        '-e', 'deadcode.DeadStores']
 
     ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_1)
     if ret:
@@ -162,7 +164,8 @@ def setup_class_common(workspace_name):
     # Log, analyze and store project 2.
     # Modifications:
     #   - Suppress a core.DivideZero report.
-    #   - Options: "-d core.CallAndMessage -e core.NullDereference"
+    #   - Options: "-d core.CallAndMessage -e core.NullDereference
+    #               -e deadcode.DeadStores"
 
     project.insert_suppression(
         os.path.join(test_proj_path_2, "divide_zero.cpp"))
@@ -170,7 +173,8 @@ def setup_class_common(workspace_name):
     codechecker_cfg['workspace'] = test_proj_path_2
     codechecker_cfg['reportdir'] = os.path.join(test_proj_path_2, 'reports')
     codechecker_cfg['checkers'] = [
-        '-d', 'core.CallAndMessage', '-e', 'core.NullDereference']
+        '-d', 'core.CallAndMessage', '-e', 'core.NullDereference',
+        '-e', 'deadcode.DeadStores']
 
     ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_2)
     if ret:
