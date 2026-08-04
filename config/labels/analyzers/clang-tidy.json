@@ -1210,7 +1210,7 @@
       "severity:MEDIUM"
     ],
     "cert-int09-c": [
-      "doc_url:https://clang.llmv.org/extra/clang-tidy/checks/cert/int09-c.html",
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/int09-c.html",
       "severity:LOW"
     ],
     "cert-mem57-cpp": [
@@ -1659,7 +1659,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-binding-in-condition": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbinding-in-condition",
+      "doc_url:https://releases.llvm.org/20.1.0/tools/clang/docs/DiagnosticsReference.html#wbinding-in-condition",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-bit-int-extension": [
@@ -2544,7 +2544,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-static-analyzer-flag": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-static-analyzer-flag",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/DiagnosticsReference.html#wdeprecated-static-analyzer-flag",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-this-capture": [
@@ -2761,7 +2761,7 @@
       "severity:HIGH"
     ],
     "clang-diagnostic-enum-constexpr-conversion": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wenum-constexpr-conversion",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/DiagnosticsReference.html#wenum-constexpr-conversion",
       "severity:HIGH"
     ],
     "clang-diagnostic-enum-conversion": [
@@ -2818,15 +2818,15 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-experimental-lifetime-safety": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wexperimental-lifetime-safety",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/DiagnosticsReference.html#wexperimental-lifetime-safety",
       "severity:HIGH"
     ],
     "clang-diagnostic-experimental-lifetime-safety-permissive": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wexperimental-lifetime-safety-permissive",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/DiagnosticsReference.html#wexperimental-lifetime-safety-permissive",
       "severity:HIGH"
     ],
     "clang-diagnostic-experimental-lifetime-safety-strict": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wexperimental-lifetime-safety-strict",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/DiagnosticsReference.html#wexperimental-lifetime-safety-strict",
       "severity:HIGH"
     ],
     "clang-diagnostic-explicit-initialize-call": [
@@ -2893,7 +2893,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-fixed-enum-extension": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfixed-enum-extension",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/DiagnosticsReference.html#wfixed-enum-extension",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-fixed-point-overflow": [
@@ -3139,7 +3139,7 @@
       "severity:STYLE"
     ],
     "clang-diagnostic-generic-type-extension": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wgeneric-type-extension",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/DiagnosticsReference.html#wgeneric-type-extension",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-global-constructors": [
@@ -3300,7 +3300,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-higher-precision-fp": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#whigher-precision-fp",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/DiagnosticsReference.html#whigher-precision-fp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-hip-omp-target-directives": [
@@ -3846,7 +3846,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-knl-knm-isa-support-removed": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wknl-knm-isa-support-removed",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/DiagnosticsReference.html#wknl-knm-isa-support-removed",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-knr-promoted-parameter": [
@@ -4190,7 +4190,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-microsoft-static-assert": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmicrosoft-static-assert",
+      "doc_url:https://releases.llvm.org/20.1.0/tools/clang/docs/DiagnosticsReference.html#wmicrosoft-static-assert",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-microsoft-string-literal-from-predefined": [
@@ -6218,7 +6218,7 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-undefined-arm-streaming": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wundefined-arm-streaming",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/DiagnosticsReference.html#wundefined-arm-streaming",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-undefined-arm-za": [
@@ -7233,127 +7233,127 @@
       "severity:STYLE"
     ],
     "hicpp-avoid-c-arrays": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/avoid-c-arrays.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/avoid-c-arrays.html",
       "severity:LOW"
     ],
     "hicpp-avoid-goto": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/avoid-goto.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/avoid-goto.html",
       "severity:STYLE"
     ],
     "hicpp-braces-around-statements": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/braces-around-statements.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/braces-around-statements.html",
       "severity:STYLE"
     ],
     "hicpp-deprecated-headers": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/deprecated-headers.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/deprecated-headers.html",
       "severity:LOW"
     ],
     "hicpp-exception-baseclass": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/exception-baseclass.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/exception-baseclass.html",
       "severity:LOW"
     ],
     "hicpp-explicit-conversions": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/explicit-conversions.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/explicit-conversions.html",
       "severity:LOW"
     ],
     "hicpp-function-size": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/function-size.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/function-size.html",
       "severity:LOW"
     ],
     "hicpp-ignored-remove-result": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/ignored-remove-result.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/ignored-remove-result.html",
       "severity:MEDIUM"
     ],
     "hicpp-invalid-access-moved": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/invalid-access-moved.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/invalid-access-moved.html",
       "severity:HIGH"
     ],
     "hicpp-member-init": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/member-init.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/member-init.html",
       "severity:LOW"
     ],
     "hicpp-move-const-arg": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/move-const-arg.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/move-const-arg.html",
       "severity:MEDIUM"
     ],
     "hicpp-multiway-paths-covered": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/multiway-paths-covered.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/multiway-paths-covered.html",
       "severity:STYLE"
     ],
     "hicpp-named-parameter": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/named-parameter.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/named-parameter.html",
       "severity:LOW"
     ],
     "hicpp-new-delete-operators": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/new-delete-operators.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/new-delete-operators.html",
       "severity:LOW"
     ],
     "hicpp-no-array-decay": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/no-array-decay.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/no-array-decay.html",
       "severity:LOW"
     ],
     "hicpp-no-assembler": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/no-assembler.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/no-assembler.html",
       "severity:LOW"
     ],
     "hicpp-no-malloc": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/no-malloc.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/no-malloc.html",
       "severity:LOW"
     ],
     "hicpp-noexcept-move": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/noexcept-move.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/noexcept-move.html",
       "severity:MEDIUM"
     ],
     "hicpp-signed-bitwise": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/signed-bitwise.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/signed-bitwise.html",
       "severity:LOW"
     ],
     "hicpp-special-member-functions": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/special-member-functions.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/special-member-functions.html",
       "severity:LOW"
     ],
     "hicpp-static-assert": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/static-assert.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/static-assert.html",
       "severity:LOW"
     ],
     "hicpp-undelegated-constructor": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/undelegated-constructor.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/undelegated-constructor.html",
       "severity:MEDIUM"
     ],
     "hicpp-uppercase-literal-suffix": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/uppercase-literal-suffix.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/uppercase-literal-suffix.html",
       "severity:STYLE"
     ],
     "hicpp-use-auto": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-auto.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-auto.html",
       "severity:STYLE"
     ],
     "hicpp-use-emplace": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-emplace.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-emplace.html",
       "severity:STYLE"
     ],
     "hicpp-use-equals-default": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-equals-default.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-equals-default.html",
       "severity:LOW"
     ],
     "hicpp-use-equals-delete": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-equals-delete.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-equals-delete.html",
       "severity:LOW"
     ],
     "hicpp-use-noexcept": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-noexcept.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-noexcept.html",
       "severity:STYLE"
     ],
     "hicpp-use-nullptr": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-nullptr.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-nullptr.html",
       "severity:LOW"
     ],
     "hicpp-use-override": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/use-override.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/use-override.html",
       "severity:LOW"
     ],
     "hicpp-vararg": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/hicpp/vararg.html",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/hicpp/vararg.html",
       "severity:LOW"
     ],
     "linuxkernel-must-check-errs": [

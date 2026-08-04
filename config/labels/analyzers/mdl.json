@@ -158,7 +158,7 @@
       "severity:STYLE"
     ],
     "MD055": [
-      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.13.0/docs/RULES.md#md055---table-row-doesnt-begin-end-with-pipes",
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.13.0/docs/RULES.md#md055---table-row-doesnt-beginend-with-pipes",
       "severity:STYLE"
     ],
     "MD056": [
@@ -166,7 +166,7 @@
       "severity:STYLE"
     ],
     "MD057": [
-      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.13.0/docs/RULES.md#md057---table-has-missing-or-invalid-header-separation",
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.13.0/docs/RULES.md#md057---table-has-missing-or-invalid-header-separation-second-row",
       "severity:STYLE"
     ]
   }
