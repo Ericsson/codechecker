@@ -40,6 +40,7 @@ const isAuthenticated = computed(function() {
 onMounted(function() {
   if (isAuthenticated.value) {
     router.replace({ name: "products" });
+    return;
   }
   detectCallback();
 });
