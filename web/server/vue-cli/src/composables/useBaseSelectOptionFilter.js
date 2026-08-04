@@ -16,7 +16,7 @@ export function useBaseSelectOptionFilter() {
   const bus = mitt();
 
   const setSelectedItems = (items, updateUrl = true) => {
-    selectedItems.value = items;
+    selectedItems.value = Array.isArray(items) ? items : [ items ];
     updateReportFilter.value();
     initPanel();
 
