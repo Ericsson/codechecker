@@ -1,0 +1,108 @@
+name: pip install
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - 'config/**'
+      - 'codechecker_common/**'
+      - 'analyzer/**'
+      - 'web/**'
+      - 'tools/**'
+      - '.github/workflows/pip-install.yml'
+      - '.github/scripts/**'
+  pull_request:
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - 'config/**'
+      - 'codechecker_common/**'
+      - 'analyzer/**'
+      - 'web/**'
+      - 'tools/**'
+      - '.github/workflows/pip-install.yml'
+      - '.github/scripts/**'
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip-install-smoke:
+    name: "pip install (${{ matrix.os }}, Python ${{ matrix.python }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+        python: ['3.9', '3.12', '3.13']
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: pip install .
+        run: pip install .
+
+      - name: Smoke test
+        run: |
+          CodeChecker --help
+          CodeChecker version
+          report-converter --help
+          merge-clang-extdef-mappings --help
+          post-process-stats --help
+          tu_collector --help
+
+      - name: Verify data files installed
+        shell: bash
+        run: .github/scripts/verify_data_files.sh
+
+  pip-install-editable:
+    name: "pip install -e . (ubuntu, Python 3.12)"
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: pip install -e .
+        run: pip install -e .
+
+      - name: Smoke test
+        run: |
+          CodeChecker --help
+          CodeChecker version
+
+  pip-install-analyze:
+    name: "pip install + analyze (ubuntu, Python 3.12)"
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y clang clang-tidy cppcheck jq
+
+      - name: pip install .
+        run: pip install .
+
+      - name: Test analyze and parse
+        run: .github/scripts/test_analyze_parse.sh

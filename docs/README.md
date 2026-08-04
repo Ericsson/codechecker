@@ -292,6 +292,29 @@ set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 - Use `make standalone_package` instead of `make package` to avoid
 having to manually activate the environment before running CodeChecker.
 
+### Alternative: `pip install`
+
+```sh
+# Standard install:
+pip install .
+
+# Editable install (source changes take effect immediately):
+pip install -e .
+
+# Verify:
+CodeChecker version
+```
+
+#### `make package` vs `pip install`
+
+| Feature | `make package` | `pip install` |
+|---------|---------------|---------------|
+| Static analysis (`analyze`, `parse`, `check`) | supported | supported |
+| Build logging (`CodeChecker log`) | supported (with ldlogger 32+64 bit on Linux and `intercept-build` on OSX) | **not** supported (unless you use `intercept-build` on OSX) |
+| Web server and storage | supported | supported, but must build API packages with `make package_api`, then `pip install api/py/codechecker_api/dist/codechecker_api.tar.gz api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz` |
+| Web frontend (Vue.js UI) | supported | **not** supported |
+| Editable / development install | **not** supported | supported (`pip install -e .`) |
+
 ### Minimum Recommended package versions
 
 * In production it is recommended to execute CodeChecker with the minimum Python versions: 3.7.14, 3.8.14, 3.9.14, 3.10.6, 3.11.0, otherwise it may be vulnerable to open-redirect attacks. For more info see https://python-security.readthedocs.io/vuln/http-server-redirection.html (CVE-2021-28861).
