@@ -144,7 +144,10 @@
     "android-cloexec-open": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-open.html",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
+      "cwe-vulnerability:cwe-668",
       "owasp-top-10-2021:owasp-A01-2021",
+      "owasp-top-10-2025:owasp-A01-2025",
       "severity:HIGH"
     ],
     "android-cloexec-pipe": [
@@ -252,6 +255,7 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
+      "cwe-vulnerability:cwe-78",
       "sei-cert-c:env33-c",
       "sei-cert-cpp:env33-c",
       "severity:MEDIUM"
@@ -322,6 +326,7 @@
     ],
     "bugprone-empty-catch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/empty-catch.html",
+      "cwe-vulnerability:cwe-390",
       "severity:STYLE"
     ],
     "bugprone-exception-copy-constructor-throws": [
@@ -601,12 +606,15 @@
     "bugprone-random-generator-seed": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/random-generator-seed.html",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-335",
       "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "sei-cert-c:msc32-c",
       "sei-cert-cpp:msc51-cpp",
       "severity:MEDIUM"
@@ -789,16 +797,18 @@
     ],
     "bugprone-suspicious-memset-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memset-usage.html",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A04-2021",
+      "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:int31-c",
       "sei-cert-cpp:int31-c",
-      "owasp-top-10-2021:owasp-A04-2021",
       "severity:HIGH"
     ],
     "bugprone-suspicious-missing-comma": [
@@ -852,6 +862,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-478",
       "severity:LOW"
     ],
     "bugprone-tagged-union-member-count": [
@@ -905,15 +916,17 @@
     ],
     "bugprone-undefined-memory-manipulation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/undefined-memory-manipulation.html",
-      "guideline:sei-cert-cpp",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
+      "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "owasp-top-10-2021:owasp-A01-2021",
+      "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-cpp:exp62-cpp",
       "sei-cert-cpp:oop57-cpp",
-      "owasp-top-10-2021:owasp-A01-2021",
       "severity:MEDIUM"
     ],
     "bugprone-undelegated-constructor": [
@@ -963,20 +976,23 @@
     "bugprone-unsafe-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
+      "cwe-vulnerability:cwe-676",
+      "owasp-top-10-2021:owasp-A04-2021",
+      "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:msc24-c",
       "sei-cert-c:msc33-c",
       "sei-cert-cpp:msc24-c",
       "sei-cert-cpp:msc33-c",
-      "owasp-top-10-2021:owasp-A04-2021",
       "severity:LOW"
     ],
     "bugprone-unsafe-to-allow-exceptions": [
@@ -1011,6 +1027,7 @@
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-252",
       "sei-cert-c:err33-c",
       "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
@@ -1116,15 +1133,18 @@
     ],
     "cert-env33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/env33-c.html",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-78",
+      "owasp-top-10-2021:owasp-A03-2021",
+      "owasp-top-10-2025:owasp-A05-2025",
       "sei-cert-c:env33-c",
       "sei-cert-cpp:env33-c",
-      "owasp-top-10-2021:owasp-A03-2021",
       "severity:MEDIUM"
     ],
     "cert-err09-cpp": [
@@ -1133,12 +1153,15 @@
     ],
     "cert-err33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err33-c.html",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-252",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:err33-c",
       "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
@@ -1234,13 +1257,19 @@
     "cert-msc30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc30-c.html",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
+      "cwe-vulnerability:cwe-338",
       "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "severity:LOW"
     ],
     "cert-msc32-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc32-c.html",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
+      "cwe-vulnerability:cwe-335",
       "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "severity:MEDIUM"
     ],
     "cert-msc33-c": [
@@ -1253,28 +1282,34 @@
     ],
     "cert-msc50-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc50-cpp.html",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-338",
+      "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "sei-cert-c:msc30-c",
       "sei-cert-cpp:msc50-cpp",
-      "owasp-top-10-2021:owasp-A02-2021",
       "severity:LOW"
     ],
     "cert-msc51-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc51-cpp.html",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-335",
+      "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "sei-cert-c:msc32-c",
       "sei-cert-cpp:msc51-cpp",
-      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "cert-msc54-cpp": [
@@ -2592,6 +2627,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-369",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dll-attribute-on-redeclaration": [
@@ -3019,6 +3055,7 @@
     "clang-diagnostic-format-security": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-security",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
@@ -3026,6 +3063,7 @@
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-20",
+      "owasp-top-10-2025:owasp-A05-2025",
       "sei-cert-c:fio30-c",
       "sei-cert-cpp:fio30-c",
       "severity:MEDIUM"
@@ -4520,6 +4558,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-476",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nonportable-cfstrings": [
@@ -6824,13 +6863,16 @@
     ],
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:owasp-top-10-2021",
       "profile:security",
+      "cwe-vulnerability:cwe-362",
+      "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:con33-c",
       "sei-cert-cpp:con33-c",
-      "owasp-top-10-2021:owasp-A02-2021",
       "severity:MEDIUM"
     ],
     "concurrency-thread-canceltype-asynchronous": [
@@ -7565,18 +7607,22 @@
     ],
     "misc-misleading-bidirectional": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misleading-bidirectional.html",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "owasp-top-10-2025:owasp-A05-2025",
       "severity:HIGH"
     ],
     "misc-misleading-identifier": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misleading-identifier.html",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "owasp-top-10-2025:owasp-A05-2025",
       "severity:HIGH"
     ],
     "misc-misplaced-const": [
@@ -7671,12 +7717,15 @@
     "misc-predictable-rand": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/predictable-rand.html",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-338",
       "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "sei-cert-c:msc30-c",
       "sei-cert-cpp:msc50-cpp",
       "severity:MEDIUM"

@@ -276,6 +276,7 @@
     "core.CallAndMessage": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-callandmessage-c-c-objc",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
@@ -283,6 +284,8 @@
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
+      "cwe-vulnerability:cwe-476",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:dcl41-c",
       "sei-cert-c:exp30-c",
       "sei-cert-c:exp33-c",
@@ -300,12 +303,15 @@
     ],
     "core.DivideZero": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-dividezero-c-c-objc",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-369",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:int33-c",
       "sei-cert-cpp:int33-c",
       "severity:HIGH"
@@ -329,6 +335,7 @@
     "core.NonNullParamChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nonnullparamchecker-c-c-objc",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
@@ -336,6 +343,8 @@
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
+      "cwe-vulnerability:cwe-476",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
       "severity:HIGH"
@@ -348,15 +357,18 @@
     "core.NullDereference": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nulldereference-c-c-objc",
       "guideline:cwe-top-25-2024",
+      "guideline:memory-safety",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
+      "cwe-vulnerability:cwe-476",
       "memory-safety:cwe-476",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
       "severity:HIGH"
@@ -372,6 +384,7 @@
       "profile:security",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
+      "cwe-vulnerability:cwe-476",
       "memory-safety:cwe-476",
       "sei-cert-c:arr30-c",
       "sei-cert-c:exp34-c",
@@ -690,6 +703,7 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-476",
       "severity:HIGH"
     ],
     "nullability.NullReturnedFromNonnull": [
@@ -699,6 +713,7 @@
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-476",
+      "cwe-vulnerability:cwe-476",
       "severity:HIGH"
     ],
     "nullability.NullabilityBase": [
@@ -813,6 +828,7 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-generictaint-c-c",
       "guideline:cwe-top-25-2024",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-20",
@@ -822,11 +838,14 @@
       "cwe-top-25-2024:cwe-79",
       "cwe-top-25-2024:cwe-89",
       "cwe-top-25-2024:cwe-94",
+      "cwe-vulnerability:cwe-78",
       "owasp-top-10-2021:owasp-A01-2021",
       "owasp-top-10-2021:owasp-A03-2021",
       "owasp-top-10-2021:owasp-A04-2021",
       "owasp-top-10-2021:owasp-A08-2021",
       "owasp-top-10-2021:owasp-A10-2021",
+      "owasp-top-10-2025:owasp-A01-2025",
+      "owasp-top-10-2025:owasp-A05-2025",
       "severity:HIGH"
     ],
     "optin.taint.TaintPropagation": [
@@ -837,20 +856,27 @@
     ],
     "optin.taint.TaintedAlloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-taintedalloc-c-c",
-      "guideline:owasp-top-10-2021",
       "guideline:memory-safety",
+      "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "profile:extreme",
       "profile:sensitive",
-      "owasp-top-10-2021:owasp-A03-2021",
       "memory-safety:cwe-789",
+      "owasp-top-10-2021:owasp-A03-2021",
+      "owasp-top-10-2025:owasp-A01-2025",
+      "owasp-top-10-2025:owasp-A05-2025",
       "severity:HIGH"
     ],
     "optin.taint.TaintedDiv": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-taint-tainteddiv-c-c-objc",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-369",
       "owasp-top-10-2021:owasp-A03-2021",
+      "owasp-top-10-2025:owasp-A01-2025",
+      "owasp-top-10-2025:owasp-A05-2025",
       "severity:HIGH"
     ],
     "osx.API": [
@@ -949,6 +975,7 @@
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
+      "cwe-vulnerability:cwe-129",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
       "memory-safety:cwe-124",
@@ -970,10 +997,13 @@
     ],
     "security.MmapWriteExec": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-mmapwriteexec-c",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-732",
+      "owasp-top-10-2025:owasp-A01-2025",
       "severity:MEDIUM"
     ],
     "security.PointerSub": [
@@ -1000,14 +1030,17 @@
     ],
     "security.SetgidSetuidOrder": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-setgidsetuidorder-c",
-      "guideline:sei-cert-c",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
+      "guideline:sei-cert-c",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
-      "sei-cert-c:pos36-c",
+      "cwe-vulnerability:cwe-269",
       "owasp-top-10-2021:owasp-A04-2021",
+      "owasp-top-10-2025:owasp-A06-2025",
+      "sei-cert-c:pos36-c",
       "severity:MEDIUM"
     ],
     "security.VAList": [
@@ -1042,9 +1075,12 @@
     ],
     "security.insecureAPI.UncheckedReturn": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-uncheckedreturn-c",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-252",
+      "owasp-top-10-2025:owasp-A10-2025",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.bcmp": [
@@ -1075,6 +1111,7 @@
     "security.insecureAPI.gets": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-gets-c",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
@@ -1084,6 +1121,8 @@
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
+      "cwe-vulnerability:cwe-676",
+      "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:str31-c",
       "sei-cert-cpp:str31-c",
       "severity:MEDIUM"
@@ -1098,33 +1137,41 @@
     "security.insecureAPI.mktemp": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-mktemp-c",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-377",
       "owasp-top-10-2021:owasp-A01-2021",
+      "owasp-top-10-2025:owasp-A01-2025",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.rand": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-rand-c",
       "guideline:owasp-top-10-2021",
+      "guideline:owasp-top-10-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerability:cwe-338",
       "owasp-top-10-2021:owasp-A02-2021",
+      "owasp-top-10-2025:owasp-A04-2025",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.strcpy": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-strcpy-c",
       "guideline:cwe-top-25-2024",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
-      "sei-cert-c:str31-c",
-      "sei-cert-cpp:str31-c",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
+      "owasp-top-10-2025:owasp-A06-2025",
+      "sei-cert-c:str31-c",
+      "sei-cert-cpp:str31-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.vfork": [
@@ -1170,11 +1217,13 @@
     ],
     "unix.Errno": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-errno-c",
+      "guideline:owasp-top-10-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "owasp-top-10-2025:owasp-A10-2025",
       "sei-cert-c:err30-c",
       "sei-cert-cpp:err30-c",
       "severity:HIGH"
