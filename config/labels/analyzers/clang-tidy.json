@@ -197,6 +197,12 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "bugprone-assignment-in-selection-statement": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assignment-in-selection-statement.html",
+      "guideline:sei-cert-c",
+      "sei-cert-c:exp45-c",
+      "severity:MEDIUM"
+    ],
     "bugprone-bad-signal-to-kill-thread": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/bad-signal-to-kill-thread.html",
       "guideline:sei-cert-c",
@@ -242,7 +248,6 @@
     ],
     "bugprone-chained-comparison": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/chained-comparison.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -495,6 +500,10 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "bugprone-missing-end-comparison": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/missing-end-comparison.html",
+      "severity:HIGH"
+    ],
     "bugprone-move-forwarding-reference": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/move-forwarding-reference.html",
       "profile:default",
@@ -666,11 +675,14 @@
       "sei-cert-c:sig30-c",
       "severity:MEDIUM"
     ],
+    "bugprone-signed-bitwise": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signed-bitwise.html",
+      "severity:LOW"
+    ],
     "bugprone-signed-char-misuse": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signed-char-misuse.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -849,7 +861,6 @@
     ],
     "bugprone-switch-missing-default-case": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/switch-missing-default-case.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -921,6 +932,10 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "bugprone-unhandled-code-paths": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unhandled-code-paths.html",
       "severity:MEDIUM"
     ],
     "bugprone-unhandled-exception-at-new": [
@@ -1034,7 +1049,7 @@
     ],
     "cert-arr39-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/arr39-c.html",
-      "severtiy:HIGH"
+      "severity:HIGH"
     ],
     "cert-con36-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/con36-c.html",
@@ -1135,10 +1150,8 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err33-c.html",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:err33-c",
       "sei-cert-cpp:err33-c",
       "severity:MEDIUM"
@@ -1187,6 +1200,10 @@
     ],
     "cert-exp42-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/exp42-c.html",
+      "severity:MEDIUM"
+    ],
+    "cert-exp45-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/exp45-c.html",
       "severity:MEDIUM"
     ],
     "cert-fio38-c": [
@@ -2149,7 +2166,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wconditional-uninitialized",
       "guideline:sei-cert-c",
       "label-tool-skip:severity",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -2634,10 +2650,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdouble-promotion",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:flp34-c",
       "sei-cert-cpp:flp34-c",
       "severity:MEDIUM"
@@ -2912,10 +2926,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfloat-conversion",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:flp32-c",
       "sei-cert-c:flp34-c",
       "sei-cert-cpp:flp32-c",
@@ -4280,9 +4292,7 @@
     ],
     "clang-diagnostic-missing-field-initializers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmissing-field-initializers",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-format-attribute": [
@@ -5435,10 +5445,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-identifier",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert-c:dcl37-c",
       "sei-cert-cpp:dcl51-cpp",
       "severity:MEDIUM"
@@ -5447,7 +5455,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-macro-identifier",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
-      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -5700,9 +5707,7 @@
     ],
     "clang-diagnostic-sign-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-compare",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-conversion": [
@@ -6640,9 +6645,7 @@
     ],
     "clang-diagnostic-unused-parameter": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-parameter",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-private-field": [
@@ -6891,6 +6894,10 @@
     "cppcoreguidelines-c-copy-assignment-signature": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/c-copy-assignment-signature.html",
       "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-explicit-constructor": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/explicit-constructor.html",
       "severity:MEDIUM"
     ],
     "cppcoreguidelines-explicit-virtual-functions": [
@@ -7364,6 +7371,10 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvm/else-after-return.html",
       "severity:STYLE"
     ],
+    "llvm-formatv-string": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvm/formatv-string.html",
+      "severity:MEDIUM"
+    ],
     "llvm-header-guard": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvm/header-guard.html",
       "severity:LOW"
@@ -7390,6 +7401,10 @@
     ],
     "llvm-qualified-auto": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvm/qualified-auto.html",
+      "severity:STYLE"
+    ],
+    "llvm-redundant-casting": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvm/redundant-casting.html",
       "severity:STYLE"
     ],
     "llvm-twine-local": [
@@ -7484,6 +7499,12 @@
     "misc-definitions-in-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/definitions-in-headers.html",
       "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "misc-explicit-constructor": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/explicit-constructor.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
@@ -7711,6 +7732,10 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/static-assert.html",
       "profile:extreme",
       "severity:LOW"
+    ],
+    "misc-static-initialization-cycle": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/static-initialization-cycle.html",
+      "severity:HIGH"
     ],
     "misc-string-compare": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-compare.html",
@@ -8159,6 +8184,10 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "performance-expensive-value-or": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/expensive-value-or.html",
+      "severity:LOW"
+    ],
     "performance-faster-string-find": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/faster-string-find.html",
       "profile:extreme",
@@ -8497,8 +8526,16 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-inline-specifier.html",
       "severity:STYLE"
     ],
+    "readability-redundant-lambda-parameter-list": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-lambda-parameter-list.html",
+      "severity:STYLE"
+    ],
     "readability-redundant-member-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-member-init.html",
+      "severity:STYLE"
+    ],
+    "readability-redundant-nested-if": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-nested-if.html",
       "severity:STYLE"
     ],
     "readability-redundant-parentheses": [
@@ -8569,6 +8606,10 @@
     ],
     "readability-trailing-comma": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/trailing-comma.html",
+      "severity:STYLE"
+    ],
+    "readability-trivial-switch": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/trivial-switch.html",
       "severity:STYLE"
     ],
     "readability-uniqueptr-delete-release": [
