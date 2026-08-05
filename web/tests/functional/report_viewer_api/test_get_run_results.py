@@ -426,12 +426,15 @@ class RunResults(unittest.TestCase):
         div_zero_labels = set([
             "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
             "#core-dividezero-c-c-objc",
+            "guideline:owasp-top-10-2025",
             "guideline:sei-cert-c",
             "guideline:sei-cert-cpp",
             "profile:default",
             "profile:extreme",
             "profile:security",
             "profile:sensitive",
+            "cwe-vulnerability:cwe-369",
+            "owasp-top-10-2025:owasp-A10-2025",
             "sei-cert-c:int33-c",
             "sei-cert-cpp:int33-c",
             "severity:HIGH"
