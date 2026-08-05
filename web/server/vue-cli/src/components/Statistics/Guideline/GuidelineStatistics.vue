@@ -57,17 +57,13 @@
           <v-row align="center">
             <v-col cols="6">
               <v-select
-                v-model="selectedGuidelineIndexes"
+                v-model="selectedGuidelineIndex"
                 :items="guidelineOptions"
                 item-title="name"
                 item-value="value"
-                label="Select guidelines"
+                label="Select guideline"
                 variant="outlined"
                 density="comfortable"
-                multiple
-                clearable
-                chips
-                closable-chips
               >
                 <template v-slot:selection="{ item }">
                   <div class="selection-item">
@@ -154,7 +150,7 @@ const noProperRun = ref(false);
 const runs = ref(null);
 const runData = ref([]);
 const selectedCheckerName = ref(null);
-const selectedGuidelineIndexes = ref([ 0, 1, 2, 3, 4 ]);
+const selectedGuidelineIndex = ref(0);
 const showRuns = ref({
   enabled: false,
   disabled: false,
@@ -164,9 +160,11 @@ const statistics = ref([]);
 const type = ref(null);
 const hideNotOutstanding = ref(false);
 
-const selectedGuidelines = computed(() => selectedGuidelineIndexes.value.map(
-  idx => new Guideline({ guidelineName: guidelineOptions.value[idx].id })
-));
+const selectedGuideline = computed(() =>
+  new Guideline({
+    guidelineName: guidelineOptions.value[selectedGuidelineIndex.value].id
+  })
+);
 
 const filteredStatistics = computed(() => {
   if (hideNotOutstanding.value) {
@@ -184,7 +182,7 @@ watch(() => baseStatistics.runIds, async () => {
   noProperRun.value = false;
 });
 
-watch(selectedGuidelines, async () => {
+watch(selectedGuideline, async () => {
   await fetchStatistics();
 });
 
@@ -274,7 +272,7 @@ function downloadCSV() {
 async function getAllGuidelineRules() {
   all_guideline_rules.value = await new Promise(resolve => {
     ccService.getClient().getGuidelineRules(
-      selectedGuidelines.value,
+      [ selectedGuideline.value ],
       handleThriftError(async guidelines => {
         for (const [ guideline, rules ] of Object.entries(guidelines)) {
           const _all_checkers = [];
