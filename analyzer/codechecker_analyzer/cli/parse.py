@@ -707,7 +707,7 @@ def main(args):
         data = gerrit.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'sarif':
-        data = sarif.convert(all_reports)
+        data = sarif.convert(all_reports, context.checker_labels)
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'baseline':
         data = baseline.convert(all_reports)
