@@ -71,13 +71,20 @@ def is_supported_version(version):
     server.
 
     If supported, returns the major and minor version as a tuple.
+
+    Only the first two version components (major.minor) are considered.
+    Any additional components (e.g. a patch number from semver-formatted
+    package versions) are ignored. See the versioning strategy documentation
+    in ``codechecker_web.shared.version`` for details.
     """
     version = version.lstrip('v')
     version_parts = version.split('.')
     if len(version_parts) < 2:
         return False
 
-    # We don't care if accidentally the version tag contains a revision number.
+    # Only major and minor are meaningful for API compatibility; any trailing
+    # components (e.g. patch from npm semver "6.72.0") are intentionally
+    # discarded here.
     major, minor = int(version_parts[0]), int(version_parts[1])
     if major in SUPPORTED_VERSIONS and minor <= SUPPORTED_VERSIONS[major]:
         return major, minor
