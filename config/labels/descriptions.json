@@ -20,6 +20,7 @@
     "sei-cert-cpp": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/",
     "misra-c": "https://www.misra.org.uk/",
     "memory-safety": "https://cwe.mitre.org/data/definitions/1399.html",
-    "owasp-top-10-2021": "https://owasp.org/Top10/2021/"
+    "owasp-top-10-2021": "https://owasp.org/Top10/2021/",
+    "owasp-top-10-2025": "https://owasp.org/Top10/2025/"
   }
 }
