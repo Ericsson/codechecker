@@ -18,7 +18,7 @@
       "severity:HIGH"
     ],
     "alpha.core.CastSize": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-castsize-c",
+      "doc_url:https://releases.llvm.org/21.1.0/tools/clang/docs/analyzer/checkers.html#alpha-core-castsize-c",
       "severity:LOW"
     ],
     "alpha.core.CastToStruct": [
@@ -33,11 +33,11 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-dynamictypechecker-objc"
     ],
     "alpha.core.FixedAddr": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-fixedaddr-c",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/analyzer/checkers.html#alpha-core-fixedaddr-c",
       "severity:LOW"
     ],
     "alpha.core.IdenticalExpr": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-identicalexpr-c-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-core-identicalexpr-c-c",
       "severity:LOW"
     ],
     "alpha.core.PointerArithm": [
@@ -45,16 +45,16 @@
       "severity:LOW"
     ],
     "alpha.core.PointerSub": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-pointersub-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-core-pointersub-c",
       "severity:LOW"
     ],
     "alpha.core.PthreadLockBase": [],
     "alpha.core.SizeofPtr": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-sizeofptr-c",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-core-sizeofptr-c",
       "severity:LOW"
     ],
     "alpha.core.StackAddressAsyncEscape": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stackaddressasyncescape-c",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stackaddressasyncescape-objc",
       "severity:HIGH"
     ],
     "alpha.core.StdVariant": [
@@ -97,7 +97,7 @@
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.MisusedMovedObject": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c"
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c"
     ],
     "alpha.cplusplus.PlacementNew": [
       "severity:HIGH"
@@ -122,11 +122,11 @@
       "severity:LOW"
     ],
     "alpha.nondeterminism.PointerIteration": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-nondeterminism-pointeriteration-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-nondeterminism-pointeriteration-c",
       "severity:MEDIUM"
     ],
     "alpha.nondeterminism.PointerSorting": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-nondeterminism-pointersorting-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-nondeterminism-pointersorting-c",
       "severity:MEDIUM"
     ],
     "alpha.osx.cocoa.DirectIvarAssignment": [
@@ -151,19 +151,19 @@
       "severity:LOW"
     ],
     "alpha.security.ArrayBound": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-arraybound-c",
+      "doc_url:https://releases.llvm.org/20.1.0/tools/clang/docs/analyzer/checkers.html#alpha-security-arraybound-c",
       "severity:HIGH"
     ],
     "alpha.security.ArrayBoundV2": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-arrayboundv2-c",
+      "doc_url:https://releases.llvm.org/20.1.0/tools/clang/docs/analyzer/checkers.html#alpha-security-arrayboundv2-c",
       "severity:HIGH"
     ],
     "alpha.security.MallocOverflow": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-mallocoverflow-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-security-mallocoverflow-c",
       "severity:HIGH"
     ],
     "alpha.security.MmapWriteExec": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-mmapwriteexec-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-security-mmapwriteexec-c",
       "severity:MEDIUM"
     ],
     "alpha.security.ReturnPtrRange": [
@@ -175,11 +175,11 @@
       "severity:MEDIUM"
     ],
     "alpha.security.cert.pos.34c": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
       "severity:HIGH"
     ],
     "alpha.unix.Chroot": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-chroot-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-unix-chroot-c",
       "severity:MEDIUM"
     ],
     "alpha.unix.Errno": [
@@ -199,7 +199,7 @@
       "severity:HIGH"
     ],
     "alpha.unix.Stream": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-stream-c",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-unix-stream-c",
       "severity:MEDIUM"
     ],
     "alpha.unix.cstring.BufferOverlap": [
@@ -207,7 +207,7 @@
       "severity:HIGH"
     ],
     "alpha.unix.cstring.NotNullTerminated": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-notnullterminated-c",
+      "doc_url:https://releases.llvm.org/19.1.0/tools/clang/docs/analyzer/checkers.html#alpha-unix-cstring-notnullterminated-c",
       "severity:HIGH"
     ],
     "alpha.unix.cstring.OutOfBounds": [
@@ -215,7 +215,7 @@
       "severity:HIGH"
     ],
     "alpha.unix.cstring.UninitializedRead": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
       "severity:HIGH"
     ],
     "alpha.webkit.ForwardDeclChecker": [
@@ -236,7 +236,7 @@
       "severity:MEDIUM"
     ],
     "alpha.webkit.RetainPtrCtorAdoptChecker": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-retainptrctoradoptchecker",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-retainptrctoradoptchecker",
       "severity:MEDIUM"
     ],
     "alpha.webkit.UncountedCallArgsChecker": [
@@ -318,7 +318,7 @@
     ],
     "core.FixedAddressDereference": [
       "cwe-top25:cwe-119",
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-fixedaddressdereference-c-c-objc",
+      "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/analyzer/checkers.html#core-fixedaddressdereference-c-c-objc",
       "guideline:cwe-top25-2024",
       "profile:default",
       "profile:extreme",
@@ -693,7 +693,7 @@
       "severity:HIGH"
     ],
     "nullability.NullReturnedFromNonnull": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullreturnedfromnonnull-objc",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullreturnedfromnonnull-c-c-objc",
       "guideline:cwe-top-25-2024",
       "profile:default",
       "profile:extreme",
