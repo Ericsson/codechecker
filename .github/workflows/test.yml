@@ -81,6 +81,13 @@ jobs:
           pip install -r requirements_py/dev/requirements.txt
           make test
 
+      - name: Run memory-safety-reporter tests
+        working-directory: tools/memory-safety-reporter
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make package
+          make test
+
       - name: Run report-converter tests
         working-directory: tools/report-converter
         run: |

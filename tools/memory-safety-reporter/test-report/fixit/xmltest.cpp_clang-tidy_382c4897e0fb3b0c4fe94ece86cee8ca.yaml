@@ -1,0 +1,436 @@
+---
+MainSourceFile:  '/local/test_projects/tinyxml2/xmltest.cpp'
+Diagnostics:
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLElement'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3614
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3614
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          52415
+            Length:          21
+            ReplacementText: "public:\nvirtual ~XMLElement() noexceptprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3614
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          52415
+            Length:          21
+            ReplacementText: "protected:\n~XMLElement() noexceptprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLComment'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3654
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3654
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30896
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLText'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3673
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3673
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30061
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLDeclaration'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3689
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3689
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          32023
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLUnknown'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      3712
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      3712
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          33076
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLNode'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      19312
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      19312
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          28109
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLText'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      29261
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      29261
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30061
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLComment'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      30376
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      30376
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          30896
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLDeclaration'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      31479
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      31479
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          32023
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLUnknown'' is protected and virtual'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      32556
+      Replacements:    []
+    Notes:
+      - Message:         make it protected and non-virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      32556
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          33076
+            Length:          8
+            ReplacementText: ''
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLAttribute'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      33565
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      33565
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          36748
+            Length:          26
+            ReplacementText: "public:\nvirtual ~XMLAttribute() noexcept {\n}\nprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      33565
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          36748
+            Length:          26
+            ReplacementText: "protected:\n~XMLAttribute() noexcept {\n}\nprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cppcoreguidelines-virtual-class-destructor
+    DiagnosticMessage:
+      Message:         'destructor of ''XMLElement'' is private and prevents using the type'
+      FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+      FileOffset:      37395
+      Replacements:    []
+    Notes:
+      - Message:         make it public and virtual
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      37395
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          52415
+            Length:          21
+            ReplacementText: "public:\nvirtual ~XMLElement() noexceptprivate:"
+      - Message:         make it protected
+        FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+        FileOffset:      37395
+        Replacements:
+          - FilePath:        '/local/test_projects/tinyxml2/tinyxml2.h'
+            Offset:          52415
+            Length:          21
+            ReplacementText: "protected:\n~XMLElement() noexceptprivate:"
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      8777
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      8777
+          Length:          12
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      8777
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      22766
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      22766
+          Length:          29
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      22766
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      23082
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      23082
+          Length:          15
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      23082
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      23120
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      23120
+          Length:          16
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      23120
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      32046
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      32046
+          Length:          17
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      32046
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      34516
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      34516
+          Length:          11
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      34516
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      39534
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      39534
+          Length:          18
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      39534
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      39815
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      39815
+          Length:          28
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      39815
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      40104
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      40104
+          Length:          18
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      40104
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      96576
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      96576
+          Length:          26
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      96576
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      96637
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      96637
+          Length:          26
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      96637
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+  - DiagnosticName:  cert-err33-c
+    DiagnosticMessage:
+      Message:         'the value returned by this function should not be disregarded; neglecting it may lead to errors'
+      FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+      FileOffset:      96859
+      Replacements:    []
+      Ranges:
+        - FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+          FileOffset:      96859
+          Length:          14
+    Notes:
+      - Message:         cast the expression to void to silence this warning
+        FilePath:        '/local/test_projects/tinyxml2/xmltest.cpp'
+        FileOffset:      96859
+        Replacements:    []
+    Level:           Warning
+    BuildDirectory:  '/local/test_projects/tinyxml2/build'
+...

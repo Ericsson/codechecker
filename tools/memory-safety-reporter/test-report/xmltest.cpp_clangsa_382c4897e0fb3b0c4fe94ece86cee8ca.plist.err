@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>analyzer_cmd</key>
+	<string>/usr/lib/llvm-18/bin/clang--analyze-Qunused-arguments-Xclang-analyzer-output=plist-multi-file-o/local/test_projects/tinyxml2/build/codechecker_reports_mem/xmltest.cpp_clangsa_382c4897e0fb3b0c4fe94ece86cee8ca.plist-Xclang-analyzer-config-Xclangexpand-macros=true-Xclang-analyzer-checker=core.BitwiseShift,core.CallAndMessage,core.DivideZero,core.NonNullParamChecker,core.UndefinedBinaryOperatorResult,core.VLASize,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.NewArraySize,core.uninitialized.UndefReturn,cplusplus.InnerPointer,cplusplus.Move,cplusplus.PlacementNew,cplusplus.PureVirtualCall,cplusplus.StringChecker,deadcode.DeadStores,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull,optin.cplusplus.UninitializedObject,optin.cplusplus.VirtualCall,optin.portability.UnixAPI,security.FloatLoopCounter,security.cert.env.InvalidPtr,security.insecureAPI.UncheckedReturn,security.insecureAPI.getpw,security.insecureAPI.gets,security.insecureAPI.mkstemp,security.insecureAPI.mktemp,security.insecureAPI.rand,security.insecureAPI.vfork,unix.API,unix.MallocSizeof,unix.StdCLibraryFunctions,unix.Vfork,unix.cstring.BadSizeArg,unix.cstring.NullArg,valist.CopyToSelf,valist.Uninitialized,valist.Unterminated,core.NullDereference,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,unix.Malloc,unix.MismatchedDeallocator-Xclang-analyzer-config-Xclangaggressive-binary-operation-simplification=true-Xclang-analyzer-config-Xclangexperimental-enable-naive-ctu-analysis=true-Xclang-analyzer-config-Xclangctu-dir=/local/test_projects/tinyxml2/build/codechecker_reports_mem/ctu-dir/x86_64-Xclang-analyzer-config-Xclangdisplay-ctu-progress=true-xc++--target=x86_64-linux-gnu-std=gnu++17clangsa:apply-fixits=false-D_FILE_OFFSET_BITS=64-I/local/test_projects/tinyxml2-fvisibility=hidden-fvisibility-inlines-hidden-idirafter/usr/include/c++/13-idirafter/usr/include/x86_64-linux-gnu/c++/13-idirafter/usr/include/c++/13/backward-idirafter/usr/local/include-idirafter/usr/include/x86_64-linux-gnu-idirafter/usr/include/local/test_projects/tinyxml2/xmltest.cpp</string>
+	<key>analyzer_name</key>
+	<string>clangsa</string>
+	<key>return_code</key>
+	<integer>1</integer>
+	<key>stderr</key>
+	<string>clang: error: no such file or directory: 'clangsa:apply-fixits=false'
+</string>
+	<key>stdout</key>
+	<string></string>
+</dict>
+</plist>
