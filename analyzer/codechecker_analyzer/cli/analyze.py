@@ -513,14 +513,13 @@ def add_arguments_to_parser(parser):
                                dest='enable_z3',
                                choices=['on', 'off'],
                                default='off',
-                               help="Enable Z3 as the solver backend. "
-                                    "This allows reasoning over more "
-                                    "complex queries, but performance is "
-                                    "much worse than the default "
-                                    "range-based constraint solver "
-                                    "system. WARNING: Z3 as the only "
-                                    "backend is a highly experimental "
-                                    "and likely unstable feature.")
+                               help="[DEPRECATED] This flag has no effect "
+                                    "and will be removed in CodeChecker "
+                                    "6.30. The Z3 constraint solver "
+                                    "backend is no longer supported by "
+                                    "upstream Clang. Use '--z3-refutation' "
+                                    "for Z3-based false positive "
+                                    "reduction instead.")
 
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable()
 
@@ -1231,11 +1230,12 @@ def check_satisfied_capabilities(args):
         LOG.info("hint: Clang 11.0.0 is the earliest version to support it")
         has_error = True
 
-    if 'enable_z3' in args and args.enable_z3 == 'on' and not \
-            analyzer_types.is_z3_capable():
-        LOG.error("Z3 solver cannot be enabled as Clang was not compiled with "
-                  "Z3!")
-        has_error = True
+    if 'enable_z3' in args and args.enable_z3 == 'on':
+        LOG.warning("The '--z3' flag is deprecated and has no effect. "
+                    "The Z3 constraint solver backend is no longer "
+                    "supported by upstream Clang. This flag will be "
+                    "removed in CodeChecker 6.30. Use "
+                    "'--z3-refutation' instead.")
 
     if 'enable_z3_refutation' in args and args.enable_z3_refutation == 'on' \
             and not analyzer_types.is_z3_capable():
