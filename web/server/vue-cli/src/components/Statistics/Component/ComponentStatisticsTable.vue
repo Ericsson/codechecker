@@ -123,7 +123,7 @@ async function itemExpanded(expandedItem) {
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
+@use "@/components/Statistics/colored-columns" with (
   $class-name: ".component-statistics"
 );
 </style>
