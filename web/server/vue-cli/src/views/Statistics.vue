@@ -197,7 +197,7 @@ body {
 }
 
 .splitpanes__pane {
-  overflow-y: auto;
+  overflow-y: hidden;
   height: 100%;
 }
 

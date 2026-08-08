@@ -220,7 +220,7 @@ import { useReviewStatus } from "@/composables/useReviewStatus";
 import { useSeverity } from "@/composables/useSeverity";
 import { ccService, handleThriftError } from "@cc-api";
 import ReportInfoItem from "@/components/Report/ReportInfo/ReportInfoItem";
-import { Checker } from "@cc/report-server-types";
+import { Checker, RunFilter } from "@cc/report-server-types";
 
 const props = defineProps({
   value: { type: Object, default: null }
@@ -273,8 +273,11 @@ onMounted(function() {
 });
 
 async function fetchRunName() {
-  const runs = await ccService.getRuns([ props.value.runId ]);
-  runName.value = runs[0].name;
+  const runFilter = new RunFilter({ ids: [ props.value.runId ] });
+  ccService.getClient().getRunData(runFilter, 1).then(runs => {
+    runName.value = runs[0].name;
+    console.warn(runName.value);
+  });
 }
 
 function formatLabel(key) {

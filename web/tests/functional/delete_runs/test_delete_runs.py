@@ -26,6 +26,8 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+
 
 def run_cmd(cmd, environ):
     proc = subprocess.Popen(
@@ -176,14 +178,16 @@ class TestCmdLineDeletion(unittest.TestCase):
         """
 
         def all_exists(runs):
-            run_names = [run.name for run in
-                         self._cc_client.getRunData(None, None, 0, None)]
+            run_names = [
+                run.name for run in
+                self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)]
             print(run_names)
             return set(runs) <= set(run_names)
 
         def none_exists(runs):
-            run_names = [run.name for run in
-                         self._cc_client.getRunData(None, None, 0, None)]
+            run_names = [
+                run.name for run in
+                self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)]
             return not bool(set(runs).intersection(run_names))
 
         # The config database caches the number of runs in a product. We also
@@ -243,7 +247,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         # Get runs before run 2 by run date.
         run2 = [run for run in self._cc_client.getRunData(
                     None,
-                    None,
+                    MAX_QUERY_SIZE,
                     0,
                     None) if run.name == run2_name][0]
 
