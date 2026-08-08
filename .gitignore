@@ -53,3 +53,5 @@ TAGS
 
 # mkdocs
 site
+venv310/
+*.patch
