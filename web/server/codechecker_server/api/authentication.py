@@ -733,8 +733,8 @@ class ThriftAuthHandler:
             # removed.
             user = self.getLoggedInUser()
             num_of_removed = session.query(PersonalAccessTokenDB) \
-                .filter(Session.user_name == user) \
-                .filter(Session.token == token) \
+                .filter(PersonalAccessTokenDB.user_name == user) \
+                .filter(PersonalAccessTokenDB.token == token) \
                 .delete(synchronize_session=False)
             session.commit()
 
