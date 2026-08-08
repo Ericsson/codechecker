@@ -226,6 +226,7 @@ COMPILE_OPTIONS_LIST = [
     '-Os',
     '-{1,2}std=',
     '-{1,2}stdlib=',
+    '-{1,2}target=',
     '-f',
     '-m',
     '-Wno-',
