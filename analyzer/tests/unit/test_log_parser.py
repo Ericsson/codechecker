@@ -508,6 +508,33 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 3)
 
+    def test_no_skip_windows_paths_with_forward_slash(self):
+        """Keep everything for analysis, no skipping there."""
+        cmp_cmd_json = [
+            {"directory": "/tmp/lib1",
+             "command": "g++ C:/lib1/a.cpp",
+             "file": "C:/lib1/a.cpp"},
+            {"directory": "/tmp/lib1",
+             "command": "g++ /tmp/lib1/b.cpp",
+             "file": "b.cpp"},
+            {"directory": "/tmp/lib2",
+             "command": "g++ /tmp/lib2/a.cpp",
+             "file": "a.cpp"}]
+
+        skip_list = """
+        +*/lib1/a.cpp
+        -*
+        """
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+
+        build_actions, _ = log_parser.\
+            parse_unique_log(cmp_cmd_json,
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
+
+        self.assertEqual(len(build_actions), 1)
+
     def test_response_file_simple(self):
         """
         Test simple response file where the source file comes outside the
