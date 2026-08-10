@@ -1,2 +1,9 @@
-recursive-include build_dist/CodeChecker/lib/python3/codechecker_report_converter/report/output/html/static *
+recursive-include tools/report-converter/codechecker_report_converter/report/output/html/static *
+recursive-include config *
+recursive-include analyzer/config *
+recursive-include web/config *
+recursive-include web/server/config *
 include LICENSE.TXT
+include docs/README.md
+include analyzer/requirements.txt
+include web/requirements.txt
