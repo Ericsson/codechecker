@@ -631,28 +631,38 @@ class SessionManager:
                 .filter(PersonalAccessToken.user_name == user_name) \
                 .filter(PersonalAccessToken.token == token) \
                 .limit(1).one_or_none()
+
+            if not personal_access_token:
+                return False
+
+            if personal_access_token.expiration < datetime.now():
+                LOG.info("User '%s' tried to login with an expired "
+                         "Personal Access Token.",
+                         personal_access_token.user_name)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "Personal Access Token is expired!")
+
+            result = {
+                'username': personal_access_token.user_name,
+                'groups': str(personal_access_token.groups).split(";")
+            }
+
+            # Update the timestamp in the database for the
+            # Personal Access Token's last access.
+            personal_access_token.last_access = datetime.now()
+            transaction.commit()
+
+            return result
+        except codechecker_api_shared.ttypes.RequestFailed:
+            raise
         except Exception as e:
             LOG.error("Couldn't check login in the database:")
             LOG.error(str(e))
+            return False
         finally:
             if transaction:
                 transaction.close()
-
-        if not personal_access_token:
-            return False
-
-        if personal_access_token.expiration < datetime.now():
-            LOG.info("User '%s' tried to login with an expired "
-                     "Personal Access Token.",
-                     personal_access_token.user_name)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "Personal Access Token is expired!")
-
-        return {
-            'username': personal_access_token.user_name,
-            'groups': str(personal_access_token.groups).split(";")
-        }
 
     def __try_auth_dictionary(self, auth_string):
         """
