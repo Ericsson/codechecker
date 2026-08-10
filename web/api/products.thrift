@@ -98,7 +98,8 @@ service codeCheckerProductService {
   Product getCurrentProduct()
                             throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  i64 getProductCount()
+  i64 getProductCount(1: optional string productEndpointFilter,
+                      2: optional string productNameFilter)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // *** Handling the add-modify-remove of registered products *** //

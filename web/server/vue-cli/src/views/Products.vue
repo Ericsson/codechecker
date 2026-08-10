@@ -174,7 +174,7 @@ const itemsPerPageOptions = [
 ];
 
 const sortBy = ref([]);
-const page = ref(null);
+const page = ref(parseInt(route.query["page"]) || 1);
 const itemsPerPage = ref(
   parseInt(route.query["items-per-page"]) || itemsPerPageOptions[0].value
 );
@@ -211,7 +211,10 @@ const debouncedSearchHandler = _.debounce(() => {
     }
   }).catch(() => {});
 
-  fetchProducts();
+  // A new filter can shrink the result set below the current offset.
+  page.value = 1;
+
+  refreshProducts();
 }, 500);
 
 watch(productNameSearch, debouncedSearchHandler);
@@ -252,29 +255,36 @@ onMounted(() => {
       order: route.query["sort-desc"] === "true" ? "desc" : "asc"
     } ];
   }
-  page.value = parseInt(route.query["page"]) || 1;
 
   getTotalProducts();
   initializeComponent();
 });
 
+function nameFilter() {
+  return productNameSearch.value ? `*${productNameSearch.value}*` : null;
+}
+
 function getTotalProducts() {
   prodService.getClient().getProductCount(
+    null,
+    nameFilter(),
     handleThriftError(count => {
-      itemsLength.value = count;
+      itemsLength.value = count.toNumber();
     })
   );
+}
+
+function refreshProducts() {
+  getTotalProducts();
+  fetchProducts();
 }
 
 function fetchProducts() {
   loading.value = true;
 
-  const productNameFilter = productNameSearch.value
-    ? `*${productNameSearch.value}*` : null;
-
   prodService.getClient().getProducts(
     null,
-    productNameFilter,
+    nameFilter(),
     itemsPerPage.value,
     itemsPerPage.value * (page.value - 1),
     getSortingMode(),
@@ -316,15 +326,15 @@ function getSortingMode() {
 }
 
 function onCompleteNewProduct() {
-  fetchProducts();
+  refreshProducts();
 }
 
 function onCompleteEditProduct() {
-  fetchProducts();
+  refreshProducts();
 }
 
-function deleteProduct(product) {
-  products.value = products.value.filter(p => p.id !== product.id);
+function deleteProduct() {
+  refreshProducts();
 }
 
 function initializeComponent() {

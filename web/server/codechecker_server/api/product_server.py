@@ -262,15 +262,11 @@ class ThriftProductHandler:
                 endpoints = [e for (e,) in session.query(Product.endpoint)]
                 self.__server.remove_products_except(endpoints)
 
-            if product_endpoint_filter:
-                prods = prods.filter(Product.endpoint.ilike(
-                    conv(escape_like(product_endpoint_filter, '\\')),
-                    escape='\\'))
-
-            if product_name_filter:
-                prods = prods.filter(Product.display_name.ilike(
-                    conv(escape_like(product_name_filter, '\\')),
-                    escape='\\'))
+            prods = self.__filter_products(
+                prods=prods,
+                product_endpoint_filter=product_endpoint_filter,
+                product_name_filter=product_name_filter
+                )
 
             prods = prods.order_by(*self.__product_order(session,
                                                          sorting_mode))
@@ -381,14 +377,34 @@ class ThriftProductHandler:
             return ret
 
     @timeit
-    def getProductCount(self):
+    def getProductCount(self, product_endpoint_filter, product_name_filter):
         """
-        Get total number of products to display on products page.
-        Needed for server side pagination.
+        Get the number of products matching the given filters, or the total
+        number of products when no filter is given.
         """
         with DBSession(self.__session) as session:
-            num = session.query(Product).count()
-            return num
+            return self.__filter_products(session.query(Product),
+                                          product_endpoint_filter,
+                                          product_name_filter).count()
+
+    @staticmethod
+    def __filter_products(prods, product_endpoint_filter, product_name_filter):
+        """
+        Apply the filters shared by getProducts() and getProductCount().
+        Both must filter identically, otherwise the page count shown in the
+        UI will not match the rows the client can actually fetch.
+        """
+        if product_endpoint_filter:
+            prods = prods.filter(Product.endpoint.ilike(
+                conv(escape_like(product_endpoint_filter, '\\')),
+                escape='\\'))
+
+        if product_name_filter:
+            prods = prods.filter(Product.display_name.ilike(
+                conv(escape_like(product_name_filter, '\\')),
+                escape='\\'))
+
+        return prods
 
     @timeit
     def getProductConfiguration(self, product_id):
