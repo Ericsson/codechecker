@@ -26,6 +26,8 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+
 
 # This is a test skeleton. The unused variables will be used probably in the
 # actual tests.
@@ -158,7 +160,7 @@ class TestSkeleton(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
         test_runs = [run for run in runs if run.name in run_names]
 
     def test_skel(self):

@@ -69,7 +69,6 @@ import { useToCSV } from "@/composables/useToCSV";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Checker,
-  MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
 } from "@cc/report-server-types";
@@ -97,7 +96,6 @@ const showRuns = ref({
 });
 const statistics = ref([]);
 const type = ref(null);
-
 
 watch(checker_stat, function(_stat) {
   statistics.value = Object.keys(_stat).map(_checker_id => {
@@ -146,44 +144,14 @@ function downloadCSV() {
   csv.toCSV(_data, "codechecker_checker_coverage_statistics.csv");
 }
 
-async function getRunData() {
-  const _limit = MAX_QUERY_SIZE;
-  let _offset = 0;
-
-  const _filter = new RunFilter({
-    ids: baseStats.runIds.value
-  });
-
-  const _runCount = await new Promise(_resolve => {
-    ccService.getClient().getRunCount(
-      _filter, handleThriftError(_runCnt => {
-        _resolve(_runCnt.toNumber());
-      }));
-  });
-
-  const _runs = [];
-
-  for ( _offset; _offset <= _runCount; _offset+=_limit ) {
-    const _limitedRuns = await new Promise(_resolve => {
-      ccService.getClient().getRunData(
-        _filter, _limit, _offset, null, handleThriftError(_runDataList => {
-          _resolve(_runDataList.map(_runData => ({
-            runId: _runData.runId,
-            runName: _runData.name,
-            codeCheckerVersion: _runData.codeCheckerVersion
-          })));
-        }));
-    });
-    _runs.push(..._limitedRuns);
-  }
-
-  return _runs;
-}
-
 async function fetchStatistics() {
   loading.value = true;
 
-  await fetchRuns();
+  const _run_filter = new RunFilter({
+    ids: baseStats.runIds.value
+  });
+
+  runs.value = await ccService.getRuns(_run_filter);
 
   const _filter = new ReportFilter(baseStats.reportFilter.value);
 
@@ -239,14 +207,6 @@ async function fetchStatistics() {
   }
 
   checker_stat.value = _checker_stat;
-  loading.value = false;
-}
-
-async function fetchRuns() {
-  loading.value = true;
-
-  const _runs = await getRunData();
-  runs.value = _runs;
   loading.value = false;
 }
 

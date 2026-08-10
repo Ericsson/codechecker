@@ -121,6 +121,13 @@ def verify_limit_range(limit):
 
     Query limit should not be larger than the max allowed value.
     Max is returned if the value is larger than max.
+
+    TODO: It would be nice in the long terms to raise an error when the limit
+    parameter is too big, otherwise the clients aren't notified about capping
+    the results.
+    The client implementation is providing a limit from CodeChecker 6.29. This
+    behavior could be strictly enforced when this version becomes quite
+    outdated.
     """
     max_query_limit = constants.MAX_QUERY_SIZE
     if not limit:
