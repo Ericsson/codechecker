@@ -28,6 +28,19 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Facebook Infer'
     URL = 'https://fbinfer.com'
 
+    EXAMPLE_CMD = """\
+# Run Facebook Infer, which produces an 'infer-out' directory containing
+# a 'report.json' file.
+infer capture -- clang++ main.cpp
+infer analyze
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Facebook Infer.
+report-converter -t fbinfer -o ./codechecker_fbinfer_reports ./infer-out
+
+# Store the Infer reports with CodeChecker.
+CodeChecker store ./codechecker_fbinfer_reports -n fbinfer"""
+
     def __init__(self):
         super().__init__()
         self.__infer_out_parent_dir = None

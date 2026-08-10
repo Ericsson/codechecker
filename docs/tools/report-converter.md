@@ -22,6 +22,7 @@ a CodeChecker server.
   * [TSLint](#tslint)
   * [Golint](#golint)
   * [Pyflakes](#pyflakes)
+  * [Ruff](#ruff)
   * [PVS-Studio](#PVS-Studio)
   * [Markdownlint](#markdownlint)
   * [Coccinelle](#coccinelle)
@@ -132,6 +133,13 @@ Supported analyzers:
 </details>
 
 ## Supported analyzer outputs
+For an always up-to-date usage example for a given analyzer straight from
+the source, run:
+```sh
+report-converter --example <TYPE>
+# e.g. report-converter --example ruff
+```
+
 ### Sanitizers
 #### Undefined Behaviour Sanitizer
 [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
@@ -407,6 +415,28 @@ report-converter -t pyflakes -o ./codechecker_pyflakes_reports ./pyflakes_report
 
 # Store the Pyflakes reports with CodeChecker.
 CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
+```
+
+### Ruff
+[Ruff](https://docs.astral.sh/ruff/) is an extremely fast static analysis
+tool (linter) for `Python` code.
+
+report-converter only accepts a `json` output file from Ruff, so you must
+generate one.
+
+The following example shows you how to run Ruff and store the results
+found by Ruff to the CodeChecker database.
+
+```sh
+# Run ruff and generate a json output file.
+ruff check --output-format json /path/to/my/project > ./ruff_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of ruff.
+report-converter -t ruff -o ./codechecker_ruff_reports ./ruff_reports.json
+
+# Store the ruff reports with CodeChecker.
+CodeChecker store ./codechecker_ruff_reports -n ruff
 ```
 
 ### PVS-Studio

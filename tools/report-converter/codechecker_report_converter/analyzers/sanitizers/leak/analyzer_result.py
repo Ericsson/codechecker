@@ -22,6 +22,17 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'LeakSanitizer'
     URL = 'https://clang.llvm.org/docs/LeakSanitizer.html'
 
+    EXAMPLE_CMD = """\
+# Compile your program with debug info and AddressSanitizer.
+clang -fsanitize=address -g lsan.c
+
+# Run your program and redirect the output to a file.
+ASAN_OPTIONS=detect_leaks=1 ./a.out > lsan.output 2>&1
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of LeakSanitizer.
+report-converter -t lsan -o ./lsan_results lsan.output"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser().get_reports(file_path)
