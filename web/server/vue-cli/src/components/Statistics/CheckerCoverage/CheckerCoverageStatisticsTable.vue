@@ -8,6 +8,8 @@
     loading-text="Loading checker statistics..."
     item-key="checker"
     :sort-by="[{ key: 'severity', order: 'desc' }]"
+    :item-class="getRowClass"
+    no-data-text="No checker coverage statistics available"
     @enabled-click="enabledClick"
   />
 </template>
@@ -56,10 +58,14 @@ const headers = [
 function enabledClick(_type, _checker_name) {
   emit("enabled-click", _type, _checker_name);
 }
+
+function getRowClass(item) {
+  return item.outstanding > 0 ? "highlight-row" : "";
+}
 </script>
 
 <style lang="scss">
-@use "@/components/Statistics/style.scss" with (
+@use "@/components/Statistics/highlight-rows" with (
   $class-name: ".analysis-statistics"
 );
 </style>
