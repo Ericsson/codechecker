@@ -101,7 +101,8 @@ import {
   Checker,
   Guideline,
   ReportFilter,
-  RunFilter
+  RunFilter,
+  Severity
 } from "@cc/report-server-types";
 import { computed, ref, watch } from "vue";
 import StatisticsDialog from "../StatisticsDialog";
@@ -194,41 +195,50 @@ function checker_stat(stat) {
           const filtered_stat = Object.keys(stat).filter(
             checkerId => rule.checkers.map(c => c.checkerName).includes(
               stat[checkerId].checkerName));
+
+          const matchedCheckerNames = new Set(
+            filtered_stat.map(checkerId => stat[checkerId].checkerName)
+          );
+
+          const matchedCheckers = filtered_stat.map(checkerId => {
+            return {
+              name: stat[checkerId].checkerName,
+              severity: stat[checkerId].severity,
+              enabledInAllRuns: stat[checkerId].disabled.length === 0
+                ? 1
+                : 0,
+              enabledRunLength: stat[checkerId].enabled.length,
+              disabledRunLength: stat[checkerId].disabled.length,
+              unknownRunLength: stat[checkerId].unknown.length,
+              closed: stat[checkerId].closed.toNumber(),
+              outstanding: stat[checkerId].outstanding.toNumber(),
+            };
+          });
+
+          const missingCheckers = rule.checkers
+            .filter(checker => !matchedCheckerNames.has(checker.checkerName))
+            .map(checker => {
+              return {
+                name: checker.checkerName,
+                severity: checker.severity !== null
+                  ? severity.severityFromStringToCode(checker.severity)
+                  : Severity.UNSPECIFIED,
+                enabledInAllRuns: 0,
+                enabledRunLength: 0,
+                disabledRunLength: runs.value.length,
+                unknownRunLength: 0,
+                closed: 0,
+                outstanding: 0,
+              };
+            });
+
           return {
             guidelineName: guideline,
             guidelineRule: rule.ruleId,
             guidelineUrl: rule.url,
             guidelineRuleTitle: rule.title,
             guidelineLevel: rule.level,
-            checkers: filtered_stat.length
-              ? filtered_stat.map(checkerId => {
-                return {
-                  name: stat[checkerId].checkerName,
-                  severity: stat[checkerId].severity,
-                  enabledInAllRuns: stat[checkerId].disabled.length === 0
-                    ? 1
-                    : 0,
-                  enabledRunLength: stat[checkerId].enabled.length,
-                  disabledRunLength: stat[checkerId].disabled.length,
-                  unknownRunLength: stat[checkerId].unknown.length,
-                  closed: stat[checkerId].closed.toNumber(),
-                  outstanding: stat[checkerId].outstanding.toNumber(),
-                };
-              })
-              : (rule.checkers.length ?
-                rule.checkers.map(checker => {
-                  return {
-                    name: checker.checkerName,
-                    severity: severity.severityFromStringToCode(
-                      checker.severity),
-                    enabledInAllRuns: 0,
-                    enabledRunLength: 0,
-                    disabledRunLength: runs.value.length,
-                    closed: 0,
-                    outstanding: 0,
-                  };
-                })
-                : [])
+            checkers: [ ...matchedCheckers, ...missingCheckers ]
           };
         })
       );
