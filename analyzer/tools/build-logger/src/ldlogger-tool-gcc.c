@@ -98,7 +98,7 @@ static void getDefaultArguments(const char* prog_, LoggerVector* args_)
 
   while ((readSize = getline(&line, &lineSize, cmdOut)) >= 0)
   {
-    char fullPath[PATH_MAX] = "-I";
+    char fullPath[PATH_MAX + 2] = "-I";
     char* pathEnd;
     char* pathStart;
 
