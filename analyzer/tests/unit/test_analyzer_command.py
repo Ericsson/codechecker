@@ -74,6 +74,40 @@ class AnalyzerCommandClangSATest(unittest.TestCase):
         cmd = analyzer.construct_analyzer_cmd(result_handler)
         self.assertNotIn('-analyzer-opt-analyze-headers', cmd)
 
+    def test_no_duplicate_target_flag(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/1158
+
+        When the original build command already specifies a target with
+        the double-dash spelling (--target=...), an implicit fallback
+        target (from querying the compiler's own default) must not also
+        be appended - the analyzer command should contain the user's
+        target flag exactly once, not a wrong/default one alongside it.
+        """
+        analyzer = create_analyzer_sa(
+            command="g++ --target=aarch64-linux-gnu -o main main.cpp")
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        target_flags = [
+            x for x in cmd if x.startswith(('-target', '--target'))]
+        self.assertEqual(target_flags, ['--target=aarch64-linux-gnu'])
+
+    def test_implicit_target_flag_still_added_when_missing(self):
+        """
+        Sanity check accompanying the regression test above: when the
+        original build command has no target flag at all, the implicit
+        default target should still be added exactly once.
+        """
+        analyzer = create_analyzer_sa(command="g++ -o main main.cpp")
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        target_flags = [
+            x for x in cmd if x.startswith(('-target', '--target'))]
+        self.assertEqual(len(target_flags), 1)
+
     def test_no_duplicate_std_flag_double_dash(self):
         """
         Regression test for
