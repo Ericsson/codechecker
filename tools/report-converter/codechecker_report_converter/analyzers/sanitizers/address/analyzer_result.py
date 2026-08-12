@@ -21,6 +21,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'AddressSanitizer'
     URL = 'https://clang.llvm.org/docs/AddressSanitizer.html'
 
+    EXAMPLE_CMD = """\
+# Compile your program with debug info and a frame pointer.
+clang++ -fsanitize=address -g -fno-omit-frame-pointer asan.cpp
+
+# Run your program and redirect the output to a file.
+ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-6.0/bin/llvm-symbolizer \\
+./a.out > asan.output 2>&1
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of AddressSanitizer.
+report-converter -t asan -o ./asan_results asan.output"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser().get_reports(file_path)

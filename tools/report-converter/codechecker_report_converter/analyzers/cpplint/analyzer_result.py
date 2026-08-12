@@ -21,6 +21,17 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'cpplint'
     URL = 'https://github.com/cpplint/cpplint'
 
+    EXAMPLE_CMD = """\
+# Run cpplint and redirect the output to a file.
+cpplint sample.cpp > ./sample.out 2>&1
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of cpplint.
+report-converter -t cpplint -o ./codechecker_cpplint_reports ./sample.out
+
+# Store the cpplint reports with CodeChecker.
+CodeChecker store ./codechecker_cpplint_reports -n cpplint"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser(file_path).get_reports(file_path)

@@ -29,6 +29,22 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Cppcheck'
     URL = 'http://cppcheck.sourceforge.net'
 
+    EXAMPLE_CMD = """\
+# Collect the compilation commands with absolute path conversion.
+CC_LOGGER_ABS_PATH=1 CodeChecker log -o compile_command.json -b "make"
+
+# Run Cppcheck using the generated compile command database.
+mkdir cppcheck_reports
+cppcheck --project=compile_command.json --plist-output=./cppcheck_reports
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Cppcheck.
+report-converter -t cppcheck -o ./codechecker_cppcheck_reports \
+    ./cppcheck_reports
+
+# Store the Cppcheck reports with CodeChecker.
+CodeChecker store ./codechecker_cppcheck_reports -n cppcheck"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         reports: List[Report] = []

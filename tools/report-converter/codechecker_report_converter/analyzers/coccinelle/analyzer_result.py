@@ -21,6 +21,21 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Coccinelle'
     URL = 'https://github.com/coccinelle/coccinelle'
 
+    EXAMPLE_CMD = """\
+# Change directory to your project (e.g. the Linux kernel).
+cd path/to/linux/kernel/repository
+
+# Run Coccicheck and redirect the output to a file.
+make coccicheck MODE=report V=1 > ./coccinelle_reports.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Coccinelle.
+report-converter -t coccinelle -o ./codechecker_coccinelle_reports \
+    ./coccinelle_reports.out
+
+# Store the Coccinelle reports with CodeChecker.
+CodeChecker store ./codechecker_coccinelle_reports -n coccinelle"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser(file_path).get_reports(file_path)

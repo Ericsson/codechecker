@@ -28,6 +28,17 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'spotbugs'
     URL = 'https://spotbugs.github.io'
 
+    EXAMPLE_CMD = """\
+# Run SpotBugs, generating xml output with messages.
+spotbugs -xml:withMessages -output ./bugs.xml -textui /path/to/your/project
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of SpotBugs.
+report-converter -t spotbugs -o ./codechecker_spotbugs_reports ./bugs.xml
+
+# Store the SpotBugs reports with CodeChecker.
+CodeChecker store ./codechecker_spotbugs_reports -n spotbugs"""
+
     def __init__(self):
         super().__init__()
         self.__project_paths = []
