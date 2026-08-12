@@ -366,6 +366,53 @@ class LogParserTest(unittest.TestCase):
         filtered = log_parser.filter_compiler_includes_extra_args(flags)
         self.assertEqual(filtered, ["--sysroot=/usr/mysysroot"])
 
+    def test_compiler_implicit_include_flags_target_arch(self):
+        """
+        Target and architecture selection flags must be forwarded so the
+        implicit include paths are queried for the target used during the
+        build (multi-target compilers select the multilib headers based on
+        these flags).
+        """
+
+        flags = ["-I", "/usr/include",
+                 "--target=arm-none-eabi", "-mcpu=cortex-m4",
+                 "-march=armv7e-m", "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16",
+                 "-mthumb", "-mabi=aapcs", "-mtune=cortex-m4",
+                 "-mendian=little", "-mbig-endian", "-mlittle-endian",
+                 "-marm", "-c"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(
+            filtered,
+            ["--target=arm-none-eabi", "-mcpu=cortex-m4", "-march=armv7e-m",
+             "-mfloat-abi=hard", "-mfpu=fpv4-sp-d16", "-mthumb", "-mabi=aapcs",
+             "-mtune=cortex-m4", "-mendian=little", "-mbig-endian",
+             "-mlittle-endian", "-marm"])
+
+    def test_compiler_implicit_include_flags_target_two_args(self):
+        """
+        The target triple may be given as two separate arguments
+        ('-target <triple>' or '--target <triple>'). It should be forwarded
+        in the '--target=<triple>' form accepted by both gcc and clang.
+        """
+
+        flags = ["-I", "/usr/include", "-target", "arm-none-eabi", "-c"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["--target=arm-none-eabi"])
+
+        flags = ["--target", "x86_64-pc-linux-gnu", "-O2"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["--target=x86_64-pc-linux-gnu"])
+
+    def test_compiler_implicit_include_flags_target_two_args_no_value(self):
+        """
+        A trailing '-target' without a value must not raise and must not be
+        forwarded.
+        """
+
+        flags = ["-I", "/usr/include", "-target"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, [])
+
     def test_skip_everything_from_parse(self):
         """Same skip file for pre analysis and analysis. Skip everything."""
         cmp_cmd_json = [
