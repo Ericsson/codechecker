@@ -38,7 +38,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
     CommentData, \
     DetectionStatus, DiffType, \
-    Encoding, ExportData, \
+    Encoding, ExportData, Guideline, \
     Order, \
     ReportData, ReportDetails, ReportStatus, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
@@ -3114,12 +3114,14 @@ class ThriftRequestHandler:
 
         return labels
 
+
     @exc_to_thrift_reqfail
     @timeit
     def getGuidelineRules(
         self,
         guidelines: List[ttypes.Guideline]
     ):
+        print("getGuidelinerules called")
         """ Return the list of rules to each guideline that given. """
         self.__require_view()
 
@@ -3353,9 +3355,20 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
-        self.__require_view()
-
         # Queries for all checkers available in CodeChecker
+        self.__require_view()
+        return self._getCheckerStatus(run_ids,report_filter)
+
+
+    # For a list of chekers defined in the checker_set
+    # returns in which runs (filtered by run_ids and the report_filter)
+    # the checker was enabled
+    # and the number of outstanding and closed reports
+
+    def _getCheckerStatus(self, run_ids, report_filter, checker_set=None):
+        LOG.info("checker set received")
+        if (checker_set):
+            LOG.info(checker_set)
         with DBSession(self._Session) as session:
             max_run_histories = session.query(
                 RunHistory.run_id,
@@ -3363,6 +3376,7 @@ class ThriftRequestHandler:
             ).filter(
                 RunHistory.run_id.in_(run_ids) if run_ids else True
             ).group_by(RunHistory.run_id)
+
 
             checker_list = (
                 session.query(
@@ -3372,6 +3386,8 @@ class ThriftRequestHandler:
                     Checker.analyzer_name
                 )
                 .select_from(Checker)
+                .filter(Checker.checker_name.in_(checker_set)
+                        if checker_set else True)
             )
 
             checker_stats = {}
@@ -3388,6 +3404,9 @@ class ThriftRequestHandler:
                     outstanding=0
                 )
                 checker_stats[checker_id] = checker_stat
+
+            LOG.info("Checker_stat initialized")
+            LOG.info(checker_stats)
 
             # Queries if the checkers were enabled/disabled in the
             # selected runs. With older CodeChecker clients, the
@@ -3409,6 +3428,8 @@ class ThriftRequestHandler:
                 )
                 .select_from(Run)
                 .join(RunHistory, (RunHistory.run_id == Run.id))
+                .filter(Checker.checker_name.in_(checker_set)
+                        if checker_set else True)
                 .filter(
                     RunHistory.id
                     == max_run_histories.subquery()
@@ -3446,6 +3467,8 @@ class ThriftRequestHandler:
                 checker_stat.enabled = list(checker_stat.enabled)
                 checker_stat.disabled = list(checker_stat.disabled)
 
+            LOG.info("Checker_stat unknown status")
+            LOG.info(checker_stats)
             # Count the outstanding and closed reports.
             if report_filter.isUnique:
                 counter = func.count(
@@ -3462,6 +3485,8 @@ class ThriftRequestHandler:
                 )
                 .join(Checker,
                       Report.checker_id == Checker.id)
+                .filter(Checker.checker_name.in_(checker_set)
+                        if checker_set else True)
                 .filter(
                     Report.run_id.in_(run_ids)
                     if run_ids else True)
@@ -3478,6 +3503,51 @@ class ThriftRequestHandler:
                         report_count
 
         return checker_stats
+
+
+
+    #list<GuidelineRuleCompliance> getGuidelineStatistics(1: Guideline guideline,
+    #                                                   2: list<i64> runIds,
+    #                                                   3: ReportFilter r);
+    # struct GuidelineRuleCompliance{
+    #1: string       rule_id,       // Rule Id
+    #2: list<CheckerStatusVerificationDetail> checkers_status
+    #}
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getGuidelineStatistics(self, guideline, run_ids, report_filter):
+        self.__require_view()
+        ret={}
+        LOG.info("calling getGuidelineRules")
+        g=Guideline(guidelineName=guideline)
+        guideline_rule = self.getGuidelineRules([g])
+        rules=guideline_rule[guideline]
+        print("XXX")
+        print(rules)
+        checker_set  = set()
+        for rule in rules:
+            checker_set.update(rule.checkers)
+        checker_status = self._getCheckerStatus(
+            run_ids, report_filter, checker_set)
+        LOG.info("checker_status")
+        LOG.info(checker_status)
+        status_by_name = {}
+        for checker_id, status in checker_status.items():
+            status_by_name[status.checkerName] = status
+        gRuleCompliance = []
+        LOG.info("checker status_by_name")
+        LOG.info(status_by_name)
+        for rule in rules:
+            cstatus_list=[]
+            for checker_name in rule.checkers:
+                cstatus_list.append(
+                    status_by_name[checker_name])
+            ret[rule.ruleId]=cstatus_list
+        LOG.info("returning from getGuidelineStatistics ")
+        LOG.info(ret)
+        return ret
+
 
     @exc_to_thrift_reqfail
     @timeit

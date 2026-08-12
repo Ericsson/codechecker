@@ -439,6 +439,9 @@ struct CheckerStatusVerificationDetail {
 }
 typedef map<i64, CheckerStatusVerificationDetail> CheckerStatusVerificationDetails
 
+// map<rule_id,checker_status_list>
+typedef map<string, list<CheckerStatusVerificationDetail>> GuidelineRuleCompliance
+
 struct CommentData {
   1: i64     id,
   2: string  author,
@@ -990,6 +993,17 @@ service codeCheckerDBAccess {
   CheckerStatusVerificationDetails getCheckerStatusVerificationDetails(1: list<i64>    runIds,
                                                                        2: ReportFilter reportFilter)
                                                                        throws (1: codechecker_api_shared.RequestFailed requestError),
+
+
+  // For the selected guideline and runs
+  // it returns the checkers associated to that guideline
+  // the severity of the checkers,
+  // whether checker was enabled in the selected runs and
+  // number of outstanding and closed reports per checker.
+  GuidelineRuleCompliance getGuidelineStatistics(1: string guideLineName,
+                                                 2: list<i64> runIds,
+                                                 3: ReportFilter r);
+
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs

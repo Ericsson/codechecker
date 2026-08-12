@@ -800,3 +800,28 @@ class TestReportFilter(unittest.TestCase):
                     runid, detail.enabled,
                     f"Checker '{detail.checkerName}' should not be "
                     f"enabled in run1 (run id {runid})")
+
+    def test_getGuidelineStatistics_details_single_run(self):
+        """
+        Get checker status verification details for run1 and verify
+        that outstanding report counts match the expected run1_checkers.
+        """
+        runid = self._runids[0]
+
+        guideline_stats = self._cc_client.getGuidelineStatistics(
+            "sei-cert-c", [runid], ReportFilter())
+
+        print("xXXXXXX")
+        print(guideline_stats)
+        self.assertIsInstance(guideline_stats, dict)
+        self.assertGreater(len(guideline_stats), 0)
+        self.assertGreater(guideline_stats["int33-c"], 0)
+        div_zero_found = False
+
+         # Build a mapping from checker name to outstanding count.
+        status_by_name = {
+            status.checkerName: status
+            for status in guideline_stats["int33-c"].values()
+        }
+        self.assertTrue("core.DivdeZero" in status_by_name,
+                        "Core.DivideZero should be associated to int33-c")
