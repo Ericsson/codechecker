@@ -4,6 +4,10 @@ CURRENT_DIR = ${CURDIR}
 BUILD_DIR ?= $(CURRENT_DIR)/build
 PYTHON_BIN ?= python3
 
+API_VERSION := $(shell python3 -c "exec(open('$(CURRENT_DIR)/web/codechecker_web/shared/version.py').read()); print(f'{max(SUPPORTED_VERSIONS)}.{SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS)]}.0')")
+VENV_API_VERSION := $(shell pip show codechecker-api 2>/dev/null | grep "^Version:" | cut -d' ' -f2)
+PACKAGE_JSON_VERSION := $(shell python3 -c "exec(open('$(CURRENT_DIR)/web/api/js/codechecker-api-node/package.json').read()); print(__import__('json').loads(open('$(CURRENT_DIR)/web/api/js/codechecker-api-node/package.json').read())['version'])")
+
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
@@ -41,7 +45,7 @@ mkdocs_build:
 package_gerrit_skiplist: package_dir_structure
 	cp -p scripts/gerrit_changed_files_to_skipfile.py $(CC_BUILD_BIN_DIR)
 
-package: package_dir_structure set_git_commit_template package_gerrit_skiplist
+package: package_dir_structure set_git_commit_template package_gerrit_skiplist check_api_version
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -251,3 +255,12 @@ test_functional_in_env:
 
 set_git_commit_template:
 	if [ -d "$(CURRENT_DIR)/.git" ]; then git config --local commit.template .gitmessage; fi
+
+check_api_version:
+	@if [ "$(API_VERSION)" != "$(VENV_API_VERSION)" ] || [ "$(API_VERSION)" != "$(PACKAGE_JSON_VERSION)" ]; then \
+		echo "ERROR: API version mismatch! Source: $(API_VERSION), venv: $(VENV_API_VERSION), package.json: $(PACKAGE_JSON_VERSION)"; \
+		echo "Please run './scripts/thrift/completly-rebuild-thrift.sh <venv|venv_dev>' to rebuild the Thrift API."; \
+		exit 1; \
+	else \
+		echo "API versions match: $(API_VERSION)"; \
+	fi
