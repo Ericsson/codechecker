@@ -1,0 +1,208 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SAST",
+          "organization": "Seqra",
+          "version": "1.4.1",
+          "rules": [
+            {
+              "id": "seqra.java.spring.xss",
+              "name": "seqra.java.spring.xss",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "fullDescription": {
+                "text": "Controller returns an untrusted unvalidated data"
+              },
+              "shortDescription": {
+                "text": "Controller returns an untrusted unvalidated data"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-79"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "level": "error",
+          "message": {
+            "text": "Controller returns an untrusted unvalidated data"
+          },
+          "ruleId": "seqra.java.spring.xss",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UserProfileController.java",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 18
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "org.example.UserProfileController#displayUserProfile",
+                  "decoratedName": "(id:69)org.example.UserProfileController#displayUserProfile(java.lang.String):1:(return %0)"
+                }
+              ]
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "UserProfileController.java"
+                },
+                "region": {
+                  "startLine": 18
+                }
+              },
+              "logicalLocations": [
+                {
+                  "name": "org.example.UserProfileController#displayUserProfile",
+                  "fullyQualifiedName": "GET /profile/display",
+                  "kind": "function"
+                }
+              ],
+              "message": {
+                "text": "Related Spring controller"
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "UserProfileController.java",
+                            "uriBaseId": "%SRCROOT%"
+                          },
+                          "region": {
+                            "startLine": 17
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "org.example.UserProfileController#displayUserProfile",
+                            "decoratedName": "(id:69)org.example.UserProfileController#displayUserProfile(java.lang.String):0:(goto JIRInstRef(index=2))"
+                          }
+                        ],
+                        "message": {
+                          "text": "Method entry marks \"message\" as $PARAM"
+                        }
+                      },
+                      "executionOrder": 0,
+                      "index": 0,
+                      "kinds": [
+                        "taint"
+                      ]
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "UserProfileController.java",
+                            "uriBaseId": "%SRCROOT%"
+                          },
+                          "region": {
+                            "startLine": 18
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "org.example.UserProfileController#displayUserProfile",
+                            "decoratedName": "(id:69)org.example.UserProfileController#displayUserProfile(java.lang.String):4:(%0 = %str)"
+                          }
+                        ],
+                        "message": {
+                          "text": "Takes $PARAM data at \"message\" and ends up with $PARAM data at a local variable"
+                        }
+                      },
+                      "executionOrder": 1,
+                      "index": 1,
+                      "kinds": [
+                        "unknown"
+                      ]
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "UserProfileController.java",
+                            "uriBaseId": "%SRCROOT%"
+                          },
+                          "region": {
+                            "startLine": 18
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "org.example.UserProfileController#displayUserProfile",
+                            "decoratedName": "(id:69)org.example.UserProfileController#displayUserProfile(java.lang.String):1:(return %0)"
+                          }
+                        ],
+                        "message": {
+                          "text": "The returning value is assigned a value with $PARAM data"
+                        }
+                      },
+                      "executionOrder": 2,
+                      "index": 2,
+                      "kinds": [
+                        "unknown"
+                      ]
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "UserProfileController.java",
+                            "uriBaseId": "%SRCROOT%"
+                          },
+                          "region": {
+                            "startLine": 18
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "org.example.UserProfileController#displayUserProfile",
+                            "decoratedName": "(id:69)org.example.UserProfileController#displayUserProfile(java.lang.String):1:(return %0)"
+                          }
+                        ],
+                        "message": {
+                          "text": "Controller returns an untrusted unvalidated data"
+                        }
+                      },
+                      "executionOrder": 3,
+                      "index": 3,
+                      "kinds": [
+                        "taint"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "originalUriBaseIds": {
+        "%SRCROOT%": {
+          "uri": "./"
+        }
+      }
+    }
+  ]
+}
