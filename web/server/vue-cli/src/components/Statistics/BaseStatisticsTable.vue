@@ -416,7 +416,7 @@
         <table>
           <tr v-for="checker in item.checkers" :key="checker.name">
             <td>
-              <severity-icon :status="checker.severity" />
+              <severity-icon :size="20" :status="checker.severity" />
             </td>
           </tr>
         </table>
