@@ -49,18 +49,21 @@ class CodeCheckerService extends BaseService {
           const runFilter = new RunFilter({
             ids: reports.map(report => report.runId)
           });
-          this.getClient().getRunData(runFilter, MAX_QUERY_SIZE).then(runs => {
-            resolve(reports.map(report => {
-              const run =
-                runs.find(run => run.runId.equals(report.runId)) || {};
+          this.getClient().getRunData(runFilter, MAX_QUERY_SIZE, 0, null,
+            handleThriftError(runs => {
+              resolve(reports.map(report => {
+                const run =
+                  runs.find(run => run.runId.equals(report.runId)) || {};
 
-              return {
-                ...report,
-                "$runName": run.name
-              };
-            }));
-          });
-        }));
+                return {
+                  ...report,
+                  "$runName": run.name
+                };
+              }));
+            })
+          );
+        })
+      );
     });
   }
 
