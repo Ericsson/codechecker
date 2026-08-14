@@ -140,8 +140,10 @@
     ],
     "gcc-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:extreme",
+      "cwe-top-25-2024:cwe-476",
       "memory-safety:cwe-476",
       "severity:HIGH",
       "sei-cert-c:exp34-c"
@@ -242,8 +244,10 @@
     ],
     "gcc-use-after-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-after-free",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:extreme",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH",
       "sei-cert-c:mem30-c"

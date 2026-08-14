@@ -298,8 +298,10 @@
     "cppcheck-ctunullpointer": [
       "cwe-top-25-2024:cwe-476",
       "guideline:cwe-top-25-2024",
+      "guideline:memory-safety",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "memory-safety:cwe-476",
       "profile:security",
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
@@ -345,10 +347,12 @@
       "severity:HIGH"
     ],
     "cppcheck-deallocuse": [
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH",
       "sei-cert-c:mem30-c",
