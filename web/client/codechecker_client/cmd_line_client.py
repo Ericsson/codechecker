@@ -1829,11 +1829,11 @@ def get_announcement_msg(protocol, host, port):
     return config_client.getNotificationBannerText()
 
 
-def print_banner(protocol, host, port):
+def print_banner(protocol, host, port, log=None):
     """Fetch and print the server banner if one is set."""
     encoded = get_announcement_msg(protocol, host, port)
     if encoded:
-        LOG.info("Announcement: %s", convert.from_b64(encoded))
+        (log or LOG).info("Announcement: %s", convert.from_b64(encoded))
 
 
 def handle_login(args):

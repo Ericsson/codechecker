@@ -938,7 +938,7 @@ def main(args):
     client = libclient.setup_client(args.product_url)
     protocol, host, port, product_name = \
         product.split_product_url(args.product_url)
-    print_banner(protocol, host, port)
+    print_banner(protocol, host, port, LOG)
     prod_client = libclient.setup_product_client(protocol,
                                                  host,
                                                  port,
