@@ -100,6 +100,12 @@ jobs:
           pip install -r requirements_py/dev/requirements.txt
           make test
 
+      - name: Run memory-safety-reporter tests
+        working-directory: tools/memory-safety-reporter
+        run: |
+          pip install -r requirements.txt
+          pytest
+
   analyzer:
     name: Analyzer
     runs-on: ubuntu-24.04
