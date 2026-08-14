@@ -810,7 +810,7 @@ class DictAuth(unittest.TestCase):
             capture_output=True,
             check=False)
         self.assertIn("Announcement: Test announcement msg!",
-                      store_out.stderr)
+                      store_out.stdout)
 
         # Check if the message shows up in diff (remote run vs remote run).
         diff_cmd = [env.codechecker_cmd(), 'cmd', 'diff',
