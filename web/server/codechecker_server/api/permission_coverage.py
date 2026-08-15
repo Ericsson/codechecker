@@ -63,6 +63,10 @@ _MAX_PROLOGUE_STATEMENTS = 3
 # Decorator names that count as a permission check on their own.
 _PERMISSION_DECORATORS = frozenset({
     "requires_view",
+    "requires_store",
+    "requires_access",
+    "requires_admin",
+    "requires_permission",
 })
 
 # Substrings inside an attribute access that indicate a permission
@@ -70,11 +74,6 @@ _PERMISSION_DECORATORS = frozenset({
 # Python's name-mangling rewrites `self.__require_view` to e.g.
 # `self._ThriftRequestHandler__require_view` at parse time as well.
 _PERMISSION_CHECK_SUFFIXES = (
-    "_require_view",
-    "__require_view",
-    "__require_admin",
-    "__require_access",
-    "__require_store",
     "__require_permission",
     "__require_supermission",
     "__require_privilaged_access",
@@ -91,8 +90,7 @@ _PERMISSION_CHECK_SUFFIXES = (
 # reported as unprotected.
 _DELEGATED_PROTECTION = {
     # Both massStoreRun variants share the same upload pipeline,
-    # __massStoreRun_common, which calls self.__require_store() before
-    # touching any data.
+    # __massStoreRun_common, which has a @requires_store decorator.
     "massStoreRun": "__massStoreRun_common",
     "massStoreRunAsynchronous": "__massStoreRun_common",
 }
@@ -114,6 +112,8 @@ def _is_permission_decorator(decorator_node: ast.expr) -> bool:
         return decorator_node.id in _PERMISSION_DECORATORS
     if isinstance(decorator_node, ast.Attribute):
         return decorator_node.attr in _PERMISSION_DECORATORS
+    if isinstance(decorator_node, ast.Call):
+        return _is_permission_decorator(decorator_node.func)
     return False
 
 
@@ -213,7 +213,7 @@ def assert_all_thrift_methods_protected() -> None:
     if unprotected:
         raise RuntimeError(
             "Thrift API methods without a detectable permission check "
-            "were found. Add either an @requires_view decorator, an "
-            "in-body self.__require_*() call, or a "
-            "_DELEGATED_PROTECTION entry for each:\n  "
+            "were found. Add either an @requires_<permission> decorator, an "
+            "in-body self.__require_*() call, or a _DELEGATED_PROTECTION "
+            "entry for each:\n  "
             + "\n  ".join(unprotected))

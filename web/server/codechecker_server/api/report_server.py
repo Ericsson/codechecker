@@ -74,7 +74,8 @@ from ..database.run_db_model import \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
-from .common import exc_to_thrift_reqfail, requires_view
+from .common import exc_to_thrift_reqfail, requires_access, requires_admin, \
+    requires_permission, requires_store, requires_view
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -1491,50 +1492,12 @@ class ThriftRequestHandler:
         self.__client_version = client_version
         self._Session = Session
         self._context = context
-        self.__permission_args = {
-            'productID': product.id
-        }
 
     def _get_username(self):
         """
         Returns the actually logged in user name.
         """
         return self._auth_session.user if self._auth_session else "Anonymous"
-
-    def __require_permission(self, required):
-        """
-        Helper method to raise an UNAUTHORIZED exception if the user does not
-        have any of the given permissions.
-        """
-
-        with DBSession(self._config_database) as session:
-            args = dict(self.__permission_args)
-            args['config_db_session'] = session
-
-            if not any(permissions.require_permission(
-                    perm, args, self._auth_session,
-                    self._manager.is_enabled)
-                    for perm in required):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You are not authorized to execute this action.")
-
-            return True
-
-    def __require_admin(self):
-        self.__require_permission([permissions.PRODUCT_ADMIN])
-
-    def __require_access(self):
-        self.__require_permission([permissions.PRODUCT_ACCESS])
-
-    def __require_store(self):
-        self.__require_permission([permissions.PRODUCT_STORE])
-
-    def _require_view(self):
-        self.__require_permission([
-            permissions.PRODUCT_VIEW,
-            permissions.PERMISSION_VIEW
-        ])
 
     def __add_comment(self, bug_id, message, kind=CommentKindValue.USER,
                       date=None):
@@ -1659,6 +1622,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def storeFilterPreset(self, filterpreset):
         """
         Store a configured FilterPreset.
@@ -1669,7 +1633,6 @@ class ThriftRequestHandler:
                 - name (str): Human readable name of preset
                 - reportFilter: ReportFilter object itself
         """
-        self.__require_admin()
         LOG.info("Storing filter preset in backend: %s", filterpreset.name)
         try:
             filter_id = filterpreset.id
@@ -1720,6 +1683,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def renameFilterPreset(self, preset_id: int, name: str):
         """
         Rename a filter preset.
@@ -1727,7 +1691,6 @@ class ThriftRequestHandler:
         Raises an error if id/name is empty or if
         a preset with the new name already exists.
         """
-        self.__require_admin()
         try:
             with DBSession(self._Session) as session:
 
@@ -1779,13 +1742,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def deleteFilterPreset(self, preset_id):
         """
         Delete a filter preset based on preset_id.
         Returns the ID of the deleted preset. Raises an error if the
         preset does not exist or could not be deleted.
         """
-        self.__require_admin()
         LOG.info("Deleting filter preset by ID: %s", preset_id)
         try:
             with DBSession(self._Session) as session:
@@ -2774,13 +2737,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_permission([
+        permissions.PRODUCT_ACCESS,
+        permissions.PRODUCT_STORE])
     def changeReviewStatus(self, report_id, status, message):
         """
         Change the review status of a report by report id.
         """
-        self.__require_permission([permissions.PRODUCT_ACCESS,
-                                   permissions.PRODUCT_STORE])
-
         with DBSession(self._Session) as session:
             report = session.get(Report, report_id)
             if report:
@@ -2881,9 +2844,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def removeReviewStatusRules(self, rule_filter):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             q = get_rs_rule_query(session, rule_filter)
             for review_status, _ in q:
@@ -2912,10 +2874,10 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_permission([
+        permissions.PRODUCT_ACCESS,
+        permissions.PRODUCT_STORE])
     def addReviewStatusRule(self, report_hash, review_status, message):
-        self.__require_permission([permissions.PRODUCT_ACCESS,
-                                   permissions.PRODUCT_STORE])
-
         if self.isReviewStatusChangeDisabled():
             msg = "Review status change is disabled!"
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -2979,10 +2941,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_access
     def addComment(self, report_id, comment_data):
         """ Add new comment for the given bug. """
-        self.__require_access()
-
         if not comment_data.message or not comment_data.message.strip():
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -3005,14 +2966,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_access
     def updateComment(self, comment_id, content):
         """
             Update the given comment message with new content. We allow
             comments to be updated by it's original author only, except for
             Anyonymous comments that can be updated by anybody.
         """
-        self.__require_access()
-
         if not content.strip():
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -3055,14 +3015,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_access
     def removeComment(self, comment_id):
         """
             Remove the comment. We allow comments to be removed by it's
             original author only, except for Anyonymous comments that can be
             updated by anybody.
         """
-        self.__require_access()
-
         user = self._get_username()
 
         with DBSession(self._Session) as session:
@@ -4105,8 +4064,8 @@ class ThriftRequestHandler:
     # -----------------------------------------------------------------------
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def removeRunResults(self, run_ids):
-        self.__require_store()
 
         failed = False
         for run_id in run_ids:
@@ -4120,9 +4079,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def removeRunReports(self, run_ids, report_filter, cmp_data):
-        self.__require_store()
-
         if not run_ids:
             run_ids = []
 
@@ -4175,9 +4133,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def removeRun(self, run_id, run_filter):
-        self.__require_store()
-
         # Remove the whole run.
         with DBSession(self._Session) as session:
             if not run_filter:
@@ -4247,9 +4204,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def updateRunData(self, run_id, new_run_name):
-        self.__require_store()
-
         if not new_run_name:
             msg = 'No new run name was given to update the run.'
             LOG.error(msg)
@@ -4288,21 +4244,21 @@ class ThriftRequestHandler:
         return True
 
     @exc_to_thrift_reqfail
+    @requires_access
     def getSuppressFile(self):
         """
         DEPRECATED the server is not started with a suppress file anymore.
         Returning empty string.
         """
-        self.__require_access()
         return ''
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def addSourceComponent(self, name, value, description):
         """
         Adds a new source if it does not exist or updates an old one.
         """
-        self.__require_admin()
         with DBSession(self._Session) as session:
             component = session.get(SourceComponent, name)
             user = self._auth_session.user if self._auth_session else None
@@ -4362,12 +4318,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def removeSourceComponent(self, name):
         """
         Removes a source component.
         """
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             component = session.get(SourceComponent, name)
             if component:
@@ -4383,9 +4338,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def getMissingContentHashes(self, file_hashes):
-        self.__require_store()
-
         if not file_hashes:
             return []
 
@@ -4400,9 +4354,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def getMissingContentHashesForBlameInfo(self, file_hashes):
-        self.__require_store()
-
         if not file_hashes:
             return []
 
@@ -4416,9 +4369,9 @@ class ThriftRequestHandler:
             return list(set(file_hashes) -
                         set(fc.content_hash for fc in q))
 
+    @requires_store
     def __massStoreRun_common(self, is_async: bool, zipfile_blob: str,
                               store_opts: SubmittedRunOptions) -> str:
-        self.__require_store()
         if not store_opts.runName:
             raise ValueError("A run name is needed to know where to store!")
 
@@ -4509,16 +4462,14 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def allowsStoringAnalysisStatistics(self):
-        self.__require_store()
-
         return bool(self._manager.get_analysis_statistics_dir())
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def getAnalysisStatisticsLimits(self):
-        self.__require_store()
-
         cfg = {}
 
         # Get the limit of failure zip size.
@@ -4537,9 +4488,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_store
     def storeAnalysisStatistics(self, run_name, b64zip):
-        self.__require_store()
-
         report_dir_store = self._manager.get_analysis_statistics_dir()
         if report_dir_store:
             try:
@@ -4649,8 +4599,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def importData(self, exportData):
-        self.__require_admin()
         with DBSession(self._Session) as session:
 
             # Logic for importing comments
@@ -4703,9 +4653,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def addCleanupPlan(self, name, description, dueDate):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = session.query(CleanupPlan) \
                 .filter(CleanupPlan.name == name) \
@@ -4731,9 +4680,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def updateCleanupPlan(self, cleanup_plan_id, name, description, dueDate):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
             cleanup_plan.name = name
@@ -4790,8 +4738,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def removeCleanupPlan(self, cleanup_plan_id):
-        self.__require_admin()
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
             name = cleanup_plan.name
@@ -4806,9 +4754,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def closeCleanupPlan(self, cleanup_plan_id):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
 
@@ -4823,9 +4770,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def reopenCleanupPlan(self, cleanup_plan_id):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
 
@@ -4838,9 +4784,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def setCleanupPlan(self, cleanup_plan_id, reportHashes):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
 
@@ -4861,9 +4806,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_admin
     def unsetCleanupPlan(self, cleanup_plan_id, reportHashes):
-        self.__require_admin()
-
         with DBSession(self._Session) as session:
             cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
 

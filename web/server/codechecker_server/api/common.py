@@ -9,9 +9,12 @@ import functools
 
 import sqlalchemy
 
+import codechecker_api_shared
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_common.logger import get_logger
+from codechecker_server import permissions
+from codechecker_server.database.database import DBSession
 
 
 LOG = get_logger("server")
@@ -51,14 +54,87 @@ def exc_to_thrift_reqfail(function):
     return wrapper
 
 
+def __requires_permission(self, required):
+    """
+    Helper method to raise an UNAUTHORIZED exception if the user does not
+    have any of the given permissions.
+    """
+
+    with DBSession(self._config_database) as session:
+        args = dict({ 'productID': self._product.id })
+        args['config_db_session'] = session
+
+        if not any(permissions.require_permission(
+                perm, args, self._auth_session,
+                self._manager.is_enabled)
+                for perm in required):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
+                "You are not authorized to execute this action.")
+
+        return True
+
+
+def requires_permission(required):
+    """
+    Decorator for Thrift API methods that require one of the given permissions
+    on the current product.
+    """
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(self, *args, **kwargs):
+            __requires_permission(self, required)
+            return function(self, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
 def requires_view(function):
     """
     Decorator for Thrift API methods that require view permission on the
-    current product. Calls into the handler's _require_view() helper
-    before invoking the wrapped method.
+    current product.
     """
     @functools.wraps(function)
     def wrapper(self, *args, **kwargs):
-        self._require_view()
+        __requires_permission(self, [
+            permissions.PRODUCT_VIEW,
+            permissions.PERMISSION_VIEW
+        ])
+        return function(self, *args, **kwargs)
+    return wrapper
+
+
+def requires_store(function):
+    """
+    Decorator for Thrift API methods that require store permission on the
+    current product.
+    """
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        __requires_permission(self, [permissions.PRODUCT_STORE])
+        return function(self, *args, **kwargs)
+    return wrapper
+
+
+def requires_access(function):
+    """
+    Decorator for Thrift API methods that require access permission on the
+    current product.
+    """
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        __requires_permission(self, [permissions.PRODUCT_ACCESS])
+        return function(self, *args, **kwargs)
+    return wrapper
+
+
+def requires_admin(function):
+    """
+    Decorator for Thrift API methods that require admin permission on the
+    current product.
+    """
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        __requires_permission(self, [permissions.PRODUCT_ADMIN])
         return function(self, *args, **kwargs)
     return wrapper
