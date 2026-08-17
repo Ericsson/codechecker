@@ -333,7 +333,7 @@ class Parser(BaseParser):
 
                     severity = checker_labels.severity(
                             checker_name,
-                            report.analyzer_name)  # type: ignore[call-arg]
+                            report.analyzer_name)
                     if severity:
                         rules[checker_name]["defaultConfiguration"] = {
                             "level": self._to_level(severity)

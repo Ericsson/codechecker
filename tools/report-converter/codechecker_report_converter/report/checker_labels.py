@@ -10,6 +10,6 @@ from typing import Callable, List, Optional, Union
 
 
 class CheckerLabels:
-    severity: Callable[[str], str]
+    severity: Callable[[str, Optional[str]], str]
     label_of_checker: Callable[
         [str, str, Optional[str]], Union[str, List[str]]]
