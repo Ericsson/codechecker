@@ -74,7 +74,7 @@ class TestParseSarif(unittest.TestCase):
         if process.returncode != (2 if "parse" in cmd else 0):
             return err
 
-        return ''.join(out)
+        return out
 
     def __log_and_analyze(self, analyze_args=None):
         """ Log and analyze the test project. """
