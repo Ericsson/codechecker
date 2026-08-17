@@ -15,7 +15,7 @@ import os
 import shutil
 
 from operator import itemgetter
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from prettytable import HRuleStyle, PrettyTable, TableStyle
 
@@ -234,7 +234,7 @@ def _fit_table_to_width(
 
     if trunc_cols:
         leftover = max(available - sum(wrap_assigned.values()),
-                        len(trunc_cols) * min_col_width)
+                       len(trunc_cols) * min_col_width)
         trunc_assigned = _assign_widths(
             trunc_cols, nat_widths, leftover, min_col_width)
         for i, w in trunc_assigned.items():
@@ -307,7 +307,7 @@ def _make_table(
 
 
 def to_table(
-    lines: Iterable[str],
+    lines: Iterable[Iterable[Any]],
     separate_head=True,
     separate_footer=False,
     ellipsis_columns: Optional[Iterable[int]] = None,
