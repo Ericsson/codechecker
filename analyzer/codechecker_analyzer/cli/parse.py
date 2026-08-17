@@ -627,6 +627,7 @@ def main(args):
                 sys.exit(1)
 
         metadata = get_metadata(dir_path)
+        statistics.add_analyzer_durations(metadata)
 
         if metadata and 'files' in args:
             # Mapping plists when files are specified to speed up parsing

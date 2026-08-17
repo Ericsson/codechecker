@@ -271,6 +271,7 @@ def perform_analysis(args, skip_handlers, filter_handlers,
                 "failed_sources": [],
                 "successful": 0,
                 "successful_sources": [],
+                "duration_of_sources": [],
                 "version": None}}
 
         for check, data in config_map[analyzer].checks().items():
