@@ -245,7 +245,7 @@ def _fit_table_to_width(
         # letting PrettyTable wrap them onto extra lines. Columns not
         # listed still wrap normally via max_width.
         truncated_rows = [
-            [_truncate(cell, assigned[i], keep_suffix=(i in keep_suffix_cols))
+            [_truncate(cell, assigned[i], keep_suffix=i in keep_suffix_cols)
              if i in ellipsis_cols else cell
              for i, cell in enumerate(row)]
             for row in data_rows
