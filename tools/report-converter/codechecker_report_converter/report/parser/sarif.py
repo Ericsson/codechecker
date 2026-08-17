@@ -478,13 +478,14 @@ class Parser(BaseParser):
 
     def _to_level(self, severity: str) -> str:
         """ Map severity label value to level (§3.50.3). """
-        if severity in ["STYLE", "LOW"]:
-            return "note"
+        if severity in ["HIGH", "CRITICAL"]:
+            return "error"
         elif severity == "MEDIUM":
             return "warning"
-        elif severity in ["HIGH", "CRITICAL"]:
-            return "error"
-        return "warning"
+        elif severity in ["STYLE", "LOW"]:
+            return "note"
+        elif severity == "UNSPECIFIED":
+            return "warning"
 
     def write(self, data: Any, output_file_path: str):
         """ Creates an analyzer output file from the given data. """
