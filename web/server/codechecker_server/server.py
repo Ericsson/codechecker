@@ -1051,6 +1051,14 @@ def start_server(config_directory: str, workspace_directory: str,
     server_secrets_file = os.path.join(config_directory, 'server_secrets.json')
 
     if not skip_db_cleanup:
+        # TODO:
+        # Perform a cleanup on the config database as well.
+        # - Do a garbage collection on table auth_sessions and
+        # remove expired sessions. Currently, this cleanup is only
+        # performed when a user logs in. Therefore, expired sessions
+        # can accumulate for users who no longer interact with the
+        # server.
+
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
                                              check_env)

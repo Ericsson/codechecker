@@ -223,7 +223,8 @@ class OAuthToken(Base):
                              ForeignKey('auth_sessions.id',
                                         deferrable=False,
                                         ondelete='CASCADE'),
-                             nullable=False)
+                             nullable=False,
+                             index=True)
 
     def __init__(self, access_token, expires_at, refresh_token,
                  auth_session_id):
