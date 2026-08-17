@@ -81,17 +81,13 @@ class TestParseSarif(unittest.TestCase):
         build_json = os.path.join(self.test_workspace, "build.json")
 
         clean_cmd = ["make", "clean"]
-        out = subprocess.check_output(clean_cmd,
-                                      cwd=self.test_dir,
-                                      encoding="utf-8", errors="ignore")
+        out = self.__run_cmd(clean_cmd)
         print(out)
 
         # Create and run log command.
         log_cmd = [self._codechecker_cmd, "log", "-b", "make",
                    "-o", build_json]
-        out = subprocess.check_output(log_cmd,
-                                      cwd=self.test_dir,
-                                      encoding="utf-8", errors="ignore")
+        out = self.__run_cmd(log_cmd)
         print(out)
 
         # Create and run analyze command.
