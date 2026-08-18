@@ -3905,7 +3905,9 @@
     ],
     "clang-diagnostic-lifetime-safety": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
@@ -3919,31 +3921,39 @@
     ],
     "clang-diagnostic-lifetime-safety-dangling-field": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-field",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-field-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-field-moved",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-global",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-global-moved",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
@@ -3953,7 +3963,9 @@
     ],
     "clang-diagnostic-lifetime-safety-invalidation": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-invalidation",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
@@ -3967,16 +3979,20 @@
     ],
     "clang-diagnostic-lifetime-safety-return-stack-addr": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-return-stack-addr",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-return-stack-addr-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-return-stack-addr-moved",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
@@ -3990,25 +4006,31 @@
     ],
     "clang-diagnostic-lifetime-safety-use-after-free": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-free",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-scope",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-scope-moved",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "severity:HIGH"
     ],
