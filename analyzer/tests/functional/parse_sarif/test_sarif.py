@@ -80,10 +80,6 @@ class TestParseSarif(unittest.TestCase):
         """ Log and analyze the test project. """
         build_json = os.path.join(self.test_workspace, "build.json")
 
-        clean_cmd = ["make", "clean"]
-        out = self.__run_cmd(clean_cmd)
-        print(out)
-
         # Create and run log command.
         log_cmd = [self._codechecker_cmd, "log", "-b", "make",
                    "-o", build_json]
