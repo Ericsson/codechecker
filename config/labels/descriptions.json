@@ -16,6 +16,7 @@
   },
   "guideline": {
     "cwe-top-25-2024": "https://cwe.mitre.org/top25/",
+    "cwe-vulnerabilities": "https://cwe.mitre.org/",
     "sei-cert-c": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/",
     "sei-cert-cpp": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/",
     "misra-c": "https://www.misra.org.uk/",
