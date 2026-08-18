@@ -99,7 +99,7 @@ class TestParseSarif(unittest.TestCase):
         self.__log_and_analyze()
 
         parse_sarif_cmd = [self._codechecker_cmd, "parse", self.report_dir,
-                           "-e", "sarif"]
+                           "-e", "sarif", "--review-status", "unreviewed"]
         out = self.__run_cmd(parse_sarif_cmd)
         parsed_json = json.loads(out)
 
