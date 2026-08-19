@@ -9,58 +9,46 @@
     @cancel="cancelReviewStatusChange"
   >
     <template v-slot:activator="{}">
-      <v-container
-        fluid
-        class="px-0"
+      <v-select
+        :model-value="value.status"
+        :items="items"
+        :hide-details="true"
+        :menu-props="{ contentClass: 'select-review-status-menu' }"
+        :disabled="isReviewStatusDisabled"
+        item-title="label"
+        item-value="id"
+        class="select-review-status small"
+        height="0"
+        flat
+        density="compact"
+        variant="solo"
+        @update:model-value="onReviewStatusChange"
       >
-        <v-row>
-          <v-col
-            cols="auto"
-            class="pa-0 mx-2"
-          >
-            <v-select
-              :model-value="value.status"
-              :items="items"
-              :hide-details="true"
-              :menu-props="{ contentClass: 'select-review-status-menu' }"
-              :disabled="isReviewStatusDisabled"
-              item-title="label"
-              item-value="id"
-              class="select-review-status small"
-              height="0"
-              flat
-              density="compact"
-              variant="solo"
-              @update:model-value="onReviewStatusChange"
-            >
-              <template v-slot:selection="{ item }">
-                <div class="d-flex align-center">
-                  <review-status-icon
-                    :status="item.value"
-                    :size="16"
-                    class="mx-2"
-                  />
-                  <span>{{ item.title }}</span>
-                </div>
-              </template>
+        <template v-slot:selection="{ item }">
+          <div class="d-flex align-center">
+            <review-status-icon
+              :status="item.value"
+              :size="16"
+              class="mx-2"
+            />
+            <span>{{ item.title }}</span>
+          </div>
+        </template>
 
-              <template v-slot:item="{ item, props: itemProps }">
-                <v-list-item
-                  v-bind="itemProps"
-                >
-                  <template v-slot:prepend>
-                    <review-status-icon
-                      :status="item.raw.id"
-                      :size="16"
-                      class="mx-2"
-                    />
-                  </template>
-                </v-list-item>
-              </template>
-            </v-select>
-          </v-col>
-        </v-row>
-      </v-container>
+        <template v-slot:item="{ item, props: itemProps }">
+          <v-list-item
+            v-bind="itemProps"
+          >
+            <template v-slot:prepend>
+              <review-status-icon
+                :status="item.raw.id"
+                :size="16"
+                class="mx-2"
+              />
+            </template>
+          </v-list-item>
+        </template>
+      </v-select>
     </template>
     <template v-slot:content>
       <v-container>
@@ -213,6 +201,14 @@ function cancelReviewStatusChange() {
 <style lang="scss" scoped>
 :deep(.v-select__selections input) {
   display: none;
+}
+
+:deep(.v-field__input) {
+  padding: 0;
+}
+
+:deep(.v-field) {
+  padding: 0;
 }
 
 :deep(.v-select.v-text-field--outlined) {

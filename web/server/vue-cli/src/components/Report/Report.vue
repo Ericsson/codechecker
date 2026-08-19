@@ -59,68 +59,12 @@
               class="review-status-wrapper pa-0 mr-2"
               align-self="center"
             >
-              <v-container
-                fluid
-                class="pa-0"
-              >
-                <v-row>
-                  <v-col
-                    cols="auto"
-                    class="pa-0"
-                  >
-                    <select-review-status
-                      class="mx-0"
-                      :value="reviewData"
-                      :report="report"
-                      :on-confirm="confirmReviewStatusChange"
-                    />
-                  </v-col>
-
-                  <v-col cols="auto" class="pa-0">
-                    <v-menu
-                      v-if="reviewData.comment"
-                      content-class="review-status-message-dialog"
-                      :close-on-content-click="false"
-                      :nudge-width="200"
-                      offset-x
-                    >
-                      <template v-slot:activator="{ props: activatorProps }">
-                        <v-btn
-                          v-bind="activatorProps"
-                          class="review-status-message"
-                          icon="mdi-message-text-outline"
-                          variant="text"
-                        />
-                      </template>
-                      <v-card>
-                        <v-list>
-                          <v-list-item>
-                            <template v-slot:prepend>
-                              <user-icon :value="reviewData.author" />
-                            </template>
-                            <v-list-item-title>
-                              {{ reviewData.author }}
-                            </v-list-item-title>
-                            <v-list-item-subtitle>
-                              {{ prettifyDate(reviewData.date) }}
-                            </v-list-item-subtitle>
-                          </v-list-item>
-                        </v-list>
-
-                        <v-divider />
-
-                        <v-list>
-                          <v-list-item>
-                            <v-list-item-title>
-                              {{ reviewData.comment }}
-                            </v-list-item-title>
-                          </v-list-item>
-                        </v-list>
-                      </v-card>
-                    </v-menu>
-                  </v-col>
-                </v-row>
-              </v-container>
+              <select-review-status
+                class="mx-0"
+                :value="reviewData"
+                :report="report"
+                :on-confirm="confirmReviewStatusChange"
+              />
             </v-col>
 
             <v-col
@@ -180,6 +124,20 @@
             </v-col>
           </v-row>
         </v-container>
+        <v-alert
+          v-if="reviewData.comment ||
+            reviewData.status !== ReviewStatus.UNREVIEWED
+          "
+          density="compact"
+          variant="tonal"
+          :color="reviewStatus.reviewStatusColor(reviewData.status)"
+          class="py-1 px-2 text-caption mb-2"
+          :text="reviewStatusAlertText"
+        >
+          <template v-slot:prepend>
+            <review-status-icon :status="reviewData.status" :size="16" />
+          </template>
+        </v-alert>
 
         <v-container
           fluid
@@ -350,11 +308,12 @@ import {
   Checker,
   Encoding,
   ExtendedReportDataType,
-  ReviewData
+  ReviewData,
+  ReviewStatus
 } from "@cc/report-server-types";
 
 import { AnalysisInfoDialog, CopyBtn } from "@/components";
-import { UserIcon } from "@/components/Icons";
+import { ReviewStatusIcon } from "@/components/Icons";
 import { FillHeight } from "@/directives";
 
 import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
@@ -368,6 +327,8 @@ import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
 
 import ReportStepMessage from "./ReportStepMessage";
+
+import { useReviewStatus } from "@/composables/useReviewStatus";
 
 const props = defineProps({
   treeItem: { type: Object, default: null }
@@ -399,6 +360,8 @@ const bus = mitt();
 const selectedChecker = ref(null);
 const docUrl = ref(null);
 const rootEl = ref(null);
+
+const reviewStatus = useReviewStatus();
 
 const instance = getCurrentInstance();
 const parentAppContext = instance.appContext;
@@ -482,6 +445,14 @@ const editorCols = computed(() => {
 const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
 );
+
+const reviewStatusAlertText = computed(() => {
+  return "This report was marked as " +
+  reviewStatus.reviewStatusFromCodeToString(reviewData.value.status) +
+  " by " + reviewData.value.author +
+  " at " + prettifyDate(reviewData.value.date) +
+  " ('" + reviewData.value.comment + "')";
+});
 
 const compactTheme = EditorView.theme({
   "&": {

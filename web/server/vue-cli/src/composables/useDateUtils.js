@@ -33,7 +33,7 @@ export function useDateUtils() {
   };
 
   const prettifyDate = date => {
-    return date.split(/[.]+/)[0];
+    return date ? date.split(/[.]+/)[0] : "";
   };
 
   return {
