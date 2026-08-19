@@ -64,7 +64,7 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalysisInfo, \
+    AnalysisInfo, AnalysisInfoFile, \
     AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
     CleanupPlan, CleanupPlanReportHash, Checker, \
@@ -1963,6 +1963,19 @@ class ThriftRequestHandler:
                         analyzer, checker, enabled = chk
                         checkers[analyzer][checker] = API_AnalysisInfoChecker(
                             enabled=enabled)
+
+                    analysis_config_files = session \
+                        .query(AnalysisInfoFile.filename,
+                               FileContent.content) \
+                        .join(FileContent, AnalysisInfoFile.content_hash
+                              == FileContent.content_hash) \
+                        .filter(AnalysisInfoFile.analysis_info_id
+                                == cmd.id).all()
+
+                    # Append analysis files to the command string
+                    for filename, content in analysis_config_files:
+                        command += f"\n\n{filename}:\n"
+                        command += zlib.decompress(content).decode("utf-8")
 
                     res.append(ttypes.AnalysisInfo(
                         analyzerCommand=html.escape(command),

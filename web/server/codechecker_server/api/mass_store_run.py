@@ -15,11 +15,13 @@ import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
 import fnmatch
+import hashlib
 from hashlib import sha256
 import json
 import os
 from pathlib import Path
 import sqlalchemy
+from sqlalchemy.orm import Session as SA_Session
 import tempfile
 import time
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, \
@@ -816,8 +818,8 @@ class MassStoreRun:
         self,
         session: DBSession,
         source_file_name: str,
-        content_hash: Optional[str]
-    ):
+        content_hash: Optional[str] = None
+    ) -> str:
         """
         Add the necessary file contents. If content_hash in None then this
         function calculates the content hash. Or if it's available at the
@@ -872,6 +874,8 @@ class MassStoreRun:
                 # Other transaction moght have added the same content in
                 # the meantime.
                 session.rollback()
+
+        return content_hash
 
     def __store_checker_identifiers(self, checkers: Set[Tuple[str, str]]):
         """
@@ -1002,6 +1006,32 @@ class MassStoreRun:
 
             session.add(analyzer_statistics)
 
+    def __store_analysis_info_files(
+        self,
+        session: SA_Session,
+        analysis_info_id: int,
+        report_dir_path: str
+    ):
+        """ Store analyzer related config files (e.g. skipfile) """
+        conf_dir_path = os.path.join(report_dir_path, "conf")
+        zip_conf_dir = os.path.join(
+            self._zip_dir, "reports",
+            hashlib.md5(conf_dir_path.encode('utf-8')).hexdigest())
+
+        if not os.path.isdir(zip_conf_dir):
+            return
+
+        for file in os.listdir(os.fsencode(zip_conf_dir)):
+            conf_file = os.path.join(zip_conf_dir, os.fsdecode(file))
+            content_hash = self.__add_file_content(session, conf_file)
+
+            if (not session.get(AnalysisInfoFile,
+                                (analysis_info_id, content_hash))):
+                session.add(AnalysisInfoFile(
+                    analysis_info_id=analysis_info_id,
+                    filename=os.path.basename(conf_file),
+                    content_hash=content_hash))
+
     def __store_analysis_info(
         self,
         session: SA_Session,
@@ -1075,6 +1105,10 @@ class MassStoreRun:
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
 
+                if mip.report_dir_path:
+                    self.__store_analysis_info_files(session,
+                                                     analysis_info.id,
+                                                     mip.report_dir_path)
     def __add_or_update_run(
         self,
         session: DBSession,
