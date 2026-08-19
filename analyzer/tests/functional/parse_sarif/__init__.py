@@ -1,3 +1,4 @@
+# coding=utf-8
 # -------------------------------------------------------------------------
 #
 #  Part of the CodeChecker project, under the Apache License v2.0 with
@@ -6,10 +7,5 @@
 #
 # -------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, Union
-
-
-class CheckerLabels:
-    severity: Callable[[str, Optional[str]], str]
-    label_of_checker: Callable[
-        [str, str, Optional[str]], Union[str, List[str]]]
+# This file is empty, and is only present so that this directory will form a
+# package.
