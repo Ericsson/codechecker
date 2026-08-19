@@ -38,12 +38,20 @@
 
             <v-col
               cols="auto"
-              class="pa-0 mr-2"
+              class="pa-0"
               align-self="center"
             >
               <set-cleanup-plan-btn
                 :value="report ? [report] : []"
               />
+            </v-col>
+
+            <v-col
+              cols="auto"
+              class="pa-0"
+              align-self="stretch"
+            >
+              <v-divider vertical style="height: 100%;" />
             </v-col>
 
             <v-col
@@ -124,8 +132,7 @@
                 v-model="showArrows"
                 class="
                   show-arrows
-                  mx-2
-                  my-0
+                  ma-0
                   align-center
                   justify-center
                   text-caption
