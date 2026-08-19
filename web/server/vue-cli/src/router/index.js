@@ -19,6 +19,18 @@ const router = createRouter({
       component: () => import("@/views/Login")
     },
     {
+      path: "/sso-login",
+      name: "sso-login",
+      beforeEnter: () => {
+        window.location.href = "/sso-login";
+      }
+    },
+    {
+      path: "/sso-login-callback",
+      name: "sso-login-callback",
+      component: () => import("@/views/SSOLogin")
+    },
+    {
       path: "/login/OAuthLogin/:provider",
       name: "oauthlogin",
       component: () => import("@/views/OAuthLogin")

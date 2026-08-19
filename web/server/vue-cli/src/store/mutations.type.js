@@ -1,6 +1,7 @@
 export const PURGE_AUTH = "logOut";
 export const SET_AUTH = "setUser";
 export const SET_AUTH_PARAMS = "setAuthParams";
+export const SET_AUTH_METHODS = "setAuthMethods";
 export const SET_LOGGED_IN_USER = "setLoggedInUser";
 
 export const SET_RUN_IDS = "setRunIds";
@@ -23,3 +24,5 @@ export const CLEAR_ERRORS = "clearErrors";
 
 export const CLEAR_QUERIES = "clearQueries";
 export const SET_QUERIES = "setQueries";
+
+export const SET_REDIRECT = "setRedirect";
