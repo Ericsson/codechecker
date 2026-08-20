@@ -33,7 +33,7 @@
           <v-btn
             value="tree"
             size="small"
-            @click="setReportFilter({ filepath: null })"
+            @click="onFileTreeViewClick"
           >
             File Tree
           </v-btn>
@@ -902,6 +902,28 @@ function buildTreeItems() {
   }
   items.forEach(aggregate);
   treeItems.value = items;
+}
+
+// Open nodes down to the first branching (multi-child) node.
+function collectAutoOpenPaths(nodes, opened) {
+  nodes.forEach(node => {
+    if (!node.children || node.children.length === 0) return;
+    opened.push(node.fullPath);
+    if (node.children.length === 1) {
+      collectAutoOpenPaths(node.children, opened);
+    }
+  });
+}
+
+function autoExpandTree() {
+  const opened = [];
+  collectAutoOpenPaths(treeItems.value, opened);
+  openedTreeItems.value = opened;
+}
+
+function onFileTreeViewClick() {
+  setReportFilter({ filepath: null });
+  autoExpandTree();
 }
 
 function itemExpanded(expandedItems) {
