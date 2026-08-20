@@ -13,13 +13,15 @@ import shlex
 import shutil
 import signal
 import sys
+import time
 import traceback
 import zipfile
 
 from functools import lru_cache
-from threading import Timer
+from threading import Event, Thread, Timer
 
 import multiprocess  # type: ignore
+import psutil
 
 from codechecker_common.logger import get_logger
 from codechecker_common.process import kill_process_tree
@@ -62,7 +64,8 @@ def worker_result_handler(results, metadata_tool, output_path):
     skipped_num = 0
     reanalyzed_num = 0
     metadata_analyzers = metadata_tool['analyzers']
-    for res, skipped, reanalyzed, analyzer_type, _, sources in results:
+    for res, skipped, reanalyzed, analyzer_type, _, sources, duration, \
+            peak_memory in results:
         statistics = metadata_analyzers[analyzer_type]['analyzer_statistics']
         if skipped:
             skipped_num += 1
@@ -76,6 +79,9 @@ def worker_result_handler(results, metadata_tool, output_path):
             else:
                 statistics['failed'] += 1
                 statistics['failed_sources'].append(sources)
+
+            statistics['duration_of_sources'].append(
+                (sources, duration, peak_memory))
 
     LOG.info("----==== Summary ====----")
     print_analyzer_statistic_summary(metadata_analyzers,
@@ -407,6 +413,55 @@ def setup_process_timeout(proc, timeout,
     return __cleanup_timeout
 
 
+def setup_process_memory_watcher(proc, poll_interval=0.05):
+    """
+    Sample the resident memory usage (RSS) of `proc` and all of its child
+    processes in a background thread, keeping track of the observed peak.
+
+    :param proc: The subprocess.Popen object representing the process to
+      watch.
+    :param poll_interval: How often, in seconds, memory usage is sampled.
+
+    :return: A function which should be called once the client code knows
+      the watched process has terminated. Calling it stops the background
+      thread and returns the peak combined RSS observed, in bytes. Returns
+      0 if peak memory usage could not be determined (e.g. the process
+      psutil handle could not be created, or it exited too quickly to be
+      sampled).
+    """
+    try:
+        ps_proc = psutil.Process(proc.pid)
+    except psutil.NoSuchProcess:
+        return lambda: 0
+
+    peak_rss = [0]
+    stop_event = Event()
+
+    def __sample():
+        try:
+            procs = [ps_proc] + ps_proc.children(recursive=True)
+            rss = sum(
+                p.memory_info().rss for p in procs if p.is_running())
+            peak_rss[0] = max(peak_rss[0], rss)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
+    def __poll():
+        while not stop_event.is_set():
+            __sample()
+            stop_event.wait(poll_interval)
+
+    watcher = Thread(target=__poll, daemon=True)
+    watcher.start()
+
+    def __get_peak_memory():
+        stop_event.set()
+        watcher.join(timeout=poll_interval * 4)
+        return peak_rss[0]
+
+    return __get_peak_memory
+
+
 def collect_ctu_involved_files(result_handler, source_analyzer, output_dir):
     """
     This function collects the list of source files involved by CTU analysis.
@@ -479,25 +534,33 @@ def check(check_data):
         # later. To work around scoping issues, we use a list here so the
         # "function pointer" is captured by reference.
         timeout_cleanup = [lambda: False]
+        memory_getter = [lambda: 0]
 
         if analysis_timeout and analysis_timeout > 0:
             def __create_timeout(analyzer_process):
                 """
                 Once the analyzer process is started, this method is
-                called. Set up a timeout for the analysis.
+                called. Set up a timeout for the analysis and start
+                watching its memory usage.
                 """
                 timeout_cleanup[0] = setup_process_timeout(
                     analyzer_process, analysis_timeout)
+                memory_getter[0] = setup_process_memory_watcher(
+                    analyzer_process)
         else:
-            def __create_timeout(_):
-                # If no timeout is given by the client, this callback
-                # shouldn't do anything.
-                pass
+            def __create_timeout(analyzer_process):
+                # No timeout is given by the client, only start watching
+                # the analyzer process' memory usage.
+                memory_getter[0] = setup_process_memory_watcher(
+                    analyzer_process)
 
         result_file_exists = os.path.exists(rh.analyzer_result_file)
 
+        analysis_start = time.monotonic()
         # Fills up the result handler with the analyzer information.
         source_analyzer.analyze(analyzer_cmd, rh, __create_timeout)
+        duration = time.monotonic() - analysis_start
+        peak_memory = memory_getter[0]()
 
         # If execution reaches this line, the analyzer process has quit.
         if timeout_cleanup[0]():
@@ -608,7 +671,10 @@ def check(check_data):
 
                 # Fills up the result handler with
                 # the analyzer information.
-                source_analyzer.analyze(analyzer_cmd, rh)
+                reanalysis_start = time.monotonic()
+                source_analyzer.analyze(analyzer_cmd, rh, __create_timeout)
+                duration += time.monotonic() - reanalysis_start
+                peak_memory = max(peak_memory, memory_getter[0]())
 
                 return_codes = rh.analyzer_returncode
                 if rh.analyzer_returncode == 0:
@@ -647,13 +713,13 @@ def check(check_data):
         PROGRESS_CHECKED_NUM.value += 1
 
         return return_codes, False, reanalyzed, action.analyzer_type, \
-            result_file, action.source
+            result_file, action.source, duration, peak_memory
 
     except Exception as e:
         LOG.debug(str(e))
         traceback.print_exc(file=sys.stdout)
         return 1, False, reanalyzed, action.analyzer_type, None, \
-            action.source
+            action.source, 0.0, 0
 
 
 def skip_cpp(compile_actions, skip_handlers):
