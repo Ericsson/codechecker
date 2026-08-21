@@ -61,9 +61,17 @@ def is_z3_capable():
     if not enabled_analyzers:
         return False
 
-    return host_check.has_analyzer_option(ClangSA.analyzer_binary(),
-                                          ['-Xclang',
-                                           '-analyzer-constraints=z3'])
+    # Newer clang (>= 23) renamed -analyzer-constraints=z3 to
+    # -analyzer-constraints=unsupported-z3. Try the new name first,
+    # then fall back to the old name for older clang versions.
+    if host_check.has_analyzer_option(
+            ClangSA.analyzer_binary(),
+            ['-Xclang', '-analyzer-constraints=unsupported-z3']):
+        return True
+
+    return host_check.has_analyzer_option(
+        ClangSA.analyzer_binary(),
+        ['-Xclang', '-analyzer-constraints=z3'])
 
 
 def is_z3_refutation_capable():

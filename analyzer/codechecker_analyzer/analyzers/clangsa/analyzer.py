@@ -554,11 +554,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     '-Xclang',
                     'aggressive-binary-operation-simplification=true'])
 
-            # Enable the z3 solver backend.
-            if config.enable_z3:
-                analyzer_cmd.extend(['-Xclang', '-analyzer-constraints=z3'])
-
-            if config.enable_z3_refutation and not config.enable_z3:
+            if config.enable_z3_refutation:
                 analyzer_cmd.extend(['-Xclang',
                                      '-analyzer-config',
                                      '-Xclang',
@@ -748,6 +744,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if 'report_hash' in args else None
 
         handler.enable_z3 = 'enable_z3' in args and args.enable_z3 == 'on'
+        if handler.enable_z3:
+            LOG.warning("The '--z3' flag is deprecated and has no effect. "
+                        "The Z3 constraint solver backend is no longer "
+                        "supported by upstream Clang. This flag will be "
+                        "removed in CodeChecker 6.30. Use "
+                        "'--z3-refutation' instead.")
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'

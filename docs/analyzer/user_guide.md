@@ -323,11 +323,11 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
-  --z3 {on,off}         Enable Z3 as the solver backend. This allows reasoning
-                        over more complex queries, but performance is much worse
-                        than the default range-based constraint solver system.
-                        WARNING: Z3 as the only backend is a highly
-                        experimental and likely unstable feature. (default: off)
+  --z3 {on,off}         [DEPRECATED] This flag has no effect and will be
+                        removed in CodeChecker 6.30. The Z3 constraint solver
+                        backend is no longer supported by upstream Clang. Use
+                        '--z3-refutation' for Z3-based false positive reduction
+                        instead. (default: off)
   --z3-refutation {on,off}
                         Switch on/off the Z3 SMT Solver backend to reduce
                         false positives. The results of the ranged based
@@ -1278,11 +1278,11 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
-  --z3 {on,off}         Enable Z3 as the solver backend. This allows reasoning
-                        over more complex queries, but performance is much worse
-                        than the default range-based constraint solver system.
-                        WARNING: Z3 as the only backend is a highly
-                        experimental and likely unstable feature. (default: off)
+  --z3 {on,off}         [DEPRECATED] This flag has no effect and will be
+                        removed in CodeChecker 6.30. The Z3 constraint solver
+                        backend is no longer supported by upstream Clang. Use
+                        '--z3-refutation' for Z3-based false positive reduction
+                        instead. (default: off)
   --z3-refutation {on,off}
                         Switch on/off the Z3 SMT Solver backend to reduce
                         false positives. The results of the ranged based
