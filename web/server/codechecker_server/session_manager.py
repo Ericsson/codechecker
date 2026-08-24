@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 import hashlib
 from typing import Optional
 
+from authlib.integrations.requests_client import OAuth2Session
 from sqlalchemy.orm import sessionmaker
 
 from codechecker_common.compatibility.multiprocessing import cpu_count
@@ -1005,6 +1006,7 @@ class SessionManager:
                 .first()
 
             oauth_token_session = OAuthToken(
+                                             provider=provider,
                                              access_token=access_token,
                                              expires_at=token_expires_at,
                                              refresh_token=refresh_token,
@@ -1119,23 +1121,91 @@ class SessionManager:
             return None
 
         for sess in self.__sessions:
-            if sess.is_alive and sess.token == token:
-                # If the session is alive but the should be re-validated.
-                if sess.is_refresh_time_expire:
-                    sess.revalidate()
-                return sess
+            if sess.token == token:
+                if sess.is_alive:
+                    # If the session is alive but the should be re-validated.
+                    if sess.is_refresh_time_expire:
+                        sess.revalidate()
+                    return sess
+
+                # Lifetime lapsed; try a silent OAuth refresh before giving up.
+                if self.__try_refresh_oauth_session(token):
+                    sess.last_access = datetime.now()
+                    return sess
+                break
 
         # Try to get a local session from the database.
         local_session = self.__get_local_session_from_db(token)
-        if local_session and local_session.is_alive:
-            self.__sessions.append(local_session)
-            if local_session.is_refresh_time_expire:
-                local_session.revalidate()
-            return local_session
+        if local_session:
+            if local_session.is_alive:
+                self.__sessions.append(local_session)
+                if local_session.is_refresh_time_expire:
+                    local_session.revalidate()
+                return local_session
+
+            if self.__try_refresh_oauth_session(token):
+                local_session.last_access = datetime.now()
+                self.__sessions.append(local_session)
+                return local_session
 
         self.invalidate(token)
 
         return None
+
+    def __try_refresh_oauth_session(self, token) -> bool:
+        """
+        Silently renews an OAuth-backed session via its refresh token.
+        Returns True and bumps last_access on success, False otherwise.
+        """
+        if not self.__is_method_enabled('oauth'):
+            return False
+
+        transaction = None
+        try:
+            transaction = self.__config_db_sessionmaker()
+            row = transaction.query(OAuthToken, SessionRecord) \
+                .join(SessionRecord,
+                      OAuthToken.auth_session_id == SessionRecord.id) \
+                .filter(SessionRecord.token == token) \
+                .limit(1).one_or_none()
+
+            if not row or not row[0].provider:
+                return False
+
+            oauth_token, session_record = row
+            oauth_config = self.get_oauth_config(oauth_token.provider)
+            if not oauth_config or not oauth_config.get('enabled'):
+                return False
+
+            oauth2_session = OAuth2Session(
+                oauth_config['client_id'],
+                oauth_config['client_secret'],
+                scope=oauth_config['scope'])
+
+            new_token = oauth2_session.refresh_token(
+                oauth_config['token_url'],
+                refresh_token=oauth_token.refresh_token)
+
+            if not new_token.get('access_token'):
+                return False
+
+            now = datetime.now()
+            oauth_token.access_token = new_token['access_token']
+            oauth_token.refresh_token = new_token.get(
+                'refresh_token', oauth_token.refresh_token)
+            if new_token.get('expires_in') is not None:
+                oauth_token.expires_at = \
+                    now + timedelta(seconds=new_token['expires_in'])
+            session_record.last_access = now
+
+            transaction.commit()
+            return True
+        except Exception as e:
+            LOG.debug("Silent OAuth session refresh failed: %s", str(e))
+            return False
+        finally:
+            if transaction:
+                transaction.close()
 
     def invalidate_local_session(self, token):
         """
@@ -1182,5 +1252,6 @@ class SessionManager:
                 self.invalidate_local_session(s.token)
 
         for s in self.__sessions[:]:
-            if not s.is_alive:
+            if not s.is_alive and not self.__try_refresh_oauth_session(
+                    s.token):
                 self.invalidate(s.token)

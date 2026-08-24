@@ -84,7 +84,8 @@ router.beforeResolve((to, from, next) => {
         (!store.getters.authParams.sessionStillActive ||
          !store.getters.isAuthenticated)
       ) {
-        // Clear stale auth state so the UI doesn't keep showing it as logged in.
+        // Clear stale auth state so the UI doesn't keep
+        // showing it as logged in.
         store.commit(PURGE_AUTH);
 
         // Redirect the user to the login page but keep the original path to
