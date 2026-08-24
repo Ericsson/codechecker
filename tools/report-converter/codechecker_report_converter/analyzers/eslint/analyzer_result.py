@@ -28,6 +28,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'ESLint'
     URL = 'https://eslint.org/'
 
+    EXAMPLE_CMD = """\
+# Run ESLint and generate a json output file.
+eslint -o ./eslint_reports.json -f json /path/to/my/project
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of ESLint.
+report-converter -t eslint -o ./codechecker_eslint_reports \
+    ./eslint_reports.json
+
+# Store the ESLint reports with CodeChecker.
+CodeChecker store ./codechecker_eslint_reports -n eslint"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         reports: List[Report] = []

@@ -545,7 +545,7 @@ Specific behavior related to each provider is configured by a provider `template
     }
     ```
 
-    For more information about the default values in templates, see [oauth_templates.py](../../web/codechecker_web/server/oauth_templates.py)
+    For more information about the default values in templates, see [oauth_templates.py](https://github.com/Ericsson/codechecker/blob/master/web/codechecker_web/server/oauth_templates.py)
 
 
 

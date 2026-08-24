@@ -433,8 +433,9 @@ struct CheckerStatusVerificationDetail {
   3: Severity     severity,     // Severity level of the checker.
   4: list<i64>    enabled,      // Run ids in which the checker enabled.
   5: list<i64>    disabled,     // Run ids in which the checker disabled.
-  6: i64          closed        // Number of closed reports.
-  7: i64          outstanding   // Number of outstanding reports.
+  6: i64          closed,        // Number of closed reports.
+  7: i64          outstanding,   // Number of outstanding reports.
+  8: optional list<i64> unknown     // Run ids in which the checker status is unknown.
 }
 typedef map<i64, CheckerStatusVerificationDetail> CheckerStatusVerificationDetails
 
@@ -980,10 +981,11 @@ service codeCheckerDBAccess {
                                  5: i64          offset)
                                  throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  // It gives statistics for specific runs which checkers were
-  // enabled and how many reports are opened or closed.
-  // If the run id list is empty the statistics
-  // will be counted for all of the runs.
+  // It returns for all checkers
+  // the number of outstanding and closed reports in the runs
+  // identified by runIds and
+  // and the configuration status of these checkers in the
+  // selected runs: enabled/disabled/unknown
   // PERMISSION: PRODUCT_VIEW
   CheckerStatusVerificationDetails getCheckerStatusVerificationDetails(1: list<i64>    runIds,
                                                                        2: ReportFilter reportFilter)

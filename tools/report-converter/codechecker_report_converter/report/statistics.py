@@ -73,7 +73,8 @@ class Statistics:
             ["Number of processed analyzer result files",
              str(self.num_of_analyzer_result_files)],
             ["Number of analyzer reports", str(self.num_of_reports)]]
-        out.write(twodim.to_table(statistics_rows, False))
+        out.write(twodim.to_table(
+            statistics_rows, False, separate_footer=True))
         out.write("\n----=================----\n")
 
     def write(self, _=sys.stdout):

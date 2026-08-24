@@ -36,7 +36,7 @@ which supports it](http://github.com/Ericsson/clang).
 
 # Report navigation and visualisation
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing basic (file, check message, ...) report summary| ✓ | ✓ |
 | Listing advanced (detection status, review, ...) report summary | ✗ | ✓ |
@@ -49,7 +49,7 @@ which supports it](http://github.com/Ericsson/clang).
 
 ## Report management, triaging tools
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Showing comments for a particular report | ✗ | ✓ |
 | Commenting on reports | ✗ | ✓ |
@@ -62,7 +62,7 @@ which supports it](http://github.com/Ericsson/clang).
 
 ## Statistics, summary views
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Run overview | Basic (only report count and timestamp) | ✓ |
 | Breakdown of reports per run, per check | ✓ | ✓ |
@@ -70,7 +70,7 @@ which supports it](http://github.com/Ericsson/clang).
 
 # Run management
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing runs in a product | ✓ | ✓ |
 | Listing store actions to a run (history) | ✗ | ✓ |
@@ -87,14 +87,14 @@ This command is also responsible for handling schema upgrades.
 
 ## [Product management](web/products.md)
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Listing products on a server | ✓ | ✓ |
 | Addition, modification and removal of products | ✓ | ✓ |
 
 ## [Authentication](web/authentication.md) and [access control](web/permissions.md)
 
-| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](/www/userguide/userguide.md) |
+| Feature name | [Command-line](web/user_guide.md#cmd) | [Web GUI](web/user_guide.md) |
 |--------------|-----------------------------------------|----------------------------------------|
 | Configuration of authentication system | Through configuration file | ✗ |
 | Managing permissions granted to users | ✗ | ✓ |

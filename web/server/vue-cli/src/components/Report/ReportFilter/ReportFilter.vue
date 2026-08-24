@@ -43,7 +43,6 @@
       class="mt-2 mb-2 d-flex align-center justify-space-between w-100 p-1"
     >
       <ClearAllFilters
-        :namespace="namespace"
         @clear="clearAllFilters"
       />
       <ReportCount :value="reportCount" />
@@ -141,15 +140,18 @@
 
     <v-divider />
 
-    <div>
+    <div
+      v-if="!hiddenFilters.includes('unique-filter')"
+    >
       <unique-filter
         :ref="setFilterRef"
-        :namespace="namespace"
         @update:url="updateUrl"
       />
     </div>
 
-    <v-divider />
+    <v-divider
+      v-if="!hiddenFilters.includes('unique-filter')"
+    />
 
     <v-list
       density="compact"
@@ -157,7 +159,10 @@
       :rounded="false"
       elevation="0"
     >
-      <v-list-item class="pl-0 border-sm border-solid border-opacity">
+      <v-list-item
+        v-if="!hiddenFilters.includes('group:baseline')"
+        class="pl-0 border-sm border-solid border-opacity"
+      >
         <v-expansion-panels
           v-model="activeBaselinePanelId"
           eager
@@ -183,16 +188,22 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <baseline-run-filter
+                v-if="!hiddenFilters.includes('baseline-run-filter')"
                 :ref="setBaselineRunFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
-              <v-divider />
+              <v-divider
+                v-if="!hiddenFilters.includes(
+                  'baseline-open-reports-date-filter'
+                )"
+              />
 
               <baseline-open-reports-date-filter
+                v-if="!hiddenFilters.includes(
+                  'baseline-open-reports-date-filter'
+                )"
                 :ref="setBaselineOpenReportsDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -201,7 +212,7 @@
       </v-list-item>
 
       <v-list-item
-        v-if="showCompareTo"
+        v-if="!hiddenFilters.includes('group:compareTo')"
         class="pl-0 border-sm border-solid border-opacity border-t-0"
       >
         <v-expansion-panels
@@ -230,25 +241,34 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <compared-to-run-filter
+                v-if="!hiddenFilters.includes(
+                  'compared-to-run-filter'
+                )"
                 :ref="setComparedToRunFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
-              <v-divider />
+              <v-divider
+                v-if="!hiddenFilters.includes(
+                  'compared-to-open-reports-date-filter'
+                )"
+              />
 
               <compared-to-open-reports-date-filter
+                v-if="!hiddenFilters.includes(
+                  'compared-to-open-reports-date-filter'
+                )"
                 :ref="setComparedToOpenReportsDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
-              <v-divider v-if="showDiffType" />
+              <v-divider
+                v-if="!hiddenFilters.includes('compared-to-diff-type-filter')"
+              />
 
               <compared-to-diff-type-filter
-                v-if="showDiffType"
+                v-if="!hiddenFilters.includes('compared-to-diff-type-filter')"
                 :ref="setComparedToDiffTypeFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -256,108 +276,146 @@
         </v-expansion-panels>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('file-path-filter')"
+        class="pl-1"
+      >
         <file-path-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
-
-      <v-list-item class="pl-1">
-        <checker-name-filter
-          :ref="setFilterRef"
-          :namespace="namespace"
-          @update:url="updateUrl"
-        />
-      </v-list-item>
-
-      <v-divider />
-
-      <v-list-item class="pl-1">
-        <severity-filter
-          :ref="setFilterRef"
-          :namespace="namespace"
-          @update:url="updateUrl"
-        />
-      </v-list-item>
-
-      <v-divider />
-
-      <v-list-item class="pl-1">
-        <report-status-filter
-          :ref="setFilterRef"
-          :namespace="namespace"
-          @update:url="updateUrl"
-        />
-      </v-list-item>
-
-      <v-divider v-if="showReviewStatus" />
+      <v-divider
+        v-if="!hiddenFilters.includes('file-path-filter')"
+      />
 
       <v-list-item
-        v-if="showReviewStatus"
+        v-if="!hiddenFilters.includes('checker-name-filter')"
+        class="pl-1"
+      >
+        <checker-name-filter
+          :ref="setFilterRef"
+          @update:url="updateUrl"
+        />
+      </v-list-item>
+
+      <v-divider
+        v-if="!hiddenFilters.includes('checker-name-filter')"
+      />
+
+      <v-list-item
+        v-if="!hiddenFilters.includes('severity-filter')"
+        class="pl-1"
+      >
+        <severity-filter
+          :ref="setFilterRef"
+          @update:url="updateUrl"
+        />
+      </v-list-item>
+
+      <v-divider
+        v-if="!hiddenFilters.includes('severity-filter')"
+      />
+
+      <v-list-item
+        v-if="!hiddenFilters.includes('report-status-filter')"
+        class="pl-1"
+      >
+        <report-status-filter
+          :ref="setFilterRef"
+          @update:url="updateUrl"
+        />
+      </v-list-item>
+
+      <v-divider
+        v-if="!hiddenFilters.includes('report-status-filter')"
+      />
+
+      <v-list-item
+        v-if="!hiddenFilters.includes('review-status-filter')"
         class="pl-1"
       >
         <review-status-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('review-status-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('detection-status-filter')"
+        class="pl-1"
+      >
         <detection-status-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('detection-status-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('analyzer-name-filter')"
+        class="pl-1"
+      >
         <analyzer-name-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('analyzer-name-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('source-component-filter')"
+        class="pl-1"
+      >
         <source-component-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('source-component-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('cleanup-plan-filter')"
+        class="pl-1"
+      >
         <cleanup-plan-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('cleanup-plan-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('checker-message-filter')"
+        class="pl-1"
+      >
         <checker-message-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-list-item class="pl-0 border-sm border-solid border-opacity">
+      <v-list-item
+        v-if="!hiddenFilters.includes('group:dateFilter')"
+        class="pl-0 border-sm border-solid border-opacity"
+      >
         <v-expansion-panels
           v-model="activeDatePanelId"
           hover
@@ -384,18 +442,21 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text class="pa-1">
               <detection-date-filter
+                v-if="!hiddenFilters.includes('detection-date-filter')"
                 id="detection-date-filter"
                 :ref="setDetectionDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
 
-              <v-divider class="mt-2" />
+              <v-divider
+                v-if="!hiddenFilters.includes('fix-date-filter')"
+                class="mt-2"
+              />
 
               <fix-date-filter
+                v-if="!hiddenFilters.includes('fix-date-filter')"
                 id="fix-date-filter"
                 :ref="setFixDateFilterRef"
-                :namespace="namespace"
                 @update:url="updateUrl"
               />
             </v-expansion-panel-text>
@@ -403,32 +464,42 @@
         </v-expansion-panels>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('report-hash-filter')"
+        class="pl-1"
+      >
         <report-hash-filter
           id="report-hash-filter"
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('report-hash-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('bug-path-length-filter')"
+        class="pl-1"
+      >
         <bug-path-length-filter
           id="bug-path-length-filter"
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
 
-      <v-divider />
+      <v-divider
+        v-if="!hiddenFilters.includes('bug-path-length-filter')"
+      />
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="!hiddenFilters.includes('testcase-filter')"
+        class="pl-1"
+      >
         <testcase-filter
           :ref="setFilterRef"
-          :namespace="namespace"
           @update:url="updateUrl"
         />
       </v-list-item>
@@ -442,10 +513,16 @@
     >
       <remove-filtered-reports
         class="mt-4 w-100"
-        :namespace="namespace"
         @update="updateAllFilters"
       />
     </div>
+    <v-alert
+      v-if="hiddenFilters.length"
+      class="mr-4 text-subtitle-2"
+      text="Unavailable filters are hidden for this page."
+      type="info"
+      variant="tonal"
+    />
   </div>
 </template>
 
@@ -456,7 +533,6 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  toRef,
   watch
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -501,13 +577,10 @@ import {
 import { Permission } from "@cc/shared-types";
 
 const props = defineProps({
-  namespace: { type: String, required: true },
-  showCompareTo: { type: Boolean, default: true },
-  showReviewStatus: { type: Boolean, default: true },
   showRemoveFilteredReports: { type: Boolean, default: true },
-  showDiffType: { type: Boolean, default: true },
   reportCount: { type: Number, required: true },
-  refreshFilter: { type: Boolean, default: false }
+  refreshFilter: { type: Boolean, default: false },
+  hiddenFilters: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits([ "set-refresh-filter-state", "refresh" ]);
@@ -575,13 +648,13 @@ const {
   reportFilterUnwatch,
   runIdsUnwatch,
   cmpDataUnwatch
-} = useBaseFilter(toRef(props, "namespace"));
+} = useBaseFilter();
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
-const reportFilter = computed(() => store.state[props.namespace].reportFilter);
+const reportFilter = computed(() => store.state.reportFilter);
 const canSeeActions = computed(() => {
   return isSuperUser.value || isAdminOfAnyProduct.value;
 });
@@ -654,18 +727,22 @@ function registerWatchers() {
   unregisterWatchers();
 
   reportFilterUnwatch.value = store.watch(
-    state => state[props.namespace].reportFilter, () => {
-      emit("refresh");
+    state => state.reportFilter, () => {
+      if (!isInitializing.value)
+        emit("refresh");
+
     }, { deep: true });
 
   runIdsUnwatch.value = store.watch(
-    state => state[props.namespace].runIds, () => {
-      emit("refresh");
+    state => state.runIds, () => {
+      if (!isInitializing.value)
+        emit("refresh");
     });
 
   cmpDataUnwatch.value = store.watch(
-    state => state[props.namespace].cmpData, () => {
-      emit("refresh");
+    state => state.cmpData, () => {
+      if (!isInitializing.value)
+        emit("refresh");
     }, { deep: true });
 }
 
@@ -751,7 +828,6 @@ function updateAllFilters() {
   if (!_filters?.length) return;
 
   _filters.forEach(filter => filter?.update?.() );
-
   emit("refresh");
 }
 

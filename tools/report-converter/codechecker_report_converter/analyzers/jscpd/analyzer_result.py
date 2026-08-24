@@ -21,6 +21,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'JSCPD'
     URL = 'https://www.npmjs.com/package/jscpd'
 
+    EXAMPLE_CMD = """\
+# Run jscpd and generate a json report.
+jscpd --reporters json -o ./jscpd_reports /path/to/my/project
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of jscpd.
+report-converter -t jscpd -o ./codechecker_jscpd_reports \
+    ./jscpd_reports/jscpd-report.json
+
+# Store the jscpd reports with CodeChecker.
+CodeChecker store ./codechecker_jscpd_reports -n jscpd"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser().get_reports(file_path)

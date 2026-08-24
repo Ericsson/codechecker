@@ -13,10 +13,10 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
-from sqlalchemy import text
-from sqlalchemy.sql.expression import and_
 
-from sqlalchemy import create_engine, exc
+from sqlalchemy.sql.expression import and_
+from sqlalchemy import create_engine, exc, text, exists, or_, \
+    func, nullslast
 from sqlalchemy.engine.url import URL
 
 import codechecker_api_shared
@@ -38,6 +38,49 @@ from .thrift_enum_helper import confidentiality_enum, \
         confidentiality_str
 
 LOG = get_logger('server')
+
+
+def _product_view_permission_names():
+    """
+    Return the set of product-scope permission names that grant PRODUCT_VIEW,
+    transitively, derived from the permission inheritance graph.
+    """
+    granting = set()
+    stack = [permissions.PRODUCT_VIEW]
+    while stack:
+        perm = stack.pop()
+        if perm in granting:
+            continue
+        granting.add(perm)
+        stack.extend(perm.inherited_from)
+
+    # Keep only product-scope permissions: SUPERUSER is injected into every
+    # inheritance chain but is system-scope and never matches a
+    # permissions_product row.
+    return {p.name for p in granting
+            if isinstance(p, permissions.ProductPermission)}
+
+
+def _accessible_product_expr(user_name, user_groups, view_perm_names):
+    """
+    Build a correlated EXISTS expression that is TRUE for a product row when
+    the given user (or one of their groups) holds any product-view-granting
+    permission on that product. Name matching is case-insensitive to mirror
+    the permission handlers (which compare with func.lower()).
+    """
+    identity = [and_(ProductPermission.is_group.is_(False),
+                     func.lower(ProductPermission.name) == user_name.lower())]
+    if user_groups:
+        identity.append(and_(
+            ProductPermission.is_group.is_(True),
+            func.lower(ProductPermission.name).in_(
+                [g.lower() for g in user_groups])))
+
+    return exists().where(and_(
+        ProductPermission.product_id == Product.id,
+        ProductPermission.permission.in_(view_perm_names),
+        or_(*identity),
+    )).correlate(Product)
 
 
 # These names are inherited from Thrift stubs.
@@ -186,10 +229,19 @@ class ThriftProductHandler:
             return False
 
     @timeit
-    def getProducts(self, product_endpoint_filter, product_name_filter):
+    def getProducts(self, product_endpoint_filter, product_name_filter,
+                    limit, offset, sorting_mode=None):
         """
         Get the list of products configured on the server.
+
+        The result set is ordered on the server according to `sorting_mode`
+        (defaults to ACCESSRIGHT) over the whole filtered set *before*
+        pagination is applied, so that e.g. products accessible to the current
+        user surface on the first page rather than only being reordered within
+        the current page.
         """
+        if sorting_mode is None:
+            sorting_mode = ttypes.ProductSortMode.ACCESSRIGHT
 
         result = []
 
@@ -207,26 +259,91 @@ class ThriftProductHandler:
                          "connected to them. Disconnecting these...",
                          self.__server.num_products - num_all_products)
 
-                all_products = session.query(Product).all()
-                self.__server.remove_products_except([prod.endpoint for prod
-                                                      in all_products])
+                endpoints = [e for (e,) in session.query(Product.endpoint)]
+                self.__server.remove_products_except(endpoints)
 
-            if product_endpoint_filter:
-                prods = prods.filter(Product.endpoint.ilike(
-                    conv(escape_like(product_endpoint_filter, '\\')),
-                    escape='\\'))
+            prods = self.__filter_products(
+                prods=prods,
+                product_endpoint_filter=product_endpoint_filter,
+                product_name_filter=product_name_filter
+                )
 
-            if product_name_filter:
-                prods = prods.filter(Product.display_name.ilike(
-                    conv(escape_like(product_name_filter, '\\')),
-                    escape='\\'))
+            prods = prods.order_by(*self.__product_order(session,
+                                                         sorting_mode))
 
-            prods = prods.all()
-            for prod in prods:
+            if limit is not None or offset is not None:
+                prods = prods.offset(offset).limit(limit)
+
+            for prod in prods.all():
                 _, ret = self.__get_product(session, prod)
                 result.append(ret)
 
             return result
+
+    def __product_order(self, session, sorting_mode):
+        """
+        Build the ORDER BY key list for the requested product sort mode.
+        Every mode ends with Product.id as a deterministic tie-breaker so that
+        pagination cannot repeat or skip rows across pages when the primary
+        sort key has ties.
+        """
+        Mode = ttypes.ProductSortMode
+        tie = Product.id.asc()
+
+        if sorting_mode == Mode.NAMES_ASC:
+            return [func.lower(Product.display_name).asc(), tie]
+        elif sorting_mode == Mode.NAMES_DESC:
+            return [func.lower(Product.display_name).desc(), tie]
+        elif sorting_mode == Mode.RUNS_ASC:
+            return [Product.num_of_runs.asc(), tie]
+        elif sorting_mode == Mode.RUNS_DESC:
+            return [Product.num_of_runs.desc(), tie]
+        elif sorting_mode == Mode.LATEST_STORE_ASC:
+            return [nullslast(Product.latest_storage_date.asc()), tie]
+        elif sorting_mode == Mode.LATEST_STORE_DESC:
+            return [nullslast(Product.latest_storage_date.desc()), tie]
+        else:  # ACCESSRIGHT (default)
+            return self.__accessright_order(session, tie)
+
+    def __accessright_order(self, session, tie):
+        """
+        Order key for ACCESSRIGHT: products the current user can access come
+        first, then the id tie-breaker.
+
+        The per-product access check is expressed as an SQL EXISTS over the
+        product-permission table so the ordering happens in the database. The
+        request-level "sees everything" cases (auth disabled, SUPERUSER, global
+        PERMISSION_VIEW) are short-circuited in Python -- in those cases every
+        product is accessible, so accessibility drops out and we order by name.
+
+        This mirrors the previous client-side default: accessible products
+        first, then alphabetically by display name, with the product id as a
+        deterministic tie-breaker for pagination.
+        """
+        name = func.lower(Product.display_name).asc()
+        is_enabled = self.__server.manager.is_enabled
+        sys_args = {'config_db_session': session}
+
+        everything_visible = (
+            not is_enabled
+            or self.__auth_session is None
+            or permissions.require_permission(
+                permissions.SUPERUSER, sys_args,
+                self.__auth_session, is_enabled)
+            or permissions.require_permission(
+                permissions.PERMISSION_VIEW, sys_args,
+                self.__auth_session, is_enabled))
+
+        if everything_visible:
+            return [name, tie]
+
+        accessible = _accessible_product_expr(
+            self.__auth_session.user,
+            self.__auth_session.groups,
+            _product_view_permission_names())
+
+        # Booleans sort False < True, so .desc() puts accessible rows first.
+        return [accessible.desc(), name, tie]
 
     @timeit
     def getCurrentProduct(self):
@@ -258,6 +375,36 @@ class ThriftProductHandler:
             _, ret = self.__get_product(session, prod)
             LOG.debug(ret)
             return ret
+
+    @timeit
+    def getProductCount(self, product_endpoint_filter, product_name_filter):
+        """
+        Get the number of products matching the given filters, or the total
+        number of products when no filter is given.
+        """
+        with DBSession(self.__session) as session:
+            return self.__filter_products(session.query(Product),
+                                          product_endpoint_filter,
+                                          product_name_filter).count()
+
+    @staticmethod
+    def __filter_products(prods, product_endpoint_filter, product_name_filter):
+        """
+        Apply the filters shared by getProducts() and getProductCount().
+        Both must filter identically, otherwise the page count shown in the
+        UI will not match the rows the client can actually fetch.
+        """
+        if product_endpoint_filter:
+            prods = prods.filter(Product.endpoint.ilike(
+                conv(escape_like(product_endpoint_filter, '\\')),
+                escape='\\'))
+
+        if product_name_filter:
+            prods = prods.filter(Product.display_name.ilike(
+                conv(escape_like(product_name_filter, '\\')),
+                escape='\\'))
+
+        return prods
 
     @timeit
     def getProductConfiguration(self, product_id):

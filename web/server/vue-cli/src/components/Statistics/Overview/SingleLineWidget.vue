@@ -62,7 +62,7 @@ defineProps({
   label: { type: String, required: true },
   helpMessage: { type: String, default: null },
   bus: { type: Object, required: true },
-  value: { type: Array, required: true },
+  value: { type: Number, default: null },
   loading: { type: Boolean, default: false }
 });
 

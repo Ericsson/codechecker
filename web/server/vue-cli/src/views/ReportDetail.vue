@@ -133,15 +133,15 @@ const reportNotFound = ref(false);
 const reviewStatus = ref(null);
 
 const runIds = computed(function() {
-  return store.state.report.runIds;
+  return store.state.runIds;
 });
 
 const reportFilter = computed(function() {
-  return store.state.report.reportFilter;
+  return store.state.reportFilter;
 });
 
 const cmpData = computed(function() {
-  return store.state.report.cmpData;
+  return store.state.cmpData;
 });
 
 onMounted(function() {

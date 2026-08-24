@@ -4,9 +4,9 @@ import mitt from "mitt";
 
 import { useBaseFilter } from "@/composables/useBaseFilter";
 
-export function useBaseSelectOptionFilter(namespaceRef) {
+export function useBaseSelectOptionFilter() {
   const route = useRoute();
-  const baseFilter = useBaseFilter(namespaceRef);
+  const baseFilter = useBaseFilter();
 
   const id = ref("");
   const selectedItems = ref([]);
@@ -16,7 +16,7 @@ export function useBaseSelectOptionFilter(namespaceRef) {
   const bus = mitt();
 
   const setSelectedItems = (items, updateUrl = true) => {
-    selectedItems.value = items;
+    selectedItems.value = Array.isArray(items) ? items : [ items ];
     updateReportFilter.value();
     initPanel();
 

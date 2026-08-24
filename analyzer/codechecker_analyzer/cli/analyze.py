@@ -461,17 +461,6 @@ def add_arguments_to_parser(parser):
                                     "clang-tidy:cc-verbatim-args-file="
                                     "<filepath>")
 
-    analyzer_opts.add_argument('--tidy-config',
-                               dest='tidy_config',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. "
-                                    "A file in YAML format containing the "
-                                    "configuration of clang-tidy checkers. "
-                                    "The file can be dumped by "
-                                    "'CodeChecker analyzers --dump-config "
-                                    "clang-tidy' command.")
-
     analyzer_opts.add_argument('--analyzer-config',
                                type=analyzer_config,
                                dest='analyzer_config',
@@ -1285,11 +1274,6 @@ def main(args):
                  "errors relating to unknown analyzer/checker configs, "
                  "consider using the option '--no-missing-checker-error'")
         sys.exit(1)
-
-    if 'tidy_config' in args:
-        LOG.warning(
-            "--tidy-config is deprecated and will be removed in the next "
-            "release. Use --analyzer-config or --checker-config instead.")
 
     # CTU loading mode is only meaningful if CTU itself is enabled.
     if 'ctu_ast_mode' in args and 'ctu_phases' not in args:

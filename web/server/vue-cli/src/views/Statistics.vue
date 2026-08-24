@@ -6,17 +6,16 @@
       size="20"
       :style="{ 'min-width': '300px' }"
     >
-      <ReportFilter
-        v-fill-height
-        :namespace="namespace"
-        :show-remove-filtered-reports="false"
-        :report-count="reportCount"
-        :show-diff-type="false"
-        :show-compare-to="showCompareTo"
-        :refresh-filter="refreshFilterState"
-        @refresh="refresh"
-        @set-refresh-filter-state="setRefreshFilterState"
-      />
+      <div v-fill-height>
+        <ReportFilter
+          :show-remove-filtered-reports="false"
+          :report-count="reportCount"
+          :refresh-filter="refreshFilterState"
+          :hidden-filters="hiddenFilters"
+          @refresh="refresh"
+          @set-refresh-filter-state="setRefreshFilterState"
+        />
+      </div>
     </pane>
     <pane>
       <div v-fill-height>
@@ -39,14 +38,16 @@
           </v-tab>
         </v-tabs>
 
-        <keep-alive>
-          <router-view
-            :key="$route.name"
-            :bus="bus"
-            :namespace="namespace"
-            @refresh-filter="setRefreshFilterState(true)"
-          />
-        </keep-alive>
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component
+              :is="Component"
+              :key="$route.name"
+              :bus="bus"
+              @refresh-filter="setRefreshFilterState(true)"
+            />
+          </keep-alive>
+        </router-view>
       </div>
     </pane>
   </splitpanes>
@@ -69,50 +70,81 @@ const vFillHeight = FillHeight;
 const router = useRouter();
 const store = useStore();
 
-const namespace = "statistics";
-
 const tabs = [
   {
     name: "Product Overview",
     icon: "mdi-briefcase-outline",
     to: { name: "product-overview" },
-    showCompareTo: true
+    hiddenFiltersByTab: []
   },
   {
     name: "Checker Statistics",
     icon: "mdi-card-account-details",
     to: { name: "checker-statistics" },
-    showCompareTo: true
+    hiddenFiltersByTab: []
   },
   {
     name: "Severity Statistics",
     icon: "mdi-speedometer",
     to: { name: "severity-statistics" },
-    showCompareTo: true
+    hiddenFiltersByTab: []
   },
   {
     name: "Component Statistics",
     icon: "mdi-puzzle-outline",
     to: { name: "component-statistics" },
-    showCompareTo: true
+    hiddenFiltersByTab: []
   },
   {
     name: "Checker Coverage",
     icon: "mdi-clipboard-check-outline",
     to: { name: "checker-coverage-statistics" },
-    showCompareTo: false
+    hiddenFiltersByTab: [
+      "baseline-open-reports-date-filter",
+      "group:compareTo",
+      "file-path-filter",
+      "checker-name-filter",
+      "severity-filter",
+      "report-status-filter",
+      "review-status-filter",
+      "detection-status-filter",
+      "analyzer-name-filter",
+      "source-component-filter",
+      "cleanup-plan-filter",
+      "checker-message-filter",
+      "group:dateFilter",
+      "report-hash-filter",
+      "bug-path-length-filter",
+      "testcase-filter"
+    ]
   },
   {
     name: "Guideline Statistics",
     icon: "mdi-clipboard-text-outline",
     to: { name: "guideline-statistics" },
-    showCompareTo: false
+    hiddenFiltersByTab: [
+      "baseline-open-reports-date-filter",
+      "group:compareTo",
+      "file-path-filter",
+      "checker-name-filter",
+      "severity-filter",
+      "report-status-filter",
+      "review-status-filter",
+      "detection-status-filter",
+      "analyzer-name-filter",
+      "source-component-filter",
+      "cleanup-plan-filter",
+      "checker-message-filter",
+      "group:dateFilter",
+      "report-hash-filter",
+      "bug-path-length-filter",
+      "testcase-filter"
+    ]
   },
 ];
 
 const refreshFilterState = ref(false);
 const reportCount = ref(0);
-const showCompareTo = ref(true);
 const tab = ref(null);
 
 const bus = mitt();
@@ -125,21 +157,31 @@ const refreshTabs = tabs.reduce((map, _tab) => {
   return map;
 }, {});
 
+const hiddenFilters = ref([]);
+const baseHiddenFilters = ref([ "compared-to-diff-type-filter" ]);
+
 const runIds = computed(function() {
-  return store.getters[`${namespace}/getRunIds`];
+  return store.getters.getRunIds;
 });
 
 const reportFilter = computed(function() {
-  return store.getters[`${namespace}/getReportFilter`];
+  return store.getters.getReportFilter;
 });
 
 watch(() => tab.value, async () => {
+  // FIXME: At page reload, this
+  // event triggers, but the report filter
+  // is not ready yet.
+
   if (tab.value == null) return;
 
   const currentTab = tabs[tab.value];
   if (!currentTab) return;
 
-  showCompareTo.value = currentTab.showCompareTo;
+  hiddenFilters.value = [
+    ...baseHiddenFilters.value,
+    ...currentTab.hiddenFiltersByTab
+  ];
 
   await nextTick();
   refreshCurrentTab();
@@ -193,7 +235,7 @@ body {
 }
 
 .splitpanes__pane {
-  overflow-y: auto;
+  overflow-y: hidden;
   height: 100%;
 }
 

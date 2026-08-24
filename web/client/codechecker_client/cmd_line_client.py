@@ -132,8 +132,8 @@ def get_run_tag(client, run_ids: List[int], tag_name: str):
     """Return run tag information for the given tag name in the given runs."""
     run_history_filter = ttypes.RunHistoryFilter()
     run_history_filter.tagNames = [tag_name]
-    run_histories = client.getRunHistory(run_ids, None, None,
-                                         run_history_filter)
+    run_histories = client.getRunHistory(
+        run_ids, constants.MAX_QUERY_SIZE, None, run_history_filter)
 
     return run_histories[0] if run_histories else None
 
@@ -385,13 +385,13 @@ def check_deprecated_arg_usage(args):
                     'help.')
 
 
-def get_run_data(client, run_filter, sort_mode=None,
-                 limit=constants.MAX_QUERY_SIZE):
+def get_run_data(client, run_filter, sort_mode=None):
     """Get all runs based on the given run filter."""
 
     all_runs = []
 
     offset = 0
+    limit = constants.MAX_QUERY_SIZE
     while True:
         runs = runs = client.getRunData(run_filter, limit, offset, sort_mode)
         all_runs.extend(runs)
@@ -522,8 +522,8 @@ def parse_report_filter(client, args):
         # Handle tags (requires API call to resolve tag names to IDs)
         if 'tag' in args:
             run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
-            run_histories = client.getRunHistory(None, None, None,
-                                                 run_history_filter)
+            run_histories = client.getRunHistory(
+                None, constants.MAX_QUERY_SIZE, None, run_history_filter)
             if run_histories:
                 report_filter.runTag = [t.id for t in run_histories]
 
@@ -1555,7 +1555,7 @@ def handle_list_result_types(args):
         checkers = client.getCheckerCounts(run_ids,
                                            report_filter,
                                            None,
-                                           None,
+                                           constants.MAX_QUERY_SIZE,
                                            0)
 
         return dict((res.name, res.count) for res in checkers)
@@ -1588,7 +1588,7 @@ def handle_list_result_types(args):
     all_checkers = client.getCheckerCounts(run_ids,
                                            all_checkers_report_filter,
                                            None,
-                                           None,
+                                           constants.MAX_QUERY_SIZE,
                                            0)
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
@@ -1846,7 +1846,8 @@ def handle_list_run_histories(args):
         runs = get_run_data(client, run_filter)
         run_ids = [r.runId for r in runs]
 
-    run_history = client.getRunHistory(run_ids, None, None, None)
+    run_history = client.getRunHistory(
+        run_ids, constants.MAX_QUERY_SIZE, None, None)
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(run_history))

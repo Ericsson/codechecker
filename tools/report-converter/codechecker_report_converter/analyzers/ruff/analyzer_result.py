@@ -27,6 +27,16 @@ class AnalyzerResult(AnalyzerResultBase):
     TOOL_NAME = 'ruff'
     NAME = 'ruff'
     URL = 'https://docs.astral.sh/ruff/'
+    EXAMPLE_CMD = """\
+# Run ruff and generate a json output file.
+ruff check --output-format json /path/to/my/project > ./ruff_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of ruff.
+report-converter -t ruff -o ./codechecker_ruff_reports ./ruff_reports.json
+
+# Store the ruff reports with CodeChecker.
+CodeChecker store ./codechecker_ruff_reports -n ruff"""
 
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """

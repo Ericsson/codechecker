@@ -47,7 +47,7 @@ def handle_list_products(args):
 
     protocol, host, port = split_server_url(args.server_url)
     client = setup_product_client(protocol, host, port)
-    products = client.getProducts(None, None)
+    products = client.getProducts(None, None, None, None, None)
 
     if args.output_format == 'json':
         results = []
@@ -141,7 +141,7 @@ def handle_del_product(args):
     client = setup_product_client(protocol, host, port)
 
     # Endpoints substring-match.
-    products = client.getProducts(args.endpoint, None)
+    products = client.getProducts(args.endpoint, None, None, None, None)
     products = [product for product in products
                 if product.endpoint == args.endpoint]
 

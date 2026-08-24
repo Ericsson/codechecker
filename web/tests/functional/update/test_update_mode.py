@@ -26,6 +26,7 @@ from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -117,7 +118,7 @@ class TestUpdate(unittest.TestCase):
         # Get the run names which belong to this test
         run_names = env.get_run_names(self._test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
 
         test_runs = [run for run in runs if run.name in run_names]
 

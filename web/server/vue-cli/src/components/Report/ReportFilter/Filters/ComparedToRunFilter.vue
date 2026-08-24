@@ -100,7 +100,6 @@
           flat
         >
           <baseline-tag-items
-            :namespace="namespace"
             :selected-items="prevSelectedTagItems"
             :run-id="selectTagForRun.runIds[0]"
             :limit="defaultLimit"
@@ -140,7 +139,7 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { ccService, extractTagWithRunName, handleThriftError } from "@cc-api";
@@ -161,17 +160,12 @@ import {
   filterIsChanged
 } from "./SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([
   "update:url",
   "select"
 ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 
@@ -183,6 +177,8 @@ const selectTagMenu = ref(false);
 const selectTagForRun = ref(null);
 const prevSelectedRuns = ref([]);
 const prevSelectedTagItems = ref([]);
+const selectedRunIds = ref([]);
+const selectedTagIds = ref([]);
 const search = ref({
   placeHolder: "Search for run names (e.g.: myrun*)...",
   regexLabel: "Filter by wildcard pattern (e.g.: myrun*)",
@@ -313,6 +309,7 @@ async function initByUrl() {
   if (_runs.length || _tags.length) {
     let _selectedTags = [];
     if (_tags.length) {
+      selectedTagIds.value = _tags;
       _selectedTags = await getSelectedTagItems(_tags);
 
       // Add runs related to tags.
@@ -322,6 +319,7 @@ async function initByUrl() {
       _runs = [ ...new Set(_runs) ];
     }
 
+    selectedRunIds.value = _runs;
     const _selectedRuns = await getSelectedRunItems(_runs);
 
     await setSelectedItems(_selectedRuns, _selectedTags, false);
@@ -349,6 +347,8 @@ function applyTagSelection(selected) {
 }
 
 async function clear(updateUrl) {
+  selectedRunIds.value = [];
+  selectedTagIds.value = [];
   await setSelectedItems([], [], updateUrl);
 }
 
@@ -357,11 +357,21 @@ function selectRunTags(selectedItems) {
 }
 
 function getUrlState() {
-  const _runState = baseSelectOptionFilter.selectedItems.value.map(
+  let _runState = selectedRunIds.value;
+  const _newRunState = baseSelectOptionFilter.selectedItems.value.map(
     item => baseSelectOptionFilter.encodeValue.value(item.id)
   );
 
-  const _tagState = runFilter.selectedTagItems.value.map(item => item.id);
+  if (_newRunState.length) {
+    _runState = _newRunState;
+  }
+
+  let _tagState = selectedTagIds.value;
+  const _newTagState = runFilter.selectedTagItems.value.map(item => item.id);
+
+  if (_newTagState.length) {
+    _tagState = _newTagState;
+  }
 
   return {
     [id]: _runState.length ? _runState : undefined,

@@ -25,6 +25,7 @@ from libtest import codechecker
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
     RunFilter, ReportFilter
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from . import setup_class_common, teardown_class_common
 
@@ -93,14 +94,14 @@ class HashClash(unittest.TestCase):
         Remove the run which was stored by this test case.
         """
         run_filter = RunFilter(names=[self._run_name], exactMatch=True)
-        runs = self._report.getRunData(run_filter, None, 0, None)
+        runs = self._report.getRunData(run_filter, MAX_QUERY_SIZE, 0, None)
         run_id = runs[0].runId
 
         # Remove the run.
         self._report.removeRun(run_id, None)
 
     def _reports_for_latest_run(self):
-        runs = self._report.getRunData(None, None, 0, None)
+        runs = self._report.getRunData(None, MAX_QUERY_SIZE, 0, None)
         max_run_id = max(run.runId for run in runs)
         return self._report.getRunResults([max_run_id],
                                           100,

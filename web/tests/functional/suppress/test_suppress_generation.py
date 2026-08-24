@@ -21,6 +21,7 @@ import unittest
 import uuid
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env
@@ -185,7 +186,7 @@ class TestSuppress(unittest.TestCase):
         # Get the run names which belong to this test
         run_names = env.get_run_names(self._test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
 
         test_runs = [run for run in runs if run.name in run_names]
 

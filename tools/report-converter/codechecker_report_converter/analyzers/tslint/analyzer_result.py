@@ -28,6 +28,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'TSLint'
     URL = 'https://palantir.github.io/tslint'
 
+    EXAMPLE_CMD = """\
+# Run TSLint and generate a json output file.
+tslint --format json /path/to/my/ts/file -o ./tslint_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of TSLint.
+report-converter -t tslint -o ./codechecker_tslint_reports \
+    ./tslint_reports.json
+
+# Store the TSLint reports with CodeChecker.
+CodeChecker store ./codechecker_tslint_reports -n tslint"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Parse the given analyzer result. """
         reports: List[Report] = []

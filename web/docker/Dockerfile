@@ -13,7 +13,7 @@ RUN set -x && apt-get update -qq \
     curl \
     git \
     make \
-    && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs
 
 # Copy CodeChecker source code.

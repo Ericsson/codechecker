@@ -1,5 +1,6 @@
 import { ccService, handleThriftError } from "@cc-api";
 import {
+  MAX_QUERY_SIZE,
   ReportFilter,
   ReviewStatus,
 } from "@cc/report-server-types";
@@ -32,7 +33,7 @@ function initDiffField(count) {
 }
 
 function getCheckerStatistics(runIds, reportFilter, cmpData) {
-  const limit = null;
+  const limit = MAX_QUERY_SIZE;
   const offset = null;
 
   const queries = reviewStatusVariations.map(q => {

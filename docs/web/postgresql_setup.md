@@ -18,7 +18,7 @@ Table of Contents
  *  [PostgreSQL](http://www.postgresql.org) (> `9.3.5`)
     (optional)
  *  At least one database connector library for PostgreSQL support required:
-    - [psycopg2](http://initd.org/psycopg) (> `2.5.4`) or
+    - [psycopg2](https://psycopg.org/) (> `2.5.4`) or
     - [pg8000](https://github.com/mfenniak/pg8000) (>= `1.10.0`)
     - [PyPi psycopg2](https://pypi.python.org/pypi/psycopg2/2.6.1)
       **(Requires `lbpq`!)**

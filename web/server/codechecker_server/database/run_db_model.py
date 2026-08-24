@@ -11,12 +11,16 @@ SQLAlchemy ORM model for the analysis run storage database.
 from datetime import datetime, timedelta
 from math import ceil
 import os
-from typing import Optional
+import json
+import hashlib
+from typing import Optional, List
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
-    LargeBinary, MetaData, String, UniqueConstraint, Table, Text, JSON
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
+    ForeignKey, Integer, LargeBinary, MetaData, String, UniqueConstraint, \
+    Table, Text, JSON, case
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import true, false
 
 CC_META = MetaData(naming_convention={
@@ -53,29 +57,59 @@ class Checker(Base):
         self.severity = severity
 
 
-class AnalysisInfoChecker(Base):
-    __tablename__ = "analysis_info_checkers"
+class CheckerSet(Base):
+    __tablename__ = "checker_set"
 
-    analysis_info_id = Column(Integer,
-                              ForeignKey("analysis_info.id",
-                                         deferrable=True,
-                                         initially="DEFERRED",
-                                         ondelete="CASCADE"),
-                              primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    hash_digest = Column(String, unique=True, nullable=False)
+
+    def __init__(self, hash_digest: str):
+        self.hash_digest = hash_digest
+
+    # We compute a hash from the enabled_checkers and
+    # disabled_checkers lists to generate a unique identifier
+    # for each CheckerSet.
+    # The goal is to speed up report storage to the server:
+    # when a user stores results to the server, we first compute
+    # this hash and then check if it was already inserted to the database.
+    # If the hash exists in this table, that means the particular CheckerSet
+    # was already used before.
+    @staticmethod
+    def compute_hash(enabled_checkers: List[int],
+                     disabled_checkers: List[int]) -> str:
+        # Sort lists to create identical hashes.
+        enabled_checkers.sort()
+        disabled_checkers.sort()
+
+        checker_set_dict = {"e": enabled_checkers, "d": disabled_checkers}
+        return hashlib.sha256(json.dumps(
+            checker_set_dict, sort_keys=True,
+            separators=(',', ':')).encode()).hexdigest()
+
+
+class CheckerSetItem(Base):
+    __tablename__ = "checker_set_items"
+
+    checker_set_id = Column(Integer,
+                            ForeignKey("checker_set.id",
+                                       deferrable=True,
+                                       initially="DEFERRED",
+                                       ondelete="CASCADE"),
+                            primary_key=True)
     checker_id = Column(Integer,
                         ForeignKey("checkers.id",
                                    deferrable=True,
                                    initially="DEFERRED",
                                    ondelete="RESTRICT"),
                         primary_key=True)
-    enabled = Column(Boolean)
+    enabled = Column(Boolean, nullable=False)
 
     def __init__(self,
-                 analysis_info: "AnalysisInfo",
-                 checker: Checker,
+                 checker_set_id: int,
+                 checker_id: int,
                  is_enabled: bool):
-        self.analysis_info_id = analysis_info.id
-        self.checker_id = checker.id
+        self.checker_set_id = checker_set_id
+        self.checker_id = checker_id
         self.enabled = is_enabled
 
 
@@ -84,10 +118,15 @@ class AnalysisInfo(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     analyzer_command = Column(LargeBinary)
-    available_checkers = relationship(AnalysisInfoChecker, uselist=True)
+    checker_set_id = Column(Integer,
+                            ForeignKey("checker_set.id",
+                                       deferrable=True,
+                                       initially="DEFERRED",
+                                       ondelete="CASCADE"))
 
-    def __init__(self, analyzer_command: bytes):
+    def __init__(self, analyzer_command: bytes, checker_set_id: int):
         self.analyzer_command = analyzer_command
+        self.checker_set_id = checker_set_id
 
 
 class Run(Base):
@@ -185,8 +224,15 @@ RunHistoryAnalysisInfo = Table(
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -277,9 +323,9 @@ class BugPathEvent(Base):
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True,
                        primary_key=True)
 
@@ -307,9 +353,9 @@ class BugReportPoint(Base):
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True,
                        primary_key=True)
 
@@ -331,9 +377,9 @@ class ExtendedReportData(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
 
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
+    report_id = Column(BigInteger, ForeignKey('reports.id', deferrable=True,
+                                              initially="DEFERRED",
+                                              ondelete='CASCADE'),
                        index=True)
 
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
@@ -370,13 +416,20 @@ ReportAnalysisInfo = Table(
     Base.metadata,
     Column(
         'report_id',
-        Integer,
+        BigInteger,
         ForeignKey('reports.id',
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -391,7 +444,7 @@ ReviewStatusType = Enum(
 class Report(Base):
     __tablename__ = 'reports'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
+    id = Column(BigInteger, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'),
@@ -436,6 +489,18 @@ class Report(Base):
         Boolean, nullable=False, server_default=false())
 
     detected_at = Column(DateTime, nullable=False)
+
+    @hybrid_property
+    def is_open(self):
+        # Python-side logic
+        return self.fixed_at is None
+
+    @is_open.expression
+    def is_open(self):
+        return case(
+            (self.fixed_at.is_(None), True),
+            else_=False
+        )
 
     # A report is considered as "fixed" when it is not found in the project
     # anymore either based on its detection status or its review status is set
@@ -497,7 +562,7 @@ class ReportAnnotations(Base):
         self.value = value
 
     report_id = Column(
-        Integer,
+        BigInteger,
         ForeignKey("reports.id", ondelete="CASCADE"),
         primary_key=True,
         index=True)

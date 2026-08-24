@@ -28,6 +28,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Pylint'
     URL = 'https://www.pylint.org'
 
+    EXAMPLE_CMD = """\
+# Run Pylint and generate a json output file.
+pylint -f json /path/to/my/project > ./pylint_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Pylint.
+report-converter -t pylint -o ./codechecker_pylint_reports \
+    ./pylint_reports.json
+
+# Store the Pylint reports with CodeChecker.
+CodeChecker store ./codechecker_pylint_reports -n pylint"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         reports: List[Report] = []

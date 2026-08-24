@@ -25,34 +25,34 @@ The report server API should be used by any client to view or store analysis
 results.
 
 API Endpoint: `/<product-name>/<API-version>/CodeCheckerService`  
-API description can be found in [report_server.thrift](/web/api/report_server.thrift).
+API description can be found in [report_server.thrift](https://github.com/Ericsson/codechecker/blob/master/web/api/report_server.thrift).
 
 ## Authentication system API <a name="authentication-system-api"></a>
 The authentication layer is used for supporting privileged-access only access
 and permission management.
 
 API Endpoint: `/<API-version>/Authentication`  
-API description can be found in [authentication.thrift](/web/api/authentication.thrift).
+API description can be found in [authentication.thrift](https://github.com/Ericsson/codechecker/blob/master/web/api/authentication.thrift).
 
 ## Product management system API <a name="product-management-system-api"></a>
 The product management layer is responsible for handling requests about the
 different products and their configuration.
 
 API Endpoint: `/<API-version>/Products`  
-API description can be found in [products.thrift](/web/api/products.thrift).
+API description can be found in [products.thrift](https://github.com/Ericsson/codechecker/blob/master/web/api/products.thrift).
 
 ## Configuration API <a name="configuration-api"></a>
 The configuration layer is used to set notifications displayed on the server.
 
 API Endpoint: `/<API-version>/Configuration`  
-API description can be found in [configuration.thrift](/web/api/configuration.thrift).
+API description can be found in [configuration.thrift](https://github.com/Ericsson/codechecker/blob/master/web/api/configuration.thrift).
 
 ## Server information API <a name="server-information-api"></a>
 The server information layer is used to get the running CodeChecker version,
 for API compatibility purposes.
 
 API Endpoint: `/<API-version>/ServerInfo`  
-API description can be found in [server_info.thrift](/web/api/server_info.thrift).
+API description can be found in [server_info.thrift](https://github.com/Ericsson/codechecker/blob/master/web/api/server_info.thrift).
 
 ## Other endpoints <a name="other-endpoints"></a>
 

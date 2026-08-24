@@ -23,10 +23,12 @@ import sqlalchemy
 import string
 
 from collections import defaultdict
+from typing import Optional
 
 from codechecker_api.Authentication_v6.ttypes import AccessControl, \
     AuthorisationList, HandshakeInformation, Permissions, \
     PersonalAccessToken, SessionTokenData
+from sqlalchemy.orm import sessionmaker
 
 from codechecker_common.logger import get_logger
 
@@ -39,7 +41,8 @@ from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
     require_manager, require_permission
 from ..server import permissions
-from ..session_manager import generate_session_token
+from ..session_manager import (SessionManager, generate_session_token,
+                               _Session)
 
 
 LOG = get_logger('server')
@@ -51,6 +54,9 @@ class ThriftAuthHandler:
     """
     Handle Thrift authentication requests.
     """
+    __manager: SessionManager
+    __auth_session: Optional[_Session]
+    __config_db: sessionmaker
 
     def __init__(self, manager, auth_session, config_database):
         self.__manager = manager

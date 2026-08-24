@@ -455,7 +455,8 @@ const lineWidgetField = context => {
               key: item.data.id
             }).range(item.pos)
           );
-          return widgets.update({ add: decoration });
+          decoration.sort((a, b) => a.from - b.from);
+          return widgets.update({ add: decoration, sort: true });
         }
       }
 
@@ -886,11 +887,9 @@ function clearArrowLines() {
   }
 }
 
-function createLineWidget(pos, data) {
+function batchCreateLineWidgets(widgets) {
   editor.value.dispatch({
-    effects: addWidgets.of([
-      { pos: pos, data: data }
-    ])
+    effects: addWidgets.of(widgets)
   });
 }
 
@@ -902,21 +901,21 @@ function createHighlightWidget(markerId, from, to) {
   });
 }
 
-function addLineWidget(element, props) {
+function createLineWidget(element, props) {
   const charWidth = 7.2;
   const marginLeft = charWidth * (element.startCol || 0) + "px";
 
   const line = editor.value.state.doc.line(element.startLine.toNumber());
-  createLineWidget(
-    line.to,
-    {
+  return {
+    pos: line.to,
+    data: {
       ...props,
       id: element.$id,
       value: element.$message,
       marginLeft: marginLeft,
       report: report.value
     }
-  );
+  };
 }
 
 function renderMainWarning(events) {
@@ -938,6 +937,8 @@ function renderMainWarning(events) {
 }
 
 function addEvents(events) {
+  const widgets = [];
+
   events.forEach(event => {
     let _type = "info";
     if (event.$isResult) {
@@ -954,7 +955,7 @@ function addEvents(events) {
       nextStep: event.$nextStep,
       docUrl: docUrl.value
     };
-    addLineWidget(event, _props);
+    widgets.push(createLineWidget(event, _props));
   });
 
 
@@ -965,12 +966,15 @@ function addEvents(events) {
       $message:report.value.checkerMsg,
       startLine:report.value.line, startCol:report.value.column };
     const chrkmsg_props = { type: "error", index:"E", hideDocUrl:true };
-    addLineWidget(chkrmsg_data, chrkmsg_props);
+    widgets.push(createLineWidget(chkrmsg_data, chrkmsg_props));
   }
 
+  batchCreateLineWidgets(widgets);
 }
 
 function addExtendedData(extendedData) {
+  const widgets = [];
+
   extendedData.forEach(data => {
     let _type = null;
     let _value = null;
@@ -988,8 +992,10 @@ function addExtendedData(extendedData) {
     }
 
     const _props = { type: _type, index: _value };
-    addLineWidget(data, _props);
+    widgets.push(createLineWidget(data, _props));
   });
+
+  batchCreateLineWidgets(widgets);
 }
 
 function createArrowConnection(points) {

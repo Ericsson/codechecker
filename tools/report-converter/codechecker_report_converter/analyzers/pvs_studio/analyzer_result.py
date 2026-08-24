@@ -28,6 +28,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'PVS-Studio'
     URL = 'https://pvs-studio.com/en/'
 
+    EXAMPLE_CMD = """\
+# Run the PVS-Studio analysis (see https://pvs-studio.com/en/docs/ for the
+# full setup), producing a PVS-Studio.json report.
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# JSON report of PVS-Studio.
+report-converter -t pvs-studio -o ./codechecker_pvs_studio_reports \
+    ./PVS-Studio.json
+
+# Store the PVS-Studio reports with CodeChecker.
+CodeChecker store ./codechecker_pvs_studio_reports -n pvs_studio"""
+
     __severities = ["UNSPECIFIED", "HIGH", "MEDIUM", "LOW"]
 
     def get_reports(self, file_path: str) -> List[Report]:

@@ -7,3 +7,4 @@ mypy<=1.7.1
 setuptools~=80.0
 PyYAML~=6.0
 types-PyYAML~=6.0
+prettytable~=3.0

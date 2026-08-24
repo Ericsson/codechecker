@@ -52,8 +52,6 @@
         :key="item.name"
         :to="{
           name: item.route,
-          params: $route.params.endpoint ?
-            { endpoint: $route.params.endpoint } : {},
           query: queries[item.query_namespace] === undefined
             ? item.query || {}
             : queries[item.query_namespace]
@@ -94,11 +92,7 @@
         <v-list-item
           v-for="item in configureMenuItems"
           :key="item.title"
-          :to="{ 
-            name: item.route,
-            params: $route.params.endpoint ?
-              { endpoint: $route.params.endpoint } : {}
-          }"
+          :to="{ name: item.route }"
           exact
         >
           <template v-slot:prepend>
@@ -145,7 +139,6 @@ import { useStore } from "vuex";
 import { GET_ANNOUNCEMENT, GET_PACKAGE_VERSION } from "@/store/actions.type";
 
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
 import HeaderMenuItems from "./HeaderMenuItems";
 import UserInfoMenu from "./UserInfoMenu";
 
@@ -188,7 +181,7 @@ const menuButtons = ref([
     route: "statistics",
     active: [ "statistics" ],
     exact: false,
-    query: defaultStatisticsFilterValues,
+    query: defaultReportFilterValues,
     hide: [ "products", "login", "404" ]
   }
 ]);

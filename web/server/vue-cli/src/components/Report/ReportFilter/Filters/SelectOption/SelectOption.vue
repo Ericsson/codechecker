@@ -218,8 +218,8 @@ function cancel() {
 }
 
 function emitInput(items) {
-  const itemsArray = !props.multiple ? [ items ] : items;
+  const itemsArray = Array.isArray(items) ? items : [ items ];
   allSelectedItems.value = itemsArray;
-  emit("input", items);
+  emit("input", !props.multiple ? itemsArray[0] : itemsArray);
 }
 </script>

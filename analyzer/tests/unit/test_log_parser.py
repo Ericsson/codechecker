@@ -81,6 +81,46 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
 
+    def test_target_equals_sign_form_preserved_for_gcc(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/1158
+
+        For non-clang-detected (GCC-style) compile commands, an explicit
+        '--target=<value>'/'-target=<value>' flag was previously silently
+        dropped entirely - not extracted into 'target', and not preserved
+        in 'analyzer_options' either, unlike the space-separated
+        '-target <value>' form (which is extracted) or the clang-detected
+        path (where unrecognized flags are preserved raw). It must now be
+        preserved in 'analyzer_options' so it still reaches the analyzer.
+        """
+        entry = {
+            'file': 'main.cpp',
+            'command': 'g++ --target=aarch64-linux-gnu -c main.cpp',
+            'directory': '/tmp'}
+        build_action = log_parser.parse_options(entry)
+
+        self.assertIn('--target=aarch64-linux-gnu',
+                      build_action.analyzer_options)
+
+    def test_target_space_separated_form(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/1158
+
+        The space-separated '-target <value>' form (e.g. as used by
+        Clang directly: 'clang -target aarch64-linux-gnu main.c') was
+        already correctly extracted into 'target' before this fix, and
+        must remain so.
+        """
+        entry = {
+            'file': 'main.c',
+            'command': 'clang -target aarch64-linux-gnu main.c',
+            'directory': '/tmp'}
+        build_action = log_parser.parse_options(entry)
+
+        self.assertEqual(build_action.target, 'aarch64-linux-gnu')
+
     def test_new_ldlogger(self):
         """
         Test log file parsing escape behaviour with after-#631 LD-LOGGER.
@@ -286,6 +326,38 @@ class LogParserTest(unittest.TestCase):
         flags = ["-I", "/usr/include", "-m64", "-stdlib=libc++", "-std=c++17"]
         filtered = log_parser.filter_compiler_includes_extra_args(flags)
         self.assertEqual(filtered, ["-m64", "-stdlib=libc++", "-std=c++17"])
+
+    def test_compiler_implicit_include_flags_double_dash_std(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4926
+
+        GCC accepts both '-std=' and '--std=' (and likewise '-stdlib='/
+        '--stdlib=') as equivalent spellings. Previously only the
+        single-dash form was recognized, so '--std=' was silently dropped
+        instead of being forwarded to the analyzer.
+        """
+
+        flags = ["-I", "/usr/include", "-m64", "--stdlib=libc++",
+                 "--std=c++23"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["-m64", "--stdlib=libc++", "--std=c++23"])
+
+    def test_compile_options_matches_double_dash_std(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4926
+
+        The COMPILE_OPTIONS pattern (used to decide which flags get
+        forwarded from the original build command to the analyzer
+        invocation) must recognize '--std=' and '--stdlib=', not just the
+        single-dash forms.
+        """
+
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("--std=c++23"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("-std=c++23"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("--stdlib=libc++"))
+        self.assertTrue(log_parser.COMPILE_OPTIONS.match("-stdlib=libc++"))
 
     def test_compiler_implicit_include_flags_sysroot(self):
         """sysroot flags should be kept."""
