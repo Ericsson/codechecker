@@ -14,7 +14,7 @@ import os
 import re
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 from typing import Optional
 
@@ -32,7 +32,7 @@ from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import OAuthToken
 from .database.config_db_model import PersonalAccessToken
 from .database.config_db_model import SystemPermission
-from .database.database import DBSession
+from .database import db_cleanup
 from .permissions import SUPERUSER
 
 import codechecker_api_shared
@@ -859,25 +859,6 @@ class SessionManager:
             self.__refresh_time, is_root, self.__config_db_sessionmaker,
             last_access)
 
-    def __cleanup_expired_auth_sessions(self, user_name: str):
-        """
-        Cleanup expired auth_sessions of a user from the database.
-        """
-        with DBSession(self.__config_db_sessionmaker) as session:
-            try:
-                cutoff_date = (datetime.now() - timedelta(
-                    seconds=self.__auth_config['session_lifetime']))
-                session.query(SessionRecord) \
-                       .filter(SessionRecord.user_name == user_name) \
-                       .filter(SessionRecord.last_access < cutoff_date) \
-                       .delete(synchronize_session=False)
-
-                session.commit()
-            except Exception as e:
-                LOG.error("Failed to cleanup expired auth sessions "
-                          "from the database:")
-                LOG.error(str(e))
-
     def create_session(self, auth_string):
         """ Creates a new session for the given auth-string. """
         if not self.__auth_config['enabled']:
@@ -910,7 +891,10 @@ class SessionManager:
         is_root = validation.get('root', False)
 
         if user_name:
-            self.__cleanup_expired_auth_sessions(user_name)
+            db_cleanup.delete_expired_auth_sessions(
+                    self.__config_db_sessionmaker,
+                    self.session_lifetime_duration,
+                    user_name)
 
         local_session = self.__create_local_session(token, user_name,
                                                     groups, is_root)
@@ -976,7 +960,9 @@ class SessionManager:
                      'groups': groups,
                      'is_root': False}
 
-        self.__cleanup_expired_auth_sessions(username)
+        db_cleanup.delete_expired_auth_sessions(self.__config_db_sessionmaker,
+                                                self.session_lifetime_duration,
+                                                username)
 
         local_session = self.__create_local_session(
             codechecker_session_token,
@@ -1072,6 +1058,11 @@ class SessionManager:
     def get_keepalive_max_probe(self):
         """ Get keepalive max probe count. """
         return self.__keepalive_config.get('max_probe')
+
+    @property
+    def session_lifetime_duration(self) -> int:
+        """ Get session lifetime duration from server configuration. """
+        return self.__auth_config['session_lifetime']
 
     def __get_local_session_from_db(self, token) -> Optional[_Session]:
         """
