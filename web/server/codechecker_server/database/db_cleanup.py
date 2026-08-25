@@ -10,9 +10,10 @@ Contains housekeeping routines that are used to remove expired, obsolete,
 or dangling records from the database.
 """
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional
 
 import sqlalchemy
+from sqlalchemy.orm import sessionmaker
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
 
@@ -27,6 +28,7 @@ from .run_db_model import \
     Comment, Checker, \
     File, FileContent, \
     Report, ReportAnalysisInfo, RunHistoryAnalysisInfo, RunLock
+from .config_db_model import Session as SessionRecord
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
@@ -414,3 +416,42 @@ def add_foreign_keys(session, table_name, foreign_keys):
             f"REFERENCES {referred_table}({referred_columns});"
         ))
     session.commit()
+
+
+def delete_expired_auth_sessions(config_db_sessionmaker: sessionmaker,
+                                 session_lifetime: int,
+                                 user_name: Optional[str]):
+    """
+    Cleanup expired auth_sessions from the config database.
+    If 'user_name' is specified, we only remove expired auth_sessions
+    of that particular user.
+    If 'user_name' is specified as None, we remove all expired auth_sessions
+    from the database.
+    """
+    if user_name:
+        LOG.debug("Cleaning up expired auth sessions of user '%s' ...",
+                  user_name)
+    else:
+        LOG.debug("Cleaning up all expired auth sessions ...")
+
+    with DBSession(config_db_sessionmaker) as session:
+        try:
+            cutoff_date = (datetime.now() - timedelta(
+                seconds=session_lifetime))
+
+            if user_name:
+                session.query(SessionRecord) \
+                       .filter(SessionRecord.user_name == user_name) \
+                       .filter(SessionRecord.last_access < cutoff_date) \
+                       .delete(synchronize_session=False)
+            else:
+                session.query(SessionRecord) \
+                       .filter(SessionRecord.last_access < cutoff_date) \
+                       .delete(synchronize_session=False)
+
+            session.commit()
+            LOG.debug("Finished cleanup of expired auth sessions.")
+        except Exception as e:
+            LOG.error("Failed to cleanup expired auth sessions "
+                      "from the database:")
+            LOG.error(str(e))
