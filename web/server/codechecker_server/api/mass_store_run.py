@@ -234,7 +234,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
     This ZIP is extracted to a temporary directory and the ZIP is then deleted.
     The function returns the size of the extracted decompressed ZIP file.
     """
-    DECOMPRESSED_ZIP_MAX_SIZE = 1024 * 1024 * 1024 * 16  # 16 GiB
+    decompressed_zip_max_size = 1024 * 1024 * 1024 * 16  # 16 GiB
 
     def reject_unzip() -> NoReturn:
         error_message = (f"Rejected storage of run '{run_name}', "
@@ -252,7 +252,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
         start_time = time.time()
         zlib_decomp = zlib.decompressobj()
         zip_file.write(zlib_decomp.decompress(
-            base64.b64decode(b64zip), max_length=DECOMPRESSED_ZIP_MAX_SIZE))
+            base64.b64decode(b64zip), max_length=decompressed_zip_max_size))
         zip_file.flush()
         end_time = time.time()
 
@@ -274,7 +274,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
                 unzipped_size = 0
                 for member in zip_handle.infolist():
                     unzipped_size += member.file_size
-                    if unzipped_size > DECOMPRESSED_ZIP_MAX_SIZE:
+                    if unzipped_size > decompressed_zip_max_size:
                         reject_unzip()
                     zip_handle.extract(member, output_dir)
                 return size
