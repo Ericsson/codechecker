@@ -47,9 +47,8 @@ from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import \
     AnalysisInfo, AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, \
+    ReportPathData, ReportPathDataFile, \
     Checker, CheckerSet, CheckerSetItem, \
-    ExtendedReportData, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
     Run, RunLock as DBRunLock, RunHistory, \
@@ -61,7 +60,6 @@ from ..product import Product as ServerProduct
 from ..session_manager import SessionManager
 from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
-from .thrift_enum_helper import report_extended_data_type_str
 
 from sqlalchemy.orm import Session as SA_Session
 
@@ -236,7 +234,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
     This ZIP is extracted to a temporary directory and the ZIP is then deleted.
     The function returns the size of the extracted decompressed ZIP file.
     """
-    DECOMPRESSED_ZIP_MAX_SIZE = 1024 * 1024 * 1024 * 16  # 16 GiB
+    decompressed_zip_max_size = 1024 * 1024 * 1024 * 16  # 16 GiB
 
     def reject_unzip() -> NoReturn:
         error_message = (f"Rejected storage of run '{run_name}', "
@@ -254,7 +252,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
         start_time = time.time()
         zlib_decomp = zlib.decompressobj()
         zip_file.write(zlib_decomp.decompress(
-            base64.b64decode(b64zip), max_length=DECOMPRESSED_ZIP_MAX_SIZE))
+            base64.b64decode(b64zip), max_length=decompressed_zip_max_size))
         zip_file.flush()
         end_time = time.time()
 
@@ -276,7 +274,7 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
                 unzipped_size = 0
                 for member in zip_handle.infolist():
                     unzipped_size += member.file_size
-                    if unzipped_size > DECOMPRESSED_ZIP_MAX_SIZE:
+                    if unzipped_size > decompressed_zip_max_size:
                         reject_unzip()
                     zip_handle.extract(member, output_dir)
                 return size
@@ -1316,48 +1314,83 @@ class MassStoreRun:
                 .update({"checker_id": chk_obj.id},
                         synchronize_session=False)
 
-    def __add_report_context(self, session, file_path_to_id):
+    def __add_report_context(
+        self,
+        session: SA_Session,
+        file_path_to_id: Dict[str, int]
+    ):
+        path_data_files = []
+
         for db_report, report in self.__added_reports:
+            path_data = []
+            used_file_ids = set()
+
             LOG.debug("Storing bug path positions.")
-            for idx, path_pos in enumerate(report.bug_path_positions):
-                session.add(BugReportPoint(
-                    path_pos.range.start_line, path_pos.range.start_col,
-                    path_pos.range.end_line, path_pos.range.end_col,
-                    idx, file_path_to_id[path_pos.file.path], db_report.id))
+            for path_pos in report.bug_path_positions:
+                path_data.append(ReportPathData.Item(
+                    path_pos.range.start_line,
+                    path_pos.range.start_col,
+                    path_pos.range.end_line,
+                    path_pos.range.end_col,
+                    file_path_to_id[path_pos.file.path],
+                    "path"
+                ))
+                used_file_ids.add(file_path_to_id[path_pos.file.path])
 
             LOG.debug("Storing bug path events.")
-            for idx, event in enumerate(report.bug_path_events):
-                session.add(BugPathEvent(
-                    event.range.start_line, event.range.start_col,
-                    event.range.end_line, event.range.end_col,
-                    idx, event.message, file_path_to_id[event.file.path],
-                    db_report.id))
+            for event in report.bug_path_events:
+                path_data.append(ReportPathData.Item(
+                    event.range.start_line,
+                    event.range.start_col,
+                    event.range.end_line,
+                    event.range.end_col,
+                    file_path_to_id[event.file.path],
+                    "event",
+                    event.message
+                ))
+                used_file_ids.add(file_path_to_id[event.file.path])
 
             LOG.debug("Storing notes.")
             for note in report.notes:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.NOTE)
-
-                session.add(ExtendedReportData(
-                    note.range.start_line, note.range.start_col,
-                    note.range.end_line, note.range.end_col,
-                    note.message, file_path_to_id[note.file.path],
-                    db_report.id, data_type))
+                path_data.append(ReportPathData.Item(
+                    note.range.start_line,
+                    note.range.start_col,
+                    note.range.end_line,
+                    note.range.end_col,
+                    file_path_to_id[note.file.path],
+                    "note",
+                    note.message
+                ))
+                used_file_ids.add(file_path_to_id[note.file.path])
 
             LOG.debug("Storing macro expansions.")
             for macro in report.macro_expansions:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.MACRO)
+                path_data.append(ReportPathData.Item(
+                    macro.range.start_line,
+                    macro.range.start_col,
+                    macro.range.end_line,
+                    macro.range.end_col,
+                    file_path_to_id[macro.file.path],
+                    "macro",
+                    macro.message
+                ))
+                used_file_ids.add(file_path_to_id[macro.file.path])
 
-                session.add(ExtendedReportData(
-                    macro.range.start_line, macro.range.start_col,
-                    macro.range.end_line, macro.range.end_col,
-                    macro.message, file_path_to_id[macro.file.path],
-                    db_report.id, data_type))
+            report_path_data = ReportPathData(db_report.id, path_data)
+            session.add(report_path_data)
+            session.flush()
+
+            path_data_files.extend({
+                "report_path_data_id": report_path_data.report_id,
+                "file_id": fid
+            } for fid in used_file_ids)
 
             if report.annotations:
                 self.__validate_and_add_report_annotations(
                     session, db_report.id, report.annotations)
+
+        if path_data_files:
+            session.execute(ReportPathDataFile.insert(), path_data_files)
 
         session.flush()
 
@@ -1526,7 +1559,7 @@ class MassStoreRun:
 
     def __store_reports(
         self,
-        session: DBSession,
+        session: SA_Session,
         report_dir: Path,
         source_root: Path,
         run_id: int,
