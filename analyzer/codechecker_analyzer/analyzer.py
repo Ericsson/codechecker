@@ -149,6 +149,14 @@ def perform_analysis(args, skip_handlers, filter_handlers,
     analyzers, errored = \
         analyzer_types.check_available_analyzers(args.analyzers)
 
+    # Sort analyzers according to the order defined in supported_analyzers.
+    # Longer-running analyzers (e.g. clangsa) come first so they are
+    # scheduled earlier in parallel execution, reducing total wall-clock time.
+    analyzer_order = list(analyzer_types.supported_analyzers.keys())
+    analyzers = sorted(analyzers,
+                       key=lambda a: analyzer_order.index(a)
+                       if a in analyzer_order else len(analyzer_order))
+
     ctu_collect = False
     ctu_analyze = False
     ctu_dir = ''
