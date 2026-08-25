@@ -64,7 +64,7 @@ Currently we want to do it for only clangsa and clang-tidy.
 
 The resources (input) contains all the CWEs we want to assign with their number and description as separate pages from the official docs.
 
-The format should be: cwe-vulnerability:cwe-xxxx.
+The format should be: cwe-vulnerabilities:cwe-xxxx.
 
 ## 2. INPUT
 
