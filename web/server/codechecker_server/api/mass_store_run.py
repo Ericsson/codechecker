@@ -22,8 +22,8 @@ from pathlib import Path
 import sqlalchemy
 import tempfile
 import time
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, \
-    cast
+from typing import Any, Callable, Dict, List, NoReturn, \
+    Optional, Set, Tuple, Union, cast
 import zipfile
 import zlib
 
@@ -236,6 +236,14 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
     This ZIP is extracted to a temporary directory and the ZIP is then deleted.
     The function returns the size of the extracted decompressed ZIP file.
     """
+    DECOMPRESSED_ZIP_MAX_SIZE = 1024 * 1024 * 1024 * 16  # 16 GiB
+
+    def reject_unzip() -> NoReturn:
+        error_message = (f"Rejected storage of run '{run_name}', "
+                         "decompressed ZIP file is too large!")
+        LOG.info(error_message)
+        raise RequestFailed(ErrorCode.IOERROR, error_message)
+
     if not b64zip:
         return 0
 
@@ -244,9 +252,14 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
         LOG.debug("Decompressing input massStoreRun() ZIP to '%s' ...",
                   zip_file.name)
         start_time = time.time()
-        zip_file.write(zlib.decompress(base64.b64decode(b64zip)))
+        zlib_decomp = zlib.decompressobj()
+        zip_file.write(zlib_decomp.decompress(
+            base64.b64decode(b64zip), max_length=DECOMPRESSED_ZIP_MAX_SIZE))
         zip_file.flush()
         end_time = time.time()
+
+        if zlib_decomp.unconsumed_tail:
+            reject_unzip()
 
         size = os.stat(zip_file.name).st_size
         LOG.debug("Decompressed input massStoreRun() ZIP '%s' -> '%s' "
@@ -260,7 +273,12 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
             LOG.debug("Extracting massStoreRun() ZIP '%s' to '%s' ...",
                       zip_file.name, output_dir)
             try:
-                zip_handle.extractall(output_dir)
+                unzipped_size = 0
+                for member in zip_handle.infolist():
+                    unzipped_size += member.file_size
+                    if unzipped_size > DECOMPRESSED_ZIP_MAX_SIZE:
+                        reject_unzip()
+                    zip_handle.extract(member, output_dir)
                 return size
             except Exception:
                 LOG.error("Failed to extract received ZIP.")
