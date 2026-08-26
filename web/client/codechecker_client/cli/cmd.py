@@ -1181,6 +1181,13 @@ def __register_runs(parser):
                         default=default_sort_type,
                         help="Sort run data by this column.")
 
+    parser.add_argument('--details',
+                        action='store_true',
+                        required=False,
+                        help="Adds extra details to the run information in "
+                             "JSON format, such as the list of enabled "
+                             "checkers.")
+
     # Get available order types.
     order_type_names = list(ttypes.Order._NAMES_TO_VALUES.keys())
     order_types = [s.lower() for s in order_type_names]

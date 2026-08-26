@@ -66,7 +66,8 @@ class ListRunsEnabledCheckersTest(unittest.TestCase):
             product_url="dummy",
             sort_type="name",
             sort_order="asc",
-            output_format="json"
+            output_format="json",
+            details=True
         )
 
         buf = io.StringIO()
