@@ -228,7 +228,7 @@ class TestCmdline(unittest.TestCase):
         environ = self._test_config['codechecker_cfg']['check_env']
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
-                   '-o', 'json', '--url', str(self.server_url)]
+                   '-o', 'json', '--url', str(self.server_url), '--details']
         ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)

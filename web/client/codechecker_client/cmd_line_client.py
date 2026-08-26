@@ -717,10 +717,15 @@ def handle_list_runs(args):
 
     runs = get_run_data(client, run_filter, sort_mode)
 
-    if args.output_format == 'json':
+    if args.output_format == 'json' and 'details' in args and args.details:
         # This json is different from the json format printed by the
         # parse command. This json converts the ReportData type report
         # to a json format.
+        #
+        # Showing the enabled checkers and additional analyzer statistics
+        # is significantly slower because additional API queries are needed
+        # (getAnalysisInfo, getAnalysisStatistics). Therefore, this output is
+        # behind the --details flag.
         results = []
         for run in runs:
             enabled_checkers: Dict[str, Set[str]] = {}
@@ -741,7 +746,11 @@ def handle_list_runs(args):
                 stat.enabledCheckers = sorted(
                     list(enabled_checkers.get(analyzer, set())))
             results.append({run.name: run})
-        print(json.dumps(results, cls=CmdLineOutputEncoder, indent=4))
+        json.dump(results, sys.stdout, cls=CmdLineOutputEncoder, indent=4)
+
+    elif args.output_format == 'json':
+        results = [{r.name: r} for r in runs]
+        json.dump(results, sys.stdout, cls=CmdLineOutputEncoder, indent=4)
 
     else:  # plaintext, csv
         header = ['Name', 'Number of unresolved reports',
