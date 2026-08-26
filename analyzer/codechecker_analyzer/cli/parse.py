@@ -207,9 +207,11 @@ def add_arguments_to_parser(parser):
                         dest="review_status",
                         metavar='REVIEW_STATUS',
                         choices=REVIEW_STATUS_VALUES,
-                        default=["confirmed", "unreviewed"],
+                        default=argparse.SUPPRESS,
                         help="Filter results by review statuses. Valid "
-                             f"values are: {', '.join(REVIEW_STATUS_VALUES)}")
+                             f"values are: {', '.join(REVIEW_STATUS_VALUES)}"
+                             " (default: everything for SARIF export,"
+                             " otherwise ['confirmed', 'unreviewed'])")
 
     parser.add_argument('--status',
                         dest="status",
@@ -525,6 +527,11 @@ def main(args):
                      getattr(args, 'output_path', None))
         return
 
+    if 'review_status' not in args:
+        if args.export == 'sarif':
+            args.review_status = REVIEW_STATUS_VALUES
+        else:
+            args.review_status = ["confirmed", "unreviewed"]
     src_comment_status_filter = args.review_status
 
     suppr_handler = None
@@ -707,7 +714,7 @@ def main(args):
         data = gerrit.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'sarif':
-        data = sarif.convert(all_reports)
+        data = sarif.convert(all_reports, context.checker_labels)
         dump_json_output(data, get_output_file_path("reports.json"))
     elif export == 'baseline':
         data = baseline.convert(all_reports)

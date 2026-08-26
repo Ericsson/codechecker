@@ -290,7 +290,7 @@ class ReviewStatusHandler:
                     .encode(encoding='utf-8', errors='ignore')
                     if 'reason' in rule['actions'] else b'',
                     bug_hash=report.report_hash or "",
-                    in_source=True)
+                    in_source=False)
 
         return None
 

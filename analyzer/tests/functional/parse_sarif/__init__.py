@@ -1,3 +1,4 @@
+# coding=utf-8
 # -------------------------------------------------------------------------
 #
 #  Part of the CodeChecker project, under the Apache License v2.0 with
@@ -6,12 +7,5 @@
 #
 # -------------------------------------------------------------------------
 
-from typing import Optional
-
-
-class CheckerLabels:
-    def severity(self, a: str, b: Optional[str] = None) -> str:
-        raise NotImplementedError()
-
-    def label_of_checker(self, a: str, b: str, c: Optional[str] = None) -> str:
-        raise NotImplementedError()
+# This file is empty, and is only present so that this directory will form a
+# package.

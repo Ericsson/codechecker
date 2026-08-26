@@ -1,0 +1,7 @@
+$version: 1
+rules:
+  - filters:
+      checker_name: core.DivideZero
+    actions:
+      review_status: intentional
+      reason: testing suppression via config file
