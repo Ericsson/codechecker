@@ -405,8 +405,7 @@ async function updateReportFilter() {
   );
   // Pass [-1] if the user selected a non-existent run,
   // to avoid removing the filter.
-  const hasSelection =
-    baseSelectOptionFilter.selectedItems.value.length > 0;
+  const hasSelection = baseSelectOptionFilter.selectedItems.value.length > 0;
   baseSelectOptionFilter.setRunIds(
     _selectedRunIds.length
       ? _selectedRunIds
