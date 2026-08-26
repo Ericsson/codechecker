@@ -28,6 +28,7 @@ import string
 import subprocess
 import sys
 import zipfile
+from multiprocessing import Pool
 from shutil import which
 
 from pathlib import Path
@@ -472,31 +473,45 @@ def zip_tu_files(
                          json.dumps(compilation_database, indent=2))
 
 
+def __get_dependent_headers_for_build_action(build_action: CompileAction
+                                             ) -> Tuple[str, Set[str]]:
+    """ Return the source file and dependent headers for a build action. """
+    files, _ = get_dependent_headers(
+        build_action['command'],
+        build_action['directory'])
+
+    source_file = os.path.join(build_action['directory'],
+                               build_action['file'])
+    return source_file, files
+
+
 def get_dependent_sources(
     compilation_db: CompilationDB,
-    header_path: Optional[str] = None
+    header_paths: Optional[List[str]] = None,
+    jobs: int = 1
 ) -> Set[str]:
     """ Get dependencies for each files in each translation unit. """
-    dependencies = collections.defaultdict(set)
-    for build_action in compilation_db:
-        files, _ = get_dependent_headers(
-            build_action['command'],
-            build_action['directory'])
+    if not header_paths:
+        return set()
 
-        source_file = os.path.join(build_action['directory'],
-                                   build_action['file'])
+    deps = set()
+    dependencies = collections.defaultdict(set)
+    with Pool(jobs) as p:
+        results = list(p.map(__get_dependent_headers_for_build_action,
+                             compilation_db))
+    for source_file, files in results:
         for f in files:
             dependencies[f].add(source_file)
 
-    pattern = None
-    if header_path:
-        norm_header_path = os.path.normpath(header_path.strip())
-        pattern = re.compile(fnmatch.translate(norm_header_path))
+    for header_path in header_paths:
+        pattern = None
+        if header_path:
+            norm_header_path = os.path.normpath(header_path.strip())
+            pattern = re.compile(fnmatch.translate(norm_header_path))
 
-    deps = set()
-    for header, source_files in dependencies.items():
-        if not pattern or pattern.match(header):
-            deps.update(source_files)
+        for header, source_files in dependencies.items():
+            if not pattern or pattern.match(header):
+                deps.update(source_files)
 
     return deps
 
@@ -603,7 +618,7 @@ used to generate a log file on the fly.""")
                      ctu_deps_dir=args.ctu_deps_dir)
         LOG.info("Done.")
     else:
-        deps = get_dependent_sources(compilation_db, args.filter)
+        deps = get_dependent_sources(compilation_db, [args.filter])
 
         if deps:
             print("\n".join(deps))
