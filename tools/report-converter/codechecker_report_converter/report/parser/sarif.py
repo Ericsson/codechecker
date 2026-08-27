@@ -367,7 +367,7 @@ class Parser(BaseParser):
             "locations": [{
                 "physicalLocation": {
                     "artifactLocation": {
-                        "uri": f"file://{report.file.original_path}"
+                        "uri": f"file://{report.file.path}"
                     },
                     "region": {
                         "startLine": report.line,
@@ -469,7 +469,7 @@ class Parser(BaseParser):
             "location": {
                 "physicalLocation": {
                     "artifactLocation": {
-                        "uri": f"file://{pos.file.original_path}"
+                        "uri": f"file://{pos.file.path}"
                     },
                     "region": region
                 }
