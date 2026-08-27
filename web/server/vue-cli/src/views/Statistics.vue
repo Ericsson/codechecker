@@ -12,7 +12,7 @@
           :report-count="reportCount"
           :refresh-filter="refreshFilterState"
           :hidden-filters="hiddenFilters"
-          @refresh="refresh"
+          @refresh="refreshByReportFilter"
           @set-refresh-filter-state="setRefreshFilterState"
         />
       </div>
@@ -146,6 +146,7 @@ const tabs = [
 const refreshFilterState = ref(false);
 const reportCount = ref(0);
 const tab = ref(null);
+const reportFiltersReady = ref(false);
 
 const bus = mitt();
 
@@ -169,10 +170,6 @@ const reportFilter = computed(function() {
 });
 
 watch(() => tab.value, async () => {
-  // FIXME: At page reload, this
-  // event triggers, but the report filter
-  // is not ready yet.
-
   if (tab.value == null) return;
 
   const currentTab = tabs[tab.value];
@@ -183,11 +180,29 @@ watch(() => tab.value, async () => {
     ...currentTab.hiddenFiltersByTab
   ];
 
+  if (!reportFiltersReady.value) return;
+
   await nextTick();
-  refreshCurrentTab();
+  emitRefreshStatistics();
 });
 
-function refresh() {
+function refreshByReportFilter(reason) {
+  if (reason === "filter-change" && !reportFiltersReady.value) {
+    return;
+  }
+
+  if (reason === "filter-init") {
+    reportFiltersReady.value = true;
+    getRunResultCount();
+    emitRefreshStatistics();
+    return;
+  }
+
+  getRunResultCount();
+  emitRefreshStatistics();
+}
+
+function getRunResultCount() {
   ccService.getClient().getRunResultCount(
     runIds.value,
     reportFilter.value,
@@ -202,11 +217,9 @@ function refresh() {
       refreshTabs[_resolve.route.name] = true;
     }
   });
-
-  refreshCurrentTab();
 }
 
-function refreshCurrentTab() {
+function emitRefreshStatistics() {
   bus.emit("refresh");
 
   if (tab.value == null) return;

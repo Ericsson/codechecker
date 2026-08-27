@@ -702,7 +702,7 @@ function beforeInit() {
 }
 
 function afterInit() {
-  emit("refresh");
+  emit("refresh", "filter-init");
   registerWatchers();
   syncGroupPanels();
 }
@@ -729,20 +729,20 @@ function registerWatchers() {
   reportFilterUnwatch.value = store.watch(
     state => state.reportFilter, () => {
       if (!isInitializing.value)
-        emit("refresh");
+        emit("refresh", "filter-change");
 
     }, { deep: true });
 
   runIdsUnwatch.value = store.watch(
     state => state.runIds, () => {
       if (!isInitializing.value)
-        emit("refresh");
+        emit("refresh", "filter-change");
     });
 
   cmpDataUnwatch.value = store.watch(
     state => state.cmpData, () => {
       if (!isInitializing.value)
-        emit("refresh");
+        emit("refresh", "filter-change");
     }, { deep: true });
 }
 
@@ -828,7 +828,7 @@ function updateAllFilters() {
   if (!_filters?.length) return;
 
   _filters.forEach(filter => filter?.update?.() );
-  emit("refresh");
+  emit("refresh", "filter-change");
 }
 
 onBeforeUnmount(() => {
