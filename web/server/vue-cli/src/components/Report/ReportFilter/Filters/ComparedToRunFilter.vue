@@ -401,11 +401,19 @@ async function updateReportFilter() {
     baseSelectOptionFilter.selectedItems
   );
   const _selectedTagIds = runFilter.selectedTagItems.value.map(t => t.id);
+  const hasSelection = baseSelectOptionFilter.selectedItems.value.length > 0;
 
   if (_selectedRunIds.length || _selectedTagIds.length) {
     baseSelectOptionFilter.setCmpData({
       runIds: _selectedRunIds.length ? _selectedRunIds : null,
       runTag: _selectedTagIds.length ? _selectedTagIds : null
+    });
+  } else if (hasSelection) {
+    // Pass [-1] if the user selected a non-existent run,
+    // to avoid removing the filter.
+    baseSelectOptionFilter.setCmpData({
+      runIds: [ -1 ],
+      runTag: null
     });
   } else {
     baseSelectOptionFilter.setCmpData(null);
