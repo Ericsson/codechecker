@@ -237,10 +237,10 @@ This setting overrides the server config file values.
     root_account = parser.add_argument_group(
         "root account arguments",
         """
-Servers automatically create a root user to access the server's configuration
-via the clients. This user is created at first start and saved in the
-CONFIG_DIRECTORY, and the credentials are printed to the server's standard
-output. The plaintext credentials are NEVER accessible again.""")
+Built in super user is not not created by default. You can assign
+super user privileges to a user by adding the "super_user" : "user_name"
+record to the server_config.json file.
+""")
 
     root_account.add_argument('--force-authentication',
                               dest="force_auth",
