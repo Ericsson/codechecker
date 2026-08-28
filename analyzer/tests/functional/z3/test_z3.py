@@ -149,23 +149,6 @@ class TestSkeleton(unittest.TestCase):
             except (ValueError, KeyError):
                 pass
 
-    def test_z3(self):
-        """ Test that --z3 flag emits deprecation warning. """
-
-        test_project_path = self._testproject_data['project_path']
-
-        cmd = [
-            self._codechecker_cmd, 'analyze',
-            'compile_command.json',
-            '-o', 'reports',
-            '--z3', 'on',
-            '--verbose', 'debug']
-        output, _, ret = call_command(
-            cmd, cwd=test_project_path, env=self.env)
-        self.assertEqual(ret, 0)
-        self.assertNotIn("-analyzer-constraints=z3", output)
-        self.assertIn("deprecated", output)
-
     def test_z3_refutation(self):
         """ Enable z3 refutation during analysis. """
         if not self.z3_capable:

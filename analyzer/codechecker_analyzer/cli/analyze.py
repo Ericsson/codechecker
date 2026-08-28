@@ -509,18 +509,6 @@ def add_arguments_to_parser(parser):
                                     "the analysis is considered as a failed "
                                     "one.")
 
-    analyzer_opts.add_argument('--z3',
-                               dest='enable_z3',
-                               choices=['on', 'off'],
-                               default='off',
-                               help="[DEPRECATED] This flag has no effect "
-                                    "and will be removed in CodeChecker "
-                                    "6.30. The Z3 constraint solver "
-                                    "backend is no longer supported by "
-                                    "upstream Clang. Use '--z3-refutation' "
-                                    "for Z3-based false positive "
-                                    "reduction instead.")
-
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable()
 
     analyzer_opts.add_argument('--z3-refutation',
@@ -1229,13 +1217,6 @@ def check_satisfied_capabilities(args):
                   "analysis!")
         LOG.info("hint: Clang 11.0.0 is the earliest version to support it")
         has_error = True
-
-    if 'enable_z3' in args and args.enable_z3 == 'on':
-        LOG.warning("The '--z3' flag is deprecated and has no effect. "
-                    "The Z3 constraint solver backend is no longer "
-                    "supported by upstream Clang. This flag will be "
-                    "removed in CodeChecker 6.30. Use "
-                    "'--z3-refutation' instead.")
 
     if 'enable_z3_refutation' in args and args.enable_z3_refutation == 'on' \
             and not analyzer_types.is_z3_capable():
