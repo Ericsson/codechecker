@@ -73,7 +73,7 @@ from ..database.run_db_model import \
     ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
-from .common import exc_to_thrift_reqfail
+from .common import exc_to_thrift_reqfail, requires_view
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -1499,7 +1499,7 @@ class ThriftRequestHandler:
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __require_view(self):
+    def _require_view(self):
         self.__require_permission([
             permissions.PRODUCT_VIEW,
             permissions.PERMISSION_VIEW
@@ -1516,9 +1516,8 @@ class ThriftRequestHandler:
                        date or datetime.now())
 
     @timeit
+    @requires_view
     def getRunData(self, run_filter, limit, offset, sort_mode):
-        self.__require_view()
-
         limit = verify_limit_range(limit)
 
         with DBSession(self._Session) as session:
@@ -1782,11 +1781,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getFilterPreset(self, preset_id: int):
         """
         Returns the FilterPreset identified by preset_id.
         """
-        self.__require_view()
         LOG.info("Returning filter preset by ID: %s", preset_id)
 
         with DBSession(self._Session) as session:
@@ -1808,11 +1807,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def listFilterPreset(self):
         """
         Returns all filter presets stored for the product repository
         """
-        self.__require_view()
         LOG.info("List back filter presets")
 
         try:
@@ -1841,8 +1840,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunCount(self, run_filter):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             query = session.query(Run.id)
@@ -1851,9 +1850,9 @@ class ThriftRequestHandler:
         return query.count()
 
     # DEPRECATED: use getAnalysisInfo API function instead of this function.
+    @requires_view
     def getCheckCommand(self, run_history_id, run_id):
         """ Get analyzer command based on the given filter. """
-        self.__require_view()
 
         limit = None
         offset = 0
@@ -1869,9 +1868,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getAnalysisInfo(self, analysis_info_filter, limit, offset):
         """ Get analysis information based on the given filter. """
-        self.__require_view()
 
         res: List[ttypes.AnalysisInfo] = []
         if not analysis_info_filter:
@@ -1941,8 +1940,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunHistory(self, run_ids, limit, offset, run_history_filter):
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -1981,8 +1980,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunHistoryCount(self, run_ids, run_history_filter):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             query = session.query(RunHistory.id)
@@ -1994,8 +1993,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReport(self, reportId):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
 
@@ -2037,9 +2036,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
                            skip_detection_statuses, tag_ids):
-        self.__require_view()
 
         # FIXME: This getDiffResultsHash() function is returning a set of
         # reports based on what are they compared to in a "CodeChecker cmd
@@ -2150,9 +2149,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data, get_details):
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2494,8 +2493,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReportAnnotations(self, run_ids, report_filter, cmp_data):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -2537,13 +2536,13 @@ class ThriftRequestHandler:
         return list(map(lambda x: x[0], result))
 
     @timeit
+    @requires_view
     def getRunReportCounts(self, run_ids, report_filter, limit, offset):
         """
           Count the results separately for multiple runs.
           If an empty run id list is provided the report
           counts will be calculated for all of the available runs.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2589,8 +2588,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunResultCount(self, run_ids, report_filter, cmp_data):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -2616,12 +2615,12 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReportDetails(self, reportId):
         """
         Parameters:
          - reportId
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             return get_report_details(session, [reportId])[reportId]
 
@@ -2732,11 +2731,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def isReviewStatusChangeDisabled(self):
         """
         Return True if review status change is disabled.
         """
-        self.__require_view()
 
         with DBSession(self._config_database) as session:
             product = session.get(Product, self._product.id)
@@ -2794,8 +2793,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReviewStatusRules(self, rule_filter, sort_mode, limit, offset):
-        self.__require_view()
         if not sort_mode:
             sort_mode = ReviewStatusRuleSortMode(
                 type=ReviewStatusRuleSortType.DATE,
@@ -2842,8 +2841,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReviewStatusRulesCount(self, rule_filter):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             q = get_rs_rule_query(session, rule_filter)
@@ -2899,11 +2898,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getComments(self, report_id):
         """
             Return the list of comments for the given bug.
         """
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             report = session.get(Report, report_id)
@@ -2932,11 +2931,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCommentCount(self, report_id):
         """
             Return the number of comments for the given bug.
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             report = session.get(Report, report_id)
             commentCount = 0
@@ -3058,22 +3057,22 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCheckerDoc(self, _):
         """
         Parameters:
          - checkerId
         """
-        self.__require_view()
         return ""
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCheckerLabels(
         self,
         checkers: List[ttypes.Checker]
     ) -> List[List[str]]:
         """ Return the list of labels to each checker. """
-        self.__require_view()
 
         labels = []
         for checker in checkers:
@@ -3092,12 +3091,12 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getGuidelineRules(
         self,
         guidelines: List[ttypes.Guideline]
     ):
         """ Return the list of rules to each guideline that given. """
-        self.__require_view()
 
         guideline_rules = defaultdict(list)
         for guideline in guidelines:
@@ -3124,6 +3123,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getSourceFileData(self, fileId, fileContent, encoding):
         """
         Parameters:
@@ -3131,7 +3131,6 @@ class ThriftRequestHandler:
          - fileContent
          - enum Encoding
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             sourcefile = session.get(File, fileId)
 
@@ -3165,9 +3164,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getBlameInfo(self, fileId):
         """ Get blame information for the given file. """
-        self.__require_view()
 
         with DBSession(self._Session) as session:
             sourcefile = session.get(File, fileId)
@@ -3216,8 +3215,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
-        self.__require_view()
         with DBSession(self._Session) as session:
             res = defaultdict(lambda: defaultdict(str))
 
@@ -3256,6 +3255,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCheckerCounts(self, run_ids, report_filter, cmp_data, limit,
                          offset):
         """
@@ -3263,7 +3263,6 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3328,8 +3327,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
-        self.__require_view()
 
         # Queries for all checkers available in CodeChecker
         with DBSession(self._Session) as session:
@@ -3457,6 +3456,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getAnalyzerNameCounts(self, run_ids, report_filter, cmp_data, limit,
                               offset):
         """
@@ -3464,7 +3464,6 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3520,13 +3519,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getSeverityCounts(self, run_ids, report_filter, cmp_data):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
         results = {}
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -3572,6 +3571,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCheckerMsgCounts(self, run_ids, report_filter, cmp_data, limit,
                             offset):
         """
@@ -3579,7 +3579,6 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3633,13 +3632,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReportStatusCounts(self, run_ids, report_filter, cmp_data):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
@@ -3698,13 +3697,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getReviewStatusCounts(self, run_ids, report_filter, cmp_data):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
@@ -3742,13 +3741,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getFileCounts(self, run_ids, report_filter, cmp_data, limit, offset):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3795,6 +3794,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getFileCountsSummary(self, run_ids, report_filter, cmp_data,
                              limit, offset):
         """
@@ -3802,7 +3802,6 @@ class ThriftRequestHandler:
           The inner map contains total report count ("reports") and
           counts per severity, review status and detection status.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3880,6 +3879,7 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data, limit,
                                offset):
         """
@@ -3887,7 +3887,6 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -3970,13 +3969,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getDetectionStatusCounts(self, run_ids, report_filter, cmp_data):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_view()
         results = {}
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -4018,13 +4017,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getFailedFilesCount(self, run_ids):
         """
         Count the number of uniqued failed files in the latest storage of each
         given run. If the run id list is empty the number of failed files will
         be counted for all of the runs.
         """
-        self.__require_view()
 
         # Unfortunately we can't distinct the failed file paths by using SQL
         # queries because the list of failed files for a run / analyzer are
@@ -4034,13 +4033,13 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getFailedFiles(self, run_ids):
         """
         Get files which failed to analyze in the latest storage of the given
         runs. For each files it will return a list where each element contains
         information in which run the failure happened.
         """
-        self.__require_view()
 
         res = defaultdict(list)
         with DBSession(self._Session) as session:
@@ -4067,8 +4066,8 @@ class ThriftRequestHandler:
 
     # -----------------------------------------------------------------------
     @timeit
+    @requires_view
     def getPackageVersion(self):
-        self.__require_view()
 
         return self.__package_version
 
@@ -4296,11 +4295,11 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getSourceComponents(self, component_filter):
         """
         Returns the available source components.
         """
-        self.__require_view()
         with DBSession(self._Session) as session:
             q = session.query(SourceComponent)
 
@@ -4540,8 +4539,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getAnalysisStatistics(self, run_id, run_history_id):
-        self.__require_view()
 
         analyzer_statistics = {}
 
@@ -4569,8 +4568,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def exportData(self, run_filter):
-        self.__require_view()
 
         with DBSession(self._Session) as session:
 
@@ -4721,8 +4720,8 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    @requires_view
     def getCleanupPlans(self, cleanup_plan_filter):
-        self.__require_view()
         with DBSession(self._Session) as session:
             q = session \
                 .query(CleanupPlan) \
