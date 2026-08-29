@@ -1,0 +1,17 @@
+{
+    "analyze": [
+        "--enable=core.DivideZero",
+        "--enable=core.CallAndMessage",
+        "--analyzer-config"
+    ],
+    "parse": [
+        "--print-steps"
+    ],
+    "server": [
+        "--port=9090"
+    ],
+    "store": [
+        "--name=run_name",
+        "--tag=tag_name"
+    ]
+}
