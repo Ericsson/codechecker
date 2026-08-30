@@ -1316,7 +1316,7 @@ class TestAnalyze(unittest.TestCase):
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "gcc",
                        "-o", self.report_dir,
-                       "--enable", "gcc-diagnostic-div-by-zero",
+                       "--enable", "gcc-div-by-zero",
                        "--verbose", "debug_analyzer"]
 
         process = subprocess.Popen(
@@ -1350,7 +1350,7 @@ class TestAnalyze(unittest.TestCase):
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "gcc",
                        "-o", self.report_dir,
-                       "--enable", "gcc-diagnostic-comment",
+                       "--enable", "gcc-comment",
                        "--verbose", "debug_analyzer"]
 
         process = subprocess.Popen(
@@ -1368,9 +1368,9 @@ class TestAnalyze(unittest.TestCase):
                        "--analyzers", "gcc",
                        "-o", self.report_dir,
                        "--enable-all",
-                       "--disable", "gcc-diagnostic-div-by-zero",
+                       "--disable", "gcc-div-by-zero",
                        "--disable", "gcc-out-of-bounds",
-                       "--disable", "gcc-diagnostic-comment",
+                       "--disable", "gcc-comment",
                        "--verbose", "debug_analyzer"]
 
         process = subprocess.Popen(
