@@ -774,8 +774,14 @@ class MassStoreRun:
                 continue
 
             with DBSession(self.__product.session_factory) as session:
-                self.__add_file_content(session, source_file_path, file_hash,
-                                        True)
+                try:
+                    self.__add_file_content(session, source_file_path,
+                                            file_hash)
+                    session.commit()
+                except sqlalchemy.exc.IntegrityError:
+                    # Other transaction might have added the same content in
+                    # the meantime.
+                    session.rollback()
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
                     session, trimmed_file_path, file_hash)
@@ -832,13 +838,13 @@ class MassStoreRun:
         self,
         session: SA_Session,
         source_file_name: str,
-        content_hash: Optional[str],
-        commit: bool
+        content_hash: Optional[str]
     ) -> str:
         """
         Add the necessary file contents. If content_hash in None then this
-        function calculates the content hash. Or if it's available at the
-        caller and it's provided then it will not be calculated again.
+        function calculates and returns the content hash.
+        Or if it's available at the caller and it's provided then it will
+        not be calculated again.
 
         This function must not be called between add_checker_run() and
         finish_checker_run() functions when SQLite database is used!
@@ -867,29 +873,23 @@ class MassStoreRun:
         if not file_content:
             if not source_file_content:
                 source_file_content = get_file_content(source_file_name)
-            try:
-                compressed_content = zlib.compress(
-                    source_file_content, zlib.Z_BEST_COMPRESSION)
 
-                if session.bind.dialect.name == 'postgresql':
-                    insert_stmt = sqlalchemy.dialects.postgresql \
-                        .insert(FileContent).values(
-                            content_hash=content_hash,
-                            content=compressed_content,
-                            blame_info=None).on_conflict_do_nothing(
-                                index_elements=['content_hash'])
+            compressed_content = zlib.compress(
+                source_file_content, zlib.Z_BEST_COMPRESSION)
 
-                    session.execute(insert_stmt)
-                else:
-                    fc = FileContent(content_hash, compressed_content, None)
-                    session.add(fc)
+            if session.bind.dialect.name == 'postgresql':
+                insert_stmt = sqlalchemy.dialects.postgresql \
+                    .insert(FileContent).values(
+                        content_hash=content_hash,
+                        content=compressed_content,
+                        blame_info=None).on_conflict_do_nothing(
+                            index_elements=['content_hash'])
 
-                if commit:
-                    session.commit()
-            except sqlalchemy.exc.IntegrityError:
-                # Other transaction moght have added the same content in
-                # the meantime.
-                session.rollback()
+                session.execute(insert_stmt)
+            else:
+                fc = FileContent(content_hash, compressed_content, None)
+                session.add(fc)
+                session.flush()
 
         return content_hash
 
@@ -1034,8 +1034,7 @@ class MassStoreRun:
             return
 
         for file in os.scandir(conf_dir_path):
-            content_hash = self.__add_file_content(session, file.path,
-                                                   None, False)
+            content_hash = self.__add_file_content(session, file.path, None)
 
             if (not session.get(AnalysisInfoFile,
                                 (analysis_info_id, file.name, content_hash))):
