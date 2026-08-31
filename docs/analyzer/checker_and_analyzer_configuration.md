@@ -92,13 +92,6 @@ inconsistent (according to the more accurate constraint tracking of Z3).
 * For more information about Z3 refutation, see also [the report by Mikhail
   Ramalho](https://lists.llvm.org/pipermail/cfe-dev/2018-August/058912.html)
   who developed this feature in 2018.
-* This Z3 refutation mode (which is also known as Z3 validation and Z3
-  crosschecking) should not be confused with the "Z3 as the constraint solver"
-  mode where Z3 completely replaces the builtin constraint modeling of the
-  analyzer. This mode was removed from upstream Clang (replaced by
-  `-analyzer-constraints=unsupported-z3`), and the `--z3 on` flag in
-  CodeChecker is deprecated with no effect. It will be removed in
-  CodeChecker 6.30.
 * If the `clang` used by CodeChecker does not support Z3, then CodeChecker does
   not recognize the Z3-specific options, which produces confusing errors like
   `error: argument input: File doesn't exist: <SOMEPATH>/on` (because the value

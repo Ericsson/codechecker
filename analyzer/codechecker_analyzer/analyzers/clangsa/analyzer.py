@@ -742,14 +742,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
-        handler.enable_z3 = 'enable_z3' in args and args.enable_z3 == 'on'
-        if handler.enable_z3:
-            LOG.warning("The '--z3' flag is deprecated and has no effect. "
-                        "The Z3 constraint solver backend is no longer "
-                        "supported by upstream Clang. This flag will be "
-                        "removed in CodeChecker 6.30. Use "
-                        "'--z3-refutation' instead.")
-
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'
 
