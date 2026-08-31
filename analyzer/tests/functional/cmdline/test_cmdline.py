@@ -212,8 +212,8 @@ class TestCmdline(unittest.TestCase):
                                       'MallocSizeof',
                                       'clang-diagnostic-format-overflow',
                                       'overflow-non-kprintf',
-                                      'gcc-allocation-size',
-                                      'gcc-out-of-bounds']))
+                                      'gcc-analyzer-allocation-size',
+                                      'gcc-analyzer-out-of-bounds']))
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
         _, out, _ = run_cmd(checkers_cmd)
