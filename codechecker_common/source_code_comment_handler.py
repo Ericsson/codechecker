@@ -362,7 +362,7 @@ class SourceCodeCommentHandler:
                         source_line_comments.append(source_line_comment)
                 continue
 
-            cstyle_start, cstyle_end = (
+            cstyle_start, _ = (
                 self.__check_if_cstyle_comment(source_line))
             if cstyle_start:
                 block = [source_line]
