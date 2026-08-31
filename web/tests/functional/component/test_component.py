@@ -20,6 +20,7 @@ import uuid
 from codechecker_api_shared.ttypes import Permission
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env
@@ -156,7 +157,7 @@ class TestComponent(unittest.TestCase):
         # Get the run names which belong to this test
         run_names = env.get_run_names(self._test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -246,17 +247,16 @@ class TestComponent(unittest.TestCase):
         the component.
         """
         all_results = self._cc_client.getRunResults(
-            None, 500, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
 
         r_filter = ReportFilter(componentNames=[c['name'] for c in components])
-        component_results = self._cc_client.getRunResults(None, 500, 0, None,
-                                                          r_filter, None,
-                                                          False)
+        component_results = self._cc_client.getRunResults(
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertNotEqual(len(component_results), 0)
 
         r_filter = ReportFilter(componentNames=[GEN_OTHER_COMPONENT_NAME])
-        other_results = self._cc_client.getRunResults(None, 500, 0, None,
-                                                      r_filter, None, False)
+        other_results = self._cc_client.getRunResults(
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertNotEqual(len(other_results), 0)
 
         self.assertEqual(len(all_results),
@@ -309,7 +309,7 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=[test_component['name']])
         run_results = self._cc_client.getRunResults(None,
-                                                    500,
+                                                    MAX_QUERY_SIZE,
                                                     0,
                                                     None,
                                                     r_filter,
@@ -350,7 +350,7 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=[test_component['name']])
         run_results = self._cc_client.getRunResults(None,
-                                                    500,
+                                                    MAX_QUERY_SIZE,
                                                     0,
                                                     None,
                                                     r_filter,
@@ -404,7 +404,7 @@ class TestComponent(unittest.TestCase):
                                                 test_component2['name']])
 
         run_results = self._cc_client.getRunResults(None,
-                                                    500,
+                                                    MAX_QUERY_SIZE,
                                                     0,
                                                     None,
                                                     r_filter,
@@ -445,7 +445,7 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=[test_component['name']])
         run_results = self._cc_client.getRunResults(None,
-                                                    500,
+                                                    MAX_QUERY_SIZE,
                                                     0,
                                                     None,
                                                     r_filter,
@@ -474,12 +474,12 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(len(components), 0)
 
         all_results = self._cc_client.getRunResults(
-            None, 500, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
         self.assertIsNotNone(all_results)
 
         r_filter = ReportFilter(componentNames=[GEN_OTHER_COMPONENT_NAME])
-        other_results = self._cc_client.getRunResults(None, 500, 0, None,
-                                                      r_filter, None, False)
+        other_results = self._cc_client.getRunResults(
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
 
         self.assertEqual(len(all_results), len(other_results))
 
@@ -566,7 +566,7 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=['peh'])
         component_results = self._cc_client.getRunResults(
-            None, 500, 0, None, r_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
 
         self.assertEqual(len(component_results), 3)
         self.assertTrue(
@@ -575,14 +575,14 @@ class TestComponent(unittest.TestCase):
 
         r_filter = ReportFilter(componentNames=['pb1cpp'])
         component_results = self._cc_client.getRunResults(
-            None, 500, 0, None, r_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertEqual(len(component_results), 0)
 
         r_filter = ReportFilter(
             componentNames=['pb1cpp'],
             componentMatchesAnyPoint=True)
         component_results = self._cc_client.getRunResults(
-            None, 500, 0, None, r_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertEqual(len(component_results), 1)
         self.assertTrue(
             component_results[0].checkedFile.endswith('path_end.h'))
@@ -614,7 +614,7 @@ class TestComponent(unittest.TestCase):
             fullReportPathInComponent=False
         )
         component_results = self._cc_client.getRunResults(
-            None, 500, 0, None, r_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertEqual(len(component_results), 2)
         self.assertEqual(component_results[0].checkerId, 'core.DivideZero')
         self.assertEqual(component_results[1].checkerId,
@@ -624,7 +624,7 @@ class TestComponent(unittest.TestCase):
             componentNames=['calculate'],
             fullReportPathInComponent=True)
         component_results = self._cc_client.getRunResults(
-            None, 500, 0, None, r_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, r_filter, None, False)
         self.assertEqual(len(component_results), 1)
         self.assertEqual(component_results[0].checkerId,
                          'misc-definitions-in-headers')

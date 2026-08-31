@@ -31,8 +31,19 @@ export function useReviewStatus() {
     }
   }
 
+  function reviewStatusColor(reviewCode) {
+    switch (reviewCode) {
+    case ReviewStatus.UNREVIEWED: return "#4b9fd5";
+    case ReviewStatus.CONFIRMED: return "#e92625";
+    case ReviewStatus.FALSE_POSITIVE: return "#808080";
+    case ReviewStatus.INTENTIONAL: return "#669603";
+    default: return undefined;
+    }
+  }
+
   return {
     reviewStatusFromCodeToString,
-    reviewStatusFromStringToCode
+    reviewStatusFromStringToCode,
+    reviewStatusColor
   };
 }

@@ -22,8 +22,8 @@ from pathlib import Path
 import sqlalchemy
 import tempfile
 import time
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union, \
-    cast
+from typing import Any, Callable, Dict, List, NoReturn, \
+    Optional, Set, Tuple, Union, cast
 import zipfile
 import zlib
 
@@ -46,10 +46,9 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import \
-    AnalysisInfo, AnalysisInfoChecker, AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, \
-    Checker, \
-    ExtendedReportData, \
+    AnalysisInfo, AnalyzerStatistic, \
+    ReportPathData, ReportPathDataFile, \
+    Checker, CheckerSet, CheckerSetItem, \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
     Run, RunLock as DBRunLock, RunHistory, \
@@ -61,7 +60,8 @@ from ..product import Product as ServerProduct
 from ..session_manager import SessionManager
 from ..task_executors.abstract_task import AbstractTask, TaskCancelHonoured
 from ..task_executors.task_manager import TaskManager
-from .thrift_enum_helper import report_extended_data_type_str
+
+from sqlalchemy.orm import Session as SA_Session
 
 
 LOG = get_logger('server')
@@ -234,6 +234,14 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
     This ZIP is extracted to a temporary directory and the ZIP is then deleted.
     The function returns the size of the extracted decompressed ZIP file.
     """
+    decompressed_zip_max_size = 1024 * 1024 * 1024 * 16  # 16 GiB
+
+    def reject_unzip() -> NoReturn:
+        error_message = (f"Rejected storage of run '{run_name}', "
+                         "decompressed ZIP file is too large!")
+        LOG.info(error_message)
+        raise RequestFailed(ErrorCode.IOERROR, error_message)
+
     if not b64zip:
         return 0
 
@@ -242,9 +250,14 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
         LOG.debug("Decompressing input massStoreRun() ZIP to '%s' ...",
                   zip_file.name)
         start_time = time.time()
-        zip_file.write(zlib.decompress(base64.b64decode(b64zip)))
+        zlib_decomp = zlib.decompressobj()
+        zip_file.write(zlib_decomp.decompress(
+            base64.b64decode(b64zip), max_length=decompressed_zip_max_size))
         zip_file.flush()
         end_time = time.time()
+
+        if zlib_decomp.unconsumed_tail:
+            reject_unzip()
 
         size = os.stat(zip_file.name).st_size
         LOG.debug("Decompressed input massStoreRun() ZIP '%s' -> '%s' "
@@ -258,7 +271,12 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
             LOG.debug("Extracting massStoreRun() ZIP '%s' to '%s' ...",
                       zip_file.name, output_dir)
             try:
-                zip_handle.extractall(output_dir)
+                unzipped_size = 0
+                for member in zip_handle.infolist():
+                    unzipped_size += member.file_size
+                    if unzipped_size > decompressed_zip_max_size:
+                        reject_unzip()
+                    zip_handle.extract(member, output_dir)
                 return size
             except Exception:
                 LOG.error("Failed to extract received ZIP.")
@@ -1002,7 +1020,7 @@ class MassStoreRun:
 
     def __store_analysis_info(
         self,
-        session: DBSession,
+        session: SA_Session,
         run_history: RunHistory
     ):
         """ Store analysis info for the given run history. """
@@ -1012,38 +1030,64 @@ class MassStoreRun:
                     analyzer_command.encode("utf-8"),
                     zlib.Z_BEST_COMPRESSION)
 
-                analysis_info_rows = session \
-                    .query(AnalysisInfo) \
-                    .filter(AnalysisInfo.analyzer_command == cmd) \
-                    .all()
+                enabled_checkers: List[int] = []
+                disabled_checkers: List[int] = []
+                for analyzer in mip.analyzers:
+                    q = session \
+                        .query(Checker) \
+                        .filter(Checker.analyzer_name == analyzer)
+                    db_checkers = {r.checker_name: r for r in q.all()}
 
-                if analysis_info_rows:
-                    # It is possible when multiple runs are stored
-                    # simultaneously to the server with the same analysis
-                    # command that multiple entries are stored into the
-                    # database. In this case we will select the first one.
-                    analysis_info = analysis_info_rows[0]
-                else:
-                    analysis_info = AnalysisInfo(analyzer_command=cmd)
+                    for chk, is_enabled in \
+                            mip.checkers.get(analyzer, {}).items():
+                        if is_enabled:
+                            enabled_checkers.append(db_checkers[chk].id)
+                        else:
+                            disabled_checkers.append(db_checkers[chk].id)
 
-                    # Obtain the ID eagerly to be able to use the M-to-N table.
-                    session.add(analysis_info)
-                    session.flush()
-                    session.refresh(analysis_info, ["id"])
+                # Check if the CheckerSet was already used before.
+                checker_set_hash = CheckerSet.compute_hash(enabled_checkers,
+                                                           disabled_checkers)
+                checker_set = session.query(CheckerSet) \
+                    .filter(CheckerSet.hash_digest == checker_set_hash) \
+                    .first()
 
-                    for analyzer in mip.analyzers:
-                        q = session \
-                            .query(Checker) \
-                            .filter(Checker.analyzer_name == analyzer)
-                        db_checkers = {r.checker_name: r for r in q.all()}
+                # If not, create a new CheckerSet and insert to db
+                if not checker_set:
+                    try:
+                        with session.begin_nested():
+                            checker_set = CheckerSet(checker_set_hash)
+                            # Obtain CheckerSet id eagerly.
+                            session.add(checker_set)
+                            session.flush()
+                            session.refresh(checker_set, ["id"])
+                            LOG.info(
+                                "[%s] Created new CheckerSet with hash '%s'",
+                                self._name, checker_set_hash)
 
-                        connection_rows = [AnalysisInfoChecker(
-                            analysis_info, db_checkers[chk], is_enabled)
-                            for chk, is_enabled
-                            in mip.checkers.get(analyzer, {}).items()]
-                        for r in connection_rows:
-                            session.add(r)
+                            # Insert checkers as elements of this newly
+                            # created CheckerSet
+                            for e in enabled_checkers:
+                                session.add(CheckerSetItem(checker_set.id,
+                                                           e, True))
+                            for d in disabled_checkers:
+                                session.add(CheckerSetItem(checker_set.id,
+                                                           d, False))
+                    except Exception:
+                        # Meanwhile, another store operation already
+                        # inserted this CheckerSet, query the existing
+                        # one from db
+                        checker_set = session.query(CheckerSet) \
+                            .filter(
+                                CheckerSet.hash_digest == checker_set_hash) \
+                            .first()
 
+                if not checker_set:
+                    raise RuntimeError(
+                        "Failed to query CheckerSet from database!")
+
+                analysis_info = AnalysisInfo(analyzer_command=cmd,
+                                             checker_set_id=checker_set.id)
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
 
@@ -1270,48 +1314,83 @@ class MassStoreRun:
                 .update({"checker_id": chk_obj.id},
                         synchronize_session=False)
 
-    def __add_report_context(self, session, file_path_to_id):
+    def __add_report_context(
+        self,
+        session: SA_Session,
+        file_path_to_id: Dict[str, int]
+    ):
+        path_data_files = []
+
         for db_report, report in self.__added_reports:
+            path_data = []
+            used_file_ids = set()
+
             LOG.debug("Storing bug path positions.")
-            for idx, path_pos in enumerate(report.bug_path_positions):
-                session.add(BugReportPoint(
-                    path_pos.range.start_line, path_pos.range.start_col,
-                    path_pos.range.end_line, path_pos.range.end_col,
-                    idx, file_path_to_id[path_pos.file.path], db_report.id))
+            for path_pos in report.bug_path_positions:
+                path_data.append(ReportPathData.Item(
+                    path_pos.range.start_line,
+                    path_pos.range.start_col,
+                    path_pos.range.end_line,
+                    path_pos.range.end_col,
+                    file_path_to_id[path_pos.file.path],
+                    "path"
+                ))
+                used_file_ids.add(file_path_to_id[path_pos.file.path])
 
             LOG.debug("Storing bug path events.")
-            for idx, event in enumerate(report.bug_path_events):
-                session.add(BugPathEvent(
-                    event.range.start_line, event.range.start_col,
-                    event.range.end_line, event.range.end_col,
-                    idx, event.message, file_path_to_id[event.file.path],
-                    db_report.id))
+            for event in report.bug_path_events:
+                path_data.append(ReportPathData.Item(
+                    event.range.start_line,
+                    event.range.start_col,
+                    event.range.end_line,
+                    event.range.end_col,
+                    file_path_to_id[event.file.path],
+                    "event",
+                    event.message
+                ))
+                used_file_ids.add(file_path_to_id[event.file.path])
 
             LOG.debug("Storing notes.")
             for note in report.notes:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.NOTE)
-
-                session.add(ExtendedReportData(
-                    note.range.start_line, note.range.start_col,
-                    note.range.end_line, note.range.end_col,
-                    note.message, file_path_to_id[note.file.path],
-                    db_report.id, data_type))
+                path_data.append(ReportPathData.Item(
+                    note.range.start_line,
+                    note.range.start_col,
+                    note.range.end_line,
+                    note.range.end_col,
+                    file_path_to_id[note.file.path],
+                    "note",
+                    note.message
+                ))
+                used_file_ids.add(file_path_to_id[note.file.path])
 
             LOG.debug("Storing macro expansions.")
             for macro in report.macro_expansions:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.MACRO)
+                path_data.append(ReportPathData.Item(
+                    macro.range.start_line,
+                    macro.range.start_col,
+                    macro.range.end_line,
+                    macro.range.end_col,
+                    file_path_to_id[macro.file.path],
+                    "macro",
+                    macro.message
+                ))
+                used_file_ids.add(file_path_to_id[macro.file.path])
 
-                session.add(ExtendedReportData(
-                    macro.range.start_line, macro.range.start_col,
-                    macro.range.end_line, macro.range.end_col,
-                    macro.message, file_path_to_id[macro.file.path],
-                    db_report.id, data_type))
+            report_path_data = ReportPathData(db_report.id, path_data)
+            session.add(report_path_data)
+            session.flush()
+
+            path_data_files.extend({
+                "report_path_data_id": report_path_data.report_id,
+                "file_id": fid
+            } for fid in used_file_ids)
 
             if report.annotations:
                 self.__validate_and_add_report_annotations(
                     session, db_report.id, report.annotations)
+
+        if path_data_files:
+            session.execute(ReportPathDataFile.insert(), path_data_files)
 
         session.flush()
 
@@ -1480,7 +1559,7 @@ class MassStoreRun:
 
     def __store_reports(
         self,
-        session: DBSession,
+        session: SA_Session,
         report_dir: Path,
         source_root: Path,
         run_id: int,

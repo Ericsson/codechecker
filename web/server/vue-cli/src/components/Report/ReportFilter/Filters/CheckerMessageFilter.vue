@@ -10,7 +10,7 @@
     :limit="baseSelectOptionFilter.defaultLimit.value"
     :panel="baseSelectOptionFilter.panel.value"
     @clear="baseSelectOptionFilter.clear(true)"
-    @input="setSelectedItems"
+    @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -23,21 +23,16 @@
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
-import { ref, toRef } from "vue";
+import { ref } from "vue";
 
 import {
   useBaseSelectOptionFilter
 } from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([ "update:url" ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 

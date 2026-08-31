@@ -19,6 +19,8 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
+from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+
 
 def setup_class_common(workspace_name):
     """
@@ -100,7 +102,7 @@ def setup_class_common(workspace_name):
 
     env.export_test_cfg(test_workspace, test_config)
     cc_client = env.setup_viewer_client(test_workspace)
-    for run_data in cc_client.getRunData(None, None, 0, None):
+    for run_data in cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None):
         cc_client.removeRun(run_data.runId, None)
 
     # Copy "cpp" test project 3 times to different directories.

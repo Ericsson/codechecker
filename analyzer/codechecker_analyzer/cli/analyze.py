@@ -461,17 +461,6 @@ def add_arguments_to_parser(parser):
                                     "clang-tidy:cc-verbatim-args-file="
                                     "<filepath>")
 
-    analyzer_opts.add_argument('--tidy-config',
-                               dest='tidy_config',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. "
-                                    "A file in YAML format containing the "
-                                    "configuration of clang-tidy checkers. "
-                                    "The file can be dumped by "
-                                    "'CodeChecker analyzers --dump-config "
-                                    "clang-tidy' command.")
-
     analyzer_opts.add_argument('--analyzer-config',
                                type=analyzer_config,
                                dest='analyzer_config',
@@ -1012,28 +1001,35 @@ def is_checker_config_valid(
 
 def get_affected_file_paths(
     file_filters: List[str],
-    compile_commands: tu_collector.CompilationDB
+    compile_commands: tu_collector.CompilationDB,
+    jobs: int
 ) -> List[str]:
     """
     Returns a list of source files for existing header file otherwise returns
     with the same file path expression.
     """
     file_paths = []  # Use list to keep the order of the file paths.
+    header_files: List[str] = []
     for file_filter in file_filters:
         file_paths.append(str(Path(file_filter).resolve())
                           if '*' not in file_filter else file_filter)
 
         if os.path.exists(file_filter) and \
                 file_filter.endswith(header_file_extensions):
-            LOG.info("Get dependent source files for '%s'...", file_filter)
-            dependent_sources = tu_collector.get_dependent_sources(
-                compile_commands, file_filter)
+            header_files.append(file_filter)
 
-            LOG.info("Get dependent source files for '%s' done.", file_filter)
-            LOG.debug("Dependent source files: %s",
-                      ', '.join(dependent_sources))
+    if not header_files:
+        return file_paths
 
-            file_paths.extend(dependent_sources)
+    LOG.info("Get dependent source files for '%s'...", ', '.join(header_files))
+    dependent_sources = tu_collector.get_dependent_sources(
+        compile_commands, header_files, jobs)
+    LOG.info("Get dependent source files for '%s' done.",
+             ', '.join(header_files))
+    LOG.debug("Dependent source files: %s",
+              ', '.join(dependent_sources))
+
+    file_paths.extend(dependent_sources)
 
     return file_paths
 
@@ -1046,7 +1042,7 @@ def __get_skip_handlers(args, compile_commands) -> SkipListHandlers:
     skip_handlers = SkipListHandlers()
     if 'files' in args:
         source_file_paths = get_affected_file_paths(
-            args.files, compile_commands)
+            args.files, compile_commands, args.jobs)
 
         # Creates a skip file where all source files will be skipped except
         # the given source files and all the header files.
@@ -1285,11 +1281,6 @@ def main(args):
                  "errors relating to unknown analyzer/checker configs, "
                  "consider using the option '--no-missing-checker-error'")
         sys.exit(1)
-
-    if 'tidy_config' in args:
-        LOG.warning(
-            "--tidy-config is deprecated and will be removed in the next "
-            "release. Use --analyzer-config or --checker-config instead.")
 
     # CTU loading mode is only meaningful if CTU itself is enabled.
     if 'ctu_ast_mode' in args and 'ctu_phases' not in args:

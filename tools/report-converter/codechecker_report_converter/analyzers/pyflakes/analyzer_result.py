@@ -21,6 +21,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Pyflakes'
     URL = 'https://github.com/PyCQA/pyflakes'
 
+    EXAMPLE_CMD = """\
+# Run Pyflakes and redirect the output to a file.
+pyflakes /path/to/your/project > ./pyflakes_reports.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Pyflakes.
+report-converter -t pyflakes -o ./codechecker_pyflakes_reports \
+    ./pyflakes_reports.out
+
+# Store the Pyflakes reports with CodeChecker.
+CodeChecker store ./codechecker_pyflakes_reports -n pyflakes"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser(file_path).get_reports(file_path)

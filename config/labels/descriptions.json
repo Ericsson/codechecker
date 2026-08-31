@@ -16,10 +16,12 @@
   },
   "guideline": {
     "cwe-top-25-2024": "https://cwe.mitre.org/top25/",
+    "cwe-vulnerabilities": "https://cwe.mitre.org/",
     "sei-cert-c": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/",
     "sei-cert-cpp": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/",
     "misra-c": "https://www.misra.org.uk/",
     "memory-safety": "https://cwe.mitre.org/data/definitions/1399.html",
-    "owasp-top-10-2021": "https://owasp.org/Top10/2021/"
+    "owasp-top-10-2021": "https://owasp.org/Top10/2021/",
+    "owasp-top-10-2025": "https://owasp.org/Top10/2025/"
   }
 }

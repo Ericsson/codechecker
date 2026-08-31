@@ -1,0 +1,135 @@
+guideline: cwe-vulnerabilities
+guideline_title: CWE Vulnerabilities
+rules:
+- rule_id: cwe-20
+  title: Improper Input Validation
+  rule_url: https://cwe.mitre.org/data/definitions/20.html
+- rule_id: cwe-22
+  title: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+  rule_url: https://cwe.mitre.org/data/definitions/22.html
+- rule_id: cwe-77
+  title: Improper Neutralization of Special Elements used in a Command ('Command Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/77.html
+- rule_id: cwe-78
+  title: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/78.html
+- rule_id: cwe-79
+  title: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+  rule_url: https://cwe.mitre.org/data/definitions/79.html
+- rule_id: cwe-89
+  title: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/89.html
+- rule_id: cwe-94
+  title: Improper Control of Generation of Code ('Code Injection')
+  rule_url: https://cwe.mitre.org/data/definitions/94.html
+- rule_id: cwe-119
+  title: Improper Restriction of Operations within the Bounds of a Memory Buffer
+  rule_url: https://cwe.mitre.org/data/definitions/119.html
+- rule_id: cwe-121
+  title: Stack-Based Buffer Overflow
+  rule_url: https://cwe.mitre.org/data/definitions/121.html
+- rule_id: cwe-122
+  title: Heap-based Buffer Overflow
+  rule_url: https://cwe.mitre.org/data/definitions/122.html
+- rule_id: cwe-123
+  title: Write-what-where Condition
+  rule_url: https://cwe.mitre.org/data/definitions/123.html
+- rule_id: cwe-124
+  title: Buffer Underwrite ('Buffer Underflow')
+  rule_url: https://cwe.mitre.org/data/definitions/124.html
+- rule_id: cwe-125
+  title: Out-of-bounds Read
+  rule_url: https://cwe.mitre.org/data/definitions/125.html
+- rule_id: cwe-126
+  title: Buffer Over-read
+  rule_url: https://cwe.mitre.org/data/definitions/126.html
+- rule_id: cwe-127
+  title: Buffer Under-read
+  rule_url: https://cwe.mitre.org/data/definitions/127.html
+- rule_id: cwe-129
+  title: Improper Validation of Array Index
+  rule_url: https://cwe.mitre.org/data/definitions/129.html
+- rule_id: cwe-170
+  title: Improper Null Termination
+  rule_url: https://cwe.mitre.org/data/definitions/170.html
+- rule_id: cwe-190
+  title: Integer Overflow or Wraparound
+  rule_url: https://cwe.mitre.org/data/definitions/190.html
+- rule_id: cwe-252
+  title: Unchecked Return Value
+  rule_url: https://cwe.mitre.org/data/definitions/252.html
+- rule_id: cwe-269
+  title: Improper Privilege Management
+  rule_url: https://cwe.mitre.org/data/definitions/269.html
+- rule_id: cwe-335
+  title: Incorrect Usage of Seeds in Pseudo-Random Number Generator (PRNG)
+  rule_url: https://cwe.mitre.org/data/definitions/335.html
+- rule_id: cwe-338
+  title: Use of Cryptographically Weak Pseudo-Random Number Generator (PRNG)
+  rule_url: https://cwe.mitre.org/data/definitions/338.html
+- rule_id: cwe-362
+  title: Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')
+  rule_url: https://cwe.mitre.org/data/definitions/362.html
+- rule_id: cwe-369
+  title: Divide By Zero
+  rule_url: https://cwe.mitre.org/data/definitions/369.html
+- rule_id: cwe-377
+  title: Insecure Temporary File
+  rule_url: https://cwe.mitre.org/data/definitions/377.html
+- rule_id: cwe-390
+  title: Detection of Error Condition Without Action
+  rule_url: https://cwe.mitre.org/data/definitions/390.html
+- rule_id: cwe-400
+  title: Uncontrolled Resource Consumption
+  rule_url: https://cwe.mitre.org/data/definitions/400.html
+- rule_id: cwe-401
+  title: Missing Release of Memory after Effective Lifetime
+  rule_url: https://cwe.mitre.org/data/definitions/401.html
+- rule_id: cwe-415
+  title: Double Free
+  rule_url: https://cwe.mitre.org/data/definitions/415.html
+- rule_id: cwe-416
+  title: Use After Free
+  rule_url: https://cwe.mitre.org/data/definitions/416.html
+- rule_id: cwe-457
+  title: Use of Uninitialized Variable
+  rule_url: https://cwe.mitre.org/data/definitions/457.html
+- rule_id: cwe-476
+  title: "NULL Pointer Dereference"
+  rule_url: https://cwe.mitre.org/data/definitions/476.html
+- rule_id: cwe-478
+  title: Missing Default Case in Multiple Condition Expression
+  rule_url: https://cwe.mitre.org/data/definitions/478.html
+- rule_id: cwe-562
+  title: Return of Stack Variable Address
+  rule_url: https://cwe.mitre.org/data/definitions/562.html
+- rule_id: cwe-590
+  title: Free of Memory not on the Heap
+  rule_url: https://cwe.mitre.org/data/definitions/590.html
+- rule_id: cwe-664
+  title: Improper Control of a Resource Through its Lifetime
+  rule_url: https://cwe.mitre.org/data/definitions/664.html
+- rule_id: cwe-668
+  title: Exposure of Resource to Wrong Sphere
+  rule_url: https://cwe.mitre.org/data/definitions/668.html
+- rule_id: cwe-676
+  title: Use of Potentially Dangerous Function
+  rule_url: https://cwe.mitre.org/data/definitions/676.html
+- rule_id: cwe-732
+  title: Incorrect Permission Assignment for Critical Resource
+  rule_url: https://cwe.mitre.org/data/definitions/732.html
+- rule_id: cwe-761
+  title: Free of Pointer not at Start of Buffer
+  rule_url: https://cwe.mitre.org/data/definitions/761.html
+- rule_id: cwe-762
+  title: Mismatched Memory Management Routines
+  rule_url: https://cwe.mitre.org/data/definitions/762.html
+- rule_id: cwe-787
+  title: Out-of-bounds Write
+  rule_url: https://cwe.mitre.org/data/definitions/787.html
+- rule_id: cwe-789
+  title: Memory Allocation with Excessive Size Value
+  rule_url: https://cwe.mitre.org/data/definitions/789.html
+- rule_id: cwe-843
+  title: Access of Resource Using Incompatible Type ('Type Confusion')
+  rule_url: https://cwe.mitre.org/data/definitions/843.html

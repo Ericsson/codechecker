@@ -27,14 +27,14 @@ from typing import Any, Collection, Dict, List, Optional, Set, Tuple
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, union_all, select, bindparam, literal_column, cast, true
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, Session as SA_Session
 from sqlalchemy.types import ARRAY, String
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
-    BlameData, BlameInfo, BugPathPos, \
+    BlameData, BlameInfo, \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
     CommentData, \
     DetectionStatus, DiffType, \
@@ -64,14 +64,13 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
+    AnalysisInfo, \
     AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, \
-    CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
-    ExtendedReportData, \
+    CleanupPlan, CleanupPlanReportHash, Checker, CheckerSetItem, Comment, \
     File, FileContent, \
-    Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
-    Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
+    Report, ReportAnnotations, ReportAnalysisInfo, \
+    ReportPathData, ReportPathDataFile, \
+    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
 from .common import exc_to_thrift_reqfail
@@ -121,6 +120,13 @@ def verify_limit_range(limit):
 
     Query limit should not be larger than the max allowed value.
     Max is returned if the value is larger than max.
+
+    TODO: It would be nice in the long terms to raise an error when the limit
+    parameter is too big, otherwise the clients aren't notified about capping
+    the results.
+    The client implementation is providing a limit from CodeChecker 6.29. This
+    behavior could be strictly enforced when this version becomes quite
+    outdated.
     """
     max_query_limit = constants.MAX_QUERY_SIZE
     if not limit:
@@ -225,7 +231,7 @@ def update_source_component_files(
 
 
 def process_report_filter(
-    session,
+    session: SA_Session,
     run_ids,
     report_filter,
     cmp_data=None,
@@ -554,57 +560,43 @@ def get_source_component_file_query(
 
 
 def get_reports_by_bugpath_filter_for_single_origin(
-    session,
+    session: SA_Session,
     file_filter_q
 ) -> Set[int]:
     """
     This function returns a query for report IDs that are fully contained
     within the files specified by the file_filter_q query."""
 
-    LOG.info("get_reports_by_bugpath_filter file_filter_q: %s", file_filter_q)
     q_report = session.query(Report.id) \
         .join(File, File.id == Report.file_id) \
         .filter(file_filter_q)
 
-    q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id == BugPathEvent.file_id) \
+    q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id == ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
-    q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id == BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id == ExtendedReportData.file_id) \
+    neg_q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id != ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
     neg_q_report = session.query(Report.id) \
         .join(File, File.id != Report.file_id) \
         .filter(file_filter_q)
 
-    neg_q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id != BugPathEvent.file_id) \
-        .filter(file_filter_q)
-
-    neg_q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id != BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    neg_q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id != ExtendedReportData.file_id) \
-        .filter(file_filter_q)
-
-    return q_report.union(
-        q_bugpathevent,
-        q_bugreportpoint,
-        q_extendedreportdata).except_(
-        neg_q_report,
-        neg_q_bugpathevent,
-        neg_q_bugreportpoint,
-        neg_q_extendedreportdata)
+    return q_report.union(q_reportpathdata) \
+        .except_(neg_q_report, neg_q_reportpathdata)
 
 
-def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
+def get_reports_by_bugpath_filter(
+    session: SA_Session,
+    file_filter_q
+) -> Set[int]:
     """
     This function returns a query for report IDs that are related to any file
     described by the query in the second parameter, either because their bug
@@ -615,25 +607,17 @@ def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
         .join(File, File.id == Report.file_id) \
         .filter(file_filter_q)
 
-    q_bugpathevent = session.query(BugPathEvent.report_id) \
-        .join(File, File.id == BugPathEvent.file_id) \
+    q_reportpathdata = session.query(ReportPathData.report_id) \
+        .join(ReportPathDataFile,
+              ReportPathData.report_id ==
+              ReportPathDataFile.c.report_path_data_id) \
+        .join(File, File.id == ReportPathDataFile.c.file_id) \
         .filter(file_filter_q)
 
-    q_bugreportpoint = session.query(BugReportPoint.report_id) \
-        .join(File, File.id == BugReportPoint.file_id) \
-        .filter(file_filter_q)
-
-    q_extendedreportdata = session.query(ExtendedReportData.report_id) \
-        .join(File, File.id == ExtendedReportData.file_id) \
-        .filter(file_filter_q)
-
-    return q_report.union(
-        q_bugpathevent,
-        q_extendedreportdata,
-        q_bugreportpoint)
+    return q_report.union(q_reportpathdata)
 
 
-def get_reports_by_components(session,
+def get_reports_by_components(session: SA_Session,
                               component_names: List[str],
                               single_origin: bool) -> Set[int]:
     """
@@ -890,52 +874,42 @@ def process_run_filter(session, query, run_filter):
     return query
 
 
-def get_report_details(session, report_ids):
+def get_report_details(
+    session: SA_Session,
+    report_ids: List[int]
+) -> Dict[int, ReportDetails]:
     """
     Returns report details for the given report ids.
     """
     details = {}
 
-    # Get bug path events.
-    bug_path_events = session.query(BugPathEvent, File.filepath) \
-        .filter(BugPathEvent.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == BugPathEvent.file_id) \
-        .order_by(BugPathEvent.report_id, BugPathEvent.order)
-
     bug_events_list = defaultdict(list)
-    for event, file_path in bug_path_events:
-        report_id = event.report_id
-        event = bugpathevent_db_to_api(event)
-        event.filePath = file_path
-        bug_events_list[report_id].append(event)
-
-    # Get bug report points.
-    bug_report_points = session.query(BugReportPoint, File.filepath) \
-        .filter(BugReportPoint.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == BugReportPoint.file_id) \
-        .order_by(BugReportPoint.report_id, BugReportPoint.order)
-
     bug_point_list = defaultdict(list)
-    for bug_point, file_path in bug_report_points:
-        report_id = bug_point.report_id
-        bug_point = bugreportpoint_db_to_api(bug_point)
-        bug_point.filePath = file_path
-        bug_point_list[report_id].append(bug_point)
-
-    # Get extended report data.
     extended_data_list = defaultdict(list)
-    q = session.query(ExtendedReportData, File.filepath) \
-        .filter(ExtendedReportData.report_id.in_(report_ids)) \
-        .outerjoin(File,
-                   File.id == ExtendedReportData.file_id)
 
-    for data, file_path in q:
-        report_id = data.report_id
-        extended_data = extended_data_db_to_api(data)
-        extended_data.filePath = file_path
-        extended_data_list[report_id].append(extended_data)
+    report_path_data = session.query(ReportPathData) \
+        .filter(ReportPathData.report_id.in_(report_ids))
+
+    files_q = session.query(File) \
+        .join(ReportPathDataFile, ReportPathDataFile.c.file_id == File.id) \
+        .filter(ReportPathDataFile.c.report_path_data_id.in_(report_ids))
+
+    files = {f.id: f.filepath for f in files_q}
+
+    for rpd in report_path_data:
+        for pd in rpd.path_data:
+            if pd.type == "event":
+                event = bugpathevent_db_to_api(pd)
+                event.filePath = files[pd.file_id]
+                bug_events_list[rpd.report_id].append(event)
+            elif pd.type == "path":
+                bug_point = bugreportpoint_db_to_api(pd)
+                bug_point.filePath = files[pd.file_id]
+                bug_point_list[rpd.report_id].append(bug_point)
+            else:
+                extended_data = extended_data_db_to_api(pd)
+                extended_data.filePath = files[pd.file_id]
+                extended_data_list[rpd.report_id].append(extended_data)
 
     # Get Comments for report data
     comment_data_list = defaultdict(list)
@@ -958,33 +932,35 @@ def get_report_details(session, report_ids):
     return details
 
 
-def bugpathevent_db_to_api(bpe):
+def bugpathevent_db_to_api(bpe: ReportPathData.Item) -> ttypes.BugPathEvent:
     return ttypes.BugPathEvent(
-        startLine=bpe.line_begin,
-        startCol=bpe.col_begin,
-        endLine=bpe.line_end,
-        endCol=bpe.col_end,
+        startLine=bpe.from_row,
+        startCol=bpe.from_col,
+        endLine=bpe.to_row,
+        endCol=bpe.to_col,
         msg=bpe.msg,
         fileId=bpe.file_id)
 
 
-def bugreportpoint_db_to_api(brp):
-    return BugPathPos(
-        startLine=brp.line_begin,
-        startCol=brp.col_begin,
-        endLine=brp.line_end,
-        endCol=brp.col_end,
+def bugreportpoint_db_to_api(brp: ReportPathData.Item) -> ttypes.BugPathPos:
+    return ttypes.BugPathPos(
+        startLine=brp.from_row,
+        startCol=brp.from_col,
+        endLine=brp.to_row,
+        endCol=brp.to_col,
         fileId=brp.file_id)
 
 
-def extended_data_db_to_api(erd):
+def extended_data_db_to_api(
+    erd: ReportPathData.Item
+) -> ttypes.ExtendedReportData:
     return ttypes.ExtendedReportData(
         type=report_extended_data_type_enum(erd.type),
-        startLine=erd.line_begin,
-        startCol=erd.col_begin,
-        endLine=erd.line_end,
-        endCol=erd.col_end,
-        message=erd.message,
+        startLine=erd.from_row,
+        startCol=erd.from_col,
+        endLine=erd.to_row,
+        endCol=erd.to_col,
+        message=erd.msg,
         fileId=erd.file_id)
 
 
@@ -1129,6 +1105,15 @@ def filter_unresolved_reports(q):
 
     return q.filter(Report.detection_status.notin_(skip_detection_statuses)) \
             .filter(Report.review_status.notin_(skip_review_statuses))
+
+
+def get_run_ids_for_filter(session, run_filter):
+    """
+    Resolve a RunFilter to the concrete list of run ids it currently
+    matches in the database.
+    """
+    return [r[0] for r in
+            process_run_filter(session, session.query(Run.id), run_filter)]
 
 
 def check_remove_runs_lock(session, run_ids):
@@ -1368,20 +1353,6 @@ def get_rs_rule_query(
         q = q.having(report_count == 0)
 
     return q
-
-
-def get_run_id_expression(session, report_filter):
-    """
-    Get run id or concatenated run id list by the unique mode and the DB type
-    """
-    if report_filter.isUnique:
-        if session.bind.dialect.name == "postgresql":
-            return func.string_agg(
-                cast(Run.id, sqlalchemy.String).distinct(),
-                ','
-            ).label("run_id")
-        return func.group_concat(Run.id.distinct()).label("run_id")
-    return Run.id.label("run_id")
 
 
 def remove_reports(session: DBSession,
@@ -1949,11 +1920,11 @@ class ThriftRequestHandler:
                     checkers_q = session \
                         .query(Checker.analyzer_name,
                                Checker.checker_name,
-                               DB_AnalysisInfoChecker.enabled) \
-                        .join(Checker, DB_AnalysisInfoChecker.checker_id ==
+                               CheckerSetItem.enabled) \
+                        .join(Checker, CheckerSetItem.checker_id ==
                               Checker.id) \
-                        .filter(DB_AnalysisInfoChecker.
-                                analysis_info_id == cmd.id)
+                        .filter(CheckerSetItem.checker_set_id ==
+                                cmd.checker_set_id)
 
                     checkers: Dict[str, Dict[str, API_AnalysisInfoChecker]] = \
                         defaultdict(dict)
@@ -3360,134 +3331,129 @@ class ThriftRequestHandler:
     def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
         self.__require_view()
 
+        # Queries for all checkers available in CodeChecker
         with DBSession(self._Session) as session:
             max_run_histories = session.query(
                 RunHistory.run_id,
                 func.max(RunHistory.id).label('max_run_history_id'),
-            ) \
-                .filter(RunHistory.run_id.in_(run_ids) if run_ids else True) \
-                .group_by(RunHistory.run_id)
+            ).filter(
+                RunHistory.run_id.in_(run_ids) if run_ids else True
+            ).group_by(RunHistory.run_id)
 
-            run_id_expression = get_run_id_expression(session, report_filter)
-
-            subquery = (
+            checker_list = (
                 session.query(
-                    run_id_expression,
+                    Checker.id.label("checker_id"),
+                    Checker.checker_name,
+                    Checker.severity,
+                    Checker.analyzer_name
+                )
+                .select_from(Checker)
+            )
+
+            checker_stats = {}
+            for checker_id, checker_name, severity, analyzer_name \
+                    in checker_list.all():
+                checker_stat = CheckerStatusVerificationDetail(
+                    checkerName=checker_name,
+                    analyzerName=analyzer_name,
+                    enabled=set(),
+                    disabled=set(),
+                    unknown=set(),
+                    severity=severity,
+                    closed=0,
+                    outstanding=0
+                )
+                checker_stats[checker_id] = checker_stat
+
+            # Queries if the checkers were enabled/disabled in the
+            # selected runs. With older CodeChecker clients, the
+            # enable/disable status is unknown.
+            run_group_func = func.string_agg(
+                cast(Run.id, sqlalchemy.String).distinct(),
+                ',').label("run_id") if session.bind.dialect.name \
+                == "postgresql" \
+                else func.group_concat(Run.id.distinct()).label("run_id")
+            checker_status_query = (
+                session.query(
                     Checker.id.label("checker_id"),
                     Checker.checker_name,
                     Checker.analyzer_name,
                     Checker.severity,
-                    Report.bug_id,
-                    Report.detection_status,
-                    Report.review_status,
+                    run_group_func,
+                    CheckerSetItem.enabled.label(
+                        "checker_enabled")
                 )
-                .join(RunHistory)
-                .join(AnalysisInfo, RunHistory.analysis_info)
-                .join(DB_AnalysisInfoChecker, (
-                    (AnalysisInfo.id ==
-                     DB_AnalysisInfoChecker.analysis_info_id)
-                    & (DB_AnalysisInfoChecker.enabled.is_(True))))
-                .join(Checker,
-                      DB_AnalysisInfoChecker.checker_id == Checker.id)
-                .outerjoin(Report, ((Checker.id == Report.checker_id)
-                                    & (Run.id == Report.run_id)))
-                .filter(RunHistory.id == max_run_histories.subquery()
-                        .c.max_run_history_id)
-            )
-
-            if report_filter.isUnique:
-                subquery = subquery.group_by(
-                    Checker.id,
-                    Checker.checker_name,
-                    Checker.analyzer_name,
-                    Checker.severity,
-                    Report.bug_id,
-                    Report.detection_status,
-                    Report.review_status
-                )
-
-            subquery = subquery.subquery()
-
-            query = (
-                session.query(
-                    subquery.c.checker_id,
-                    subquery.c.checker_name,
-                    subquery.c.analyzer_name,
-                    subquery.c.severity,
-                    subquery.c.run_id,
-                    subquery.c.detection_status,
-                    subquery.c.review_status,
-                    func.count(subquery.c.bug_id)
-                )
+                .select_from(Run)
+                .join(RunHistory, (RunHistory.run_id == Run.id))
+                .filter(
+                    RunHistory.id
+                    == max_run_histories.subquery()
+                    .c.max_run_history_id)
+                .outerjoin(AnalysisInfo, RunHistory.analysis_info)
+                .outerjoin(CheckerSetItem, AnalysisInfo.checker_set_id ==
+                           CheckerSetItem.checker_set_id)
+                .outerjoin(Checker, (
+                    Checker.id
+                    == CheckerSetItem.checker_id))
                 .group_by(
-                    subquery.c.checker_id,
-                    subquery.c.checker_name,
-                    subquery.c.analyzer_name,
-                    subquery.c.severity,
-                    subquery.c.run_id,
-                    subquery.c.detection_status,
-                    subquery.c.review_status
-                )
+                    Checker.id, CheckerSetItem.enabled)
             )
 
-            checker_stats = {}
-            all_run_id = [runId for runId, _ in max_run_histories.all()]
-            for checker_id, \
-                checker_name, \
-                analyzer_name, \
-                severity, \
-                run_id_list, \
-                detection_status, \
-                review_status, \
-                cnt \
-                    in query.all():
+            runs_unknown_checker_status = {}
+            for (checker_id, checker_name, analyzer_name,
+                 severity, run_id_list,
+                 checker_enabled) in checker_status_query.all():
+                if checker_id:
+                    checker_stat = checker_stats[checker_id]
 
-                checker_stat = checker_stats.get(
-                    checker_id,
-                    CheckerStatusVerificationDetail(
-                        checkerName=checker_name,
-                        analyzerName=analyzer_name,
-                        enabled=[],
-                        disabled=all_run_id.copy(),
-                        severity=severity,
-                        closed=0,
-                        outstanding=0
-                    ))
-
-                is_enabled = detection_status not in map(
-                    detection_status_str,
-                    (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
-
-                is_opened = \
-                    detection_status in map(
-                        detection_status_str,
-                        (DetectionStatus.NEW,
-                         DetectionStatus.UNRESOLVED,
-                         DetectionStatus.REOPENED)) \
-                    and \
-                    review_status in map(
-                        review_status_str,
-                        (API_ReviewStatus.UNREVIEWED,
-                         API_ReviewStatus.CONFIRMED))
-
-                if is_enabled:
-                    for r in (run_id_list.split(",")
-                              if isinstance(run_id_list, str)
-                              else [run_id_list]):
-                        run_id = int(r)
-                        if run_id not in checker_stat.enabled:
-                            checker_stat.enabled.append(run_id)
-                        if run_id in checker_stat.disabled:
-                            checker_stat.disabled.remove(run_id)
-
-                if is_enabled and is_opened:
-                    checker_stat.outstanding += cnt
+                    if checker_enabled:
+                        checker_stat.enabled.update(
+                            map(int, run_id_list.split(",")))
+                    else:
+                        checker_stat.disabled.update(
+                            map(int, run_id_list.split(",")))
                 else:
-                    checker_stat.closed += cnt
+                    runs_unknown_checker_status = set(
+                        map(int, run_id_list.split(",")))
 
-                checker_stats[checker_id] = checker_stat
+            for checker_id, checker_stat in checker_stats.items():
+                checker_stat.unknown = \
+                    list(runs_unknown_checker_status)
+                checker_stat.enabled = list(checker_stat.enabled)
+                checker_stat.disabled = list(checker_stat.disabled)
 
-            return checker_stats
+            # Count the outstanding and closed reports.
+            if report_filter.isUnique:
+                counter = func.count(
+                    Report.bug_id.distinct()
+                ).label("report_count")
+            else:
+                counter = func.count(
+                    Report.bug_id).label("report_count")
+            report_counts_query = (
+                session.query(
+                    Checker.id.label("checker_id"),
+                    counter,
+                    Report.is_open.label("is_open_case")
+                )
+                .join(Checker,
+                      Report.checker_id == Checker.id)
+                .filter(
+                    Report.run_id.in_(run_ids)
+                    if run_ids else True)
+                .group_by(Checker.id, "is_open_case")
+            )
+
+            for checker_id, report_count, is_open \
+                    in report_counts_query.all():
+                if is_open:
+                    checker_stats[checker_id].outstanding = \
+                        report_count
+                else:
+                    checker_stats[checker_id].closed = \
+                        report_count
+
+        return checker_stats
 
     @exc_to_thrift_reqfail
     @timeit
@@ -4184,10 +4150,20 @@ class ThriftRequestHandler:
 
         # Remove the whole run.
         with DBSession(self._Session) as session:
-            check_remove_runs_lock(session, [run_id])
-
             if not run_filter:
                 run_filter = RunFilter(ids=[run_id])
+
+            # Resolve which runs are actually going to be deleted before
+            # checking for active locks. 'run_id' alone is not enough here:
+            # callers (e.g. the CLI's "CodeChecker cmd del" command) commonly
+            # pass 'run_id=None' and select the runs to remove purely via
+            # 'run_filter' (e.g. by name). Checking locks against
+            # '[run_id]' in that case previously meant checking against
+            # '[None]', which never matches any run and silently bypassed
+            # the lock check entirely (see #1445).
+            matched_run_ids = get_run_ids_for_filter(session, run_filter)
+            if matched_run_ids:
+                check_remove_runs_lock(session, matched_run_ids)
 
             q = process_run_filter(session, session.query(Run), run_filter)
 

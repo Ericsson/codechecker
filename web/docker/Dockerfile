@@ -13,7 +13,7 @@ RUN set -x && apt-get update -qq \
     curl \
     git \
     make \
-    && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs
 
 # Copy CodeChecker source code.
@@ -132,7 +132,7 @@ RUN chmod 755 /usr/local/bin/wait-for
 
 EXPOSE 8001
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=10 \
   CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/live', timeout=3).read()" || exit 1
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint.sh"]

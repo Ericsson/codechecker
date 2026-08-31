@@ -69,7 +69,7 @@
           label="History stored before..."
           prepend-inner-icon="mdi-calendar-arrow-left"
           variant="outlined"
-          density="compact" 
+          density="compact"
           clearable
         >
           <template #append-inner>
@@ -81,16 +81,36 @@
           </template>
         </DateTimePicker>
       </v-col>
-
       <v-spacer />
-
       <v-col cols="auto" align="right">
+        <v-btn
+          icon
+          class="reload-runs-btn"
+          title="Reload runs"
+          color="primary"
+          @click="update"
+        >
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+    <template #extension>
+      <div
+        class="d-flex justify-center align-center w-100"
+      >
+        <LoadMultipleRunsBtn
+          :selected="selected"
+          :disabled="!enoughRunsSelected"
+          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
+        />
         <DeleteRunBtn
           :selected="selected"
           variant="outlined"
           @on-confirm="update"
           @delete-complete="emit('delete-complete')"
         />
+
+        <v-spacer />
 
         <v-btn
           variant="outlined"
@@ -118,18 +138,8 @@
             </ul>
           </tooltip-help-icon>
         </v-btn>
-
-        <v-btn
-          icon
-          class="reload-runs-btn"
-          title="Reload runs"
-          color="primary"
-          @click="update"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </template>
   </v-toolbar>
 </template>
 
@@ -153,7 +163,7 @@ import {
 import _ from "lodash";
 
 import DateTimePicker from "@/components/DateTimePicker";
-import { DeleteRunBtn } from "@/components/Run";
+import { DeleteRunBtn, LoadMultipleRunsBtn } from "@/components/Run";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 
 const props = defineProps({
@@ -306,4 +316,15 @@ function updateUrl(params) {
 function update() {
   emit("update");
 }
+
+function getSelectedRunsFilterQuery(selected) {
+  return {
+    run: selected.map(item => item.name)
+  };
+}
+
+const enoughRunsSelected = computed(() => {
+  return  props.selected.length >= 2;;
+});
+
 </script>

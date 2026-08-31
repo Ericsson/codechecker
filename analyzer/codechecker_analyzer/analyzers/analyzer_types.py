@@ -29,6 +29,11 @@ from .infer.analyzer import Infer
 
 LOG = get_logger('analyzer')
 
+# The order of this dictionary determines the default execution order of
+# analyzers. Longer-running analyzers (e.g. clangsa) should come first so
+# that they are scheduled earlier in parallel execution, reducing total
+# wall-clock time. Do not change the order without considering the impact
+# on analysis scheduling.
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        ClangTidy.ANALYZER_NAME: ClangTidy,
                        Cppcheck.ANALYZER_NAME: Cppcheck,

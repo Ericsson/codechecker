@@ -1,0 +1,33 @@
+guideline: owasp-top-10-2025
+guideline_title: OWASP Top 10 Web Application Security Risks 2025
+rules:
+- rule_id: owasp-A01-2025
+  title: Broken Access Control
+  rule_url: https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/
+- rule_id: owasp-A02-2025
+  title: Security Misconfiguration
+  rule_url: https://owasp.org/Top10/2025/A02_2025-Security_Misconfiguration/
+- rule_id: owasp-A03-2025
+  title: Software Supply Chain Failures
+  rule_url: https://owasp.org/Top10/2025/A03_2025-Software_Supply_Chain_Failures/
+- rule_id: owasp-A04-2025
+  title: Cryptographic Failures
+  rule_url: https://owasp.org/Top10/2025/A04_2025-Cryptographic_Failures/
+- rule_id: owasp-A05-2025
+  title: Injection
+  rule_url: https://owasp.org/Top10/2025/A05_2025-Injection/
+- rule_id: owasp-A06-2025
+  title: Insecure Design
+  rule_url: https://owasp.org/Top10/2025/A06_2025-Insecure_Design/
+- rule_id: owasp-A07-2025
+  title: Authentication Failures
+  rule_url: https://owasp.org/Top10/2025/A07_2025-Authentication_Failures/
+- rule_id: owasp-A08-2025
+  title: Software or Data Integrity Failures
+  rule_url: https://owasp.org/Top10/2025/A08_2025-Software_or_Data_Integrity_Failures/
+- rule_id: owasp-A09-2025
+  title: Security Logging and Alerting Failures
+  rule_url: https://owasp.org/Top10/2025/A09_2025-Security_Logging_and_Alerting_Failures/
+- rule_id: owasp-A10-2025
+  title: Mishandling of Exceptional Conditions
+  rule_url: https://owasp.org/Top10/2025/A10_2025-Mishandling_of_Exceptional_Conditions/

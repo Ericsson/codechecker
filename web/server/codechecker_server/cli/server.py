@@ -237,10 +237,10 @@ This setting overrides the server config file values.
     root_account = parser.add_argument_group(
         "root account arguments",
         """
-Servers automatically create a root user to access the server's configuration
-via the clients. This user is created at first start and saved in the
-CONFIG_DIRECTORY, and the credentials are printed to the server's standard
-output. The plaintext credentials are NEVER accessible again.""")
+Built in super user is not not created by default. You can assign
+super user privileges to a user by adding the "super_user" : "user_name"
+record to the server_config.json file.
+""")
 
     root_account.add_argument('--force-authentication',
                               dest="force_auth",
@@ -858,6 +858,20 @@ def is_localhost(address):
     return address in valid_values
 
 
+def config_db_has_products(cfg_sql_server) -> bool:
+    """
+    Returns whether the configuration database already has at least one
+    product registered in it.
+    """
+    engine = cfg_sql_server.create_engine()
+    sess = sessionmaker(bind=engine)()
+    try:
+        return sess.query(ORMProduct).first() is not None
+    finally:
+        sess.close()
+        engine.dispose()
+
+
 def server_init_start(args):
     """
     Start or manage a CodeChecker report server.
@@ -976,8 +990,19 @@ def server_init_start(args):
     # command line.
     workspace_dir = os.path.abspath(args.workspace)
     default_product_path = os.path.join(workspace_dir, 'Default.sqlite')
+
+    # The 'Default' product should only be auto-created when the config
+    # database has no products in it at all. Relying only on the
+    # 'Default.sqlite' file's absence is not enough: if that file was
+    # deleted (e.g. manually, or as leftover from an unrelated product)
+    # while the config database still has product(s) registered - be it
+    # the previous 'Default' entry or any other product - creating a new
+    # 'Default' product would either collide with an existing one or,
+    # since 'add_initial_run_database' refuses to run on a non-empty
+    # config database, crash the server on startup (see #1386).
     create_default_product = 'sqlite' in args and \
-                             not os.path.exists(default_product_path)
+                             not os.path.exists(default_product_path) and \
+                             not config_db_has_products(cfg_sql_server)
 
     if create_default_product:
         # Create a default product and add it to the configuration database.

@@ -680,7 +680,7 @@ one can write `CodeChecker store --config client_config.json`.
   ],
 }
 ```
-For details see [Client Configuration File](/docs/config_file.md)
+For details see [Client Configuration File](../config_file.md)
 
 ## CodeChecker analyzer subcommands
 
@@ -816,7 +816,7 @@ export CC_LOGGER_DEBUG_FILE="/path/to/codechecker.debug.log"
 With `CC_LOGGER_KEEP_LINK` environment variable you can set whether linking
 build actions (i.e. those which don't perform compilation but contain only
 object files as input) should be captured. For further details see
-[this documentation](/analyzer/tools/build-logger/README.md).
+[this documentation](https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/build-logger/README.md).
 
 
 If your build tool overrides `LD_LIBRARY_PATH` during the build process, then
@@ -931,7 +931,7 @@ Do the following steps to log compiler calls made by
 [Bazel](https://www.bazel.build/) using CodeChecker.
 
 1) We need to deactivate the
-["sandbox"](https://bazel.build/designs/2016/06/02/sandboxing.html)
+["sandbox"](https://bazel.build/docs/sandboxing)
 mechanism of *Bazel*:
 
 - Use [`--batch`](https://docs.bazel.build/versions/2.0.0/user-manual.html#flag--batch)
@@ -2484,8 +2484,8 @@ overwritten when the package is reinstalled!
 
 There are some coding guidelines which contain best practices on avoiding
 common programming mistakes
-([https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines](C++ Core Guidelines),
-[https://cmu-sei.github.io/secure-coding-standards/](SEI-CERT), etc.)
+([C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines),
+[SEI-CERT](https://cmu-sei.github.io/secure-coding-standards/), etc.)
 Many of these guideline rules can be checked by static analyzer tools. The
 detailed output of `CodeChecker checkers` command contains information about
 which checkers cover certain guideline rules. This mapping is given in the
@@ -2624,7 +2624,7 @@ Several source code comment types are allowed:
     indication for developers to deal with this report. Such a report is
     considered outstanding.
 
-You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
+You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#export-comments-and-review-statuses-export)
 
 #### Change review status of a specific checker result
 ```cpp
@@ -2792,7 +2792,7 @@ is applied for every report that match the filter fields. The following filter
 options are available:
 
 - `filepath` (optional): A glob to a path where the given review status is
-  applied. A [https://docs.python.org/3/library/glob.html](glob) is a path that
+  applied. A [glob](https://docs.python.org/3/library/glob.html) is a path that
   may contain shell-style wildcards: `*` substitutes zero or more characters,
   `?` substitutes exactly one character. This filter option is applied on the
   full path of a source file, even if `--trim-path-prefix` flag is used later.

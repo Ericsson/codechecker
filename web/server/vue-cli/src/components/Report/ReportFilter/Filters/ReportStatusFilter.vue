@@ -59,7 +59,7 @@
   
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
-import { ref, toRef } from "vue";
+import { ref } from "vue";
 
 import { ReportStatusIcon } from "@/components/Icons";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
@@ -70,14 +70,9 @@ import { useBaseSelectOptionFilter }
 import { useReportStatus } from "@/composables/useReportStatus";
 import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([ "update:url" ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 baseSelectOptionFilter.encodeValue.value = encodeValue;

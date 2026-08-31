@@ -10,9 +10,10 @@ Contains housekeeping routines that are used to remove expired, obsolete,
 or dangling records from the database.
 """
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional
 
 import sqlalchemy
+from sqlalchemy.orm import sessionmaker
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
 
@@ -22,10 +23,12 @@ from codechecker_common.logger import get_logger
 from .database import DBSession
 from .run_db_model import \
     AnalysisInfo, \
-    BugPathEvent, BugReportPoint, \
+    CheckerSet, \
     Comment, Checker, \
     File, FileContent, \
-    Report, ReportAnalysisInfo, RunHistoryAnalysisInfo, RunLock
+    Report, ReportAnalysisInfo, ReportPathDataFile, RunHistoryAnalysisInfo, \
+    RunLock
+from .config_db_model import Session as SessionRecord
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
@@ -42,6 +45,7 @@ def remove_unused_data(product):
     remove_unused_files(product)
     remove_unused_comments(product)
     remove_unused_analysis_info(product)
+    remove_unused_checker_sets(product)
 
 
 def update_contextual_data(product, context):
@@ -88,19 +92,16 @@ def remove_unused_files(product):
         LOG.debug("[%s] Garbage collection of dangling files started...",
                   product.endpoint)
         try:
-            bpe_files = session.query(BugPathEvent.file_id) \
-                .group_by(BugPathEvent.file_id)
-            brp_files = session.query(BugReportPoint.file_id) \
-                .group_by(BugReportPoint.file_id)
+            files = session.query(ReportPathDataFile.c.file_id) \
+                .group_by(ReportPathDataFile.c.file_id)
 
             files_to_delete = session.query(File.id) \
-                .filter(File.id.notin_(bpe_files), File.id.notin_(brp_files))
+                .filter(File.id.notin_(files))
             files_to_delete = map(lambda x: x[0], files_to_delete)
 
             total_count = 0
             for chunk in util.chunks(iter(files_to_delete), chunk_size):
-                q = session.query(File) \
-                    .filter(File.id.in_(chunk))
+                q = session.query(File).filter(File.id.in_(chunk))
                 count = q.delete(synchronize_session=False)
                 if count:
                     total_count += count
@@ -216,6 +217,29 @@ def remove_unused_analysis_info(product):
                 add_foreign_keys(session,
                                  ReportAnalysisInfo.name,
                                  rep_ai_foreign_keys)
+
+
+def remove_unused_checker_sets(product):
+    with DBSession(product.session_factory) as session:
+        LOG.debug("[%s] Garbage collection of checker sets started...",
+                  product.endpoint)
+        try:
+            used_checker_sets = session.query(AnalysisInfo.checker_set_id) \
+                .filter(AnalysisInfo.checker_set_id.is_not(None)) \
+                .group_by(AnalysisInfo.checker_set_id)
+
+            session.query(CheckerSet) \
+                .filter(CheckerSet.id.notin_(used_checker_sets)) \
+                .delete(synchronize_session=False)
+
+            session.commit()
+
+            LOG.debug("[%s] Garbage collection of dangling checker sets "
+                      "finished.", product.endpoint)
+        except (sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.ProgrammingError) as ex:
+            LOG.error("[%s] Failed to remove checker sets: %s",
+                      product.endpoint, str(ex))
 
 
 def upgrade_severity_levels(product, checker_labels):
@@ -389,3 +413,42 @@ def add_foreign_keys(session, table_name, foreign_keys):
             f"REFERENCES {referred_table}({referred_columns});"
         ))
     session.commit()
+
+
+def delete_expired_auth_sessions(config_db_sessionmaker: sessionmaker,
+                                 session_lifetime: int,
+                                 user_name: Optional[str]):
+    """
+    Cleanup expired auth_sessions from the config database.
+    If 'user_name' is specified, we only remove expired auth_sessions
+    of that particular user.
+    If 'user_name' is specified as None, we remove all expired auth_sessions
+    from the database.
+    """
+    if user_name:
+        LOG.debug("Cleaning up expired auth sessions of user '%s' ...",
+                  user_name)
+    else:
+        LOG.debug("Cleaning up all expired auth sessions ...")
+
+    with DBSession(config_db_sessionmaker) as session:
+        try:
+            cutoff_date = (datetime.now() - timedelta(
+                seconds=session_lifetime))
+
+            if user_name:
+                session.query(SessionRecord) \
+                       .filter(SessionRecord.user_name == user_name) \
+                       .filter(SessionRecord.last_access < cutoff_date) \
+                       .delete(synchronize_session=False)
+            else:
+                session.query(SessionRecord) \
+                       .filter(SessionRecord.last_access < cutoff_date) \
+                       .delete(synchronize_session=False)
+
+            session.commit()
+            LOG.debug("Finished cleanup of expired auth sessions.")
+        except Exception as e:
+            LOG.error("Failed to cleanup expired auth sessions "
+                      "from the database:")
+            LOG.error(str(e))

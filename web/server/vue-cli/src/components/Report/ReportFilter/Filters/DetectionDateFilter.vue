@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import { DateInterval, ReportDate } from "@cc/report-server-types";
@@ -80,16 +80,11 @@ import DetectionDateFilterItems, {
 } from "./DetectionDateFilterItems";
 import SelectOption from "./SelectOption/SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([
   "update:url"
 ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 

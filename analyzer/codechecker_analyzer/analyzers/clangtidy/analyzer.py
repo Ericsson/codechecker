@@ -570,6 +570,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         # A line mentioning a file in Clang-Tidy's output looks like this:
         # /home/.../.cpp:L:C: warning: foobar.
+        # With the UseColor option enabled Clang-Tidy wraps the diagnostics
+        # in ANSI escape sequences, so they have to be removed first,
+        # otherwise they would become part of the matched path.
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+
         regex = re.compile(
             # File path followed by a ':'.
             r'^(?P<path>[\S ]+?):'
@@ -581,7 +586,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         paths = []
 
         for line in output.splitlines():
-            match = re.match(regex, line)
+            match = re.match(regex, ansi_escape.sub('', line))
             if match:
                 paths.append(match.group('path'))
 
@@ -699,16 +704,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                         'key': f"{cfg.checker}.{cfg.option}",
                         'value': cfg.value})
             analyzer_config['CheckOptions'] = check_options
-        else:
-            try:
-                with open(args.tidy_config, 'r',
-                          encoding='utf-8', errors='ignore') as tidy_config:
-                    handler.checker_config = tidy_config.read()
-            except IOError as ioerr:
-                LOG.debug(ioerr)
-            except AttributeError as aerr:
-                # No clang tidy config file was given in the command line.
-                LOG.debug(aerr)
 
         handler.analyzer_config = analyzer_config
 

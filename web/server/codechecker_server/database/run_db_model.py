@@ -8,14 +8,20 @@
 """
 SQLAlchemy ORM model for the analysis run storage database.
 """
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from math import ceil
 import os
-from typing import Optional
+import json
+import hashlib
+from typing import Optional, List
+import zlib
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
-    LargeBinary, MetaData, String, UniqueConstraint, Table, Text, JSON
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
+    ForeignKey, Integer, LargeBinary, MetaData, String, UniqueConstraint, \
+    Table, Text, JSON, case
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
@@ -53,29 +59,59 @@ class Checker(Base):
         self.severity = severity
 
 
-class AnalysisInfoChecker(Base):
-    __tablename__ = "analysis_info_checkers"
+class CheckerSet(Base):
+    __tablename__ = "checker_set"
 
-    analysis_info_id = Column(Integer,
-                              ForeignKey("analysis_info.id",
-                                         deferrable=True,
-                                         initially="DEFERRED",
-                                         ondelete="CASCADE"),
-                              primary_key=True)
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    hash_digest = Column(String, unique=True, nullable=False)
+
+    def __init__(self, hash_digest: str):
+        self.hash_digest = hash_digest
+
+    # We compute a hash from the enabled_checkers and
+    # disabled_checkers lists to generate a unique identifier
+    # for each CheckerSet.
+    # The goal is to speed up report storage to the server:
+    # when a user stores results to the server, we first compute
+    # this hash and then check if it was already inserted to the database.
+    # If the hash exists in this table, that means the particular CheckerSet
+    # was already used before.
+    @staticmethod
+    def compute_hash(enabled_checkers: List[int],
+                     disabled_checkers: List[int]) -> str:
+        # Sort lists to create identical hashes.
+        enabled_checkers.sort()
+        disabled_checkers.sort()
+
+        checker_set_dict = {"e": enabled_checkers, "d": disabled_checkers}
+        return hashlib.sha256(json.dumps(
+            checker_set_dict, sort_keys=True,
+            separators=(',', ':')).encode()).hexdigest()
+
+
+class CheckerSetItem(Base):
+    __tablename__ = "checker_set_items"
+
+    checker_set_id = Column(Integer,
+                            ForeignKey("checker_set.id",
+                                       deferrable=True,
+                                       initially="DEFERRED",
+                                       ondelete="CASCADE"),
+                            primary_key=True)
     checker_id = Column(Integer,
                         ForeignKey("checkers.id",
                                    deferrable=True,
                                    initially="DEFERRED",
                                    ondelete="RESTRICT"),
                         primary_key=True)
-    enabled = Column(Boolean)
+    enabled = Column(Boolean, nullable=False)
 
     def __init__(self,
-                 analysis_info: "AnalysisInfo",
-                 checker: Checker,
+                 checker_set_id: int,
+                 checker_id: int,
                  is_enabled: bool):
-        self.analysis_info_id = analysis_info.id
-        self.checker_id = checker.id
+        self.checker_set_id = checker_set_id
+        self.checker_id = checker_id
         self.enabled = is_enabled
 
 
@@ -84,10 +120,15 @@ class AnalysisInfo(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     analyzer_command = Column(LargeBinary)
-    available_checkers = relationship(AnalysisInfoChecker, uselist=True)
+    checker_set_id = Column(Integer,
+                            ForeignKey("checker_set.id",
+                                       deferrable=True,
+                                       initially="DEFERRED",
+                                       ondelete="CASCADE"))
 
-    def __init__(self, analyzer_command: bytes):
+    def __init__(self, analyzer_command: bytes, checker_set_id: int):
         self.analyzer_command = analyzer_command
+        self.checker_set_id = checker_set_id
 
 
 class Run(Base):
@@ -185,8 +226,15 @@ RunHistoryAnalysisInfo = Table(
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -263,106 +311,73 @@ class File(Base):
         self.tracking_branch = tracking_branch
 
 
-class BugPathEvent(Base):
-    __tablename__ = 'bug_path_events'
-
-    line_begin = Column(Integer)
-    col_begin = Column(Integer)
-    line_end = Column(Integer)
-    col_end = Column(Integer)
-
-    order = Column(Integer, primary_key=True)
-
-    msg = Column(String)
-    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
-                                         initially="DEFERRED",
-                                         ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
-                       index=True,
-                       primary_key=True)
-
-    def __init__(self, line_begin, col_begin, line_end, col_end,
-                 order, msg, file_id, report_id):
-        self.line_begin, self.col_begin, self.line_end, self.col_end = \
-            line_begin, col_begin, line_end, col_end
-
-        self.order = order
-        self.msg = msg
-        self.file_id = file_id
-        self.report_id = report_id
+ReportPathDataFile = Table(
+    'report_path_data_files',
+    Base.metadata,
+    Column(
+        'report_path_data_id',
+        BigInteger,
+        ForeignKey('report_path_data.report_id',
+                   deferrable=True,
+                   initially="DEFERRED",
+                   ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+        primary_key=True),
+    Column(
+        'file_id',
+        Integer,
+        ForeignKey('files.id',
+                   deferrable=True,
+                   initially="DEFERRED",
+                   ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+        primary_key=True)
+)
 
 
-class BugReportPoint(Base):
-    __tablename__ = 'bug_report_points'
-
-    line_begin = Column(Integer)
-    col_begin = Column(Integer)
-    line_end = Column(Integer)
-    col_end = Column(Integer)
-
-    order = Column(Integer, primary_key=True)
-
-    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
-                                         initially="DEFERRED",
-                                         ondelete='CASCADE'), index=True)
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
-                       index=True,
-                       primary_key=True)
-
-    def __init__(self, line_begin, col_begin, line_end, col_end,
-                 order, file_id, report_id):
-        self.line_begin, self.col_begin, self.line_end, self.col_end = \
-            line_begin, col_begin, line_end, col_end
-
-        self.order = order
-        self.file_id = file_id
-        self.report_id = report_id
-
-
-class ExtendedReportData(Base):
+class ReportPathData(Base):
     """
-    Store extra information which can help to understand or fix a report.
+    Store bug path positions, bug events, macro expansions, fix-its, etc.
     """
-    __tablename__ = 'extended_report_data'
+    __tablename__ = 'report_path_data'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
+    report_id = Column(
+        BigInteger,
+        ForeignKey(
+            'reports.id',
+            deferrable=True,
+            initially="DEFERRED",
+            ondelete='CASCADE'),
+        primary_key=True)
 
-    report_id = Column(Integer, ForeignKey('reports.id', deferrable=True,
-                                           initially="DEFERRED",
-                                           ondelete='CASCADE'),
-                       index=True)
+    @dataclass
+    class Item:
+        from_row: int
+        from_col: int
+        to_row: int
+        to_col: int
+        file_id: int
+        type: str
+        msg: Optional[str] = None
 
-    file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
-                                         initially="DEFERRED",
-                                         ondelete='CASCADE'), index=True)
+    _path_data = Column("path_data", LargeBinary, nullable=False)
 
-    type = Column(Enum('note',
-                       'macro',
-                       'fixit',
-                       name='extended_data_type'))
+    @property
+    def path_data(self):
+        pd = json.loads(zlib.decompress(self._path_data).decode("utf-8"))
+        return list(map(lambda d: ReportPathData.Item(**d), pd))
 
-    line_begin = Column(Integer)
-    col_begin = Column(Integer)
-    line_end = Column(Integer)
-    col_end = Column(Integer)
+    @path_data.setter
+    def path_data(self, data: List[Item]):
+        self._path_data = zlib.compress(
+            json.dumps(list(map(asdict, data))).encode("utf-8"),
+            zlib.Z_BEST_COMPRESSION)
 
-    message = Column(String)
-
-    def __init__(self, line_begin, col_begin, line_end, col_end,
-                 message, file_id, report_id, data_type):
-
-        self.line_begin = line_begin
-        self.col_begin = col_begin
-        self.line_end = line_end
-        self.col_end = col_end
-        self.message = message
-        self.file_id = file_id
+    def __init__(self, report_id, path_data):
         self.report_id = report_id
-        self.type = data_type
+        self.path_data = path_data
 
 
 ReportAnalysisInfo = Table(
@@ -370,13 +385,20 @@ ReportAnalysisInfo = Table(
     Base.metadata,
     Column(
         'report_id',
-        Integer,
+        BigInteger,
         ForeignKey('reports.id',
                    deferrable=True,
                    initially="DEFERRED",
                    ondelete="CASCADE"),
-        index=True),
-    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+        nullable=False,
+        index=True,
+        primary_key=True),
+    Column(
+        'analysis_info_id',
+        Integer,
+        ForeignKey('analysis_info.id'),
+        nullable=False,
+        primary_key=True)
 )
 
 
@@ -391,7 +413,7 @@ ReviewStatusType = Enum(
 class Report(Base):
     __tablename__ = 'reports'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
+    id = Column(BigInteger, autoincrement=True, primary_key=True)
     file_id = Column(Integer, ForeignKey('files.id', deferrable=True,
                                          initially="DEFERRED",
                                          ondelete='CASCADE'),
@@ -436,6 +458,18 @@ class Report(Base):
         Boolean, nullable=False, server_default=false())
 
     detected_at = Column(DateTime, nullable=False)
+
+    @hybrid_property
+    def is_open(self):
+        # Python-side logic
+        return self.fixed_at is None
+
+    @is_open.expression
+    def is_open(self):
+        return case(
+            (self.fixed_at.is_(None), True),
+            else_=False
+        )
 
     # A report is considered as "fixed" when it is not found in the project
     # anymore either based on its detection status or its review status is set
@@ -497,7 +531,7 @@ class ReportAnnotations(Base):
         self.value = value
 
     report_id = Column(
-        Integer,
+        BigInteger,
         ForeignKey("reports.id", ondelete="CASCADE"),
         primary_key=True,
         index=True)

@@ -73,7 +73,7 @@ const chartData = ref({
 });
 
 watch(
-  () => props.statistics,
+  [ () => props.statistics, () => props.loading ],
   () => {
     if (props.loading) return;
 

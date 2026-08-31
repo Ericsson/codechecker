@@ -24,8 +24,10 @@
     "gcc-double-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "memory-safety:cwe-415",
+      "cwe-vulnerabilities:cwe-415",
       "severity:HIGH",
       "sei-cert-c:mem30-c"
     ],
@@ -88,8 +90,10 @@
     "gcc-free-of-non-heap": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-free-of-non-heap",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "memory-safety:cwe-590",
+      "cwe-vulnerabilities:cwe-590",
       "severity:HIGH",
       "sei-cert-c:mem34-c",
       "sei-cert-c:mem51-cpp"
@@ -113,9 +117,12 @@
     "gcc-malloc-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-malloc-leak",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "memory-safety:cwe-401",
       "memory-safety:cwe-761",
+      "cwe-vulnerabilities:cwe-401",
+      "cwe-vulnerabilities:cwe-761",
       "severity:HIGH",
       "sei-cert-c:err57-cpp",
       "sei-cert-c:fio42-c",
@@ -124,8 +131,10 @@
     "gcc-mismatching-deallocation": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "memory-safety:cwe-762",
+      "cwe-vulnerabilities:cwe-762",
       "severity:HIGH",
       "sei-cert-c:exp51-cpp",
       "sei-cert-c:mem51-cpp",
@@ -140,15 +149,20 @@
     ],
     "gcc-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
+      "cwe-top-25-2024:cwe-476",
       "memory-safety:cwe-476",
+      "cwe-vulnerabilities:cwe-476",
       "severity:HIGH",
       "sei-cert-c:exp34-c"
     ],
     "gcc-out-of-bounds": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
@@ -156,6 +170,12 @@
       "memory-safety:cwe-126",
       "memory-safety:cwe-127",
       "memory-safety:cwe-843",
+      "cwe-vulnerabilities:cwe-121",
+      "cwe-vulnerabilities:cwe-122",
+      "cwe-vulnerabilities:cwe-124",
+      "cwe-vulnerabilities:cwe-126",
+      "cwe-vulnerabilities:cwe-127",
+      "cwe-vulnerabilities:cwe-843",
       "severity:HIGH",
       "sei-cert-c:arr30-c",
       "sei-cert-c:arr38-c",
@@ -242,9 +262,13 @@
     ],
     "gcc-use-after-free": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-after-free",
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:extreme",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
+      "cwe-vulnerabilities:cwe-416",
       "severity:HIGH",
       "sei-cert-c:mem30-c"
     ],

@@ -58,22 +58,18 @@
 
 <script setup>
 import { BugPathLengthRange } from "@cc/report-server-types";
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 
 import { useBaseFilter } from "@/composables/useBaseFilter";
 import FilterToolbar from "./Layout/FilterToolbar";
 
 import { useRoute } from "vue-router";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([
   "update:url"
 ]);
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+const baseFilter = useBaseFilter();
 baseFilter.initPanel.value = initPanel;
 
 const minId = ref("min-bug-path-length");

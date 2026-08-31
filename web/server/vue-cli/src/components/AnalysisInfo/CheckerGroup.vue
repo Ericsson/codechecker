@@ -56,7 +56,7 @@
             :total-text="'Number of checkers available'"
             :simplify-showing-if-all="true"
             :show-total="true"
-            :show-dividers="false"
+            :show-dividers="true"
             :show-zero-chips="false"
             class="pl-4"
           />

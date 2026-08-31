@@ -586,21 +586,23 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if not has_flag('-x', analyzer_cmd):
                 analyzer_cmd.extend(['-x', compile_lang])
 
-            if not has_flag('--target', analyzer_cmd) and \
-                    self.buildaction.target != "":
-                analyzer_cmd.append(f"--target={self.buildaction.target}")
-
             if not has_flag('-arch', analyzer_cmd) and \
                     self.buildaction.arch != "":
                 analyzer_cmd.extend(["-arch", self.buildaction.arch])
 
-            if not has_flag('-std', analyzer_cmd) and \
-                    self.buildaction.compiler_standard != "":
-                analyzer_cmd.append(self.buildaction.compiler_standard)
-
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
+
+            if not has_flag('--target', analyzer_cmd) and \
+                    not has_flag('-target', analyzer_cmd) and \
+                    self.buildaction.target != "":
+                analyzer_cmd.append(f"--target={self.buildaction.target}")
+
+            if not has_flag('-std', analyzer_cmd) and \
+                    not has_flag('--std', analyzer_cmd) and \
+                    self.buildaction.compiler_standard != "":
+                analyzer_cmd.append(self.buildaction.compiler_standard)
 
             analyzer_cmd.extend(prepend_all(
                 '-isystem' if config.add_gcc_include_dirs_with_isystem else

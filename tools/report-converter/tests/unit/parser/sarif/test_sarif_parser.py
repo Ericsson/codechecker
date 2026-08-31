@@ -14,7 +14,9 @@ Test the parsing of the sarif files.
 import os
 import unittest
 
-from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report import BugPathEvent, File, Report, \
+    report_file
+from codechecker_report_converter.report.parser import sarif
 
 
 gen_sarif_dir_path = os.path.join(
@@ -41,3 +43,25 @@ class SarifParserTestCase(unittest.TestCase):
                 abs_filename = os.path.join(root, filename)
                 # We test for no crashes.
                 report_file.get_reports(abs_filename)
+
+    def test_trim_path_prefix_in_artifact_location(self):
+        """Exported sarif URIs must honour trim-path-prefix."""
+        report = Report(
+            file=File('/home/user/project/src/main.c'),
+            line=3, column=5, message='divide by zero',
+            checker_name='core.DivideZero',
+            bug_path_events=[BugPathEvent(
+                'assuming zero', File('/home/user/project/src/util.c'), 7, 2)])
+        report.trim_path_prefixes(['/home/user/project'])
+
+        data = sarif.Parser().convert([report])
+        result = data['runs'][0]['results'][0]
+
+        self.assertEqual(
+            result['locations'][0]['physicalLocation']
+            ['artifactLocation']['uri'],
+            'file://src/main.c')
+        self.assertEqual(
+            result['codeFlows'][0]['threadFlows'][0]['locations'][0]
+            ['location']['physicalLocation']['artifactLocation']['uri'],
+            'file://src/util.c')

@@ -24,6 +24,12 @@ def codechecker_env():
     checker_env = os.environ.copy()
     cc_bin = os.path.join(PKG_ROOT, 'bin')
     checker_env['PATH'] = cc_bin + ":" + checker_env['PATH']
+    # Ensure stable UTF-8 output regardless of the CI runner's locale.
+    # PrettyTable uses Unicode box-drawing characters which require UTF-8
+    # to render correctly.
+    checker_env['PYTHONIOENCODING'] = 'utf-8'
+    checker_env['LC_ALL'] = 'C.UTF-8'
+    checker_env['LANG'] = 'C.UTF-8'
     return checker_env
 
 

@@ -138,7 +138,7 @@ Python client to communicate with a CodeChecker server.""",
     try:
         print("Get products...")
         products = cli_product.getProducts(
-            product_endpoint_filter, product_name_filter)
+            product_endpoint_filter, product_name_filter, None, None, None)
         print(f"Products: {products}\n")
     except TApplicationException as ex:
         print(f"Failed to get products with the following exception: {ex}")
@@ -148,7 +148,7 @@ Python client to communicate with a CodeChecker server.""",
         args, ReportAPI_v6, "CodeCheckerService", "Default", token)
 
     run_filter = None
-    limit = 0
+    limit = ReportAPI_v6.constants.MAX_QUERY_SIZE
     offset = 0
     sort_mode = None
     try:

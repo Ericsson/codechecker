@@ -32,7 +32,11 @@ import {
   GET_CURRENT_PRODUCT,
   GET_CURRENT_PRODUCT_CONFIG
 } from "@/store/actions.type";
-import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
+import {
+  CLEAR_QUERIES,
+  PURGE_AUTH,
+  SET_QUERIES
+} from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import fromUnixTime from "./filters/from-unix-time";
@@ -80,6 +84,8 @@ router.beforeResolve((to, from, next) => {
         (!store.getters.authParams.sessionStillActive ||
          !store.getters.isAuthenticated)
       ) {
+        store.commit(PURGE_AUTH);
+
         // Redirect the user to the login page but keep the original path to
         // redirect the user back once logged in.
         return next({
@@ -111,8 +117,11 @@ router.afterEach(to => {
     || to.name === "checker-statistics"
     || to.name === "severity-statistics"
     || to.name === "component-statistics"
-  )
+    || to.name === "checker-coverage-statistics"
+    || to.name === "guideline-statistics"
+  ) {
     query_namespace = "report_filter";
+  }
 
   store.commit(SET_QUERIES, { location: query_namespace, query: to.query });
 });
@@ -139,7 +148,8 @@ const vuetify = createVuetify({
           warning: "#ff9800",
           info: "#3f51b5",
           success: "#4caf50",
-          grey: "#9E9E9E"
+          grey: "#9E9E9E",
+          "grey-card": "#e0e0e0"
         }
       }
     }

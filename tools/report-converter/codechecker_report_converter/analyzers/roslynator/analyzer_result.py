@@ -29,6 +29,21 @@ class AnalyzerResult(AnalyzerResultBase):
     URL = 'https://github.com/JosefPihrt/Roslynator' \
         + '#roslynator-command-line-tool-'
 
+    EXAMPLE_CMD = """\
+# Change directory to your project or solution.
+cd path/to/your/project_or_solution
+
+# Run Roslynator (use an .sln file instead of .csproj to analyze a
+# solution).
+roslynator analyze sample.csproj --output sample.xml
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Roslynator.
+report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
+
+# Store the Roslynator reports with CodeChecker.
+CodeChecker store ./codechecker_roslynator_reports -n roslynator"""
+
     def __init__(self):
         super().__init__()
         self.__file_cache: Dict[str, File] = {}

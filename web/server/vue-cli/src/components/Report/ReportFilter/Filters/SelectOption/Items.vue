@@ -56,7 +56,7 @@
           :key="item.id"
           :value="item.id"
           class="my-1"
-          :disabled="!multiple && localSelectedItems === item.id"
+          :disabled="!multiple && isSelected(item.id)"
           @click="toggleSelection(item)"
         >
           <template v-slot:prepend>
@@ -109,9 +109,9 @@
 
     <div
       v-if="limit"
-      class="text-center text-secondary"
+      class="text-center text-primary"
     >
-      <span v-if="limit === items.length">Only the first</span>
+      <span v-if="limit === items.length">Only the first </span>
       <i>{{ items.length }}</i> item(s) shown.
     </div>
 
@@ -201,7 +201,9 @@ const filter = _.debounce(async value => {
 }, 500);
 
 onMounted(() => {
-  localSelectedItems.value = props.selectedItems || [];
+  localSelectedItems.value = props.selectedItems
+    ? [ ...props.selectedItems ]
+    : [];
 });
 
 // Emit the `apply` event with the selected items.
@@ -212,11 +214,7 @@ function apply() {
 
 // Check if given item is selected.
 function isSelected(id) {
-  const selected = props.multiple ?
-    localSelectedItems.value.some(item => item.id === id) :
-    localSelectedItems.value?.id === id;
-
-  return selected;
+  return localSelectedItems.value.some(item => item.id === id);
 }
 
 // Handle clicking on any of the items in the list.
@@ -231,7 +229,7 @@ function toggleSelection(_item) {
     }
   } else {
     // This component supports selecting only one option.
-    localSelectedItems.value = _item;
+    localSelectedItems.value = [ _item ];
   }
 }
 </script>

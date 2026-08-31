@@ -33,21 +33,16 @@
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
 import { CompareData, DiffType } from "@cc/report-server-types";
-import { ref, toRef } from "vue";
+import { ref } from "vue";
 
 import {
   useBaseSelectOptionFilter
 } from "@/composables/useBaseSelectOptionFilter";
 import SelectOption from "./SelectOption/SelectOption";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([ "update:url" ]);
 
-const baseSelectOptionFilter =
-  useBaseSelectOptionFilter(toRef(props, "namespace"));
+const baseSelectOptionFilter = useBaseSelectOptionFilter();
 baseSelectOptionFilter.fetchItems.value = fetchItems;
 baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 baseSelectOptionFilter.encodeValue.value = encodeValue;

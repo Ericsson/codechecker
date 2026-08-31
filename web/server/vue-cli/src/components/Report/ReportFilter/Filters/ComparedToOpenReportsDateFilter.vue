@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from "vue";
+import { computed, ref } from "vue";
 
 import { useRoute } from "vue-router";
 
@@ -52,10 +52,6 @@ import { useDateUtils } from "@/composables/useDateUtils";
 
 import FilterToolbar from "./Layout/FilterToolbar";
 
-const props = defineProps({
-  namespace: { type: String, required: true }
-});
-
 const emit = defineEmits([
   "update:url"
 ]);
@@ -65,7 +61,7 @@ const date = ref(null);
 
 const { dateTimeToStr, getUnixTime } = useDateUtils();
 
-const baseFilter = useBaseFilter(toRef(props, "namespace"));
+const baseFilter = useBaseFilter();
 baseFilter.initPanel.value = initPanel;
 
 const route = useRoute();

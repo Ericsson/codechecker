@@ -121,7 +121,7 @@ after `CodeChecker analyze` and `CodeChecker check` commands.
 
 References:
 
-* [https://software.intel.com/sites/landingpage/IntrinsicsGuide/](https://software.intel.com/sites/landingpage/IntrinsicsGuide/)
+* [https://intel.com/content/www/us/en/docs/intrinsics-guide/index.html](https://intel.com/content/www/us/en/docs/intrinsics-guide/index.html)
 * [http://clang.llvm.org/compatibility.html#vector_builtins](http://clang.llvm.org/compatibility.html#vector_builtins)
 * [http://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors](http://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors)
 

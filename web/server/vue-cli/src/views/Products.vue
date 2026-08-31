@@ -1,13 +1,17 @@
 <template>
   <v-container fluid>
-    <v-data-table
+    <v-data-table-server
+      v-model:page="page"
+      v-model:items-per-page="itemsPerPage"
+      v-model:sort-by="sortBy"
       :headers="headers"
       :items="products"
       :loading="loading"
       :items-per-page-options="itemsPerPageOptions"
+      :items-length="itemsLength"
       loading-text="Loading products..."
       item-key="endpoint"
-      :items-per-page="25"
+      @update:options="fetchProducts"
     >
       <template v-slot:top>
         <v-toolbar
@@ -70,7 +74,7 @@
           class="v-chip-max-width-wrapper"
         >
           <v-chip
-            color="secondary"
+            color="primary"
             class="mr-2 my-1"
             variant="outlined"
             :title="admin"
@@ -131,12 +135,12 @@
           />
         </div>
       </template>
-    </v-data-table>
+    </v-data-table-server>
   </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { useDateUtils } from "@/composables/useDateUtils";
@@ -152,6 +156,7 @@ const { prettifyDate } = useDateUtils();
 
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
+import { ProductSortMode } from "@cc/prod-types";
 
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
 import {
@@ -168,53 +173,48 @@ const itemsPerPageOptions = [
   { value: 100, title: "100" }
 ];
 
-const sortBy = ref(null);
-const sortDesc = ref(null);
-const page = ref(null);
+const sortBy = ref([]);
+const page = ref(parseInt(route.query["page"]) || 1);
+const itemsPerPage = ref(
+  parseInt(route.query["items-per-page"]) || itemsPerPageOptions[0].value
+);
 const productNameSearch = ref(null);
 const loading = ref(null);
 const products = ref([]);
 const isSuperUser = ref(false);
 const isAdminOfAnyProduct = ref(false);
+const itemsLength = ref(0);
 
-const pagination = computed(() => ({
-  sortBy: sortBy.value ? [ sortBy.value ] : [ ],
-  sortDesc: sortDesc.value !== undefined ? [ !!sortDesc.value ] : [ ]
-}));
-
-watch(pagination, () => {
-  const sortByValue = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDescValue = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+function updateUrl() {
+  const defaultItemsPerPage = itemsPerPageOptions[0].value;
+  const sort = sortBy.value?.[0];
 
   router.replace({
     query: {
-      "sort-by": sortByValue,
-      "sort-desc": sortDescValue,
+      ...route.query,
+      "page": page.value === 1 ? undefined : page.value,
+      "items-per-page": itemsPerPage.value === defaultItemsPerPage
+        ? undefined : itemsPerPage.value,
+      "sort-by": sort?.key,
+      "sort-desc": sort ? sort.order === "desc" : undefined,
     }
   }).catch(() => {});
+}
 
-  products.value.sort(sortProducts);
-}, { deep: true });
-
-watch(page, () => {
-  const page = page === 1 ? undefined : page;
-  router.replace({
-    query: {
-      "page": page
-    }
-  }).catch(() => {});
-});
+watch([ page, itemsPerPage, sortBy ], updateUrl, { deep: true });
 
 const debouncedSearchHandler = _.debounce(() => {
   router.replace({
     query: {
+      ...route.query,
       "name": productNameSearch.value || undefined
     }
   }).catch(() => {});
 
-  fetchProducts();
+  // A new filter can shrink the result set below the current offset.
+  page.value = 1;
+
+  refreshProducts();
 }, 500);
 
 watch(productNameSearch, debouncedSearchHandler);
@@ -222,47 +222,72 @@ watch(productNameSearch, debouncedSearchHandler);
 const headers = ref([
   {
     title: "Name",
-    value: "displayedName",
+    key: "displayedName",
     sortable: true
   },
   {
     title: "Admins",
-    value: "admins",
+    key: "admins",
     sortable: false
   },
   {
     title: "Number of runs",
-    value: "runCount",
+    key: "runCount",
     align: "center",
     sortable: true
   },
   {
     title: "Latest store to product",
-    value: "latestStoreToProduct",
+    key: "latestStoreToProduct",
     sortable: true
   },
   {
     title: "Actions",
-    value: "actions",
+    key: "actions",
     sortable: false
-  }, 
+  },
 ]);
 
 onMounted(() => {
-  sortBy.value = route.query["sort-by"];
-  sortDesc.value = route.query["sort-desc"];
-  page.value = parseInt(route.query["page"]) || 1;
+  if (route.query["sort-by"]) {
+    sortBy.value = [ {
+      key: route.query["sort-by"],
+      order: route.query["sort-desc"] === "true" ? "desc" : "asc"
+    } ];
+  }
 
+  getTotalProducts();
   initializeComponent();
 });
+
+function nameFilter() {
+  return productNameSearch.value ? `*${productNameSearch.value}*` : null;
+}
+
+function getTotalProducts() {
+  prodService.getClient().getProductCount(
+    null,
+    nameFilter(),
+    handleThriftError(count => {
+      itemsLength.value = count.toNumber();
+    })
+  );
+}
+
+function refreshProducts() {
+  getTotalProducts();
+  fetchProducts();
+}
 
 function fetchProducts() {
   loading.value = true;
 
-  const productNameFilter = productNameSearch.value
-    ? `*${productNameSearch.value}*` : null;
-
-  prodService.getClient().getProducts(null, productNameFilter,
+  prodService.getClient().getProducts(
+    null,
+    nameFilter(),
+    itemsPerPage.value,
+    itemsPerPage.value * (page.value - 1),
+    getSortingMode(),
     handleThriftError(_products => {
       products.value = _products.map(product => {
         const description = product.description_b64 ?
@@ -275,65 +300,41 @@ function fetchProducts() {
           displayedName,
           ...product
         };
-      }).sort(sortProducts);
-
-      pagination.value.page = page.value;
+      });
 
       loading.value = false;
     }));
 }
 
-function sortProducts(p1, p2) {
-  const sortBy = pagination.value.sortBy.length
-    ? pagination.value.sortBy[0] : undefined;
-  const sortDesc = pagination.value.sortDesc.length
-    ? pagination.value.sortDesc[0] : undefined;
+function getSortingMode() {
+  const sort = sortBy.value?.[0];
+  const desc = sort?.order === "desc";
 
-  let p1Value = null;
-  let p2Value = null;
-
-  if (sortBy === undefined) {
-    // By default sort runs by displayed name and put products to the end
-    // of list which are not accessible by the current user.
-    if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
-
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "displayedName") {
-    p1Value = p1.displayedName.toLowerCase();
-    p2Value = p2.displayedName.toLowerCase();
-  } else if (sortBy === "runCount") {
-    p1Value = p1.runCount;
-    p2Value = p2.runCount;
-  } else if (sortBy === "latestStoreToProduct") {
-    p1Value = p1.latestStoreToProduct
-      ? new Date(p1.latestStoreToProduct)
-      : null;
-    p2Value = p2.latestStoreToProduct
-      ? new Date(p2.latestStoreToProduct)
-      : null;
-  } else {
-    console.warn("Invalid sort field: ", sortBy);
+  switch (sort?.key) {
+  case "displayedName":
+    return desc ? ProductSortMode.NAMES_DESC : ProductSortMode.NAMES_ASC;
+  case "runCount":
+    return desc ? ProductSortMode.RUNS_DESC : ProductSortMode.RUNS_ASC;
+  case "latestStoreToProduct":
+    return desc
+      ? ProductSortMode.LATEST_STORE_DESC
+      : ProductSortMode.LATEST_STORE_ASC;
+  default:
+    // No column selected -> accessible-to-current-user products first.
+    return ProductSortMode.ACCESSRIGHT;
   }
-
-  if (sortDesc) [ p1Value, p2Value ] = [ p2Value, p1Value ];
-
-  if (p1Value < p2Value) return -1;
-  if (p1Value > p2Value) return 1;
-
-  return 0;
 }
 
 function onCompleteNewProduct() {
-  fetchProducts();
+  refreshProducts();
 }
 
 function onCompleteEditProduct() {
-  fetchProducts();
+  refreshProducts();
 }
 
-function deleteProduct(product) {
-  products.value = products.value.filter(p => p.id !== product.id);
+function deleteProduct() {
+  refreshProducts();
 }
 
 function initializeComponent() {
@@ -350,7 +351,7 @@ function initializeComponent() {
 
             if (!isAdmin) {
               headers.value.splice(
-                headers.value.findIndex(h => h.value === "actions"), 1
+                headers.value.findIndex(h => h.key === "actions"), 1
               );
             }
           }));

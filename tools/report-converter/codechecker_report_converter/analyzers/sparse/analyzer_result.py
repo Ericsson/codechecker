@@ -21,6 +21,20 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Sparse'
     URL = 'https://git.kernel.org/pub/scm/devel/sparse/sparse.git'
 
+    EXAMPLE_CMD = """\
+# Change directory to your kernel source repository.
+cd path/to/linux/kernel/repository
+
+# Run Sparse and redirect the output to a file.
+make C=1 2>&1 | tee sparse.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Sparse.
+report-converter -t sparse -o ./codechecker_sparse_reports ./sparse.out
+
+# Store the Sparse reports with CodeChecker.
+CodeChecker store ./codechecker_sparse_reports -n sparse"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         return Parser(file_path).get_reports(file_path)

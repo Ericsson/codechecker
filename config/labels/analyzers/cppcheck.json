@@ -64,12 +64,16 @@
     ],
     "cppcheck-arrayIndexOutOfBounds": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
       "memory-safety:cwe-126",
+      "cwe-vulnerabilities:cwe-121",
+      "cwe-vulnerabilities:cwe-122",
+      "cwe-vulnerabilities:cwe-126",
       "severity:HIGH",
       "sei-cert-c:arr30-c"
     ],
@@ -118,10 +122,12 @@
     ],
     "cppcheck-autovarInvalidDeallocation": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-590",
+      "cwe-vulnerabilities:cwe-590",
       "severity:HIGH",
       "sei-cert-c:mem34-c"
     ],
@@ -142,11 +148,14 @@
     ],
     "cppcheck-bufferAccessOutOfBounds": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
+      "cwe-vulnerabilities:cwe-121",
+      "cwe-vulnerabilities:cwe-122",
       "severity:HIGH",
       "sei-cert-c:arr30-c"
     ],
@@ -303,11 +312,15 @@
     "cppcheck-ctunullpointer": [
       "cwe-top-25-2024:cwe-476",
       "guideline:cwe-top-25-2024",
+      "guideline:memory-safety",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:cwe-vulnerabilities",
+      "memory-safety:cwe-476",
       "profile:security",
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
+      "cwe-vulnerabilities:cwe-476",
       "severity:HIGH"
     ],
     "cppcheck-dangerousTypeCast": [
@@ -350,11 +363,15 @@
       "severity:HIGH"
     ],
     "cppcheck-deallocuse": [
+      "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
+      "cwe-vulnerabilities:cwe-416",
       "severity:HIGH",
       "sei-cert-c:mem30-c",
       "sei-cert-c:mem50-cpp"
@@ -373,10 +390,12 @@
     ],
     "cppcheck-doubleFree": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-415",
+      "cwe-vulnerabilities:cwe-415",
       "severity:HIGH",
       "sei-cert-c:mem36-c",
       "sei-cert-c:mem56-cpp"
@@ -579,10 +598,12 @@
     ],
     "cppcheck-invalidContainerReference": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-664",
+      "cwe-vulnerabilities:cwe-664",
       "severity:HIGH"
     ],
     "cppcheck-invalidFree": [
@@ -854,10 +875,12 @@
     ],
     "cppcheck-mismatchAllocDealloc": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-762",
+      "cwe-vulnerabilities:cwe-762",
       "severity:HIGH",
       "sei-cert-c:mem51-cpp"
     ],
@@ -950,11 +973,14 @@
     ],
     "cppcheck-negativeIndex": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-124",
       "memory-safety:cwe-127",
+      "cwe-vulnerabilities:cwe-124",
+      "cwe-vulnerabilities:cwe-127",
       "severity:HIGH"
     ],
     "cppcheck-negativeMemoryAllocationSize": [
@@ -1247,10 +1273,12 @@
     ],
     "cppcheck-returnDanglingLifetime": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-562",
+      "cwe-vulnerabilities:cwe-562",
       "severity:HIGH",
       "sei-cert-c:dcl30-c",
       "sei-cert-c:exp54-cpp",
@@ -1516,6 +1544,7 @@
       "guideline:memory-safety",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1523,6 +1552,7 @@
       "memory-safety:cwe-170",
       "sei-cert-c:str32-c",
       "sei-cert-cpp:str32-c",
+      "cwe-vulnerabilities:cwe-170",
       "severity:HIGH"
     ],
     "cppcheck-thisSubtraction": [
@@ -1604,10 +1634,12 @@
     ],
     "cppcheck-uninitvar": [
       "guideline:memory-safety",
+      "guideline:cwe-vulnerabilities",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "memory-safety:cwe-457",
+      "cwe-vulnerabilities:cwe-457",
       "severity:HIGH",
       "sei-cert-c:exp33-c"
     ],

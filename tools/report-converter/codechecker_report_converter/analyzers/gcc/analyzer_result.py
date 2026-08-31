@@ -25,6 +25,18 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'GNU Compiler Collection Static Analyzer'
     URL = 'https://gcc.gnu.org/wiki/StaticAnalyzer'
 
+    EXAMPLE_CMD = """\
+# Compile and analyze with GCC's static analyzer (GCC 13+), producing a
+# sarif output file.
+g++ -fanalyzer -fdiagnostics-format=sarif-file my_file.cpp
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of GCC's static analyzer.
+report-converter -t gcc -o ./codechecker_gcc_reports my_file.cpp.sarif
+
+# Store the gcc reports with CodeChecker.
+CodeChecker store ./codechecker_gcc_reports -n gcc"""
+
     def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result file. """
 

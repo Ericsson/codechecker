@@ -1,7 +1,5 @@
 <template>
-  <v-container
-    fluid
-  >
+  <v-container fluid>
     <reports
       ref="reportsRef"
       :bus="bus"
@@ -134,6 +132,7 @@ import { useRoute, useRouter } from "vue-router";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { useBaseStatistics } from "@/composables/useBaseStatistics";
 import { ccService, handleThriftError } from "@cc-api";
+import { MAX_QUERY_SIZE } from "@cc/report-server-types";
 
 import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
@@ -141,8 +140,7 @@ import Reports from "./Reports";
 import SingleLineWidget from "./SingleLineWidget";
 
 const props = defineProps({
-  bus: { type: Object, required: true },
-  namespace: { type: String, required: true }
+  bus: { type: Object, required: true }
 });
 
 const route = useRoute();
@@ -223,7 +221,7 @@ function getNumberOfFailedFiles() {
     ccService.getClient().getFailedFilesCount(
       baseStats.runIds.value,
       handleThriftError(_res => {
-        _resolve(_res);
+        _resolve(_res.toNumber());
       }));
   });
 }
@@ -234,7 +232,7 @@ function getNumberOfActiveCheckers() {
     reportFilter: _reportFilter,
     cmpData: _cmpData
   } = baseStats.getStatisticsFilters();
-  const _limit = null;
+  const _limit = MAX_QUERY_SIZE;
   const _offset = 0;
 
   return new Promise(_resolve => {
