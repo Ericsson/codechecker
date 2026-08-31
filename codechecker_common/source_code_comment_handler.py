@@ -193,8 +193,9 @@ class SourceCodeCommentHandler:
             relative_line = relative_offset if relative_sign == '+' \
                 else -relative_offset
 
-        return SourceCodeComment(checkers_names, message, review_status,
-                         relative_line=relative_line)
+        return SourceCodeComment(
+            checkers_names, message, review_status,
+            relative_line=relative_line)
 
     def has_source_line_comments(self, fp: TextIO, line: int) -> bool:
         """
