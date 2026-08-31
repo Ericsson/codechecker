@@ -332,7 +332,8 @@ class SourceCodeCommentHandler:
         fp: TextIO,
         bug_line: int
     ) -> SourceCodeComments:
-        """Return source comments whose relative offset targets the bug line."""
+        """Return source comments whose relative offset targets the
+        bug line."""
         fp.seek(0)
         lines = fp.readlines()
         source_line_comments = []
@@ -352,8 +353,8 @@ class SourceCodeCommentHandler:
                 source_line_comment = self.__process_source_line_comment(
                     review_comment)
 
-                if source_line_comment and source_line_comment.relative_line is \
-                        not None:
+                if (source_line_comment and
+                        source_line_comment.relative_line is not None):
                     target_line = (idx - len(block) + 1) + \
                         source_line_comment.relative_line
                     if target_line == bug_line:
@@ -361,7 +362,8 @@ class SourceCodeCommentHandler:
                         source_line_comments.append(source_line_comment)
                 continue
 
-            cstyle_start, cstyle_end = self.__check_if_cstyle_comment(source_line)
+            cstyle_start, cstyle_end = (
+                self.__check_if_cstyle_comment(source_line))
             if cstyle_start:
                 block = [source_line]
                 idx += 1
@@ -385,8 +387,8 @@ class SourceCodeCommentHandler:
                 source_line_comment = self.__process_source_line_comment(
                     review_comment)
 
-                if source_line_comment and source_line_comment.relative_line is \
-                        not None:
+                if (source_line_comment and
+                        source_line_comment.relative_line is not None):
                     target_line = (idx - len(block) + 1) + \
                         source_line_comment.relative_line
                     if target_line == bug_line:
