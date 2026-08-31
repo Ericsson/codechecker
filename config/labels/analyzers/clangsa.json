@@ -99,10 +99,6 @@
     ],
     "alpha.cplusplus.MisusedMovedObject": [
       "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c",
-      "guideline:cwe-top-25-2024",
-      "guideline:sei-cert-cpp",
-      "cwe-top-25-2024:cwe-416",
-      "sei-cert-cpp:exp63-cpp",
       "severity:HIGH"
     ],
     "alpha.cplusplus.PlacementNew": [
@@ -222,8 +218,6 @@
     ],
     "alpha.unix.cstring.UninitializedRead": [
       "doc_url:https://releases.llvm.org/22.1.0/tools/clang/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
-      "guideline:sei-cert-c",
-      "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
     "alpha.webkit.ForwardDeclChecker": [
