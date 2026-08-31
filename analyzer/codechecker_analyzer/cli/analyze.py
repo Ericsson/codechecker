@@ -509,19 +509,6 @@ def add_arguments_to_parser(parser):
                                     "the analysis is considered as a failed "
                                     "one.")
 
-    analyzer_opts.add_argument('--z3',
-                               dest='enable_z3',
-                               choices=['on', 'off'],
-                               default='off',
-                               help="Enable Z3 as the solver backend. "
-                                    "This allows reasoning over more "
-                                    "complex queries, but performance is "
-                                    "much worse than the default "
-                                    "range-based constraint solver "
-                                    "system. WARNING: Z3 as the only "
-                                    "backend is a highly experimental "
-                                    "and likely unstable feature.")
-
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable()
 
     analyzer_opts.add_argument('--z3-refutation',
@@ -1236,12 +1223,6 @@ def check_satisfied_capabilities(args):
         LOG.error("Clang does not support on-demand Cross Translation Unit"
                   "analysis!")
         LOG.info("hint: Clang 11.0.0 is the earliest version to support it")
-        has_error = True
-
-    if 'enable_z3' in args and args.enable_z3 == 'on' and not \
-            analyzer_types.is_z3_capable():
-        LOG.error("Z3 solver cannot be enabled as Clang was not compiled with "
-                  "Z3!")
         has_error = True
 
     if 'enable_z3_refutation' in args and args.enable_z3_refutation == 'on' \

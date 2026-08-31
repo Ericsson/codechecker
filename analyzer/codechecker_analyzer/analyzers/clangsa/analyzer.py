@@ -554,11 +554,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     '-Xclang',
                     'aggressive-binary-operation-simplification=true'])
 
-            # Enable the z3 solver backend.
-            if config.enable_z3:
-                analyzer_cmd.extend(['-Xclang', '-analyzer-constraints=z3'])
-
-            if config.enable_z3_refutation and not config.enable_z3:
+            if config.enable_z3_refutation:
                 analyzer_cmd.extend(['-Xclang',
                                      '-analyzer-config',
                                      '-Xclang',
@@ -746,8 +742,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
-
-        handler.enable_z3 = 'enable_z3' in args and args.enable_z3 == 'on'
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'

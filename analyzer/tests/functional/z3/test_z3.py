@@ -127,15 +127,19 @@ class TestSkeleton(unittest.TestCase):
         print(output)
         print(err)
 
-        # Get if the package is z3 compatible.
+        # Probe z3 capability by trying --z3-refutation on.  If the
+        # analyzer exits with an error about Z3 not being available,
+        # the tests that need actual Z3 support will be skipped.
         cmd = [self._codechecker_cmd,
                'analyze', 'compile_command.json',
                '-o', 'reports',
-               '--z3', 'on']
+               '--z3-refutation', 'on']
         test_project_path = self._testproject_data['project_path']
-        output, _, _ = call_command(cmd, cwd=test_project_path, env=self.env)
-        self.z3_capable = 'Z3 solver cannot be enabled' not in output
-        print(f"'analyze' reported z3 compatibility? {self.z3_capable}")
+        output, _, ret = call_command(
+            cmd, cwd=test_project_path, env=self.env)
+        self.z3_capable = ret == 0
+        print(f"z3-refutation probe exit code: {ret}, "
+              f"z3 capable: {self.z3_capable}")
 
         if not self.z3_capable:
             try:
@@ -144,24 +148,6 @@ class TestSkeleton(unittest.TestCase):
                 )
             except (ValueError, KeyError):
                 pass
-
-    def test_z3(self):
-        """ Enable z3 during analysis. """
-        if not self.z3_capable:
-            self.skipTest(NO_Z3_MESSAGE)
-
-        test_project_path = self._testproject_data['project_path']
-
-        cmd = [
-            self._codechecker_cmd, 'analyze',
-            'compile_command.json',
-            '-o', 'reports',
-            '--z3', 'on',
-            '--verbose', 'debug']
-        output, _, ret = call_command(
-            cmd, cwd=test_project_path, env=self.env)
-        self.assertEqual(ret, 0)
-        self.assertIn("-analyzer-constraints=z3", output)
 
     def test_z3_refutation(self):
         """ Enable z3 refutation during analysis. """

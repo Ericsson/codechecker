@@ -476,19 +476,6 @@ used to generate a log file on the fly.""")
                                     "assigned to specific directories, "
                                     "checkers, bug hashes.")
 
-    analyzer_opts.add_argument('--z3',
-                               dest='enable_z3',
-                               choices=['on', 'off'],
-                               default='off',
-                               help="Enable Z3 as the solver backend. "
-                                    "This allows reasoning over more "
-                                    "complex queries, but performance is "
-                                    "much worse than the default "
-                                    "range-based constraint solver "
-                                    "system. WARNING: Z3 as the only "
-                                    "backend is a highly experimental "
-                                    "and likely unstable feature.")
-
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable()
 
     analyzer_opts.add_argument('--z3-refutation',
@@ -990,7 +977,6 @@ def main(args):
                           'add_gcc_include_dirs_with_isystem',
                           'compiler_info_file',
                           'dump_compiler_info_file',
-                          'enable_z3',
                           'enable_z3_refutation']
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
