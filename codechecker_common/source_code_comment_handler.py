@@ -52,12 +52,14 @@ class SourceCodeComment:
         checkers: Set[str],
         message: str,
         status: str,
-        line: Optional[str] = None
+        line: Optional[str] = None,
+        relative_line: Optional[int] = None
     ):
         self.checkers = checkers
         self.message = message
         self.status = status
         self.line = line
+        self.relative_line = relative_line
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """
@@ -65,7 +67,8 @@ class SourceCodeComment:
             "checkers": list(self.checkers),
             "message": self.message,
             "status": self.status,
-            "line": self.line
+            "line": self.line,
+            "relative_line": self.relative_line
         }
 
     def __eq__(self, other) -> bool:
@@ -148,6 +151,8 @@ class SourceCodeCommentHandler:
         # Check for codechecker source code comment.
         comment_markers = '|'.join(self.source_code_comment_markers)
         pattern = r'^\s*(?P<status>' + comment_markers + r')' \
+                  + r'\s*(?:line\s*(?P<relative_sign>[+-])' \
+                  + r'\s*(?P<relative_offset>\d+)\s*)?' \
                   + r'\s*\[\s*(?P<checkers>[^\]]*)\s*\]\s*(?P<comment>.*)$'
 
         ptn = re.compile(pattern)
@@ -181,7 +186,15 @@ class SourceCodeCommentHandler:
         elif status == 'codechecker_confirmed':
             review_status = 'confirmed'
 
-        return SourceCodeComment(checkers_names, message, review_status)
+        relative_line = None
+        relative_sign = res.group('relative_sign')
+        if relative_sign:
+            relative_offset = int(res.group('relative_offset'))
+            relative_line = relative_offset if relative_sign == '+' \
+                else -relative_offset
+
+        return SourceCodeComment(checkers_names, message, review_status,
+                                relative_line=relative_line)
 
     def has_source_line_comments(self, fp: TextIO, line: int) -> bool:
         """
@@ -308,6 +321,80 @@ class SourceCodeCommentHandler:
 
             if cstyle_start:
                 break
+
+        if source_line_comments:
+            return source_line_comments
+
+        return self.get_relative_source_line_comments(fp, bug_line)
+
+    def get_relative_source_line_comments(
+        self,
+        fp: TextIO,
+        bug_line: int
+    ) -> SourceCodeComments:
+        """Return source comments whose relative offset targets the bug line."""
+        fp.seek(0)
+        lines = fp.readlines()
+        source_line_comments = []
+
+        idx = 0
+        while idx < len(lines):
+            source_line = lines[idx]
+            if self.__check_if_comment(source_line):
+                block = [source_line]
+                idx += 1
+                while idx < len(lines) and self.__check_if_comment(lines[idx]):
+                    block.append(lines[idx])
+                    idx += 1
+
+                orig_review_comment = ' '.join(block)
+                review_comment = orig_review_comment.replace('//', '')
+                source_line_comment = self.__process_source_line_comment(
+                    review_comment)
+
+                if source_line_comment and source_line_comment.relative_line is \
+                        not None:
+                    target_line = (idx - len(block) + 1) + \
+                        source_line_comment.relative_line
+                    if target_line == bug_line:
+                        source_line_comment.line = orig_review_comment
+                        source_line_comments.append(source_line_comment)
+                continue
+
+            cstyle_start, cstyle_end = self.__check_if_cstyle_comment(source_line)
+            if cstyle_start:
+                block = [source_line]
+                idx += 1
+                while idx < len(lines):
+                    block.append(lines[idx])
+                    if '*/' in lines[idx]:
+                        break
+                    idx += 1
+                idx += 1
+
+                orig_review_comment = ' '.join(block)
+                r_comment = []
+                for comment in block:
+                    comment = comment.strip()
+                    comment = comment.replace('/*', '').replace('*/', '')
+                    if comment.startswith('*'):
+                        r_comment.append(comment[1:])
+                    else:
+                        r_comment.append(comment)
+                review_comment = ' '.join(r_comment).strip()
+                source_line_comment = self.__process_source_line_comment(
+                    review_comment)
+
+                if source_line_comment and source_line_comment.relative_line is \
+                        not None:
+                    target_line = (idx - len(block) + 1) + \
+                        source_line_comment.relative_line
+                    if target_line == bug_line:
+                        source_line_comment.line = orig_review_comment
+                        source_line_comments.append(source_line_comment)
+                continue
+
+            idx += 1
 
         return source_line_comments
 
