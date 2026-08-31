@@ -399,11 +399,16 @@ class SQLServer(metaclass=ABCMeta):
             engine = sqlalchemy.create_engine(
                 self.get_connection_string(),
                 connect_args={'timeout': 600, 'check_same_thread': False},
+                # Using query string caching can cause memory issues
+                # with large number of products. Therefore,
+                # we disable it for now.
+                query_cache_size=0,
                 poolclass=NullPool)
         else:
             engine = sqlalchemy.create_engine(
                 self.get_connection_string(),
                 client_encoding='utf8',
+                query_cache_size=0,
                 poolclass=NullPool)
 
         self._register_engine_hooks(engine)
