@@ -633,6 +633,7 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#deadcode-deadstores-c",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
+      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
