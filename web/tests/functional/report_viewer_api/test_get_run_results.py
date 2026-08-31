@@ -26,6 +26,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Checker, \
     RunSortMode, RunSortType
 from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
 
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_web.shared import convert
 
 from libtest.debug_printer import print_run_results
@@ -68,6 +69,9 @@ class RunResults(unittest.TestCase):
         test_runs = [run for run in runs if run.name in run_names]
 
         self._runid = test_runs[0].runId
+
+        self.checker_labels_dir = os.path.join(
+            env.codechecker_package(), 'config', 'labels')
 
     def __check_bug_path_order(self, run_results, order):
         """
@@ -420,48 +424,36 @@ class RunResults(unittest.TestCase):
         self.assertEqual(len(report.details.pathEvents), 5)
 
     def test_get_checker_labels(self):
-        checker_labels = self._cc_client.getCheckerLabels([])
-        self.assertEqual(len(checker_labels), 0)
+        remote_checker_labels = self._cc_client.getCheckerLabels([])
+        self.assertEqual(len(remote_checker_labels), 0)
 
-        div_zero_labels = set([
-            "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
-            "#core-dividezero-c-c-objc",
-            "guideline:owasp-top-10-2025",
-            "guideline:sei-cert-c",
-            "guideline:sei-cert-cpp",
-            "guideline:cwe-vulnerabilities",
-            "profile:default",
-            "profile:extreme",
-            "profile:security",
-            "profile:sensitive",
-            "cwe-vulnerabilities:cwe-369",
-            "owasp-top-10-2025:owasp-A10-2025",
-            "sei-cert-c:int33-c",
-            "sei-cert-cpp:int33-c",
-            "severity:HIGH"
-        ])
+        local_checker_labels = CheckerLabels(self.checker_labels_dir)
+        div_zero_labels = set(map(
+            ':'.join,
+            set(local_checker_labels.labels_of_checker(
+                'core.DivideZero', 'clangsa'))))
 
-        checker_labels = self._cc_client.getCheckerLabels([
+        remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("clangsa", "core.DivideZero")])
-        self.assertEqual(len(checker_labels), 1)
-        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+        self.assertEqual(len(remote_checker_labels), 1)
+        self.assertEqual(set(remote_checker_labels[0]), div_zero_labels)
 
-        checker_labels = self._cc_client.getCheckerLabels([
+        remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("unknown", "core.DivideZero")])
-        self.assertEqual(len(checker_labels), 1)
-        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+        self.assertEqual(len(remote_checker_labels), 1)
+        self.assertEqual(set(remote_checker_labels[0]), div_zero_labels)
 
-        checker_labels = self._cc_client.getCheckerLabels([
+        remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("UNKNOWN", "core.DivideZero")])
-        self.assertEqual(len(checker_labels), 1)
-        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+        self.assertEqual(len(remote_checker_labels), 1)
+        self.assertEqual(set(remote_checker_labels[0]), div_zero_labels)
 
-        checker_labels = self._cc_client.getCheckerLabels([
+        remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("clangsa", "core.DivideZero"),
             Checker("clang-tidy", "dummy-checker")])
-        self.assertEqual(len(checker_labels), 2)
-        self.assertEqual(set(checker_labels[0]), div_zero_labels)
-        self.assertEqual(set(checker_labels[1]), set())
+        self.assertEqual(len(remote_checker_labels), 2)
+        self.assertEqual(set(remote_checker_labels[0]), div_zero_labels)
+        self.assertEqual(set(remote_checker_labels[1]), set())
 
     def test_get_guideline_rules(self):
         sei_cert_gl = Guideline("sei-cert-cpp")

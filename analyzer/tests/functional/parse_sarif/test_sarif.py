@@ -19,6 +19,8 @@ import unittest
 
 from libtest import env
 
+from codechecker_common.checker_labels import CheckerLabels
+
 
 class TestParseSarif(unittest.TestCase):
     _ccClient = None
@@ -57,6 +59,9 @@ class TestParseSarif(unittest.TestCase):
         self._tu_collector_cmd = env.tu_collector_cmd()
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
+
+        self.workspace_labels_dir = os.path.join(
+            env.codechecker_package(), 'config', 'labels')
 
     def __run_cmd(self, cmd):
         process = subprocess.Popen(
@@ -106,13 +111,16 @@ class TestParseSarif(unittest.TestCase):
         rules = parsed_json['runs'][0]['tool']['driver']['rules']
         self.assertEqual(len(rules), 1)
 
+        checker_labels = CheckerLabels(self.workspace_labels_dir)
+        div_zero_doc_urls = checker_labels.label_of_checker(
+            'core.DivideZero', 'doc_url', 'clangsa')
+
         self.assertEqual(rules[0], {
             'id': 'core.DivideZero',
             'fullDescription': {
                 'text': 'Division by zero'
             },
-            # pylint: disable-next=line-too-long
-            'helpUri': 'https://clang.llvm.org/docs/analyzer/checkers.html#core-dividezero-c-c-objc',  # noqa
+            'helpUri': div_zero_doc_urls[0],
             'defaultConfiguration': {
                 'level': 'error'
             }

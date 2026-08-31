@@ -41,6 +41,10 @@ def codechecker_cmd():
     return os.path.join(PKG_ROOT, 'bin', 'CodeChecker')
 
 
+def codechecker_package():
+    return PKG_ROOT
+
+
 def tu_collector_cmd():
     return os.path.join(PKG_ROOT, 'bin', 'tu_collector')
 
