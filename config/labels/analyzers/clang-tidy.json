@@ -8746,6 +8746,10 @@
       "profile:extreme",
       "severity:STYLE"
     ],
+    "readability-redundant-zero-initializer": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-zero-initializer.html",
+      "severity:STYLE"
+    ],
     "readability-reference-to-constructed-temporary": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/reference-to-constructed-temporary.html",
       "profile:default",
