@@ -130,8 +130,7 @@ class DiffRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_base,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
-                                       '-d', 'core.NullDereference',
-                                       '-e', 'deadcode.DeadStores']
+                                       '-d', 'core.NullDereference']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_base)
         if ret:
@@ -165,8 +164,7 @@ class DiffRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_new,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
-                                       '-e', 'core.NullDereference',
-                                       '-e', 'deadcode.DeadStores']
+                                       '-e', 'core.NullDereference']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_new)
         if ret:
@@ -202,8 +200,7 @@ class DiffRemote(unittest.TestCase):
         test_project_name_update = \
             project_info['name'] + '_' + uuid.uuid4().hex
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
-                                       '-e', 'core.StackAddressEscape',
-                                       '-e', 'deadcode.DeadStores'
+                                       '-e', 'core.StackAddressEscape'
                                        ]
 
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_update,
@@ -227,8 +224,7 @@ class DiffRemote(unittest.TestCase):
 
         # ===-------------------------- Analysis -------------------------=== #
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
-                                       '-d', 'core.StackAddressEscape',
-                                       '-e', 'deadcode.DeadStores'
+                                       '-d', 'core.StackAddressEscape'
                                        ]
         ret = codechecker.analyze(codechecker_cfg, test_proj_path_update)
         if ret:

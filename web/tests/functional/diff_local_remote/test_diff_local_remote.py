@@ -101,8 +101,7 @@ class LocalRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_local,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
-                                       '-d', 'core.NullDereference',
-                                       '-e', 'deadcode.DeadStores']
+                                       '-d', 'core.NullDereference']
 
         ret = codechecker.log_and_analyze(codechecker_cfg,
                                           test_proj_path_local)
@@ -125,8 +124,7 @@ class LocalRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_remote,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
-                                       '-e', 'core.NullDereference',
-                                       '-e', 'deadcode.DeadStores']
+                                       '-e', 'core.NullDereference']
 
         ret = codechecker.log_and_analyze(codechecker_cfg,
                                           test_proj_path_remote)
