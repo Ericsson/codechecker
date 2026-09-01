@@ -13,8 +13,6 @@ Authentication tests.
 
 import json
 import os
-import io
-import contextlib
 import subprocess
 import unittest
 import requests
@@ -765,7 +763,7 @@ class DictAuth(unittest.TestCase):
     def test_announcement_showing_in_cli(self):
         """
         Test if the announcement message posted on the CodeChecker GUI shows
-        up in cli.
+        up in the login, store, and diff CLI commands.
         """
         # Authenticate (SU permission required)
         auth_client = env.setup_auth_client(self._test_workspace,
@@ -777,20 +775,63 @@ class DictAuth(unittest.TestCase):
 
         auth_client.addPermission(Permission.SUPERUSER, "root", False, "")
 
-        # Set announcement message
+        # Set announcement message.
         su_config_client = env.setup_config_client(self._test_workspace,
                                                    session_token=session_token)
 
         su_config_client.setNotificationBannerText(
             convert.to_b64('Test announcement msg!'))
 
-        # Check if the message shows up
-        f = io.StringIO()
-        with contextlib.redirect_stdout(f):
-            codechecker.login(self._test_cfg['codechecker_cfg'],
-                              self._test_workspace,
-                              'root',
-                              'root')
-        output = f.getvalue()
+        codechecker_cfg = self._test_cfg['codechecker_cfg']
 
-        self.assertIn("Announcement: Test announcement msg!", output)
+        # Check if the message shows up in login.
+        login_env = codechecker_cfg['check_env'].copy()
+        login_env['CC_PASSWORD'] = 'root'
+        login_cmd = [env.codechecker_cmd(), 'cmd', 'login', 'root',
+                     '--url', env.parts_to_url(codechecker_cfg),
+                     '--verbose', 'debug']
+        login_out = subprocess.run(
+            login_cmd,
+            env=login_env,
+            encoding="utf-8",
+            errors="ignore",
+            capture_output=True,
+            check=False)
+        self.assertEqual(login_out.returncode, 0,
+                         login_out.stdout + login_out.stderr)
+        self.assertIn("Announcement: Test announcement msg!",
+                      login_out.stdout + login_out.stderr)
+
+        # Check if the message shows up in store.
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        report_file = os.path.join(test_dir, 'clang-5.0-trunk.plist')
+        store_cmd = [env.codechecker_cmd(), 'store', '--name', 'auth',
+                     '--url', env.parts_to_url(codechecker_cfg),
+                     '--verbose', 'debug',
+                     report_file]
+        store_out = subprocess.run(
+            store_cmd,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore",
+            capture_output=True,
+            check=False)
+        self.assertIn("Announcement: Test announcement msg!",
+                      store_out.stdout + store_out.stderr)
+
+        # Check if the message shows up in diff (remote run vs remote run).
+        diff_cmd = [env.codechecker_cmd(), 'cmd', 'diff',
+                    '--url', env.parts_to_url(codechecker_cfg),
+                    '--basename', 'auth',
+                    '--newname', 'auth',
+                    '--unresolved',
+                    '--verbose', 'debug']
+        diff_out = subprocess.run(
+            diff_cmd,
+            env=codechecker_cfg['check_env'],
+            encoding="utf-8",
+            errors="ignore",
+            capture_output=True,
+            check=False)
+        self.assertIn("Announcement: Test announcement msg!",
+                      diff_out.stdout + diff_out.stderr)

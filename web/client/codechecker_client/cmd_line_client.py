@@ -42,8 +42,9 @@ from codechecker_web.shared import convert, webserver_context
 
 from codechecker_client import report_type_converter
 from .client import login_user, setup_client, init_config_client
+from .credential_manager import UserCredentials
 from .cmd_line import CmdLineOutputEncoder
-from .product import split_server_url
+from .product import split_product_url, split_server_url
 
 from .filter_defaults import DEFAULT_FILTER_VALUES
 
@@ -705,6 +706,7 @@ def handle_list_runs(args):
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    print_banner(args.product_url)
 
     client = setup_client(args.product_url)
 
@@ -792,6 +794,7 @@ def handle_list_results(args):
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    print_banner(args.product_url)
 
     check_deprecated_arg_usage(args)
 
@@ -1380,6 +1383,8 @@ def handle_diff_results(args):
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    if 'product_url' in args:
+        print_banner(args.product_url)
 
     output_dir = args.export_dir if 'export_dir' in args else None
     if len(output_formats) > 1 and ('export_dir' not in args):
@@ -1549,6 +1554,7 @@ def handle_list_result_types(args):
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    print_banner(args.product_url)
     check_deprecated_arg_usage(args)
 
     def get_statistics(
@@ -1743,6 +1749,7 @@ def handle_list_result_types(args):
 def handle_remove_run_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
+    print_banner(args.product_url)
 
     client = setup_client(args.product_url)
 
@@ -1760,6 +1767,7 @@ def handle_update_run(args):
     Argument handler for the 'CodeChecker cmd update' subcommand.
     """
     init_logger(args.verbose if 'verbose' in args else None)
+    print_banner(args.product_url)
 
     if not args.new_run_name:
         LOG.error("The new run name can not be empty!")
@@ -1785,6 +1793,7 @@ def handle_update_run(args):
 def handle_suppress(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
+    print_banner(args.product_url)
 
     limit = constants.MAX_QUERY_SIZE
 
@@ -1818,9 +1827,21 @@ def handle_suppress(args):
                 client.changeReviewStatus(report.reportId, rw_status, comment)
 
 
-def get_announcement_msg(protocol, host, port):
-    config_client = init_config_client(protocol, host, port)
-    return config_client.getNotificationBannerText()
+def print_banner(server_url):
+    """Fetch and print the server banner if one is set."""
+    try:
+        try:
+            protocol, host, port, _ = split_product_url(server_url)
+        except Exception:
+            protocol, host, port = split_server_url(server_url)
+        session_token = UserCredentials().get_token(host, port)
+        config_client = init_config_client(protocol, host, port,
+                                           session_token)
+        encoded = config_client.getNotificationBannerText()
+        if encoded:
+            LOG.info("Announcement: %s", convert.from_b64(encoded))
+    except (Exception, SystemExit):
+        pass
 
 
 def handle_login(args):
@@ -1828,12 +1849,9 @@ def handle_login(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    encoded_announcement_msg = get_announcement_msg(protocol, host, port)
-    if encoded_announcement_msg:
-        announcement_msg = convert.from_b64(encoded_announcement_msg)
-        LOG.info(f"Announcement: {announcement_msg}")
     login_user(protocol, host, port, args.username,
                login='logout' not in args)
+    print_banner(args.server_url)
 
 
 def handle_list_run_histories(args):
@@ -1844,6 +1862,7 @@ def handle_list_run_histories(args):
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    print_banner(args.product_url)
 
     client = setup_client(args.product_url)
     run_ids = None
@@ -1885,6 +1904,7 @@ def handle_export(args):
 
     stream = 'stderr'
     init_logger(args.verbose if 'verbose' in args else None, stream)
+    print_banner(args.product_url)
 
     client = setup_client(args.product_url)
     run_filter = process_run_filter_conditions(args)
@@ -1904,6 +1924,7 @@ def handle_import(args):
     """
 
     init_logger(args.verbose if 'verbose' in args else None)
+    print_banner(args.product_url)
 
     client = setup_client(args.product_url)
 
