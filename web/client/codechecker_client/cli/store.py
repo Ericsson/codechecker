@@ -506,6 +506,11 @@ def assemble_zip(inputs,
             files_to_compress[os.path.dirname(review_status_file_path)]\
                 .add(review_status_file_path)
 
+        # Add files from report_dir/conf/ directory
+        conf_dir = os.path.join(dir_path, "conf")
+        if os.path.isdir(conf_dir):
+            files_to_compress[dir_path].add(conf_dir)
+
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
     analyzer_result_file_reports = parse_analyzer_result_files(
@@ -619,7 +624,14 @@ def assemble_zip(inputs,
                     hashlib.md5(dirname.encode('utf-8')).hexdigest()
                 zip_target = \
                     os.path.join('reports', report_dir_name, file_name)
-                zipf.write(file_path, zip_target)
+
+                # Add directory contents.
+                if os.path.isdir(file_path):
+                    for f in os.scandir(file_path):
+                        zipf.write(f.path, os.path.join(zip_target, f.name))
+                else:
+                    # Add regular file.
+                    zipf.write(file_path, zip_target)
 
         collected_file_paths = set()
         for f, h in file_to_hash.items():
