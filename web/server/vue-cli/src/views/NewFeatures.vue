@@ -8,6 +8,140 @@
       class="centered-timeline"
     >
       <v-timeline-item
+        dot-color="primary"
+        icon="mdi-star"
+      >
+        <new-release-item
+          color="bg-primary"
+        >
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.29.0"
+              target="_blank"
+              class="text-white"
+            >
+              Highlights of CodeChecker 6.29.0 release
+            </a>
+          </template>
+          <new-feature-item>
+            <template v-slot:title>
+              Redesigned file tree view
+            </template>
+            <p>
+              The report file tree view has been redesigned. You can filter
+              paths by wildcard, sort them by severity or review status, pick
+              paths with checkboxes, and the tree auto-expands to the first
+              branching folder.
+            </p>
+            <p>
+              The current view mode and expanded folders are now captured in
+              the URL, so shared links will show the exact same view.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.29.0/report_tree.png"
+              alt="Redesigned file tree view"
+              width="100%"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              GCC compiler warnings as checkers
+            </template>
+            Any <code>-W</code> GCC warning can now be enabled and reported like
+            a standard checker.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              OWASP Top 10 (2025) and CWE vulnerabilities guidelines
+            </template>
+            New security guidelines with rule and CWE mappings are added, shown
+            directly in the guideline statistics.
+            <img
+              src="@/assets/userguide/images/new_features/6.29.0/guideline_statistics.png"
+              alt="OWASP Top 10 guideline statistics"
+              width="100%"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Richer SARIF export from <code>parse</code>
+            </template>
+            The SARIF output of the <code>CodeChecker parse</code> command now
+            includes suppression information and complete rule details, and
+            includes all review statuses by default, improving CI and
+            third-party tool integration.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Analysis configuration stored with the run and visible in the GUI
+            </template>
+            <p>
+              The skip file and other configuration files are now kept
+              alongside the run and shown in the redesigned analysis
+              information dialog, giving a clear record of exactly how a run was
+              analyzed.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.29.0/skipfile_analysis_info.png"
+              alt="Analysis configuration in the analysis information dialog"
+              width="100%"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Redesigned report info page
+            </template>
+            <p>
+              The report info page has been redesigned to present all details
+              of a report in clearly organized cards: run and report
+              information, analyzer and checker details, file and location, bug
+              path length and severity, detection and review status, and
+              detection and fix dates.
+            </p>
+            <p>
+              Values such as the run name, report hash, file path, checker and
+              analyzer name link directly to the matching filtered reports view.
+            </p>
+            <img
+              src="@/assets/userguide/images/new_features/6.29.0/report_info.png"
+              alt="Redesigned report info page"
+              width="100%"
+            >
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              More readable report steps
+            </template>
+            Lengthy step messages now wrap across multiple lines, and step
+            boxes are color-coded by type (error, fixit, macro, note).
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Improved statistics pages
+            </template>
+            A refined layout, a single-select guideline picker, more readable
+            colors, and checkers missing from the selected runs are shown as
+            disabled rather than blocking the view from loading.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              New memory-safety reporting tool
+            </template>
+            A helper script combines a run's findings, checker details, and
+            analyzer configuration into a single, checksummed archive.
+          </new-feature-item>
+          <new-feature-item>
+            <template v-slot:title>
+              Faster, cleaner command-line output
+            </template>
+            Human-readable output uses terminal-width-aware tables, analyzers
+            are scheduled so longer-running ones start earlier, and the CLI can
+            now be invoked as lowercase <code>codechecker</code>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item
         dot-color="green-lighten-1"
         icon="mdi-star"
       >
