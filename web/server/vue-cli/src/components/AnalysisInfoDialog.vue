@@ -29,7 +29,7 @@
     </template>
     <template v-slot:content>
       <span>Analysis command</span>
-      <div class="pa-0 pt-2">
+      <div class="analyze-command-container pa-0 pt-2">
         <!-- eslint-disable vue/no-v-html -->
         <div
           v-for="cmd in highlightedCmds"
@@ -261,6 +261,11 @@ async function getAnalysisInfo() {
 </script>
 
 <style lang="scss">
+.analyze-command-container {
+  max-height: 60vh;
+  overflow-y: scroll;
+}
+
 .analyze-command {
   .param {
     background-color: rgba(0, 0, 0, 0.25);
