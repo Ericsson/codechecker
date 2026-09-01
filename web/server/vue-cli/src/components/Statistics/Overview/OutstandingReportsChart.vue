@@ -62,7 +62,7 @@ const chart = ref();
 const dates = ref([]);
 const filterDateFormat = ref("");
 
-const refreshHandler = () => fetchDataHandler();
+const refreshHandler = () => fetchData(dates.value);
 
 const options = ref({
   plugins: {
@@ -192,10 +192,6 @@ onActivated(function() {
 onDeactivated(function() {
   props.bus.off("refresh", refreshHandler);
 });
-
-function fetchDataHandler() {
-  fetchData(dates.value);
-}
 
 /* eslint-disable no-unused-vars */
 function setChartDataOld() {
