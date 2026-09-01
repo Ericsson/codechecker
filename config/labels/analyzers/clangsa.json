@@ -58,7 +58,8 @@
       "severity:HIGH"
     ],
     "alpha.core.StdVariant": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c"
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c",
+      "severity:HIGH"
     ],
     "alpha.core.StoreToImmutable": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-storetoimmutable",
@@ -97,7 +98,8 @@
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.MisusedMovedObject": [
-      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c"
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c",
+      "severity:HIGH"
     ],
     "alpha.cplusplus.PlacementNew": [
       "severity:HIGH"
@@ -569,6 +571,7 @@
       "severity:HIGH"
     ],
     "cplusplus.Move": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-move-c",
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:sei-cert-cpp",
@@ -1244,6 +1247,7 @@
       "guideline:cwe-vulnerabilities",
       "profile:extreme",
       "profile:security",
+      "profile:sensitive",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
@@ -1469,6 +1473,16 @@
       "sei-cert-c:exp34-c",
       "sei-cert-cpp:exp34-c",
       "cwe-vulnerabilities:cwe-476",
+      "severity:HIGH"
+    ],
+    "unix.cstring.UninitializedRead": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-uninitializedread-c",
+      "guideline:sei-cert-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert-c:exp33-c",
       "severity:HIGH"
     ],
     "valist.CopyToSelf": [

@@ -48,6 +48,11 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "cppcheck-algorithmOutOfBounds": [
+      "guideline:sei-cert-cpp",
+      "sei-cert-cpp:ctr50-cpp",
+      "severity:HIGH"
+    ],
     "cppcheck-argumentSize": [
       "profile:default",
       "profile:extreme",
@@ -457,6 +462,11 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "cppcheck-fcloseInLoopCondition": [
+      "guideline:sei-cert-c",
+      "sei-cert-c:fio46-c",
+      "severity:HIGH"
     ],
     "cppcheck-fflushOnInputStream": [
       "severity:MEDIUM"
@@ -1208,6 +1218,8 @@
     ],
     "cppcheck-redundantContinue": [
       "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "cppcheck-redundantCopy": [
@@ -1321,6 +1333,9 @@
       "severity:STYLE"
     ],
     "cppcheck-shadowFunction": [
+      "severity:STYLE"
+    ],
+    "cppcheck-shadowMember": [
       "severity:STYLE"
     ],
     "cppcheck-shadowVariable": [
@@ -1828,6 +1843,9 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-wrongfeofUsage": [
       "severity:MEDIUM"
     ],
     "cppcheck-wrongmathcall": [
