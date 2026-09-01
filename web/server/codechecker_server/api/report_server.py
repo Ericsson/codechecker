@@ -4165,7 +4165,14 @@ class ThriftRequestHandler:
             if matched_run_ids:
                 check_remove_runs_lock(session, matched_run_ids)
 
-            q = process_run_filter(session, session.query(Run), run_filter)
+            # Delete exactly the runs that were resolved and lock-checked
+            # above, not whatever the filter happens to match now. Each
+            # delete below runs in its own committed transaction, so
+            # re-running the filter here could pick up a run that didn't
+            # exist (and so wasn't lock-checked) a moment ago - e.g. a
+            # run recreated under the same name with a fresh, active lock
+            # (see #5031).
+            q = session.query(Run).filter(Run.id.in_(matched_run_ids))
 
             # q.delete(synchronize_session=False) could also be used here,
             # however, a run deletion tends to be a slow operation due to

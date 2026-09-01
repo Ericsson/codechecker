@@ -22,24 +22,30 @@ whether the targeted run(s) were actually locked.
 
 import unittest
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
 from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_server.api.report_server import \
-    check_remove_runs_lock, get_run_ids_for_filter
+    ThriftRequestHandler, check_remove_runs_lock, get_run_ids_for_filter
 from codechecker_server.database.run_db_model import \
     Base, Run, RunLock
 
 
 class RunRemovalLockTest(unittest.TestCase):
     def setUp(self):
-        self.engine = create_engine('sqlite:///:memory:')
+        self.engine = create_engine(
+            'sqlite:///:memory:',
+            connect_args={'check_same_thread': False},
+            poolclass=StaticPool)
         Base.metadata.create_all(self.engine)
-        self.session = sessionmaker(bind=self.engine)()
+        self.session_factory = sessionmaker(bind=self.engine)
+        self.session = self.session_factory()
 
         run1 = Run('locked_run', '1.0')
         run1.id = 1
@@ -101,6 +107,80 @@ class RunRemovalLockTest(unittest.TestCase):
         # Should not raise: the lock is old enough to be considered
         # expired/stale.
         check_remove_runs_lock(self.session, matched_run_ids)
+
+    def test_remove_run_does_not_delete_a_run_recreated_during_the_call(
+            self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/5031
+
+        This is a follow-up to #1445/#4999: 'removeRun' resolves
+        'matched_run_ids' from the filter and lock-checks those ids, but
+        previously re-ran the *filter* (not the resolved ids) to build
+        the actual destructive query. Since each delete commits in its
+        own transaction, a run recreated under the same name between the
+        lock check and the deletion - now holding a fresh, active lock -
+        would still match the filter and get deleted without ever being
+        lock-checked.
+
+        Unlike a test that re-implements the query being fixed, this
+        exercises the real 'removeRun()' method end-to-end: 'run_filter'
+        resolution is intercepted at exactly the point 'removeRun' calls
+        it, and a concurrent removal + recreation of 'unlocked_run' under
+        the same name (now with an active lock) is simulated right after
+        the real lock check has passed - simulating a second client
+        racing in between. The new, locked run must survive the call.
+        """
+        run_filter = RunFilter(names=['unlocked_run'], exactMatch=True)
+        real_get_run_ids_for_filter = get_run_ids_for_filter
+
+        prev_run_id = None
+
+        def resolve_then_simulate_concurrent_removal(session, rf):
+            nonlocal prev_run_id
+            ids = real_get_run_ids_for_filter(session, rf)
+
+            concurrent_session = self.session_factory()
+            prev_run_id = concurrent_session.query(Run).filter(
+                Run.name == 'unlocked_run').first().id
+            concurrent_session.query(Run).filter(
+                Run.name == 'unlocked_run').delete()
+            new_run = Run('unlocked_run', '1.0')
+            new_run.id = prev_run_id + 1
+            concurrent_session.add(new_run)
+            concurrent_session.add(RunLock('unlocked_run'))
+            concurrent_session.commit()
+            concurrent_session.close()
+
+            return ids
+
+        handler = ThriftRequestHandler.__new__(ThriftRequestHandler)
+        handler._Session = self.session_factory
+        handler._product = MagicMock()
+        handler._config_database = MagicMock()
+        handler._auth_session = None
+
+        with patch.object(
+                ThriftRequestHandler, '_ThriftRequestHandler__require_store',
+                lambda self: None), \
+                patch('codechecker_server.api.report_server.db_cleanup'
+                      '.remove_unused_comments'), \
+                patch('codechecker_server.api.report_server.db_cleanup'
+                      '.remove_unused_analysis_info'), \
+                patch('codechecker_server.api.report_server'
+                      '.get_run_ids_for_filter',
+                      side_effect=resolve_then_simulate_concurrent_removal):
+            handler.removeRun(None, run_filter)
+
+        verify_session = self.session_factory()
+        remaining = verify_session.query(Run).filter(
+            Run.id == prev_run_id + 1).all()
+        verify_session.close()
+
+        self.assertEqual(
+            len(remaining), 1,
+            "The run recreated (with an active lock) during the "
+            "removeRun() call was incorrectly deleted.")
 
 
 if __name__ == "__main__":
