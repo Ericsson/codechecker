@@ -151,7 +151,12 @@ const guidelineOptions = ref([
     id: "cwe-vulnerabilities",
     name: "CWE Vulnerabilities",
     value: 6
-  }
+  },
+  {
+    id: "cwe-top-25-2025",
+    name: "CWE Top 25 Most Dangerous Software Weaknesses 2025",
+    value: 7
+  },
 ]);
 const all_guideline_rules = ref({});
 const checker_stats = ref({});

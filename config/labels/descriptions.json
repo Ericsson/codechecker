@@ -15,7 +15,8 @@
     "UNSPECIFIED": "Checker severity is not specified for a checker."
   },
   "guideline": {
-    "cwe-top-25-2024": "https://cwe.mitre.org/top25/",
+    "cwe-top-25-2024": "https://cwe.mitre.org/top25/archive/2024/2024_top25_list",
+    "cwe-top-25-2025": "https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html",
     "cwe-vulnerabilities": "https://cwe.mitre.org/",
     "sei-cert-c": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/",
     "sei-cert-cpp": "https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/",

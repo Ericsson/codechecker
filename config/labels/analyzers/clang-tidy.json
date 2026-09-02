@@ -262,8 +262,10 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:extreme",
       "cwe-vulnerabilities:cwe-78",
+      "cwe-top-25-2025:cwe-78",
       "sei-cert-c:env33-c",
       "sei-cert-cpp:env33-c",
       "severity:MEDIUM"
@@ -1010,6 +1012,7 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -1019,7 +1022,9 @@
       "cwe-vulnerabilities:cwe-676",
       "cwe-vulnerabilities:cwe-119",
       "cwe-vulnerabilities:cwe-125",
+      "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
+      "cwe-top-25-2025:cwe-787",
       "owasp-top-10-2021:owasp-A04-2021",
       "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:msc24-c",
@@ -1172,10 +1177,12 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
       "cwe-vulnerabilities:cwe-78",
+      "cwe-top-25-2025:cwe-78",
       "owasp-top-10-2021:owasp-A03-2021",
       "owasp-top-10-2025:owasp-A05-2025",
       "sei-cert-c:env33-c",
@@ -1290,12 +1297,15 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc24-c.html",
       "guideline:cwe-top-25-2024",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
       "cwe-vulnerabilities:cwe-119",
       "cwe-vulnerabilities:cwe-125",
+      "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
+      "cwe-top-25-2025:cwe-787",
       "severity:LOW"
     ],
     "cert-msc30-c": [
@@ -1322,12 +1332,15 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc33-c.html",
       "guideline:cwe-top-25-2024",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-119",
       "cwe-top-25-2024:cwe-125",
       "cwe-top-25-2024:cwe-787",
       "cwe-vulnerabilities:cwe-119",
       "cwe-vulnerabilities:cwe-125",
+      "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
+      "cwe-top-25-2025:cwe-787",
       "severity:LOW"
     ],
     "cert-msc50-cpp": [
@@ -3114,6 +3127,7 @@
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -3123,6 +3137,7 @@
       "sei-cert-c:fio30-c",
       "sei-cert-cpp:fio30-c",
       "cwe-vulnerabilities:cwe-20",
+      "cwe-top-25-2025:cwe-20",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-signedness": [
@@ -3668,6 +3683,7 @@
       "guideline:cwe-top-25-2024",
       "guideline:sei-cert-c",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -3678,7 +3694,9 @@
       "sei-cert-c:exp32-c",
       "cwe-vulnerabilities:cwe-119",
       "cwe-vulnerabilities:cwe-125",
+      "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
+      "cwe-top-25-2025:cwe-787",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-pointer-types-discards-overflow-behavior": [
@@ -3973,9 +3991,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-all": [
@@ -3991,12 +4011,14 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-field-moved": [
@@ -4004,9 +4026,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global": [
@@ -4014,12 +4038,14 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global-moved": [
@@ -4027,9 +4053,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-intra-tu-suggestions": [
@@ -4041,9 +4069,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-noescape": [
@@ -4059,12 +4089,14 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-return-stack-addr-moved": [
@@ -4072,9 +4104,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-strict": [
@@ -4090,12 +4124,14 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope": [
@@ -4103,12 +4139,14 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope-moved": [
@@ -4116,9 +4154,11 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
       "cwe-vulnerabilities:cwe-416",
+      "cwe-top-25-2025:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-validations": [
@@ -4665,10 +4705,12 @@
     "clang-diagnostic-nonnull": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonnull",
       "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "cwe-vulnerabilities:cwe-476",
+      "cwe-top-25-2025:cwe-476",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nonportable-cfstrings": [
