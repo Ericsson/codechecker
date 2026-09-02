@@ -421,7 +421,15 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import {
+  computed,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
@@ -1127,13 +1135,22 @@ function prettifyDate(date) {
 function getBugPathLenColor(length) {
   return gradientColor.getGradientColor(length);
 }
+
+function lockBodyScroll() {
+  document.body.style.overflow = "hidden";
+}
+
+function unlockBodyScroll() {
+  document.body.style.overflow = "";
+}
+
+onMounted(lockBodyScroll);
+onActivated(lockBodyScroll);
+onUnmounted(unlockBodyScroll);
+onDeactivated(unlockBodyScroll);
 </script>
 
 <style lang="scss">
-
-body {
-  overflow: hidden;
-}
 
 .height-constraint {
   height: calc(100vh - 100px);

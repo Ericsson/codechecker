@@ -54,7 +54,16 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch
+} from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
@@ -236,13 +245,22 @@ function emitRefreshStatistics() {
 function setRefreshFilterState(state) {
   refreshFilterState.value = state;
 }
+
+function lockBodyScroll() {
+  document.body.style.overflow = "hidden";
+}
+
+function unlockBodyScroll() {
+  document.body.style.overflow = "";
+}
+
+onMounted(lockBodyScroll);
+onActivated(lockBodyScroll);
+onUnmounted(unlockBodyScroll);
+onDeactivated(unlockBodyScroll);
 </script>
 
 <style lang="scss" scoped>
-body {
-  overflow: hidden;
-}
-
 .height-constraint {
   height: calc(100vh - 100px);
 }
