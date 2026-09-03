@@ -41,14 +41,6 @@
           </tooltip-help-icon>
         </h3>
       </v-row>
-      <v-row class="ma-0 mb-6">
-        <v-alert
-          icon="mdi-information"
-        >
-          In this statistics only the "Run / Tag Filter"
-          and the "Unique reports" are effective.
-        </v-alert>
-      </v-row>
       <v-row class="ma-0">
         <v-col
           cols="12"
@@ -128,29 +120,34 @@ const guidelineOptions = ref([
     value: 1
   },
   {
+    id: "cwe-vulnerabilities",
+    name: "CWE Vulnerabilities",
+    value: 2
+  },
+  {
     id: "cwe-top-25-2024",
     name: "CWE Top 25 Most Dangerous Software Weaknesses 2024",
-    value: 2
+    value: 3
+  },
+  {
+    id: "cwe-top-25-2025",
+    name: "CWE Top 25 Most Dangerous Software Weaknesses 2025",
+    value: 4
   },
   {
     id: "owasp-top-10-2021",
     name: "OWASP Top 10 Web Application Security Risks 2021",
-    value: 3
-  },
-  {
-    id: "memory-safety",
-    name: "Memory-safety related CWEs",
-    value: 4
+    value: 5
   },
   {
     id: "owasp-top-10-2025",
     name: "OWASP Top 10 Web Application Security Risks 2025",
-    value: 5
+    value: 6
   },
   {
-    id: "cwe-vulnerabilities",
-    name: "CWE Vulnerabilities",
-    value: 6
+    id: "memory-safety",
+    name: "Memory-safety related CWEs",
+    value: 7
   }
 ]);
 const all_guideline_rules = ref({});
