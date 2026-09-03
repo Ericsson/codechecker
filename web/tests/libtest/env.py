@@ -561,20 +561,24 @@ def create_sqlalchemy_session(workspace):
         raise err
 
 
-def validate_oauth_token_session(session_alchemy, access_token):
+def validate_oauth_token_session(session_alchemy, access_token, provider=None):
     """
     Helper function that returns bool depending
-    if the OAuth token exists
+    if the OAuth token exists. If 'provider' is given, also checks that
+    the stored token's provider matches it.
     """
 
-    access_token_db = None
     with DBSession(session_alchemy) as session:
-        access_token_db, *_ = \
-            session.query(OAuthToken.access_token) \
+        row = session.query(OAuthToken.access_token, OAuthToken.provider) \
             .filter(OAuthToken.access_token == access_token) \
             .first()
-    return access_token_db is not None \
-        and access_token_db == access_token
+
+    if row is None:
+        return False
+
+    access_token_db, provider_db = row
+    return access_token_db == access_token \
+        and (provider is None or provider_db == provider)
 
 
 def validate_oauth_session(session_alchemy, state):
