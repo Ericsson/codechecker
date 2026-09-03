@@ -44,7 +44,7 @@ from codechecker_web.shared import convert, webserver_context
 from codechecker_client import report_type_converter
 from .client import login_user, setup_client, init_config_client
 from .cmd_line import CmdLineOutputEncoder
-from .product import split_server_url
+from .product import split_product_url, split_server_url
 
 from .filter_defaults import DEFAULT_FILTER_VALUES
 
@@ -1470,6 +1470,9 @@ def handle_diff_results(args):
                       args.product_url)
             raise sexit
 
+        protocol, host, port, _ = split_product_url(args.product_url)
+        print_banner(protocol, host, port)
+
     if 'component' in args:
         check_existing_source_components(client, args.component)
 
@@ -1826,15 +1829,19 @@ def get_announcement_msg(protocol, host, port):
     return config_client.getNotificationBannerText()
 
 
+def print_banner(protocol, host, port, log=None):
+    """Fetch and print the server banner if one is set."""
+    encoded = get_announcement_msg(protocol, host, port)
+    if encoded:
+        (log or LOG).info("Announcement: %s", convert.from_b64(encoded))
+
+
 def handle_login(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    encoded_announcement_msg = get_announcement_msg(protocol, host, port)
-    if encoded_announcement_msg:
-        announcement_msg = convert.from_b64(encoded_announcement_msg)
-        LOG.info(f"Announcement: {announcement_msg}")
+    print_banner(protocol, host, port)
     login_user(protocol, host, port, args.username,
                login='logout' not in args)
 
