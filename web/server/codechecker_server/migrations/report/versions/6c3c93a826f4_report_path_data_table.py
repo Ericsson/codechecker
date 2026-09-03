@@ -69,6 +69,23 @@ def upgrade():
 
     conn = op.get_bind()
 
+    # Create the indexes before inserting data. The foreign keys are
+    # DEFERRABLE INITIALLY DEFERRED, so the bulk inserts below only queue the
+    # FK checks as pending trigger events (validated at COMMIT). PostgreSQL
+    # refuses to CREATE INDEX on a table that has pending trigger events
+    # (psycopg2.errors.ObjectInUse), so the indexes must be built while the
+    # table is still empty.
+    op.create_index(
+        op.f('ix_report_path_data_files_file_id'),
+        'report_path_data_files',
+        ['file_id'],
+        unique=False)
+    op.create_index(
+        op.f('ix_report_path_data_files_report_path_data_id'),
+        'report_path_data_files',
+        ['report_path_data_id'],
+        unique=False)
+
     report_ids = conn.execute(sa.text("""SELECT id FROM reports"""))
 
     for report_id_chunk in util.chunks(report_ids, 100_000):
@@ -157,16 +174,6 @@ def upgrade():
             sa.insert(report_path_data_files_table),
             report_data_file_content)
 
-    op.create_index(
-        op.f('ix_report_path_data_files_file_id'),
-        'report_path_data_files',
-        ['file_id'],
-        unique=False)
-    op.create_index(
-        op.f('ix_report_path_data_files_report_path_data_id'),
-        'report_path_data_files',
-        ['report_path_data_id'],
-        unique=False)
     op.drop_index(
         op.f('ix_bug_report_points_file_id'),
         table_name='bug_report_points')
