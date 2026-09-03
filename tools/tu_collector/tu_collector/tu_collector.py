@@ -83,6 +83,34 @@ def __get_toolchain_compiler(command: List[str]) -> Optional[str]:
     return None
 
 
+# Mapping from GCC-family compiler names to their Clang equivalents.
+_GCC_TO_CLANG = {
+    'gcc': 'clang',
+    'cc': 'clang',
+    'g++': 'clang++',
+    'c++': 'clang++',
+}
+
+
+def __get_clang_fallback(compiler: str) -> Optional[str]:
+    """
+    If the given compiler is a GCC-family compiler that cannot be found on
+    PATH, return the equivalent Clang compiler if it is available.
+    Returns None if no fallback is needed or possible.
+    """
+    # Only remap if the compiler itself (basename without path) is a known
+    # GCC alias and is not available on the system.
+    basename = os.path.basename(compiler)
+    if which(compiler) is not None:
+        return None  # compiler exists, no fallback needed
+    clang_equiv = _GCC_TO_CLANG.get(basename)
+    if clang_equiv and which(clang_equiv) is not None:
+        LOG.debug("Compiler '%s' not found, falling back to '%s'.",
+                  compiler, clang_equiv)
+        return clang_equiv
+    return None
+
+
 def __determine_compiler(gcc_command: List[str]) -> str:
     """
     This function determines the compiler from the given compilation command.
@@ -116,6 +144,11 @@ def __determine_compiler(gcc_command: List[str]) -> str:
     """
     if gcc_command[0].endswith('ccache'):
         if which(gcc_command[1]) is not None:
+            return gcc_command[1]
+        # gcc_command[1] may be a GCC compiler not present in a clang-only
+        # environment; return it anyway so __get_clang_fallback can remap it.
+        clang_equiv = _GCC_TO_CLANG.get(os.path.basename(gcc_command[1]))
+        if clang_equiv and which(clang_equiv) is not None:
             return gcc_command[1]
 
     return gcc_command[0]
@@ -195,6 +228,14 @@ def __gather_dependencies(
 
     # Build out custom invocation for dependency generation.
     compiler = __determine_compiler(command)
+
+    # In a clang-only environment the original compiler (e.g. gcc/g++) may
+    # not be present. Try to substitute it with the equivalent Clang binary.
+    clang_fallback = __get_clang_fallback(compiler)
+    if clang_fallback:
+        command[command.index(compiler)] = clang_fallback
+        compiler = clang_fallback
+
     command = [compiler, '-E', '-M', '-MT', '__dummy'] \
         + command[command.index(compiler) + 1:]
 
