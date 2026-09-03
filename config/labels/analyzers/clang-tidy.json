@@ -590,9 +590,13 @@
     ],
     "bugprone-not-null-terminated-result": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/not-null-terminated-result.html",
+      "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "severity:MEDIUM"
     ],
     "bugprone-optional-value-conversion": [
@@ -1025,6 +1029,8 @@
       "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
       "cwe-top-25-2025:cwe-787",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "owasp-top-10-2021:owasp-A04-2021",
       "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:msc24-c",

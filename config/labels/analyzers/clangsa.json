@@ -924,6 +924,8 @@
       "cwe-top-25-2025:cwe-89",
       "cwe-vulnerabilities:cwe-94",
       "cwe-top-25-2025:cwe-94",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "owasp-top-10-2021:owasp-A01-2021",
       "owasp-top-10-2021:owasp-A03-2021",
       "owasp-top-10-2021:owasp-A04-2021",
@@ -1078,6 +1080,8 @@
       "cwe-vulnerabilities:cwe-127",
       "cwe-vulnerabilities:cwe-787",
       "cwe-top-25-2025:cwe-787",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
       "memory-safety:cwe-124",
@@ -1173,7 +1177,11 @@
     ],
     "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-deprecatedorunsafebufferhandling-c",
+      "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "profile:extreme",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.SecuritySyntaxChecker": [
@@ -1236,6 +1244,8 @@
       "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
       "cwe-top-25-2025:cwe-787",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "owasp-top-10-2025:owasp-A06-2025",
       "sei-cert-c:str31-c",
       "sei-cert-cpp:str31-c",
@@ -1296,6 +1306,8 @@
       "cwe-top-25-2025:cwe-125",
       "cwe-vulnerabilities:cwe-787",
       "cwe-top-25-2025:cwe-787",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.vfork": [
@@ -1477,12 +1489,16 @@
     ],
     "unix.cstring.BadSizeArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-badsizearg-c",
+      "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "sei-cert-c:str31-c",
       "sei-cert-cpp:str31-c",
       "severity:MEDIUM"
@@ -1494,11 +1510,15 @@
     ],
     "unix.cstring.NotNullTerminated": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-notnullterminated-c",
+      "guideline:cwe-vulnerabilities",
+      "guideline:cwe-top-25-2025",
       "guideline:sei-cert-c",
       "guideline:sei-cert-cpp",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "cwe-vulnerabilities:cwe-120",
+      "cwe-top-25-2025:cwe-120",
       "sei-cert-c:str31-c",
       "sei-cert-cpp:str31-c",
       "severity:HIGH"
