@@ -184,6 +184,16 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
+    parser.add_argument('--perf-stats',
+                        dest="print_perf_stats",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Print the top 10 slowest and most "
+                             "memory-hungry files to analyze, based on the "
+                             "per-file analyzer duration and peak memory "
+                             "usage recorded during 'CodeChecker analyze'.")
+
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -634,6 +644,8 @@ def main(args):
                 sys.exit(1)
 
         metadata = get_metadata(dir_path)
+        if 'print_perf_stats' in args:
+            statistics.add_analyzer_durations(metadata)
 
         if metadata and 'files' in args:
             # Mapping plists when files are specified to speed up parsing

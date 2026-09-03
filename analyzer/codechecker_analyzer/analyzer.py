@@ -12,6 +12,7 @@ Prepare and start different analysis types
 
 from collections import defaultdict
 from string import Template
+from typing import Any, Dict
 import os
 import shutil
 import signal
@@ -272,13 +273,14 @@ def perform_analysis(args, skip_handlers, filter_handlers,
 
     # Save some metadata information.
     for analyzer in analyzers:
-        metadata_info = {
+        metadata_info: Dict[str, Any] = {
             'checkers': {},
             'analyzer_statistics': {
                 "failed": 0,
                 "failed_sources": [],
                 "successful": 0,
                 "successful_sources": [],
+                "duration_of_sources": [],
                 "version": None}}
 
         for check, data in config_map[analyzer].checks().items():
