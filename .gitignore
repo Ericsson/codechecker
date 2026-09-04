@@ -9,6 +9,18 @@ venv_dev
 .coverage
 Makefile.local
 
+# Generated config files (copied/extended from sub-project dirs by setup.py)
+config/analyzer_version.json
+config/web_version.json
+config/git_commit_urls.json
+config/session_client.json
+config/system_comment_kinds.json
+config/server_config.json
+
+# Setuptools artifacts
+*.egg-info
+dist
+
 /web/server/vue-cli/dist
 
 # tools
