@@ -1385,7 +1385,12 @@ def main(args):
         pre_analysis_skip_handlers,
         ctu_or_stats_enabled)
 
-    if not actions:
+    # When CTU or statistics based analysis is enabled, the files which are
+    # skipped from the analysis are still kept in 'actions', because the
+    # pre-analysis may need them. If all of them are skipped, then the
+    # pre-analysis would run for nothing, so bail out here too.
+    if not actions or (skip_handlers and all(
+            skip_handlers.should_skip(action.source) for action in actions)):
         LOG.warning("No analysis is required.")
         LOG.warning("There were no compilation commands in the provided "
                     "compilation database or all of them were skipped.")
