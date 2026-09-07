@@ -23,6 +23,7 @@ AnalyzerStatistics = Any
 AnalyzerList = List[str]
 CheckCommands = List[str]
 CheckDurations = List[float]
+DurationOfSources = List[tuple]
 CheckerNamesView = Iterable[str]
 CheckerToAnalyzer = Dict[str, str]
 CodeCheckerVersion = Optional[str]
@@ -59,6 +60,7 @@ class MetadataInfoParser:
         self.cc_version: CodeCheckerVersion = None
         self.check_commands: CheckCommands = []
         self.check_durations: CheckDurations = []
+        self.duration_of_sources: DurationOfSources = []
         self.analyzer_statistics: AnalyzerStatistics = {}
 
         self.checkers: MetadataCheckers = {}
@@ -153,6 +155,10 @@ class MetadataInfoParser:
                 dest[analyzer_name]['successful_sources'].extend(
                     source.get('successful_sources', []))
 
+            if 'duration_of_sources' in dest[analyzer_name]:
+                dest[analyzer_name]['duration_of_sources'].extend(
+                    source.get('duration_of_sources', []))
+
             dest[analyzer_name]['version'].update([source['version']])
         else:
             dest[analyzer_name] = source
@@ -230,6 +236,10 @@ class MetadataInfoParser:
                 stats['successful'] = len(stats['successful_sources'])
 
             stats['version'] = '; '.join(stats['version'])
+
+        for stats in self.analyzer_statistics.values():
+            self.duration_of_sources.extend(
+                stats.get('duration_of_sources', []))
 
         # FIXME: if multiple report directories are stored created by different
         # codechecker versions there can be multiple results with OFF detection

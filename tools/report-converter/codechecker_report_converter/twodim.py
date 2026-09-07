@@ -15,7 +15,7 @@ import os
 import shutil
 
 from operator import itemgetter
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 from prettytable import HRuleStyle, PrettyTable, TableStyle
 
@@ -98,9 +98,61 @@ def to_rows(lines: Iterable[str]) -> str:
     return '\n'.join(str_parts)
 
 
+def _truncate(text, width: int, keep_suffix: bool = False) -> str:
+    """
+    Shorten ``text`` to ``width`` characters, adding an ellipsis. By default
+    the end of the string is cut off; if ``keep_suffix`` is set, the start
+    is cut off instead (useful for file paths, where the meaningful part -
+    the file name - is at the end).
+    """
+    s = str(text)
+    if len(s) <= width:
+        return s
+    if keep_suffix:
+        return '…' + s[-(width - 1):]
+    return s[:max(0, width - 1)] + '…'
+
+
+def _assign_widths(indices, nat_widths, budget, min_col_width):
+    assigned = {}
+    unassigned = list(indices)
+    remaining = budget
+
+    for _ in range(len(indices) + 1):
+        if not unassigned:
+            break
+
+        equal_share = remaining // len(unassigned)
+        locked_this_round = [
+            i for i in unassigned if nat_widths[i] <= equal_share
+        ]
+
+        if not locked_this_round:
+            break
+
+        for i in locked_this_round:
+            assigned[i] = nat_widths[i]
+            remaining -= nat_widths[i]
+            unassigned.remove(i)
+
+    if unassigned:
+        nat_sum = sum(nat_widths[i] for i in unassigned)
+        for i in unassigned:
+            if nat_sum > 0:
+                share = max(min_col_width,
+                            int(nat_widths[i] / nat_sum * remaining))
+            else:
+                share = max(min_col_width, remaining // len(unassigned))
+            assigned[i] = share
+
+    return assigned
+
+
 def _fit_table_to_width(
     table: PrettyTable,
     terminal_width: int,
+    ellipsis_columns: Optional[Iterable[int]] = None,
+    keep_suffix_columns: Optional[Iterable[int]] = None,
 ) -> str:
     """
     Render ``table`` so that it fits within ``terminal_width`` columns.
@@ -158,46 +210,72 @@ def _fit_table_to_width(
     # Available content budget (sum of column widths must be <= this).
     available = max(terminal_width - overhead, num_cols * min_col_width)
 
+    ellipsis_cols = set(ellipsis_columns) if ellipsis_columns else set()
+    keep_suffix_cols = set(keep_suffix_columns) if keep_suffix_columns \
+        else set()
+    wrap_cols = [i for i in range(num_cols) if i not in ellipsis_cols]
+    trunc_cols = [i for i in range(num_cols) if i in ellipsis_cols]
+
     # --- Iterative fixpoint ---
     # assigned[i] holds the final max_width for column i once locked.
     # Initialised to 0; every entry is guaranteed to be set before use.
     assigned: List[int] = [0] * num_cols
-    unassigned = list(range(num_cols))
-    remaining = available
 
     # Each iteration locks columns whose natural width is <= the equal
     # share they would receive if the remaining budget were split evenly
     # among the still-unassigned columns.  This guarantees that short
     # columns always keep their full natural width, and only the genuinely
     # wide columns are shortened.
-    for _ in range(num_cols + 1):
-        if not unassigned:
-            break
+    wrap_assigned = _assign_widths(
+        wrap_cols, nat_widths,
+        available - len(trunc_cols) * min_col_width, min_col_width)
+    for i, w in wrap_assigned.items():
+        assigned[i] = w
 
-        equal_share = remaining // len(unassigned)
-        locked_this_round = [
-            i for i in unassigned if nat_widths[i] <= equal_share
+    if trunc_cols:
+        leftover = max(available - sum(wrap_assigned.values()),
+                       len(trunc_cols) * min_col_width)
+        trunc_assigned = _assign_widths(
+            trunc_cols, nat_widths, leftover, min_col_width)
+        for i, w in trunc_assigned.items():
+            assigned[i] = w
+
+    if ellipsis_columns:
+        # Hard-truncate the requested columns with an ellipsis instead of
+        # letting PrettyTable wrap them onto extra lines. Columns not
+        # listed still wrap normally via max_width.
+        truncated_rows = [
+            [_truncate(cell, assigned[i], keep_suffix=i in keep_suffix_cols)
+             if i in ellipsis_cols else cell
+             for i, cell in enumerate(row)]
+            for row in data_rows
+        ]
+        truncated_headers = [
+            _truncate(h, assigned[i]) if i in ellipsis_cols else h
+            for i, h in enumerate(field_names)
         ]
 
-        if not locked_this_round:
-            break  # Nothing new was locked; exit early.
-
-        for i in locked_this_round:
-            assigned[i] = nat_widths[i]
-            remaining -= nat_widths[i]
-            unassigned.remove(i)
-
-    # Distribute remaining budget among columns still unassigned
-    # (those that need truncation), proportionally to natural widths.
-    if unassigned:
-        nat_sum = sum(nat_widths[i] for i in unassigned)
-        for i in unassigned:
-            if nat_sum > 0:
-                share = max(min_col_width,
-                            int(nat_widths[i] / nat_sum * remaining))
+        # PrettyTable requires unique field names; disambiguate any
+        # collisions created by truncation.
+        seen: dict = {}
+        unique_headers = []
+        for h in truncated_headers:
+            if h in seen:
+                seen[h] += 1
+                unique_headers.append(f"{h[:max(0, len(h) - 1)]}{seen[h]}")
             else:
-                share = max(min_col_width, remaining // len(unassigned))
-            assigned[i] = share
+                seen[h] = 0
+                unique_headers.append(h)
+
+        table = _make_table(
+            unique_headers, truncated_rows, show_header, table.hrules)
+
+        for i, fn in enumerate(table.field_names):
+            table.max_width[fn] = assigned[i]  # type: ignore[index]
+
+        table.max_table_width = terminal_width
+
+        return table.get_string()
 
     # Apply per-column max_width constraints.
     for i, fn in enumerate(table.field_names):
@@ -229,9 +307,11 @@ def _make_table(
 
 
 def to_table(
-    lines: Iterable[str],
+    lines: Iterable[Iterable[Any]],
     separate_head=True,
-    separate_footer=False
+    separate_footer=False,
+    ellipsis_columns: Optional[Iterable[int]] = None,
+    keep_suffix_columns: Optional[Iterable[int]] = None,
 ) -> str:
     """
     Pretty-prints the given two-dimensional array's lines using PrettyTable.
@@ -245,6 +325,13 @@ def to_table(
     The first row is used as the header when ``separate_head`` is True.
     When ``separate_footer`` is True, the last data row is visually separated
     from the rest by drawing a horizontal rule between every row.
+
+    By default, columns that don't fit are wrapped onto extra lines within
+    the same row. ``ellipsis_columns`` selects column indices (0-based) that
+    should instead be hard-truncated with an ellipsis ('…') and kept on a
+    single line. Of those, ``keep_suffix_columns`` selects the ones where the
+    start (rather than the end) is cut off (useful for file paths, where the
+    file name at the end is the meaningful part).
     """
     lns: List[List[str]] = [
         ['' if e is None else str(e) for e in line] for line in lines]
@@ -276,7 +363,8 @@ def to_table(
     else:
         table = _make_table(field_names, data_rows, show_header)
 
-    return _fit_table_to_width(table, terminal_width)
+    return _fit_table_to_width(
+        table, terminal_width, ellipsis_columns, keep_suffix_columns)
 
 
 def to_csv(lines: Iterable[str]) -> str:
