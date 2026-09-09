@@ -36,12 +36,69 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         cls.__tmp_srcfile_3 = open(os.path.join(cls.__test_src_dir,
                                                 'test_file_3'),
                                    encoding='utf-8', errors="ignore")
+        cls.__tmp_srcfile_relative = open(os.path.join(
+            cls.__test_src_dir, 'test_file_relative_lines'),
+            encoding='utf-8', errors="ignore")
 
     @classmethod
     def teardown_class(cls):
         cls.__tmp_srcfile_1.close()
         cls.__tmp_srcfile_2.close()
         cls.__tmp_srcfile_3.close()
+        cls.__tmp_srcfile_relative.close()
+
+    def test_relative_line_suppress_positive_offset(self):
+        """Relative suppress comment applies to the target line."""
+        bug_line = 4
+        sc_handler = SourceCodeCommentHandler()
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            self.__tmp_srcfile_relative, bug_line)
+
+        self.assertEqual(len(source_line_comments), 1)
+        self.assertEqual(source_line_comments[0].checkers, {'core.DivideZero'})
+        self.assertEqual(source_line_comments[0].message,
+                         'relative suppress on line 5')
+
+    def test_relative_line_suppress_multiple_lines(self):
+        """Relative suppress comment may span multiple lines."""
+        bug_line = 10
+        sc_handler = SourceCodeCommentHandler()
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            self.__tmp_srcfile_relative, bug_line)
+
+        self.assertEqual(len(source_line_comments), 1)
+        self.assertEqual(source_line_comments[0].checkers,
+                         {'my_checker_1', 'my_checker_2'})
+        self.assertEqual(source_line_comments[0].message,
+                         'multi line relative comment second line of comment')
+
+    def test_relative_line_suppress_negative_offset(self):
+        """Relative suppress comment can target a previous line."""
+        bug_line = 31
+        sc_handler = SourceCodeCommentHandler()
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            self.__tmp_srcfile_relative, bug_line)
+
+        self.assertEqual(len(source_line_comments), 1)
+        self.assertEqual(source_line_comments[0].checkers, {'all'})
+        self.assertEqual(source_line_comments[0].message,
+                         'negative relative offset')
+
+    def test_relative_line_suppress_spaces_in_offset(self):
+        """Relative suppress comment supports spaces around the offset."""
+        bug_line = 38
+        sc_handler = SourceCodeCommentHandler()
+
+        source_line_comments = sc_handler.get_source_line_comments(
+            self.__tmp_srcfile_relative, bug_line)
+
+        self.assertEqual(len(source_line_comments), 1)
+        self.assertEqual(source_line_comments[0].checkers, {'core.DivideZero'})
+        self.assertEqual(source_line_comments[0].message,
+                         'relative comment with spaces in offset')
 
     def test_src_comment_first_line(self):
         """Bug is reported for the first line."""

@@ -1,0 +1,40 @@
+// codechecker_suppress line+3 [core.DivideZero] relative suppress on line 5
+if (condition1 &&
+    condition2 &&
+    condition3_with_divide_zero) { // Line 5
+    int x = 1;
+}
+
+// codechecker_suppress line+2 [my_checker_1, my_checker_2] multi line relative comment
+// second line of comment
+if (conditionA &&
+    conditionB) { // Line 13
+    int y = 2;
+}
+
+/* codechecker_suppress line+3 [core.NullDereference] c-style single line relative comment */
+if (ptr != 0 &&
+    ptr == 1 &&
+    ptr == 2) { // Line 20
+    int z = 3;
+}
+
+/*
+ * codechecker_confirmed line+4 [deadcode.DeadStores] c-style multi line relative comment
+ */
+if (var1 &&
+    var2 &&
+    var3) { // Line 29
+    int w = 4;
+}
+
+int some_code = 0; // Line 34
+// codechecker_intentional line-1 [all] negative relative offset
+int other_code = 1; // Line 36
+
+// codechecker_suppress line + 3 [core.DivideZero] relative comment with spaces in offset
+if (c1 &&
+    c2 &&
+    c3) { // Line 40
+    int v = 5;
+}
