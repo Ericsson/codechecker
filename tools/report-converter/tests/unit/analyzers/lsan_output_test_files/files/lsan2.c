@@ -6,5 +6,6 @@ int main()
 {
     p = malloc(7);
     p = 0; // The memory is leaked here.
+    void *p2 = malloc(5);
     return 0;
 }
