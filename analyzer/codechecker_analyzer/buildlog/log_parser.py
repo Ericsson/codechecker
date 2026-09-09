@@ -1087,7 +1087,7 @@ def parse_options(compilation_db_entry,
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
         details['source'] = ''
-
+    details['source'] = os.path.normpath(details['source'])
     lang = get_language(os.path.splitext(details['source'])[1])
     if lang:
         if details['lang'] is None:
