@@ -621,7 +621,7 @@ def assemble_zip(inputs,
 
                 # Create a unique report directory name.
                 report_dir_name = \
-                    hashlib.md5(dirname.encode('utf-8')).hexdigest()
+                    hashlib.sha256(dirname.encode('utf-8')).hexdigest()
                 zip_target = \
                     os.path.join('reports', report_dir_name, file_name)
 

@@ -357,12 +357,12 @@ int main()
                      "in the environment.")
     def test_fixit_apply_failure(self):
         def content_hash(filename):
-            md5 = hashlib.md5()
+            sha256 = hashlib.sha256()
 
             with open(filename, 'rb') as f:
-                md5.update(f.read())
+                sha256.update(f.read())
 
-            return md5.hexdigest()
+            return sha256.hexdigest()
 
         # --- Common files and variables --- #
 

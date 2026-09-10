@@ -1316,7 +1316,7 @@ def print_reports(
             for file_path, file_reports in file_report_map.items():
                 file_name = os.path.basename(file_path)
                 h = int(
-                    hashlib.md5(
+                    hashlib.sha256(
                         file_path.encode('utf-8')).hexdigest(),
                     16) % (10 ** 8)
 

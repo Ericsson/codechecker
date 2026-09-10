@@ -50,4 +50,4 @@ def analyzer_action_hash(analyzed_source_file, build_dir, build_command):
 
     build_info = source_file + '_' + ' '.join(args)
 
-    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+    return hashlib.sha256(build_info.encode(errors='ignore')).hexdigest()
