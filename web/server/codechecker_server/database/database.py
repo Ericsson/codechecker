@@ -441,6 +441,25 @@ class SQLServer(metaclass=ABCMeta):
         return args
 
     @staticmethod
+    def resolve_sqlite_relative_path(
+        connection_string: str, workspace_directory: str
+    ) -> str:
+        """
+        If connection_string is an SQLite connection with a relative
+        database path, resolve that path against workspace_directory and
+        return the resulting connection string. PostgreSQL connection
+        strings, and SQLite ones that already use an absolute path, are
+        returned unchanged.
+        """
+        url = make_url(connection_string)
+        if 'sqlite' not in url.drivername or not url.database or \
+                os.path.isabs(url.database):
+            return connection_string
+
+        return str(url.set(
+            database=os.path.join(workspace_directory, url.database)))
+
+    @staticmethod
     def from_connection_string(connection_string: str,
                                name_in_log: str,
                                model_meta,
