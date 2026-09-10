@@ -283,6 +283,37 @@ PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
 # Match for all of the compiler flags.
 CLANG_OPTIONS = re.compile('.*')
 
+# A Windows drive-letter path, e.g. 'C:\\tools\\gcc.exe'. Used only to
+# detect that a compilation command uses Windows-style paths at all.
+WINDOWS_DRIVE_PATH = re.compile(r'[A-Za-z]:\\')
+
+# A backslash acting as a Windows path separator, i.e. one directly
+# followed by a "path-ish" character. This deliberately does NOT match a
+# backslash that escapes a quote (\") or a space (\ ), because those are
+# meaningful POSIX escapes emitted by ld-logger and intercept-build.
+WINDOWS_PATH_SEP = re.compile(r'\\(?=[A-Za-z0-9_.\-])')
+
+
+def normalize_windows_paths(command):
+    """
+    Convert Windows path separators in a compilation command to forward
+    slashes, so the command can be split with POSIX-mode shlex.
+
+    Compilation databases generated on Windows (e.g. by CMake) contain
+    backslash-separated paths. 'shlex.split()' runs in POSIX mode, where a
+    backslash is an escape character, so those separators would be eaten:
+    'A:\\tools\\gcc.exe' becomes 'A:toolsgcc.exe' (see #4277).
+
+    Forward slashes are accepted as path separators by Windows itself, so
+    converting is safe. This is only applied when the command actually
+    contains a Windows drive-letter path, leaving POSIX commands - and the
+    backslash escapes they legitimately use - completely untouched.
+    """
+    if not WINDOWS_DRIVE_PATH.search(command):
+        return command
+
+    return WINDOWS_PATH_SEP.sub('/', command)
+
 
 def filter_compiler_includes_extra_args(compiler_flags):
     """Return the list of flags which affect the list of implicit includes.
@@ -1011,7 +1042,8 @@ def parse_options(compilation_db_entry,
         details['original_command'] = shlex.join(gcc_command)
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
-        gcc_command = shlex.split(compilation_db_entry['command'])
+        gcc_command = shlex.split(
+            normalize_windows_paths(compilation_db_entry['command']))
     else:
         raise KeyError("No valid 'command' or 'arguments' entry found!")
 
@@ -1188,7 +1220,8 @@ def extend_compilation_database_entries(compilation_database):
             source_dir = entry['directory']
             response_files = set()
 
-            options = shlex.split(entry['command'])
+            options = shlex.split(
+                normalize_windows_paths(entry['command']))
             for opt in options:
                 if opt.startswith('@'):
                     response_file = os.path.join(source_dir, opt[1:])
