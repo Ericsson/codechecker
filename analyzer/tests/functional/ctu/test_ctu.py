@@ -127,6 +127,35 @@ class TestCtu(unittest.TestCase):
         self.assertIn('Analysis finished', str(proc.stdout))
 
     @skipUnlessCTUCapable
+    def test_ctu_file_filter_matching_nothing_skips_pre_analysis(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/5022
+
+        If a '--file' filter matches none of the compilation commands,
+        analysis (and, if '--ctu' is enabled, the expensive CTU
+        pre-analysis/PCH-dumping phase) must not run at all - the CLI
+        should recognize upfront that this invocation is guaranteed to
+        produce nothing, instead of first dumping PCHs for every
+        translation unit and only then discovering that every file gets
+        skipped.
+        """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', self.buildlog,
+               '--file', '*/nothing/aaaaaaaaaaa.js']
+        proc = run(cmd, cwd=self.test_dir, env=self.env, check=False,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn('No analysis is required', str(proc.stdout))
+
+        ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
+        self.assertFalse(
+            os.path.isdir(ctu_dir),
+            "CTU pre-analysis (PCH dumping) should not have run at all "
+            "when the '--file' filter matches nothing.")
+
+    @skipUnlessCTUCapable
     def test_ctu_loading_mode_requires_ctu_mode(self):
         """ Test ctu-ast-mode option requires ctu mode enabled. """
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,

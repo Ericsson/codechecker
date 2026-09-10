@@ -208,6 +208,20 @@ def perform_analysis(args, skip_handlers, filter_handlers,
 
     actions = prepare_actions(actions, analyzers)
 
+    # If the skip/select filters (e.g. '--file') would leave nothing to
+    # actually analyze, bail out now, before any expensive machinery runs.
+    # This check mirrors 'skip_cpp()', which is otherwise only applied
+    # much later, inside 'start_workers()' - after CTU pre-analysis (PCH
+    # dumping) would already have run for nothing (see #5022).
+    to_analyze, _ = analysis_manager.skip_cpp(actions, skip_handlers)
+    if not to_analyze:
+        LOG.warning("No analysis is required.")
+        LOG.warning("All of the compilation commands were skipped "
+                    "according to the '--file'/'--ignore' filters. "
+                    "Analysis (and, if enabled, CTU pre-analysis) will "
+                    "not run.")
+        return
+
     available_checkers = set()
     # Add profile names to the checkers list so we will not warn
     # if a profile is enabled but there is no checker with that name.
