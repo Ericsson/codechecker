@@ -21,21 +21,21 @@ CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --
 [LOW] context_hash.cpp:8:3: Value stored to 'x' is never read [deadcode.DeadStores]
   x = 1;
   ^
-  Report hash: d101ee6221bb0ee2294619731f8a37de
+  Report hash: 74b96a7f80e1d7a0410c19501dcecbf52075bc4f2a3510eea1709f64e32e81d6
   Steps:
     1, context_hash.cpp:8:3: Value stored to 'x' is never read
 
 [LOW] context_hash.cpp:13:3: Value stored to 'x' is never read [deadcode.DeadStores]
   x = 1;
   ^
-  Report hash: d101ee6221bb0ee2294619731f8a37de
+  Report hash: 74b96a7f80e1d7a0410c19501dcecbf52075bc4f2a3510eea1709f64e32e81d6
   Steps:
     1, context_hash.cpp:13:3: Value stored to 'x' is never read
 
 [LOW] context_hash.cpp:19:3: Value stored to 'z' is never read [deadcode.DeadStores]
   z = 1;
   ^
-  Report hash: 9bf6918cf70cc58a37ea556c4afed103
+  Report hash: 65d21df8467b0d0caced5f85a1e5510b831c5b6f641c94af22b9f77745314e06
   Steps:
     1, context_hash.cpp:19:3: Value stored to 'z' is never read
 

@@ -40,10 +40,12 @@ class ResultHandlerTest(unittest.TestCase):
             f'g++ main.cpp -o {random_string()} -o{random_string()}'
         self.assertEqual(
             rh.analyzer_action_str,
-            'main.cpp_clangsa_b42298618a535959e9adc7807414763c')
+            'main.cpp_clangsa_'
+            '1514f3641c1f1e31c3e60889f85be60006ab2641173d3b6424417ba18ccaf9e6')
 
         ba.original_command = \
             f'g++ main.cpp -o {random_string()} -o{random_string()} -W -O3'
         self.assertEqual(
             rh.analyzer_action_str,
-            'main.cpp_clangsa_193423e3c13026c10bc1457b7434a25a')
+            'main.cpp_clangsa_'
+            '5ccd234ec2e6fde8042001de48658a27a5e5acc2a42de1ec305f7236159a643f')

@@ -21,21 +21,21 @@ CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --
 [HIGH] context_hash.cpp:23:23: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
   std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
                       ^
-  Report hash: 0f66553a0a3a129a00773b0e8ae42ca0
+  Report hash: 708498bf6cb41da1361b28ea7e1c369d9aa4652811169df9f2f1cdeeef02a97b
   Steps:
     1, context_hash.cpp:23:23: suspicious usage of 'sizeof(K)'; did you mean 'K'?
 
 [HIGH] context_hash.cpp:34:23: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
   std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
                       ^
-  Report hash: 0f66553a0a3a129a00773b0e8ae42ca0
+  Report hash: 708498bf6cb41da1361b28ea7e1c369d9aa4652811169df9f2f1cdeeef02a97b
   Steps:
     1, context_hash.cpp:34:23: suspicious usage of 'sizeof(K)'; did you mean 'K'?
 
 [HIGH] context_hash.cpp:37:21: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
 std::memset(buf, 0, sizeof(BUFLEN));  // sizeof(42) ==> sizeof(int)
                     ^
-  Report hash: 0f66553a0a3a129a00773b0e8ae42ca0
+  Report hash: 708498bf6cb41da1361b28ea7e1c369d9aa4652811169df9f2f1cdeeef02a97b
   Steps:
     1, context_hash.cpp:37:21: suspicious usage of 'sizeof(K)'; did you mean 'K'?
 
