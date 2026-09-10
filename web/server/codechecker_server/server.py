@@ -608,7 +608,7 @@ def _do_db_cleanups(config_database, context, check_env,
         for product, result in \
                 zip(products, executor.map(
                     partial(_do_db_cleanup, context, check_env,
-                           workspace_directory),
+                            workspace_directory),
                     *zip(*products))):
             success, reason = result
             if not success:
