@@ -17,7 +17,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
-from codechecker_api_shared.ttypes import DBStatus
+from codechecker_api.python.shared.ttypes import DBStatus
 
 from codechecker_common.logger import get_logger
 

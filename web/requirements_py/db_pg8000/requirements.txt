@@ -4,6 +4,3 @@ alembic~=1.5
 pg8000~=1.31
 psutil~=7.0
 portalocker~=3.0
-
-./api/py/codechecker_api/dist/codechecker_api.tar.gz
-./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz

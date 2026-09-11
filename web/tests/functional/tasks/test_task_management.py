@@ -19,8 +19,8 @@ from typing import Optional, cast
 
 import multiprocess
 
-from codechecker_api_shared.ttypes import RequestFailed, Ternary
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.shared.ttypes import RequestFailed, Ternary
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from libtest import codechecker, env

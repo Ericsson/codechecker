@@ -22,8 +22,8 @@ import time
 import json
 from typing import Iterable, Optional
 
-from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.DBAccess_v6 import constants, ttypes
+from codechecker_api.python.shared.ttypes import RequestFailed
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import File, Report, report_file, \
     reports as reports_helper

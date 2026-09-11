@@ -15,8 +15,9 @@ from typing import Optional
 
 from sqlalchemy.sql.expression import and_, or_
 
-from codechecker_api_shared.ttypes import RequestFailed, ErrorCode, Ternary
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.shared.ttypes import \
+    RequestFailed, ErrorCode, Ternary
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from codechecker_common.logger import get_logger

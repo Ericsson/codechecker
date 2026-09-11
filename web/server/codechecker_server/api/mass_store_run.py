@@ -28,8 +28,9 @@ from typing import Any, Callable, NoReturn, \
 import zipfile
 import zlib
 
-from codechecker_api_shared.ttypes import DBStatus, ErrorCode, RequestFailed
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.shared.ttypes import \
+    DBStatus, ErrorCode, RequestFailed
+from codechecker_api.python.DBAccess_v6 import ttypes
 
 from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger

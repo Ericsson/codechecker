@@ -11,9 +11,9 @@ Thrift enum helper.
 
 
 from typing import Optional
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+from codechecker_api.python.DBAccess_v6.ttypes import DetectionStatus, \
         ExtendedReportDataType, ReportStatus, ReviewStatus
-from codechecker_api.ProductManagement_v6.ttypes import Confidentiality
+from codechecker_api.python.ProductManagement_v6.ttypes import Confidentiality
 
 
 def detection_status_enum(status: Optional[str]) -> Optional[DetectionStatus]:

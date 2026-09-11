@@ -9,7 +9,8 @@
 Helper functions for Thrift api calls.
 """
 
-from codechecker_api.codeCheckerDBAccess_v6 import codeCheckerDBAccess, ttypes
+from codechecker_api.python.DBAccess_v6 import \
+    codeCheckerDBAccess, ttypes
 
 from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper
