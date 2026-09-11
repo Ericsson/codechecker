@@ -1,89 +1,54 @@
 <template>
-  <v-dialog
+  <ConfirmDialog
     v-model="dialog"
-    class="edit-source-component-dialog"
-    max-width="600px"
+    content-class="edit-source-component-dialog"
     scrollable
+    :title="dialogTitle"
+    confirm-btn-color="primary"
+    :confirm-btn-label="dialogConfirmButtonTitle"
+    @confirm="saveSourceComponent"
   >
-    <template v-slot:activator="{}">
-      <slot />
+    <template v-slot:content>
+      <v-container>
+        <v-form ref="form">
+          <v-text-field
+            v-model="nameInput"
+            class="component-name"
+            label="Name*"
+            autofocus
+            variant="outlined"
+            required
+            :rules="rules.name"
+          />
+
+          <v-textarea
+            v-model="componentInput"
+            class="component-value value"
+            variant="outlined"
+            required
+            validate-on-blur
+            label="Value"
+            :placeholder="placeHolderValue"
+            :rules="rules.value"
+          />
+
+          <v-textarea
+            v-model="descriptionInput"
+            class="component-description"
+            label="Description"
+            variant="outlined"
+          />
+        </v-form>
+      </v-container>
     </template>
-
-    <v-card
-      :title="title"
-    >
-      <template v-slot:append>
-        <v-btn
-          class="close-btn"
-          icon="mdi-close"
-          @click="dialog = false"
-        />
-      </template>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          <v-form ref="form">
-            <v-text-field
-              v-model="nameInput"
-              class="component-name"
-              label="Name*"
-              autofocus
-              variant="outlined"
-              required
-              :rules="rules.name"
-            />
-
-            <v-textarea
-              v-model="componentInput"
-              class="component-value value"
-              variant="outlined"
-              required
-              validate-on-blur
-              label="Value"
-              :placeholder="placeHolderValue"
-              :rules="rules.value"
-            />
-
-            <v-textarea
-              v-model="descriptionInput"
-              class="component-description "
-              label="Description"
-              variant="outlined"
-            />
-          </v-form>
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          class="cancel-btn"
-          color="error"
-          variant="text"
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          class="save-btn"
-          color="primary"
-          variant="text"
-          @click="saveSourceComponent"
-        >
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  </ConfirmDialog>
 </template>
 
 <script setup>
-import { ccService, handleThriftError } from "@cc-api";
 import { computed, ref, watch } from "vue";
+import { ccService, handleThriftError } from "@cc-api";
+
+import { ConfirmDialog } from "@/components";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -92,11 +57,14 @@ const props = defineProps({
 
 const emit = defineEmits([ "update:modelValue", "save:component" ]);
 
-const title = computed(() => {
+const dialogTitle = computed(() => {
   return props.sourceComponent ?
     "Edit source component" : "New source component";
 });
 
+const dialogConfirmButtonTitle = computed(() => {
+  return props.sourceComponent ? "Save" : "Create";
+});
 
 function isValidComponentValue (value) {
   const _lines = value.trim().split(/\r|\n/);
@@ -143,11 +111,15 @@ const dialog = computed({
 });
 
 watch(dialog, opened => {
-  if (opened && props.sourceComponent) {
-    nameInput.value = props.sourceComponent.name;
-    componentInput.value = props.sourceComponent.value;
-    descriptionInput.value = props.sourceComponent.description;
+  if (opened) {
+    form.value?.resetValidation();
   }
+});
+
+watch(() => props.sourceComponent, component => {
+  nameInput.value = component?.name;
+  componentInput.value = component?.value;
+  descriptionInput.value = component?.description;
 });
 
 async function saveSourceComponent() {

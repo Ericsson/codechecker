@@ -1,4 +1,3 @@
-import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
 import AnalyzerStatisticsDialog from "./AnalyzerStatisticsDialog";
 import DeleteRunBtn from "./DeleteRunBtn";
@@ -9,9 +8,12 @@ import RunNameColumn from "./RunNameColumn";
 import LoadMultipleRunsBtn from "./LoadMultipleRunsBtn.vue";
 
 export {
-  AnalysisInfoBtn, AnalyzerStatisticsBtn,
-  AnalyzerStatisticsDialog, DeleteRunBtn,
+  AnalyzerStatisticsBtn,
+  AnalyzerStatisticsDialog,
+  DeleteRunBtn,
   ExpandedRun,
-  RunDescription, RunFilterToolbar, RunNameColumn,
+  RunDescription,
+  RunFilterToolbar,
+  RunNameColumn,
   LoadMultipleRunsBtn
 };

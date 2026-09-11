@@ -213,7 +213,7 @@ function cancelReviewStatusChange() {
 
 :deep(.v-select.v-text-field--outlined) {
   .theme--light.v-label {
-    background-color: #fff;
+    background-color: #ffffff;
   }
 }
 </style>

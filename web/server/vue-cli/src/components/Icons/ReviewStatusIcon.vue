@@ -1,45 +1,46 @@
 <template>
   <v-icon
-    v-if="status === ReviewStatus.UNREVIEWED"
-    :color="reviewStatus.reviewStatusColor(ReviewStatus.UNREVIEWED)"
-    title="Unreviewed"
+    v-if="currentStatus"
+    :color="currentStatus.color"
+    :title="currentStatus.title"
     :size="size"
-    icon="mdi-eye-off"
-  />
-
-  <v-icon
-    v-else-if="status === ReviewStatus.CONFIRMED"
-    :color="reviewStatus.reviewStatusColor(ReviewStatus.CONFIRMED)"
-    title="Confirmed"
-    :size="size"
-    icon="mdi-check-circle-outline"
-  />
-
-  <v-icon
-    v-else-if="status === ReviewStatus.FALSE_POSITIVE"
-    :color="reviewStatus.reviewStatusColor(ReviewStatus.FALSE_POSITIVE)"
-    title="False positive"
-    :size="size"
-    icon="mdi-cancel"
-  />
-
-  <v-icon
-    v-else-if="status === ReviewStatus.INTENTIONAL"
-    :color="reviewStatus.reviewStatusColor(ReviewStatus.INTENTIONAL)"
-    title="Intentional"
-    :size="size"
-    icon="mdi-close-circle-outline"
+    :icon="currentStatus.icon"
   />
 </template>
 
 <script setup>
-import { ReviewStatus } from "@cc/report-server-types";
-import { useReviewStatus } from "@/composables/useReviewStatus";
+import { computed } from "vue";
+import { ReviewStatus } from "@cc/report-server-types";;
 
-defineProps({
+const props = defineProps({
   status: { type: Number, required: true },
-  size: { type: Number, default: undefined }
+  size: { type: String, default: "24" }
 });
 
-const reviewStatus = useReviewStatus();
+const reviewStatusInfo = {
+  [ReviewStatus.UNREVIEWED]: {
+    color: "var(--color-soft-blue)",
+    title: "Unreviewed",
+    icon: "mdi-eye-off"
+  },
+  [ReviewStatus.CONFIRMED]: {
+    color: "var(--color-soft-red)",
+    title: "Confirmed",
+    icon: "mdi-check-circle-outline"
+  },
+  [ReviewStatus.FALSE_POSITIVE]: {
+    color: "var(--color-gray-light)",
+    title: "False positive",
+    icon: "mdi-cancel"
+  },
+  [ReviewStatus.INTENTIONAL]: {
+    color: "var(--color-soft-green)",
+    title: "Intentional",
+    icon: "mdi-close-circle-outline"
+  }
+};
+
+const currentStatus = computed(function() {
+  return reviewStatusInfo[parseInt(props.status)];
+});
 </script>

@@ -1,60 +1,56 @@
 <template>
-  <v-container fluid>
-    <v-row align="center">
-      <v-col class="py-0">
-        <v-text-field
-          v-model="reportHash"
-          class="report-hash"
-          prepend-inner-icon="mdi-magnify"
-          label="Search by report hash..."
-          single-line
-          hide-details
-          variant="outlined"
-          density="compact"
-          clearable
-          @update:model-value="onTextFilterChanged"
-        />
-      </v-col>
-      <v-col class="py-0">
-        <select-review-status
-          v-model="reviewStatusValue"
-          label="Search by review status"
-          @update:model-value="onFilterChanged"
-        />
-      </v-col>
-      <v-col class="py-0">
-        <v-text-field
-          v-model="author"
-          class="author"
-          prepend-inner-icon="mdi-magnify"
-          label="Search by author..."
-          single-line
-          hide-details
-          variant="outlined"
-          density="compact"
-          clearable
-          @update:model-value="onTextFilterChanged"
-        />
-      </v-col>
-      <v-col class="py-0">
-        <v-checkbox
-          v-model="noAssociatedReports"
-          class="no-associated-reports ma-0 py-0"
-          :hide-details="true"
-          @change="onFilterChanged"
-        >
-          <template v-slot:label>
-            No associated reports
-            <tooltip-help-icon>
-              Show only review status rules which have no associated reports
-              and can be safely removed from the database without changing the
-              statistics.
-            </tooltip-help-icon>
-          </template>
-        </v-checkbox>
-      </v-col>
-    </v-row>
-  </v-container>
+  <div class="d-flex align-center ga-3 review-status-rule-filter">
+    <v-text-field
+      v-model="reportHash"
+      class="report-hash"
+      width="240"
+      prepend-inner-icon="mdi-magnify"
+      label="Search by report hash..."
+      single-line
+      hide-details
+      variant="outlined"
+      density="compact"
+      clearable
+      @update:model-value="onTextFilterChanged"
+    />
+
+    <select-review-status
+      v-model="reviewStatusValue"
+      width="240"
+      label="Search by review status"
+      @update:model-value="onFilterChanged"
+    />
+
+    <v-text-field
+      v-model="author"
+      class="author"
+      width="240"
+      prepend-inner-icon="mdi-account-search"
+      label="Search by author..."
+      single-line
+      hide-details
+      variant="outlined"
+      density="compact"
+      clearable
+      @update:model-value="onTextFilterChanged"
+    />
+
+    <v-checkbox
+      v-model="noAssociatedReports"
+      class="no-associated-reports ma-0 py-0"
+      :hide-details="true"
+      @change="onFilterChanged"
+    >
+      <template v-slot:label>
+        No associated reports
+        <tooltip-help-icon>
+          Show only review status rules which have no associated reports
+          and can be safely removed from the database without changing the
+          statistics.
+        </tooltip-help-icon>
+      </template>
+    </v-checkbox>
+  </div>
 </template>
 
 <script setup>

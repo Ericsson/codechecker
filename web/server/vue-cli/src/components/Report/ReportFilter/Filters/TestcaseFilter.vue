@@ -14,7 +14,9 @@
     @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon>
-      <v-icon color="grey">
+      <v-icon
+        color="var(--color-gray-light)"
+      >
         mdi-card-account-details
       </v-icon>
     </template>

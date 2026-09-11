@@ -1,7 +1,7 @@
 <template>
   <v-icon
     v-if="value === ReportStepIconType.DEFAULT"
-    color="#000000"
+    color="var(--color-black)"
     :size="size"
   >
     mdi-console-line
@@ -49,21 +49,21 @@
 
   <v-icon
     v-else-if="value === ReportStepIconType.ENTERING_LOOP_BODY"
-    color="#000000"
+    color="var(--color-black)"
     :size="size"
   >
     mdi-refresh
   </v-icon>
   <v-icon
     v-else-if="value === ReportStepIconType.LOOP_BODY_EXECUTED"
-    color="#000000"
+    color="var(--color-black)"
     :size="size"
   >
     mdi-sync
   </v-icon>
   <v-icon
     v-else-if="value === ReportStepIconType.LOOP_BACK"
-    color="#000000"
+    color="var(--color-black)"
     :size="size"
   >
     mdi-undo

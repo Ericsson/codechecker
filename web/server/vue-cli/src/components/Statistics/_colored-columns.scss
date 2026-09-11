@@ -17,9 +17,12 @@ $border_before: (
 // so nth-child indices are shifted by (colspan - 1).
 $total-row-offset: $unreviewed_col - 2;
 
-$outstanding-bg-color: #fef5f6;
-$suppressed-bg-color: #f2f6eb;
-$darken: 2;
+$outstanding-color: var(--color-soft-red);
+$suppressed-color: var(--color-soft-green);
+
+$bg-opacity: 10%;
+$accent-opacity: 10%;
+$hover-opacity: 15%;
 
 $tr: "tr:not(.v-data-table__expanded__content):not(.total-row)";
 
@@ -46,7 +49,9 @@ $table: "#{$class-name} > .v-table__wrapper > table";
   }
 }
 
-@mixin set-bg-color($bg-color, $cols...) {
+@mixin set-bg-color($color, $opacity, $cols...) {
+  $bg-color: color-mix(in srgb, #{$color} #{$opacity}, transparent);
+
   // Header and regular body rows
   @include set-cells-color($cols...) {
     background-color: $bg-color;
@@ -61,7 +66,7 @@ $table: "#{$class-name} > .v-table__wrapper > table";
   #{$table} > tbody > #{$tr}:hover {
     @each $col in $cols {
       & > td:nth-child(#{$col}) {
-        background-color: darken($bg-color, 5%);
+        background-color: color-mix(in srgb, #{$color} #{$hover-opacity}, transparent);
       }
     }
   }
@@ -69,17 +74,17 @@ $table: "#{$class-name} > .v-table__wrapper > table";
 
 // Set background color of outstanding report columns (red).
 @for $i from $unreviewed_col through $outstanding_reports_col {
-  @include set-bg-color($outstanding-bg-color, $i);
+  @include set-bg-color($outstanding-color, $bg-opacity, $i);
 }
 
-@include set-bg-color(darken($outstanding-bg-color, $darken), $outstanding_reports_col);
+@include set-bg-color($outstanding-color, $accent-opacity, $outstanding_reports_col);
 
 // Set background color of suppressed report columns (green).
 @for $i from $false_positive_col through $suppressed_reports_col {
-  @include set-bg-color($suppressed-bg-color, $i);
+  @include set-bg-color($suppressed-color, $bg-opacity, $i);
 }
 
-@include set-bg-color(darken($suppressed-bg-color, $darken), $suppressed_reports_col);
+@include set-bg-color($suppressed-color, $accent-opacity, $suppressed_reports_col);
 
 // Set border before some columns.
 @each $i in $border_before {

@@ -2,8 +2,9 @@
   <ConfirmDialog
     v-model="dialog"
     content-class="remove-review-status-rule-dialog"
-    confirm-btn-label="Remove"
     title="Remove review status rule"
+    confirm-btn-color="error"
+    confirm-btn-label="Remove"
     @confirm="removeReviewStatusRule"
   >
     <template v-slot:content>

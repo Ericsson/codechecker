@@ -1,9 +1,91 @@
 <template>
+  <edit-review-status-rule-dialog
+    v-model="editDialog"
+    :rule="selected"
+    @on:confirm="fetchReviewStatusRules"
+  />
+
+  <remove-review-status-rule-dialog
+    v-model="removeDialog"
+    :rule="selected"
+    @on:confirm="fetchReviewStatusRules"
+  />
+
+  <remove-filtered-rules-dialog
+    v-model="removeFilteredRuleDialog"
+    :total="totalItems"
+    :filter="filter"
+    @on:confirm="fetchReviewStatusRules"
+  />
+
+  <v-toolbar
+    elevation="0"
+    color="transparent"
+    class="mb-4"
+  >
+    <div class="d-flex align-center w-100">
+      <review-status-rule-filter
+        class="review-status-rule-filters flex-grow-0 w-auto"
+        :bus="bus"
+        @on:filter="filterReviewStatusRules"
+      />
+      <v-divider
+        vertical
+        class="mx-2 align-self-center"
+        length="28"
+      />
+      <v-btn
+        color="primary"
+        class="clear-all-filters-btn px-0"
+        variant="tonal"
+        height="40"
+        min-width="40"
+        title="Clear all filters"
+        @click="clearAllFilters"
+      >
+        <v-icon>mdi-filter-remove-outline</v-icon>
+      </v-btn>
+      <v-spacer />
+      <v-btn
+        color="error"
+        class="remove-filtered-rules-btn mr-2"
+        variant="tonal"
+        height="40"
+        :disabled="loading"
+        prepend-icon="mdi-trash-can-outline"
+        @click="removeFilteredRuleDialog = true"
+      >
+        Remove filtered rules
+      </v-btn>
+
+      <v-btn
+        color="primary"
+        class="new-rule-btn mr-2"
+        variant="flat"
+        height="40"
+        prepend-icon="mdi-plus"
+        @click="newReviewStatusRule"
+      >
+        New
+      </v-btn>
+
+      <v-btn
+        icon
+        title="Reload review status rules"
+        color="primary"
+        @click="fetchReviewStatusRules"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
+    </div>
+  </v-toolbar>
+
   <v-data-table-server
     v-model:page="page"
     v-model:items-per-page="itemsPerPage"
     v-model:sort-by="sortBy"
     v-model:items-per-page-options="itemsPerPageOptions"
+    class="review-status-rules-table"
     :headers="headers"
     :items="rules"
     :items-length="totalItems"
@@ -12,83 +94,6 @@
     :mobile-breakpoint="1000"
     item-key="reportHash"
   >
-    <template v-slot:top>
-      <edit-review-status-rule-dialog
-        v-model="editDialog"
-        :rule="selected"
-        @on:confirm="fetchReviewStatusRules"
-      />
-
-      <remove-review-status-rule-dialog
-        v-model="removeDialog"
-        :rule="selected"
-        @on:confirm="fetchReviewStatusRules"
-      />
-
-      <remove-filtered-rules-dialog
-        v-model="removeFilteredRuleDialog"
-        :total="totalItems"
-        :filter="filter"
-        @on:confirm="fetchReviewStatusRules"
-      />
-
-      <v-toolbar
-        elevation="0"
-        color="transparent"
-        class="mb-4"
-      >
-        <v-container class="pa-0" fluid>
-          <v-row align="center">
-            <v-col class="pa-0">
-              <review-status-rule-filter
-                class="review-status-rule-filters"
-                :bus="bus"
-                @on:filter="filterReviewStatusRules"
-              />
-            </v-col>
-            <v-col class="pa-0" align="right" cols="auto">
-              <v-btn
-                color="error"
-                class="remove-filtered-rules-btn mr-2"
-                variant="outlined"
-                :disabled="loading"
-                @click="removeFilteredRuleDialog = true"
-              >
-                Remove filtered rules
-              </v-btn>
-
-              <v-btn
-                color="primary"
-                class="clear-all-filters-btn mr-2"
-                variant="outlined"
-                @click="clearAllFilters"
-              >
-                Clear all filters
-              </v-btn>
-
-              <v-btn
-                color="primary"
-                class="new-rule-btn mr-2"
-                variant="outlined"
-                @click="newReviewStatusRule"
-              >
-                New
-              </v-btn>
-
-              <v-btn
-                icon
-                title="Reload review status rules"
-                color="primary"
-                @click="fetchReviewStatusRules"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-toolbar>
-    </template>
-
     <template #item.status="{ item }">
       <review-status-label
         :value="item.status"
@@ -114,7 +119,7 @@
       <v-chip
         class="ma-2"
         color="primary"
-        variant="outlined"
+        variant="tonal"
       >
         <v-icon
           start
@@ -127,23 +132,23 @@
 
     <template v-slot:item.actions="{ item }">
       <v-btn
-        class="remove-btn mr-2"
-        icon="mdi-trash-can-outline"
-        color="error"
-        size="small"
-        variant="tonal"
-        :disabled="loading"
-        @click="removeReviewStatusRule(item)"
-      />
-
-      <v-btn
         class="edit-btn"
         icon="mdi-pencil"
         color="primary"
         size="small"
-        variant="tonal"
+        variant="text"
         :disabled="loading"
         @click="editReviewStatusRule(item)"
+      />
+
+      <v-btn
+        class="remove-btn mr-2"
+        icon="mdi-trash-can-outline"
+        color="error"
+        size="small"
+        variant="text"
+        :disabled="loading"
+        @click="removeReviewStatusRule(item)"
       />
     </template>
   </v-data-table-server>
@@ -232,7 +237,8 @@ const headers = [
   {
     title: "Date",
     key: "date",
-    sortable: true
+    sortable: true,
+    align: "center"
   },
   {
     title: "Number of associated reports",
@@ -243,7 +249,8 @@ const headers = [
   {
     title: "Actions",
     key: "actions",
-    sortable: false
+    sortable: false,
+    align: "center"
   },
 ];
 
@@ -392,5 +399,14 @@ function truncate(text, length) {
 
 :deep(.v-toolbar__content) {
   padding: 0;
+}
+
+.review-status-rules-table
+  th.v-data-table-column--align-center.v-data-table__th--sortable
+  .v-data-table-header__content::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  flex: 0 0 auto;
 }
 </style>

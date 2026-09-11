@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <reports
+    <report-statistics-widget
       ref="reportsRef"
       :bus="bus"
       :run-ids="baseStats.runIds.value"
@@ -12,7 +12,7 @@
       >
         <single-line-widget
           icon="mdi-close"
-          color="red"
+          color="var(--color-soft-red)"
           label="Number of failed files"
           :bus="bus"
           :value="failedFiles"
@@ -42,7 +42,7 @@
       >
         <single-line-widget
           icon="mdi-card-account-details"
-          color="grey"
+          color="var(--color-gray-light)"
           label="Number of checkers reporting faults"
           :bus="bus"
           :value="activeCheckers"
@@ -136,7 +136,7 @@ import { MAX_QUERY_SIZE } from "@cc/report-server-types";
 
 import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
-import Reports from "./Reports";
+import ReportStatisticsWidget from "./ReportStatisticsWidget";
 import SingleLineWidget from "./SingleLineWidget";
 
 const props = defineProps({

@@ -1,6 +1,6 @@
 <template>
   <select-option
-    :id="id.value"
+    :id="id"
     title="Latest Detection Status"
     :bus="baseSelectOptionFilter.bus"
     :fetch-items="fetchItems"
@@ -11,7 +11,10 @@
     @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon="{ item }">
-      <detection-status-icon :status="item.id" />
+      <detection-status-icon
+        :status="item.id"
+        size="24"
+      />
     </template>
 
     <template v-slot:append-toolbar-title>
@@ -74,7 +77,7 @@
 
 <script setup>
 import { ccService, handleThriftError } from "@cc-api";
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 import { DetectionStatusIcon } from "@/components/Icons";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
@@ -94,9 +97,8 @@ baseSelectOptionFilter.updateReportFilter.value = updateReportFilter;
 baseSelectOptionFilter.encodeValue.value = encodeValue;
 baseSelectOptionFilter.decodeValue.value = decodeValue;
 
-const id = ref("detection-status");
-// eslint-disable-next-line vue/no-ref-object-reactivity-loss
-baseSelectOptionFilter.id.value = id.value;
+const id = "detection-status";
+baseSelectOptionFilter.id.value = id;
 
 const reportFilter = computed(
   () => baseSelectOptionFilter.baseFilter?.reportFilter?.value

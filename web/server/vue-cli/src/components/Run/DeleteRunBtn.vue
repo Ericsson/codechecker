@@ -12,10 +12,11 @@
   >
     <template v-slot:activator="{ props: activatorProps }">
       <v-btn
+        class="delete-run-btn ml-2"
         v-bind="activatorProps"
         color="error"
-        class="delete-run-btn mr-2"
         :variant="variant"
+        height="40"
         :disabled="!selected.length"
       >
         <v-icon left>

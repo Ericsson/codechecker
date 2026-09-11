@@ -2,6 +2,7 @@
   <v-icon
     v-if="value === 'successful'"
     class="analyzer-statistics-icon-successful"
+    color="var(--color-soft-green)"
   >
     mdi-check
   </v-icon>
@@ -9,6 +10,7 @@
   <v-icon
     v-else-if="value === 'failed'"
     class="analyzer-statistics-icon-failed"
+    color="var(--color-soft-red)"
   >
     mdi-close
   </v-icon>
@@ -19,11 +21,3 @@ defineProps({
   value: { type: String, required: true }
 });
 </script>
-<style lang="scss">
-.analyzer-statistics-icon-successful {
-  color: #587548 !important;
-}
-.analyzer-statistics-icon-failed {
-  color: #964739 !important;
-}
-</style>

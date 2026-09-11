@@ -39,7 +39,7 @@
         <template v-slot:prepend>
           <v-checkbox
             :model-value="selectedRgx === searchTxt"
-            color="#28a745"
+            color="var(--color-soft-green)"
             class="ma-1 mr-5"
             hide-details="auto"
           />
@@ -62,7 +62,7 @@
           <template v-slot:prepend>
             <v-checkbox
               :model-value="isSelected(item.id)"
-              color="#28a745"
+              color="var(--color-soft-green)"
               class="ma-1"
               hide-details="auto"
             />
@@ -83,7 +83,7 @@
 
             <v-chip
               v-if="item.count !== undefined"
-              color="#878d96"
+              color="var(--color-cool-gray)"
               variant="outlined"
               size="small"
             >
@@ -238,5 +238,11 @@ function toggleSelection(_item) {
 .regex-label {
   background-color: rgb(var(--v-theme-primary));
   color: white;
+}
+</style>
+
+<style lang="scss" scoped>
+:deep(.v-list-item__spacer) {
+  width: 8px !important;
 }
 </style>

@@ -100,6 +100,7 @@
       >
         <v-btn
           color="primary"
+          variant="flat"
           @click="createPresetDialog"
         >
           Create Preset

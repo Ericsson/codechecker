@@ -25,20 +25,24 @@
               text-truncate"
           >{{ title }}</span>
 
-          <slot name="append-toolbar-title" />
-
           <v-spacer />
 
-          <slot name="prepend-toolbar-items" />
+          <slot name="prepend-selected" />
 
-          <v-btn
-            icon="mdi-close-circle"
-            size="small"
-            variant="plain"
-            @click.stop="emit('clear');"
-          />
+          <slot name="append-toolbar-title" />
 
-          <slot name="append-toolbar-items" />
+          <span class="toolbar-items">
+            <slot name="prepend-toolbar-items" />
+
+            <v-btn
+              icon="mdi-close-circle"
+              size="small"
+              variant="plain"
+              @click.stop="emit('clear');"
+            />
+
+            <slot name="append-toolbar-items" />
+          </span>
         </template>
       </v-expansion-panel-title>
 
@@ -73,5 +77,29 @@ watch(() => props.panelActive, active => {
 
 :deep(.selected-items) {
   color: grey;
+  margin-left: 8px;
+}
+
+.toolbar-items {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.toolbar-items :deep(> *) {
+  display: none;
+}
+
+.v-expansion-panel-title:hover .toolbar-items,
+.v-expansion-panel-title:focus-within .toolbar-items,
+.toolbar-items:focus-within {
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+}
+
+.v-expansion-panel-title:hover .toolbar-items :deep(> *),
+.v-expansion-panel-title:focus-within .toolbar-items :deep(> *),
+.toolbar-items:focus-within :deep(> *) {
+  display: inline-flex;
 }
 </style>

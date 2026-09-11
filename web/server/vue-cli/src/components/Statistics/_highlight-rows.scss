@@ -1,11 +1,12 @@
 $class-name: "" !default;
 
-$outstanding-bg-color: #ffebee;
+$highlight-color: var(--color-soft-red);
+$bg-opacity: 10%;
 
 $tr: "tr:not(.v-data-table__expanded__content)";
 
 #{$class-name} tr.highlight-row td {
-  background-color: $outstanding-bg-color !important;
+  background-color: color-mix(in srgb, #{$highlight-color} #{$bg-opacity}, white) !important;
 }
 
 #{$class-name} > table {

@@ -138,7 +138,7 @@ function selectSameReport(reportId) {
 
 .v-select.v-text-field--outlined {
   :deep(.theme--light.v-label) {
-    background-color: #fff;
+    background-color: #ffffff;
   }
 }
 </style>

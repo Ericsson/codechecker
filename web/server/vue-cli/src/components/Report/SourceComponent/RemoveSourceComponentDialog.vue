@@ -13,8 +13,8 @@
         class="remove-btn"
         icon="mdi-trash-can-outline"
         color="error"
-        variant="tonal"
         size="small"
+        variant="text"
       />
     </template>
     <template v-slot:content>

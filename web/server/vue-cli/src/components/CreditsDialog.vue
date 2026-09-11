@@ -9,12 +9,9 @@
       <v-list-item
         v-bind="activatorProps"
         id="edit-global-permissions-btn"
+        prepend-icon="mdi-account-group-outline"
+        prepend-gap="8"
       >
-        <template v-slot:prepend>
-          <v-icon>
-            mdi-account-group-outline
-          </v-icon>
-        </template>
         <v-list-item-title>Credits</v-list-item-title>
       </v-list-item>
     </template>
@@ -26,10 +23,13 @@
         >
           <template v-slot:prepend>
             <v-btn
-              :href="`http://github.com/${credit.github}`"
-              target="_blank"
+              :href="credit.github
+                ? `http://github.com/${credit.github}`
+                : undefined"
+              :target="credit.github ? '_blank' : undefined"
+              :class="{ 'no-link': !credit.github }"
               icon="mdi-github"
-              color="primary"
+              :color="credit.github ? 'primary' : 'grey'"
               variant="plain"
             />
           </template>
@@ -124,4 +124,8 @@ const credits = ref([
 </script>
 
 <style lang="scss">
+// Force default cursor if the link does not exists.
+.v-btn.no-link {
+  cursor: default;
+}
 </style>

@@ -20,7 +20,7 @@
           :filter-icon="filterIconNames"
         />
       </template>
-      <template v-slot:prepend-toolbar-items>
+      <template v-slot:prepend-selected>
         <v-chip
           color="grey"
           variant="outlined"
@@ -32,6 +32,8 @@
             color="text-grey-darken-1"
           />
         </v-chip>
+      </template>
+      <template v-slot:prepend-toolbar-items>
         <v-btn
           v-if="administrating"
           class="manage-components-btn"
@@ -43,7 +45,9 @@
       </template>
 
       <template v-slot:icon>
-        <v-icon color="grey">
+        <v-icon
+          color="var(--color-gray-light)"
+        >
           mdi-puzzle-outline
         </v-icon>
       </template>

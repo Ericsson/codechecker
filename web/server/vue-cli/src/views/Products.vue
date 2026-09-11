@@ -4,6 +4,7 @@
       v-model:page="page"
       v-model:items-per-page="itemsPerPage"
       v-model:sort-by="sortBy"
+      class="products-table clickable-rows"
       :headers="headers"
       :items="products"
       :loading="loading"
@@ -12,6 +13,7 @@
       loading-text="Loading products..."
       item-key="endpoint"
       @update:options="fetchProducts"
+      @click:row="onRowClick"
     >
       <template v-slot:top>
         <v-toolbar
@@ -26,9 +28,11 @@
                 class="ml-4"
                 label="Search for products..."
                 hide-details
-                variant="outlined"
                 clearable
                 density="compact"
+                color="primary"
+                variant="outlined"
+                prepend-inner-icon="mdi-magnify"
               />
             </v-col>
 
@@ -76,7 +80,7 @@
           <v-chip
             color="primary"
             class="mr-2 my-1"
-            variant="outlined"
+            variant="tonal"
             :title="admin"
           >
             <template v-slot:prepend>
@@ -93,8 +97,10 @@
 
       <template #item.runCount="{ item }">
         <v-chip
-          class="text-black"
-          :color="gradientColor.getGradientColor(item.runCount, 500)"
+          :style="{
+            color: gradientColor.getGradientTextColor(item.runCount, 500) 
+          }"
+          :color="gradientColor.getTonalGradientColor(item.runCount, 500)"
           size="small"
           variant="flat"
         >
@@ -107,7 +113,7 @@
           v-if="item.latestStoreToProduct"
           class="ma-2"
           color="primary"
-          variant="outlined"
+          variant="tonal"
         >
           <template v-slot:prepend>
             <v-icon
@@ -121,7 +127,7 @@
       </template>
 
       <template v-slot:item.actions="{ item }">
-        <div class="text-no-wrap">
+        <div class="text-no-wrap" @click.stop>
           <edit-product-btn
             v-if="item.administrating"
             :product="item"
@@ -155,7 +161,7 @@ const { prettifyDate } = useDateUtils();
 
 
 import { authService, handleThriftError, prodService } from "@cc-api";
-import { Permission } from "@cc/shared-types";
+import { DBStatus, Permission } from "@cc/shared-types";
 import { ProductSortMode } from "@cc/prod-types";
 
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
@@ -239,11 +245,13 @@ const headers = ref([
   {
     title: "Latest store to product",
     key: "latestStoreToProduct",
+    align: "center",
     sortable: true
   },
   {
     title: "Actions",
     key: "actions",
+    align: "center",
     sortable: false
   },
 ]);
@@ -277,6 +285,12 @@ function getTotalProducts() {
 function refreshProducts() {
   getTotalProducts();
   fetchProducts();
+}
+
+function onRowClick(event, { item }) {
+  if (!item.accessible || item.databaseStatus !== DBStatus.OK) return;
+
+  router.push({ name: "runs", params: { endpoint: item.endpoint } });
 }
 
 function fetchProducts() {
@@ -381,5 +395,38 @@ function initializeComponent() {
     text-overflow: ellipsis;
     position: relative;
   }
+}
+
+:deep(tbody tr) {
+  .v-list-item-title a {
+    text-decoration: none;
+  }
+
+  &:hover .v-list-item-title a {
+    text-decoration: underline;
+  }
+}
+
+// For center-aligned sortable columns, Vuetify centers the whole header
+// content group (title + sort icon), which shifts the title left of the
+// column's true center. Add an invisible spacer of the same width as the
+// sort icon on the left so the title is balanced and centered over the
+// column. Only sortable headers get the spacer, since non-sortable ones have
+// no sort icon to balance against.
+.products-table
+  :deep(
+    th.v-data-table-column--align-center.v-data-table__th--sortable
+    .v-data-table-header__content
+  ) {
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    flex: 0 0 auto;
+  }
+}
+
+.clickable-rows :deep(tbody tr) {
+  cursor: pointer;
 }
 </style>

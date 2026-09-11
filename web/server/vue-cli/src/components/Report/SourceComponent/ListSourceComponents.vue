@@ -1,4 +1,34 @@
 <template>
+  <edit-source-component-dialog
+    v-model="editDialog"
+    :source-component="selectedComponent"
+    @save:component="fetchSourceComponents"
+  />
+  <v-toolbar
+    elevation="0"
+    class="mb-4"
+    color="transparent"
+  >
+    <div class="d-flex justify-end align-center ga-2 w-100">
+      <v-btn
+        color="primary"
+        class="new-component-btn"
+        variant="flat"
+        height="40"
+        @click="newSourceComponent"
+      >
+        New
+      </v-btn>
+
+      <v-btn
+        icon="mdi-refresh"
+        title="Reload components"
+        color="primary"
+        @click="fetchSourceComponents"
+      />
+    </div>
+  </v-toolbar>
+
   <v-data-table
     :headers="headers"
     :items="processedComponents"
@@ -6,40 +36,6 @@
     :items-per-page-options="itemsPerPageOptions"
     :loading="loading"
   >
-    <template v-slot:top>
-      <edit-source-component-dialog
-        v-model="editDialog"
-        :source-component="selectedComponent"
-        @save:component="fetchSourceComponents"
-      />
-
-      <v-toolbar
-        elevation="0"
-        class="mb-4"
-        color="transparent"
-      >
-        <v-row>
-          <v-col class="d-flex justify-end align-center">
-            <v-btn
-              color="primary"
-              class="new-component-btn mr-2"
-              variant="outlined"
-              @click="newSourceComponent"
-            >
-              New
-            </v-btn>
-
-            <v-btn
-              icon="mdi-refresh"
-              title="Reload components"
-              color="primary"
-              @click="fetchSourceComponents"
-            />
-          </v-col>
-        </v-row>
-      </v-toolbar>
-    </template>
-
     <template #item.key="{ item }">
       <ul class="component-value">
         <li
@@ -63,18 +59,17 @@
     </template>
 
     <template v-slot:item.actions="{ item }">
-      <remove-source-component-dialog
-        :source-component="item"
-        @on:confirm="fetchSourceComponents"
-      />
-
       <v-btn
         class="edit-btn ml-2"
         icon="mdi-pencil"
         color="primary"
-        variant="tonal"
         size="small"
+        variant="text"
         @click="editSourceComponent(item)"
+      />
+      <remove-source-component-dialog
+        :source-component="item"
+        @on:confirm="fetchSourceComponents"
       />
     </template>
   </v-data-table>

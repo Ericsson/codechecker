@@ -2,6 +2,7 @@
   <ConfirmDialog
     v-model="dialog"
     content-class="remove-filtered-rules-dialog"
+    confirm-btn-color="error"
     confirm-btn-label="Remove"
     title="Remove filtered review status rules"
     @confirm="removeReviewStatusRule"

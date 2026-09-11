@@ -1,62 +1,13 @@
 <template>
   <v-avatar
-    v-if="status === Severity.UNSPECIFIED"
     rounded="xs"
     :color="color"
     :size="size"
-    title="Unspecified"
+    :title="severityInfo[status].title"
   >
-    <span class="text-white text-weight-bold">U</span>
-  </v-avatar>
-
-  <v-avatar
-    v-else-if="status === Severity.STYLE"
-    rounded="xs"
-    :color="color"
-    :size="size"
-    title="Style"
-  >
-    <span class="text-white text-weight-bold">S</span>
-  </v-avatar>
-
-  <v-avatar
-    v-else-if="status === Severity.LOW"
-    rounded="xs"
-    :color="color"
-    :size="size"
-    title="Low"
-  >
-    <span class="text-white text-weight-bold">L</span>
-  </v-avatar>
-
-  <v-avatar
-    v-else-if="status === Severity.MEDIUM"
-    rounded="xs"
-    :color="color"
-    :size="size"
-    title="Medium"
-  >
-    <span class="text-white text-weight-bold">M</span>
-  </v-avatar>
-
-  <v-avatar
-    v-else-if="status === Severity.HIGH"
-    rounded="xs"
-    :color="color"
-    :size="size"
-    title="High"
-  >
-    <span class="text-white text-weight-bold">H</span>
-  </v-avatar>
-
-  <v-avatar
-    v-else-if="status === Severity.CRITICAL"
-    rounded="xs"
-    :color="color"
-    :size="size"
-    title="Critical"
-  >
-    <span class="text-white text-weight-bold">C</span>
+    <span class="text-white text-weight-bold">
+      {{ severityInfo[status].letter }}
+    </span>
   </v-avatar>
 </template>
 
@@ -73,4 +24,13 @@ const props = defineProps({
 const severity = useSeverity();
 
 const color = computed(() => severity.severityFromCodeToColor(props.status));
+
+const severityInfo = {
+  [Severity.UNSPECIFIED]: { letter: "U", title: "Unspecified" },
+  [Severity.STYLE]: { letter: "S", title: "Style" },
+  [Severity.LOW]: { letter: "L", title: "Low" },
+  [Severity.MEDIUM]: { letter: "M", title: "Medium" },
+  [Severity.HIGH]: { letter: "H", title: "High" },
+  [Severity.CRITICAL]: { letter: "C", title: "Critical" },
+};
 </script>

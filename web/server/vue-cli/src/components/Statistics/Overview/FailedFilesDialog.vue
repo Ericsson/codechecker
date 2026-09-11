@@ -52,7 +52,7 @@
                       <v-chip
                         v-for="i in failedFiles[file]"
                         :key="i.runName"
-                        color="#878d96"
+                        color="var(--color-cool-gray)"
                         variant="outlined"
                         size="small"
                       >

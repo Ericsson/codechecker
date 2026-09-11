@@ -1,7 +1,7 @@
 <template>
   <v-icon
     v-if="value === Confidentiality.CONFIDENTIAL"
-    color="#ff0000"
+    color="var(--color-red)"
     :title="title"
     :size="size"
   >
@@ -10,7 +10,7 @@
 
   <v-icon
     v-else-if="value === Confidentiality.INTERNAL"
-    color="#4e4e4e"
+    color="var(--color-gray)"
     :title="title"
     :size="size"
   >
@@ -19,7 +19,7 @@
 
   <v-icon
     v-else-if="value === Confidentiality.OPEN"
-    color="#669603"
+    color="var(--color-soft-green)"
     :title="title"
     :size="size"
   >

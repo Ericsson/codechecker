@@ -15,7 +15,7 @@
         v-model="checkerDocDialog"
         :checker="selectedChecker"
       />
-      <div class="d-flex align-center w-100">
+      <div class="d-flex align-center w-100 mb-2">
         <span class="mr-2 text-body-2">View</span>
         <v-btn-toggle
           v-model="viewMode"
@@ -52,7 +52,7 @@
         v-model:items-per-page="itemsPerPage"
         v-model:sort-by="sortBy"
         v-model:expanded="expanded"
-        class="text-caption"
+        class="text-caption reports-table"
         :items-per-page-options="itemsPerPageOptions"
         :items-length="totalItems"
         :headers="tableHeaders"
@@ -186,7 +186,9 @@
         </template>
 
         <template v-else #item.reviewData="{ item }">
-          <review-status-icon :status="parseInt(item.reviewData.status)" />
+          <review-status-icon
+            :status="parseInt(item.reviewData.status)"
+          />
         </template>
 
         <template #item.detectionStatus="{ item }">
@@ -282,7 +284,10 @@
             class="tree-header-cell sortable"
             @click="toggleTreeSort('unreviewed')"
           >
-            <review-status-icon :status="0" :size="14" />
+            <review-status-icon
+              :status="0"
+              :size="14"
+            />
             <v-icon
               v-if="treeSortKey === 'unreviewed'"
               size="12"
@@ -295,7 +300,10 @@
             class="tree-header-cell sortable"
             @click="toggleTreeSort('confirmed')"
           >
-            <review-status-icon :status="1" :size="14" />
+            <review-status-icon
+              :status="1"
+              :size="14"
+            />
             <v-icon
               v-if="treeSortKey === 'confirmed'"
               size="12"
@@ -308,7 +316,10 @@
             class="tree-header-cell sortable"
             @click="toggleTreeSort('false_positive')"
           >
-            <review-status-icon :status="2" :size="14" />
+            <review-status-icon
+              :status="2"
+              :size="14"
+            />
             <v-icon
               v-if="treeSortKey === 'false_positive'"
               size="12"
@@ -321,7 +332,10 @@
             class="tree-header-cell sortable"
             @click="toggleTreeSort('intentional')"
           >
-            <review-status-icon :status="3" :size="14" />
+            <review-status-icon
+              :status="3"
+              :size="14"
+            />
             <v-icon
               v-if="treeSortKey === 'intentional'"
               size="12"
@@ -517,14 +531,15 @@ const headers = [
   },
   {
     title: "Analyzer",
-    value: "analyzerName",
+    key: "analyzerName",
     align: "center",
     sortable: false
   },
   {
     title: "Severity",
-    value: "severity",
-    sortable: true
+    key: "severity",
+    sortable: true,
+    align: "center"
   },
   {
     title: "Bug path length",
@@ -1168,8 +1183,8 @@ onDeactivated(unlockBodyScroll);
 }
 
 .v-btn-toggle .v-btn--active {
-  background-color: #2280c3 !important;
-  color: #fff !important;
+  background-color: var(--color-soft-blue) !important;
+  color: #ffffff !important;
 }
 
 .tree-view-container {
@@ -1264,6 +1279,17 @@ onDeactivated(unlockBodyScroll);
 
   .checker-name {
     cursor: pointer;
+  }
+}
+
+.reports-table {
+  th.v-data-table-column--align-center {
+    .v-data-table-header__content::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      flex: 0 0 auto;
+    }
   }
 }
 

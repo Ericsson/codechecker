@@ -16,6 +16,7 @@
       v-model:sort-by="sortBy"
       v-model:expanded="expanded"
       v-model:items-per-page-options="itemsPerPageOptions"
+      class="clickable-rows runs-table"
       :items-length="totalItems"
       :headers="headers"
       :items="runs"
@@ -27,6 +28,7 @@
       :mobile-breakpoint="1000"
       item-value="runId"
       return-object
+      @click:row="onRowClick"
     >
       <template v-slot:top>
         <RunFilterToolbar
@@ -81,13 +83,23 @@
         />
       </template>
 
+      <template #item.resultCount="{ item }">
+        <v-chip
+          class="ma-2"
+          color="warning"
+          variant="tonal"
+          prepend-icon="mdi-counter"
+        >
+          {{ item.resultCount }}
+        </v-chip>
+      </template>
+
       <template #item.analyzerStatistics="{ item }">
         <analyzer-statistics-btn
           v-if="Object.keys(item.analyzerStatistics).length"
           :value="item.analyzerStatistics"
-          :show-dividers="false"
           tag="div"
-          @click="openAnalyzerStatisticsDialog(item)"
+          @click.stop="openAnalyzerStatisticsDialog(item)"
         />
       </template>
 
@@ -95,11 +107,9 @@
         <v-chip
           class="ma-2"
           color="primary"
-          variant="outlined"
+          variant="tonal"
+          prepend-icon="mdi-calendar-range"
         >
-          <v-icon left>
-            mdi-calendar-range
-          </v-icon>
           {{ prettifyDate(item.runDate) }}
         </v-chip>
       </template>
@@ -108,23 +118,29 @@
         <v-chip
           class="ma-2"
           color="success"
-          variant="outlined"
+          variant="tonal"
+          prepend-icon="mdi-clock-outline"
         >
-          <v-icon start>
-            mdi-clock-outline
-          </v-icon>
           {{ item.$duration }}
         </v-chip>
       </template>
 
       <template #item.codeCheckerVersion="{ item }">
-        <span :title="item.codeCheckerVersion">
+        <v-chip
+          class="ma-2"
+          :color="
+            item.$codeCheckerVersion === packageVersion ? 
+              'primary' : 'var(--color-cool-gray-dark)'
+          "
+          variant="tonal"
+          prepend-icon="mdi-label-outline"
+        >
           {{ item.$codeCheckerVersion }}
-        </span>
+        </v-chip>
       </template>
 
       <template #item.diff="{ item }">
-        <v-container class="py-0">
+        <v-container class="py-0" @click.stop>
           <v-row class="flex-nowrap py-0">
             <v-checkbox
               v-model="selectedBaselineRuns"
@@ -155,6 +171,7 @@ import { useStore } from "vuex";
 
 import { useVersion } from "@/composables/useVersion";
 
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Order,
@@ -260,6 +277,7 @@ const headers = ref([
 
 const runFilter = computed(() => store.getters["run/runFilter"]);
 const runHistoryFilter = computed(() => store.getters["run/runHistoryFilter"]);
+const packageVersion = computed(() => store.getters.packageVersion);
 
 watch(
   [ page, itemsPerPage, sortBy ],
@@ -528,6 +546,16 @@ function getReportFilterQuery(run) {
   };
 }
 
+function onRowClick(event, { item }) {
+  router.push({
+    name: "reports",
+    query: {
+      ...defaultReportFilterValues,
+      ...getReportFilterQuery(item)
+    }
+  });
+}
+
 function getStatisticsFilterQuery(run) {
   return {
     run: run.name
@@ -550,5 +578,32 @@ function prettifyDate(date) {
 <style lang="scss" scoped>
 .v-data-table :deep(tbody tr.v-data-table__expanded__content) {
   box-shadow: none;
+}
+
+:deep(tbody tr) {
+  .v-list-item-title a {
+    text-decoration: none;
+  }
+
+  &:hover .v-list-item-title a {
+    text-decoration: underline;
+  }
+}
+
+.clickable-rows :deep(tbody tr) {
+  cursor: pointer;
+}
+
+.runs-table
+  :deep(
+    th.v-data-table-column--align-center.v-data-table__th--sortable
+    .v-data-table-header__content
+  ) {
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    flex: 0 0 auto;
+  }
 }
 </style>

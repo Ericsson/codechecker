@@ -13,6 +13,7 @@
     <v-card
       v-if="loading"
       color="bg-primary"
+      rounded="lg"
     >
       <v-card-text>
         Loading...
@@ -27,12 +28,15 @@
     <v-card
       v-else
       :title="props.title"
+      :prepend-icon="props.icon"
+      rounded="lg"
     >
       <template v-slot:append>
         <v-btn
           class="close-btn"
           icon="mdi-close"
-          size="small"
+          size="default"
+          variant="text"
           @click="dialog = false"
         />
       </template>
@@ -65,7 +69,7 @@
         </v-btn>
 
         <v-btn
-          variant="text"
+          variant="flat"
           class="confirm-btn"
           :color="confirmBtnColor"
           @click="emit('confirm')"
@@ -92,7 +96,8 @@ const props = defineProps({
   scrollable: { type: Boolean, default: true },
   loading: { type: Boolean, default: false },
   contentClass: { type: String, default: null },
-  title: { type: String, default: null }
+  title: { type: String, default: null },
+  icon: { type: String, default: null }
 });
 
 const emit = defineEmits([

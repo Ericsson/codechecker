@@ -4,6 +4,8 @@
     content-class="edit-review-status-rule-dialog"
     scrollable
     :title="dialogTitle"
+    confirm-btn-color="primary"
+    :confirm-btn-label="dialogConfirmButtonTitle"
     @confirm="saveReviewStatusRule"
   >
     <template v-slot:content>
@@ -41,8 +43,8 @@
 </template>
 
 <script setup>
-import { ccService, handleThriftError } from "@cc-api";
 import { computed, ref, watch } from "vue";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { ConfirmDialog } from "@/components";
 import SelectReviewStatus from "./SelectReviewStatus";
@@ -75,6 +77,10 @@ const dialog = computed({
 
 const dialogTitle = computed(() => {
   return props.rule ? "Edit review status rule" : "New review status rule";
+});
+
+const dialogConfirmButtonTitle = computed(() => {
+  return props.rule ? "Save" : "Create";
 });
 
 watch(dialog, newVal => {

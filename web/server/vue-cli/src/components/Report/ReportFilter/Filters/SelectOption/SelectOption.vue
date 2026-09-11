@@ -16,6 +16,10 @@
       <slot name="prepend-toolbar-title" />
     </template>
 
+    <template v-slot:prepend-selected>
+      <slot name="prepend-selected" />
+    </template>
+
     <template v-slot:prepend-toolbar-items>
       <slot name="prepend-toolbar-items" />
     </template>

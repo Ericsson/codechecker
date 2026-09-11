@@ -2,7 +2,7 @@
   <v-avatar
     v-if="value === DetectionDateFilterItems.TODAY"
     title="Today"
-    color="#ee8985"
+    color="var(--color-soft-red)"
     size="24"
     tile
   >
@@ -12,7 +12,7 @@
   <v-avatar
     v-else-if="value === DetectionDateFilterItems.YESTERDAY"
     title="Yesterday"
-    color="#007ea7"
+    color="var(--color-soft-blue)"
     size="24"
     tile
   >
@@ -22,7 +22,7 @@
   <v-avatar
     v-else-if="value === DetectionDateFilterItems.LAST_7_DAYS"
     title="Last 7 days"
-    color="#54ae5f"
+    color="var(--color-soft-green)"
     size="24"
     tile
   >
@@ -32,7 +32,7 @@
   <v-avatar
     v-else-if="value === DetectionDateFilterItems.THIS_MONTH"
     title="This month"
-    color="#8f44ad"
+    color="var(--color-soft-purple)"
     size="24"
     tile
   >
@@ -42,7 +42,7 @@
   <v-avatar
     v-else-if="value === DetectionDateFilterItems.THIS_YEAR"
     title="This year"
-    color="#2e3f51"
+    color="var(--color-cool-gray-dark)"
     size="24"
     tile
   >

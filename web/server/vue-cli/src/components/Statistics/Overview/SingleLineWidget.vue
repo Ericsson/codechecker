@@ -13,11 +13,12 @@
           <v-avatar
             :color="color"
             size="64"
-            rounded="0"
-            class="ma-2"
+            rounded="sm"
+            class="ma-2 widget-avatar"
           >
             <v-icon
               size="48"
+              color="white"
             >
               {{ icon }}
             </v-icon>
@@ -72,4 +73,8 @@ defineProps({
 .v-card {
   border: thin solid rgba(0, 0, 0, 0.12);
 }
+.widget-avatar {
+  border-radius: 4px !important;
+}
+
 </style>

@@ -28,7 +28,7 @@
       <template v-slot:append>
         <v-chip
           class="report-count"
-          color="#878d96"
+          color="var(--color-cool-gray)"
           variant="outlined"
           size="small"
         >

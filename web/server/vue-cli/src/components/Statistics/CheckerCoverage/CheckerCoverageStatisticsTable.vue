@@ -5,7 +5,7 @@
     :items="items"
     :loading="loading"
     :mobile-breakpoint="1000"
-    loading-text="Loading checker statistics..."
+    loading-text="Loading checker coverage statistics..."
     item-key="checker"
     :sort-by="[{ key: 'severity', order: 'desc' }]"
     :item-class="getRowClass"

@@ -4,11 +4,11 @@
     class="mb-4 run-filter-toolbar"
     color="transparent"
   >
-    <v-row>
-      <v-col align-self="center">
+    <div class="d-flex align-center w-100 search-row">
+      <div class="d-flex align-center search-group">
         <v-text-field
           v-model="runName"
-          class="run-name"
+          class="run-name flex-grow-1"
           prepend-inner-icon="mdi-magnify"
           label="Search for runs..."
           single-line
@@ -17,129 +17,142 @@
           variant="outlined"
           density="compact"
         />
-      </v-col>
-
-      <v-col align-self="center">
-        <v-text-field
-          v-model="runTag"
-          class="run-tag"
-          prepend-inner-icon="mdi-tag"
-          label="Filter events by tag name..."
-          clearable
-          single-line
-          hide-details
-          variant="outlined"
-          density="compact"
-        >
-          <template #append-inner>
-            <tooltip-help-icon>
-              Filter run history events by the given tag name.<br>
-              <i>Note</i>: this will filter only the history events.
-            </tooltip-help-icon>
-          </template>
-        </v-text-field>
-      </v-col>
-
-      <v-col align-self="center" width="50px">
-        <DateTimePicker
-          v-model="storedAfter"
-          input-class="stored-after"
-          dialog-class="stored-after"
-          label="History stored after..."
-          prepend-inner-icon="mdi-calendar-arrow-right"
-          variant="outlined"
-          density="compact"
-          clearable
-        >
-          <template #append-inner>
-            <tooltip-help-icon>
-              Filter run history events that were stored after the given
-              date.<br>
-              <i>Note</i>: this will filter only the history events.
-            </tooltip-help-icon>
-          </template>
-        </DateTimePicker>
-      </v-col>
-
-      <v-col align-self="center" width="50px">
-        <DateTimePicker
-          v-model="storedBefore"
-          input-class="stored-before"
-          dialog-class="stored-before"
-          label="History stored before..."
-          prepend-inner-icon="mdi-calendar-arrow-left"
-          variant="outlined"
-          density="compact"
-          clearable
-        >
-          <template #append-inner>
-            <tooltip-help-icon>
-              Filter run history events that were stored before the given
-              date.<br>
-              <i>Note</i>: this will filter only the history events.
-            </tooltip-help-icon>
-          </template>
-        </DateTimePicker>
-      </v-col>
-      <v-spacer />
-      <v-col cols="auto" align="right">
-        <v-btn
-          icon
-          class="reload-runs-btn"
-          title="Reload runs"
-          color="primary"
-          @click="update"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
-    <template #extension>
-      <div
-        class="d-flex justify-center align-center w-100"
-      >
-        <LoadMultipleRunsBtn
-          :selected="selected"
-          :disabled="!enoughRunsSelected"
-          :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
-        />
-        <DeleteRunBtn
-          :selected="selected"
-          variant="outlined"
-          @on-confirm="update"
-          @delete-complete="emit('delete-complete')"
-        />
-
-        <v-spacer />
 
         <v-btn
-          variant="outlined"
-          color="primary"
-          class="diff-runs-btn mr-2"
-          :to="diffTargetRoute"
-          :disabled="isDiffBtnDisabled"
+          class="toggle-filters-btn ml-2 px-4"
+          variant="tonal"
+          height="40"
+          :color="showFilters ? 'primary' : undefined"
+          @click="showFilters = !showFilters"
         >
-          <v-icon left>
-            mdi-select-compare
+          <v-icon right>
+            mdi-filter-variant
           </v-icon>
-          Diff
-          <tooltip-help-icon>
-            Compare the set of <i>outstanding reports</i> in two run (or tag)
-            sets.<br>
-            A report is outstanding if <b> all of the following is true</b>:
-            <ul>
-              <li>
-                its detection status is <i>new</i>, <i>reopened</i>, or
-                <i>unresolved</i>,
-              </li>
-              <li>
-                its review status is <i>unreviewed</i> or <i>confirmed</i>.
-              </li>
-            </ul>
-          </tooltip-help-icon>
+          <v-icon right>
+            {{ showFilters ? "mdi-chevron-up" : "mdi-chevron-down" }}
+          </v-icon>
         </v-btn>
       </div>
-    </template>
+
+      <LoadMultipleRunsBtn
+        class="ml-2"
+        :selected="selected"
+        :disabled="!enoughRunsSelected"
+        :report-filter-query="getSelectedRunsFilterQuery(props.selected)"
+      />
+      <DeleteRunBtn
+        :selected="selected"
+        variant="tonal"
+        @on-confirm="update"
+        @delete-complete="emit('delete-complete')"
+      />
+      <v-btn
+        class="diff-runs-btn ml-2 px-4"
+        variant="tonal"
+        color="primary"
+        height="40"
+        :to="diffTargetRoute"
+        :disabled="isDiffBtnDisabled"
+      >
+        <v-icon left>
+          mdi-select-compare
+        </v-icon>
+        Diff
+        <tooltip-help-icon>
+          Compare the set of <i>outstanding reports</i> in two run (or tag)
+          sets.<br>
+          A report is outstanding if <b> all of the following is true</b>:
+          <ul>
+            <li>
+              its detection status is <i>new</i>, <i>reopened</i>, or
+              <i>unresolved</i>,
+            </li>
+            <li>
+              its review status is <i>unreviewed</i> or <i>confirmed</i>.
+            </li>
+          </ul>
+        </tooltip-help-icon>
+      </v-btn>
+
+      <v-spacer />
+
+      <v-btn
+        icon
+        class="reload-runs-btn"
+        title="Reload runs"
+        color="primary"
+        @click="update"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
+    </div>
+
+    <v-expand-transition>
+      <v-row v-show="showFilters" class="additional-filters" no-gutters>
+        <v-col cols="auto" align-self="center">
+          <v-text-field
+            v-model="runTag"
+            class="run-tag additional-filter-input"
+            prepend-inner-icon="mdi-tag"
+            label="Filter events by tag name..."
+            clearable
+            single-line
+            hide-details
+            variant="outlined"
+            density="compact"
+          >
+            <template #append-inner>
+              <tooltip-help-icon>
+                Filter run history events by the given tag name.<br>
+                <i>Note</i>: this will filter only the history events.
+              </tooltip-help-icon>
+            </template>
+          </v-text-field>
+        </v-col>
+
+        <v-col cols="auto" align-self="center">
+          <DateTimePicker
+            v-model="storedAfter"
+            input-class="stored-after additional-filter-input"
+            dialog-class="stored-after"
+            label="History stored after..."
+            prepend-inner-icon="mdi-calendar-arrow-right"
+            variant="outlined"
+            density="compact"
+            clearable
+          >
+            <template #append-inner>
+              <tooltip-help-icon>
+                Filter run history events that were stored after the given
+                date.<br>
+                <i>Note</i>: this will filter only the history events.
+              </tooltip-help-icon>
+            </template>
+          </DateTimePicker>
+        </v-col>
+
+        <v-col cols="auto" align-self="center">
+          <DateTimePicker
+            v-model="storedBefore"
+            input-class="stored-before additional-filter-input"
+            dialog-class="stored-before"
+            label="History stored before..."
+            prepend-inner-icon="mdi-calendar-arrow-left"
+            variant="outlined"
+            density="compact"
+            clearable
+          >
+            <template #append-inner>
+              <tooltip-help-icon>
+                Filter run history events that were stored before the given
+                date.<br>
+                <i>Note</i>: this will filter only the history events.
+              </tooltip-help-icon>
+            </template>
+          </DateTimePicker>
+        </v-col>
+      </v-row>
+    </v-expand-transition>
   </v-toolbar>
 </template>
 
@@ -147,6 +160,7 @@
 import {
   computed,
   onMounted,
+  ref,
   watch
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -183,7 +197,13 @@ const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
-// const runNameSearch = ref(null);
+const showFilters = ref(
+  Boolean(
+    route.query["run-tag"] ||
+    route.query["stored-after"] ||
+    route.query["stored-before"]
+  )
+);
 
 const { dateTimeToStr } = useDateUtils();
 
@@ -324,7 +344,32 @@ function getSelectedRunsFilterQuery(selected) {
 }
 
 const enoughRunsSelected = computed(() => {
-  return  props.selected.length >= 2;;
+  return props.selected.length >= 1;
 });
 
 </script>
+
+<style lang="scss" scoped>
+.run-filter-toolbar :deep(.v-toolbar__content) {
+  height: auto !important;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+$filter-input-width: 260px;
+$filter-gap: 16px;
+
+.additional-filters {
+  gap: $filter-gap;
+}
+
+.additional-filters > .v-col {
+  width: $filter-input-width;
+  flex: 0 0 $filter-input-width;
+}
+
+.search-group {
+  width: ($filter-input-width * 3) + ($filter-gap * 2);
+  max-width: 100%;
+}
+</style>

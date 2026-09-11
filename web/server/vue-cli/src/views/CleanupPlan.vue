@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <h1>Manage Cleanup Plans</h1>
     <span
       class="subtitle-1"

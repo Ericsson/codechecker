@@ -25,7 +25,7 @@
     </span>
     <span v-else-if="item.kind === ReportTreeKind.SEVERITY_LEVEL">
       {{ item.name }}
-      <span v-if="newReportCount" style="color: #ec7672;">
+      <span v-if="newReportCount" style="color: var(--color-soft-red);">
         {{ newReportCountLabel }}
       </span>
     </span>

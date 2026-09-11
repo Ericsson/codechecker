@@ -66,6 +66,7 @@
 
 <script setup>
 import { ReportStepEnumIcon } from "@/components/Icons";
+import { getCssColor } from "@/utilities/colors";
 import { computed } from "vue";
 
 const props = defineProps({
@@ -84,30 +85,30 @@ const props = defineProps({
 const color = computed(() => {
   switch (props.type) {
   case "error":
-    return "#f2dede";
+    return getCssColor("color-report-step-message-error-light");
   case "fixit":
-    return "#fcf8e3";
+    return getCssColor("color-report-step-message-fixit-light");
   case "macro":
-    return "#d7dac2";
+    return getCssColor("color-report-step-message-macro-light");
   case "note":
-    return "#d7d7d7";
+    return getCssColor("color-report-step-message-note-light");
   default:
-    return "#bfdfe9";
+    return getCssColor("color-report-step-message-default-light");
   }
 });
 
 const textColor = computed(() => {
   switch (props.type) {
   case "error":
-    return "#a94442";
+    return getCssColor("color-report-step-message-error");
   case "fixit":
-    return "#8a6d3b";
+    return getCssColor("color-report-step-message-fixit");
   case "macro":
-    return "#4f5c6d";
+    return getCssColor("color-report-step-message-macro");
   case "note":
-    return "#4f5c6d";
+    return getCssColor("color-report-step-message-note");
   default:
-    return "#00546f";
+    return getCssColor("color-report-step-message-default");
   }
 });
 
@@ -146,7 +147,7 @@ function showDocumentation() {
     }
 
     .show-documentation-btn {
-      border-bottom: 1px dashed #438ec7;
+      border-bottom: 1px dashed var(--color-soft-blue);
       display: inline-block;
     }
   }
@@ -162,18 +163,18 @@ function showDocumentation() {
 }
 
 .current[type="error"] {
-  border: 2px dashed #a94442 !important;
+  border: 2px dashed var(--color-report-step-message-error) !important;
 }
 
 .current[type="fixit"] {
-  border: 2px dashed #8a6d3b !important;
+  border: 2px dashed var(--color-report-step-message-fixit) !important;
 }
 
 .current[type="macro"] {
-  border: 2px dashed #4f5c6d !important;
+  border: 2px dashed var(--color-report-step-message-macro) !important;
 }
 
 .current[type="note"] {
-  border: 2px dashed #4f5c6d !important;
+  border: 2px dashed var(--color-report-step-message-macro) !important;
 }
 </style>

@@ -3,13 +3,17 @@
     ref="form"
     v-model="valid"
   >
+    <div class="text-body-large text-medium-emphasis mb-2">
+      Product Details
+    </div>
     <v-text-field
       v-if="isSuperUser"
       v-model="endpoint"
       :rules="rules.endpoint"
       label="URL endpoint*"
       name="endpoint"
-      prepend-icon="mdi-card-account-details-outline"
+      prepend-inner-icon="mdi-card-account-details-outline"
+      variant="outlined"
       required
     />
 
@@ -17,14 +21,16 @@
       v-model="displayName"
       label="Display name"
       name="display-name"
-      prepend-icon="mdi-television"
+      prepend-inner-icon="mdi-television"
+      variant="outlined"
     />
 
     <v-textarea
       v-model="description"
       label="Description"
       name="description"
-      prepend-icon="mdi-text"
+      prepend-inner-icon="mdi-text"
+      variant="outlined"
       rows="1"
     />
 
@@ -34,63 +40,68 @@
       type="number"
       label="Run limit"
       name="run-limit"
-      prepend-icon="mdi-speedometer"
+      prepend-inner-icon="mdi-speedometer"
+      variant="outlined"
       :rules="rules.runLimit"
     />
 
-    <v-row
-      class="ma-0"
-    >
-      <v-text-field
-        v-if="isSuperUser"
-        v-model="reportLimit"
-        :value="productConfig.reportLimit"
-        type="number"
-        label="Report limit"
-        name="report-limit"
-        prepend-icon="mdi-close-octagon"
-        :rules="rules.runLimit"
-      />
+    <v-text-field
+      v-if="isSuperUser"
+      v-model="reportLimit"
+      :value="productConfig.reportLimit"
+      type="number"
+      label="Report limit"
+      name="report-limit"
+      prepend-inner-icon="mdi-close-octagon"
+      :rules="rules.runLimit"
+      hint="Maximum number of reports per run; if exceeded,
+      the store action is rejected."
+      persistent-hint
+      variant="outlined"
+    />
 
-      <tooltip-help-icon>
-        The maximum number of reports allowed to
-        store in one run, if exceeded, the store
-        action will be rejected.
-      </tooltip-help-icon>
-    </v-row>
+    <v-divider class="my-2 mb-4" />
 
-    <v-row
-      class="ma-0"
-    >
-      <v-select
-        v-model="confidentialityString"
-        label="Information Classification"
-        class="select-confidentiality"
-        prepend-icon="mdi-file-eye-outline"
-        name="confidentiality"
-        :items="confidentialityItems"
-      />
+    <div class="text-body-large text-medium-emphasis mb-2">
+      Information Classification Type
+    </div>
 
-      <tooltip-help-icon>
-        Classification and handling of source code confidentiality.
-      </tooltip-help-icon>
-    </v-row>
+    <v-select
+      v-model="confidentialityString"
+      class="select-confidentiality"
+      prepend-inner-icon="mdi-file-eye-outline"
+      name="confidentiality"
+      :items="confidentialityItems"
+      hint="Classification and handling of source code
+      confidentiality."
+      persistent-hint
+      variant="outlined"
+    />
+
+    <v-divider class="my-2 mb-4" />
+    <div class="text-body-large text-medium-emphasis">
+      Product Settings
+    </div>
 
     <v-checkbox
       v-model="isReviewStatusChangeDisabled"
       label="Disable review status change"
       name="disable-review-status-change"
+      hide-details
     />
 
     <div
       v-if="isSuperUser"
     >
-      <v-divider />
+      <v-divider class="my-2" />
 
       <v-radio-group
         v-model="dbEngine"
         :rules="rules.engine"
       >
+        <template v-slot:label>
+          <div>Database type</div>
+        </template>
         <v-radio
           label="SQLite"
           value="sqlite"
@@ -175,7 +186,6 @@ import {
 
 import { useConfidentiality } from "@/composables/useConfidentiality";
 
-import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { Confidentiality } from "@cc/prod-types";
 
 const props = defineProps({

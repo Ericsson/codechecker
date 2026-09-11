@@ -26,50 +26,42 @@
 
     <template v-slot:item.actions="{ item }">
       <v-btn
-        class="edit-btn mr-2"
+        class="edit-btn"
         color="primary"
         size="small"
-        variant="tonal"
-        prepend-icon="mdi-pencil-outline"
+        variant="text"
+        icon="mdi-pencil-outline"
         @click="emit('edit', item)"
-      >
-        Edit
-      </v-btn>
+      />
 
       <v-btn
         v-if="item.closedAt"
-        class="reopen-btn mr-2"
+        class="reopen-btn"
         size="small"
         color="green"
-        variant="tonal"
-        prepend-icon="mdi-refresh"
+        variant="text"
+        icon="mdi-refresh"
         @click="emit('reopen', item)"
-      >
-        Reopen
-      </v-btn>
+      />
 
       <v-btn
         v-else
-        class="close-btn mr-2"
+        class="close-btn"
         size="small"
         color="green"
-        variant="tonal"
-        prepend-icon="mdi-close-circle-outline"
+        variant="text"
+        icon="mdi-close-circle-outline"
         @click="emit('close', item)"
-      >
-        Close
-      </v-btn>
+      />
 
       <v-btn
         class="remove-btn"
         size="small"
         color="error"
-        variant="tonal"
-        prepend-icon="mdi-trash-can-outline"
+        variant="text"
+        icon="mdi-trash-can-outline"
         @click="emit('remove', item)"
-      >
-        Delete
-      </v-btn>
+      />
     </template>
   </v-data-table>
 </template>

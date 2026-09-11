@@ -59,7 +59,7 @@
               class="review-status-wrapper pa-0 mr-2"
               align-self="center"
             >
-              <select-review-status
+              <select-review-status-dialog
                 class="mx-0"
                 :value="reviewData"
                 :report="report"
@@ -323,7 +323,7 @@ import { useGitBlame } from "@/composables/useGitBlame";
 import { ReportComments } from "./Comment";
 import ToggleBlameViewBtn from "./Git/ToggleBlameViewBtn";
 import { ShowReportInfoDialog } from "./ReportInfo";
-import SelectReviewStatus from "./SelectReviewStatus";
+import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
 import ReportStepMessage from "./ReportStepMessage";
@@ -747,7 +747,10 @@ function resetJsPlumb() {
     Container : _jsPlumbParentElement,
     Anchor : [ "Perimeter", { shape : "Ellipse" } ],
     Endpoint : [ "Dot", { radius: 1 } ],
-    PaintStyle : { stroke : "#a94442", strokeWidth: 2 },
+    PaintStyle : {
+      stroke : "var(--color-report-step-message-error)",
+      strokeWidth: 2
+    },
     Connector: [ "Bezier", { curviness: 10 } ],
     ConnectionsDetachable : false,
     ConnectionOverlays : [

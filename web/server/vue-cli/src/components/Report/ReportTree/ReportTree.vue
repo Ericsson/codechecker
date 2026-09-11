@@ -26,13 +26,13 @@
 
       <report-tree-icon
         :item="item"
-        size="22"
+        size="24"
       />
 
       <review-status-icon
         v-if="item.kind === ReportTreeKind.REPORT"
         :status="parseInt(item.report.reviewData.status)"
-        size="22"
+        size="24"
       />
     </template>
 

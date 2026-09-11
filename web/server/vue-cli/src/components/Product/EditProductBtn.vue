@@ -12,8 +12,8 @@
         class="edit-btn mr-2"
         icon="mdi-pencil"
         color="primary"
-        size="x-small"
-        variant="tonal"
+        size="small"
+        variant="text"
       />
     </template>
 

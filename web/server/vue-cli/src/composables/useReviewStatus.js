@@ -1,4 +1,5 @@
 import { ReviewStatus } from "@cc/report-server-types";
+import { getCssColor } from "@/utilities/colors";
 
 export function useReviewStatus() {
   function reviewStatusFromCodeToString(reviewCode) {
@@ -33,10 +34,10 @@ export function useReviewStatus() {
 
   function reviewStatusColor(reviewCode) {
     switch (reviewCode) {
-    case ReviewStatus.UNREVIEWED: return "#4b9fd5";
-    case ReviewStatus.CONFIRMED: return "#e92625";
-    case ReviewStatus.FALSE_POSITIVE: return "#808080";
-    case ReviewStatus.INTENTIONAL: return "#669603";
+    case ReviewStatus.UNREVIEWED: return getCssColor("color-soft-blue");
+    case ReviewStatus.CONFIRMED: return getCssColor("color-soft-red");
+    case ReviewStatus.FALSE_POSITIVE: return getCssColor("color-gray");
+    case ReviewStatus.INTENTIONAL: return getCssColor("color-soft-green");
     default: return undefined;
     }
   }

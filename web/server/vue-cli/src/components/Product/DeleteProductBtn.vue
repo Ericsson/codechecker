@@ -14,8 +14,8 @@
         class="remove-btn"
         icon="mdi-trash-can-outline"
         color="error"
-        variant="tonal"
-        size="x-small"
+        variant="text"
+        size="small"
       />
     </template>
 

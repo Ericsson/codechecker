@@ -1,8 +1,9 @@
 <template>
   <v-btn
-    variant="outlined"
+    class="diff-runs-btn px-4"
+    variant="tonal"
     color="primary"
-    class="diff-runs-btn mr-2"
+    height="40"
     :to="{ name: 'reports',
            query: {
              ...defaultReportFilterValues,
@@ -13,7 +14,7 @@
     <v-icon left>
       mdi-vector-combine
     </v-icon>
-    LOAD SELECTED RUNS
+    LOAD SELECTED RUNS ({{ selected.length }})
   </v-btn>
 </template>
 
@@ -22,6 +23,7 @@
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 
 defineProps({
+  selected: { type: Array, default: () => [] },
   reportFilterQuery: { type: Object, default: () => {} },
 });
 

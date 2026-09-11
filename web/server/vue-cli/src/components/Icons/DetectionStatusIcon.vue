@@ -1,7 +1,7 @@
 <template>
   <v-icon
     v-if="status === DetectionStatus.NEW"
-    color="#ec7672"
+    color="var(--color-soft-red)"
     :title="formattedTitle"
     :size="size"
   >
@@ -10,16 +10,16 @@
 
   <v-icon
     v-else-if="status === DetectionStatus.RESOLVED"
-    color="#669603"
+    color="var(--color-soft-green)"
     :title="formattedTitle"
     :size="size"
   >
-    mdi-check
+    mdi-check-circle
   </v-icon>
 
   <v-icon
     v-else-if="status === DetectionStatus.UNRESOLVED"
-    color="#007ea7"
+    color="var(--color-soft-blue)"
     :title="formattedTitle"
     :size="size"
   >
@@ -28,7 +28,7 @@
 
   <v-icon
     v-else-if="status === DetectionStatus.REOPENED"
-    color="#ff0000"
+    color="var(--color-red)"
     :title="formattedTitle"
     :size="size"
   >
@@ -37,7 +37,7 @@
 
   <v-icon
     v-else-if="status === DetectionStatus.OFF"
-    color="#4e4e4e"
+    color="var(--color-gray-light)"
     :title="formattedTitle"
     :size="size"
   >
@@ -46,7 +46,7 @@
 
   <v-icon
     v-else-if="status === DetectionStatus.UNAVAILABLE"
-    color="#737373"
+    color="var(--color-grey)"
     :title="formattedTitle"
     :size="size"
   >

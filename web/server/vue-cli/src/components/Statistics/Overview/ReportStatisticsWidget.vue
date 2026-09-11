@@ -16,10 +16,10 @@
           class="pa-2"
         >
           <v-card-title
-            class="text-h5"
+            class="text-h5 text-white"
           >
             <v-icon
-              class="mr-2"
+              class="mr-2 text-white"
             >
               {{ reportType.icon }}
             </v-icon>
@@ -191,7 +191,7 @@ const reportTypes = ref([
   {
     id: "new",
     label: "Number of new outstanding reports since",
-    color: "red",
+    color: "var(--color-soft-red)",
     icon: "mdi-arrow-up",
     getValue: getNewReports,
     cols: cols.map(_c => ({ ..._c, value: null, loading: null }))
@@ -199,7 +199,7 @@ const reportTypes = ref([
   {
     id: "resolved",
     label: "Number of resolved reports since",
-    color: "green",
+    color: "var(--color-soft-green)",
     icon: "mdi-arrow-down",
     getValue: getResolvedReports,
     cols: cols.map(_c => ({ ..._c, value: null, loading: null }))

@@ -5,15 +5,25 @@
     density="compact"
   >
     <template v-slot:prepend>
-      <v-avatar
+      <v-sheet
         :color="strToColor(product.endpoint)"
-        size="42"
-        class="my-1"
+        :style="{
+          color: strToColor(product.endpoint),
+          backgroundColor:
+            `color-mix(
+              in srgb, ${strToColor(product.endpoint)} 40%, transparent
+            )`
+        }"
+
+        width="42"
+        height="42"
+        rounded
+        class="d-flex align-center justify-center my-1 ml-1 mr-4"
       >
-        <span class="text-white headline">
+        <span class="headline">
           {{ getProductIconName(product.endpoint) }}
         </span>
-      </v-avatar>
+      </v-sheet>
     </template>
 
     <v-list-item-title
@@ -35,6 +45,8 @@
       <router-link
         v-else
         :to="{ name: 'runs', params: { endpoint: product.endpoint } }"
+        class="text-grey-darken-4 text-subtitle-1"
+        @click.stop
       >
         {{ product.displayedName }}
       </router-link>
@@ -69,6 +81,7 @@
 
     <v-list-item-subtitle
       v-if="product.databaseStatus === DBStatus.OK && product.accessible"
+      @click.stop
     >
       <v-btn-group
         class="overflow-visible"

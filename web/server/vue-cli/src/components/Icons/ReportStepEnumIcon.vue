@@ -19,6 +19,8 @@
 
 <script setup>
 import { computed } from "vue";
+import { getCssColor } from "@/utilities/colors";
+
 const props = defineProps({
   type: { type: String, default: null },
   index: { type: [ Number, String ], default: null },
@@ -28,15 +30,15 @@ const props = defineProps({
 const color = computed(() => {
   switch (props.type) {
   case "error":
-    return "#a94442";
+    return getCssColor("color-report-step-message-error");
   case "fixit":
-    return "#8a6d3b";
+    return getCssColor("color-report-step-message-fixit");
   case "macro":
-    return "#83876a";
+    return getCssColor("color-report-step-message-macro");
   case "note":
-    return "#9299a1";
+    return getCssColor("color-report-step-message-note");
   default:
-    return "#427ea9";
+    return getCssColor("color-report-step-message-default");
   }
 });
 </script>

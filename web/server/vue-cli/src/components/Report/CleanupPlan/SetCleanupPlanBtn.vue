@@ -11,7 +11,7 @@
           v-bind="activatorProps"
           color="primary"
           class="set-cleanup-plan-btn"
-          variant="outlined"
+          variant="tonal"
           size="small"
           :disabled="!selectedReportHashes.length"
           :loading="cleanupPlan.loading.value"

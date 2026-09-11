@@ -8,7 +8,7 @@
     >
       <v-chip
         v-if="props.numGood > 0"
-        color="success"
+        color="var(--color-soft-green)"
         :ripple="false"
         :title="goodText"
         variant="outlined"
@@ -21,7 +21,7 @@
 
       <v-chip
         v-if="props.numBad > 0 "
-        color="error"
+        color="var(--color-soft-red)"
         :ripple="false"
         :title="badText"
         variant="outlined"
@@ -33,7 +33,7 @@
       </v-chip>
       <v-chip
         v-if="props.numUnknown > 0 "
-        color="warning"
+        color="var(--color-soft-orange)"
         :ripple="false"
         :title="unknownText"
         variant="outlined"

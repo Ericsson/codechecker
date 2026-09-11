@@ -58,12 +58,11 @@
         }"
         :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
+        class="mr-2"
         :exact="item.exact"
         variant="text"
+        :prepend-icon="item.icon"
       >
-        <v-icon class="mr-2">
-          {{ item.icon }}
-        </v-icon>
         {{ item.name }}
       </v-btn>
     </span>
@@ -75,16 +74,12 @@
         <v-btn
           v-bind="props"
           variant="text"
+          prepend-icon="mdi-cog-outline"
+          append-icon="mdi-menu-down"
           :class="configureMenuItems.map(c => c.route).includes($route.name) &&
             'v-btn--active router-link-active'"
         >
-          <v-icon class="mr-2">
-            mdi-cog-outline
-          </v-icon>
           Configuration
-          <v-icon class="ml-2">
-            mdi-menu-down
-          </v-icon>
         </v-btn>
       </template>
 
@@ -94,12 +89,9 @@
           :key="item.title"
           :to="{ name: item.route }"
           exact
+          :prepend-icon="item.icon"
+          prepend-gap="8"
         >
-          <template v-slot:prepend>
-            <v-icon class="mr-1">
-              {{ item.icon }}
-            </v-icon>
-          </template>
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
       </v-list>

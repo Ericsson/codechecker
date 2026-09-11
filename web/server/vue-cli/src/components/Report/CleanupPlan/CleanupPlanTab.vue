@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <div>
     <v-tabs v-model="tab">
       <v-tab
         v-for="item in [ 'Open', 'Closed' ]"
@@ -19,7 +19,7 @@
         <slot name="closed" />
       </v-window-item>
     </v-window>
-  </v-container>
+  </div>
 </template>
 
 <script setup>

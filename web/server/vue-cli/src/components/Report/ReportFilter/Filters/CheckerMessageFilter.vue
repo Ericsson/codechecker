@@ -13,7 +13,9 @@
     @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template v-slot:icon>
-      <v-icon color="grey">
+      <v-icon
+        color="var(--color-gray-light)"
+      >
         mdi-message-text-outline
       </v-icon>
     </template>

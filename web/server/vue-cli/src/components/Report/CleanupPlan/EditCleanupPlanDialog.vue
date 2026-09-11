@@ -5,6 +5,8 @@
     max-width="600px"
     scrollable
     :title="title"
+    confirm-btn-color="primary"
+    :confirm-btn-label="dialogConfirmButtonTitle"
     @confirm="saveCleanupPlan"
     @cancel="resetValues"
   >
@@ -13,7 +15,9 @@
         v-bind="activatorProps"
         color="primary"
         class="new-cleanup-plan-btn"
-        variant="outlined"
+        variant="flat"
+        height="40"
+        prepend-icon="mdi-plus"
       >
         New
       </v-btn>
@@ -85,6 +89,10 @@ const dialog = computed({
 const title = computed(
   () => props.cleanupPlan ? "Edit cleanup plan" : "New cleanup plan"
 );
+
+const dialogConfirmButtonTitle = computed(() => {
+  return props.cleanupPlan ? "Save" : "Create";
+});
 
 watch(dialog, () => {
   if (!dialog.value) return;

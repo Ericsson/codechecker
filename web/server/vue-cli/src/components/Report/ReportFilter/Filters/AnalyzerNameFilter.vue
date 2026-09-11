@@ -12,7 +12,9 @@
     @input="baseSelectOptionFilter.setSelectedItems"
   >
     <template #icon>
-      <v-icon color="grey">
+      <v-icon
+        color="var(--color-gray-light)"
+      >
         mdi-crosshairs
       </v-icon>
     </template>

@@ -27,7 +27,9 @@
       </template>
 
       <template v-slot:icon>
-        <v-icon color="grey">
+        <v-icon
+          color="var(--color-gray-light)"
+        >
           mdi-sign-direction
         </v-icon>
       </template>

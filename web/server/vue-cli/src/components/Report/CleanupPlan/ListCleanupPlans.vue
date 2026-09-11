@@ -1,64 +1,61 @@
 <template>
-  <v-container>
-    <remove-cleanup-plan-dialog
-      v-model="removeDialog"
-      :cleanup-plan="selected"
-      @on:confirm="cleanupPlan.fetchCleanupPlans"
-    />
+  <remove-cleanup-plan-dialog
+    v-model="removeDialog"
+    :cleanup-plan="selected"
+    @on:confirm="cleanupPlan.fetchCleanupPlans"
+  />
 
-    <v-toolbar
-      elevation="0"
-      color="transparent"
+  <v-toolbar
+    elevation="0"
+    color="transparent"
+    class="mb-4"
+  >
+    <div class="d-flex justify-end align-center ga-2 w-100">
+      <edit-cleanup-plan-dialog
+        v-model="editDialog"
+        :cleanup-plan="selected"
+        @save:cleanup-plan="cleanupPlan.fetchCleanupPlans"
+      />
+
+      <v-btn
+        icon="mdi-refresh"
+        title="Reload cleanup plans"
+        color="primary"
+        @click="cleanupPlan.fetchCleanupPlans"
+      />
+    </div>
+  </v-toolbar>
+
+  <cleanup-plan-tab
+    v-model="selectedTab"
+  >
+    <template
+      v-slot:open
     >
-      <v-row>
-        <v-col class="d-flex justify-end align-center">
-          <v-btn
-            icon="mdi-refresh"
-            title="Reload cleanup plans"
-            color="primary"
-            @click="cleanupPlan.fetchCleanupPlans"
-          />
-
-          <edit-cleanup-plan-dialog
-            v-model="editDialog"
-            :cleanup-plan="selected"
-            @save:cleanup-plan="cleanupPlan.fetchCleanupPlans"
-          />
-        </v-col>
-      </v-row>
-    </v-toolbar>
-
-    <cleanup-plan-tab
-      v-model="selectedTab"
+      <list-cleanup-plans-table
+        :items="cleanupPlan.openCleanupPlans?.value || []"
+        :loading="loading"
+        :hide-cols="[ 'closedAt' ]"
+        @edit="editCleanupPlan"
+        @reopen="reopenCleanupPlan"
+        @close="closeCleanupPlan"
+        @remove="removeCleanupPlan"
+      />
+    </template>
+    <template
+      v-slot:closed
     >
-      <template
-        v-slot:open
-      >
-        <list-cleanup-plans-table
-          :items="cleanupPlan.openCleanupPlans?.value || []"
-          :loading="loading"
-          :hide-cols="[ 'closedAt' ]"
-          @edit="editCleanupPlan"
-          @reopen="reopenCleanupPlan"
-          @close="closeCleanupPlan"
-          @remove="removeCleanupPlan"
-        />
-      </template>
-      <template
-        v-slot:closed
-      >
-        <list-cleanup-plans-table
-          :items="cleanupPlan.closedCleanupPlans?.value || []"
-          :loading="loading"
-          :hide-cols="[ 'dueDate' ]"
-          @edit="editCleanupPlan"
-          @reopen="reopenCleanupPlan"
-          @close="closeCleanupPlan"
-          @remove="removeCleanupPlan"
-        />
-      </template>
-    </cleanup-plan-tab>
-  </v-container>
+      <list-cleanup-plans-table
+        :items="cleanupPlan.closedCleanupPlans?.value || []"
+        :loading="loading"
+        :hide-cols="[ 'dueDate' ]"
+        @edit="editCleanupPlan"
+        @reopen="reopenCleanupPlan"
+        @close="closeCleanupPlan"
+        @remove="removeCleanupPlan"
+      />
+    </template>
+  </cleanup-plan-tab>
 </template>
 
 <script setup>

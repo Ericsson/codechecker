@@ -3,7 +3,9 @@
     two-line
     density="compact"
   >
-    <v-list-item-title>
+    <v-list-item-title
+      class="text-body-2"
+    >
       <router-link
         :to="{ name: 'reports',
                query: {
@@ -11,7 +13,8 @@
                  ...reportFilterQuery
                }
         }"
-        class="name mr-2 text-body-2"
+        class="name mr-2 text-grey-darken-4 text-subtitle-1"
+        @click.stop
       >
         <span>{{ name }}</span>
       </router-link>
@@ -27,7 +30,7 @@
       />
     </v-list-item-title>
 
-    <v-list-item-subtitle>
+    <v-list-item-subtitle @click.stop>
       <v-btn-group
         class="overflow-visible"
         density="compact"

@@ -1,4 +1,28 @@
-$font-size-root: 14px;
-
 @use 'vuetify/styles';
 @use "sass:math";
+
+$font-size-root: 14px;
+
+:root {
+  --color-red: #d63031;
+  --color-soft-red: #E53935;
+  --color-soft-orange: 1#FFB300;
+  --color-soft-green: #43A047;
+  --color-soft-blue: #0984e3;
+  --color-soft-purple: #6c5ce7;
+  --color-black: #000000;
+  --color-gray: #737373;
+  --color-gray-light: #8d8d8d;
+  --color-cool-gray: #878D96;
+  --color-cool-gray-dark: #2E2C51;
+  --color-report-step-message-error: #A94442;
+  --color-report-step-message-error-light: #F2DEDE;
+  --color-report-step-message-fixit: #806433;
+  --color-report-step-message-fixit-light: #E6DDCF;
+  --color-report-step-message-macro: #5C6C80;
+  --color-report-step-message-macro-light: #D6DCE6;
+  --color-report-step-message-note: #808080;
+  --color-report-step-message-note-light: #E6E6E6;
+  --color-report-step-message-default: #005B80;
+  --color-report-step-message-default-light: #C3DCE6;
+}
