@@ -4,9 +4,9 @@
 //  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // -------------------------------------------------------------------------
 
-include "codechecker_api_shared.thrift"
+include "shared.thrift"
 
-namespace py Authentication_v6
+namespace py codechecker_api.python.Authentication_v6
 namespace js codeCheckerAuthentication_v6
 
 struct HandshakeInformation {
@@ -59,7 +59,7 @@ service codeCheckerAuthentication {
   // This method's call succeeds (and is a no-op), if the server allows the
   // client's API to connect. Otherwise, the RequestFailed exception is thrown.
   void checkAPIVersion()
-                       throws (1: codechecker_api_shared.RequestFailed requestError),
+                       throws (1: shared.RequestFailed requestError),
 
   // ============= Authentication and session handling =============
   // Get basic authentication information from the server.
@@ -71,40 +71,40 @@ service codeCheckerAuthentication {
 
   // PERMISSION: PERMISSION_VIEW
   AccessControl getAccessControl()
-                                 throws (1: codechecker_api_shared.RequestFailed requestError),
+                                 throws (1: shared.RequestFailed requestError),
 
   // Handles creating a session token for the user.
   string performLogin(1: string authMethod,
                       2: string authString)
-                      throws (1: codechecker_api_shared.RequestFailed requestError),
+                      throws (1: shared.RequestFailed requestError),
 
   // Returns a list of providers for OAuth for respective appearance of buttons.
   list<string> getOauthProviders(),
 
   // Create a link for the user to log in with an OAuth provider.
   string createLink(1: string provider)
-                    throws (1: codechecker_api_shared.RequestFailed requestError),
+                    throws (1: shared.RequestFailed requestError),
 
   // Performs logout action for the user. Must be called from the
   // corresponding valid session which is to be destroyed.
   bool destroySession()
-                      throws (1: codechecker_api_shared.RequestFailed requestError),
+                      throws (1: shared.RequestFailed requestError),
 
   // Returns the currently logged in user within the active session, or empty
   // string if no authenticated session is active.
   string getLoggedInUser()
-                         throws (1: codechecker_api_shared.RequestFailed requestError),
+                         throws (1: shared.RequestFailed requestError),
 
 
   // ============= Authorization, permission management =============
   // Returns the list of permissions.
   // scope acts as a filter for which scope's permissions to list. Refer to
-  // the documentation in api/codechecker_api_shared.thrift for the list of valid scopes.
-  list<codechecker_api_shared.Permission> getPermissions(1: string scope),
+  // the documentation in api/shared.thrift for the list of valid scopes.
+  list<shared.Permission> getPermissions(1: string scope),
 
 
   // ----------------------------------------------------------------
-  // Refer to the documentation in api/codechecker_api_shared.thrift on what data the
+  // Refer to the documentation in api/shared.thrift on what data the
   // 'extraParams' field for a particular permission requires.
   // In each case, it has to be a JSON representation of a dict.
   // ----------------------------------------------------------------
@@ -114,11 +114,11 @@ service codeCheckerAuthentication {
   // criteria.
   // If no criteria are given, this behaves identically to
   // getPermissions(scope).
-  list<codechecker_api_shared.Permission> getPermissionsForUser(
+  list<shared.Permission> getPermissionsForUser(
     1: string           scope,
     2: string           extraParams,
     3: PermissionFilter filter)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
+    throws (1: shared.RequestFailed requestError),
 
   // Returns the list of users and groups with the given permission.
   //
@@ -128,53 +128,53 @@ service codeCheckerAuthentication {
   // This call is only applicable, if the CURRENTLY LOGGED IN USER has access
   // to manage the given permission.
   AuthorisationList getAuthorisedNames(
-    1: codechecker_api_shared.Permission permission,
+    1: shared.Permission permission,
     2: string            extraParams)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
+    throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: Have at least one of the managers of permission argument.
-  bool addPermission(1: codechecker_api_shared.Permission permission,
+  bool addPermission(1: shared.Permission permission,
                      2: string            authName,
                      3: bool              isGroup,
                      4: string            extraParams)
-                     throws (1: codechecker_api_shared.RequestFailed requestError),
+                     throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: Have at least one of the managers of permission argument.
-  bool removePermission(1: codechecker_api_shared.Permission permission,
+  bool removePermission(1: shared.Permission permission,
                         2: string            authName,
                         3: bool              isGroup,
                         4: string            extraParams)
-                        throws (1: codechecker_api_shared.RequestFailed requestError),
+                        throws (1: shared.RequestFailed requestError),
 
   // Returns whether or not the CURRENTLY LOGGED IN USER is authorised with
   // the given permission. Works even if authentication is disabled on the
   // server, based on the permission's default values. This API call honours
   // permission inheritance.
-  bool hasPermission(1: codechecker_api_shared.Permission permission,
+  bool hasPermission(1: shared.Permission permission,
                      2: string            extraParams)
-                     throws (1: codechecker_api_shared.RequestFailed requestError)
+                     throws (1: shared.RequestFailed requestError)
 
   SessionTokenDataList getTokens() // !Deprecated!
-                                 throws (1: codechecker_api_shared.RequestFailed requestError)
+                                 throws (1: shared.RequestFailed requestError)
 
   SessionTokenData newToken(1: string description) // !Deprecated!
-                            throws (1: codechecker_api_shared.RequestFailed requestError)
+                            throws (1: shared.RequestFailed requestError)
 
   bool removeToken(1: string token) // !Deprecated!
-                   throws (1: codechecker_api_shared.RequestFailed requestError)
+                   throws (1: shared.RequestFailed requestError)
 
   PersonalAccessTokenList getPersonalAccessTokens()
-    throws (1: codechecker_api_shared.RequestFailed requestError)
+    throws (1: shared.RequestFailed requestError)
 
   i16 getMaxTokenExpiration()
-    throws (1: codechecker_api_shared.RequestFailed requestError)
+    throws (1: shared.RequestFailed requestError)
 
   PersonalAccessToken newPersonalAccessToken(
     1: string name,
     2: optional string description,
     3: optional i64 expiration)
-    throws (1: codechecker_api_shared.RequestFailed requestError)
+    throws (1: shared.RequestFailed requestError)
 
   bool removePersonalAccessToken(1: string name)
-    throws (1: codechecker_api_shared.RequestFailed requestError)
+    throws (1: shared.RequestFailed requestError)
 }

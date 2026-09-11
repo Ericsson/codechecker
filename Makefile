@@ -14,6 +14,7 @@ CC_SERVER = $(CC_WEB)/server/
 CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
 CC_COMMON = $(CURRENT_DIR)/codechecker_common
+CC_API = $(CURRENT_DIR)/codechecker_api
 
 CC_TOOLS = $(CURRENT_DIR)/tools
 CC_ANALYZER_TOOLS = $(CC_ANALYZER)/tools
@@ -45,12 +46,14 @@ package_memory_safety_reporter: package_dir_structure
 	cp -p tools/memory-safety-reporter/memory_safety_reporter.py $(CC_BUILD_BIN_DIR)/memory_safety_reporter
 
 package: package_dir_structure set_git_commit_template package_gerrit_skiplist package_memory_safety_reporter
+	$(MAKE) -C $(CC_API) build_codechecker_api
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
 	# Copy libraries.
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	cp -r $(ROOT)/codechecker_api $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
@@ -76,6 +79,7 @@ package: package_dir_structure set_git_commit_template package_gerrit_skiplist p
 
 dev_package: package
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_common && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_api && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_analyzer && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_web && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_server && \
@@ -83,14 +87,12 @@ dev_package: package
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client
 
 	ln -fsv $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(ROOT)/codechecker_api $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
-
-package_api:
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_api
 
 standalone_package: venv package
 	# Create a version of the package, which uses a wrapper script to
@@ -166,7 +168,7 @@ PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   pylint -j0 ./bin/** ./codechecker_common \
 	./scripts/** ./scripts/build/** ./scripts/debug_tools/** \
 	./scripts/resources/** \
-	./scripts/test/** ./scripts/thrift/** \
+	./scripts/test/** \
 	--rcfile=$(ROOT)/.pylintrc
 
 pylint:

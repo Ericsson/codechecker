@@ -10,9 +10,9 @@ Helper for the "serverside tasks" Thrift API.
 """
 from typing import Callable, Optional
 
-from codechecker_api.codeCheckerServersideTasks_v6 import \
+from codechecker_api.python.ServersideTasks_v6 import \
     codeCheckerServersideTaskService
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo
 
 from ..thrift_call import thrift_client_call

@@ -17,7 +17,7 @@ import datetime
 import os
 import sys
 
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.DBAccess_v6 import ttypes
 
 from codechecker_client import \
     cmd_line_client, \

@@ -77,9 +77,6 @@ COPY --from=builder /codechecker/web/build/CodeChecker /codechecker
 COPY --from=builder /codechecker/web/requirements_py /requirements_py
 COPY --from=builder /codechecker/web/requirements.txt /requirements_py
 
-# Copy local API packages (Python, Node).
-COPY --from=builder /codechecker/web/api /api
-
 # Install python requirements.
 RUN apt-get update -qq  && \
   apt-get install -qqy --no-install-recommends \

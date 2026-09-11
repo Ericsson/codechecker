@@ -35,7 +35,7 @@ from .database.config_db_model import SystemPermission
 from .database import db_cleanup
 from .permissions import SUPERUSER
 
-import codechecker_api_shared
+import codechecker_api.python.shared as codechecker_api_shared
 
 
 UNSUPPORTED_METHODS = []

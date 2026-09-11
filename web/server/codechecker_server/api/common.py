@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 import sqlalchemy
 
-from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
+from codechecker_api.python.shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_common.logger import get_logger
 

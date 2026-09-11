@@ -17,6 +17,7 @@ REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
 PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
 os.environ["CC_DATA_FILES_DIR"] = PKG_ROOT
+os.environ["CC_LIB_DIR"] = os.path.join(PKG_ROOT, "lib", "python3")
 
 sys.path.append(REPO_ROOT)
 sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report-converter'))

@@ -9,7 +9,7 @@
 Helper for tha authentication api.
 """
 
-from codechecker_api.Authentication_v6 import codeCheckerAuthentication
+from codechecker_api.python.Authentication_v6 import codeCheckerAuthentication
 
 from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper

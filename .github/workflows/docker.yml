@@ -27,6 +27,10 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Build codechecker_api
+        run: |
+          make -C codechecker_api/ build_codechecker_api
+
       - name: Build and push
         uses: docker/build-push-action@v2
         with:

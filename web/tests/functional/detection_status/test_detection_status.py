@@ -14,9 +14,9 @@ import os
 import shutil
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
-    Encoding, ReportFilter
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.ttypes \
+    import DetectionStatus, Encoding, ReportFilter
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env

@@ -28,8 +28,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.DBAccess_v6.ttypes import RunFilter
+from codechecker_api.python.shared.ttypes import RequestFailed
 
 from codechecker_server.api.report_server import \
     ThriftRequestHandler, check_remove_runs_lock, get_run_ids_for_filter

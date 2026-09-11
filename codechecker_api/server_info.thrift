@@ -4,7 +4,7 @@
 //  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // -------------------------------------------------------------------------
 
-namespace py ServerInfo_v6
+namespace py codechecker_api.python.ServerInfo_v6
 namespace js codeCheckerServerInfo_v6
 
 service serverInfoService {

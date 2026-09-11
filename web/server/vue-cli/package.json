@@ -34,7 +34,6 @@
     "@mdi/font": "^6.9.96",
     "chart.js": "^4.5.1",
     "chartjs-plugin-datalabels": "^2.2.0",
-    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.74.0.tgz",
     "codemirror": "^6.0.2",
     "date-fns": "^2.30.0",
     "dompurify": "^3.4.12",
@@ -45,6 +44,7 @@
     "mitt": "^3.0.1",
     "semver": "^5.7.2",
     "splitpanes": "^4.1.2",
+    "thrift": "^0.22.0",
     "uuid": "^13.0.2",
     "vue": "3.5.25",
     "vue-chartjs": "^5.3.3",
@@ -121,8 +121,8 @@
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
-      "@cc/report-server-types": "codechecker-api/lib/report_server_types.js",
-      "@cc/prod-types": "codechecker-api/lib/products_types.js"
+      "@cc/report-server-types": "<rootDir>/../../../codechecker_api/js/report_server_types.js",
+      "@cc/prod-types": "<rootDir>/../../../codechecker_api/js/products_types.js"
     },
     "transform": {
       ".*\\.(vue)$": "@vue/vue3-jest",

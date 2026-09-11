@@ -9,7 +9,7 @@
 Argument handlers for the 'CodeChecker cmd permissions' subcommands.
 """
 
-from codechecker_api.Authentication_v6.ttypes import AccessControl
+from codechecker_api.python.Authentication_v6.ttypes import AccessControl
 
 from codechecker_common import logger
 

@@ -15,8 +15,8 @@ import os
 import shutil
 import unittest
 
-from codechecker_api_shared.ttypes import Permission
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.shared.ttypes import Permission
+from codechecker_api.python.shared.ttypes import RequestFailed
 
 from codechecker_web.shared import convert
 
