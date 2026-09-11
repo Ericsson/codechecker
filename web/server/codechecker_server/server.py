@@ -65,7 +65,7 @@ from .api.server_info_handler import \
 from .api.tasks import ThriftTaskHandler as TaskHandler_v6
 from .database.config_db_model import Product as ORMProduct, \
     Configuration as ORMConfiguration
-from .database.database import DBSession
+from .database.database import DBSession, SQLServer
 from .database.run_db_model import Run
 from .database import db_cleanup
 from .product import Product
@@ -547,11 +547,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.send_error(405, "No permission to list directory")
 
 
-def _do_db_cleanup(context, check_env,
+def _do_db_cleanup(context, check_env, workspace_directory,
                    id_: int, endpoint: str, display_name: str,
                    connection_str: str) -> tuple[Optional[bool], str]:
     # This functions is a concurrent job handler!
     try:
+        connection_str = SQLServer.resolve_sqlite_relative_path(
+            connection_str, workspace_directory)
         prod = Product(id_, endpoint, display_name, connection_str,
                        context, check_env)
         prod.connect(init_db=False)
@@ -572,7 +574,8 @@ def _do_db_cleanup(context, check_env,
         return False, str(e)
 
 
-def _do_db_cleanups(config_database, context, check_env) \
+def _do_db_cleanups(config_database, context, check_env,
+                    workspace_directory) \
         -> tuple[bool, list[tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -605,7 +608,8 @@ def _do_db_cleanups(config_database, context, check_env) \
                  thr_count)
         for product, result in \
                 zip(products, executor.map(
-                    partial(_do_db_cleanup, context, check_env),
+                    partial(_do_db_cleanup, context, check_env,
+                            workspace_directory),
                     *zip(*products))):
             success, reason = result
             if not success:
@@ -851,10 +855,13 @@ class CCSimpleHttpServer(HTTPServer):
 
         LOG.debug("Setting up product '%s'", orm_product.endpoint)
 
+        connection_string = SQLServer.resolve_sqlite_relative_path(
+            orm_product.connection, self.workspace_directory)
+
         prod = Product(orm_product.id,
                        orm_product.endpoint,
                        orm_product.display_name,
-                       orm_product.connection,
+                       connection_string,
                        self.context,
                        self.check_env)
 
@@ -903,16 +910,23 @@ class CCSimpleHttpServer(HTTPServer):
         driver = \
             'pysqlite' if conn.connection.engine == 'sqlite' else 'psycopg2'
 
+        db_name = conn.connection.database
+        if conn.connection.engine == 'sqlite' and \
+                not os.path.isabs(db_name):
+            db_name = os.path.join(self.workspace_directory, db_name)
+
         # create a tuple of database that is going to be added for comparison
         to_add = (
             f"{conn.connection.engine}+{driver}",
-            conn.connection.database,
+            db_name,
             conn.connection.host,
             conn.connection.port)
 
         # create a tuple of database that is already connected for comparison
         def to_tuple(product):
-            url = make_url(product.connection)
+            connection_string = SQLServer.resolve_sqlite_relative_path(
+                product.connection, self.workspace_directory)
+            url = make_url(connection_string)
             return url.drivername, url.database, url.host, url.port
         # creates a list of currently connected databases
         current_connected_databases = list(map(
@@ -1074,7 +1088,8 @@ def start_server(config_directory: str, workspace_directory: str,
 
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
-                                             check_env)
+                                             check_env,
+                                             workspace_directory)
         if not all_success:
             LOG.error("Failed to perform automatic cleanup on %d products! "
                       "Earlier logs might contain additional detailed "

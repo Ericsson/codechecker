@@ -31,7 +31,8 @@ from codechecker_web.shared import convert
 
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
-from ..database.database import DBSession, SQLServer, conv, escape_like
+from ..database.database import DBSession, SQLServer, SQLiteDatabase, \
+    conv, escape_like
 from ..routing import is_valid_product_endpoint
 
 from .thrift_enum_helper import confidentiality_enum, \
@@ -592,8 +593,10 @@ class ThriftProductHandler:
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     "SQLite database must be given by relative path!")
 
-            dbc.database = path_for_fake_root(os.path.join(
+            resolved_path = path_for_fake_root(os.path.join(
                 "/", dbc.database), self.__server.workspace_directory)
+            dbc.database = os.path.relpath(
+                resolved_path, self.__server.workspace_directory)
 
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
@@ -631,20 +634,23 @@ class ThriftProductHandler:
                              'dbusername': dbuser,
                              'dbpassword': dbpass,
                              'dbname': dbc.database}
+            conn_str = SQLServer \
+                .from_cmdline_args(conn_str_args, product.endpoint,
+                                   IDENTIFIER, None, False, None) \
+                .get_connection_string()
         elif dbc.engine == 'sqlite':
-            conn_str_args = {'postgresql': False,
-                             'sqlite': dbc.database}
+            # Built directly (bypassing from_cmdline_args) so the relative
+            # path is preserved instead of being resolved against the
+            # server process's current working directory.
+            conn_str = SQLiteDatabase(
+                product.endpoint, dbc.database, IDENTIFIER, None) \
+                .get_connection_string()
         else:
             msg = f"Database engine '{dbc.engine}' unknown!"
             LOG.error(msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
-
-        conn_str = SQLServer \
-            .from_cmdline_args(conn_str_args, product.endpoint, IDENTIFIER,
-                               None, False, None) \
-            .get_connection_string()
 
         is_rws_change_disabled = product.isReviewStatusChangeDisabled
 
@@ -767,14 +773,30 @@ class ThriftProductHandler:
             # preserved as is, if they are unchanged.
 
             old_args = SQLServer.connection_string_to_args(product.connection)
-            if dbc.engine == 'sqlite' and dbc.database != old_args['sqlite']:
-                if os.path.isabs(dbc.database):
-                    raise codechecker_api_shared.ttypes.RequestFailed(
-                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        "SQLite database must be given by relative path!")
-                dbc.database = path_for_fake_root(
-                    os.path.join("/", dbc.database),
-                    self.__server.workspace_directory)
+            if dbc.engine == 'sqlite':
+                # Old products may still have an absolute path stored from
+                # before relative paths were introduced. Normalize it the
+                # same way toProduct() does when exposing it to clients, so
+                # an unchanged path is correctly detected as unchanged.
+                old_sqlite_path = old_args.get('sqlite')
+                if old_sqlite_path and os.path.isabs(old_sqlite_path):
+                    config_dir = os.path.normpath(
+                        self.__server.workspace_directory) + "/"
+                    if old_sqlite_path.startswith(config_dir):
+                        old_sqlite_path = \
+                            old_sqlite_path[len(config_dir):]
+
+                if dbc.database != old_sqlite_path:
+                    if os.path.isabs(dbc.database):
+                        raise codechecker_api_shared.ttypes.RequestFailed(
+                            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                            "SQLite database must be given by relative "
+                            "path!")
+                    resolved_path = path_for_fake_root(
+                        os.path.join("/", dbc.database),
+                        self.__server.workspace_directory)
+                    dbc.database = os.path.relpath(
+                        resolved_path, self.__server.workspace_directory)
 
             # Some values come encoded as Base64, decode these.
             displayed_name = convert.from_b64(new_config.displayedName_b64) \
@@ -809,9 +831,17 @@ class ThriftProductHandler:
                                  'dbusername': dbuser,
                                  'dbpassword': dbpass,
                                  'dbname': dbc.database}
+                conn_str = SQLServer \
+                    .from_cmdline_args(conn_str_args, product.endpoint,
+                                       IDENTIFIER, None, False, None) \
+                    .get_connection_string()
             elif dbc.engine == 'sqlite':
-                conn_str_args = {'postgresql': False,
-                                 'sqlite': dbc.database}
+                # Built directly (bypassing from_cmdline_args) so the
+                # relative path is preserved instead of being resolved
+                # against the server process's current working directory.
+                conn_str = SQLiteDatabase(
+                    product.endpoint, dbc.database, IDENTIFIER, None) \
+                    .get_connection_string()
             else:
                 msg = f"Database engine '{dbc.engine}' unknown!"
                 LOG.error(msg)
@@ -819,17 +849,19 @@ class ThriftProductHandler:
                     codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                     msg)
 
-            conn_str = SQLServer \
-                .from_cmdline_args(conn_str_args, product.endpoint,
-                                   IDENTIFIER, None, False, None) \
-                .get_connection_string()
-
             # If endpoint or database arguments change, the product
             # configuration has changed so severely, that it needs
-            # to be reconnected.
+            # to be reconnected. Resolve SQLite paths to their absolute
+            # form first, so a merely different (relative vs. legacy
+            # absolute) representation of the same path isn't seen as
+            # a change.
+            old_connection_resolved = SQLServer.resolve_sqlite_relative_path(
+                product.connection, self.__server.workspace_directory)
+            new_connection_resolved = SQLServer.resolve_sqlite_relative_path(
+                conn_str, self.__server.workspace_directory)
             product_needs_reconnect = \
                 product.endpoint != new_config.endpoint or \
-                product.connection != conn_str
+                old_connection_resolved != new_connection_resolved
             old_endpoint = product.endpoint
 
             if product_needs_reconnect:
