@@ -3,6 +3,7 @@
   "labels": {
     "gcc-analyzer-allocation-size": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-allocation-size",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp36-c",
@@ -11,12 +12,14 @@
     ],
     "gcc-analyzer-deref-before-check": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-deref-before-check",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:exp34-c"
     ],
     "gcc-analyzer-double-fclose": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-fclose",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:fio42-c"
@@ -25,6 +28,7 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "memory-safety:cwe-415",
       "cwe-vulnerabilities:cwe-415",
@@ -53,6 +57,7 @@
     ],
     "gcc-analyzer-fd-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-leak",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos35-c",
@@ -70,12 +75,14 @@
     ],
     "gcc-analyzer-fd-use-after-close": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos35-c"
     ],
     "gcc-analyzer-fd-use-without-check": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-without-check",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:pos35-c",
@@ -83,6 +90,7 @@
     ],
     "gcc-analyzer-file-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-file-leak",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:fio42-c"
@@ -91,6 +99,7 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-free-of-non-heap",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "memory-safety:cwe-590",
       "cwe-vulnerabilities:cwe-590",
@@ -110,6 +119,7 @@
     ],
     "gcc-analyzer-jump-through-null": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-jump-through-null",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:oop55-cpp"
@@ -118,6 +128,7 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-malloc-leak",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "memory-safety:cwe-401",
       "memory-safety:cwe-761",
@@ -132,6 +143,7 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "memory-safety:cwe-762",
       "cwe-vulnerabilities:cwe-762",
@@ -142,6 +154,7 @@
     ],
     "gcc-analyzer-null-argument": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-argument",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:err33-c",
@@ -152,6 +165,7 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "cwe-top-25-2024:cwe-476",
       "memory-safety:cwe-476",
@@ -163,6 +177,7 @@
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "memory-safety:cwe-121",
       "memory-safety:cwe-122",
@@ -189,6 +204,7 @@
     ],
     "gcc-analyzer-possible-null-argument": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-argument",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:pos54-c",
@@ -196,6 +212,7 @@
     ],
     "gcc-analyzer-possible-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-dereference",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:exp34-c",
@@ -203,18 +220,21 @@
     ],
     "gcc-analyzer-putenv-of-auto-var": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:pos34-c"
     ],
     "gcc-analyzer-shift-count-negative": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-negative",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:int34-c"
     ],
     "gcc-analyzer-shift-count-overflow": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-overflow",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:int34-c"
@@ -256,6 +276,7 @@
     ],
     "gcc-analyzer-unsafe-call-within-signal-handler": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-unsafe-call-within-signal-handler",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:sig30-c"
@@ -265,6 +286,7 @@
       "guideline:cwe-top-25-2024",
       "guideline:memory-safety",
       "guideline:cwe-vulnerabilities",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "cwe-top-25-2024:cwe-416",
       "memory-safety:cwe-416",
@@ -274,6 +296,7 @@
     ],
     "gcc-analyzer-use-of-pointer-in-stale-stack-frame": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-pointer-in-stale-stack-frame",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:dcl30-c",
@@ -281,6 +304,7 @@
     ],
     "gcc-analyzer-use-of-uninitialized-value": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-uninitialized-value",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:arr38-c",
@@ -293,12 +317,14 @@
     ],
     "gcc-analyzer-va-arg-type-mismatch": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-arg-type-mismatch",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:msc39-c"
     ],
     "gcc-analyzer-va-list-exhausted": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-exhausted",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:dcl50-cpp",
@@ -306,6 +332,7 @@
     ],
     "gcc-analyzer-va-list-leak": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-leak",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp58-cpp"
@@ -317,24 +344,28 @@
     ],
     "gcc-analyzer-write-to-const": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-const",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:str30-c"
     ],
     "gcc-analyzer-write-to-string-literal": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-string-literal",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:str30-c"
     ],
     "gcc-analyzer-infinite-loop": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp45-c"
     ],
     "gcc-analyzer-overlapping-buffers": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:exp43-c"
@@ -346,6 +377,7 @@
     ],
     "gcc-analyzer-throw-of-unexpected-type": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-throw-of-unexpected-type",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:err55-cpp"
@@ -357,6 +389,7 @@
     ],
     "gcc-analyzer-undefined-behavior-ptrdiff": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-ptrdiff",
+      "guideline:sei-cert-c",
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:arr36-c"
