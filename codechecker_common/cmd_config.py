@@ -47,7 +47,7 @@ def _tokenize_entry(entry, config_file, section):
     than one argument (e.g. '--analyzers clangsa clang-tidy'). Splitting is
     done with shlex so that quoting, escapes and spaces inside quoted values
     behave like they do on the command line. Comments are disabled: a '#'' in
-    an argument value is data, not the start of a comment.
+    behave like they do on the command line. Comments are disabled: a '#' in
     """
     if not isinstance(entry, str):
         raise ConfigFileTokenizeError(
