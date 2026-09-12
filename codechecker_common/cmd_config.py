@@ -39,6 +39,40 @@ class ConfigFileTokenizeError(Exception):
     """
 
 
+# Sentinel used to carry literal backslashes through shlex. A NUL byte cannot
+# occur in a config file entry, so it cannot collide with real content.
+_BACKSLASH_SENTINEL = '\x00'
+# Characters for which a preceding backslash is a shell escape rather than a
+# Windows path separator.
+_SHLEX_SPECIAL = frozenset(' \\"\'#\n\t')
+
+
+def _protect_path_backslashes(entry):
+    """
+    Replace backslashes that act as path separators with a sentinel.
+
+    'C:\\Users\\me' must survive tokenization unchanged, while 'a\\ b' must
+    still collapse to 'a b'. The two are told apart by what follows the
+    backslash: a shell-special character means escape, anything else means a
+    Windows separator.
+    """
+    if '\\' not in entry:
+        return entry
+
+    result = []
+    index = 0
+    length = len(entry)
+    while index < length:
+        char = entry[index]
+        if char == '\\' and index + 1 < length \
+                and entry[index + 1] not in _SHLEX_SPECIAL:
+            result.append(_BACKSLASH_SENTINEL)
+        else:
+            result.append(char)
+        index += 1
+    return ''.join(result)
+
+
 def _tokenize_entry(entry, config_file, section):
     """
     Split a single config file entry into command line arguments.
@@ -46,23 +80,33 @@ def _tokenize_entry(entry, config_file, section):
     YAML and JSON entries are both single strings, but a string may hold more
     than one argument (e.g. '--analyzers clangsa clang-tidy'). Splitting is
     done with shlex so that quoting, escapes and spaces inside quoted values
-    behave like they do on the command line. Comments are disabled: a '#'' in
     behave like they do on the command line. Comments are disabled: a '#' in
+    an argument value is data, not the start of a comment.
+
+    Backslashes need care because the two meanings collide. In a POSIX shell a
+    backslash escapes the following character, but on Windows it is a path
+    separator, so 'C:\\Users\\me' would otherwise become 'C:Usersme'. A
+    backslash is treated as an escape only when it precedes a character that
+    shlex would treat specially; otherwise it is protected across tokenization
+    and restored afterwards.
     """
     if not isinstance(entry, str):
         raise ConfigFileTokenizeError(
             f"Invalid entry in '{config_file}' under '{section}': expected a "
             f"string, got {type(entry).__name__}.")
 
+    escaped = _protect_path_backslashes(entry)
     try:
-        return shlex.split(entry, comments=False, posix=True)
+        tokens = shlex.split(escaped, comments=False, posix=True)
     except ValueError as ex:
         raise ConfigFileTokenizeError(
             f"Invalid quoting in '{config_file}' under '{section}': "
             f"{ex}\n"
             f"  entry: {entry!r}\n"
             f"If a value contains a space, quote it, e.g. "
-            f"'- --trim-path-prefix \"/tmp/my project\"'.") from ex
+            f"--trim-path-prefix \"/tmp/my project\".") from ex
+
+    return [token.replace(_BACKSLASH_SENTINEL, '\\') for token in tokens]
 
 
 def _expand_section_options(entries, config_file, section) -> list[str]:
@@ -85,10 +129,13 @@ def _expand_section_options(entries, config_file, section) -> list[str]:
     return options
 
 
-def get_analyze_options(cfg) -> list[str]:
-    """ Get analyze related options. """
-    # The config value can be 'analyze' or 'analyzer'
-    # for backward compatibility.
+def get_analyze_options(cfg) -> tuple[str, list[str]]:
+    """ Get analyze related options and the section key they came from.
+
+    The config value can be 'analyze' or 'analyzer' for backward
+    compatibility. The key is returned so that diagnostics can name the
+    section the user actually wrote.
+    """
     analyze_cfg = cfg.get("analyze", [])
     analyzer_cfg = cfg.get("analyzer", [])
     if analyze_cfg:
@@ -98,9 +145,12 @@ def get_analyze_options(cfg) -> list[str]:
                         "file. Please use the 'analyze' value to be "
                         "in sync with the subcommands.\n"
                         "Using the 'analyze' configuration.")
-        return analyze_cfg
+        return "analyze", analyze_cfg
 
-    return analyzer_cfg
+    if analyzer_cfg:
+        return "analyzer", analyzer_cfg
+
+    return "analyze", []
 
 
 def process_config_file(args, subcommand_name):
@@ -119,12 +169,12 @@ def process_config_file(args, subcommand_name):
         is_yaml = config_file.endswith(('.yaml', '.yml'))
 
         # The subcommand name is analyze but the
-        # configuration section name is analyzer.
+        # configuration section name is analyze or analyzer.
         if subcommand_name == 'analyze':
-            sections = [('analyze', get_analyze_options(cfg))]
+            sections = [get_analyze_options(cfg)]
         elif subcommand_name == 'check':
             sections = [
-                ('analyze', get_analyze_options(cfg)),
+                get_analyze_options(cfg),
                 ('parse', cfg.get("parse", [])),
             ]
         else:

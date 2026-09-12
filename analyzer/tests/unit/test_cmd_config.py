@@ -268,6 +268,75 @@ analyze:
                 "cfg.yaml", "analyze"),
             ["--analyzer-config=clangsa:unroll-loops=true"])
 
+    # ------------------------------------------------------------------
+    # Windows paths (added 2026-09-12 after review feedback).
+    # ------------------------------------------------------------------
+
+    def test_windows_path_backslashes_are_preserved(self):
+        """
+        A backslash in a Windows path is a separator, not an escape. POSIX
+        tokenization would otherwise turn 'C:\\Users\\me' into 'C:Usersme'.
+        """
+        config_file = self._write_yaml(
+            "analyze:\n"
+            "  - --trim-path-prefix=C:\\Users\\me\\workspace\n")
+        self.assertEqual(
+            self._process(config_file),
+            ["--trim-path-prefix=C:\\Users\\me\\workspace"])
+
+    def test_windows_path_without_spaces_is_unchanged(self):
+        """
+        An entry with no spaces must keep working, including on Windows.
+        """
+        config_file = self._write_yaml(
+            "analyze:\n"
+            "  - --skip=C:\\project\\skip.txt\n")
+        self.assertEqual(
+            self._process(config_file),
+            ["--skip=C:\\project\\skip.txt"])
+
+    def test_escaped_space_still_collapses(self):
+        """
+        A backslash before a space is still an escape, so the two meanings do
+        not conflict.
+        """
+        config_file = self._write_yaml(
+            "analyze:\n"
+            "  - --define=FOO=bar\\ baz\n")
+        self.assertEqual(
+            self._process(config_file),
+            ["--define=FOO=bar baz"])
+
+    # ------------------------------------------------------------------
+    # Section labels in diagnostics (added 2026-09-12).
+    # ------------------------------------------------------------------
+
+    def test_analyzer_alias_is_named_in_diagnostics(self):
+        """
+        Diagnostics must name the section the user actually wrote, even when
+        the backward compatible 'analyzer' key is used.
+        """
+        config_file = self._write_yaml("""
+analyzer:
+  - --analyzers clangsa clang-tidy
+""")
+        with self.assertLogs('system', level='INFO') as captured:
+            cmd_config.process_config_file(
+                Namespace(config_file=config_file), 'analyze')
+        self.assertTrue(any("under 'analyzer'" in line
+                            for line in captured.output))
+
+    def test_analyze_key_is_named_in_diagnostics(self):
+        config_file = self._write_yaml("""
+analyze:
+  - --analyzers clangsa clang-tidy
+""")
+        with self.assertLogs('system', level='INFO') as captured:
+            cmd_config.process_config_file(
+                Namespace(config_file=config_file), 'analyze')
+        self.assertTrue(any("under 'analyze'" in line
+                            for line in captured.output))
+
     def test_tokenize_entry_rejects_non_string(self):
         with self.assertRaises(cmd_config.ConfigFileTokenizeError):
             cmd_config._tokenize_entry(42, "cfg.yaml", "analyze")
