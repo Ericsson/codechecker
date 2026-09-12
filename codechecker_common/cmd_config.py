@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------
 
 import os
+import shlex
 import yaml
 
 from codechecker_common import logger
@@ -29,6 +30,59 @@ def add_option(parser):
                              "For more information see the docs: "
                              "https://github.com/Ericsson/codechecker/tree/"
                              "master/docs/config_file.md")
+
+
+class ConfigFileTokenizeError(Exception):
+    """
+    Raised when a config file entry cannot be split into command line
+    arguments, e.g. because of an unterminated quote.
+    """
+
+
+def _tokenize_entry(entry, config_file, section):
+    """
+    Split a single config file entry into command line arguments.
+
+    YAML and JSON entries are both single strings, but a string may hold more
+    than one argument (e.g. '--analyzers clangsa clang-tidy'). Splitting is
+    done with shlex so that quoting, escapes and spaces inside quoted values
+    behave like they do on the command line. Comments are disabled: a '#'' in
+    an argument value is data, not the start of a comment.
+    """
+    if not isinstance(entry, str):
+        raise ConfigFileTokenizeError(
+            f"Invalid entry in '{config_file}' under '{section}': expected a "
+            f"string, got {type(entry).__name__}.")
+
+    try:
+        return shlex.split(entry, comments=False, posix=True)
+    except ValueError as ex:
+        raise ConfigFileTokenizeError(
+            f"Invalid quoting in '{config_file}' under '{section}': "
+            f"{ex}\n"
+            f"  entry: {entry!r}\n"
+            f"If a value contains a space, quote it, e.g. "
+            f"'- --trim-path-prefix \"/tmp/my project\"'.") from ex
+
+
+def _expand_section_options(entries, config_file, section) -> list[str]:
+    """
+    Tokenize every entry of a config file section and flatten the results.
+
+    One list item may therefore produce several command line arguments.
+    Entries that produce more than one argument are logged, because a config
+    file written for the previous behavior (where one entry was always exactly
+    one argument) can silently change meaning.
+    """
+    options = []
+    for entry in entries:
+        tokens = _tokenize_entry(entry, config_file, section)
+        if len(tokens) > 1:
+            LOG.info("Config file entry %r in '%s' under '%s' was split into "
+                     "multiple command line arguments: %s",
+                     entry, config_file, section, tokens)
+        options.extend(tokens)
+    return options
 
 
 def get_analyze_options(cfg) -> list[str]:
@@ -62,18 +116,31 @@ def process_config_file(args, subcommand_name):
         else:
             cfg = load_json(config_file, default={})
 
+        is_yaml = config_file.endswith(('.yaml', '.yml'))
+
         # The subcommand name is analyze but the
         # configuration section name is analyzer.
-        options = None
         if subcommand_name == 'analyze':
-            options = get_analyze_options(cfg)
+            sections = [('analyze', get_analyze_options(cfg))]
         elif subcommand_name == 'check':
-            options = [
-                *get_analyze_options(cfg),
-                *cfg.get("parse", [])
+            sections = [
+                ('analyze', get_analyze_options(cfg)),
+                ('parse', cfg.get("parse", [])),
             ]
         else:
-            options = cfg.get(subcommand_name, [])
+            sections = [(subcommand_name, cfg.get(subcommand_name, []))]
+
+        options = []
+        for section, entries in sections:
+            if not entries:
+                continue
+            # JSON has always been one-entry-per-argument; only YAML entries
+            # may hold several arguments in a single item.
+            if is_yaml:
+                options.extend(
+                    _expand_section_options(entries, config_file, section))
+            else:
+                options.extend(entries)
 
         if options:
             LOG.info("Extending command line options with %s options from "
