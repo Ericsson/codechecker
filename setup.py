@@ -113,7 +113,7 @@ class BuildExt(build_ext):
 class Sdist(sdist):
     def run(self):
         res = subprocess.call(
-            ["make", "clean_package", "package", "package_api"],
+            ["make", "clean_package", "package"],
             env=dict(os.environ,
                      BUILD_DIR=build_dir),
             encoding="utf-8",

@@ -16,9 +16,9 @@ import os
 import shutil
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+from codechecker_api.python.DBAccess_v6.ttypes import \
         ReviewStatus, DiffType, ReportFilter, DetectionStatus
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_client.cmd_line_client import \
     get_diff_local_dirs, get_diff_remote_run_local_dir, \

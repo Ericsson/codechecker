@@ -5,11 +5,12 @@ const { DefinePlugin, ProvidePlugin } = require("webpack");
 const ESLintPlugin = require("eslint-webpack-plugin");
 
 const { join } = require("path");
-
-const codeCheckerApi = require("codechecker-api/package.json");
-const apiVersion = codeCheckerApi.version.split(".").slice(0, 2).join(".");
-
 const helpers = require("./helpers");
+
+// Generated Thrift API JavaScript stubs
+const apiDir = helpers.root("..", "..", "..", "codechecker_api");
+const apiJsDir = join(apiDir, "js");
+const apiVersion = require(join(apiDir, "api_version.json")).api_version;
 
 function sassLoaderOptions(indentedSyntax=false) {
   return {
@@ -66,36 +67,24 @@ module.exports = {
     },
     unsafeCache: false,
     extensions: [ ".js", ".vue" ],
+    // Let the external Thrift API stubs (in `codechecker_api/js`) resolve
+    // their bare `require("thrift")` / `require("node-int64")` against this
+    // project's node_modules.
+    modules: [ helpers.root("node_modules"), "node_modules" ],
     alias: {
       "@": helpers.root("src"),
       "@statistics": helpers.root("src", "components", "Statistics"),
       "@cc-api": helpers.root("src", "services", "api"),
-      "@cc/auth": join(
-        "codechecker-api", "lib", "codeCheckerAuthentication.js"
-      ),
-      "@cc/auth-types": join(
-        "codechecker-api", "lib", "authentication_types.js"
-      ),
-      "@cc/conf": join("codechecker-api", "lib", "configurationService.js"),
-      "@cc/conf-types": join(
-        "codechecker-api", "lib", "configuration_types.js"
-      ),
-      "@cc/db-access": join(
-        "codechecker-api", "lib", "codeCheckerDBAccess.js"
-      ),
-      "@cc/prod": join(
-        "codechecker-api", "lib", "codeCheckerProductService.js"
-      ),
-      "@cc/prod-types": join("codechecker-api", "lib", "products_types.js"),
-      "@cc/server-info": join(
-        "codechecker-api", "lib", "serverInfoService.js"
-      ),
-      "@cc/report-server-types": join(
-        "codechecker-api", "lib", "report_server_types.js"
-      ),
-      "@cc/shared-types": join(
-        "codechecker-api", "lib", "codechecker_api_shared_types.js"
-      ),
+      "@cc/auth": join(apiJsDir, "codeCheckerAuthentication.js"),
+      "@cc/auth-types": join(apiJsDir, "authentication_types.js"),
+      "@cc/conf": join(apiJsDir, "configurationService.js"),
+      "@cc/conf-types": join(apiJsDir, "configuration_types.js"),
+      "@cc/db-access": join(apiJsDir, "codeCheckerDBAccess.js"),
+      "@cc/prod": join(apiJsDir, "codeCheckerProductService.js"),
+      "@cc/prod-types": join(apiJsDir, "products_types.js"),
+      "@cc/server-info": join(apiJsDir, "serverInfoService.js"),
+      "@cc/report-server-types": join(apiJsDir, "report_server_types.js"),
+      "@cc/shared-types": join(apiJsDir, "shared_types.js"),
       "thrift": join("thrift", "lib", "nodejs", "lib", "thrift", "browser.js"),
       "Vuetify": join("vuetify", "lib", "components"),
     }
@@ -105,7 +94,13 @@ module.exports = {
       {
         test: /\.js$/,
         loader: "babel-loader",
-        exclude: [ /node_modules\/(?!vuetify)/ ],
+        // The Thrift API stubs (in `codechecker_api/js`) are plain CommonJS.
+        // Exclude them like node_modules so babel doesn't turn them into ES
+        // modules and break their `module.exports`.
+        exclude: [
+          /node_modules\/(?!vuetify)/,
+          /[\\/]codechecker_api[\\/]js[\\/]/
+        ],
         options: {
           presets: [
             [ "@babel/preset-env", {

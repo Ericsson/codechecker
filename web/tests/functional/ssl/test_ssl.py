@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import unittest
 
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.shared.ttypes import RequestFailed
 
 from libtest import codechecker
 from libtest import env

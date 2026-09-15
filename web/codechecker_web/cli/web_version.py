@@ -18,7 +18,7 @@ from codechecker_report_converter import twodim
 from codechecker_common import logger
 from codechecker_common.output import USER_FORMATS
 
-from codechecker_web.shared import webserver_context, version
+from codechecker_web.shared import webserver_context
 
 
 LOG = logger.get_logger('system')
@@ -28,15 +28,13 @@ class Version:
     def __init__(self):
         context = webserver_context.get_context()
 
-        self.server_versions = [
-            f'{major}.{minor}'
-            for major, minor in version.SUPPORTED_VERSIONS.items()]
+        self.server_versions = [context.api_version]
 
         self.version = context.version
         self.build_date = context.package_build_date
         self.git_hash = context.package_git_hash
         self.git_tag = context.package_git_tag
-        self.client_api = version.CLIENT_API
+        self.client_api = context.api_version
 
     def is_release_candidate(self):
         return 'rc' in self.version

@@ -16,7 +16,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import union
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
+from codechecker_api.python.DBAccess_v6.ttypes import Severity
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger

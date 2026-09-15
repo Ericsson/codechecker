@@ -19,7 +19,7 @@ import time
 
 import multiprocess
 
-from codechecker_api_shared.ttypes import Permission
+from codechecker_api.python.shared.ttypes import Permission
 
 from codechecker_client.product import create_product_url
 

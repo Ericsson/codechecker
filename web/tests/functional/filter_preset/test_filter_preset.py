@@ -12,9 +12,9 @@ Functional tests for filter preset Thrift API.
 import os
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.DBAccess_v6 import ttypes
 
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.shared.ttypes import RequestFailed
 
 from libtest import env
 

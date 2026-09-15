@@ -9,7 +9,8 @@
 Helper for the product thrift api.
 """
 
-from codechecker_api.ProductManagement_v6 import codeCheckerProductService
+from codechecker_api.python.ProductManagement_v6 import \
+    codeCheckerProductService
 
 from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper
