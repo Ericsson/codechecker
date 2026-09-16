@@ -9,7 +9,7 @@
 Helper for the configuration thrift api.
 """
 
-from codechecker_api.Configuration_v6 import configurationService
+from codechecker_api.python.Configuration_v6 import configurationService
 
 from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper

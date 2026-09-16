@@ -22,7 +22,7 @@ import unittest
 
 from codechecker_report_converter import util
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter
+from codechecker_api.python.DBAccess_v6.ttypes import AnalysisInfoFilter
 from libtest import codechecker
 from libtest import env
 from libtest import plist_test

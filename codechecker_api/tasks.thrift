@@ -4,9 +4,9 @@
 //  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // -------------------------------------------------------------------------
 
-include "codechecker_api_shared.thrift"
+include "shared.thrift"
 
-namespace py codeCheckerServersideTasks_v6
+namespace py codechecker_api.python.ServersideTasks_v6
 namespace js codeCheckerServersideTasks_v6
 
 enum TaskStatus {
@@ -20,7 +20,7 @@ enum TaskStatus {
 }
 
 struct TaskInfo {
-   1: codechecker_api_shared.TaskToken token,
+   1: shared.TaskToken token,
    2: string                           taskKind,
    3: TaskStatus                       status,
   // If the task is associated with a product, this ID can be used to query
@@ -80,8 +80,8 @@ struct TaskFilter {
   12: i64                            completedAfterEpoch,
   13: i64                            heartbeatBeforeEpoch,
   14: i64                            heartbeatAfterEpoch,
-  15: codechecker_api_shared.Ternary cancelFlag,
-  16: codechecker_api_shared.Ternary consumedFlag,
+  15: shared.Ternary cancelFlag,
+  16: shared.Ternary consumedFlag,
 }
 
 service codeCheckerServersideTaskService {
@@ -103,8 +103,8 @@ service codeCheckerServersideTaskService {
   //
   // PERMISSION: <Situational>.
   TaskInfo getTaskInfo(
-    1: codechecker_api_shared.TaskToken token)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
+    1: shared.TaskToken token)
+    throws (1: shared.RequestFailed requestError),
 
   // Returns privileged information about the tasks stored in the servers'
   // databases, based on the given filter.
@@ -118,7 +118,7 @@ service codeCheckerServersideTaskService {
   // PERMISSION: SUPERUSER, PRODUCT_ADMIN
   list<AdministratorTaskInfo> getTasks(
     1: TaskFilter filters)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
+    throws (1: shared.RequestFailed requestError),
 
   // Sets the specified task's "cancel" flag to TRUE, resulting in a request to
   // the task's execution to co-operatively terminate itself.
@@ -142,8 +142,8 @@ service codeCheckerServersideTaskService {
   //
   // PERMISSION: SUPERUSER
   bool cancelTask(
-    1: codechecker_api_shared.TaskToken token)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
+    1: shared.TaskToken token)
+    throws (1: shared.RequestFailed requestError),
 
   // Used for testing purposes only.
   // This function will **ALWAYS** throw an exception when ran outside of a
@@ -153,8 +153,8 @@ service codeCheckerServersideTaskService {
   // intermittent sleeping, up to approximately "timeout" number of seconds,
   // after which point it will gracefully terminate.
   // The result of the execution is unsuccessful if "shouldFail" is a true.
-  codechecker_api_shared.TaskToken createDummyTask(
+  shared.TaskToken createDummyTask(
     1: i32  timeout,
     2: bool shouldFail)
-  throws (1: codechecker_api_shared.RequestFailed requestError),
+  throws (1: shared.RequestFailed requestError),
 }

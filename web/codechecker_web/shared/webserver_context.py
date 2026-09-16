@@ -88,6 +88,17 @@ class Context(metaclass=Singleton):
 
         self.__set_version()
 
+        self.__api_version = (load_json(
+            os.path.join(
+                self._lib_dir_path, "codechecker_api",
+                "api_version.json")) or {}).get("api_version", None)
+
+        if not self.__api_version:
+            raise RuntimeError("Failed to read codechecker_api version!")
+
+        self.__api_version_major, self.__api_version_minor = \
+            [int(v) for v in self.__api_version.split(".")]
+
     def __get_git_commit_urls(self):
         """ Get commit urls from the configuration file. """
         git_commit_urls = load_json(self.git_commit_urls_file, [])
@@ -230,6 +241,18 @@ class Context(metaclass=Singleton):
     @property
     def guideline(self):
         return self._guidelines
+
+    @property
+    def api_version(self) -> str:
+        return self.__api_version
+
+    @property
+    def api_version_major(self) -> int:
+        return self.__api_version_major
+
+    @property
+    def api_version_minor(self) -> int:
+        return self.__api_version_minor
 
 
 def get_context():

@@ -13,7 +13,7 @@ Defines the routing rules for the CodeChecker server.
 import re
 from urllib.parse import urlparse
 
-from codechecker_web.shared.version import SUPPORTED_VERSIONS
+from codechecker_web.shared import webserver_context
 
 # A list of top-level path elements under the webserver root which should not
 # be considered as a product route.
@@ -72,6 +72,8 @@ def is_supported_version(version):
 
     If supported, returns the major and minor version as a tuple.
     """
+    context = webserver_context.get_context()
+
     version = version.lstrip('v')
     version_parts = version.split('.')
     if len(version_parts) < 2:
@@ -79,7 +81,8 @@ def is_supported_version(version):
 
     # We don't care if accidentally the version tag contains a revision number.
     major, minor = int(version_parts[0]), int(version_parts[1])
-    if major in SUPPORTED_VERSIONS and minor <= SUPPORTED_VERSIONS[major]:
+    if major == context.api_version_major and \
+       minor <= context.api_version_minor:
         return major, minor
 
     return False

@@ -30,9 +30,9 @@ from sqlalchemy.sql.expression import or_, and_, not_, func, \
 from sqlalchemy.orm import contains_eager, Session as SA_Session
 from sqlalchemy.types import ARRAY, String
 
-import codechecker_api_shared
-from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+import codechecker_api.python.shared as codechecker_api_shared
+from codechecker_api.python.DBAccess_v6 import constants, ttypes
+from codechecker_api.python.DBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
     BlameData, BlameInfo, \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
@@ -48,7 +48,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     SourceComponentData, SourceFileData, SortMode, SortType, \
     SubmittedRunOptions
 
-from codechecker_api_shared.ttypes import ErrorCode, RequestFailed
+from codechecker_api.python.shared.ttypes import ErrorCode, RequestFailed
 
 from codechecker_common import util
 from codechecker_common.util import thrift_to_json

@@ -26,7 +26,7 @@ from alembic.util import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
-from codechecker_api_shared.ttypes import DBStatus
+from codechecker_api.python.shared.ttypes import DBStatus
 
 from codechecker_report_converter import twodim
 

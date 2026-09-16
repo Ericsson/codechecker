@@ -20,12 +20,12 @@ import os
 import shutil
 import unittest
 
-from codechecker_api_shared.ttypes import Permission
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.shared.ttypes import Permission
+from codechecker_api.python.shared.ttypes import RequestFailed
 
-from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
-from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.ProductManagement_v6.ttypes import \
+    ProductConfiguration, DatabaseConnection
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_web.shared import convert
 

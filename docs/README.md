@@ -256,6 +256,9 @@ sudo apt-get install libpq-dev
 curl -sL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
+# Install docker.
+# https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker

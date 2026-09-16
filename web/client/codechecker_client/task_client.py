@@ -17,9 +17,9 @@ import sys
 import time
 from typing import Callable, Optional, cast
 
-from codechecker_api_shared.ttypes import Ternary
-from codechecker_api.ProductManagement_v6.ttypes import Product
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.shared.ttypes import Ternary
+from codechecker_api.python.ProductManagement_v6.ttypes import Product
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from codechecker_common import logger

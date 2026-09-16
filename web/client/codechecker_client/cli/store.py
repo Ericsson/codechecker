@@ -31,7 +31,7 @@ from datetime import timedelta
 from threading import Timer
 from typing import Iterable
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+from codechecker_api.python.DBAccess_v6.ttypes import \
     StoreLimitKind, SubmittedRunOptions
 
 from codechecker_report_converter import twodim

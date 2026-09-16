@@ -4,9 +4,9 @@
 //  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // -------------------------------------------------------------------------
 
-include "codechecker_api_shared.thrift"
+include "shared.thrift"
 
-namespace py Configuration_v6
+namespace py codechecker_api.python.Configuration_v6
 namespace js codeCheckerConfiguration_v6
 
 service configurationService {
@@ -18,5 +18,5 @@ service configurationService {
     // Call with an empty string to hide the notification banner.
     // PERMISSION: SUPERUSER
     void setNotificationBannerText(1: string notification_b64)
-                         throws (1: codechecker_api_shared.RequestFailed requestError)
+                         throws (1: shared.RequestFailed requestError)
 }

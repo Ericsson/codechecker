@@ -19,8 +19,8 @@ import uuid
 import time
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CleanupPlanFilter, \
-    ReportFilter
+from codechecker_api.python.DBAccess_v6.ttypes import \
+    CleanupPlanFilter, ReportFilter
 
 from libtest import codechecker
 from libtest import env
