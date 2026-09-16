@@ -83,6 +83,7 @@
           v-if="treeItems.length > 0"
           v-model:selected="treeSelection"
           :items="treeItems"
+          :load-children="loadChildren"
           select-strategy="independent"
           item-value="fullPath"
           open-on-click
@@ -97,7 +98,7 @@
               @update:model-value="toggleTreeItem(item)"
               @click.stop
             />
-            <v-icon v-if="item.children?.length > 0" size="small">
+            <v-icon v-if="item.isDir" size="small">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
             <v-icon v-else size="small">
@@ -211,7 +212,7 @@ const filteredFileCounts = computed(() => {
   return filtered;
 });
 
-const treeItems = computed(() => {
+const fullTree = computed(() => {
   const items = [];
   Object.entries(filteredFileCounts.value || {}).forEach(
     ([ filePath, count ]) => {
@@ -228,7 +229,7 @@ const treeItems = computed(() => {
         if (!existing) {
           existing = {
             name: part, fullPath: currentPath,
-            children: [], findings: 0
+            children: [], findings: 0, isDir: true
           };
           currentLevel.push(existing);
         }
@@ -242,7 +243,7 @@ const treeItems = computed(() => {
         } else {
           currentLevel.push({
             name: fileName, fullPath: filePath,
-            findings: numCount
+            findings: numCount, isDir: false
           });
         }
       }
@@ -257,6 +258,49 @@ const treeItems = computed(() => {
   items.forEach(aggregate);
   return items;
 });
+
+const nodeIndex = computed(() => {
+  const index = new Map();
+  const walk = nodes => {
+    nodes.forEach(node => {
+      index.set(node.fullPath, node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(fullTree.value);
+  return index;
+});
+
+function toViewNode(node) {
+  const view = {
+    name: node.name,
+    fullPath: node.fullPath,
+    findings: node.findings,
+    isDir: node.isDir
+  };
+  if (node.isDir) {
+    view.children = [];
+    view.loaded = false;
+  }
+  return view;
+}
+
+const treeItems = ref([]);
+
+function rebuildTreeItems() {
+  treeItems.value = fullTree.value.map(toViewNode);
+}
+
+watch(fullTree, rebuildTreeItems, { immediate: true });
+
+function loadChildren(item) {
+  if (item.loaded) return Promise.resolve();
+  item.loaded = true;
+  const source = nodeIndex.value.get(item.fullPath);
+  if (!source?.children?.length) return Promise.resolve();
+  item.children.push(...source.children.map(toViewNode));
+  return Promise.resolve();
+}
 
 baseSelectOptionFilter.bus.on("update:url", () => {
   emit("update:url");
@@ -389,17 +433,7 @@ function toggleTreeItem(item) {
 }
 
 function isDirectory(fullPath) {
-  const find = nodes => {
-    for (const n of nodes) {
-      if (n.fullPath === fullPath) return (n.children?.length ?? 0) > 0;
-      if (n.children?.length) {
-        const r = find(n.children);
-        if (r !== null) return r;
-      }
-    }
-    return null;
-  };
-  return !!find(treeItems.value);
+  return !!nodeIndex.value.get(fullPath)?.isDir;
 }
 
 
