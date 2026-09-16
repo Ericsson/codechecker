@@ -81,7 +81,7 @@ according to your database configuration.
 
 #### **Step 2**: Generating migration scripts using autogenerate
 
-`alembic --name run_db revision --autogenerate -m "Change description"`
+`PYTHONPATH=<codechecker_root>/build/CodeChecker/lib/python3 alembic --name run_db revision --autogenerate -m "Change description"`
 
 #### **Step 3**: Check the generated scripts
 
