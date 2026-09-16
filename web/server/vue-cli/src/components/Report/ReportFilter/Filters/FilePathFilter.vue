@@ -82,6 +82,7 @@
         <v-treeview
           v-if="treeItems.length > 0"
           v-model:selected="treeSelection"
+          v-model:opened="treeOpened"
           :items="treeItems"
           :load-children="loadChildren"
           select-strategy="independent"
@@ -175,6 +176,7 @@ const anywhereId = "anywhere-filepath";
 const allFileCounts = ref({});
 const treeSelection = ref([]);
 const treeFilter = ref("");
+const treeOpened = ref([]);
 const selectedPatterns = ref([]);
 const route = useRoute();
 
@@ -212,6 +214,7 @@ const filteredFileCounts = computed(() => {
   return filtered;
 });
 
+// Builds the complete nested file/directory tree from the filtered counts.
 const fullTree = computed(() => {
   const items = [];
   Object.entries(filteredFileCounts.value || {}).forEach(
@@ -259,6 +262,7 @@ const fullTree = computed(() => {
   return items;
 });
 
+// Maps each fullPath to its node in fullTree for O(1) lookups.
 const nodeIndex = computed(() => {
   const index = new Map();
   const walk = nodes => {
@@ -271,6 +275,7 @@ const nodeIndex = computed(() => {
   return index;
 });
 
+// Creates a shallow, lazily-loadable copy of a node for the treeview.
 function toViewNode(node) {
   const view = {
     name: node.name,
@@ -287,18 +292,52 @@ function toViewNode(node) {
 
 const treeItems = ref([]);
 
+// Rebuilds the rendered tree from scratch and auto-expands single-child chains.
 function rebuildTreeItems() {
+  treeOpened.value = [];
   treeItems.value = fullTree.value.map(toViewNode);
+  treeItems.value.forEach(node => {
+    if (node.isDir) autoExpandSingleChildChain(node);
+  });
 }
 
 watch(fullTree, rebuildTreeItems, { immediate: true });
 
+// Populates a directory node's immediate children on first access.
+function fillChildrenNodes(item) {
+  if (!item.isDir) return [];
+  if (!item.loaded) {
+    item.loaded = true;
+    const source = nodeIndex.value.get(item.fullPath);
+    if (source?.children?.length) {
+      item.children.push(...source.children.map(toViewNode));
+    }
+  }
+  return item.children;
+}
+
+// Opens levels downward while each has a single directory child.
+function autoExpandSingleChildChain(node) {
+  let current = node;
+  while (current?.isDir) {
+    const children = fillChildrenNodes(current);
+    if (!treeOpened.value.includes(current.fullPath)) {
+      treeOpened.value.push(current.fullPath);
+    }
+    if (children.length !== 1) break;
+    const only = children[0];
+    if (!only.isDir) break;
+    current = only;
+  }
+}
+
+// Treeview callback: lazily loads a folder's children when it is expanded.
 function loadChildren(item) {
-  if (item.loaded) return Promise.resolve();
-  item.loaded = true;
-  const source = nodeIndex.value.get(item.fullPath);
-  if (!source?.children?.length) return Promise.resolve();
-  item.children.push(...source.children.map(toViewNode));
+  const alreadyLoaded = item.loaded;
+  fillChildrenNodes(item);
+  if (!alreadyLoaded && item.children.length === 1 && item.children[0].isDir) {
+    autoExpandSingleChildChain(item.children[0]);
+  }
   return Promise.resolve();
 }
 
