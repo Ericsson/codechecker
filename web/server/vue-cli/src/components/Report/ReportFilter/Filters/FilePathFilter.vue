@@ -185,10 +185,11 @@ const allFullPaths = computed(() => {
   Object.keys(allFileCounts.value || {}).forEach(filePath => {
     if (!filePath) return;
     paths.add(filePath);
+    const isAbsolute = filePath.startsWith("/");
     let currentPath = "";
     filePath.split("/").slice(0, -1).forEach(part => {
       if (part === "") return;
-      currentPath += "/" + part;
+      currentPath += (currentPath || isAbsolute) ? "/" + part : part;
       paths.add(currentPath);
     });
   });
@@ -222,12 +223,13 @@ const fullTree = computed(() => {
       if (!filePath) return;
       const numCount = typeof count === "object" && count.toNumber
         ? count.toNumber() : count;
+      const isAbsolute = filePath.startsWith("/");
       const pathParts = filePath.split("/").slice(0, -1);
       let currentLevel = items;
       let currentPath = "";
       pathParts.forEach(part => {
         if (part === "") return;
-        currentPath += "/" + part;
+        currentPath += (currentPath || isAbsolute) ? "/" + part : part;
         let existing = currentLevel.find(n => n.name === part);
         if (!existing) {
           existing = {
