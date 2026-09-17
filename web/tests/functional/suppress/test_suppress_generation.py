@@ -37,20 +37,20 @@ def _generate_suppress_file(suppress_file):
     print("Generating suppress file: " + suppress_file)
 
     import calendar
-    import hashlib
     import random
     import time
 
+    from codechecker_common.util import md5_hexdigest
+
     hash_version = '1'
     suppress_stuff = []
+    suppress_line_hash = ''
     for _ in range(10):
         curr_time = calendar.timegm(time.gmtime())
         random_integer = random.randint(1, 9999999)
         suppress_line = str(curr_time) + str(random_integer)
-        suppress_stuff.append(
-            hashlib.md5(
-                suppress_line.encode('utf-8')).hexdigest() +
-            '#' + hash_version)
+        suppress_line_hash = md5_hexdigest(suppress_line.encode('utf-8'))
+        suppress_stuff.append(suppress_line_hash + '#' + hash_version)
 
     s_file = open(suppress_file, 'w', encoding="utf-8", errors="ignore")
     for k in suppress_stuff:
@@ -59,7 +59,7 @@ def _generate_suppress_file(suppress_file):
             k + '||' + 'test_~!@#$%^&*.cpp' +
             '||' + 'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
-            hashlib.md5(suppress_line.encode('utf-8')).hexdigest() + '||' +
+            suppress_line_hash + '||' +
             'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
 
     s_file.close()

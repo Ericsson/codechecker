@@ -194,6 +194,15 @@ def load_args_from_file(filepath: str) -> list[str]:
         return shlex.split(content)
 
 
+def md5_hexdigest(data: bytes) -> str:
+    """
+    Computes MD5 hash with non-cryptographic flag for FIPS compliance.
+    """
+    # 'usedforsecurity=False' allows non-cryptographic MD5 hashing on
+    # FIPS-enforced hosts. (https://docs.python.org/3/library/hashlib.html)
+    return hashlib.md5(data, usedforsecurity=False).hexdigest()
+
+
 # TODO: This class is used for checking if a path exists. This class should
 # inherit from pathlib.Path, however it is not possible before Python 3.12 due
 # to a bug:

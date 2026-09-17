@@ -13,7 +13,6 @@ Test case for the CodeChecker fixit command's direct functionality.
 
 
 import datetime
-import hashlib
 import json
 import os
 import shutil
@@ -24,6 +23,8 @@ import unittest
 from shutil import which
 
 from libtest import env
+
+from codechecker_common.util import md5_hexdigest
 
 
 class TestFixit(unittest.TestCase):
@@ -357,12 +358,8 @@ int main()
                      "in the environment.")
     def test_fixit_apply_failure(self):
         def content_hash(filename):
-            md5 = hashlib.md5()
-
             with open(filename, 'rb') as f:
-                md5.update(f.read())
-
-            return md5.hexdigest()
+                return md5_hexdigest(f.read())
 
         # --- Common files and variables --- #
 
