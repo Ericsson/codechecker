@@ -460,7 +460,8 @@ def get_schema_version_from_package(migration_root):
     return pckg_schema_ver.get_current_head()
 
 
-def check_product_db_status(cfg_sql_server, migration_root, environ):
+def check_product_db_status(cfg_sql_server, migration_root, environ,
+                            workspace_directory):
     """
     Check the products for database statuses.
 
@@ -495,7 +496,9 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
 
     prod_status = {}
     for pd in products:
-        db = database.SQLServer.from_connection_string(pd.connection,
+        connection_str = database.SQLServer.resolve_sqlite_relative_path(
+            pd.connection, workspace_directory)
+        db = database.SQLServer.from_connection_string(connection_str,
                                                        pd.endpoint,
                                                        RUN_META,
                                                        migration_root,
@@ -521,7 +524,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
 
 
 def __db_status_check(cfg_sql_server, migration_root, environ,
-                      product_name=None) -> int:
+                      workspace_directory, product_name=None) -> int:
     """
     Check and print database statuses for the given product.
     """
@@ -531,7 +534,7 @@ def __db_status_check(cfg_sql_server, migration_root, environ,
     LOG.debug("Checking database status for %s product.", product_name)
 
     prod_statuses = check_product_db_status(cfg_sql_server, migration_root,
-                                            environ)
+                                            environ, workspace_directory)
 
     if product_name != "all":
         avail = prod_statuses.get(product_name)
@@ -596,7 +599,7 @@ def __db_migration(migration_root,
 
 
 def __db_migration_multiple(
-    cfg_sql_server, migration_root, environ,
+    cfg_sql_server, migration_root, environ, workspace_directory,
     products_requested_for_upgrade: Optional[list[str]] = None,
     force_upgrade: bool = False
 ) -> int:
@@ -611,7 +614,8 @@ def __db_migration_multiple(
 
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             migration_root,
-                                            environ)
+                                            environ,
+                                            workspace_directory)
     products_to_upgrade: list[str] = []
     for endpoint in (products_requested_for_upgrade or []):
         avail = prod_statuses.get(endpoint)
@@ -644,7 +648,9 @@ def __db_migration_multiple(
                 if product is None:
                     raise NonExistentProductError(endpoint)
 
-                connection_str = product.connection
+                connection_str = database.SQLServer \
+                    .resolve_sqlite_relative_path(
+                        product.connection, workspace_directory)
             except NonExistentProductError as nepe:
                 LOG.error("Attempted to upgrade product '%s', but it was not "
                           "found in the server's configuration database.",
@@ -901,8 +907,10 @@ def server_init_start(args):
         LOG.info("'--force-authentication' was passed as a command-line "
                  "option. The server will ask for users to authenticate!")
 
+    workspace_dir = os.path.abspath(args.workspace)
+
     context = webserver_context.get_context()
-    context.codechecker_workspace = args.workspace
+    context.codechecker_workspace = workspace_dir
     context.db_username = args.dbusername
 
     environ = env.extend(context.path_env_extra,
@@ -968,6 +976,7 @@ def server_init_start(args):
             ret = __db_status_check(cfg_sql_server,
                                     context.migration_root,
                                     environ,
+                                    workspace_dir,
                                     args.status)
             sys.exit(ret)
     except AttributeError:
@@ -979,6 +988,7 @@ def server_init_start(args):
                 cfg_sql_server,
                 context.migration_root,
                 environ,
+                workspace_dir,
                 [args.product_to_upgrade]
                 if args.product_to_upgrade != "all" else None,
                 force_upgrade)
@@ -988,7 +998,6 @@ def server_init_start(args):
 
     # Create the main database link from the arguments passed over the
     # command line.
-    workspace_dir = os.path.abspath(args.workspace)
     default_product_path = os.path.join(workspace_dir, 'Default.sqlite')
 
     # The 'Default' product should only be auto-created when the config
@@ -1022,7 +1031,12 @@ def server_init_start(args):
                 LOG.error("Failed to configure default product")
                 sys.exit(1)
 
-        product_conn_string = prod_server.get_connection_string()
+        # Store the database path relative to the workspace directory, so
+        # moving the workspace/config directory elsewhere does not break
+        # the product's database connection (see #3081).
+        product_conn_string = database.SQLiteDatabase(
+            "Default", 'Default.sqlite', RUN_META,
+            context.run_migration_root, environ).get_connection_string()
 
         server.add_initial_run_database(
             cfg_sql_server, product_conn_string)
@@ -1032,7 +1046,8 @@ def server_init_start(args):
 
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             context.run_migration_root,
-                                            environ)
+                                            environ,
+                                            workspace_dir)
 
     upgrade_available = {}
     for k, v in prod_statuses.items():
@@ -1046,12 +1061,14 @@ def server_init_start(args):
         __db_migration_multiple(cfg_sql_server,
                                 context.run_migration_root,
                                 environ,
+                                workspace_dir,
                                 None,
                                 force_upgrade)
 
         prod_statuses = check_product_db_status(cfg_sql_server,
                                                 context.run_migration_root,
-                                                environ)
+                                                environ,
+                                                workspace_dir)
     print_prod_status(prod_statuses)
 
     non_ok_db = False
@@ -1079,7 +1096,7 @@ def server_init_start(args):
 
     try:
         return server.start_server(args.config_directory,
-                                   args.workspace,
+                                   workspace_dir,
                                    package_data,
                                    args.view_port,
                                    cfg_sql_server,
