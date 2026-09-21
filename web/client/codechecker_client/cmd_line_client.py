@@ -20,7 +20,7 @@ import sys
 import shutil
 import time
 import json
-from typing import Iterable, Optional
+from typing import Iterable
 
 from codechecker_api.python.DBAccess_v6 import constants, ttypes
 from codechecker_api.python.shared.ttypes import RequestFailed
@@ -82,7 +82,7 @@ def filter_local_file_remote_run(
     return local_dirs, baseline_files, run_names
 
 
-def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
+def run_sort_type_str(value: ttypes.RunSortType) -> str | None:
     """ Converts the given run sort type to string. """
     if value == ttypes.RunSortType.NAME:
         return 'name'
@@ -98,7 +98,7 @@ def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
     assert False, f"Unknown ttypes.RunSortType: {value}"
 
 
-def run_sort_type_enum(value: str) -> Optional[ttypes.RunSortType]:
+def run_sort_type_enum(value: str) -> ttypes.RunSortType | None:
     """ Returns the given run sort type Thrift enum value. """
     if value == 'name':
         return ttypes.RunSortType.NAME
@@ -1282,7 +1282,7 @@ def print_reports(
 
     statistics = Statistics()
     changed_files: set[str] = set()
-    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    html_builder: report_to_html.HtmlBuilder | None = None
     for report in reports:
         statistics.add_report(report)
 
@@ -1571,7 +1571,7 @@ def handle_list_result_types(args):
     def checker_count(checker_dict, key):
         return checker_dict.get(key, 0)
 
-    def formatted_guidelines(guideline_rules: Iterable[dict]) -> Optional[str]:
+    def formatted_guidelines(guideline_rules: Iterable[dict]) -> str | None:
         return ";  ".join(
             f"{guideline_rule['guideline']}: "
             f"{', '.join(guideline_rule['rules'])}"

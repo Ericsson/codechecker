@@ -18,7 +18,7 @@ import os
 import signal
 import socket
 import sys
-from typing import Optional, cast
+from typing import cast
 
 from alembic import config
 from alembic import script
@@ -597,7 +597,7 @@ def __db_migration(migration_root,
 
 def __db_migration_multiple(
     cfg_sql_server, migration_root, environ,
-    products_requested_for_upgrade: Optional[list[str]] = None,
+    products_requested_for_upgrade: list[str] | None = None,
     force_upgrade: bool = False
 ) -> int:
     """
@@ -634,10 +634,10 @@ def __db_migration_multiple(
         scheduled_upgrades_or_inits: list[tuple[str, str, bool]] = []
         for endpoint in products_to_upgrade:
             LOG.info("Checking: %s", endpoint)
-            connection_str: Optional[str] = None
+            connection_str: str | None = None
 
             try:
-                product: Optional[ORMProduct] = cfg_session \
+                product: ORMProduct | None = cfg_session \
                     .query(ORMProduct.connection) \
                     .filter(ORMProduct.endpoint == endpoint) \
                     .one_or_none()

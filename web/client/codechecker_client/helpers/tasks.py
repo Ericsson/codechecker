@@ -8,7 +8,7 @@
 """
 Helper for the "serverside tasks" Thrift API.
 """
-from typing import Callable, Optional
+from typing import Callable
 
 from codechecker_api.python.ServersideTasks_v6 import \
     codeCheckerServersideTaskService
@@ -25,8 +25,8 @@ class ThriftServersideTaskHelper(BaseClientHelper):
     """Clientside Thrift stub for the `codeCheckerServersideTaskService`."""
 
     def __init__(self, protocol: str, host: str, port: int, uri: str,
-                 session_token: Optional[str] = None,
-                 get_new_token: Optional[Callable] = None):
+                 session_token: str | None = None,
+                 get_new_token: Callable | None = None):
         super().__init__(protocol, host, port, uri,
                          session_token, get_new_token)
 

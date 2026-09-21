@@ -13,7 +13,6 @@ import logging
 from logging import config
 import os
 import sys
-from typing import Optional
 
 # The logging leaves can be accesses without importing the logging module in
 # other modules.
@@ -145,7 +144,7 @@ def validate_loglvl(log_level):
 
 
 def raw_sprint_log(logger: logging.Logger, level: str, message: str) \
-        -> Optional[str]:
+        -> str | None:
     """
     Formats a raw log `message` using the date format of the specified
     `logger`, without actually invoking the logging infrastructure.

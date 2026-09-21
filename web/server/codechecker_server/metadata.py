@@ -9,7 +9,7 @@
 Helpers to parse metadata.json file.
 """
 
-from typing import Any, Iterable, Optional, cast
+from typing import Any, Iterable, cast
 import os
 
 from codechecker_common.logger import get_logger
@@ -25,7 +25,7 @@ CheckCommands = list[str]
 CheckDurations = list[float]
 CheckerNamesView = Iterable[str]
 CheckerToAnalyzer = dict[str, str]
-CodeCheckerVersion = Optional[str]
+CodeCheckerVersion = str | None
 DisabledCheckers = set[str]
 EnabledCheckers = set[str]
 # Checker name to enabled status.

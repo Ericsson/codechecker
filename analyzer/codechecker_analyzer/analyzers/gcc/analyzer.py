@@ -5,7 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-from typing import Optional
 from semver.version import Version
 import shlex
 import subprocess
@@ -170,7 +169,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
 
     @classmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         """
         Return the analyzer version.
         """

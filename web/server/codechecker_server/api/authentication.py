@@ -23,7 +23,6 @@ import sqlalchemy
 import string
 
 from collections import defaultdict
-from typing import Optional
 
 from codechecker_api.python.Authentication_v6.ttypes import AccessControl, \
     AuthorisationList, HandshakeInformation, Permissions, \
@@ -55,7 +54,7 @@ class ThriftAuthHandler:
     Handle Thrift authentication requests.
     """
     __manager: SessionManager
-    __auth_session: Optional[_Session]
+    __auth_session: _Session | None
     __config_db: sessionmaker
 
     def __init__(self, manager, auth_session, config_database):

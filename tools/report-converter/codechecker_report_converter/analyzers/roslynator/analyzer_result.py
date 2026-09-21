@@ -10,7 +10,6 @@ import logging
 import os
 import xml.etree.ElementTree as ET
 
-from typing import Optional
 
 from codechecker_report_converter.report import File, get_or_create_file, \
     Report
@@ -69,7 +68,7 @@ CodeChecker store ./codechecker_roslynator_reports -n roslynator"""
     def __parse_analyzer_result(
         self,
         analyzer_result: str
-    ) -> Optional[ET.Element]:
+    ) -> ET.Element | None:
         """ Parse the given analyzer result xml file.
 
         Returns the root element of the parsed tree or None if something goes
@@ -91,7 +90,7 @@ CodeChecker store ./codechecker_roslynator_reports -n roslynator"""
         self,
         diag,
         input_file_path: str
-    ) -> Optional[Report]:
+    ) -> Report | None:
         """ Parse the given Roslynator diagnostic
 
         Returns the Report from the parsed diagnostic or None if something goes

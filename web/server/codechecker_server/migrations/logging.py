@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 import logging
 import sys
-from typing import Optional, cast
+from typing import cast
 
 
 class MigrationFormatter(logging.Formatter):
@@ -23,7 +23,7 @@ class MigrationFormatter(logging.Formatter):
                              "- %(message)s",
                          datefmt="%Y-%m-%d %H:%M:%S")
         self.schema = schema
-        self._database: Optional[str] = None
+        self._database: str | None = None
 
     @property
     def database(self):

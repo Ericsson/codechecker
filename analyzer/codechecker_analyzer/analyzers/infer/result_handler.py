@@ -8,7 +8,6 @@
 """
 Result handler for Infer.
 """
-from typing import Optional
 from pathlib import Path
 import shutil
 
@@ -40,8 +39,8 @@ class InferResultHandler(ResultHandler):
 
     def postprocess_result(
         self,
-        skip_handlers: Optional[SkipListHandlers],
-        rs_handler: Optional[ReviewStatusHandler]
+        skip_handlers: SkipListHandlers | None,
+        rs_handler: ReviewStatusHandler | None
     ):
         """
         Generate analyzer result output file which can be parsed and stored

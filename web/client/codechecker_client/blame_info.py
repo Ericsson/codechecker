@@ -4,7 +4,7 @@ import zipfile
 
 from git import Repo
 from git.exc import InvalidGitRepositoryError, GitCommandError
-from typing import Iterable, Optional
+from typing import Iterable
 
 from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.logger import get_logger
@@ -12,10 +12,10 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-FileBlameInfo = dict[str, Optional[dict]]
+FileBlameInfo = dict[str, dict | None]
 
 
-def __get_tracking_branch(repo: Repo) -> Optional[str]:
+def __get_tracking_branch(repo: Repo) -> str | None:
     """
     Get the tracking branch name or the current commit hash from the given
     repository.

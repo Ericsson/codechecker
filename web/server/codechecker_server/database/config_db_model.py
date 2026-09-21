@@ -10,7 +10,6 @@ SQLAlchemy ORM model for the product configuration database.
 """
 from datetime import datetime, timedelta, timezone
 import sys
-from typing import Optional
 
 from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
     Integer, MetaData, String, Text, UniqueConstraint
@@ -343,8 +342,8 @@ class BackgroundTask(Base):
                  kind: str,
                  summary: str,
                  machine_id: str,
-                 user_name: Optional[str],
-                 product: Optional[Product] = None,
+                 user_name: str | None,
+                 product: Product | None = None,
                  ):
         self.machine_id = machine_id
         self.token = token
@@ -357,7 +356,7 @@ class BackgroundTask(Base):
         if product:
             self.product_id = product.id
 
-    def add_comment(self, comment: str, actor: Optional[str] = None):
+    def add_comment(self, comment: str, actor: str | None = None):
         if not self.comments:
             self.comments = ""
         elif self.comments:

@@ -15,7 +15,6 @@ import plistlib
 import re
 import subprocess
 import sys
-from typing import Optional
 
 from semver.version import Version
 
@@ -187,7 +186,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @staticmethod
-    def parse_version(version_txt) -> Optional[Version]:
+    def parse_version(version_txt) -> Version | None:
         """
         Parse the version string of the analyzer.
         """
@@ -195,7 +194,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return Version.parse(version_txt)
 
     @classmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():
             return None

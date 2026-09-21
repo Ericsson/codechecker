@@ -12,7 +12,7 @@ Utilities for compilation database handling.
 
 import os
 import shlex
-from typing import Callable, Optional
+from typing import Callable
 
 from codechecker_common.util import load_json
 
@@ -31,7 +31,7 @@ C_CPP_OBJC_OBJCPP_EXTS = [
 COMPILATION_DATABASE = "compile_commands.json"
 
 
-def find_closest_compilation_database(path: str) -> Optional[str]:
+def find_closest_compilation_database(path: str) -> str | None:
     """
     Traverse the parent directories of the given path and find the closest
     compile_commands.json. If no JSON file exists with this name up to the root
@@ -137,7 +137,7 @@ def find_build_actions_for_file(file_path: str) -> list[dict]:
         load_json(comp_db)))
 
 
-def gather_compilation_database(analysis_input: str) -> Optional[list[dict]]:
+def gather_compilation_database(analysis_input: str) -> list[dict] | None:
     """
     Return a compilation database that describes the build of the given
     analysis_input:
@@ -157,7 +157,7 @@ def gather_compilation_database(analysis_input: str) -> Optional[list[dict]]:
     def __select_compilation_database(
         comp_db_paths: list[str],
         source_file: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Helper function for selecting the corresponding compilation database
         for the given source file, i.e. the compilation database in the closest

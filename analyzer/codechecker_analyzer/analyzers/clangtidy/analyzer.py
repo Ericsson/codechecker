@@ -19,7 +19,7 @@ from semver.version import Version
 import shutil
 import subprocess
 import sys
-from typing import Iterable, Optional
+from typing import Iterable
 
 import yaml
 
@@ -267,7 +267,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         if not cls.analyzer_binary():
             return None
         # No need to LOG here, we will emit a warning later anyway.

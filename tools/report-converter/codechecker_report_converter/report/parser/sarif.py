@@ -12,7 +12,7 @@ import os
 
 from sarif import loader  # type: ignore
 
-from typing import Any, Optional
+from typing import Any
 
 from urllib.parse import urlparse
 
@@ -48,7 +48,7 @@ class Parser(BaseParser):
     def get_reports(
         self,
         analyzer_result_file_path: str,
-        _: Optional[str] = None
+        _: str | None = None
     ) -> list[Report]:
         """ Get reports from the given analyzer result file. """
 
@@ -179,7 +179,7 @@ class Parser(BaseParser):
     def _process_location(
         self,
         location: dict,
-    ) -> tuple[Optional[File], Optional[Range]]:
+    ) -> tuple[File | None, Range | None]:
         """
         Parse location (§3.28). Currently we only parse physical locations
         (§3.29), that describe a (file, range) pair, among other things.
@@ -194,7 +194,7 @@ class Parser(BaseParser):
 
         return None, None
 
-    def _get_range(self, physical_loc: dict) -> Optional[Range]:
+    def _get_range(self, physical_loc: dict) -> Range | None:
         """ Get range from a physical location. """
         region = physical_loc.get("region", {})
         start_line = region.get("startLine")
@@ -257,7 +257,7 @@ class Parser(BaseParser):
     def _get_file(
         self,
         physical_loc: dict
-    ) -> Optional[File]:
+    ) -> File | None:
         """
         Assemble the artifact location (§3.4) for physical_loc. Sarif files
         contain a lot of relative references, but also contains everything
@@ -305,7 +305,7 @@ class Parser(BaseParser):
     def convert(
         self,
         reports: list[Report],
-        analyzer_info: Optional[AnalyzerInfo] = None
+        analyzer_info: AnalyzerInfo | None = None
     ):
         """ Converts the given reports to sarif format. """
         tool_name, tool_version = get_tool_info()
@@ -440,8 +440,8 @@ class Parser(BaseParser):
     def _create_location(
         self,
         pos: BugPathPosition,
-        line: Optional[int] = -1,
-        column: Optional[int] = -1
+        line: int | None = -1,
+        column: int | None = -1
     ) -> dict[str, Any]:
         """ Create location from bug path position. """
         if pos.range:
@@ -454,7 +454,7 @@ class Parser(BaseParser):
             }
         else:
             # Seems like there is no smarter way to make mypy happy. Without
-            # this trickery, it will complain about Optional[int] and int being
+            # this trickery, it will complain about "int | None" and int being
             # incompatible.
             assert line is not None
             assert column is not None
@@ -476,7 +476,7 @@ class Parser(BaseParser):
             }
         }
 
-    def _to_level(self, severity: str) -> Optional[str]:
+    def _to_level(self, severity: str) -> str | None:
         """ Map severity label value to level (§3.50.3). """
         if severity in ["HIGH", "CRITICAL"]:
             return "error"
