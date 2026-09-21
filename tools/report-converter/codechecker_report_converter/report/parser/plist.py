@@ -17,7 +17,7 @@ import traceback
 import sys
 
 from plistlib import _PlistParser  # type: ignore
-from typing import Any, BinaryIO, Optional
+from typing import Any, BinaryIO
 
 from xml.parsers.expat import ExpatError
 import lxml
@@ -191,7 +191,7 @@ class Parser(BaseParser):
     def get_reports(
         self,
         analyzer_result_file_path: str,
-        source_dir_path: Optional[str] = None
+        source_dir_path: str | None = None
     ) -> list[Report]:
         """ Get reports from the given analyzer result file. """
         reports: list[Report] = []
@@ -276,7 +276,7 @@ class Parser(BaseParser):
         self,
         checker_name: str,
         metadata: dict[str, Any]
-    ) -> Optional[str]:
+    ) -> str | None:
         """ Get analyzer name for the given checker name. """
         if metadata:
             name = metadata.get("analyzer", {}).get("name")
@@ -427,7 +427,7 @@ class Parser(BaseParser):
     def convert(
         self,
         reports: list[Report],
-        analyzer_info: Optional[AnalyzerInfo] = None
+        analyzer_info: AnalyzerInfo | None = None
     ):
         """ Converts the given reports. """
         tool_name, tool_version = get_tool_info()

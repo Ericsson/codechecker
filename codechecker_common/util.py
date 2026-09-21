@@ -18,7 +18,7 @@ import yaml
 import os
 import pathlib
 import random
-from typing import TextIO, Union
+from typing import TextIO
 
 import portalocker
 
@@ -59,7 +59,7 @@ def chunks(iterator, n):
         yield itertools.chain([first], rest_of_chunk)
 
 
-def load_json(path: Union[str, pathlib.Path],
+def load_json(path: str | pathlib.Path,
               default=None,
               lock=False,
               display_warning=True):

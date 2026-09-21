@@ -18,7 +18,6 @@ import argparse
 import getpass
 import sys
 
-from typing import Optional
 
 try:
     # pylint: disable=no-name-in-module
@@ -64,8 +63,8 @@ def create_client(
     args,
     cls,
     endpoint: str,
-    product_name: Optional[str] = None,
-    token: Optional[str] = None
+    product_name: str | None = None,
+    token: str | None = None
 ):
     """ Create a Thrift client. """
     url = f"{args.protocol}://{args.host}:{args.port}/"

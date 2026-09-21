@@ -14,7 +14,6 @@ import os
 import pathlib
 import shutil
 import time
-from typing import Optional
 
 from codechecker_common.logger import get_logger
 
@@ -59,7 +58,7 @@ class AbstractTask:
     same machine instance.
     """
 
-    def __init__(self, token: str, data_path: Optional[pathlib.Path]):
+    def __init__(self, token: str, data_path: pathlib.Path | None):
         self._token = token
         self._data_path = data_path
 
@@ -69,7 +68,7 @@ class AbstractTask:
         return self._token
 
     @property
-    def data_path(self) -> Optional[pathlib.Path]:
+    def data_path(self) -> pathlib.Path | None:
         """
         Returns the filesystem path where the task's input data is prepared.
         """

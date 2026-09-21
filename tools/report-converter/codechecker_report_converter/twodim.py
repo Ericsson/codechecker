@@ -15,7 +15,7 @@ import os
 import shutil
 
 from operator import itemgetter
-from typing import Iterable, Optional
+from typing import Iterable
 
 from prettytable import HRuleStyle, PrettyTable, TableStyle
 
@@ -24,7 +24,7 @@ def to_str(
     format_name: str,
     keys,
     rows,
-    sort_by_column_number: Optional[int] = None,
+    sort_by_column_number: int | None = None,
     rev=False,
     separate_footer=False
 ) -> str:

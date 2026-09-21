@@ -9,7 +9,7 @@
 import logging
 import os
 
-from typing import Iterator, Optional
+from typing import Iterator
 
 from codechecker_report_converter.report import File, Report
 from codechecker_report_converter.report.checker_labels import CheckerLabels
@@ -35,8 +35,8 @@ def is_supported(analyzer_result_file_path: str) -> bool:
 
 def get_parser(
     analyzer_result_file_path: str,
-    checker_labels: Optional[CheckerLabels] = None,
-    file_cache: Optional[dict[str, File]] = None
+    checker_labels: CheckerLabels | None = None,
+    file_cache: dict[str, File] | None = None
 ):
     """ Returns a parser object for the given analyzer result file. """
     # FIXME: It would be more elegant to collect these modules (plist, sarif,
@@ -52,9 +52,9 @@ def get_parser(
 
 def get_reports(
     analyzer_result_file_path: str,
-    checker_labels: Optional[CheckerLabels] = None,
-    file_cache: Optional[dict[str, File]] = None,
-    source_dir_path: Optional[str] = None
+    checker_labels: CheckerLabels | None = None,
+    file_cache: dict[str, File] | None = None,
+    source_dir_path: str | None = None
 ) -> list[Report]:
     """ Get reports from the given report file. """
     parser = get_parser(analyzer_result_file_path, checker_labels, file_cache)
@@ -73,8 +73,8 @@ def get_reports(
 def create(
     output_file_path: str,
     reports: list[Report],
-    checker_labels: Optional[CheckerLabels] = None,
-    analyzer_info: Optional[AnalyzerInfo] = None
+    checker_labels: CheckerLabels | None = None,
+    analyzer_info: AnalyzerInfo | None = None
 ):
     """ Creates an analyzer output file from the given reports. """
     parser = get_parser(output_file_path, checker_labels)

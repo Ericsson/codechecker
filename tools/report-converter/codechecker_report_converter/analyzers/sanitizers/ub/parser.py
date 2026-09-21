@@ -10,7 +10,7 @@ import logging
 import os
 import re
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 from codechecker_report_converter.report import get_or_create_file, Report
 
@@ -179,7 +179,7 @@ class Parser(SANParser):
         self,
         it: Iterable[str],
         line: str
-    ) -> tuple[Optional[Report], str]:
+    ) -> tuple[Report | None, str]:
         """ Parses UndefinedBehaviorSanitizer output message. """
         match = self.line_re.match(line)
         if not match:

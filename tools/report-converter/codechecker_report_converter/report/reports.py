@@ -8,7 +8,7 @@
 
 import logging
 
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 from codechecker_report_converter.report import Report, SkipListHandlers
 from codechecker_report_converter.report.hash import get_report_path_hash
@@ -54,10 +54,10 @@ def dump_changed_files(changed_files: set[str]):
 
 def skip(
     reports: list[Report],
-    processed_path_hashes: Optional[set[str]] = None,
-    skip_handlers: Optional[SkipListHandlers] = None,
-    suppr_handler: Optional[GenericSuppressHandler] = None,
-    review_status_filter: Optional[Iterable[str]] = None
+    processed_path_hashes: set[str] | None = None,
+    skip_handlers: SkipListHandlers | None = None,
+    suppr_handler: GenericSuppressHandler | None = None,
+    review_status_filter: Iterable[str] | None = None
 ) -> list[Report]:
     """ Skip reports. """
     kept_reports = []

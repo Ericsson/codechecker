@@ -15,7 +15,7 @@ import os
 import shutil
 import unittest
 import time
-from typing import Optional, cast
+from typing import cast
 
 import multiprocess
 
@@ -31,7 +31,7 @@ STOP_SERVER = multiprocess.Event()
 STOP_SERVER_AUTH = multiprocess.Event()
 STOP_SERVER_NO_AUTH = multiprocess.Event()
 
-TEST_WORKSPACE: Optional[str] = None
+TEST_WORKSPACE: str | None = None
 
 
 # Note: Test names in this file follow a strict ordinal convention, because

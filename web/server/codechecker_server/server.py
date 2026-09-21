@@ -23,7 +23,7 @@ import socket
 import ssl
 import sys
 import time
-from typing import Optional, cast
+from typing import cast
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -117,7 +117,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(result)
 
-    def __check_session_header(self) -> Optional[_Session]:
+    def __check_session_header(self) -> _Session | None:
         """
         Check the CodeChecker privileged access cookie in the request headers.
 
@@ -548,7 +548,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
 def _do_db_cleanup(context, check_env,
                    id_: int, endpoint: str, display_name: str,
-                   connection_str: str) -> tuple[Optional[bool], str]:
+                   connection_str: str) -> tuple[bool | None, str]:
     # This functions is a concurrent job handler!
     try:
         prod = Product(id_, endpoint, display_name, connection_str,
@@ -1026,8 +1026,8 @@ def start_server(config_directory: str, workspace_directory: str,
                  listen_address: str, force_auth: bool,
                  skip_db_cleanup: bool, context, check_env,
                  machine_id: str,
-                 api_handler_processes: Optional[int],
-                 task_worker_processes: Optional[int]) -> int:
+                 api_handler_processes: int | None,
+                 task_worker_processes: int | None) -> int:
     """
     Starts the HTTP server to handle Web client and Thrift requests, execute
     background jobs.

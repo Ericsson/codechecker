@@ -10,7 +10,6 @@ import logging
 import os
 import xml.etree.ElementTree as ET
 
-from typing import Optional
 
 from codechecker_report_converter.report import BugPathEvent, \
     File, get_or_create_file, Report
@@ -165,7 +164,7 @@ CodeChecker store ./codechecker_spotbugs_reports -n spotbugs"""
 
         return report
 
-    def __event_from_class(self, element) -> Optional[BugPathEvent]:
+    def __event_from_class(self, element) -> BugPathEvent | None:
         """ Creates event from a Class element. """
         message = element.find('Message').text
 
@@ -183,7 +182,7 @@ CodeChecker store ./codechecker_spotbugs_reports -n spotbugs"""
             line,
             col)
 
-    def __event_from_method(self, element) -> Optional[BugPathEvent]:
+    def __event_from_method(self, element) -> BugPathEvent | None:
         """ Creates event from a Method element. """
         message = element.find('Message').text
 

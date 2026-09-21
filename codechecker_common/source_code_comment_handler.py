@@ -13,7 +13,7 @@ import json
 import logging
 import re
 
-from typing import Iterable, Optional, TextIO
+from typing import Iterable, TextIO
 
 from . import util
 
@@ -52,7 +52,7 @@ class SourceCodeComment:
         checkers: set[str],
         message: str,
         status: str,
-        line: Optional[str] = None
+        line: str | None = None
     ):
         self.checkers = checkers
         self.message = message
@@ -118,7 +118,7 @@ class SourceCodeCommentHandler:
     def __process_source_line_comment(
         self,
         source_line_comment: str
-    ) -> Optional[SourceCodeComment]:
+    ) -> SourceCodeComment | None:
         """
         Process CodeChecker source code comment.
 

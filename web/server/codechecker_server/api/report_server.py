@@ -22,7 +22,7 @@ import zlib
 from copy import deepcopy
 from collections import OrderedDict, defaultdict, namedtuple
 from datetime import datetime, timedelta
-from typing import Any, Collection, Optional
+from typing import Any, Collection
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -188,7 +188,7 @@ def get_component_values(
 
 def update_source_component_files(
     session: DBSession,
-    component: Optional[SourceComponent] = None
+    component: SourceComponent | None = None
 ):
     """
     Refreshes the SourceComponentFile table for a specific source component.
@@ -1012,7 +1012,7 @@ def get_comment_msg(comment):
 
 def create_review_data(
     review_status: str,
-    message: Optional[str],
+    message: str | None,
     author,
     date,
     is_in_source: bool
@@ -1027,7 +1027,7 @@ def create_review_data(
 
 def apply_report_filter(q, filter_expression,
                         join_tables: list[Any],
-                        already_joined_tables: Optional[list[Any]] = None):
+                        already_joined_tables: list[Any] | None = None):
     """
     Applies the given filter expression and joins the Checker, File, Run, and
     RunHistory tables if necessary based on join_tables parameter. If a table
@@ -1222,9 +1222,9 @@ def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
 
 
 def get_commit_url(
-    remote_url: Optional[str],
+    remote_url: str | None,
     git_commit_urls: list
-) -> Optional[str]:
+) -> str | None:
     """ Get commit url for the given remote url. """
     if not remote_url:
         return None
@@ -1307,7 +1307,7 @@ def sort_review_statuses_query(
 
 def process_rs_rule_filter(
     query,
-    rule_filter: Optional[ReviewStatusRuleFilter] = None
+    rule_filter: ReviewStatusRuleFilter | None = None
 ):
     """ Process review status rule filter. """
     if rule_filter:
@@ -1331,8 +1331,8 @@ def process_rs_rule_filter(
 
 def get_rs_rule_query(
     session: DBSession,
-    rule_filter: Optional[ReviewStatusRuleFilter] = None,
-    sort_mode: Optional[ReviewStatusRuleSortMode] = None
+    rule_filter: ReviewStatusRuleFilter | None = None,
+    sort_mode: ReviewStatusRuleSortMode | None = None
 ):
     """ Returns query to get review status rules. """
     report_count = func.count(Report.id).label('report_count')
@@ -4448,12 +4448,12 @@ class ThriftRequestHandler:
     @timeit
     def massStoreRun(self,
                      name: str,
-                     tag: Optional[str],
+                     tag: str | None,
                      version: str,
                      b64zip: str,
                      force: bool,
-                     trim_path_prefixes: Optional[list[str]],
-                     description: Optional[str]) -> int:
+                     trim_path_prefixes: list[str] | None,
+                     description: str | None) -> int:
         store_opts = SubmittedRunOptions(runName=name,
                                          tag=tag,
                                          version=version,

@@ -16,7 +16,7 @@ import sys
 
 from collections import defaultdict
 from string import Template
-from typing import Callable, Optional
+from typing import Callable
 
 from codechecker_report_converter.report import BugPathEvent, \
     InvalidFileContentMsg, File, MacroExpansion, Report, report_file, \
@@ -58,26 +58,26 @@ HTMLMacroExpansions = list[HTMLMacroExpansion]
 
 class Checker(TypedDict):
     name: str
-    url: Optional[str]
+    url: str | None
 
 
 class HTMLReport(TypedDict):
     fileId: str
     path: str
-    reportHash: Optional[str]
+    reportHash: str | None
     checker: Checker
-    analyzerName: Optional[str]
+    analyzerName: str | None
     line: int
     column: int
     message: str
     events: HTMLBugPathEvents
     macros: HTMLMacroExpansions
     notes: HTMLBugPathEvents
-    reviewStatus: Optional[str]
-    severity: Optional[str]
-    testcase: Optional[str]
-    timestamp: Optional[str]
-    chronologicalOrder: Optional[str]
+    reviewStatus: str | None
+    severity: str | None
+    testcase: str | None
+    timestamp: str | None
+    chronologicalOrder: str | None
 
 
 HTMLReports = list[HTMLReport]
@@ -110,7 +110,7 @@ class HtmlBuilder:
     def __init__(
         self,
         layout_dir: str,
-        checker_labels: Optional[CheckerLabels] = None
+        checker_labels: CheckerLabels | None = None
     ):
         self._checker_labels = checker_labels
         self.layout_dir = layout_dir
@@ -181,7 +181,7 @@ class HtmlBuilder:
 
         return self.files[file.id]
 
-    def _get_doc_url(self, report: Report) -> Optional[str]:
+    def _get_doc_url(self, report: Report) -> str | None:
         """ Get documentation url for the given report if exists. """
         if self._checker_labels:
             doc_urls = self._checker_labels.label_of_checker(
@@ -271,7 +271,7 @@ class HtmlBuilder:
         self,
         output_file_path: str,
         reports: list[Report]
-    ) -> tuple[Optional[HTMLReports], set[str]]:
+    ) -> tuple[HTMLReports | None, set[str]]:
         """
         Create html file from the given analyzer result file to the output
         path.
@@ -459,7 +459,7 @@ def parse(
     input_path: str,
     output_path: str,
     layout_dir: str,
-    html_builder: Optional[HtmlBuilder] = None
+    html_builder: HtmlBuilder | None = None
 ) -> set[str]:
     """
     Parses analyzer result files from the given input directory to the output

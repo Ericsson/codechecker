@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Mapping, Optional, Tuple, Sequence
+from typing import Mapping, Tuple, Sequence
 
 REPO_ROOT = os.path.abspath(os.getenv("REPO_ROOT"))
 LOGGER_DIR = os.path.join(REPO_ROOT, "build")
@@ -23,8 +23,8 @@ LOGGER_DIR = os.path.join(REPO_ROOT, "build")
 
 def run_command(
     cmd: Sequence[str],
-    cwd: Optional[str] = None,
-    env: Optional[Mapping[str, str]] = None,
+    cwd: str | None = None,
+    env: Mapping[str, str] | None = None,
 ) -> tuple[int, str, str]:
     cmd = " ".join([shlex.quote(c) for c in cmd])
     try:

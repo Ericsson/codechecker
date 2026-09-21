@@ -9,7 +9,6 @@
 
 import fnmatch
 import os
-from typing import Optional
 import yaml
 
 from codechecker_report_converter.report import Report, SourceReviewStatus
@@ -266,7 +265,7 @@ class ReviewStatusHandler:
     def get_review_status_from_config(
         self,
         report: Report
-    ) -> Optional[SourceReviewStatus]:
+    ) -> SourceReviewStatus | None:
         """
         Return the review status of the given report based on the config file
         set by set_review_status_config(). If not config file set, or no
@@ -297,7 +296,7 @@ class ReviewStatusHandler:
     def get_review_status_from_source(
         self,
         report: Report
-    ) -> Optional[SourceReviewStatus]:
+    ) -> SourceReviewStatus | None:
         """
         Return the review status based on the source code comment belonging to
         the given report.
@@ -365,7 +364,7 @@ class ReviewStatusHandler:
         """
         return self.__source_comment_warnings
 
-    def source_comment(self, report: Report) -> Optional[SourceCodeComment]:
+    def source_comment(self, report: Report) -> SourceCodeComment | None:
         """
         This ReviewStatusHandler class is caching source comments so they are
         read and parsed only once for each report.

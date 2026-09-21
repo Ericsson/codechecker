@@ -13,7 +13,6 @@ import os
 import sys
 
 from collections import defaultdict
-from typing import Optional
 
 from codechecker_report_converter.report import BugPathEvent, \
     InvalidFileContentMsg, MacroExpansion, Report
@@ -24,8 +23,8 @@ LOG = logging.getLogger('report-converter')
 
 def __get_source_file_for_analyzer_result_file(
     analyzer_result_file_path: str,
-    metadata: Optional[dict]
-) -> Optional[str]:
+    metadata: dict | None
+) -> str | None:
     """ Get source file for the given analyzer result file. """
     if not metadata:
         return None
@@ -125,8 +124,8 @@ def print_details(report: Report, output=sys.stdout):
 
 def get_file_report_map(
     reports: list[Report],
-    input_file_path: Optional[str] = None,
-    metadata: Optional[dict] = None
+    input_file_path: str | None = None,
+    metadata: dict | None = None
 ) -> dict[str, list[Report]]:
     """ Get file report map. """
     file_report_map = defaultdict(list)
@@ -150,7 +149,7 @@ def get_file_report_map(
 def convert(
     review_status_handler,
     source_file_report_map: dict[str, list[Report]],
-    processed_file_paths: Optional[set[str]] = None,
+    processed_file_paths: set[str] | None = None,
     print_steps: bool = False,
     output=sys.stdout
 ):

@@ -15,7 +15,6 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 def print_dict(d: dict):
@@ -58,8 +57,8 @@ class DataPoint:
     waiting_count: int = 0
     processing_count: int = 0
     completed_count: int = 0
-    waiting_stats: Optional[DataStats] = None
-    processing_stats: Optional[DataStats] = None
+    waiting_stats: DataStats | None = None
+    processing_stats: DataStats | None = None
 
 
 def calc_stats(float_list: list[float]) -> DataStats:
@@ -72,8 +71,8 @@ def calc_stats(float_list: list[float]) -> DataStats:
 @dataclass
 class ProcessingResult:
     total_status_count: dict = field(default_factory=dict)
-    total_waiting_stats: Optional[DataStats] = None
-    total_processing_stats: Optional[DataStats] = None
+    total_waiting_stats: DataStats | None = None
+    total_processing_stats: DataStats | None = None
     intervals: list[DataPoint] = field(default_factory=list)
 
 

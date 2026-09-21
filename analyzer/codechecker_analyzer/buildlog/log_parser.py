@@ -22,7 +22,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
-from typing import Optional, Any
+from typing import Any
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
@@ -361,7 +361,7 @@ class ImplicitCompilerInfo:
         return ImplicitCompilerInfo.compiler_isexecutable[compiler]
 
     @staticmethod
-    def __get_compiler_err(cmd: list[str]) -> Optional[str]:
+    def __get_compiler_err(cmd: list[str]) -> str | None:
         """
         Returns the stderr of a compiler invocation as string
         or None in case of error.
@@ -731,7 +731,7 @@ def __contains_no_intrinsic_headers(dirname):
 
 
 @lru_cache(32)
-def __get_installed_dir(clang_binary) -> Optional[str]:
+def __get_installed_dir(clang_binary) -> str | None:
     """
     Return the directory path where the given clang binary is installed. This
     function returns None if it doesn't belong to a clang compiler.
