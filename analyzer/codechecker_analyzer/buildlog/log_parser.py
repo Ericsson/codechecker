@@ -799,7 +799,9 @@ def __collect_transform_include_opts(flag_iterator, details):
     # order to print these absolute paths natively, this conversion will
     # not be necessary.
     flags_with_path = ['-I', '-idirafter', '-iquote', '-isysroot', '-isystem',
-                       '-sysroot', '--sysroot']
+                       '-sysroot', '--sysroot', '-include', '--include',
+                       '-imacros', '-iprefix', '-iwithprefix',
+                       '-iwithprefixbefore']
     if flag in flags_with_path and ('sysroot' in flag or param[0] != '='):
         # --sysroot format can be --sysroot=/path/to/include in this case
         # before the normalization the '=' sign must be removed.
