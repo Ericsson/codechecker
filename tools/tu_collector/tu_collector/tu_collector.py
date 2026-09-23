@@ -260,7 +260,10 @@ def __analyzer_action_hash(build_action: CompileAction) -> str:
 
     build_info = source_file + '_' + ' '.join(args)
 
-    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+    # FIXME: In the future, this should utilize 'md5_hexdigest()' imported
+    # from codechecker_common.util
+    return hashlib.md5(build_info.encode(errors='ignore'),
+                       usedforsecurity=False).hexdigest()
 
 
 def __get_ctu_buildactions(

@@ -13,7 +13,6 @@ Command line client.
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
-import hashlib
 import os
 import re
 import sys
@@ -37,7 +36,7 @@ from codechecker_report_converter.util import dump_json_output
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.review_status_handler import ReviewStatusHandler
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, md5_hexdigest
 
 from codechecker_web.shared import convert, webserver_context
 
@@ -1316,10 +1315,9 @@ def print_reports(
             for file_path, file_reports in file_report_map.items():
                 file_name = os.path.basename(file_path)
                 h = int(
-                    hashlib.md5(
-                        file_path.encode('utf-8')).hexdigest(),
+                    md5_hexdigest(
+                        file_path.encode('utf-8')),
                     16) % (10 ** 8)
-
                 output_file_path = os.path.join(
                     output_dir, f"{file_name}_ {str(h)}.html")
                 html_builder.create(output_file_path, file_reports)
