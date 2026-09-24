@@ -18,17 +18,13 @@ import sys
 
 from typing import Any, Iterable, Sequence
 
-
-# If we run this script in an environment where 'codechecker_report_converter'
-# module is not available we should add the grandparent directory of this file
-# to the system path.
-# TODO: This section will not be needed when CodeChecker will be delivered as
-# a python package and will be installed in a virtual environment with all the
-# dependencies.
-if __name__ == '__main__':
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    sys.path.insert(0, os.path.dirname(current_dir))
-
+# In case "report-converter" is directly executed in the CLI,
+# add lib_dir_path to syspath so modules like codechecker_common
+# can be imported.
+if __name__ == "__main__":
+    lib_dir_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                'lib', 'python3')
+    sys.path.append(lib_dir_path)
 
 # The following imports must come after the previous sys.path.insert() section.
 # pylint: disable=wrong-import-position

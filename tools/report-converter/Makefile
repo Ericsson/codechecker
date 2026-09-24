@@ -6,26 +6,12 @@
 #
 # -------------------------------------------------------------------------
 CODEMIRROR = https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0
-
-CURRENT_DIR = ${CURDIR}
-ROOT = $(CURRENT_DIR)
-
-BUILD_DIR = $(CURRENT_DIR)/build
-PYTHON_BIN ?= python3
-REPORT_CONVERTER_DIR = $(BUILD_DIR)/report_converter
-
-STATIC_DIR = $(CURRENT_DIR)/codechecker_report_converter/report/output/html/static
-VENDOR_DIR = $(STATIC_DIR)/vendor
-CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
+CODEMIRROR_DIR = $(CURDIR)/codechecker_report_converter/report/output/html/static/vendor/codemirror
 
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
-
-default: all
-
-all: package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
@@ -44,37 +30,8 @@ clean_venv_dev:
 
 include tests/Makefile
 
-package: dep
-	# Install package in 'development mode'.
-	${PYTHON_BIN} setup.py develop
-
-.PHONY: build
-build: dep
-	${PYTHON_BIN} setup.py build --build-purelib $(REPORT_CONVERTER_DIR)
-
-dist: dep
-	# Create a source distribution.
-	${PYTHON_BIN} setup.py sdist
-
-upload_test:
-	# Upload package to the TestPyPI repository.
-	$(eval PKG_NAME := $(shell ${PYTHON_BIN} setup.py --name))
-	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
-	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
-
-upload:
-	# Upload package to the PyPI repository.
-	$(eval PKG_NAME := $(shell ${PYTHON_BIN} setup.py --name))
-	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
-	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
-
-vendor_dir:
-	mkdir -p $(VENDOR_DIR)
-
-codemirror_dir: vendor_dir
+codemirror_dir:
 	mkdir -p $ $(CODEMIRROR_DIR)
-
-dep: codemirror
 
 codemirror: $(CODEMIRROR_DIR)/codemirror.min.js
 codemirror: $(CODEMIRROR_DIR)/codemirror.min.css
@@ -104,10 +61,3 @@ $(CODEMIRROR_DIR)/clike.min.js: codemirror_dir
 	curl -sSfLk --get $(CODEMIRROR)/mode/clike/clike.min.js \
 			 -z $(CODEMIRROR_DIR)/clike.min.js \
 			 -o $(CODEMIRROR_DIR)/clike.min.js
-
-clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf report_converter.egg-info
-
-clean_vendor:
-	rm -rf $(VENDOR_DIR)

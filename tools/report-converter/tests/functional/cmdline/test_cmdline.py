@@ -17,20 +17,25 @@ import subprocess
 import tempfile
 import unittest
 
+from .. import PKG_ROOT
+
 
 class TestCmdline(unittest.TestCase):
     """ Simple tests to check report-converter command line. """
 
+    def report_converter_cmd(self):
+        return os.path.join(PKG_ROOT, 'bin', 'report-converter')
+
     def test_help(self):
         """ Get help for report-converter tool. """
-        ret = subprocess.call(['report-converter', '--help'],
+        ret = subprocess.call([self.report_converter_cmd(), '--help'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         self.assertEqual(0, ret)
 
     def test_nonexistent_file(self):
         """ Get help for report-converter tool. """
-        process = subprocess.Popen(['report-converter', '-t', 'gcc',
+        process = subprocess.Popen([self.report_converter_cmd(), '-t', 'gcc',
                                     '-o', 'reports/', 'non_existent.sarif'],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
@@ -48,7 +53,7 @@ class TestCmdline(unittest.TestCase):
         test_dir = os.path.dirname(os.path.realpath(__file__))
         test_file = os.path.join(test_dir, "test_files", "simple.out")
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ret = subprocess.call(['report-converter', '-t', 'golint',
+            ret = subprocess.call([self.report_converter_cmd(), '-t', 'golint',
                                    '-o', tmp_dir, test_file, '--meta',
                                    'analyzer_version=' + analyzer_version,
                                    'analyzer_command=' + analyzer_command])
@@ -90,7 +95,7 @@ class TestCmdline(unittest.TestCase):
         outputs_dir = os.path.join(test_dir, "test_files", "test_outputs")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ret = subprocess.call(['report-converter', '-t', 'golint',
+            ret = subprocess.call([self.report_converter_cmd(), '-t', 'golint',
                                    '-o', tmp_dir, outputs_dir])
             self.assertEqual(0, ret)
 
@@ -102,7 +107,7 @@ class TestCmdline(unittest.TestCase):
         test_input1 = os.path.join(outputs_dir, "subdir", "simple2.out")
         test_input2 = os.path.join(outputs_dir, "subdir", "simple3.out")
         with tempfile.TemporaryDirectory() as tmp_dir:
-            ret = subprocess.call(['report-converter', '-t', 'golint',
+            ret = subprocess.call([self.report_converter_cmd(), '-t', 'golint',
                                    '-o', tmp_dir, test_input1, test_input2])
             self.assertEqual(0, ret)
 
