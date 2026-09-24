@@ -17,7 +17,6 @@ sources.
 import argparse
 import collections
 import fnmatch
-import hashlib
 import json
 import logging
 import os
@@ -32,13 +31,17 @@ from multiprocessing import Pool
 from shutil import which
 
 from pathlib import Path
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, TypedDict
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from mypy_extensions import TypedDict
+# In case "tu_collector" is directly executed in the CLI,
+# add lib_dir_path to syspath so modules like codechecker_common
+# can be imported.
+if __name__ == "__main__":
+    lib_dir_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                'lib', 'python3')
+    sys.path.append(lib_dir_path)
 
+from codechecker_common.util import md5_hexdigest
 
 LOG = logging.getLogger('tu_collector')
 
@@ -260,10 +263,7 @@ def __analyzer_action_hash(build_action: CompileAction) -> str:
 
     build_info = source_file + '_' + ' '.join(args)
 
-    # FIXME: In the future, this should utilize 'md5_hexdigest()' imported
-    # from codechecker_common.util
-    return hashlib.md5(build_info.encode(errors='ignore'),
-                       usedforsecurity=False).hexdigest()
+    return md5_hexdigest(build_info.encode(errors='ignore'))
 
 
 def __get_ctu_buildactions(

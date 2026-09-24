@@ -50,21 +50,16 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
-build_tu_collector:
-	$(MAKE) -C $(ROOT)/tools/tu_collector build
-
-package_tu_collector: build_tu_collector package_dir_structure
+package_tu_collector: package_dir_structure
 	# Copy tu_collector files.
-	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
+	cp -rp $(CC_TOOLS)/tu_collector/tu_collector/ $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../lib/python3/tu_collector/tu_collector.py tu_collector
 
-build_report_converter:
-	$(MAKE) -C $(CC_TOOLS)/report-converter build
-
-package_report_converter: build_report_converter package_dir_structure
-	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+package_report_converter: package_dir_structure
+	$(MAKE) -C $(CC_TOOLS)/report-converter codemirror
+	cp -rp $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../lib/python3/codechecker_report_converter/cli.py report-converter
