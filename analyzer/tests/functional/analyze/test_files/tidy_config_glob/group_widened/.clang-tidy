@@ -1,0 +1,6 @@
+---
+# Scenario 2: this directory enables a whole group which the parent did not
+# enable at all, except one of its members.
+InheritParentConfig: true
+Checks: 'readability-*,-readability-magic-numbers'
+...
