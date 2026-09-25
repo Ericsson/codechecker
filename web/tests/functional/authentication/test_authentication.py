@@ -298,14 +298,18 @@ class DictAuth(unittest.TestCase):
         session = self.try_login("github", "admin_github", "admin")
         self.assertTrue(session, "Authentication failed")
 
-        result = env.validate_oauth_token_session(session_factory, "github1",)
-        self.assertTrue(result, "Access_token wasn't inserted in Database")
+        result = env.validate_oauth_token_session(
+            session_factory, "github1", provider="github")
+        self.assertTrue(
+            result, "Access_token/provider wasn't inserted in Database")
 
         session = self.try_login("google", "user_google", "user")
         self.assertTrue(session, "Authentication failed")
 
-        result = env.validate_oauth_token_session(session_factory, "google3",)
-        self.assertTrue(result, "Access_token wasn't inserted in Database")
+        result = env.validate_oauth_token_session(
+            session_factory, "google3", provider="google")
+        self.assertTrue(
+            result, "Access_token/provider wasn't inserted in Database")
 
     def test_oauth_regular_users(self):
         """
