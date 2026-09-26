@@ -180,8 +180,16 @@ def get_file_index_map(
     file_index_map: dict[int, File] = {}
 
     for i, orig_file_path in enumerate(plist.get('files', [])):
-        file_path = os.path.normpath(os.path.join(
-            source_dir_path, orig_file_path))
+        if orig_file_path.startswith('/'):
+            # On POSIX os.path.join() already returns an absolute path
+            # unchanged, but on Windows a leading '/' means "root of the
+            # current drive", so joining would turn '/home/user/a.cpp' into
+            # 'C:\home\user\a.cpp'. The store then cannot match it
+            # against the file records and drops every report.
+            file_path = orig_file_path
+        else:
+            file_path = os.path.normpath(os.path.join(
+                source_dir_path, orig_file_path))
         file_index_map[i] = get_or_create_file(file_path, file_cache)
 
     return file_index_map
