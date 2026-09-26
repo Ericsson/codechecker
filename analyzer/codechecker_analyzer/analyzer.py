@@ -124,11 +124,59 @@ def __get_ctu_data(ctu_dir):
         'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
+def __has_external_checker_config(ch: AnalyzerConfigHandler):
+    """
+    Returns True if the checkers of the given config handler are configured
+    outside of CodeChecker.
+
+    Currently this is the case when Clang-Tidy is instructed to read the
+    '.clang-tidy' configuration files of the source directories. The enabled
+    checkers are described by those files, so the checker states of the config
+    handler don't tell whether the analyzer has anything to do.
+    """
+    return bool(ch.analyzer_config) and \
+        ch.analyzer_config.get('take-config-from-directory') == 'true'
+
+
+def __get_externally_enabled_checkers(
+    analyzer: str,
+    config_handler: AnalyzerConfigHandler,
+    actions
+) -> set[str] | None:
+    """
+    Return the checkers which are enabled by a configuration outside of
+    CodeChecker, or None if the checkers of the analyzer are configured by
+    CodeChecker itself.
+
+    Clang-Tidy resolves a separate configuration for each source directory, so
+    the union of these is returned. The report database stores one checker set
+    for an analysis, so the directory which enabled a checker is not preserved.
+    """
+    if not __has_external_checker_config(config_handler):
+        return None
+
+    analyzer_class = analyzer_types.supported_analyzers[analyzer]
+
+    if not hasattr(analyzer_class, 'get_effective_checkers_for_dir'):
+        return None
+
+    source_dirs = {os.path.dirname(action.source) for action in actions}
+
+    enabled: set[str] = set()
+    for source_dir in sorted(source_dirs):
+        enabled |= analyzer_class.get_effective_checkers_for_dir(source_dir)
+
+    return enabled
+
+
 def __has_enabled_checker(ch: AnalyzerConfigHandler):
     """
     Returns True if at least one checker is enabled in the given config
     handler.
     """
+    if __has_external_checker_config(ch):
+        return True
+
     return any(state == CheckerState.ENABLED
                for _, (state, _) in ch.checks().items())
 
@@ -281,11 +329,25 @@ def perform_analysis(args, skip_handlers, filter_handlers,
                 "successful_sources": [],
                 "version": None}}
 
+        externally_enabled = __get_externally_enabled_checkers(
+            analyzer, config_map[analyzer], actions)
+
         for check, data in config_map[analyzer].checks().items():
             state, _ = data
-            metadata_info['checkers'].update({
-                check: state == CheckerState.ENABLED})
-            if state == CheckerState.ENABLED:
+            is_enabled = check in externally_enabled \
+                if externally_enabled is not None \
+                else state == CheckerState.ENABLED
+
+            metadata_info['checkers'].update({check: is_enabled})
+            if is_enabled:
+                enabled_checkers[analyzer].append(check)
+
+        # The analyzer may have resolved checkers which CodeChecker doesn't
+        # know about. Report them as enabled too, otherwise they would be
+        # missing from the analysis information of the web UI.
+        for check in sorted(externally_enabled or []):
+            if check not in metadata_info['checkers']:
+                metadata_info['checkers'][check] = True
                 enabled_checkers[analyzer].append(check)
 
         version = analyzer_types.supported_analyzers[analyzer] \
