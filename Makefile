@@ -150,15 +150,9 @@ clean_venv_dev:
 clean: clean_package
 	$(MAKE) -C $(CC_WEB) clean
 
-clean_package: clean_tu_collector clean_report_converter clean_statistics_collector
+clean_package: clean_statistics_collector
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
-
-clean_tu_collector:
-	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
-
-clean_report_converter:
-	$(MAKE) -C $(CC_TOOLS)/report-converter clean
 
 clean_statistics_collector:
 	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector clean

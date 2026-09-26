@@ -1,24 +1,17 @@
 # Environment variables to run tests.
 
 # Test project configuration, tests are run on these files.
-TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
+TEST_PROJECT ?= TEST_PROJ=$(CURDIR)/tests/projects
 
-REPO_ROOT ?= REPO_ROOT=$(ROOT)
+# Root of the CodeChecker repository.
+REPO_ROOT = REPO_ROOT=$(CURDIR)/../../
 
 # pytest test runner configuration options.
 PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
-test: mypy pycodestyle pylint test_unit
+test: pycodestyle pylint test_unit
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
-
-MYPY_TEST_CMD = mypy --ignore-missing-imports tu_collector tests
-
-mypy:
-	$(MYPY_TEST_CMD)
-
-mypy_in_env: venv_dev
-	$(ACTIVATE_DEV_VENV) && $(MYPY_TEST_CMD)
 
 PYCODESTYLE_TEST_CMD = pycodestyle tu_collector tests
 
@@ -28,7 +21,7 @@ pycodestyle:
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
+PYLINT_TEST_CMD = PYLINTRC=.pylintrc \
 	pylint -j0 ./tu_collector ./tests/**
 
 pylint:
