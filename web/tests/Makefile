@@ -33,7 +33,8 @@ PYCODESTYLE_TEST_CMD = pycodestyle \
   tests \
   client/codechecker_client \
   server/codechecker_server \
-  server/tests
+  server/tests \
+  docker/healthcheck.py
 
 pycodestyle:
 	$(PYCODESTYLE_TEST_CMD)
@@ -47,6 +48,7 @@ PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
     ./codechecker_web \
     ./client/codechecker_client \
     ./server/codechecker_server ./server/tests/unit \
+    ./docker/healthcheck.py \
     ./tests/functional ./tests/libtest ./tests/tools \
     $(ROOT)/tools/report-converter/codechecker_report_converter
 
