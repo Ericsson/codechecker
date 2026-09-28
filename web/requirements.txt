@@ -7,7 +7,7 @@
 Authlib~=1.6
 requests~=2.0  # Required by Authlib. Not installed automatically for some reason.
 lxml~=6.0
-sqlalchemy~=2.0
+sqlalchemy~=2.0.0
 alembic~=1.5
 portalocker~=3.0
 psutil~=7.0
