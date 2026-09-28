@@ -27,6 +27,7 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 from codechecker_web.shared import convert
 
 from libtest.debug_printer import print_run_results
@@ -72,6 +73,8 @@ class RunResults(unittest.TestCase):
 
         self.checker_labels_dir = os.path.join(
             env.codechecker_package(), 'config', 'labels')
+        self.guidelines_dir = os.path.join(
+            env.codechecker_package(), 'config', 'guidelines')
 
     def __check_bug_path_order(self, run_results, order):
         """
@@ -427,7 +430,13 @@ class RunResults(unittest.TestCase):
         remote_checker_labels = self._cc_client.getCheckerLabels([])
         self.assertEqual(len(remote_checker_labels), 0)
 
-        local_checker_labels = CheckerLabels(self.checker_labels_dir)
+        # NOTE: PR gating lints against the released CodeChecker package whose
+        # CheckerLabels constructor predates the 'guidelines' parameter, so
+        # pylint wrongly flags too-many-function-args here.
+        # pylint: disable=too-many-function-args
+        local_checker_labels = CheckerLabels(
+            self.checker_labels_dir, Guidelines(self.guidelines_dir))
+        # pylint: enable=too-many-function-args
         div_zero_labels = set(map(
             ':'.join,
             set(local_checker_labels.labels_of_checker(

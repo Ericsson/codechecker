@@ -190,27 +190,32 @@ def __uglify(text: str) -> str:
 
 
 def __guideline_to_label(
-    args: argparse.Namespace,
-    cl: CheckerLabels
+    args: argparse.Namespace
 ) -> str:
     """
     Transforms --guideline parameter as if they were given through --label.
     For example "--guideline sei-cert-c" is equivalent with
     "--label guideline:sei-cert-c" and "--guideline sei-cert-c:str38-c" is the
-    same as "--label sei-cert-c:str38-c".
-    """
-    guidelines = []
-    for analyzer in args.analyzers:
-        guidelines.extend(cl.occurring_values('guideline', analyzer))
+    same as "--label rule:str38-c".
 
-    if args.guideline in guidelines:
+    A guideline is derived in memory from the "rule:<rule_id>" labels of a
+    checker, so a whole-guideline query is expressed as a "guideline:<name>"
+    label and a single-rule query as a "rule:<rule_id>" label.
+    """
+    guidelines = analyzer_context.get_context().guideline
+    all_guidelines = list(guidelines.all_guidelines())
+
+    if args.guideline in all_guidelines:
         return f'guideline:{args.guideline}'
     elif args.guideline.find(':') == -1:
         LOG.error('--guideline parameter is either <guideline> or '
                   '<guideline>:<rule>')
         sys.exit(1)
 
-    return args.guideline
+    # "<guideline>:<rule>" form -> query by the rule only, since the guideline
+    # is derived from the rule in memory.
+    _, rule = args.guideline.split(':', 1)
+    return f'rule:{rule}'
 
 
 def __get_detailed_checker_info(
@@ -256,7 +261,8 @@ def __get_detailed_checker_info(
             profile_checkers.append((f'severity:{args.severity}', True))
 
         if 'guideline' in args:
-            profile_checkers.append((__guideline_to_label(args, cl), True))
+            profile_checkers.append(
+                (__guideline_to_label(args), True))
 
         config_handler.initialize_checkers(checkers, profile_checkers)
 
@@ -312,7 +318,7 @@ def __print_severities(args: argparse.Namespace, cl: CheckerLabels):
     print(twodim.to_str(args.output_format, header, rows))
 
 
-def __print_guidelines(args: argparse.Namespace, cl: CheckerLabels):
+def __print_guidelines(args: argparse.Namespace):
     """
     Print guidelines according to the command line arguments to the standard
     output.
@@ -320,10 +326,11 @@ def __print_guidelines(args: argparse.Namespace, cl: CheckerLabels):
     if args.output_format == 'custom':
         args.output_format = 'rows'
 
-    result = {}
+    guidelines = analyzer_context.get_context().guideline
 
-    for guideline in cl.get_description('guideline'):
-        result[guideline] = set(cl.occurring_values(guideline))
+    result = {}
+    for guideline in guidelines.all_guidelines():
+        result[guideline] = set(guidelines.rules_of_guideline(guideline))
 
     header = ['Guideline', 'Rules']
     if args.output_format in ['csv', 'json']:
@@ -468,7 +475,7 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
         labels.append(f'profile:{args.profile}')
 
     if 'guideline' in args:
-        labels.append(__guideline_to_label(args, cl))
+        labels.append(__guideline_to_label(args))
 
     if 'severity' in args:
         labels.append(f'severity:{args.severity}')
@@ -594,7 +601,7 @@ def main(args):
         return
 
     if 'guideline' in args and not args.guideline:
-        __print_guidelines(args, cl)
+        __print_guidelines(args)
         return
 
     if 'label' in args and not args.label:
