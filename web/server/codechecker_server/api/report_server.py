@@ -3122,7 +3122,7 @@ class ThriftRequestHandler:
                 continue
             for rule in rules:
                 checkers = self._context.checker_labels.checkers_by_labels(
-                    [f"{guideline.guidelineName}:{rule}"])
+                    [f"rule:{rule}"])
 
                 guideline_rules[guideline.guidelineName].append(
                     Rule(

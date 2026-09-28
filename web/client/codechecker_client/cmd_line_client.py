@@ -1635,18 +1635,38 @@ def handle_list_result_types(args):
                 for stat in checker_details.values()]
     checker_labels = client.getCheckerLabels(checkers)
 
+    # Collect the guidelines that appear for the queried checkers. A checker's
+    # guidelines are derived on the server from its "rule:<rule_id>" labels.
+    all_guideline_names = set()
+    for labels in checker_labels:
+        for label in labels:
+            if label.startswith("guideline:"):
+                all_guideline_names.add(label.split("guideline:", 1)[1])
+
+    # Fetch the rule ids that belong to each guideline so that a checker's
+    # rules can be bucketed under the guideline they belong to. A single rule
+    # may belong to multiple guidelines.
+    guideline_rule_map: dict = {}
+    if all_guideline_names:
+        guideline_rules = client.getGuidelineRules([
+            ttypes.Guideline(guidelineName=name)
+            for name in sorted(all_guideline_names)])
+        for name, rules in guideline_rules.items():
+            guideline_rule_map[name] = {rule.ruleId.lower() for rule in rules}
+
     all_guideline_rules = []
     for labels in checker_labels:
-        guideline_entries = []
-        guidelines = [label.split("guideline:")[1]
-                      for label in labels if label.startswith("guideline")]
+        guidelines = [label.split("guideline:", 1)[1]
+                      for label in labels if label.startswith("guideline:")]
+        checker_rules = {label.split("rule:", 1)[1].lower()
+                         for label in labels if label.startswith("rule:")}
 
+        guideline_entries = []
         for guideline in guidelines:
+            rules_of_guideline = guideline_rule_map.get(guideline, set())
             guideline_entries.append({
                 "guideline": guideline,
-                "rules": [label.split(f"{guideline}:")[1]
-                          for label in labels
-                          if label.startswith(f"{guideline}:")]
+                "rules": sorted(checker_rules & rules_of_guideline)
             })
         all_guideline_rules.append(guideline_entries)
 

@@ -17,6 +17,18 @@ import unittest
 from codechecker_common.checker_labels import CheckerLabels
 
 
+class _FakeGuidelines:
+    """
+    Minimal stand-in for the Guidelines object. Maps rule ids to the
+    guidelines that contain them.
+    """
+    def __init__(self, rule_to_guidelines):
+        self._rule_to_guidelines = rule_to_guidelines
+
+    def guidelines_of_rule(self, rule_id):
+        return list(self._rule_to_guidelines.get(rule_id, []))
+
+
 class TestCheckerLabels(unittest.TestCase):
     def setUp(self) -> None:
         self.labels_dir = tempfile.TemporaryDirectory()
@@ -38,8 +50,9 @@ class TestCheckerLabels(unittest.TestCase):
               "MEDIUM": "Medium documentation",
               "UNSPECIFIED": "Unspecified documentation"
           },
-          "guideline": {
-              "sei-cert-c": "SEI-CERT C documentation"
+          "profile-containment": {
+              "extreme": ["sensitive"],
+              "sensitive": ["default"]
           }
         }
 
@@ -58,18 +71,14 @@ class TestCheckerLabels(unittest.TestCase):
                     "severity:HIGH"
                 ],
                 "core.DivideZero": [
-                    "profile:default",
                     "profile:sensitive",
                     "severity:HIGH"
                 ],
                 "core.NonNullParamChecker": [
-                    "profile:default",
                     "profile:sensitive",
                     "severity:HIGH"
                 ],
                 "core.builtin.NoReturnFunctions": [
-                    "profile:default",
-                    "profile:sensitive",
                     "profile:extreme",
                     "severity:MEDIUM"
                 ],
@@ -89,8 +98,6 @@ class TestCheckerLabels(unittest.TestCase):
                     "severity:HIGH"
                 ],
                 "bugprone-undelegated-constructor": [
-                    "profile:default",
-                    "profile:sensitive",
                     "profile:extreme",
                     "severity:MEDIUM"
                 ],
@@ -98,11 +105,9 @@ class TestCheckerLabels(unittest.TestCase):
                     "profile:extreme"
                 ],
                 "cert-err34-c": [
-                    "profile:sensitive",
-                    "profile:security",
                     "profile:extreme",
-                    "guideline:sei-cert-c",
-                    "sei-cert-c:err34-c",
+                    "profile:security",
+                    "rule:err34-c",
                     "severity:LOW"
                 ]
             }
@@ -114,7 +119,8 @@ class TestCheckerLabels(unittest.TestCase):
             json.dump(labels, f)
 
     def test_checker_labels(self):
-        cl = CheckerLabels(self.labels_dir.name)
+        guidelines = _FakeGuidelines({"err34-c": ["sei-cert-c"]})
+        cl = CheckerLabels(self.labels_dir.name, guidelines)
 
         self.assertEqual(
             sorted(cl.get_analyzers()),
@@ -123,14 +129,33 @@ class TestCheckerLabels(unittest.TestCase):
                 "clangsa"
             ]))
 
+        # Query "extreme" expands to {extreme, sensitive, default}, so it
+        # matches every checker with any containment tier.
         self.assertEqual(
             sorted(cl.checkers_by_labels([
                 'profile:extreme'])),
             sorted([
+                'core.DivideZero',
+                'core.NonNullParamChecker',
                 'core.builtin.NoReturnFunctions',
                 'bugprone-undelegated-constructor',
                 'google-objc-global-variable-declaration',
                 'cert-err34-c']))
+
+        # Query "sensitive" expands to {sensitive, default}: extreme-labeled
+        # checkers are NOT matched.
+        self.assertEqual(
+            sorted(cl.checkers_by_labels([
+                'profile:sensitive'], 'clangsa')),
+            sorted([
+                'core.DivideZero',
+                'core.NonNullParamChecker']))
+
+        # Query "default" matches only default-labeled checkers (smallest
+        # set). The test data has none in clangsa.
+        self.assertEqual(
+            sorted(cl.checkers_by_labels(['profile:default'], 'clangsa')),
+            [])
 
         self.assertEqual(
             sorted(cl.checkers_by_labels([
@@ -164,6 +189,18 @@ class TestCheckerLabels(unittest.TestCase):
             cl.label_of_checker('globalChecker', 'profile'),
             ['security'])
 
+        # label_of_checker returns the checker's single containment tier;
+        # the containment relation is applied on the query side, not here.
+        self.assertEqual(
+            cl.label_of_checker(
+                'core.builtin.NoReturnFunctions', 'profile', 'clangsa'),
+            ['extreme'])
+
+        # Guideline derived from the rule label.
+        self.assertEqual(
+            cl.label_of_checker('cert-err34-c', 'guideline', 'clang-tidy'),
+            ['sei-cert-c'])
+
         self.assertEqual(
             cl.label_of_checker(
                 'bugprone-undelegated-constructor', 'severity', 'clang-tidy'),
@@ -179,14 +216,6 @@ class TestCheckerLabels(unittest.TestCase):
             sorted([
                 ('profile', 'security'),
                 ('severity', 'HIGH')]))
-
-        self.assertEqual(
-            sorted(cl.labels()),
-            sorted(['guideline', 'profile', 'sei-cert-c', 'severity']))
-
-        self.assertEqual(
-            sorted(cl.occurring_values('profile')),
-            sorted(['default', 'extreme', 'security', 'sensitive']))
 
         self.assertEqual(
             cl.severity('bugprone-undelegated-constructor'),
