@@ -143,12 +143,9 @@
     ],
     "android-cloexec-open": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-open.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:cwe-vulnerabilities",
-      "cwe-vulnerabilities:cwe-668",
-      "owasp-top-10-2021:owasp-A01-2021",
-      "owasp-top-10-2025:owasp-A01-2025",
+      "rule:cwe-668",
+      "rule:owasp-A01-2021",
+      "rule:owasp-A01-2025",
       "severity:HIGH"
     ],
     "android-cloexec-pipe": [
@@ -174,26 +171,19 @@
     ],
     "boost-use-to-string": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/boost/use-to-string.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-argument-comment": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/argument-comment.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-assert-side-effect": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assert-side-effect.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pre31-c",
-      "sei-cert-cpp:pre31-c",
+      "rule:pre31-c",
       "severity:MEDIUM"
     ],
     "bugprone-assignment-in-if-condition": [
@@ -203,130 +193,95 @@
     ],
     "bugprone-assignment-in-selection-statement": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assignment-in-selection-statement.html",
-      "guideline:sei-cert-c",
-      "sei-cert-c:exp45-c",
+      "rule:exp45-c",
       "severity:MEDIUM"
     ],
     "bugprone-bad-signal-to-kill-thread": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/bad-signal-to-kill-thread.html",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pos44-c",
+      "rule:pos44-c",
       "severity:MEDIUM"
     ],
     "bugprone-bitwise-pointer-cast": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/bitwise-pointer-cast.html",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-bool-pointer-implicit-conversion": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/bool-pointer-implicit-conversion.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-branch-clone": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/branch-clone.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-capturing-this-in-member-variable": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/capturing-this-in-member-variable.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-casting-through-void": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/casting-through-void.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-chained-comparison": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/chained-comparison.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-command-processor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/command-processor.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:extreme",
-      "cwe-vulnerabilities:cwe-78",
-      "cwe-top-25-2025:cwe-78",
-      "sei-cert-c:env33-c",
-      "sei-cert-cpp:env33-c",
+      "rule:cwe-78",
+      "rule:env33-c",
       "severity:MEDIUM"
     ],
     "bugprone-compare-pointer-to-member-virtual-function": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/compare-pointer-to-member-virtual-function.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-copy-constructor-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/copy-constructor-init.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-copy-constructor-mutates-argument": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/copy-constructor-mutates-argument.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "sei-cert-cpp:oop58-cpp",
+      "rule:oop58-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-crtp-constructor-accessibility": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/crtp-constructor-accessibility.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-dangling-handle": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/dangling-handle.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-default-operator-new-on-overaligned-type": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/default-operator-new-on-overaligned-type.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:mem57-cpp",
+      "rule:mem57-cpp",
       "severity:HIGH"
     ],
     "bugprone-derived-method-shadowing-base-method": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/derived-method-shadowing-base-method.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-dynamic-static-initializers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/dynamic-static-initializers.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-easily-swappable-parameters": [
@@ -336,119 +291,86 @@
     ],
     "bugprone-empty-catch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/empty-catch.html",
-      "guideline:cwe-vulnerabilities",
-      "cwe-vulnerabilities:cwe-390",
+      "rule:cwe-390",
       "severity:STYLE"
     ],
     "bugprone-exception-copy-constructor-throws": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/exception-copy-constructor-throws.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:err60-cpp",
+      "profile:security",
+      "rule:err60-cpp",
       "severity:HIGH"
     ],
     "bugprone-exception-escape": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/exception-escape.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:dcl57-cpp",
-      "sei-cert-cpp:err55-cpp",
-      "sei-cert-cpp:msc53-cpp",
+      "profile:security",
+      "rule:dcl57-cpp",
+      "rule:err55-cpp",
+      "rule:msc53-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-float-loop-counter": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/float-loop-counter.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:flp30-c",
-      "sei-cert-cpp:flp30-c",
+      "rule:flp30-c",
       "severity:MEDIUM"
     ],
     "bugprone-fold-init-type": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/fold-init-type.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-forward-declaration-namespace": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/forward-declaration-namespace.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-forwarding-reference-overload": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/forwarding-reference-overload.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-implicit-widening-of-multiplication-result": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/implicit-widening-of-multiplication-result.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-inaccurate-erase": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/inaccurate-erase.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-inc-dec-in-conditions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/inc-dec-in-conditions.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-incorrect-enable-if": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-enable-if.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-incorrect-enable-shared-from-this": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-enable-shared-from-this.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-incorrect-roundings": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-roundings.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-infinite-loop": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/infinite-loop.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-400",
-      "cwe-vulnerabilities:cwe-400",
+      "rule:cwe-400",
       "severity:MEDIUM"
     ],
     "bugprone-integer-division": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/integer-division.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-invalid-enum-default-initialization": [
@@ -459,58 +381,41 @@
     "bugprone-lambda-function-name": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/lambda-function-name.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-macro-parentheses": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/macro-parentheses.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
-      "sei-cert-c:pre02-c",
-      "sei-cert-cpp:pre02-c",
+      "rule:pre02-c",
       "severity:MEDIUM"
     ],
     "bugprone-macro-repeated-side-effects": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/macro-repeated-side-effects.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pre31-c",
-      "sei-cert-cpp:pre31-c",
+      "rule:pre31-c",
       "severity:MEDIUM"
     ],
     "bugprone-misleading-setter-of-reference": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/misleading-setter-of-reference.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-misplaced-operator-in-strlen-in-alloc": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/misplaced-operator-in-strlen-in-alloc.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-misplaced-pointer-arithmetic-in-alloc": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/misplaced-pointer-arithmetic-in-alloc.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-misplaced-widening-cast": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/misplaced-widening-cast.html",
       "profile:default",
-      "profile:extreme",
       "profile:portability",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-missing-end-comparison": [
@@ -520,59 +425,41 @@
     "bugprone-move-forwarding-reference": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/move-forwarding-reference.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-multi-level-implicit-pointer-conversion": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multi-level-implicit-pointer-conversion.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-multiple-new-in-one-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multiple-new-in-one-expression.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:err51-cpp",
-      "sei-cert-cpp:exp50-cpp",
-      "sei-cert-cpp:mem51-cpp",
-      "sei-cert-cpp:mem52-cpp",
+      "rule:err51-cpp",
+      "rule:exp50-cpp",
+      "rule:mem51-cpp",
+      "rule:mem52-cpp",
       "severity:HIGH"
     ],
     "bugprone-multiple-statement-macro": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multiple-statement-macro.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/narrowing-conversions.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-top-25-2024:cwe-190",
-      "sei-cert-c:exp45-c",
-      "sei-cert-c:fio34-c",
-      "sei-cert-c:flp34-c",
-      "sei-cert-c:flp36-c",
-      "sei-cert-cpp:exp45-c",
-      "sei-cert-cpp:fio34-c",
-      "sei-cert-cpp:flp34-c",
-      "sei-cert-cpp:flp36-c",
-      "cwe-vulnerabilities:cwe-190",
+      "profile:security",
+      "rule:cwe-190",
+      "rule:exp45-c",
+      "rule:fio34-c",
+      "rule:flp34-c",
+      "rule:flp36-c",
       "severity:MEDIUM"
     ],
     "bugprone-no-escape": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/no-escape.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -584,118 +471,86 @@
     "bugprone-nondeterministic-pointer-iteration-order": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/nondeterministic-pointer-iteration-order.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-not-null-terminated-result": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/not-null-terminated-result.html",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-120",
-      "cwe-top-25-2025:cwe-120",
+      "rule:cwe-120",
       "severity:MEDIUM"
     ],
     "bugprone-optional-value-conversion": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/optional-value-conversion.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-parent-virtual-call": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/parent-virtual-call.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-pointer-arithmetic-on-polymorphic-object": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/pointer-arithmetic-on-polymorphic-object.html",
-      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
-      "sei-cert-cpp:ctr56-cpp",
+      "rule:ctr56-cpp",
       "severity:HIGH"
     ],
     "bugprone-posix-return": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/posix-return.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-random-generator-seed": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/random-generator-seed.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-vulnerabilities:cwe-335",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
-      "sei-cert-c:msc32-c",
-      "sei-cert-cpp:msc51-cpp",
+      "profile:security",
+      "rule:cwe-335",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
+      "rule:msc32-c",
+      "rule:msc51-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-raw-memory-call-on-non-trivial-type": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/raw-memory-call-on-non-trivial-type.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:exp62-cpp",
-      "sei-cert-cpp:oop57-cpp",
+      "rule:exp62-cpp",
+      "rule:oop57-cpp",
       "severity:HIGH"
     ],
     "bugprone-redundant-branch-condition": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/redundant-branch-condition.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-reserved-identifier": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/reserved-identifier.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:extreme",
       "profile:security",
-      "sei-cert-c:dcl37-c",
-      "sei-cert-cpp:dcl51-cpp",
+      "rule:dcl37-c",
+      "rule:dcl51-cpp",
       "severity:LOW"
     ],
     "bugprone-return-const-ref-from-parameter": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/return-const-ref-from-parameter.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-shared-ptr-array-mismatch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/shared-ptr-array-mismatch.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:mem51-cpp",
+      "rule:mem51-cpp",
       "severity:HIGH"
     ],
     "bugprone-signal-handler": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signal-handler.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:msc54-cpp",
-      "sei-cert-c:sig30-c",
+      "rule:msc54-cpp",
+      "rule:sig30-c",
       "severity:MEDIUM"
     ],
     "bugprone-signed-bitwise": [
@@ -704,231 +559,157 @@
     ],
     "bugprone-signed-char-misuse": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/signed-char-misuse.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:str34-c",
-      "sei-cert-cpp:str34-c",
+      "rule:str34-c",
       "severity:MEDIUM"
     ],
     "bugprone-sizeof-container": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-container.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-sizeof-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-expression.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-190",
-      "sei-cert-c:mem35-c",
-      "sei-cert-cpp:mem35-c",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
+      "rule:mem35-c",
       "severity:HIGH"
     ],
     "bugprone-spuriously-wake-up-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/spuriously-wake-up-functions.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-c:con36-c",
-      "sei-cert-cpp:con54-cpp",
+      "profile:security",
+      "rule:con36-c",
+      "rule:con54-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-standalone-empty": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/standalone-empty.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-std-exception-baseclass": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/std-exception-baseclass.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-std-namespace-modification": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/std-namespace-modification.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl58-cpp",
+      "rule:dcl58-cpp",
       "severity:HIGH"
     ],
     "bugprone-string-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/string-constructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-string-integer-assignment": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/string-integer-assignment.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-string-literal-with-embedded-nul": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/string-literal-with-embedded-nul.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-stringview-nullptr": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/stringview-nullptr.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-suspicious-enum-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-enum-usage.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-suspicious-include": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-include.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-suspicious-memory-comparison": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memory-comparison.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp42-c",
-      "sei-cert-c:flp37-c",
-      "sei-cert-cpp:exp42-c",
-      "sei-cert-cpp:flp37-c",
+      "rule:exp42-c",
+      "rule:flp37-c",
       "severity:MEDIUM"
     ],
     "bugprone-suspicious-memset-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-memset-usage.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "owasp-top-10-2021:owasp-A04-2021",
-      "owasp-top-10-2025:owasp-A06-2025",
-      "sei-cert-c:int31-c",
-      "sei-cert-cpp:int31-c",
+      "rule:owasp-A04-2021",
+      "rule:owasp-A06-2025",
+      "rule:int31-c",
       "severity:HIGH"
     ],
     "bugprone-suspicious-missing-comma": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-missing-comma.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-suspicious-realloc-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-realloc-usage.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:err33-c",
-      "sei-cert-cpp:err33-c",
+      "rule:err33-c",
       "severity:HIGH"
     ],
     "bugprone-suspicious-semicolon": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-semicolon.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-suspicious-string-compare": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-string-compare.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-suspicious-stringview-data-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-stringview-data-usage.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-swapped-arguments": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/swapped-arguments.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-switch-missing-default-case": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/switch-missing-default-case.html",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-478",
+      "rule:cwe-478",
       "severity:LOW"
     ],
     "bugprone-tagged-union-member-count": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/tagged-union-member-count.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-terminating-continue": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/terminating-continue.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-throw-keyword-missing": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/throw-keyword-missing.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-throwing-static-initialization": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/throwing-static-initialization.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-too-small-loop-variable": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/too-small-loop-variable.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-unchecked-optional-access": [
@@ -938,33 +719,23 @@
     ],
     "bugprone-unchecked-string-to-number-conversion": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unchecked-string-to-number-conversion.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:extreme",
-      "sei-cert-c:err34-c",
-      "sei-cert-cpp:err34-c",
+      "rule:err34-c",
       "severity:MEDIUM"
     ],
     "bugprone-undefined-memory-manipulation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/undefined-memory-manipulation.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "owasp-top-10-2021:owasp-A01-2021",
-      "owasp-top-10-2025:owasp-A06-2025",
-      "sei-cert-cpp:exp62-cpp",
-      "sei-cert-cpp:oop57-cpp",
+      "rule:owasp-A01-2021",
+      "rule:owasp-A06-2025",
+      "rule:exp62-cpp",
+      "rule:oop57-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-undelegated-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/undelegated-constructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-unhandled-code-paths": [
@@ -973,125 +744,82 @@
     ],
     "bugprone-unhandled-exception-at-new": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unhandled-exception-at-new.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:err51-cpp",
-      "sei-cert-cpp:mem52-cpp",
+      "rule:err51-cpp",
+      "rule:mem52-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-unhandled-self-assignment": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unhandled-self-assignment.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:oop54-cpp",
+      "profile:security",
+      "rule:oop54-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-unintended-char-ostream-output": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unintended-char-ostream-output.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-unique-ptr-array-mismatch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unique-ptr-array-mismatch.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:mem51-cpp",
+      "rule:mem51-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-unsafe-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-top-25-2024:cwe-125",
-      "cwe-top-25-2024:cwe-787",
-      "cwe-vulnerabilities:cwe-676",
-      "cwe-vulnerabilities:cwe-119",
-      "cwe-vulnerabilities:cwe-125",
-      "cwe-top-25-2025:cwe-125",
-      "cwe-vulnerabilities:cwe-787",
-      "cwe-top-25-2025:cwe-787",
-      "cwe-vulnerabilities:cwe-120",
-      "cwe-top-25-2025:cwe-120",
-      "owasp-top-10-2021:owasp-A04-2021",
-      "owasp-top-10-2025:owasp-A06-2025",
-      "sei-cert-c:msc24-c",
-      "sei-cert-c:msc33-c",
-      "sei-cert-cpp:msc24-c",
-      "sei-cert-cpp:msc33-c",
+      "profile:security",
+      "rule:cwe-119",
+      "rule:cwe-125",
+      "rule:cwe-787",
+      "rule:cwe-676",
+      "rule:cwe-120",
+      "rule:owasp-A04-2021",
+      "rule:owasp-A06-2025",
+      "rule:msc24-c",
+      "rule:msc33-c",
       "severity:LOW"
     ],
     "bugprone-unsafe-to-allow-exceptions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-to-allow-exceptions.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl57-cpp",
-      "sei-cert-cpp:err55-cpp",
+      "rule:dcl57-cpp",
+      "rule:err55-cpp",
       "severity:HIGH"
     ],
     "bugprone-unused-local-non-trivial-variable": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-local-non-trivial-variable.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-unused-raii": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-raii.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "bugprone-unused-return-value": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-return-value.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-252",
-      "sei-cert-c:err33-c",
-      "sei-cert-cpp:err33-c",
+      "rule:cwe-252",
+      "rule:err33-c",
       "severity:MEDIUM"
     ],
     "bugprone-use-after-move": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/use-after-move.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:exp63-cpp",
+      "rule:exp63-cpp",
       "severity:HIGH"
     ],
     "bugprone-virtual-near-miss": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/virtual-near-miss.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "cert-arr39-c": [
@@ -1112,33 +840,22 @@
     ],
     "cert-dcl03-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl03-c.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-c:dcl03-c",
-      "sei-cert-cpp:dcl03-c",
+      "profile:security",
+      "rule:dcl03-c",
       "severity:MEDIUM"
     ],
     "cert-dcl16-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl16-c.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-c:dcl16-c",
-      "sei-cert-cpp:dcl16-c",
+      "profile:security",
+      "rule:dcl16-c",
       "severity:STYLE"
     ],
     "cert-dcl21-cpp": [
       "doc_url:https://releases.llvm.org/18.1.1/tools/clang/tools/extra/docs/clang-tidy/checks/cert/dcl21-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:dcl21-cpp",
+      "profile:security",
       "severity:LOW"
     ],
     "cert-dcl37-c": [
@@ -1147,11 +864,9 @@
     ],
     "cert-dcl50-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl50-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:dcl50-cpp",
+      "profile:security",
+      "rule:dcl50-cpp",
       "severity:LOW"
     ],
     "cert-dcl51-cpp": [
@@ -1164,12 +879,9 @@
     ],
     "cert-dcl58-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/dcl58-cpp.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl58-cpp",
+      "rule:dcl58-cpp",
       "severity:HIGH"
     ],
     "cert-dcl59-cpp": [
@@ -1178,21 +890,12 @@
     ],
     "cert-env33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/env33-c.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-vulnerabilities:cwe-78",
-      "cwe-top-25-2025:cwe-78",
-      "owasp-top-10-2021:owasp-A03-2021",
-      "owasp-top-10-2025:owasp-A05-2025",
-      "sei-cert-c:env33-c",
-      "sei-cert-cpp:env33-c",
+      "profile:security",
+      "rule:cwe-78",
+      "rule:owasp-A03-2021",
+      "rule:owasp-A05-2025",
+      "rule:env33-c",
       "severity:MEDIUM"
     ],
     "cert-err09-cpp": [
@@ -1201,56 +904,39 @@
     ],
     "cert-err33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err33-c.html",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-252",
-      "owasp-top-10-2025:owasp-A10-2025",
-      "sei-cert-c:err33-c",
-      "sei-cert-cpp:err33-c",
+      "rule:cwe-252",
+      "rule:owasp-A10-2025",
+      "rule:err33-c",
       "severity:MEDIUM"
     ],
     "cert-err34-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err34-c.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-c:err34-c",
-      "sei-cert-cpp:err34-c",
+      "profile:security",
+      "rule:err34-c",
       "severity:LOW"
     ],
     "cert-err52-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err52-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:err52-cpp",
+      "profile:security",
+      "rule:err52-cpp",
       "severity:LOW"
     ],
     "cert-err58-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err58-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:err58-cpp",
+      "profile:security",
+      "rule:err58-cpp",
       "severity:LOW"
     ],
     "cert-err60-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/err60-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:err60-cpp",
+      "profile:security",
+      "rule:err60-cpp",
       "severity:MEDIUM"
     ],
     "cert-err61-cpp": [
@@ -1271,14 +957,9 @@
     ],
     "cert-flp30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/flp30-c.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:flp30-c",
-      "sei-cert-cpp:flp30-c",
+      "rule:flp30-c",
       "severity:HIGH"
     ],
     "cert-flp37-c": [
@@ -1291,96 +972,59 @@
     ],
     "cert-mem57-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/mem57-cpp.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:mem57-cpp",
+      "rule:mem57-cpp",
       "severity:MEDIUM"
     ],
     "cert-msc24-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc24-c.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-top-25-2024:cwe-125",
-      "cwe-top-25-2024:cwe-787",
-      "cwe-vulnerabilities:cwe-119",
-      "cwe-vulnerabilities:cwe-125",
-      "cwe-top-25-2025:cwe-125",
-      "cwe-vulnerabilities:cwe-787",
-      "cwe-top-25-2025:cwe-787",
+      "rule:cwe-119",
+      "rule:cwe-125",
+      "rule:cwe-787",
       "severity:LOW"
     ],
     "cert-msc30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc30-c.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:cwe-vulnerabilities",
-      "cwe-vulnerabilities:cwe-338",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
+      "rule:cwe-338",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
       "severity:LOW"
     ],
     "cert-msc32-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc32-c.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:cwe-vulnerabilities",
-      "cwe-vulnerabilities:cwe-335",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
+      "rule:cwe-335",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
       "severity:MEDIUM"
     ],
     "cert-msc33-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc33-c.html",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-top-25-2024:cwe-125",
-      "cwe-top-25-2024:cwe-787",
-      "cwe-vulnerabilities:cwe-119",
-      "cwe-vulnerabilities:cwe-125",
-      "cwe-top-25-2025:cwe-125",
-      "cwe-vulnerabilities:cwe-787",
-      "cwe-top-25-2025:cwe-787",
+      "rule:cwe-119",
+      "rule:cwe-125",
+      "rule:cwe-787",
       "severity:LOW"
     ],
     "cert-msc50-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc50-cpp.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-vulnerabilities:cwe-338",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
-      "sei-cert-c:msc30-c",
-      "sei-cert-cpp:msc50-cpp",
+      "profile:security",
+      "rule:cwe-338",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
+      "rule:msc30-c",
+      "rule:msc50-cpp",
       "severity:LOW"
     ],
     "cert-msc51-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc51-cpp.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-vulnerabilities:cwe-335",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
-      "sei-cert-c:msc32-c",
-      "sei-cert-cpp:msc51-cpp",
+      "profile:security",
+      "rule:cwe-335",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
+      "rule:msc32-c",
+      "rule:msc51-cpp",
       "severity:MEDIUM"
     ],
     "cert-msc54-cpp": [
@@ -1389,12 +1033,8 @@
     ],
     "cert-oop11-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/oop11-cpp.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop11-cpp",
       "severity:MEDIUM"
     ],
     "cert-oop54-cpp": [
@@ -1403,21 +1043,16 @@
     ],
     "cert-oop57-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/oop57-cpp.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:oop57-cpp",
+      "profile:security",
+      "rule:oop57-cpp",
       "severity:HIGH"
     ],
     "cert-oop58-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/oop58-cpp.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop58-cpp",
+      "rule:oop58-cpp",
       "severity:MEDIUM"
     ],
     "cert-pos44-c": [
@@ -1451,8 +1086,6 @@
     "clang-diagnostic-TU-local-entity-exposure": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtu-local-entity-exposure",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-aarch64-sme-attributes": [
@@ -1510,8 +1143,6 @@
     "clang-diagnostic-alloc-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#walloc-size",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-alloca": [
@@ -1616,7 +1247,6 @@
     ],
     "clang-diagnostic-arm-interrupt-save-fp-no-vfp-unit": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warm-interrupt-save-fp-no-vfp-unit",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -1626,25 +1256,18 @@
     ],
     "clang-diagnostic-array-bounds-pointer-arithmetic": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-bounds-pointer-arithmetic",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:arr39-c",
-      "sei-cert-cpp:arr39-c",
+      "rule:arr39-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-array-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-compare",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-array-compare-cxx26": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-compare-cxx26",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -1787,22 +1410,16 @@
     "clang-diagnostic-bitwise-conditional-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbitwise-conditional-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-bitwise-instead-of-logical": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbitwise-instead-of-logical",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-bitwise-op-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbitwise-op-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-block-capture-autoreleasing": [
@@ -1820,8 +1437,6 @@
     "clang-diagnostic-bool-operation": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbool-operation",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-braced-scalar-init": [
@@ -1846,10 +1461,7 @@
     ],
     "clang-diagnostic-builtin-memcpy-chk-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wbuiltin-memcpy-chk-size",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-vulnerabilities:cwe-119",
+      "rule:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-builtin-requires-header": [
@@ -1862,7 +1474,6 @@
     ],
     "clang-diagnostic-c++-keyword": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wc-keyword",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -2145,8 +1756,6 @@
     "clang-diagnostic-cast-of-sel-type": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcast-of-sel-type",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-cast-qual": [
@@ -2160,8 +1769,6 @@
     "clang-diagnostic-cfi-unchecked-callee": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcfi-unchecked-callee",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "clang-diagnostic-cfstring-literal": [
@@ -2175,15 +1782,11 @@
     "clang-diagnostic-char-subscripts": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wchar-subscripts",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-character-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcharacter-conversion",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-cl4": [
@@ -2213,8 +1816,6 @@
     "clang-diagnostic-comment": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcomment",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-comments": [
@@ -2255,13 +1856,10 @@
     ],
     "clang-diagnostic-conditional-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wconditional-uninitialized",
-      "guideline:sei-cert-c",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp33-c",
+      "rule:exp33-c",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-config-macros": [
@@ -2302,7 +1900,6 @@
     ],
     "clang-diagnostic-coro-type-aware-allocation-function": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wcoro-type-aware-allocation-function",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -2352,24 +1949,19 @@
     ],
     "clang-diagnostic-dangling": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-cpp:mem50-cpp",
+      "rule:mem50-cpp",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-dangling-capture": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling-capture",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dangling-else": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling-else",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dangling-field": [
@@ -2407,42 +1999,31 @@
     "clang-diagnostic-default-const-init": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-field": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-field",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-field-unsafe": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-field-unsafe",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-unsafe": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-unsafe",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-var": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-default-const-init-var-unsafe": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdefault-const-init-var-unsafe",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-defaulted-function-deleted": [
@@ -2459,43 +2040,31 @@
     ],
     "clang-diagnostic-delete-abstract-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdelete-abstract-non-virtual-dtor",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop52-cpp",
+      "rule:oop52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-delete-incomplete": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdelete-incomplete",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:exp57-cpp",
+      "rule:exp57-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-delete-non-abstract-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdelete-non-abstract-non-virtual-dtor",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop52-cpp",
+      "rule:oop52-cpp",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-delete-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdelete-non-virtual-dtor",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop52-cpp",
+      "rule:oop52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-delimited-escape-sequence-extension": [
@@ -2537,8 +2106,6 @@
     "clang-diagnostic-deprecated-copy": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-copy",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-copy-dtor": [
@@ -2552,8 +2119,6 @@
     "clang-diagnostic-deprecated-copy-with-user-provided-copy": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-copy-with-user-provided-copy",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-copy-with-user-provided-dtor": [
@@ -2571,8 +2136,6 @@
     "clang-diagnostic-deprecated-declarations-switch-case": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-declarations-switch-case",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-deprecated-dynamic-exception-spec": [
@@ -2609,7 +2172,6 @@
     ],
     "clang-diagnostic-deprecated-missing-comma-variadic-parameter": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-missing-comma-variadic-parameter",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -2635,7 +2197,6 @@
     ],
     "clang-diagnostic-deprecated-octal-literals": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-octal-literals",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -2697,11 +2258,8 @@
     ],
     "clang-diagnostic-division-by-zero": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdivision-by-zero",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-369",
+      "rule:cwe-369",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dll-attribute-on-redeclaration": [
@@ -2742,14 +2300,9 @@
     ],
     "clang-diagnostic-double-promotion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdouble-promotion",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:flp34-c",
-      "sei-cert-cpp:flp34-c",
+      "rule:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dtor-name": [
@@ -2786,10 +2339,9 @@
     ],
     "clang-diagnostic-dynamic-class-memaccess": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdynamic-class-memaccess",
-      "guideline:sei-cert-cpp",
       "profile:security",
-      "sei-cert-cpp:exp62-cpp",
-      "sei-cert-cpp:oop57-cpp",
+      "rule:exp62-cpp",
+      "rule:oop57-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dynamic-exception-spec": [
@@ -2814,14 +2366,9 @@
     ],
     "clang-diagnostic-embedded-directive": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wembedded-directive",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pre32-c",
-      "sei-cert-cpp:pre32-c",
+      "rule:pre32-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-empty-body": [
@@ -2835,8 +2382,6 @@
     "clang-diagnostic-empty-init-stmt": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wempty-init-stmt",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-empty-translation-unit": [
@@ -2866,8 +2411,6 @@
     "clang-diagnostic-enum-compare-typo": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wenum-compare-typo",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "clang-diagnostic-enum-constexpr-conversion": [
@@ -2891,20 +2434,15 @@
       "severity:MEDIUM"
     ],
     "clang-diagnostic-error": [
-      "severity:CRITICAL",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive"
+      "severity:CRITICAL"
     ],
     "clang-diagnostic-exceptions": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wexceptions",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:err53-cpp",
-      "sei-cert-cpp:err54-cpp",
+      "rule:err53-cpp",
+      "rule:err54-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-excess-initializers": [
@@ -2962,8 +2500,6 @@
     "clang-diagnostic-extern-c-compat": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wextern-c-compat",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-extern-initializer": [
@@ -3020,16 +2556,10 @@
     ],
     "clang-diagnostic-float-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfloat-conversion",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:flp32-c",
-      "sei-cert-c:flp34-c",
-      "sei-cert-cpp:flp32-c",
-      "sei-cert-cpp:flp34-c",
+      "rule:flp32-c",
+      "rule:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-float-equal": [
@@ -3047,42 +2577,29 @@
     "clang-diagnostic-for-loop-analysis": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfor-loop-analysis",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:fio47-c",
-      "sei-cert-cpp:fio47-c",
+      "rule:fio47-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-extra-args": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-extra-args",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-insufficient-args": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-insufficient-args",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-invalid-specifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-invalid-specifier",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-non-iso": [
@@ -3091,35 +2608,24 @@
     ],
     "clang-diagnostic-format-nonliteral": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-nonliteral",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:fio30-c",
-      "sei-cert-cpp:fio30-c",
+      "rule:fio30-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:mem35-c",
-      "sei-cert-cpp:mem35-c",
+      "rule:mem35-c",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-format-overflow-non-kprintf": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow-non-kprintf",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:mem35-c",
-      "sei-cert-cpp:mem35-c",
+      "rule:mem35-c",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-format-pedantic": [
@@ -3128,22 +2634,11 @@
     ],
     "clang-diagnostic-format-security": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-security",
-      "guideline:cwe-top-25-2024",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-20",
-      "owasp-top-10-2025:owasp-A05-2025",
-      "sei-cert-c:fio30-c",
-      "sei-cert-cpp:fio30-c",
-      "cwe-vulnerabilities:cwe-20",
-      "cwe-top-25-2025:cwe-20",
+      "rule:cwe-20",
+      "rule:owasp-A05-2025",
+      "rule:fio30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-signedness": [
@@ -3165,15 +2660,11 @@
     "clang-diagnostic-format-y2k": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-y2k",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-zero-length": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-zero-length",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format=2": [
@@ -3182,10 +2673,7 @@
     ],
     "clang-diagnostic-fortify-source": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfortify-source",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-vulnerabilities:cwe-119",
+      "rule:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-four-char-constants": [
@@ -3195,18 +2683,16 @@
     "clang-diagnostic-frame-address": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wframe-address",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than": [
-      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wframe-larger-than",
+      "blacklist:true",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-frame-larger-than=": [
-      "blacklist:true",
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#id1",
+      "blacklist:true",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-framework-include-private-from-public": [
@@ -3236,8 +2722,6 @@
     "clang-diagnostic-fuse-ld-path": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfuse-ld-path",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-future-attribute-extensions": [
@@ -3439,7 +2923,6 @@
     ],
     "clang-diagnostic-hlsl-implicit-binding": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#whlsl-implicit-binding",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3457,7 +2940,6 @@
     ],
     "clang-diagnostic-ignored-base-class-qualifiers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wignored-base-class-qualifiers",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3484,25 +2966,18 @@
     "clang-diagnostic-ignored-qualifiers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wignored-qualifiers",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-ignored-reference-qualifiers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wignored-reference-qualifiers",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl31-c",
+      "rule:dcl31-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit-atomic-properties": [
@@ -3519,7 +2994,6 @@
     ],
     "clang-diagnostic-implicit-enum-enum-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-enum-enum-cast",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3545,32 +3019,23 @@
     ],
     "clang-diagnostic-implicit-function-declaration": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-function-declaration",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl31-c",
+      "rule:dcl31-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-implicit-int": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl31-c",
+      "rule:dcl31-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-implicit-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-conversion",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:int36-c",
-      "sei-cert-cpp:int36-c",
+      "rule:int36-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit-int-conversion-on-negation": [
@@ -3579,7 +3044,6 @@
     ],
     "clang-diagnostic-implicit-int-enum-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-enum-cast",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3664,12 +3128,9 @@
     ],
     "clang-diagnostic-incompatible-function-pointer-types-strict": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-function-pointer-types-strict",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:exp37-c",
-      "sei-cert-cpp:exp37-c",
+      "rule:exp37-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-library-redeclaration": [
@@ -3686,40 +3147,24 @@
     ],
     "clang-diagnostic-incompatible-pointer-types": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-pointer-types",
-      "guideline:cwe-top-25-2024",
-      "guideline:sei-cert-c",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-top-25-2024:cwe-125",
-      "cwe-top-25-2024:cwe-787",
-      "sei-cert-c:exp32-c",
-      "cwe-vulnerabilities:cwe-119",
-      "cwe-vulnerabilities:cwe-125",
-      "cwe-top-25-2025:cwe-125",
-      "cwe-vulnerabilities:cwe-787",
-      "cwe-top-25-2025:cwe-787",
+      "rule:cwe-119",
+      "rule:cwe-125",
+      "rule:cwe-787",
+      "rule:exp32-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-pointer-types-discards-overflow-behavior": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-pointer-types-discards-overflow-behavior",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-pointer-types-discards-qualifiers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-pointer-types-discards-qualifiers",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp32-c",
+      "rule:exp32-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-property-type": [
@@ -3772,17 +3217,13 @@
     ],
     "clang-diagnostic-infinite-recursion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winfinite-recursion",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl56-cpp",
+      "rule:dcl56-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-init-priority-reserved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winit-priority-reserved",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3793,8 +3234,6 @@
     "clang-diagnostic-initializer-overrides": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winitializer-overrides",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "clang-diagnostic-injected-class-name": [
@@ -3827,12 +3266,9 @@
     ],
     "clang-diagnostic-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wint-conversion",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:int36-c",
-      "sei-cert-cpp:int36-c",
+      "rule:int36-c",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-int-conversions": [
@@ -3842,8 +3278,6 @@
     "clang-diagnostic-int-in-bool-context": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wint-in-bool-context",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-int-to-pointer-cast": [
@@ -3856,10 +3290,7 @@
     ],
     "clang-diagnostic-integer-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winteger-overflow",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-interrupt-service-routine": [
@@ -3896,9 +3327,8 @@
     ],
     "clang-diagnostic-invalid-noreturn": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-noreturn",
-      "guideline:sei-cert-cpp",
       "profile:security",
-      "sei-cert-cpp:msc53-cpp",
+      "rule:msc53-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-invalid-offsetof": [
@@ -3927,7 +3357,6 @@
     ],
     "clang-diagnostic-invalid-specialization": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-specialization",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3950,13 +3379,10 @@
     "clang-diagnostic-invalid-version-availability": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-version-availability",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-jump-misses-init": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wjump-misses-init",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -3994,14 +3420,7 @@
     ],
     "clang-diagnostic-lifetime-safety": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-all": [
@@ -4014,56 +3433,24 @@
     ],
     "clang-diagnostic-lifetime-safety-dangling-field": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-field",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-field-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-field-moved",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-global",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-dangling-global-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-dangling-global-moved",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-intra-tu-suggestions": [
@@ -4072,14 +3459,7 @@
     ],
     "clang-diagnostic-lifetime-safety-invalidation": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-invalidation",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-noescape": [
@@ -4092,29 +3472,13 @@
     ],
     "clang-diagnostic-lifetime-safety-return-stack-addr": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-return-stack-addr",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-return-stack-addr-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-return-stack-addr-moved",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-strict": [
@@ -4127,44 +3491,19 @@
     ],
     "clang-diagnostic-lifetime-safety-use-after-free": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-free",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-scope",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-use-after-scope-moved": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlifetime-safety-use-after-scope-moved",
-      "guideline:cwe-top-25-2024",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
-      "cwe-top-25-2024:cwe-416",
-      "memory-safety:cwe-416",
-      "cwe-vulnerabilities:cwe-416",
-      "cwe-top-25-2025:cwe-416",
+      "rule:cwe-416",
       "severity:HIGH"
     ],
     "clang-diagnostic-lifetime-safety-validations": [
@@ -4190,15 +3529,11 @@
     "clang-diagnostic-logical-not-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlogical-not-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-logical-op-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wlogical-op-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-long-long": [
@@ -4240,8 +3575,6 @@
     "clang-diagnostic-matrix-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmatrix-conversion",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-max-tokens": [
@@ -4362,7 +3695,6 @@
     ],
     "clang-diagnostic-microsoft-inline-on-non-function": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmicrosoft-inline-on-non-function",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4421,16 +3753,13 @@
     "clang-diagnostic-misleading-indentation": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmisleading-indentation",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-mismatched-new-delete": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmismatched-new-delete",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-cpp:mem51-cpp",
+      "rule:mem51-cpp",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-mismatched-parameter-types": [
@@ -4444,15 +3773,11 @@
     "clang-diagnostic-mismatched-tags": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmismatched-tags",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-braces": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmissing-braces",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-constinit": [
@@ -4474,8 +3799,6 @@
     "clang-diagnostic-missing-field-initializers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmissing-field-initializers",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-format-attribute": [
@@ -4489,8 +3812,6 @@
     "clang-diagnostic-missing-method-return-type": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmissing-method-return-type",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-missing-multilib": [
@@ -4547,7 +3868,6 @@
     ],
     "clang-diagnostic-module-file-mapping-mismatch": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmodule-file-mapping-mismatch",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4569,7 +3889,6 @@
     ],
     "clang-diagnostic-module-map": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#rmodule-map",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4596,15 +3915,11 @@
     "clang-diagnostic-most": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmost",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-move": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmove",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-ms-bitfield-padding": [
@@ -4626,8 +3941,6 @@
     "clang-diagnostic-multichar": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmultichar",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-multilib-not-found": [
@@ -4700,23 +4013,15 @@
     ],
     "clang-diagnostic-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnon-virtual-dtor",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop52-cpp",
+      "rule:oop52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nonnull": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonnull",
-      "guideline:cwe-vulnerabilities",
-      "guideline:cwe-top-25-2025",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-vulnerabilities:cwe-476",
-      "cwe-top-25-2025:cwe-476",
+      "rule:cwe-476",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nonportable-cfstrings": [
@@ -4737,7 +4042,6 @@
     ],
     "clang-diagnostic-nonportable-sycl": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnonportable-sycl",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4755,7 +4059,6 @@
     ],
     "clang-diagnostic-nontrivial-memcall": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnontrivial-memcall",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4794,15 +4097,11 @@
     "clang-diagnostic-null-pointer-arithmetic": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnull-pointer-arithmetic",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-null-pointer-subtraction": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnull-pointer-subtraction",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nullability": [
@@ -4856,8 +4155,6 @@
     "clang-diagnostic-objc-designated-initializers": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wobjc-designated-initializers",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-objc-dictionary-duplicate-keys": [
@@ -4871,8 +4168,6 @@
     "clang-diagnostic-objc-flexible-array": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wobjc-flexible-array",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-objc-forward-class-redefinition": [
@@ -4910,8 +4205,6 @@
     "clang-diagnostic-objc-missing-super-calls": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wobjc-missing-super-calls",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-objc-multiple-method-names": [
@@ -5004,7 +4297,6 @@
     ],
     "clang-diagnostic-octal-prefix-extension": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woctal-prefix-extension",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -5030,7 +4322,6 @@
     ],
     "clang-diagnostic-openacc-confusing-routine-name": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wopenacc-confusing-routine-name",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -5108,10 +4399,9 @@
     ],
     "clang-diagnostic-over-aligned": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wover-aligned",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-cpp:mem57-cpp",
+      "rule:mem57-cpp",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-overflow": [
@@ -5133,15 +4423,11 @@
     "clang-diagnostic-overloaded-shift-op-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woverloaded-shift-op-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-overloaded-virtual": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woverloaded-virtual",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-override-init": [
@@ -5155,15 +4441,11 @@
     "clang-diagnostic-overriding-complex-range": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woverriding-complex-range",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-overriding-deployment-version": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#woverriding-deployment-version",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-overriding-method-mismatch": [
@@ -5196,22 +4478,15 @@
     ],
     "clang-diagnostic-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wparentheses",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp45-c",
-      "sei-cert-cpp:exp45-c",
+      "rule:exp45-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-parentheses-equality": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wparentheses-equality",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-partial-availability": [
@@ -5257,8 +4532,6 @@
     "clang-diagnostic-pessimizing-move": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpessimizing-move",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pgo-coverage": [
@@ -5291,12 +4564,9 @@
     ],
     "clang-diagnostic-pointer-to-int-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpointer-to-int-cast",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:int36-c",
-      "sei-cert-cpp:int36-c",
+      "rule:int36-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pointer-type-mismatch": [
@@ -5314,8 +4584,6 @@
     "clang-diagnostic-potentially-evaluated-expression": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpotentially-evaluated-expression",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pragma-clang-attribute": [
@@ -5432,21 +4700,17 @@
     ],
     "clang-diagnostic-preferred-type-bitfield-enum-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpreferred-type-bitfield-enum-conversion",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-preferred-type-bitfield-width": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpreferred-type-bitfield-width",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-private-extern": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wprivate-extern",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-private-header": [
@@ -5512,8 +4776,6 @@
     "clang-diagnostic-range-loop-construct": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wrange-loop-construct",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-read-modules-implicitly": [
@@ -5542,13 +4804,11 @@
     ],
     "clang-diagnostic-reduced-bmi-output-overrided": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreduced-bmi-output-overrided",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-redundant-attribute": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wredundant-attribute",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -5563,8 +4823,6 @@
     "clang-diagnostic-redundant-move": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wredundant-move",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-redundant-parens": [
@@ -5574,8 +4832,6 @@
     "clang-diagnostic-reference-tu-local-entity-in-other-tu": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreference-tu-local-entity-in-other-tu",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-register": [
@@ -5593,25 +4849,18 @@
     "clang-diagnostic-reorder": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreorder",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reorder-ctor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreorder-ctor",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop53-cpp",
+      "rule:oop53-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reorder-init-list": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreorder-init-list",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-requires-super-attribute": [
@@ -5620,7 +4869,6 @@
     ],
     "clang-diagnostic-reserved-attribute-identifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-attribute-identifier",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -5630,35 +4878,25 @@
     ],
     "clang-diagnostic-reserved-identifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-identifier",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl37-c",
-      "sei-cert-cpp:dcl51-cpp",
+      "rule:dcl37-c",
+      "rule:dcl51-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reserved-macro-identifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-macro-identifier",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl37-c",
-      "sei-cert-cpp:dcl51-cpp",
+      "rule:dcl37-c",
+      "rule:dcl51-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reserved-module-identifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreserved-module-identifier",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:dcl51-cpp",
+      "profile:security",
+      "rule:dcl51-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-reserved-user-defined-literal": [
@@ -5683,46 +4921,31 @@
     ],
     "clang-diagnostic-return-stack-address": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-stack-address",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl30-c",
-      "sei-cert-cpp:exp54-cpp",
-      "sei-cert-cpp:exp61-cpp",
-      "memory-safety:cwe-562",
-      "cwe-vulnerabilities:cwe-562",
+      "rule:dcl30-c",
+      "rule:exp54-cpp",
+      "rule:exp61-cpp",
+      "rule:cwe-562",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-return-std-move": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-std-move",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-return-type": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-type",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:msc37-c",
-      "sei-cert-cpp:msc52-cpp",
+      "rule:msc37-c",
+      "rule:msc52-cpp",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-return-type-c-linkage": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-type-c-linkage",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-rewrite-not-bool": [
@@ -5772,40 +4995,29 @@
     "clang-diagnostic-self-assign": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wself-assign",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-self-assign-field": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wself-assign-field",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-self-assign-overloaded": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wself-assign-overloaded",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:oop54-cpp",
+      "rule:oop54-cpp",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-self-move": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wself-move",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-semicolon-before-method-body": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsemicolon-before-method-body",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sentinel": [
@@ -5854,7 +5066,6 @@
     ],
     "clang-diagnostic-shift-bool": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-bool",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -5864,10 +5075,7 @@
     ],
     "clang-diagnostic-shift-count-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-count-overflow",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-negative-value": [
@@ -5877,47 +5085,31 @@
     "clang-diagnostic-shift-op-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-op-parentheses",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-overflow",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shift-sign-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshift-sign-overflow",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-shorten-64-to-32": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wshorten-64-to-32",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsign-conversion",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sign-promo": [
@@ -5943,15 +5135,11 @@
     "clang-diagnostic-sizeof-array-argument": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsizeof-array-argument",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sizeof-array-decay": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsizeof-array-decay",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-sizeof-array-div": [
@@ -5980,14 +5168,11 @@
     ],
     "clang-diagnostic-sometimes-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsometimes-uninitialized",
-      "guideline:sei-cert-c",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:dcl41-c",
-      "sei-cert-c:exp33-c",
+      "rule:dcl41-c",
+      "rule:exp33-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-source-mgr": [
@@ -6024,14 +5209,9 @@
     ],
     "clang-diagnostic-static-in-inline": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstatic-in-inline",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:msc40-c",
-      "sei-cert-cpp:msc40-c",
+      "rule:msc40-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-static-inline-explicit-instantiation": [
@@ -6045,8 +5225,6 @@
     "clang-diagnostic-static-self-init": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstatic-self-init",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-stdlibcxx-not-found": [
@@ -6120,8 +5298,6 @@
     "clang-diagnostic-string-concatenation": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstring-concatenation",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-string-conversion": [
@@ -6135,8 +5311,6 @@
     "clang-diagnostic-string-plus-int": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstring-plus-int",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-strlcpy-strlcat-size": [
@@ -6145,10 +5319,7 @@
     ],
     "clang-diagnostic-strncat-size": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstrncat-size",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
-      "cwe-top-25-2024:cwe-119",
-      "cwe-vulnerabilities:cwe-119",
+      "rule:cwe-119",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-suggest-destructor-override": [
@@ -6177,20 +5348,13 @@
     ],
     "clang-diagnostic-switch": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wswitch",
-      "guideline:cwe-top-25-2024",
-      "guideline:cwe-vulnerabilities",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "cwe-top-25-2024:cwe-190",
-      "cwe-vulnerabilities:cwe-190",
+      "rule:cwe-190",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-switch-bool": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wswitch-bool",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-switch-default": [
@@ -6220,22 +5384,16 @@
     "clang-diagnostic-tautological-bitwise-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-bitwise-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-constant-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-constant-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-constant-in-range-compare": [
@@ -6245,8 +5403,6 @@
     "clang-diagnostic-tautological-constant-out-of-range-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-constant-out-of-range-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-negation-compare": [
@@ -6256,22 +5412,16 @@
     "clang-diagnostic-tautological-objc-bool-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-objc-bool-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-overlap-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-overlap-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-pointer-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-pointer-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-type-limit-compare": [
@@ -6281,8 +5431,6 @@
     "clang-diagnostic-tautological-undefined-compare": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtautological-undefined-compare",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-tautological-unsigned-char-zero-compare": [
@@ -6315,7 +5463,6 @@
     ],
     "clang-diagnostic-tentative-definition-compat": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtentative-definition-compat",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -6345,12 +5492,8 @@
     ],
     "clang-diagnostic-thread-safety-pointer": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wthread-safety-pointer",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
       "profile:sensitive",
-      "sei-cert-c:msc54-c",
-      "sei-cert-cpp:msc54-c",
+      "rule:msc54-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-thread-safety-precise": [
@@ -6372,8 +5515,6 @@
     "clang-diagnostic-trigraphs": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtrigraphs",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-trivial-auto-var-init": [
@@ -6426,7 +5567,6 @@
     ],
     "clang-diagnostic-undef-true": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wundef-true",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -6477,27 +5617,18 @@
     "clang-diagnostic-underlying-atomic-qualifier-ignored": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunderlying-atomic-qualifier-ignored",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "clang-diagnostic-underlying-cv-qualifier-ignored": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunderlying-cv-qualifier-ignored",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "clang-diagnostic-unevaluated-expression": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunevaluated-expression",
-      "guideline:sei-cert-cpp",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:exp44-c",
-      "sei-cert-c:exp44-c",
+      "rule:exp44-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unguarded-availability": [
@@ -6526,49 +5657,34 @@
     ],
     "clang-diagnostic-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized",
-      "guideline:sei-cert-c",
-      "guideline:memory-safety",
-      "guideline:cwe-vulnerabilities",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp33-c",
-      "memory-safety:cwe-457",
-      "cwe-vulnerabilities:cwe-457",
+      "rule:exp33-c",
+      "rule:cwe-457",
+      "label-tool-skip:severity",
       "severity:HIGH"
     ],
     "clang-diagnostic-uninitialized-const-pointer": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized-const-pointer",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-uninitialized-const-reference": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized-const-reference",
-      "guideline:sei-cert-c",
-      "label-tool-skip:severity",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp33-c",
+      "rule:exp33-c",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-uninitialized-explicit-init": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized-explicit-init",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
-      "sei-cert-c:exp33-c",
+      "rule:exp33-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unique-object-duplication": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunique-object-duplication",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -6603,8 +5719,6 @@
     "clang-diagnostic-unknown-pragmas": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunknown-pragmas",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unknown-sanitizers": [
@@ -6622,15 +5736,11 @@
     "clang-diagnostic-unnecessary-virtual-specifier": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunnecessary-virtual-specifier",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unneeded-internal-declaration": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunneeded-internal-declaration",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unneeded-member-function": [
@@ -6688,20 +5798,13 @@
     "clang-diagnostic-unsafe-buffer-usage-in-unique-ptr-array-access": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunsafe-buffer-usage-in-unique-ptr-array-access",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "clang-diagnostic-unsequenced": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunsequenced",
-      "guideline:sei-cert-cpp",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:exp30-c",
-      "sei-cert-cpp:exp30-c",
+      "rule:exp30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unsupported-abi": [
@@ -6750,7 +5853,6 @@
     ],
     "clang-diagnostic-unterminated-string-initialization": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunterminated-string-initialization",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -6765,8 +5867,6 @@
     "clang-diagnostic-unused-argument": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-argument",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-but-set-global": [
@@ -6776,15 +5876,11 @@
     "clang-diagnostic-unused-but-set-parameter": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-but-set-parameter",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-but-set-variable": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-but-set-variable",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-command-line-argument": [
@@ -6794,15 +5890,11 @@
     "clang-diagnostic-unused-comparison": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-comparison",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-const-variable": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-const-variable",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-exception-parameter": [
@@ -6812,8 +5904,6 @@
     "clang-diagnostic-unused-function": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-function",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-getter-return-value": [
@@ -6823,22 +5913,16 @@
     "clang-diagnostic-unused-label": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-label",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-lambda-capture": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-lambda-capture",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-local-typedef": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-local-typedef",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-local-typedefs": [
@@ -6856,29 +5940,21 @@
     "clang-diagnostic-unused-parameter": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-parameter",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-private-field": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-private-field",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-property-ivar": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-property-ivar",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-result": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-result",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-template": [
@@ -6888,15 +5964,11 @@
     "clang-diagnostic-unused-value": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-value",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-variable": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wunused-variable",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unused-volatile-lvalue": [
@@ -6909,34 +5981,26 @@
     ],
     "clang-diagnostic-user-defined-literals": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuser-defined-literals",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl51-cpp",
+      "rule:dcl51-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-user-defined-warnings": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuser-defined-warnings",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-varargs": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvarargs",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "label-tool-skip:severity",
       "profile:security",
-      "sei-cert-c:exp47-c",
-      "sei-cert-cpp:exp58-cpp",
+      "rule:exp47-c",
+      "rule:exp58-cpp",
+      "label-tool-skip:severity",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-variadic-macro-arguments-omitted": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvariadic-macro-arguments-omitted",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -6958,12 +6022,9 @@
     ],
     "clang-diagnostic-vexing-parse": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvexing-parse",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl53-cpp",
+      "rule:dcl53-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-visibility": [
@@ -7001,8 +6062,6 @@
     "clang-diagnostic-volatile-register-var": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvolatile-register-var",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-wasm-exception-spec": [
@@ -7039,27 +6098,18 @@
     ],
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
       "profile:security",
-      "cwe-vulnerabilities:cwe-362",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A06-2025",
-      "sei-cert-c:con33-c",
-      "sei-cert-cpp:con33-c",
+      "rule:cwe-362",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A06-2025",
+      "rule:con33-c",
       "severity:MEDIUM"
     ],
     "concurrency-thread-canceltype-asynchronous": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/thread-canceltype-asynchronous.html",
-      "guideline:sei-cert-c",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pos47-c",
+      "rule:pos47-c",
       "severity:MEDIUM"
     ],
     "cppcoreguidelines-avoid-c-arrays": [
@@ -7070,13 +6120,10 @@
     "cppcoreguidelines-avoid-capturing-lambda-coroutines": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-capturing-lambda-coroutines.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "cppcoreguidelines-avoid-const-or-ref-data-members": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-const-or-ref-data-members.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
     ],
@@ -7103,8 +6150,6 @@
     "cppcoreguidelines-avoid-reference-coroutine-parameters": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-reference-coroutine-parameters.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "cppcoreguidelines-c-copy-assignment-signature": [
@@ -7143,7 +6188,6 @@
     ],
     "cppcoreguidelines-misleading-capture-default-by-value": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/misleading-capture-default-by-value.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -7214,11 +6258,9 @@
     ],
     "cppcoreguidelines-pro-type-const-cast": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/pro-type-const-cast.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:exp55-cpp",
+      "profile:security",
+      "rule:exp55-cpp",
       "severity:LOW"
     ],
     "cppcoreguidelines-pro-type-cstyle-cast": [
@@ -7238,7 +6280,6 @@
     ],
     "cppcoreguidelines-pro-type-static-cast-downcast": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/pro-type-static-cast-downcast.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -7254,22 +6295,18 @@
     ],
     "cppcoreguidelines-rvalue-reference-param-not-moved": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/rvalue-reference-param-not-moved.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "cppcoreguidelines-slicing": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/slicing.html",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-cpp:oop51-cpp",
+      "profile:security",
+      "rule:oop51-cpp",
       "severity:LOW"
     ],
     "cppcoreguidelines-special-member-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/special-member-functions.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -7286,8 +6323,6 @@
     "cppcoreguidelines-virtual-class-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/virtual-class-destructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "darwin-avoid-spinlock": [
@@ -7325,23 +6360,18 @@
     ],
     "google-build-explicit-make-pair": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/build-explicit-make-pair.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "google-build-namespaces": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/build-namespaces.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl59-cpp",
+      "rule:dcl59-cpp",
       "severity:MEDIUM"
     ],
     "google-build-using-namespace": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/build-using-namespace.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
     ],
@@ -7352,13 +6382,11 @@
     ],
     "google-explicit-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/explicit-constructor.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "google-global-names-in-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/global-names-in-headers.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
     ],
@@ -7385,9 +6413,8 @@
     ],
     "google-readability-braces-around-statements": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/readability-braces-around-statements.html",
-      "guideline:misra-c",
-      "misra-c:14.9",
       "profile:extreme",
+      "rule:14.9",
       "severity:STYLE"
     ],
     "google-readability-casting": [
@@ -7422,31 +6449,26 @@
     ],
     "google-runtime-int": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/runtime-int.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "google-runtime-member-string-references": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/google-runtime-member-string-references.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "google-runtime-memset": [
       "doc_url:https://releases.llvm.org/4.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/google-runtime-memset.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "google-runtime-operator": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/runtime-operator.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "google-runtime-references": [
       "doc_url:https://releases.llvm.org/11.1.0/tools/clang/tools/extra/docs/clang-tidy/checks/google-runtime-references.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
     ],
@@ -7661,40 +6683,29 @@
     ],
     "misc-anonymous-namespace-in-header": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/anonymous-namespace-in-header.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "misc-argument-comment": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-argument-comment.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "misc-assert-side-effect": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-assert-side-effect.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:pre31-c",
-      "sei-cert-cpp:pre31-c",
+      "rule:pre31-c",
       "severity:MEDIUM"
     ],
     "misc-bool-pointer-implicit-conversion": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-bool-pointer-implicit-conversion.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-confusable-identifiers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/confusable-identifiers.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-const-correctness": [
@@ -7708,56 +6719,41 @@
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-definitions-in-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/definitions-in-headers.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-explicit-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/explicit-constructor.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-fold-init-type": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-fold-init-type.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-forward-declaration-namespace": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-forward-declaration-namespace.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-forwarding-reference-overload": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-forwarding-reference-overload.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-header-include-cycle": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/header-include-cycle.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-inaccurate-erase": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-inaccurate-erase.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-include-cleaner": [
@@ -7768,92 +6764,66 @@
     "misc-incorrect-roundings": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-incorrect-roundings.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-inefficient-algorithm": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-inefficient-algorithm.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-lambda-function-name": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-lambda-function-name.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-macro-parentheses": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-macro-parentheses.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-macro-repeated-side-effects": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-macro-repeated-side-effects.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-misleading-bidirectional": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misleading-bidirectional.html",
-      "guideline:owasp-top-10-2025",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "owasp-top-10-2025:owasp-A05-2025",
+      "rule:owasp-A05-2025",
       "severity:HIGH"
     ],
     "misc-misleading-identifier": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misleading-identifier.html",
-      "guideline:owasp-top-10-2025",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "owasp-top-10-2025:owasp-A05-2025",
+      "rule:owasp-A05-2025",
       "severity:HIGH"
     ],
     "misc-misplaced-const": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misplaced-const.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-misplaced-widening-cast": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-misplaced-widening-cast.html",
       "profile:default",
-      "profile:extreme",
       "profile:portability",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-move-const-arg": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-move-const-arg.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-move-constructor-init": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-move-constructor-init.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-move-forwarding-reference": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-move-forwarding-reference.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-multiple-inheritance": [
@@ -7862,18 +6832,14 @@
     ],
     "misc-multiple-statement-macro": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-multiple-statement-macro.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-new-delete-overloads": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/new-delete-overloads.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:dcl54-cpp",
+      "rule:dcl54-cpp",
       "severity:MEDIUM"
     ],
     "misc-no-recursion": [
@@ -7887,14 +6853,9 @@
     ],
     "misc-non-copyable-objects": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/non-copyable-objects.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:fio38-c",
-      "sei-cert-cpp:fio38-c",
+      "rule:fio38-c",
       "severity:HIGH"
     ],
     "misc-non-private-member-variables-in-classes": [
@@ -7905,51 +6866,34 @@
     "misc-override-with-different-visibility": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/override-with-different-visibility.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-predictable-rand": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/predictable-rand.html",
-      "guideline:owasp-top-10-2021",
-      "guideline:owasp-top-10-2025",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "guideline:cwe-vulnerabilities",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "cwe-vulnerabilities:cwe-338",
-      "owasp-top-10-2021:owasp-A02-2021",
-      "owasp-top-10-2025:owasp-A04-2025",
-      "sei-cert-c:msc30-c",
-      "sei-cert-cpp:msc50-cpp",
+      "profile:security",
+      "rule:cwe-338",
+      "rule:owasp-A02-2021",
+      "rule:owasp-A04-2025",
+      "rule:msc30-c",
+      "rule:msc50-cpp",
       "severity:MEDIUM"
     ],
     "misc-redundant-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/redundant-expression.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-sizeof-container": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-sizeof-container.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-sizeof-expression": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-sizeof-expression.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-c:arr39-c",
-      "sei-cert-cpp:arr39-c",
+      "rule:arr39-c",
       "severity:HIGH"
     ],
     "misc-static-assert": [
@@ -7964,80 +6908,58 @@
     "misc-string-compare": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-compare.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-string-constructor": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-constructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-string-integer-assignment": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-integer-assignment.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "misc-string-literal-with-embedded-nul": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-literal-with-embedded-nul.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-suspicious-enum-usage": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-suspicious-enum-usage.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-suspicious-missing-comma": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-suspicious-missing-comma.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-suspicious-semicolon": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-suspicious-semicolon.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-suspicious-string-compare": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-suspicious-string-compare.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-swapped-arguments": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-swapped-arguments.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-throw-by-value-catch-by-reference": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/throw-by-value-catch-by-reference.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:err09-cpp",
-      "sei-cert-cpp:err61-cpp",
+      "rule:err61-cpp",
       "severity:HIGH"
     ],
     "misc-unconventional-assign-operator": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/unconventional-assign-operator.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-undelegated-constructor": [
@@ -8048,13 +6970,10 @@
     "misc-uniqueptr-reset-release": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/uniqueptr-reset-release.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-unused-alias-decls": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/unused-alias-decls.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8066,29 +6985,22 @@
     "misc-unused-raii": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-unused-raii.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "misc-unused-using-decls": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/unused-using-decls.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "misc-use-after-move": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-use-after-move.html",
-      "guideline:sei-cert-cpp",
       "profile:default",
-      "profile:extreme",
       "profile:security",
-      "profile:sensitive",
-      "sei-cert-cpp:exp63-cpp",
+      "rule:exp63-cpp",
       "severity:HIGH"
     ],
     "misc-use-anonymous-namespace": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/use-anonymous-namespace.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8100,8 +7012,6 @@
     "misc-virtual-near-miss": [
       "doc_url:https://releases.llvm.org/6.0.1/tools/clang/tools/extra/docs/clang-tidy/checks/misc-virtual-near-miss.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:HIGH"
     ],
     "modernize-avoid-bind": [
@@ -8134,7 +7044,6 @@
     ],
     "modernize-deprecated-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/deprecated-headers.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8166,8 +7075,6 @@
     "modernize-min-max-use-initializer-list": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/min-max-use-initializer-list.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "modernize-pass-by-value": [
@@ -8187,7 +7094,6 @@
     ],
     "modernize-replace-auto-ptr": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/replace-auto-ptr.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8198,7 +7104,6 @@
     ],
     "modernize-replace-random-shuffle": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/replace-random-shuffle.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8234,7 +7139,6 @@
     ],
     "modernize-use-constraints": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-constraints.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8353,13 +7257,11 @@
     ],
     "mpi-buffer-deref": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/mpi/buffer-deref.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "mpi-type-mismatch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/mpi/type-mismatch.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8398,13 +7300,11 @@
     ],
     "performance-avoid-endl": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/avoid-endl.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-enum-size": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/enum-size.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8414,135 +7314,106 @@
     ],
     "performance-faster-string-find": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/faster-string-find.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-for-range-copy": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/for-range-copy.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-implicit-cast-in-loop": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/implicit-cast-in-loop.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-implicit-conversion-in-loop": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/implicit-conversion-in-loop.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-inefficient-algorithm": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/inefficient-algorithm.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-inefficient-string-concatenation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/inefficient-string-concatenation.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-inefficient-vector-operation": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/inefficient-vector-operation.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-move-const-arg": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/move-const-arg.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-move-constructor-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/move-constructor-init.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-no-automatic-move": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/no-automatic-move.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "performance-no-int-to-ptr": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/no-int-to-ptr.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-noexcept-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-destructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-noexcept-move-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-move-constructor.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-noexcept-swap": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-swap.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "performance-prefer-single-char-overloads": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/prefer-single-char-overloads.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-string-view-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/string-view-conversions.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-trivially-destructible": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/trivially-destructible.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "performance-type-promotion-in-math-fn": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/type-promotion-in-math-fn.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-unnecessary-copy-initialization": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/unnecessary-copy-initialization.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-unnecessary-value-param": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/unnecessary-value-param.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
     "performance-use-std-move": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/use-std-move.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
     ],
@@ -8570,7 +7441,6 @@
     ],
     "portability-template-virtual-member-function": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/portability/template-virtual-member-function.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -8606,15 +7476,11 @@
     "readability-container-contains": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/container-contains.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "readability-container-data-pointer": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/container-data-pointer.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "readability-container-size-empty": [
@@ -8643,13 +7509,9 @@
     ],
     "readability-enum-initial-value": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/enum-initial-value.html",
-      "guideline:sei-cert-c",
-      "guideline:sei-cert-cpp",
-      "profile:extreme",
-      "profile:security",
       "profile:sensitive",
-      "sei-cert-c:int09-c",
-      "sei-cert-cpp:int09-c",
+      "profile:security",
+      "rule:int09-c",
       "severity:LOW"
     ],
     "readability-function-cognitive-complexity": [
@@ -8764,7 +7626,6 @@
     ],
     "readability-redundant-parentheses": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-parentheses.html",
-      "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
     ],
@@ -8801,8 +7662,6 @@
     "readability-reference-to-constructed-temporary": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/reference-to-constructed-temporary.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "readability-simplify-boolean-expr": [
@@ -8828,8 +7687,6 @@
     "readability-suspicious-call-argument": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/suspicious-call-argument.html",
       "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "readability-trailing-comma": [
