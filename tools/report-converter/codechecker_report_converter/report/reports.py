@@ -41,7 +41,6 @@ def get_changed_files(reports: list[Report]):
     return changed_files
 
 
-
 def dump_changed_files(changed_files: set[str], as_error: bool = False):
     """ Dump changed files. """
     if not changed_files:
