@@ -1,5 +1,5 @@
 lxml~=6.0
-sqlalchemy~=2.0
+sqlalchemy~=2.0.0
 alembic~=1.5
 pg8000~=1.31
 psutil~=7.0
