@@ -15,7 +15,9 @@
       "guideline:sei-cert-c",
       "profile:extreme",
       "severity:MEDIUM",
-      "sei-cert-c:exp34-c"
+      "sei-cert-c:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "gcc-analyzer-double-fclose": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-fclose",
@@ -158,7 +160,9 @@
       "profile:extreme",
       "severity:HIGH",
       "sei-cert-c:err33-c",
-      "sei-cert-c:exp34-c"
+      "sei-cert-c:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "gcc-analyzer-null-dereference": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
@@ -171,7 +175,10 @@
       "memory-safety:cwe-476",
       "cwe-vulnerabilities:cwe-476",
       "severity:HIGH",
-      "sei-cert-c:exp34-c"
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "gcc-analyzer-out-of-bounds": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
@@ -216,7 +223,10 @@
       "profile:extreme",
       "severity:MEDIUM",
       "sei-cert-c:exp34-c",
-      "sei-cert-c:err33-c"
+      "sei-cert-cpp:exp34-c",
+      "sei-cert-c:err33-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "gcc-analyzer-putenv-of-auto-var": [
       "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var",
