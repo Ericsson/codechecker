@@ -1,5 +1,5 @@
 lxml~=6.0
-sqlalchemy~=2.0
+sqlalchemy~=2.0.0
 alembic~=1.5
 psycopg2-binary~=2.9
 psutil~=7.0
