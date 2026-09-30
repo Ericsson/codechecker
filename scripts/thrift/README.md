@@ -10,29 +10,30 @@ setup an environment:
 python3 -m venv venv
 source $PWD/venv/bin/activate
 
-# Install thrift package.
+# Install the thrift package.
 pip3 install thrift==0.22.0
-
-# Get and install CodeChecker API packages.
-#
-# It will download API packages for the 'v6.19.1' but you can download newer
-# versions as well.
-#
-# WARNING: make sure that the package versions are not newer than what
-# CodeChecker server uses.
-wget https://github.com/Ericsson/codechecker/raw/v6.19.1/web/api/py/codechecker_api/dist/codechecker_api.tar.gz && \
-pip3 install codechecker_api.tar.gz && \
-rm -rf codechecker_api.tar.gz
-
-wget https://github.com/Ericsson/codechecker/raw/v6.19.1/web/api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz && \
-pip3 install codechecker_api_shared.tar.gz && \
-rm -rf codechecker_api_shared.tar.gz
 ```
+
+The `codechecker_api` Python stubs are generated from the `.thrift` API
+description files in the `codechecker_api/` directory by a Thrift compiler that
+runs inside a Docker container, so `docker` needs to be installed on your
+system.
+
+Running `make package` (or `make dev_package`) in the root of the repository
+generates the stubs into `codechecker_api/python/`:
+
+```sh
+make package
+```
+
+> **NOTE:** The API version used by the client is hard-coded in `client.py`
+> (the `CLIENT_API` constant). Make sure that the API version is not newer than
+> what the CodeChecker server uses.
 
 After your environment is ready you can run the following command:
 
 ```sh
-python3 client.py \
+python3 scripts/thrift/client.py \
   --protocol "http" \
   --host "localhost" \
   --port 8001 \

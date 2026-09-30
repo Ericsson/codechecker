@@ -16,9 +16,9 @@ from collections import defaultdict
 import os
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+from codechecker_api.python.DBAccess_v6.ttypes import DetectionStatus, \
     ReportFilter, ReviewStatus, Severity, RunSortMode, RunSortType, Order
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import env
 

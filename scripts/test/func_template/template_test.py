@@ -26,7 +26,7 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 
 # This is a test skeleton. The unused variables will be used probably in the

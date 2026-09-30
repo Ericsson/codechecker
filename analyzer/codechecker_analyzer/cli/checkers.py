@@ -15,7 +15,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from typing import Iterable, Union
+from typing import Iterable
 
 from codechecker_report_converter import twodim
 
@@ -501,7 +501,7 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
 
     if 'details' in args:
         header = ['Status', 'Name', 'Analyzer', 'Description', 'Labels']
-        rows: Union[list[list], list[tuple]] = list(map(__format_row, result))
+        rows: list[list] | list[tuple] = list(map(__format_row, result))
     else:
         header = ['Name']
         rows = [[r[1]] for r in result]

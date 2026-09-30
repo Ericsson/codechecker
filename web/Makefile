@@ -13,9 +13,7 @@ CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
-CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
-CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/codechecker_api
 
 CC_SERVER = $(CURRENT_DIR)/server/
 CC_CLIENT = $(CURRENT_DIR)/client/
@@ -94,7 +92,7 @@ package_report_converter: build_report_converter package_dir_structure
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build tools
 # multiple times.
-package_web: check_codechecker_api_version check_dist package_dir_structure package_report_converter $(DIST_DIR)
+package_web: check_dist package_dir_structure package_report_converter $(DIST_DIR)
 ifeq ($(BUILD_UI_DIST),YES)
 	mkdir -p $(CC_BUILD_WEB_DIR)
 	cp -r $(DIST_DIR)/* $(CC_BUILD_WEB_DIR)
@@ -103,6 +101,7 @@ endif
 package: package_dir_structure package_web
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	cp -r $(ROOT)/codechecker_api $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
@@ -120,11 +119,6 @@ package: package_dir_structure package_web
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
-package_api:
-	${PYTHON_BIN} -m pip install --no-deps -t ${CC_BUILD_LIB_DIR} \
-		api/py/codechecker_api/dist/codechecker_api.tar.gz \
-		api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
-
 standalone_package: venv package
 	cd $(CC_BUILD_BIN_DIR) && \
 	mv CodeChecker _CodeChecker && \
@@ -132,16 +126,6 @@ standalone_package: venv package
 		-e $(CURRENT_DIR)/venv \
 		-b _CodeChecker \
 		-o CodeChecker
-
-# This target will check that 'codecheck_api' and 'codechecker_api_shared'
-# python packages are up to date. If not, it will update these packages and
-# removes the dist directory to make sure the the UI part will be built again.
-check_codechecker_api_version:
-	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied (use --upgrade to upgrade): codechecker-api"; then \
-		if [ "$(BUILD_UI_DIST)" = "YES" ]; then \
-		  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
-		fi; \
-	fi
 
 # This target will check if the 'dist' directory exists and the vue-cli folder
 # is changed. In this case it will remove the dist directory so the UI will

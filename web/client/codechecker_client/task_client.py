@@ -15,11 +15,11 @@ import json
 import os
 import sys
 import time
-from typing import Callable, Optional, cast
+from typing import Callable, cast
 
-from codechecker_api_shared.ttypes import Ternary
-from codechecker_api.ProductManagement_v6.ttypes import Product
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.shared.ttypes import Ternary
+from codechecker_api.python.ProductManagement_v6.ttypes import Product
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from codechecker_common import logger
@@ -33,7 +33,7 @@ from .product import split_server_url
 
 
 # Needs to be set in the handler functions.
-LOG: Optional[logger.logging.Logger] = None
+LOG: logger.logging.Logger | None = None
 
 
 def init_logger(level, stream=None, logger_name="system"):
@@ -58,10 +58,10 @@ def await_task_termination(
     token: str,
     probe_delta_min: timedelta = timedelta(seconds=5),
     probe_delta_max: timedelta = timedelta(minutes=2),
-    timeout_from_last_task_progress: Optional[timedelta] = timedelta(hours=1),
-    max_consecutive_request_failures: Optional[int] = 10,
-    task_api_client: Optional[ThriftServersideTaskHelper] = None,
-    server_address: Optional[tuple[str, str, str]] = None,
+    timeout_from_last_task_progress: timedelta | None = timedelta(hours=1),
+    max_consecutive_request_failures: int | None = 10,
+    task_api_client: ThriftServersideTaskHelper | None = None,
+    server_address: tuple[str, str, str] | None = None,
 ) -> str:
     """
     Blocks the execution of the current process until the task specified by
@@ -109,7 +109,7 @@ def await_task_termination(
 
     probe_distance: timedelta = deepcopy(probe_delta_min)
     request_failures: int = 0
-    last_forward_progress_by_task: Optional[datetime] = None
+    last_forward_progress_by_task: datetime | None = None
     task_status: int = TaskStatus.ALLOCATED
 
     def _query_task_status():
@@ -130,7 +130,7 @@ def await_task_termination(
                 log.info("Retrying task status query [%d / %d retries] ...",
                          request_failures, max_consecutive_request_failures)
 
-        last_forward_progress_by_task: Optional[datetime] = None
+        last_forward_progress_by_task: datetime | None = None
         epoch_to_consider: int = 0
         if ti.completedAtEpoch:
             epoch_to_consider = ti.completedAtEpoch
@@ -220,24 +220,24 @@ def await_task_termination(
     return TaskStatus._VALUES_TO_NAMES[task_status]
 
 
-def _datetime_to_utc_epoch(d: Optional[datetime]) -> Optional[int]:
+def _datetime_to_utc_epoch(d: datetime | None) -> int | None:
     return int(d.replace(tzinfo=timezone.utc).timestamp()) if d else None
 
 
-def _utc_epoch_to_datetime(s: Optional[int]) -> Optional[datetime]:
+def _utc_epoch_to_datetime(s: int | None) -> datetime | None:
     return datetime.fromtimestamp(s, timezone.utc) if s else None
 
 
-def _datetime_to_str(d: Optional[datetime]) -> Optional[str]:
+def _datetime_to_str(d: datetime | None) -> str | None:
     return d.strftime("%Y-%m-%d %H:%M:%S") if d else None
 
 
 def _build_filter(args: Namespace,
                   product_id_to_endpoint: dict[int, str],
                   get_product_api: Callable[[], ThriftProductHelper]) \
-        -> Optional[TaskFilter]:
+        -> TaskFilter | None:
     """Build a `TaskFilter` from the command-line `args`."""
-    filter_: Optional[TaskFilter] = None
+    filter_: TaskFilter | None = None
 
     def get_filter() -> TaskFilter:
         nonlocal filter_
@@ -259,7 +259,7 @@ def _build_filter(args: Namespace,
     if args.product:
         # Users specify products via ENDPOINTs for U.X. friendliness, but the
         # API works with product IDs.
-        def _get_product_id_or_log(endpoint: str) -> Optional[int]:
+        def _get_product_id_or_log(endpoint: str) -> int | None:
             try:
                 products: list[Product] = cast(
                     list[Product],
@@ -397,7 +397,7 @@ def handle_tasks(args: Namespace) -> int:
     # Lazily initialise a Product manager API client as well, it can be needed
     # if products are being put into a request filter, or product-specific
     # tasks appear on the output.
-    product_api: Optional[ThriftProductHelper] = None
+    product_api: ThriftProductHelper | None = None
     product_id_to_endpoint: dict[int, str] = {}
 
     def get_product_api() -> ThriftProductHelper:

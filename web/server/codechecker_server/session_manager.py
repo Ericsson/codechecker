@@ -16,7 +16,6 @@ import uuid
 
 from datetime import datetime
 import hashlib
-from typing import Optional
 
 from sqlalchemy.orm import sessionmaker
 
@@ -35,7 +34,7 @@ from .database.config_db_model import SystemPermission
 from .database import db_cleanup
 from .permissions import SUPERUSER
 
-import codechecker_api_shared
+import codechecker_api.python.shared as codechecker_api_shared
 
 
 UNSUPPORTED_METHODS = []
@@ -178,8 +177,8 @@ class SessionManager:
 
     def __init__(self, config_db_sessionmaker: sessionmaker,
                  configuration_file, secrets_file, force_auth=False,
-                 api_handler_processes: Optional[int] = None,
-                 task_worker_processes: Optional[int] = None):
+                 api_handler_processes: int | None = None,
+                 task_worker_processes: int | None = None):
         """
         Initialise a new Session Manager on the server.
 
@@ -560,7 +559,7 @@ class SessionManager:
         }
 
     @property
-    def default_superuser_name(self) -> Optional[str]:
+    def default_superuser_name(self) -> str | None:
         """ Get default superuser name. """
         return self.__auth_config['super_user']
 
@@ -1064,7 +1063,7 @@ class SessionManager:
         """ Get session lifetime duration from server configuration. """
         return self.__auth_config['session_lifetime']
 
-    def __get_local_session_from_db(self, token) -> Optional[_Session]:
+    def __get_local_session_from_db(self, token) -> _Session | None:
         """
         Creates a local session if a valid session token can be found in the
         database.
@@ -1096,7 +1095,7 @@ class SessionManager:
 
         return None
 
-    def get_session(self, token) -> Optional[_Session]:
+    def get_session(self, token) -> _Session | None:
         """
         Retrieves the session for the given session cookie token from the
         server's memory backend, if such session exists or creates and returns

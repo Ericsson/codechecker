@@ -8,7 +8,6 @@
 """
 Result handler for Cppcheck.
 """
-from typing import Optional
 
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
@@ -44,8 +43,8 @@ class CppcheckResultHandler(ResultHandler):
 
     def postprocess_result(
         self,
-        skip_handlers: Optional[SkipListHandlers],
-        rs_handler: Optional[ReviewStatusHandler]
+        skip_handlers: SkipListHandlers | None,
+        rs_handler: ReviewStatusHandler | None
     ):
         """
         Generate analyzer result output file which can be parsed and stored

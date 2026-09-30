@@ -12,7 +12,6 @@ import logging
 import os
 import re
 
-from typing import Union
 
 from codechecker_report_converter.report import Report
 
@@ -59,10 +58,10 @@ def mandatory_env_var_is_set():
 
 
 def __convert_reports(reports: list[Report],
-                      repo_dir: Union[str, None],
-                      report_url: Union[str, None],
+                      repo_dir: str | None,
+                      report_url: str | None,
                       changed_files: list[str],
-                      changed_file_path: Union[str, None]) -> dict:
+                      changed_file_path: str | None) -> dict:
     """Convert the given reports to gerrit json format.
 
     This function will convert the given report to Gerrit json format.
@@ -136,7 +135,7 @@ def __convert_reports(reports: list[Report],
     return review
 
 
-def __get_changed_files(changed_file_path: Union[None, str]) -> list[str]:
+def __get_changed_files(changed_file_path: None | str) -> list[str]:
     """Return a list of changed files.
 
     Process the given gerrit changed file object and return a list of

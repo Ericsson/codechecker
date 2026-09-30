@@ -13,7 +13,7 @@ import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import hashlib
-from typing import Iterable, Optional
+from typing import Iterable
 
 from codechecker_report_converter.report import Report, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
@@ -50,7 +50,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         output_dir_path: str,
         export_type: str,
         file_name: str = "{source_file}_{analyzer}_{file_hash}",
-        metadata: Optional[dict[str, str]] = None
+        metadata: dict[str, str] | None = None
     ) -> bool:
         """
         Converts the given analyzer result to the output directory in the given
@@ -163,8 +163,10 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         analyzer_info = AnalyzerInfo(name=self.TOOL_NAME)
         for file_path, file_reports in file_to_report.items():
             source_file = os.path.basename(file_path)
-            file_hash = hashlib.md5(file_path.encode(errors='ignore')) \
-                .hexdigest()
+            # FIXME: In the future, this should utilize 'md5_hexdigest()'
+            # imported from codechecker_common.util
+            file_hash = hashlib.md5(file_path.encode(errors='ignore'),
+                                    usedforsecurity=False).hexdigest()
 
             out_file_name = file_name \
                 .replace("{source_file}", source_file) \

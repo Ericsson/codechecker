@@ -1084,13 +1084,19 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM",
-      "sei-cert-c:err33-c"
+      "sei-cert-c:err33-c",
+      "sei-cert-c:exp34-c",
+      "guideline:sei-cert-c"
     ],
     "cppcheck-nullPointerRedundantCheck": [
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "cppcheck-objectIndex": [
       "profile:default",

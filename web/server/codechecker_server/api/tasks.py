@@ -11,12 +11,12 @@ Handle Thrift requests for background task management.
 import datetime
 import os
 import time
-from typing import Optional
 
 from sqlalchemy.sql.expression import and_, or_
 
-from codechecker_api_shared.ttypes import RequestFailed, ErrorCode, Ternary
-from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
+from codechecker_api.python.shared.ttypes import \
+    RequestFailed, ErrorCode, Ternary
+from codechecker_api.python.ServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from codechecker_common.logger import get_logger
@@ -65,14 +65,14 @@ class TestingDummyTask(AbstractTask):
             raise ValueError("Task self-failure as per the user's request.")
 
 
-def _db_timestamp_to_posix_epoch(d: Optional[datetime.datetime]) \
-        -> Optional[int]:
+def _db_timestamp_to_posix_epoch(d: datetime.datetime | None) \
+        -> int | None:
     return int(d.replace(tzinfo=datetime.timezone.utc).timestamp()) if d \
         else None
 
 
-def _posix_epoch_to_db_timestamp(s: Optional[int]) \
-        -> Optional[datetime.datetime]:
+def _posix_epoch_to_db_timestamp(s: int | None) \
+        -> datetime.datetime | None:
     return datetime.datetime.fromtimestamp(s, datetime.timezone.utc) if s \
         else None
 
@@ -122,7 +122,7 @@ class ThriftTaskHandler:
         self._task_manager = task_manager
         self._auth_session = auth_session
 
-    def _get_username(self) -> Optional[str]:
+    def _get_username(self) -> str | None:
         """
         Returns the actually logged in user name.
         """
@@ -137,13 +137,13 @@ class ThriftTaskHandler:
         with DBSession(self._config_db) as session:
             has_right_to_query_status: bool = False
             should_set_consumed_flag: bool = False
-            db_task: Optional[DBTask] = session.get(DBTask, token)
+            db_task: DBTask | None = session.get(DBTask, token)
 
             if db_task and db_task.username == self._get_username():
                 has_right_to_query_status = True
                 should_set_consumed_flag = db_task.is_in_terminated_state
             elif db_task and db_task.product_id is not None:
-                associated_product: Optional[Product] = \
+                associated_product: Product | None = \
                     session.get(Product, db_task.product_id)
                 if not associated_product:
                     LOG.error("No product with ID '%d', but a task is "
@@ -296,7 +296,7 @@ class ThriftTaskHandler:
                     AND.append(DBTask.consumed.is_(True))
 
             ret: list[AdministratorTaskInfo] = []
-            has_superuser: Optional[bool] = None
+            has_superuser: bool | None = None
             product_access_rights: dict[int, bool] = {}
             for db_task in session.query(DBTask).filter(and_(*AND)).all():
                 if not db_task.product_id:
@@ -343,12 +343,12 @@ class ThriftTaskHandler:
         """
         with DBSession(self._config_db) as session:
             has_right_to_cancel: bool = False
-            db_task: Optional[DBTask] = session.get(DBTask, token)
+            db_task: DBTask | None = session.get(DBTask, token)
 
             if db_task and db_task.username == self._get_username():
                 has_right_to_cancel = True
             elif db_task and db_task.product_id is not None:
-                associated_product: Optional[Product] = \
+                associated_product: Product | None = \
                     session.get(Product, db_task.product_id)
                 if not associated_product:
                     LOG.error("No product with ID '%d', but a task is "

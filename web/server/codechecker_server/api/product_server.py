@@ -19,8 +19,8 @@ from sqlalchemy import create_engine, exc, text, exists, or_, \
     func, nullslast
 from sqlalchemy.engine.url import URL
 
-import codechecker_api_shared
-from codechecker_api.ProductManagement_v6 import ttypes
+import codechecker_api.python.shared as codechecker_api_shared
+from codechecker_api.python.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
 from codechecker_common.util import is_valid_postgresql_db_name, \

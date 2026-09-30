@@ -12,7 +12,6 @@ Result handlers to manage the output of the static analyzers.
 import os
 
 from abc import ABCMeta
-from typing import Optional
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.util import analyzer_action_hash
@@ -150,8 +149,8 @@ class ResultHandler(metaclass=ABCMeta):
     #   extra checks.
     def postprocess_result(
         self,
-        skip_handlers: Optional[SkipListHandlers],
-        rs_handler: Optional[ReviewStatusHandler]
+        skip_handlers: SkipListHandlers | None,
+        rs_handler: ReviewStatusHandler | None
     ):
         """
         Postprocess result if needed.

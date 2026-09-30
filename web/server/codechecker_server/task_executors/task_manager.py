@@ -14,7 +14,7 @@ from pathlib import Path
 import re
 import shutil
 import tempfile
-from typing import Callable, Optional
+from typing import Callable
 
 import sqlalchemy
 
@@ -56,7 +56,7 @@ class TaskManager:
                  server_environment,
                  executor_kill_flag: Value,
                  machine_id: str,
-                 temp_dir: Optional[Path] = None):
+                 temp_dir: Path | None = None):
         self._queue = q
         self._database_factory = config_db_session_factory
         self._server_environment = server_environment
@@ -88,8 +88,8 @@ class TaskManager:
         return self._machine_id
 
     def allocate_task_record(self, kind: str, summary: str,
-                             user_name: Optional[str],
-                             product: Optional[Product] = None) -> str:
+                             user_name: str | None,
+                             product: Product | None = None) -> str:
         """
         Creates the token and the status record for a new task with the given
         initial metadata.
@@ -180,7 +180,7 @@ class TaskManager:
         This class should not be mutated, only the fields queried.
         """
         with DBSession(self._database_factory) as session:
-            db_task: Optional[DBTask] = session.get(DBTask, token)
+            db_task: DBTask | None = session.get(DBTask, token)
             if not db_task:
                 raise KeyError(f"No task record for token '{token}' "
                                "in the database")
@@ -202,7 +202,7 @@ class TaskManager:
         corresponding to the `task_obj` description available in memory.
         """
         with DBSession(self._database_factory) as session:
-            db_task: Optional[DBTask] = session.get(DBTask, task_obj.token)
+            db_task: DBTask | None = session.get(DBTask, task_obj.token)
             if not db_task:
                 raise KeyError(f"No task record for token '{task_obj.token}' "
                                "in the database")
@@ -285,7 +285,7 @@ class TaskManager:
              and db_task.cancel_flag)
 
     def add_comment(self, task_obj: "AbstractTask", comment: str,
-                    actor: Optional[str] = None):
+                    actor: str | None = None):
         """
         Adds `comment` in the name of `actor` to the task record corresponding
         to `task_obj`.

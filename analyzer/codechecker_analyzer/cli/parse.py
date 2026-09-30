@@ -14,7 +14,7 @@ human-readable format.
 import argparse
 import os
 import sys
-from typing import Optional, Any
+from typing import Any
 import json
 import fnmatch
 
@@ -257,7 +257,7 @@ def add_arguments_to_parser(parser):
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def ch_workdir(metadata: Optional[dict]):
+def ch_workdir(metadata: dict | None):
     """ Change working directory to the one noted in metadata.json if this
     file exists and contains "working_directory".
     """
@@ -274,7 +274,7 @@ def ch_workdir(metadata: Optional[dict]):
         sys.exit(1)
 
 
-def get_metadata(dir_path: str) -> Optional[dict]:
+def get_metadata(dir_path: str) -> dict | None:
     """ Get metadata from the given dir path or None if not exists. """
     metadata_file = os.path.join(dir_path, "metadata.json")
     if os.path.exists(metadata_file):
@@ -388,9 +388,9 @@ def get_report_dir_status(compile_commands: list[dict[str, str]],
 
 def print_status(report_dir: str,
                  detailed_flag: bool,
-                 files: Optional[list[str]],
-                 export: Optional[str] = None,
-                 output_path: Optional[str] = None):
+                 files: list[str] | None,
+                 export: str | None = None,
+                 output_path: str | None = None):
     if export and export != "json":
         LOG.error("Only JSON export format is supported.")
         sys.exit(1)
@@ -586,7 +586,7 @@ def main(args):
         if not os.path.exists(output_dir_path):
             os.makedirs(output_dir_path)
 
-    def get_output_file_path(default_file_name: str) -> Optional[str]:
+    def get_output_file_path(default_file_name: str) -> str | None:
         """ Return an output file path. """
         if output_file_path:
             return output_file_path
@@ -617,7 +617,7 @@ def main(args):
     print_steps = 'print_steps' in args
     review_status_handler = ReviewStatusHandler()
 
-    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    html_builder: report_to_html.HtmlBuilder | None = None
     if export == 'html':
         html_builder = report_to_html.HtmlBuilder(
             context.path_plist_to_html_dist,

@@ -6,12 +6,10 @@
 #
 # -------------------------------------------------------------------------
 
-from typing import Optional
-
 
 class CheckerLabels:
-    def severity(self, a: str, b: Optional[str] = None) -> str:
+    def severity(self, a: str, b: str | None = None) -> str:
         raise NotImplementedError()
 
-    def label_of_checker(self, a: str, b: str, c: Optional[str] = None) -> str:
+    def label_of_checker(self, a: str, b: str, c: str | None = None) -> str:
         raise NotImplementedError()

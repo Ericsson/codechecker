@@ -20,9 +20,9 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter, \
+from codechecker_api.python.DBAccess_v6.ttypes import ReportFilter, \
     RunFilter, ExtendedReportDataType
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 
 class TestExtendedReportData(unittest.TestCase):

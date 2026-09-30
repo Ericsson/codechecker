@@ -82,7 +82,9 @@
         <v-treeview
           v-if="treeItems.length > 0"
           v-model:selected="treeSelection"
+          v-model:opened="treeOpened"
           :items="treeItems"
+          :load-children="loadChildren"
           select-strategy="independent"
           item-value="fullPath"
           open-on-click
@@ -97,7 +99,7 @@
               @update:model-value="toggleTreeItem(item)"
               @click.stop
             />
-            <v-icon v-if="item.children?.length > 0" size="small">
+            <v-icon v-if="item.isDir" size="small">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
             <v-icon v-else size="small">
@@ -174,6 +176,7 @@ const anywhereId = "anywhere-filepath";
 const allFileCounts = ref({});
 const treeSelection = ref([]);
 const treeFilter = ref("");
+const treeOpened = ref([]);
 const selectedPatterns = ref([]);
 const route = useRoute();
 
@@ -182,10 +185,11 @@ const allFullPaths = computed(() => {
   Object.keys(allFileCounts.value || {}).forEach(filePath => {
     if (!filePath) return;
     paths.add(filePath);
+    const isAbsolute = filePath.startsWith("/");
     let currentPath = "";
     filePath.split("/").slice(0, -1).forEach(part => {
       if (part === "") return;
-      currentPath += "/" + part;
+      currentPath += (currentPath || isAbsolute) ? "/" + part : part;
       paths.add(currentPath);
     });
   });
@@ -211,24 +215,26 @@ const filteredFileCounts = computed(() => {
   return filtered;
 });
 
-const treeItems = computed(() => {
+// Builds the complete nested file/directory tree from the filtered counts.
+const fullTree = computed(() => {
   const items = [];
   Object.entries(filteredFileCounts.value || {}).forEach(
     ([ filePath, count ]) => {
       if (!filePath) return;
       const numCount = typeof count === "object" && count.toNumber
         ? count.toNumber() : count;
+      const isAbsolute = filePath.startsWith("/");
       const pathParts = filePath.split("/").slice(0, -1);
       let currentLevel = items;
       let currentPath = "";
       pathParts.forEach(part => {
         if (part === "") return;
-        currentPath += "/" + part;
+        currentPath += (currentPath || isAbsolute) ? "/" + part : part;
         let existing = currentLevel.find(n => n.name === part);
         if (!existing) {
           existing = {
             name: part, fullPath: currentPath,
-            children: [], findings: 0
+            children: [], findings: 0, isDir: true
           };
           currentLevel.push(existing);
         }
@@ -242,7 +248,7 @@ const treeItems = computed(() => {
         } else {
           currentLevel.push({
             name: fileName, fullPath: filePath,
-            findings: numCount
+            findings: numCount, isDir: false
           });
         }
       }
@@ -257,6 +263,85 @@ const treeItems = computed(() => {
   items.forEach(aggregate);
   return items;
 });
+
+// Maps each fullPath to its node in fullTree for O(1) lookups.
+const nodeIndex = computed(() => {
+  const index = new Map();
+  const walk = nodes => {
+    nodes.forEach(node => {
+      index.set(node.fullPath, node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(fullTree.value);
+  return index;
+});
+
+// Creates a shallow, lazily-loadable copy of a node for the treeview.
+function toViewNode(node) {
+  const view = {
+    name: node.name,
+    fullPath: node.fullPath,
+    findings: node.findings,
+    isDir: node.isDir
+  };
+  if (node.isDir) {
+    view.children = [];
+    view.loaded = false;
+  }
+  return view;
+}
+
+const treeItems = ref([]);
+
+// Rebuilds the rendered tree from scratch and auto-expands single-child chains.
+function rebuildTreeItems() {
+  treeOpened.value = [];
+  treeItems.value = fullTree.value.map(toViewNode);
+  treeItems.value.forEach(node => {
+    if (node.isDir) autoExpandSingleChildChain(node);
+  });
+}
+
+watch(fullTree, rebuildTreeItems, { immediate: true });
+
+// Populates a directory node's immediate children on first access.
+function fillChildrenNodes(item) {
+  if (!item.isDir) return [];
+  if (!item.loaded) {
+    item.loaded = true;
+    const source = nodeIndex.value.get(item.fullPath);
+    if (source?.children?.length) {
+      item.children.push(...source.children.map(toViewNode));
+    }
+  }
+  return item.children;
+}
+
+// Opens levels downward while each has a single directory child.
+function autoExpandSingleChildChain(node) {
+  let current = node;
+  while (current?.isDir) {
+    const children = fillChildrenNodes(current);
+    if (!treeOpened.value.includes(current.fullPath)) {
+      treeOpened.value.push(current.fullPath);
+    }
+    if (children.length !== 1) break;
+    const only = children[0];
+    if (!only.isDir) break;
+    current = only;
+  }
+}
+
+// Treeview callback: lazily loads a folder's children when it is expanded.
+function loadChildren(item) {
+  const alreadyLoaded = item.loaded;
+  fillChildrenNodes(item);
+  if (!alreadyLoaded && item.children.length === 1 && item.children[0].isDir) {
+    autoExpandSingleChildChain(item.children[0]);
+  }
+  return Promise.resolve();
+}
 
 baseSelectOptionFilter.bus.on("update:url", () => {
   emit("update:url");
@@ -389,17 +474,7 @@ function toggleTreeItem(item) {
 }
 
 function isDirectory(fullPath) {
-  const find = nodes => {
-    for (const n of nodes) {
-      if (n.fullPath === fullPath) return (n.children?.length ?? 0) > 0;
-      if (n.children?.length) {
-        const r = find(n.children);
-        if (r !== null) return r;
-      }
-    }
-    return null;
-  };
-  return !!find(treeItems.value);
+  return !!nodeIndex.value.get(fullPath)?.isDir;
 }
 
 

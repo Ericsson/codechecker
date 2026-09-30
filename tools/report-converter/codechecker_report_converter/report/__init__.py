@@ -14,8 +14,7 @@ import json
 import logging
 import os
 
-from typing import Callable, Optional, Protocol, \
-        Union, Any
+from typing import Callable, Protocol, Any
 
 from .. import util
 
@@ -43,14 +42,14 @@ class File:
     def __init__(
         self,
         file_path: str,
-        file_id: Optional[str] = None,
-        content: Optional[str] = None
+        file_id: str | None = None,
+        content: str | None = None
     ):
         self.__id = file_path if file_id is None else file_id
         self.__path = file_path
         self.__original_path = file_path
         self.__content = content
-        self.__name: Optional[str] = None
+        self.__name: str | None = None
 
     @property
     def id(self) -> str:
@@ -105,7 +104,7 @@ class File:
 
         return self.__content.splitlines(keepends=True)[line - 1]
 
-    def trim(self, path_prefixes: Optional[list[str]] = None) -> str:
+    def trim(self, path_prefixes: list[str] | None = None) -> str:
         """ Removes the longest matching leading path from the file paths. """
         self.__path = util.trim_path_prefixes(
             self.__path, path_prefixes)
@@ -185,7 +184,7 @@ class BugPathPosition:
     def __init__(
         self,
         file: File,
-        file_range: Optional[Range]
+        file_range: Range | None
     ):
         self.file = file
         self.range = file_range
@@ -217,7 +216,7 @@ class BugPathEvent(BugPathPosition):
         file: File,
         line: int,
         column: int,
-        file_range: Optional[Range] = None
+        file_range: Range | None = None
     ):
         super().__init__(file, file_range)
 
@@ -262,7 +261,7 @@ class MacroExpansion(BugPathEvent):
         file: File,
         line: int,
         column: int,
-        file_range: Optional[Range] = None
+        file_range: Range | None = None
     ):
         super().__init__(message, file, line, column, file_range)
         self.name = name
@@ -291,8 +290,8 @@ class SourceReviewStatus:
     message: bytes = b""
     bug_hash: str = ""
     in_source: bool = False
-    author: Optional[str] = None
-    date: Optional[datetime] = None
+    author: str | None = None
+    date: datetime | None = None
 
     def formatted_status(self):
         return self.status.lower().replace('_', ' ').capitalize()
@@ -308,20 +307,20 @@ class Report:
         column: int,
         message: str,
         checker_name: str,
-        severity: Optional[str] = None,
-        report_hash: Optional[str] = None,
-        analyzer_name: Optional[str] = None,
-        category: Optional[str] = None,
-        type: Optional[str] = None,  # pylint: disable=redefined-builtin
-        analyzer_result_file_path: Optional[str] = None,
-        source_line: Optional[str] = None,
-        bug_path_events: Optional[list[BugPathEvent]] = None,
-        bug_path_positions: Optional[list[BugPathPosition]] = None,
-        notes: Optional[list[BugPathEvent]] = None,
-        macro_expansions: Optional[list[MacroExpansion]] = None,
-        annotations: Optional[dict[str, str]] = None,
-        static_message: Optional[str] = None,
-        review_status: Optional[SourceReviewStatus] = SourceReviewStatus()
+        severity: str | None = None,
+        report_hash: str | None = None,
+        analyzer_name: str | None = None,
+        category: str | None = None,
+        type: str | None = None,  # pylint: disable=redefined-builtin
+        analyzer_result_file_path: str | None = None,
+        source_line: str | None = None,
+        bug_path_events: list[BugPathEvent] | None = None,
+        bug_path_positions: list[BugPathPosition] | None = None,
+        notes: list[BugPathEvent] | None = None,
+        macro_expansions: list[MacroExpansion] | None = None,
+        annotations: dict[str, str] | None = None,
+        static_message: str | None = None,
+        review_status: SourceReviewStatus | None = SourceReviewStatus()
     ):
         """
         This constructor populates the members of the Report object.
@@ -363,9 +362,9 @@ class Report:
 
         self.review_status = review_status
 
-        self.__source_line: Optional[str] = source_line
-        self.__files: Optional[set[File]] = None
-        self.__changed_files: Optional[set[str]] = None
+        self.__source_line: str | None = source_line
+        self.__files: set[File] | None = None
+        self.__changed_files: set[str] | None = None
 
     @property
     def source_line(self) -> str:
@@ -388,7 +387,7 @@ class Report:
         if self.__source_line is None:
             self.__source_line = source_line
 
-    def trim_path_prefixes(self, path_prefixes: Optional[list[str]] = None):
+    def trim_path_prefixes(self, path_prefixes: list[str] | None = None):
         """ Removes the longest matching leading path from the file paths. """
         self.file.trim(path_prefixes)
 
@@ -476,8 +475,7 @@ class Report:
             self.__changed_files = changed_files
 
     # FIXME: Remove Any typing once we only have 1 SkipListHandlers not 2
-    def skip(self, skip_handlers: Optional[Union[
-            SkipListHandlers, Any]]) -> bool:
+    def skip(self, skip_handlers: SkipListHandlers | Any | None) -> bool:
         """ True if the report should be skipped. """
         if not skip_handlers:
             return False

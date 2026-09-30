@@ -13,13 +13,13 @@ import sys
 import fnmatch
 import re
 
-from typing import Optional, TextIO
+from typing import TextIO
 
 
 LOG = logging.getLogger('report-converter')
 
 
-def get_last_mod_time(file_path: str) -> Optional[float]:
+def get_last_mod_time(file_path: str) -> float | None:
     """ Return the last modification time of a file. """
     try:
         return os.stat(file_path).st_mtime
@@ -62,7 +62,7 @@ def get_line(file_path: str, line_no: int, errors: str = 'ignore') -> str:
         return ''
 
 
-def trim_path_prefixes(path: str, prefixes: Optional[list[str]]) -> str:
+def trim_path_prefixes(path: str, prefixes: list[str] | None) -> str:
     """
     Removes the longest matching leading path from the file path.
     """
@@ -102,7 +102,7 @@ def trim_path_prefixes(path: str, prefixes: Optional[list[str]]) -> str:
 
 def dump_json_output(
     data: dict,
-    output_file_path: Optional[str] = None,
+    output_file_path: str | None = None,
     out=sys.stdout
 ) -> str:
     """

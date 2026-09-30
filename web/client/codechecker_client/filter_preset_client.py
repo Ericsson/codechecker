@@ -16,7 +16,7 @@ from codechecker_report_converter import twodim
 
 from codechecker_common import logger
 from codechecker_common.util import thrift_to_json
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.DBAccess_v6 import ttypes
 
 from .client import setup_client
 from .cmd_line_client import parse_report_filter_offline

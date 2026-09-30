@@ -12,8 +12,8 @@ Argument handlers for the 'CodeChecker cmd product' subcommands.
 
 import sys
 
-from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
-    ProductConfiguration
+from codechecker_api.python.ProductManagement_v6.ttypes import \
+    DatabaseConnection, ProductConfiguration
 
 from codechecker_report_converter import twodim
 

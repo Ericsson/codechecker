@@ -18,7 +18,6 @@ import subprocess
 import sys
 import shlex
 
-from typing import Optional
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
@@ -73,7 +72,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         """
         Return the version number of the binary that CodeChecker found, even
         if it's incompatible.
@@ -81,7 +80,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def is_binary_version_incompatible(cls) -> Optional[str]:
+    def is_binary_version_incompatible(cls) -> str | None:
         """
         CodeChecker can only execute certain versions of analyzers.
         Returns a error object (an optional string). If the return value is

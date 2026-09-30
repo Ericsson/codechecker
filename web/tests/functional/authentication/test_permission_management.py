@@ -14,7 +14,7 @@ import json
 import os
 import unittest
 
-from codechecker_api_shared.ttypes import Permission
+from codechecker_api.python.shared.ttypes import Permission
 
 from libtest import codechecker, env
 

@@ -4,6 +4,8 @@
 //  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // -------------------------------------------------------------------------
 
+namespace py codechecker_api.python.shared
+
 /**
  * Helper enum for expressing a three-way boolean in a filter.
  */

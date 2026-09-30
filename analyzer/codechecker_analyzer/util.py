@@ -11,7 +11,8 @@ Utility functions for the CodeChecker analyzer.
 
 import os
 import shlex
-import hashlib
+
+from codechecker_common.util import md5_hexdigest
 
 
 def analyzer_action_hash(analyzed_source_file, build_dir, build_command):
@@ -50,4 +51,4 @@ def analyzer_action_hash(analyzed_source_file, build_dir, build_command):
 
     build_info = source_file + '_' + ' '.join(args)
 
-    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+    return md5_hexdigest(build_info.encode(errors='ignore'))

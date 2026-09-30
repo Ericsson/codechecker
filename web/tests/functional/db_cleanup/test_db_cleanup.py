@@ -17,9 +17,9 @@ import shutil
 import unittest
 from shutil import copytree, rmtree
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
+from codechecker_api.python.DBAccess_v6.ttypes import CommentData, \
     ReportFilter, ReviewStatus, RunFilter, Severity
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 from codechecker_common.checker_labels import CheckerLabels
 
 from libtest import codechecker

@@ -14,7 +14,7 @@ import logging
 import os
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from codechecker_report_converter import __title__, __version__
 from codechecker_report_converter.report import File, Report
@@ -79,13 +79,13 @@ class BaseParser(metaclass=ABCMeta):
     """ Base class to manage analyzer result file. """
     def __init__(
         self,
-        checker_labels: Optional[CheckerLabels] = None,
-        file_cache: Optional[dict[str, File]] = None
+        checker_labels: CheckerLabels | None = None,
+        file_cache: dict[str, File] | None = None
     ):
         self._checker_labels = checker_labels
         self._file_cache = file_cache if file_cache is not None else {}
 
-    def get_severity(self, checker_name: str) -> Optional[str]:
+    def get_severity(self, checker_name: str) -> str | None:
         """ Get severity levels for the given checker name. """
         if self._checker_labels:
             return self._checker_labels.severity(checker_name)
@@ -103,7 +103,7 @@ class BaseParser(metaclass=ABCMeta):
     def convert(
         self,
         reports: list[Report],
-        analyzer_info: Optional[AnalyzerInfo] = None
+        analyzer_info: AnalyzerInfo | None = None
     ):
         """ Converts the given reports. """
         raise NotImplementedError("Subclasses should implement this!")

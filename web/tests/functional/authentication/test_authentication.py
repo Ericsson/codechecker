@@ -19,7 +19,7 @@ import subprocess
 import unittest
 import requests
 
-from codechecker_api_shared.ttypes import RequestFailed, Permission
+from codechecker_api.python.shared.ttypes import RequestFailed, Permission
 
 from datetime import datetime, timedelta
 from codechecker_server.session_manager \

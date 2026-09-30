@@ -19,10 +19,10 @@ import uuid
 
 import unittest
 
-from codechecker_api_shared.ttypes import RequestFailed
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
+from codechecker_api.python.shared.ttypes import RequestFailed
+from codechecker_api.python.DBAccess_v6.ttypes import CommentData, \
     CommentKind
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
 from libtest import env

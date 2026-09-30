@@ -19,7 +19,7 @@ import unittest
 import zipfile
 
 from tempfile import TemporaryDirectory
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
+from codechecker_api.python.DBAccess_v6.ttypes import RunFilter
 
 
 from libtest import codechecker

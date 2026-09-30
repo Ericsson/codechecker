@@ -28,7 +28,9 @@ class HashType(Enum):
 def __str_to_hash(string_to_hash: str, errors: str = 'ignore') -> str:
     """ Encodes the given string and generates a hash from it. """
     string_hash = string_to_hash.encode(encoding="utf-8", errors=errors)
-    return hashlib.md5(string_hash).hexdigest()
+    # FIXME: In the future, this should utilize 'md5_hexdigest()' imported
+    # from codechecker_common.util
+    return hashlib.md5(string_hash, usedforsecurity=False).hexdigest()
 
 
 def _remove_whitespace(line_content: str, old_col: int) -> tuple[str, int]:

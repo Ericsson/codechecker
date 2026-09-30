@@ -1,7 +1,6 @@
 
 # Packaging requirements
   *  [Git](https://git-scm.com/) (> 1.9.1)
-  *  [Thrift compiler](https://thrift.apache.org/) (> 0.9.2) required to generate python and javascript files
   *  Build logging
     - It is possible to build package without the ld-logger. In that case no automatic compilation database generation is done. To build ld-logger 32 and 64 bit versions automatically, `gcc multilib` and `make` is required.
     - Compilation command database can be generated with CMake during the build (run `cmake` with the `CMAKE_EXPORT_COMPILE_COMMANDS` option). CodeChecker can process the generated compilation database at runtime.
@@ -26,6 +25,7 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
   * [Marked](https://github.com/chjj/marked) (BSD) - view documentation for checkers written in markdown (generated dynamically)
   * [Dojotoolkit](https://dojotoolkit.org/) (BSD) - main framework for the web UI
   * [Highlightjs](https://highlightjs.org/) (BSD) - required for highlighting the source code
+  * [Docker](https://www.docker.com/) - to build Thrift stubs
 
 ## Install newer clang versions (Ubuntu 18.04 Bionic)
 

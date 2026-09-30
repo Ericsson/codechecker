@@ -13,17 +13,16 @@ Command line client.
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
-import hashlib
 import os
 import re
 import sys
 import shutil
 import time
 import json
-from typing import Iterable, Optional
+from typing import Iterable
 
-from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
-from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api.python.DBAccess_v6 import constants, ttypes
+from codechecker_api.python.shared.ttypes import RequestFailed
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import File, Report, report_file, \
     reports as reports_helper
@@ -37,7 +36,7 @@ from codechecker_report_converter.util import dump_json_output
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.review_status_handler import ReviewStatusHandler
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, md5_hexdigest
 
 from codechecker_web.shared import convert, webserver_context
 
@@ -82,7 +81,7 @@ def filter_local_file_remote_run(
     return local_dirs, baseline_files, run_names
 
 
-def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
+def run_sort_type_str(value: ttypes.RunSortType) -> str | None:
     """ Converts the given run sort type to string. """
     if value == ttypes.RunSortType.NAME:
         return 'name'
@@ -98,7 +97,7 @@ def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
     assert False, f"Unknown ttypes.RunSortType: {value}"
 
 
-def run_sort_type_enum(value: str) -> Optional[ttypes.RunSortType]:
+def run_sort_type_enum(value: str) -> ttypes.RunSortType | None:
     """ Returns the given run sort type Thrift enum value. """
     if value == 'name':
         return ttypes.RunSortType.NAME
@@ -1282,7 +1281,7 @@ def print_reports(
 
     statistics = Statistics()
     changed_files: set[str] = set()
-    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    html_builder: report_to_html.HtmlBuilder | None = None
     for report in reports:
         statistics.add_report(report)
 
@@ -1316,10 +1315,9 @@ def print_reports(
             for file_path, file_reports in file_report_map.items():
                 file_name = os.path.basename(file_path)
                 h = int(
-                    hashlib.md5(
-                        file_path.encode('utf-8')).hexdigest(),
+                    md5_hexdigest(
+                        file_path.encode('utf-8')),
                     16) % (10 ** 8)
-
                 output_file_path = os.path.join(
                     output_dir, f"{file_name}_ {str(h)}.html")
                 html_builder.create(output_file_path, file_reports)
@@ -1571,7 +1569,7 @@ def handle_list_result_types(args):
     def checker_count(checker_dict, key):
         return checker_dict.get(key, 0)
 
-    def formatted_guidelines(guideline_rules: Iterable[dict]) -> Optional[str]:
+    def formatted_guidelines(guideline_rules: Iterable[dict]) -> str | None:
         return ";  ".join(
             f"{guideline_rule['guideline']}: "
             f"{', '.join(guideline_rule['rules'])}"

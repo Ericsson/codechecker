@@ -11,16 +11,13 @@ This is a simple example how we can write our own Python client for a
 CodeChecker server.
 
 For available API functions see the .thrift files:
-  https://github.com/Ericsson/codechecker/tree/master/web/api
+  https://github.com/Ericsson/codechecker/tree/master/codechecker_api
 """
 
 import argparse
 import getpass
-import re
-import subprocess
 import sys
 
-from typing import Optional
 
 try:
     # pylint: disable=no-name-in-module
@@ -36,35 +33,27 @@ except Exception:
 
 
 try:
-    from codechecker_api.Authentication_v6 import \
+    from codechecker_api.python.Authentication_v6 import \
         codeCheckerAuthentication as AuthAPI_v6
-    from codechecker_api.codeCheckerDBAccess_v6 import \
+    from codechecker_api.python.DBAccess_v6 import \
         codeCheckerDBAccess as ReportAPI_v6
-    from codechecker_api.ProductManagement_v6 import \
+    from codechecker_api.python.ProductManagement_v6 import \
         codeCheckerProductService as ProductAPI_v6
-    from codechecker_api.ServerInfo_v6 import \
+    from codechecker_api.python.ServerInfo_v6 import \
         serverInfoService as ServerInfoAPI_v6
 
-    from codechecker_api_shared.ttypes import RequestFailed
+    from codechecker_api.python.shared.ttypes import RequestFailed
 except Exception:
-    print("'codechecker_api' and 'codechecker_api_shared' must be available "
-          "in your environment to run this script. Please install it before "
-          "you run this script again:")
-    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py"
-          "/codechecker_api/dist/codechecker_api.tar.gz")
-    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py"
-          "/codechecker_api_shared/dist/codechecker_api_shared.tar.gz")
+    print("The 'codechecker_api' package must be available in your "
+          "environment to run this script. The Thrift API stubs are generated "
+          "by running 'make package' or 'make dev_package' in the root of the "
+          "repository (this requires Docker).")
     sys.exit(1)
 
 
 def get_client_api_version() -> str:
-    """ Get client api version from the installed codechecker package. """
-    p = subprocess.run([
-        "pip3", "show", "codechecker_api"], stdout=subprocess.PIPE,
-        check=False)
-    ver = p.stdout.decode('utf-8').strip().split('\n')[1]
-    res = re.search('^Version: (.*)$', ver)
-    return res.group(1)
+    """ Get the client API version. """
+    return "6.74"
 
 
 CLIENT_API = get_client_api_version()
@@ -74,8 +63,8 @@ def create_client(
     args,
     cls,
     endpoint: str,
-    product_name: Optional[str] = None,
-    token: Optional[str] = None
+    product_name: str | None = None,
+    token: str | None = None
 ):
     """ Create a Thrift client. """
     url = f"{args.protocol}://{args.host}:{args.port}/"
@@ -168,9 +157,9 @@ def __add_arguments_to_parser(parser):
                         help="CodeChecker server protocol.")
 
     parser.add_argument('--host',
-                    dest="host",
-                    default="localhost",
-                    help="CodeChecker server host.")
+                        dest="host",
+                        default="localhost",
+                        help="CodeChecker server host.")
 
     parser.add_argument('--port',
                         dest="port",
@@ -185,6 +174,7 @@ def __add_arguments_to_parser(parser):
     parser.add_argument('--password',
                         dest="password",
                         help="Password.")
+
 
 if __name__ == "__main__":
     main()

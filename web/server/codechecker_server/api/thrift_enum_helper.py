@@ -10,13 +10,12 @@ Thrift enum helper.
 """
 
 
-from typing import Optional
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+from codechecker_api.python.DBAccess_v6.ttypes import DetectionStatus, \
         ExtendedReportDataType, ReportStatus, ReviewStatus
-from codechecker_api.ProductManagement_v6.ttypes import Confidentiality
+from codechecker_api.python.ProductManagement_v6.ttypes import Confidentiality
 
 
-def detection_status_enum(status: Optional[str]) -> Optional[DetectionStatus]:
+def detection_status_enum(status: str | None) -> DetectionStatus | None:
     if status is None:
         return None
     elif status == 'new':
@@ -35,7 +34,7 @@ def detection_status_enum(status: Optional[str]) -> Optional[DetectionStatus]:
     assert False, f"Unknown detection status: {status}"
 
 
-def detection_status_str(status: Optional[DetectionStatus]) -> Optional[str]:
+def detection_status_str(status: DetectionStatus | None) -> str | None:
     if status is None:
         return None
     elif status == DetectionStatus.NEW:
@@ -55,8 +54,8 @@ def detection_status_str(status: Optional[DetectionStatus]) -> Optional[str]:
 
 
 def confidentiality_enum(
-    confidentiality: Optional[str]
-) -> Optional[Confidentiality]:
+    confidentiality: str | None
+) -> Confidentiality | None:
     """
     Converts the given string to confidentiality Thrift enum value.
     """
@@ -73,8 +72,8 @@ def confidentiality_enum(
 
 
 def confidentiality_str(
-    confidentiality: Optional[Confidentiality]
-) -> Optional[str]:
+    confidentiality: Confidentiality | None
+) -> str | None:
     """
     Converts the given confidentiality to string.
     """
@@ -90,7 +89,7 @@ def confidentiality_str(
     assert False, f"Unknown confidentiality: {confidentiality}"
 
 
-def review_status_str(status: Optional[ReviewStatus]) -> Optional[str]:
+def review_status_str(status: ReviewStatus | None) -> str | None:
     """
     Returns the given review status Thrift enum value.
     """
@@ -108,7 +107,7 @@ def review_status_str(status: Optional[ReviewStatus]) -> Optional[str]:
     assert False, f"Unknown review status: {status}"
 
 
-def review_status_enum(status: Optional[str]) -> Optional[ReviewStatus]:
+def review_status_enum(status: str | None) -> ReviewStatus | None:
     """
     Converts the given review status to string.
     """
@@ -127,8 +126,8 @@ def review_status_enum(status: Optional[str]) -> Optional[ReviewStatus]:
 
 
 def report_extended_data_type_str(
-    status: Optional[ExtendedReportDataType]
-) -> Optional[str]:
+    status: ExtendedReportDataType | None
+) -> str | None:
     """
     Converts the given extended data type to string.
     """
@@ -145,8 +144,8 @@ def report_extended_data_type_str(
 
 
 def report_extended_data_type_enum(
-    status: Optional[str]
-) -> Optional[ExtendedReportDataType]:
+    status: str | None
+) -> ExtendedReportDataType | None:
     """
     Returns the given extended report data Thrift enum value.
     """
@@ -162,7 +161,7 @@ def report_extended_data_type_enum(
     assert False, f"Unknown ExtendedReportDataType: {status}"
 
 
-def report_status_str(status: Optional[ReportStatus]) -> Optional[str]:
+def report_status_str(status: ReportStatus | None) -> str | None:
     """
     Returns the given report status Thrift enum value.
     """
@@ -176,7 +175,7 @@ def report_status_str(status: Optional[ReportStatus]) -> Optional[str]:
     assert False, f"Unknown report status: {status}"
 
 
-def report_status_enum(status: Optional[str]) -> Optional[ReportStatus]:
+def report_status_enum(status: str | None) -> ReportStatus | None:
     """
     Converts the given report status to string.
     """

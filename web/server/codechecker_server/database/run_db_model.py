@@ -14,7 +14,6 @@ from math import ceil
 import os
 import json
 import hashlib
-from typing import Optional
 import zlib
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
@@ -388,7 +387,7 @@ class ReportPathData(Base):
         to_col: int
         file_id: int
         type: str
-        msg: Optional[str] = None
+        msg: str | None = None
 
     _path_data = Column("path_data", LargeBinary, nullable=False)
 
@@ -519,7 +518,7 @@ class Report(Base):
     def __init__(self,
                  file_id: int,
                  run_id: int,
-                 bug_id: Optional[str],
+                 bug_id: str | None,
                  checker: Checker,
                  line: int,
                  column: int,
@@ -527,11 +526,11 @@ class Report(Base):
                  checker_message: str,
                  detection_status,
                  review_status,
-                 review_status_author: Optional[str],
-                 review_status_message: Optional[bytes],
-                 review_status_date: Optional[datetime],
+                 review_status_author: str | None,
+                 review_status_message: bytes | None,
+                 review_status_date: datetime | None,
                  review_status_is_in_source: bool, detection_date: datetime,
-                 fixed_date: Optional[datetime]):
+                 fixed_date: datetime | None):
         self.file_id = file_id
         self.run_id = run_id
         self.bug_id = bug_id

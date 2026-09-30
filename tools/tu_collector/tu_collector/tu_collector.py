@@ -32,7 +32,7 @@ from multiprocessing import Pool
 from shutil import which
 
 from pathlib import Path
-from typing import Iterable, Iterator, Optional, Union
+from typing import Iterable, Iterator
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -68,7 +68,7 @@ def __random_string(length: int) -> str:
                    for i in range(length))
 
 
-def __get_toolchain_compiler(command: list[str]) -> Optional[str]:
+def __get_toolchain_compiler(command: list[str]) -> str | None:
     """
     Clang can be given a GCC toolchain so that the standard libs of that GCC
     are used. This function returns the path of the GCC toolchain compiler.
@@ -122,7 +122,7 @@ def __determine_compiler(gcc_command: list[str]) -> str:
 
 
 def __gather_dependencies(
-    cmd: Union[str, list[str]],
+    cmd: str | list[str],
     build_dir: str
 ) -> list[str]:
     """
@@ -260,7 +260,10 @@ def __analyzer_action_hash(build_action: CompileAction) -> str:
 
     build_info = source_file + '_' + ' '.join(args)
 
-    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+    # FIXME: In the future, this should utilize 'md5_hexdigest()' imported
+    # from codechecker_common.util
+    return hashlib.md5(build_info.encode(errors='ignore'),
+                       usedforsecurity=False).hexdigest()
 
 
 def __get_ctu_buildactions(
@@ -299,7 +302,7 @@ def __get_ctu_buildactions(
 
 
 def get_dependent_headers(
-    command: Union[str, list[str]],
+    command: str | list[str],
     build_dir_path: str,
     collect_toolchain=True
 ) -> tuple[set[str], str]:
@@ -350,8 +353,8 @@ def get_dependent_headers(
 
 
 def add_sources_to_zip(
-    zip_file: Union[str, Path],
-    files: Union[str, Iterable[str]]
+    zip_file: str | Path,
+    files: str | Iterable[str]
 ):
     """
     This function adds source files to the ZIP file if those are not present
@@ -379,11 +382,11 @@ def add_sources_to_zip(
 
 
 def zip_tu_files(
-    zip_file: Union[str, Path],
-    compilation_db: Union[str, CompilationDB],
+    zip_file: str | Path,
+    compilation_db: str | CompilationDB,
     file_filter='*',
     write_mode='w',
-    ctu_deps_dir: Optional[str] = None
+    ctu_deps_dir: str | None = None
 ):
     """
     Collects all files to a zip file which are required for the compilation of
@@ -487,7 +490,7 @@ def __get_dependent_headers_for_build_action(build_action: CompileAction
 
 def get_dependent_sources(
     compilation_db: CompilationDB,
-    header_paths: Optional[list[str]] = None,
+    header_paths: list[str] | None = None,
     jobs: int = 1
 ) -> set[str]:
     """ Get dependencies for each files in each translation unit. """

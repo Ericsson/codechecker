@@ -25,8 +25,8 @@ from libtest import project
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.ttypes import DetectionStatus
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 test_dir = os.path.dirname(os.path.realpath(__file__))
 

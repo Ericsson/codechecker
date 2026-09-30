@@ -12,12 +12,11 @@ analysis results and associated information, which a CodeChecker server can
 connect to.
 """
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
-from codechecker_api_shared.ttypes import DBStatus
+from codechecker_api.python.shared.ttypes import DBStatus
 
 from codechecker_common.logger import get_logger
 
@@ -210,8 +209,8 @@ class Product:
 
     def set_cached_run_data(self,
                             config_db_session_factory,
-                            number_of_runs_change: Optional[int] = None,
-                            last_store_date: Optional[datetime] = None):
+                            number_of_runs_change: int | None = None,
+                            last_store_date: datetime | None = None):
         """
         Update the configuration database row for the current `Product`
         for the keys that contain cached summaries of what would otherwise

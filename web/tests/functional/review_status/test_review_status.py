@@ -21,11 +21,11 @@ import uuid
 
 from typing import Callable
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
+from codechecker_api.python.DBAccess_v6.ttypes import CommentKind, \
     DetectionStatus, Order, ReviewStatus, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunFilter
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import env, codechecker, plist_test, project
 from libtest.thrift_client_to_db import get_all_run_results

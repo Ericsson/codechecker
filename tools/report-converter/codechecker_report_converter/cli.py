@@ -16,7 +16,7 @@ import os
 import shutil
 import sys
 
-from typing import Any, Iterable, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 
 
 # If we run this script in an environment where 'codechecker_report_converter'
@@ -108,7 +108,7 @@ def transform_output(
     file_name: str,
     export_type: str,
     clean: bool = False,
-    metadata: Optional[dict[str, str]] = None
+    metadata: dict[str, str] | None = None
 ):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
@@ -152,7 +152,7 @@ class CollectFiles(argparse.Action):
         self,
         option_strings: Sequence[str],
         dest: str,
-        nargs: Union[int, str, None],
+        nargs: int | str | None,
         **kwargs
     ) -> None:
         if nargs != "+":
@@ -163,8 +163,8 @@ class CollectFiles(argparse.Action):
         self,
         parser: argparse.ArgumentParser,
         namespace: argparse.Namespace,
-        values: Union[str, Sequence[Any], None],
-        option_string: Union[str, None] = None
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None
     ):
         # Type of "values" can have any of the indicated types above. But in
         # argument parser it is given by "nargs='+'", so it will be a list in

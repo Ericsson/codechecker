@@ -23,7 +23,7 @@ import socket
 import ssl
 import sys
 import time
-from typing import Optional, cast
+from typing import cast
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import make_url
@@ -33,18 +33,18 @@ from thrift.transport import TTransport
 from thrift.Thrift import TApplicationException
 from thrift.Thrift import TMessageType
 
-from codechecker_api_shared.ttypes import DBStatus
-from codechecker_api.Authentication_v6 import \
+from codechecker_api.python.shared.ttypes import DBStatus
+from codechecker_api.python.Authentication_v6 import \
     codeCheckerAuthentication as AuthAPI_v6
-from codechecker_api.Configuration_v6 import \
+from codechecker_api.python.Configuration_v6 import \
     configurationService as ConfigAPI_v6
-from codechecker_api.codeCheckerDBAccess_v6 import \
+from codechecker_api.python.DBAccess_v6 import \
     codeCheckerDBAccess as ReportAPI_v6
-from codechecker_api.ProductManagement_v6 import \
+from codechecker_api.python.ProductManagement_v6 import \
     codeCheckerProductService as ProductAPI_v6
-from codechecker_api.ServerInfo_v6 import \
+from codechecker_api.python.ServerInfo_v6 import \
     serverInfoService as ServerInfoAPI_v6
-from codechecker_api.codeCheckerServersideTasks_v6 import \
+from codechecker_api.python.ServersideTasks_v6 import \
     codeCheckerServersideTaskService as TaskAPI_v6
 
 from codechecker_common import util
@@ -53,7 +53,6 @@ from codechecker_common.compatibility.multiprocessing import \
 from codechecker_common.logger import get_logger, signal_log
 
 from codechecker_web.shared import database_status
-from codechecker_web.shared.version import get_version_str
 
 from . import instance_manager, permissions, routing, session_manager
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
@@ -118,7 +117,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(result)
 
-    def __check_session_header(self) -> Optional[_Session]:
+    def __check_session_header(self) -> _Session | None:
         """
         Check the CodeChecker privileged access cookie in the request headers.
 
@@ -507,7 +506,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 error_msg = \
                     "The API version you are using is not supported " \
                     "by this server (server API version: " \
-                    f"{get_version_str()})!"
+                    f"{self.server.context.api_version})!"
                 self.send_thrift_exception(error_msg, iprot, oprot, otrans)
                 return
 
@@ -549,7 +548,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
 def _do_db_cleanup(context, check_env,
                    id_: int, endpoint: str, display_name: str,
-                   connection_str: str) -> tuple[Optional[bool], str]:
+                   connection_str: str) -> tuple[bool | None, str]:
     # This functions is a concurrent job handler!
     try:
         prod = Product(id_, endpoint, display_name, connection_str,
@@ -666,6 +665,8 @@ class CCSimpleHttpServer(HTTPServer):
         self.check_env = check_env
         self.address, self.port = server_address
         self.__products = {}
+
+        LOG.info("Server API version: %s", self.context.api_version)
 
         # Create a database engine for the configuration database.
         LOG.debug("Creating database engine for CONFIG DATABASE...")
@@ -1025,8 +1026,8 @@ def start_server(config_directory: str, workspace_directory: str,
                  listen_address: str, force_auth: bool,
                  skip_db_cleanup: bool, context, check_env,
                  machine_id: str,
-                 api_handler_processes: Optional[int],
-                 task_worker_processes: Optional[int]) -> int:
+                 api_handler_processes: int | None,
+                 task_worker_processes: int | None) -> int:
     """
     Starts the HTTP server to handle Web client and Thrift requests, execute
     background jobs.

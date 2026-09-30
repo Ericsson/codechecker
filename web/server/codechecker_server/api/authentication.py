@@ -17,15 +17,14 @@ from urllib.parse import urlparse, parse_qs
 
 import datetime
 import json
-import codechecker_api_shared
+import codechecker_api.python.shared as codechecker_api_shared
 import random
 import sqlalchemy
 import string
 
 from collections import defaultdict
-from typing import Optional
 
-from codechecker_api.Authentication_v6.ttypes import AccessControl, \
+from codechecker_api.python.Authentication_v6.ttypes import AccessControl, \
     AuthorisationList, HandshakeInformation, Permissions, \
     PersonalAccessToken, SessionTokenData
 from sqlalchemy.orm import sessionmaker
@@ -55,7 +54,7 @@ class ThriftAuthHandler:
     Handle Thrift authentication requests.
     """
     __manager: SessionManager
-    __auth_session: Optional[_Session]
+    __auth_session: _Session | None
     __config_db: sessionmaker
 
     def __init__(self, manager, auth_session, config_database):

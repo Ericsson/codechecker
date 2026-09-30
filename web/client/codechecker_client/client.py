@@ -15,13 +15,13 @@ import sys
 from thrift.Thrift import TApplicationException
 
 
-import codechecker_api_shared
-from codechecker_api.Authentication_v6 import ttypes as AuthTypes
+import codechecker_api.python.shared as codechecker_api_shared
+from codechecker_api.python.Authentication_v6 import ttypes as AuthTypes
 
 from codechecker_common.logger import get_logger
 
 from codechecker_web.shared import env
-from codechecker_web.shared.version import CLIENT_API
+from codechecker_web.shared.webserver_context import get_context
 
 from .credential_manager import UserCredentials
 from .helpers.authentication import ThriftAuthHelper
@@ -32,6 +32,7 @@ from .helpers.tasks import ThriftServersideTaskHelper
 from .product import split_product_url
 
 LOG = get_logger('system')
+CLIENT_API = get_context().api_version
 
 
 def check_preconfigured_username(username, host, port):

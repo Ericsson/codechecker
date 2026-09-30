@@ -10,7 +10,7 @@ Handle Thrift requests for configuration.
 """
 
 
-import codechecker_api_shared
+import codechecker_api.python.shared as codechecker_api_shared
 
 from codechecker_common.logger import get_logger
 

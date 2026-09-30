@@ -10,7 +10,7 @@ import logging
 import os
 import re
 
-from typing import Iterator, Optional
+from typing import Iterator
 
 from codechecker_report_converter.report import BugPathEvent, File, \
     get_or_create_file, Report
@@ -46,7 +46,7 @@ class SANParser(BaseParser):
         self,
         it: Iterator[str],
         line: str
-    ) -> tuple[Optional[Report], str]:
+    ) -> tuple[Report | None, str]:
         """ Parses ThreadSanitizer output message. """
         match = self.line_re.match(line)
         if not match:
@@ -79,7 +79,7 @@ class SANParser(BaseParser):
 
         return [], next(it)
 
-    def parse_stack_trace_line(self, line: str) -> Optional[BugPathEvent]:
+    def parse_stack_trace_line(self, line: str) -> BugPathEvent | None:
         """ Parse the given stack trace line.
 
         Return an event if the file in the stack trace line exists otherwise
@@ -109,7 +109,7 @@ class SANParser(BaseParser):
         column: int,
         message: str,
         stack_traces: list[str],
-        checker_name: Optional[str] = None
+        checker_name: str | None = None
     ) -> Report:
         """
         Create a report for the sanitizer output with the given data.

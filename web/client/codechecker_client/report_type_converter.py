@@ -10,7 +10,7 @@
 
 from typing import Callable
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+from codechecker_api.python.DBAccess_v6.ttypes import \
     ExtendedReportDataType, ReportData, Severity
 
 from codechecker_report_converter.report import BugPathEvent, \

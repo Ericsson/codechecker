@@ -20,10 +20,10 @@ import unittest
 import uuid
 from datetime import datetime, timedelta
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
+from codechecker_api.python.DBAccess_v6.ttypes import CompareData, \
     DiffType, Order, ReportFilter, ReviewStatus, RunHistoryFilter, \
     RunSortMode, RunSortType, Severity
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_report_converter.report import InvalidFileContentMsg
 

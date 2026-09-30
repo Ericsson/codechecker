@@ -11,7 +11,6 @@ Cppcheck related functions.
 
 from collections import defaultdict
 import sys
-from typing import Optional
 from pathlib import Path
 import os
 import re
@@ -60,7 +59,7 @@ def parse_checkers(cppcheck_output):
     return checkers
 
 
-def parse_version(cppcheck_output) -> Optional[Version]:
+def parse_version(cppcheck_output) -> Version | None:
     """
     Parse cppcheck version output and return the version number.
     """
@@ -89,7 +88,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
         if not cls.analyzer_binary():

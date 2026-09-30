@@ -18,7 +18,7 @@ import yaml
 import os
 import pathlib
 import random
-from typing import TextIO, Union
+from typing import TextIO
 
 import portalocker
 
@@ -59,7 +59,7 @@ def chunks(iterator, n):
         yield itertools.chain([first], rest_of_chunk)
 
 
-def load_json(path: Union[str, pathlib.Path],
+def load_json(path: str | pathlib.Path,
               default=None,
               lock=False,
               display_warning=True):
@@ -192,6 +192,15 @@ def load_args_from_file(filepath: str) -> list[str]:
             replace_env_var(filepath),
             f.read().strip())
         return shlex.split(content)
+
+
+def md5_hexdigest(data: bytes) -> str:
+    """
+    Computes MD5 hash with non-cryptographic flag for FIPS compliance.
+    """
+    # 'usedforsecurity=False' allows non-cryptographic MD5 hashing on
+    # FIPS-enforced hosts. (https://docs.python.org/3/library/hashlib.html)
+    return hashlib.md5(data, usedforsecurity=False).hexdigest()
 
 
 # TODO: This class is used for checking if a path exists. This class should

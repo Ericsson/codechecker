@@ -411,6 +411,7 @@
       "memory-safety:cwe-476",
       "sei-cert-c:arr30-c",
       "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
       "sei-cert-cpp:arr30-c",
       "sei-cert-cpp:exp34-c",
       "severity:HIGH"
@@ -767,6 +768,10 @@
       "profile:sensitive",
       "cwe-vulnerabilities:cwe-476",
       "cwe-top-25-2025:cwe-476",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp",
       "severity:HIGH"
     ],
     "nullability.NullReturnedFromNonnull": [
@@ -782,29 +787,49 @@
       "cwe-vulnerabilities:cwe-476",
       "cwe-top-25-2025:cwe-476",
       "memory-safety:cwe-476",
-      "severity:HIGH"
+      "severity:HIGH",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "nullability.NullabilityBase": [
       "profile:extreme",
-      "profile:sensitive"
+      "profile:sensitive",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "nullability.NullableDereferenced": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullabledereferenced-objc",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "nullability.NullablePassedToNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablepassedtononnull-objc",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "nullability.NullableReturnedFromNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablereturnedfromnonnull-objc",
       "profile:extreme",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "severity:MEDIUM",
+      "sei-cert-c:exp34-c",
+      "sei-cert-cpp:exp34-c",
+      "guideline:sei-cert-c",
+      "guideline:sei-cert-cpp"
     ],
     "optin.core.EnumCastOutOfRange": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-enumcastoutofrange-c-c",

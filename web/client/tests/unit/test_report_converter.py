@@ -15,7 +15,7 @@ import unittest
 from codechecker_report_converter.report import File, Report
 
 from codechecker_client import report_type_converter
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.DBAccess_v6 import ttypes
 
 
 class ReportTypeConverterTest(unittest.TestCase):

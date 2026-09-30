@@ -15,7 +15,7 @@ import sys
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.Thrift import TApplicationException
 
-import codechecker_api_shared
+import codechecker_api.python.shared as codechecker_api_shared
 
 from codechecker_common.logger import get_logger
 

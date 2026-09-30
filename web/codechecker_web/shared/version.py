@@ -16,20 +16,3 @@ and client, related to API and other version-specific information.
 # DEPRECATED: Session-based authentication will be removed in a future version.
 # Use the Authorization header instead.
 SESSION_COOKIE_NAME = '__ccPrivilegedAccessToken'
-
-# The newest supported minor version (value) for each supported major version
-# (key) in this particular build.
-SUPPORTED_VERSIONS = {
-    6: 74
-}
-
-# Used by the client to automatically identify the latest major and minor
-# version.
-CLIENT_API = \
-    f'{max(SUPPORTED_VERSIONS.keys())}.' \
-    f'{SUPPORTED_VERSIONS[max(SUPPORTED_VERSIONS.keys())]}'
-
-
-def get_version_str():
-    return ', '.join(f"v{str(major)}.{str(minor)}"
-                     for major, minor in SUPPORTED_VERSIONS.items())

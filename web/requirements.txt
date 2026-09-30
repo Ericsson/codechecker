@@ -7,7 +7,7 @@
 Authlib~=1.6
 requests~=2.0  # Required by Authlib. Not installed automatically for some reason.
 lxml~=6.0
-sqlalchemy~=2.0
+sqlalchemy~=2.0.0
 alembic~=1.5
 portalocker~=3.0
 psutil~=7.0
@@ -20,6 +20,3 @@ types-PyYAML~=6.0
 sarif-tools~=3.0
 argcomplete~=3.0
 prettytable~=3.0
-
-./api/py/codechecker_api/dist/codechecker_api.tar.gz
-./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz

@@ -12,7 +12,7 @@ Map between database statuses and the corresponding messages.
 """
 
 
-from codechecker_api_shared.ttypes import DBStatus
+from codechecker_api.python.shared.ttypes import DBStatus
 
 db_status_msg = {
     DBStatus.OK: "Database is up to date.",

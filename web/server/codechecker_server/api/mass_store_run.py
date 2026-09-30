@@ -23,13 +23,13 @@ import sqlalchemy
 from sqlalchemy.orm import Session as SA_Session
 import tempfile
 import time
-from typing import Any, Callable, NoReturn, \
-    Optional, Union, cast
+from typing import Any, Callable, NoReturn, cast
 import zipfile
 import zlib
 
-from codechecker_api_shared.ttypes import DBStatus, ErrorCode, RequestFailed
-from codechecker_api.codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.python.shared.ttypes import \
+    DBStatus, ErrorCode, RequestFailed
+from codechecker_api.python.DBAccess_v6 import ttypes
 
 from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger
@@ -129,7 +129,7 @@ class RunLock:
             # could not obtain lock on row in relation "run_locks"
             # This is the reason why we have to wrap this query to a try/except
             # block.
-            run_lock: Optional[DBRunLock] = self.__session.query(DBRunLock) \
+            run_lock: DBRunLock | None = self.__session.query(DBRunLock) \
                 .filter(DBRunLock.name == self.__run_name) \
                 .with_for_update(nowait=True) \
                 .one_or_none()
@@ -210,7 +210,7 @@ class RunLock:
         # Using with_for_update() here so the database (in case it supports
         # this operation) locks the lock record's row from any other access.
         LOG.debug("Releasing 'run_lock' from run '%s' ...")
-        run_lock: Optional[DBRunLock] = self.__session.query(DBRunLock) \
+        run_lock: DBRunLock | None = self.__session.query(DBRunLock) \
             .filter(DBRunLock.name == self.__run_name) \
             .with_for_update(nowait=True).one()
         if not run_lock:
@@ -342,7 +342,7 @@ def add_file_record(
     session: DBSession,
     file_path: str,
     content_hash: str
-) -> Optional[int]:
+) -> int | None:
     """
     Add the necessary file record pointing to an already existing content.
     Returns the added file record id or None, if the content_hash is not
@@ -409,7 +409,7 @@ def add_file_record(
 
 def get_blame_file_data(
     blame_file: Path
-) -> tuple[Optional[str], Optional[str], Optional[str]]:
+) -> tuple[str | None, str | None, str | None]:
     """
     Get blame information from the given file.
 
@@ -458,11 +458,11 @@ class MassStoreRunInputHandler:
                  package_context,
                  product_id: int,
                  run_name: str,
-                 run_description: Optional[str],
-                 store_tag: Optional[str],
+                 run_description: str | None,
+                 store_tag: str | None,
                  client_version: str,
                  force_overwrite_of_run: bool,
-                 path_prefixes_to_trim: Optional[list[str]],
+                 path_prefixes_to_trim: list[str] | None,
                  zipfile_contents_base64: str,
                  user_name: str):
         self._input_handling_start_time = time.time()
@@ -481,7 +481,7 @@ class MassStoreRunInputHandler:
         self.user_name = user_name
 
         with DBSession(self._config_db) as session:
-            product: Optional[Product] = session.get(Product, product_id)
+            product: Product | None = session.get(Product, product_id)
             if not product:
                 raise KeyError(f"No product with ID '{product_id}'")
 
@@ -576,7 +576,7 @@ class MassStoreRunInputHandler:
         Checks the maximum allowed number of uploadable runs for the current
         product.
         """
-        run_limit: Optional[int] = self._session_manager.get_max_run_count()
+        run_limit: int | None = self._session_manager.get_max_run_count()
         if self._product.run_limit:
             run_limit = self._product.run_limit
 
@@ -588,7 +588,7 @@ class MassStoreRunInputHandler:
                   self._product.endpoint, run_limit)
 
         with DBSession(self._product_db) as session:
-            existing_run: Optional[Run] = session.query(Run) \
+            existing_run: Run | None = session.query(Run) \
                 .filter(Run.name == self.run_name) \
                 .one_or_none()
             run_count = session.query(Run.id).count()
@@ -644,7 +644,7 @@ class MassStoreRunTask(AbstractTask):
             raise
 
         with DBSession(tm.configuration_database_session_factory) as session:
-            db_product: Optional[Product] = \
+            db_product: Product | None = \
                 session.get(Product, self._product_id)
             if not db_product:
                 raise KeyError(f"No product with ID '{self._product_id}'")
@@ -699,11 +699,11 @@ class MassStoreRun:
                  config_db,
                  product: ServerProduct,
                  name: str,
-                 tag: Optional[str],
-                 version: Optional[str],
+                 tag: str | None,
+                 version: str | None,
                  force: bool,
-                 trim_path_prefix_list: Optional[list[str]],
-                 description: Optional[str],
+                 trim_path_prefix_list: list[str] | None,
+                 description: str | None,
                  user_name: str,
                  ):
         self._zip_dir = zip_dir
@@ -733,7 +733,7 @@ class MassStoreRun:
         self.__reports_with_fake_checkers: dict[
             # Either a DBReport *without* an ID, or the ID of a committed
             # DBReport.
-            str, tuple[Report, Union[DBReport, int]]] = {}
+            str, tuple[Report, DBReport | int]] = {}
 
         with DBSession(config_db) as session:
             product = session.get(Product, self.__product.id)
@@ -838,7 +838,7 @@ class MassStoreRun:
         self,
         session: SA_Session,
         source_file_name: str,
-        content_hash: Optional[str]
+        content_hash: str | None
     ) -> str:
         """
         Add the necessary file contents. If content_hash in None then this
@@ -1213,11 +1213,11 @@ class MassStoreRun:
     def __get_checker(self,
                       session: DBSession,
                       analyzer_name: str,
-                      checker_name: str) -> Optional[Checker]:
+                      checker_name: str) -> Checker | None:
         try:
             return self.__checker_row_cache[(analyzer_name, checker_name)]
         except KeyError:
-            maybe_orm: Optional[Checker] = session.query(Checker) \
+            maybe_orm: Checker | None = session.query(Checker) \
                 .filter(sqlalchemy.and_(
                     Checker.analyzer_name == analyzer_name,
                     Checker.checker_name == checker_name)) \
@@ -1229,7 +1229,7 @@ class MassStoreRun:
 
     def __checker_for_report(self,
                              session: DBSession,
-                             report: Report) -> Optional[Checker]:
+                             report: Report) -> Checker | None:
         analyzer_name, checker_name = checker_name_for_report(report)
         return self.__get_checker(session, analyzer_name, checker_name)
 
@@ -1244,8 +1244,8 @@ class MassStoreRun:
         detection_status: str,
         detection_time: datetime,
         run_history_time: datetime,
-        analysis_info: Optional[AnalysisInfo],
-        fixed_at: Optional[datetime] = None
+        analysis_info: AnalysisInfo | None,
+        fixed_at: datetime | None = None
     ) -> int:
         """ Add report to the database. """
         checker = self.__checker_for_report(session, report)

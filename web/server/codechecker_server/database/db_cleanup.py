@@ -10,13 +10,12 @@ Contains housekeeping routines that are used to remove expired, obsolete,
 or dangling records from the database.
 """
 from datetime import datetime, timedelta
-from typing import Optional
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import union
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
+from codechecker_api.python.DBAccess_v6.ttypes import Severity
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -419,7 +418,7 @@ def add_foreign_keys(session, table_name, foreign_keys):
 
 def delete_expired_auth_sessions(config_db_sessionmaker: sessionmaker,
                                  session_lifetime: int,
-                                 user_name: Optional[str]):
+                                 user_name: str | None):
     """
     Cleanup expired auth_sessions from the config database.
     If 'user_name' is specified, we only remove expired auth_sessions

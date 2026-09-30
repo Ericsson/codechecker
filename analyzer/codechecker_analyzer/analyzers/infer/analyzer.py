@@ -14,7 +14,6 @@ import shlex
 import subprocess
 from pathlib import Path
 import sys
-from typing import Optional
 from semver.version import Version
 
 from codechecker_common import util
@@ -178,7 +177,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
 
     @classmethod
-    def get_binary_version(cls) -> Optional[Version]:
+    def get_binary_version(cls) -> Version | None:
         """
         Return the analyzer version.
         """

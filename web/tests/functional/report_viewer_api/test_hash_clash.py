@@ -23,9 +23,9 @@ from uuid import uuid4
 from libtest import env
 from libtest import codechecker
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
+from codechecker_api.python.DBAccess_v6.ttypes import Encoding, \
     RunFilter, ReportFilter
-from codechecker_api.codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from . import setup_class_common, teardown_class_common
 

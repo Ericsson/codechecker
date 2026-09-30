@@ -10,7 +10,6 @@ import json
 import logging
 import os
 
-from typing import Optional
 
 from codechecker_report_converter.report import BugPathEvent, File, \
     get_or_create_file, Report
@@ -98,7 +97,7 @@ CodeChecker store ./codechecker_fbinfer_reports -n fbinfer"""
         LOG.warning("No source file found: %s", source_path)
         return None
 
-    def __parse_report(self, bug) -> Optional[Report]:
+    def __parse_report(self, bug) -> Report | None:
         """ Parse the given report and create a message from them. """
         report_hash = bug['hash']
         checker_name = bug['bug_type']
@@ -129,7 +128,7 @@ CodeChecker store ./codechecker_fbinfer_reports -n fbinfer"""
 
         return report
 
-    def __parse_bug_trace(self, bug_trace) -> Optional[BugPathEvent]:
+    def __parse_bug_trace(self, bug_trace) -> BugPathEvent | None:
         """ Creates event from a bug trace element. """
         source_path = self.__get_abs_path(bug_trace['filename'])
         if not source_path:

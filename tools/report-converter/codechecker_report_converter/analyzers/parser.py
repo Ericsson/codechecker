@@ -10,7 +10,7 @@ import logging
 import os
 
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, Iterator, Optional
+from typing import Iterable, Iterator
 
 from codechecker_report_converter.report import File, Report
 
@@ -58,7 +58,7 @@ class BaseParser(metaclass=ABCMeta):
     def _get_analyzer_result_file_content(
         self,
         result_file_path: str
-    ) -> Optional[list[str]]:
+    ) -> list[str] | None:
         """ Return the content of the given file. """
         if not os.path.exists(result_file_path):
             LOG.error("Result file does not exists: %s", result_file_path)

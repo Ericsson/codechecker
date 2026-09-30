@@ -7,8 +7,7 @@
 # -------------------------------------------------------------------------
 from collections import defaultdict
 import os
-from typing import Any, cast, Iterable, Optional, \
-    Union
+from typing import Any, cast, Iterable
 
 from codechecker_common.util import load_json
 
@@ -143,7 +142,7 @@ class CheckerLabels:
 
     def __get_analyzer_data(
         self,
-        analyzer: Optional[str] = None
+        analyzer: str | None = None
     ) -> Iterable[tuple[str, Any]]:
         """
         Most functions of this class require an analyzer name which determines
@@ -162,7 +161,7 @@ class CheckerLabels:
     def checkers_by_labels(
         self,
         filter_labels: Iterable[str],
-        analyzer: Optional[str] = None
+        analyzer: str | None = None
     ) -> list[str]:
         """
         Returns a list of checkers that have at least one of the specified
@@ -190,8 +189,8 @@ class CheckerLabels:
         self,
         checker: str,
         label: str,
-        analyzer: Optional[str] = None
-    ) -> Union[str, list[str]]:
+        analyzer: str | None = None
+    ) -> str | list[str]:
         """
         If a label has unique constraint then this function retuns the value
         that belongs to the given label or the default value that is set among
@@ -217,7 +216,7 @@ class CheckerLabels:
         # cover this case properly.
         return list(set(labels))
 
-    def severity(self, checker: str, analyzer: Optional[str] = None) -> str:
+    def severity(self, checker: str, analyzer: str | None = None) -> str:
         """
         Shorthand for the following call:
         checker_labels.label_of_checker(checker, 'severity', analyzer)
@@ -227,7 +226,7 @@ class CheckerLabels:
     def labels_of_checker(
         self,
         checker: str,
-        analyzer: Optional[str] = None
+        analyzer: str | None = None
     ) -> list[tuple[str, str]]:
         """
         Return the list of labels of a checker. The list contains (label,
@@ -238,7 +237,7 @@ class CheckerLabels:
         labels: list[tuple[str, str]] = []
 
         for _, checkers in self.__get_analyzer_data(analyzer):
-            c: Optional[str] = checker
+            c: str | None = checker
 
             if c not in checkers:
                 c = next(filter(
@@ -258,7 +257,7 @@ class CheckerLabels:
         """
         return self.__descriptions.get(label, {})
 
-    def checkers(self, analyzer: Optional[str] = None) -> list[str]:
+    def checkers(self, analyzer: str | None = None) -> list[str]:
         """
         Return the list of available checkers.
         """
@@ -269,7 +268,7 @@ class CheckerLabels:
 
         return collection
 
-    def labels(self, analyzer: Optional[str] = None) -> list[str]:
+    def labels(self, analyzer: str | None = None) -> list[str]:
         """
         Returns a list of occurring labels.
         """
@@ -285,7 +284,7 @@ class CheckerLabels:
     def occurring_values(
         self,
         label: str,
-        analyzer: Optional[str] = None
+        analyzer: str | None = None
     ) -> list[str]:
         """
         Return the list of values belonging to the given label which were used

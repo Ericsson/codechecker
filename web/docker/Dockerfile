@@ -77,9 +77,6 @@ COPY --from=builder /codechecker/web/build/CodeChecker /codechecker
 COPY --from=builder /codechecker/web/requirements_py /requirements_py
 COPY --from=builder /codechecker/web/requirements.txt /requirements_py
 
-# Copy local API packages (Python, Node).
-COPY --from=builder /codechecker/web/api /api
-
 # Install python requirements.
 RUN apt-get update -qq  && \
   apt-get install -qqy --no-install-recommends \
@@ -121,6 +118,7 @@ RUN chown codechecker:codechecker /codechecker
 ENV PATH="/codechecker/bin:$PATH"
 
 COPY web/docker/entrypoint.sh /usr/local/bin/
+COPY web/docker/healthcheck.py /usr/local/bin/
 RUN chmod a+x /usr/local/bin/entrypoint.sh \
   && chown codechecker:codechecker /usr/local/bin/entrypoint.sh
 
@@ -133,7 +131,7 @@ RUN chmod 755 /usr/local/bin/wait-for
 EXPOSE 8001
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=10 \
-  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/live', timeout=3).read()" || exit 1
+  CMD python3 /usr/local/bin/healthcheck.py
 
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint.sh"]
 
