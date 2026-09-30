@@ -41,15 +41,17 @@ def get_changed_files(reports: list[Report]):
     return changed_files
 
 
-def dump_changed_files(changed_files: set[str]):
+def dump_changed_files(changed_files: set[str], as_error: bool = False):
     """ Dump changed files. """
     if not changed_files:
         return
 
+    log_func = LOG.error if as_error else LOG.warning
+
     file_paths = '\n'.join([' - ' + f for f in changed_files])
-    LOG.warning("The following source file contents changed or missing since "
-                "the latest analysis:\n%s\nPlease re-analyze your "
-                "project to update the reports!", file_paths)
+    log_func("The following source file contents changed or missing since "
+             "the latest analysis:\n%s\nPlease re-analyze your "
+             "project to update the reports!", file_paths)
 
 
 def skip(
