@@ -5,13 +5,24 @@ JSON file. The output of the script is a ZIP package with the collected
 sources.
 
 ## Install guide
+`tu-collector` is part of the CodeChecker package, it is not distributed as a
+standalone package. It is installed together with CodeChecker:
+```sh
+pip3 install codechecker
+```
+
+To use it from the source, build a CodeChecker package in the **root** of the
+repository:
 ```sh
 # Create a Python virtualenv and set it as your environment.
 make venv
 source $PWD/venv/bin/activate
 
-# Build and install tu-collector package.
+# Build a CodeChecker package.
 make package
+
+# For ease of access, add the build directory to PATH.
+export PATH="$PWD/build/CodeChecker/bin:$PATH"
 ```
 
 ## Usage

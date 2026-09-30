@@ -80,11 +80,9 @@ ifeq ($(BUILD_UI_DIST),YES)
 	echo $(LATEST_COMMIT) > $(LATEST_COMMIT_FILE)
 endif
 
-build_report_converter:
-	$(MAKE) -C $(CC_TOOLS)/report-converter build
-
-package_report_converter: build_report_converter package_dir_structure
-	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+package_report_converter: package_dir_structure
+	$(MAKE) -C $(CC_TOOLS)/report-converter codemirror
+	cp -rp $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../lib/python3/codechecker_report_converter/cli.py report-converter

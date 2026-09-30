@@ -62,6 +62,11 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install gcc-multilib
 
+      - name: Build the package
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
       - name: Run build-logger tests
         working-directory: analyzer/tools/build-logger
         run: |
@@ -85,7 +90,7 @@ jobs:
         working-directory: tools/report-converter
         run: |
           pip install -r requirements_py/dev/requirements.txt
-          make package
+          make codemirror
           make test
 
       - name: Run tu-collector tests
