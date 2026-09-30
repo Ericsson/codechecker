@@ -127,6 +127,41 @@ class TestCtu(unittest.TestCase):
         self.assertIn('Analysis finished', str(proc.stdout))
 
     @skipUnlessCTUCapable
+    def test_ctu_file_filter_matching_nothing_skips_pre_analysis(self):
+        """
+        If the '--file' filter matches none of the compilation commands, then
+        the CTU pre-analysis shouldn't run, because nothing is analyzed after
+        it.
+        """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', self.buildlog,
+               '--file', '*/nothing/aaaaaaaaaaa.js']
+        proc = run(cmd, cwd=self.test_dir, env=self.env, check=False,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn('No analysis is required', str(proc.stdout))
+        self.assertNotIn('Pre-analysis', str(proc.stdout))
+
+    @skipUnlessCTUCapable
+    def test_ctu_file_filter_matching_some_runs_pre_analysis(self):
+        """
+        If the '--file' filter matches some of the compilation commands, then
+        the CTU pre-analysis still has to run, because the analyzed files may
+        use definitions from the skipped ones.
+        """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', self.buildlog,
+               '--file', os.path.join(self.test_dir, 'main.c')]
+        proc = run(cmd, cwd=self.test_dir, env=self.env, check=False,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.assertEqual(proc.returncode, 0)
+        self.assertNotIn('No analysis is required', str(proc.stdout))
+        self.assertIn('Pre-analysis started', str(proc.stdout))
+        self.assertIn('analyzed main.c successfully', str(proc.stdout))
+
+    @skipUnlessCTUCapable
     def test_ctu_loading_mode_requires_ctu_mode(self):
         """ Test ctu-ast-mode option requires ctu mode enabled. """
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
