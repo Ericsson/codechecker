@@ -40,7 +40,7 @@ from codechecker_common.util import format_size, load_json, path_for_fake_root
 from codechecker_report_converter import twodim
 from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import \
-    FakeChecker, Report, UnknownChecker, report_file
+    FakeChecker, Report, UnknownChecker, coverage, report_file
 from codechecker_report_converter.report.hash import get_report_path_hash
 
 from ..database import db_cleanup
@@ -53,7 +53,7 @@ from ..database.run_db_model import \
     File, FileContent, \
     Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
     Run, RunLock as DBRunLock, RunHistory, \
-    SourceComponent, SourceComponentFile
+    SourceComponent, SourceComponentFile, TestCoverage
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_annotations import report_annotation_types
@@ -435,6 +435,42 @@ def get_blame_file_data(
     return blame_info, remote_url, tracking_branch
 
 
+def get_skip_handler(report_dir: Path) -> skiplist_handler.SkipListHandler:
+    """ Get a skip list handler based on the given report directory. """
+    skip_file_path = report_dir / "skip_file"
+    if not skip_file_path.exists():
+        return skiplist_handler.SkipListHandler()
+
+    LOG.debug("Pocessing skip file %s", skip_file_path)
+    try:
+        with open(skip_file_path, encoding="utf-8", errors="ignore") as f:
+            skip_content = f.read()
+            LOG.debug(skip_content)
+
+            return skiplist_handler.SkipListHandler(skip_content)
+    except (IOError, OSError) as err:
+        LOG.error("Failed to open skip file: %s", err)
+        raise
+
+
+def merge_file_coverage(
+    cov1: coverage.FileCoverage,
+    cov2: coverage.FileCoverage
+) -> coverage.FileCoverage:
+    """
+    Merge the coverage of the same source file coming from multiple report
+    directories. A line is covered if it is covered in any of them.
+    """
+    covered = set(cov1.covered_lines) | set(cov2.covered_lines)
+    uncovered = (set(cov1.uncovered_lines) | set(cov2.uncovered_lines)) \
+        - covered
+
+    return coverage.FileCoverage(
+        sorted(covered), sorted(uncovered),
+        max(cov1.functions_found, cov2.functions_found),
+        max(cov1.functions_hit, cov2.functions_hit))
+
+
 def checker_name_for_report(report: Report) -> tuple[str, str]:
     return (report.analyzer_name or UnknownChecker[0],
             report.checker_name or UnknownChecker[1])
@@ -730,6 +766,8 @@ class MassStoreRun:
         self.__new_report_hashes: dict[str, tuple] = {}
         self.__all_report_checkers: set[str] = set()
         self.__added_reports: list[tuple[DBReport, Report]] = []
+        self.__file_coverages: dict[int, coverage.FileCoverage] = {}
+        self.__has_coverage_file = False
         self.__reports_with_fake_checkers: dict[
             # Either a DBReport *without* an ID, or the ID of a committed
             # DBReport.
@@ -1600,26 +1638,6 @@ class MassStoreRun:
     ):
         """ Parse up and store the plist report files. """
 
-        def get_skip_handler(
-            report_dir: Path
-        ) -> skiplist_handler.SkipListHandler:
-            """ Get a skip list handler based on the given report directory."""
-            skip_file_path = report_dir / "skip_file"
-            if not skip_file_path.exists():
-                return skiplist_handler.SkipListHandler()
-
-            LOG.debug("Pocessing skip file %s", skip_file_path)
-            try:
-                with open(skip_file_path,
-                          encoding="utf-8", errors="ignore") as f:
-                    skip_content = f.read()
-                    LOG.debug(skip_content)
-
-                    return skiplist_handler.SkipListHandler(skip_content)
-            except (IOError, OSError) as err:
-                LOG.error("Failed to open skip file: %s", err)
-                raise
-
         # Reset internal data.
         self.__already_added_report_hashes = set()
         self.__new_report_hashes = {}
@@ -1762,6 +1780,95 @@ class MassStoreRun:
 
         return False
 
+    def __parse_coverage_files(
+        self,
+        report_dir: Path,
+        file_path_to_id: dict[str, int]
+    ):
+        """
+        Parse the test coverage files (created by e.g. 'report-converter -t
+        lcov') of the stored report directories. Only the source files which
+        are part of the current storage are considered, the server never reads
+        source files from its own file system.
+
+        The client puts the coverage file of a report directory next to its
+        'metadata.json' (reports/<dir>/coverage.json). Files with the same name
+        deeper in the tree (e.g. in the 'conf' directory) are not coverage
+        data of the report directory, so they are not parsed.
+        """
+        matched_paths: set[str] = set()
+        unmatched_paths: set[str] = set()
+        skipped_paths: set[str] = set()
+
+        report_dir_paths = sorted(
+            entry.path for entry in os.scandir(report_dir)
+            if entry.is_dir()) if report_dir.is_dir() else []
+
+        for root_dir_path in report_dir_paths:
+            coverage_file_path = os.path.join(
+                root_dir_path, coverage.COVERAGE_FILE_NAME)
+            if not os.path.isfile(coverage_file_path):
+                continue
+
+            self.__graceful_cancel_if_requested()
+            self.__has_coverage_file = True
+            try:
+                with open(coverage_file_path, encoding="utf-8") as f:
+                    file_coverages = coverage.parse(json.load(f))
+            except (OSError, ValueError, coverage.CoverageFileError) as ex:
+                # The message of this exception is shown to the user as the
+                # reason of the failed storage.
+                raise ValueError(f"Invalid test coverage file: {ex}") from ex
+
+            skip_handler = get_skip_handler(Path(root_dir_path))
+
+            for file_path, file_coverage in file_coverages.items():
+                if skip_handler.should_skip(file_path):
+                    skipped_paths.add(file_path)
+                    continue
+
+                file_id = file_path_to_id.get(
+                    trim_path_prefixes(file_path, self._trim_path_prefixes))
+                if file_id is None:
+                    unmatched_paths.add(file_path)
+                    continue
+
+                matched_paths.add(file_path)
+                if file_id in self.__file_coverages:
+                    file_coverage = merge_file_coverage(
+                        self.__file_coverages[file_id], file_coverage)
+                self.__file_coverages[file_id] = file_coverage
+
+        if unmatched_paths:
+            LOG.warning("[%s] Test coverage data of %d source file(s) was "
+                        "not stored, because these files were not uploaded "
+                        "by the client: %s", self._name, len(unmatched_paths),
+                        ', '.join(sorted(unmatched_paths)[:10]) +
+                        (', ...' if len(unmatched_paths) > 10 else ''))
+
+        if matched_paths or unmatched_paths or skipped_paths:
+            LOG.info("[%s] Test coverage data found for %d source file(s) "
+                     "(skipped: %d, not uploaded: %d).", self._name,
+                     len(matched_paths), len(skipped_paths),
+                     len(unmatched_paths))
+
+    def __store_coverage(self, session: SA_Session, run_id: int):
+        """
+        Replace the test coverage data of the given run with the coverage
+        parsed by __parse_coverage_files().
+        """
+        session.query(TestCoverage) \
+            .filter(TestCoverage.run_id == run_id) \
+            .delete(synchronize_session=False)
+
+        session.add_all(
+            TestCoverage(run_id, file_id,
+                         file_coverage.covered_lines,
+                         file_coverage.uncovered_lines,
+                         file_coverage.functions_found,
+                         file_coverage.functions_hit)
+            for file_id, file_coverage in self.__file_coverages.items())
+
     def store(self,
               original_zip_size: int,
               time_spent_on_task_preparation: float):
@@ -1797,6 +1904,9 @@ class MassStoreRun:
                     self.__mips[root_dir_path] = \
                         MetadataInfoParser(metadata_file_path)
 
+            with StepLog(self._name, "Parse test coverage files"):
+                self.__parse_coverage_files(report_dir, file_path_to_id)
+
             self.__graceful_cancel_if_requested()
             with StepLog(self._name,
                          "Store look-up ID for checkers in 'metadata.json'"):
@@ -1820,6 +1930,15 @@ class MassStoreRun:
                         self.__store_reports(
                             session, report_dir, source_root, run_id,
                             file_path_to_id, run_history_time)
+
+                    # The test coverage of a run is replaced only if the
+                    # current storage contains a test coverage file. If none
+                    # of its source files were uploaded, the previous
+                    # coverage of the run is removed, so stale data is not
+                    # shown.
+                    if self.__has_coverage_file:
+                        with StepLog(self._name, "Store test coverage"):
+                            self.__store_coverage(session, run_id)
 
                     self.__graceful_cancel_if_requested()
                     session.commit()

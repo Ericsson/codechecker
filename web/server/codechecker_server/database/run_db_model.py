@@ -677,6 +677,65 @@ class CleanupPlanReportHash(Base):
     bug_hash = Column(String, primary_key=True)
 
 
+class TestCoverage(Base):
+    """
+    Test coverage of a source file in a run. The line numbers of the covered
+    and the executable but uncovered lines are stored as zlib compressed JSON
+    arrays, the counts are stored separately so statistics can be computed
+    without decompressing the line data.
+    """
+    __tablename__ = 'test_coverage'
+
+    __table_args__ = (
+        UniqueConstraint('run_id', 'file_id'),
+    )
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    run_id = Column(Integer,
+                    ForeignKey('runs.id',
+                               deferrable=True,
+                               initially="DEFERRED",
+                               ondelete='CASCADE'),
+                    nullable=False)
+    file_id = Column(Integer,
+                     ForeignKey('files.id',
+                                deferrable=True,
+                                initially="DEFERRED",
+                                ondelete='CASCADE'),
+                     nullable=False, index=True)
+    lines_found = Column(Integer, nullable=False)
+    lines_hit = Column(Integer, nullable=False)
+    functions_found = Column(Integer, nullable=False)
+    functions_hit = Column(Integer, nullable=False)
+    covered_lines = Column(LargeBinary, nullable=False)
+    uncovered_lines = Column(LargeBinary, nullable=False)
+
+    def __init__(self,
+                 run_id: int,
+                 file_id: int,
+                 covered_lines: list[int],
+                 uncovered_lines: list[int],
+                 functions_found: int,
+                 functions_hit: int):
+        self.run_id = run_id
+        self.file_id = file_id
+        self.lines_found = len(covered_lines) + len(uncovered_lines)
+        self.lines_hit = len(covered_lines)
+        self.functions_found = functions_found
+        self.functions_hit = functions_hit
+        self.covered_lines = TestCoverage.encode_lines(covered_lines)
+        self.uncovered_lines = TestCoverage.encode_lines(uncovered_lines)
+
+    @staticmethod
+    def encode_lines(lines: list[int]) -> bytes:
+        return zlib.compress(json.dumps(lines).encode('utf-8'),
+                             zlib.Z_BEST_COMPRESSION)
+
+    @staticmethod
+    def decode_lines(data: bytes) -> list[int]:
+        return json.loads(zlib.decompress(data).decode('utf-8'))
+
+
 IDENTIFIER = {
     'identifier': "RunDatabase",
     'orm_meta': CC_META
