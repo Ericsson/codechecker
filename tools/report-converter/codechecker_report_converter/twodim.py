@@ -210,6 +210,31 @@ def _fit_table_to_width(
     return table.get_string()
 
 
+def _effective_locale_supports_utf8() -> bool:
+    """
+    Returns whether the character set of the effective locale supports UTF-8
+    output.
+
+    The locale is read from the standard environment variables with the
+    precedence required by POSIX: LC_ALL overrides LC_CTYPE, which overrides
+    LANG. Locales without an explicit character set (such as C or POSIX,
+    which are common in CI pipelines and headless environments) specify plain
+    ASCII, and locales with a non-UTF-8 character set cannot render the
+    box-drawing characters used by the table output.
+    """
+    locale_value = (os.environ.get('LC_ALL')
+                    or os.environ.get('LC_CTYPE')
+                    or os.environ.get('LANG') or '')
+
+    if '.' not in locale_value:
+        return False
+
+    # The character set follows the language and territory parts, and may be
+    # followed by an '@modifier' suffix (e.g. "en_US.UTF-8@euro").
+    charset = locale_value.split('.', 1)[1].split('@', 1)[0]
+    return charset.upper().replace('-', '').replace('_', '') == 'UTF8'
+
+
 def _make_table(
     field_names: list[str],
     data_rows: list[list[str]],
@@ -218,7 +243,13 @@ def _make_table(
 ) -> PrettyTable:
     """Build and return a configured PrettyTable (without rendering it)."""
     table = PrettyTable()
-    table.set_style(TableStyle.SINGLE_BORDER)
+    if _effective_locale_supports_utf8():
+        table.set_style(TableStyle.SINGLE_BORDER)
+    else:
+        # The default PrettyTable style uses ASCII-only characters
+        # ("+", "-", "|"), which render correctly in non-UTF-8 environments
+        # such as ASCII-only log viewers and CI consoles.
+        table.set_style(TableStyle.DEFAULT)
     table.field_names = field_names
     table.header = show_header
     table.hrules = hrules
