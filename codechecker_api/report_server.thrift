@@ -405,6 +405,7 @@ struct ReportFilter {
   23: optional list<ReportStatus>  reportStatus, // Specifying the status of the filtered reports.
   // If set, report filter filters only the components where the whole report path is inside.
   24: optional bool fullReportPathInComponent,
+  25: optional list<string> run_labels; // A list of run labels
 }
 
 struct FilterPreset {
@@ -461,6 +462,7 @@ struct RunFilter {
   5: optional i64    afterTime,  // Filter runs that were stored to the server AFTER this time.
   6: optional string beforeRun,  // Filter runs that were stored to the server BEFORE this one.
   7: optional string afterRun,   // Filter runs that were stored to the server AFTER this one.
+  8: optional list<string> labels // A list of run labels the runs must match
 }
 
 // CompareData is used as an optinal argument for multiple API calls.
@@ -1211,4 +1213,31 @@ service codeCheckerDBAccess {
   bool unsetCleanupPlan(1: i64          cleanupPlanId,
                         2: list<string> reportHashes)
                         throws (1: shared.RequestFailed requestError),
+  
+  //============================================
+  // Run label related API calls.
+  //============================================
+
+  // Returns a list of labels the run identified with runId has.
+  // PERMISSION: PRODUCT_VIEW
+  list<string> getRunLabelsForRun(1: i64 runId)
+                                  throws (1: shared.RequestFailed requestError),
+
+  // Returns a list of labels which contain labelFilter as a substring.
+  // PERMISSION: PRODUCT_VIEW
+  list<string> getRunLabels(1: string labelFilter)
+                            throws (1: shared.RequestFailed requestError),
+
+  // Adds a label to all runs matching the runFilter.
+  // PERMISSION: PRODUCT_STORE
+  void addRunLabel(1: RunFilter runFilter,
+                   2: string    label)
+                   throws (1: shared.RequestFailed requestError),
+
+  // Removes a label from all runs matching the runFilter.
+  // PERMISSION: PRODUCT_STORE
+  void removeRunLabel(1: RunFilter runFilter,
+                      2: string    label)
+                      throws (1: shared.RequestFailed requestError),
+  
 }
