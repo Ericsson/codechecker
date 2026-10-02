@@ -135,13 +135,13 @@ def configure_utf8_output():
         sys.stdout.buffer,
         encoding='utf-8',
         errors='backslashreplace',
-        line_buffering=sys.stdout.line_buffering
+        line_buffering=bool(sys.stdout.line_buffering)
     )
     sys.stderr = io.TextIOWrapper(
         sys.stderr.buffer,
         encoding='utf-8',
         errors='backslashreplace',
-        line_buffering=sys.stderr.line_buffering
+        line_buffering=bool(sys.stderr.line_buffering)
     )
 
 

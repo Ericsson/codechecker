@@ -25,6 +25,7 @@ class ReturnValueCollector:
 
     # Checker name which runs the analysis.
     checker_analyze = 'statisticsbased.UncheckedReturnValue'
+    stats: dict[str, defaultdict[str, int]]
 
     def __init__(self, stats_min_sample_count, stats_relevance_threshold):
         self.stats_min_sample_count = stats_min_sample_count
@@ -38,8 +39,9 @@ class ReturnValueCollector:
             re.compile(r'.*warning: Return Value Check:'
                        '.*:[0-9]*:[0-9]*.*,(.*),([0,1])')
 
-        self.stats = {'total': defaultdict(int),
-                      'nof_unchecked': defaultdict(int)}
+        self.stats = {
+            'total': defaultdict(int),
+            'nof_unchecked': defaultdict(int)}
 
     @staticmethod
     def stats_file(path):
@@ -77,7 +79,7 @@ class ReturnValueCollector:
         was unchecked above the threshold.
         """
         unchecked_functions = []
-        total = self.stats.get('total')
+        total = self.stats['total']
         for key in sorted(total):
             checked_ratio = 1 - \
                     self.stats['nof_unchecked'][key]/self.stats['total'][key]

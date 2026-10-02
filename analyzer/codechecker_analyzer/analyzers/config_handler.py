@@ -47,6 +47,11 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
     Handle the checker configurations and enabled disabled checkers lists.
     """
 
+    # FIXME: The type should be the same for both ClangSA and Clang-Tidy
+    # analyzers. Currently, Clang-Tidy treats it as a str, while
+    # ClangSa as a list.
+    checker_config: str | list[str]
+
     def __init__(self):
 
         self.analyzer_extra_arguments = []

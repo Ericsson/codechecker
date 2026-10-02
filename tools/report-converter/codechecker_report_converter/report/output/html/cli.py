@@ -80,10 +80,11 @@ def main():
           f"{os.path.join(args.output_dir, 'index.html')}")
 
     if changed_source_files:
-        changed_files = '\n'.join([' - ' + f for f in changed_source_files])
+        changed_files_str = '\n'.join(
+            [' - ' + f for f in changed_source_files])
         print("\nThe following source file contents changed since the "
-              "latest analysis:\n{changed_files}\nPlease analyze your project "
-              "again to update the reports!")
+              f"latest analysis:\n{changed_files_str}\nPlease analyze "
+              "your project again to update the reports!")
 
 
 if __name__ == "__main__":

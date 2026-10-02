@@ -88,14 +88,15 @@ class Context(metaclass=Singleton):
 
         self.__set_version()
 
-        self.__api_version = (load_json(
+        api_version = (load_json(
             os.path.join(
                 self._lib_dir_path, "codechecker_api",
                 "api_version.json")) or {}).get("api_version", None)
 
-        if not self.__api_version:
+        if not api_version:
             raise RuntimeError("Failed to read codechecker_api version!")
 
+        self.__api_version: str = api_version
         self.__api_version_major, self.__api_version_minor = \
             [int(v) for v in self.__api_version.split(".")]
 

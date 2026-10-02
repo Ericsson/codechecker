@@ -18,6 +18,7 @@ import zipfile
 
 from functools import lru_cache
 from threading import Timer
+from typing import Any
 
 import multiprocess  # type: ignore
 
@@ -33,6 +34,7 @@ from . import gcc_toolchain
 from .analyzers import analyzer_types
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.config_handler import CheckerState
+from tu_collector import tu_collector
 
 LOG = get_logger('analyzer')
 
@@ -114,8 +116,8 @@ def worker_result_handler(results, metadata_tool, output_path):
 
 
 # Progress reporting.
-PROGRESS_CHECKED_NUM = None
-PROGRESS_ACTIONS = None
+PROGRESS_CHECKED_NUM: Any = None
+PROGRESS_ACTIONS: Any = None
 
 
 def init_worker(checked_num, action_num):
@@ -195,12 +197,6 @@ def prepare_check(action, analyzer_config, output_dir,
                                                   output_dir,
                                                   skip_handlers)
 
-    # NOTICE!
-    # The currently analyzed source file needs to be set before the
-    # analyzer command is constructed.
-    # The analyzer output file is based on the currently
-    # analyzed source.
-    rh.analyzed_source_file = action.source
     return source_analyzer, rh
 
 
@@ -252,7 +248,7 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
 
     LOG.debug("Collecting debug data")
 
-    buildactions = [{
+    buildactions: list[tu_collector.CompileAction] = [{
         'file': action.source,
         'command': action.original_command,
         'directory': action.directory}]
@@ -268,8 +264,6 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
                 'directory': mentioned_file_action.directory})
         else:
             LOG.debug("Could not find %s in build actions.", key)
-
-    from tu_collector import tu_collector
 
     tu_collector.zip_tu_files(zip_file, buildactions)
 

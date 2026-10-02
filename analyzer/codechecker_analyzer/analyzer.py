@@ -91,7 +91,7 @@ def __get_statistics_data(args):
 
     if statistics_data:
         statistics_data['stat_tmp_dir'] = \
-            os.path.join(statistics_data.get('stats_out_dir'), 'tmp')
+            os.path.join(statistics_data['stats_out_dir'], 'tmp')
 
     if 'stats_min_sample_count' in args and statistics_data:
         if args.stats_min_sample_count > 1:

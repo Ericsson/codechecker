@@ -44,7 +44,9 @@ def parse_checkers(cppcheck_output):
 
     tree = ET.ElementTree(ET.fromstring(cppcheck_output))
     root = tree.getroot()
+    assert root
     errors = root.find('errors')
+    assert errors
     for error in errors.findall('error'):
         name = error.attrib.get('id')
         if name:
@@ -178,7 +180,9 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 # The below check will add the next item in the
                 # analyzer_options list if the parameter is specified with a
                 # space, as that should be actual path to the include.
-                if interesting_option.match(analyzer_option).span() == (0, 2):
+                if ((interesting_match :=
+                     interesting_option.match(analyzer_option)) and
+                        interesting_match.span() == (0, 2)):
                     params.extend(
                         [self.buildaction.analyzer_options[i+1]]
                     )

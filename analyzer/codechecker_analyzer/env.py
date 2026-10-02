@@ -96,7 +96,7 @@ def get_log_env(logfile, original_env, use_absolute_ldpreload_path=False):
 
 
 def get_original_env():
-    original_env = os.environ
+    original_env: dict[str, str] | None = dict(os.environ)
     try:
         original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
         if original_env_file:
@@ -153,7 +153,7 @@ def find_by_regex_in_envpath(pattern, environment):
 
     regex = re.compile(pattern)
 
-    binaries = {}
+    binaries: dict[str, list[str]] = {}
     for path in environment['PATH'].split(os.pathsep):
         _, _, filenames = next(os.walk(path), ([], [], []))
         for f in filenames:

@@ -88,6 +88,7 @@ class ReviewStatusHandler:
         return src_comment_data
 
     def __check_format_version_1(self):
+        assert self.__data is not None
         if 'rules' not in self.__data or \
                 not isinstance(self.__data['rules'], list):
             raise ValueError(

@@ -101,7 +101,7 @@ def trim_path_prefixes(path: str, prefixes: list[str] | None) -> str:
 
 
 def dump_json_output(
-    data: dict,
+    data: object,
     output_file_path: str | None = None,
     out=sys.stdout
 ) -> str:

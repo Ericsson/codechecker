@@ -27,6 +27,7 @@ from .analyzers import analyzer_base
 from .analyzers.clangsa import ctu_manager, ctu_triple_arch
 from .analyzers.clangsa import statistics
 from .analyzers.clangsa.analyzer import ClangSA
+from typing import Any
 
 LOG = get_logger('analyzer')
 
@@ -72,8 +73,8 @@ def collect_statistics(action, source, clangsa_config, statistics_data):
 
 
 # Progress reporting.
-PROGRESS_CHECKED_NUM = None
-PROGRESS_ACTIONS = None
+PROGRESS_CHECKED_NUM: Any = None
+PROGRESS_ACTIONS: Any = None
 
 
 def init_worker(checked_num, action_num):

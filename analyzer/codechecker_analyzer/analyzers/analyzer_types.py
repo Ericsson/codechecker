@@ -16,6 +16,7 @@ import re
 import subprocess
 import sys
 
+from .analyzer_base import SourceAnalyzer
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
@@ -34,12 +35,13 @@ LOG = get_logger('analyzer')
 # that they are scheduled earlier in parallel execution, reducing total
 # wall-clock time. Do not change the order without considering the impact
 # on analysis scheduling.
-supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
-                       ClangTidy.ANALYZER_NAME: ClangTidy,
-                       Cppcheck.ANALYZER_NAME: Cppcheck,
-                       Gcc.ANALYZER_NAME: Gcc,
-                       Infer.ANALYZER_NAME: Infer
-                       }
+supported_analyzers: dict[str, type[SourceAnalyzer]] = {
+        ClangSA.ANALYZER_NAME: ClangSA,
+        ClangTidy.ANALYZER_NAME: ClangTidy,
+        Cppcheck.ANALYZER_NAME: Cppcheck,
+        Gcc.ANALYZER_NAME: Gcc,
+        Infer.ANALYZER_NAME: Infer
+}
 
 
 def is_statistics_capable():

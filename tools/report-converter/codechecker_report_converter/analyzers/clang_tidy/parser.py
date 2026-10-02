@@ -147,17 +147,20 @@ class Parser(BaseParser):
 
         while self.message_line_re.match(line) is None and \
                 self.note_line_re.match(line) is None:
-            match = self.fixit_new_re.match(line)
-            if not match:
-                match = self.fixit_old_re.match(line)
-                message_text = match.group("message")
-                # Until Clang 16, the FixIt line starts with whitespace.
-                col = line.find(message_text) + 1
-            else:
-                message_text = match.group("message")
+            new_match = self.fixit_new_re.match(line)
+            old_match = self.fixit_old_re.match(line)
+            if new_match:
+                message_text = new_match.group("message")
                 # In newer versions, we have whitespace then, optionally
                 # a line number, and then a | character.
                 col = line.find(message_text) - line.find("|") - 1
+            elif old_match:
+                message_text = old_match.group("message")
+                # Until Clang 16, the FixIt line starts with whitespace.
+                col = line.find(message_text) + 1
+            else:
+                raise ValueError(
+                    f"Unexpected line: {line}. Expected a FixIt line!")
 
             report.notes.append(BugPathEvent(
                     f"{message_text} (fixit)",
