@@ -1,0 +1,13 @@
+
+=================================================================
+==17727==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 7 byte(s) in 1 object(s) allocated from:
+    #0 0x49c2ad in __interceptor_malloc /projects/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x4ce525 in main files/lsan2.c:5:9
+
+Direct leak of 5 byte(s) in 1 object(s) allocated from:
+    #0 0x49c2ad in __interceptor_malloc /projects/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x4ce543 in main files/lsan2.c:7:16
+
+SUMMARY: AddressSanitizer: 12 byte(s) leaked in 2 allocation(s).
