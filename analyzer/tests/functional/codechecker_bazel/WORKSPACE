@@ -1,0 +1,19 @@
+workspace(name = "bazel_codechecker_test")
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "bazel_codechecker",
+    remote = "https://github.com/Szelethus/codechecker_bazel.git",
+    branch = "bin_bash_first_line",
+)
+
+load(
+    "@bazel_codechecker//src:tools.bzl",
+    "register_default_codechecker",
+    "register_default_python_toolchain",
+)
+
+register_default_python_toolchain()
+
+register_default_codechecker()
