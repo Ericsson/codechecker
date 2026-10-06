@@ -16,7 +16,6 @@ import plistlib
 import traceback
 import sys
 
-from codechecker_report_converter.util import resolve_path
 
 from plistlib import _PlistParser  # type: ignore
 from typing import Any, BinaryIO, Optional
@@ -24,6 +23,8 @@ from typing import Any, BinaryIO, Optional
 from xml.parsers.expat import ExpatError
 import lxml
 
+
+from codechecker_report_converter.util import resolve_path
 from codechecker_report_converter.report import \
     BugPathEvent, BugPathPosition, \
     File, \
