@@ -52,6 +52,18 @@
       </div>
 
       <v-btn
+        class="report-step-copy-btn"
+        variant="text"
+        :icon="isCopied ? 'mdi-check' : 'mdi-content-copy'"
+        size="small"
+        density="compact"
+        :color="isCopied ? 'green' : undefined"
+        :aria-label="isCopied ? 'Copied message' : 'Copy message'"
+        :title="isCopied ? 'Copied' : 'Copy message'"
+        @click="copyToClipboard"
+      />
+
+      <v-btn
         v-if="nextStep"
         right
         variant="text"
@@ -67,7 +79,7 @@
 <script setup>
 import { ReportStepEnumIcon } from "@/components/Icons";
 import { getCssColor } from "@/utilities/colors";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   id: { type: [ String, Number ], required: true },
@@ -125,6 +137,22 @@ function showNextReport() {
 function showDocumentation() {
   window.open(props.docUrl, "_blank");
 }
+
+const isCopied = ref(false);
+
+async function copyToClipboard() {
+  try {
+    await navigator.clipboard.writeText(props.value);
+    isCopied.value = true;
+
+    // Reset the icon back to the copy glyph after a short delay.
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2000);
+  } catch (error) {
+    console.warn("Clipboard copy failed: ", error);
+  }
+}
 </script>
 
 <style lang="scss">
@@ -153,6 +181,16 @@ function showDocumentation() {
   }
   .no-documentation-msg-text {
     color: grey
+  }
+
+  .report-step-copy-btn {
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+  }
+
+  &:hover .report-step-copy-btn,
+  &:focus-within .report-step-copy-btn {
+    opacity: 1;
   }
 }
 
