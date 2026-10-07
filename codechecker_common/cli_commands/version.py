@@ -67,16 +67,18 @@ def main(args):
     # Get analyzer version information if the module is available.
     analyzer_version = None
     try:
-        from codechecker_analyzer.cli.analyzer_version import Version
-        analyzer_version = Version()
+        from codechecker_analyzer.cli.analyzer_version import Version \
+                as AnalyzerVersion
+        analyzer_version = AnalyzerVersion()
     except Exception:
         pass
 
     # Get web version information if the module is available.
     web_version = None
     try:
-        from codechecker_web.cli.web_version import Version
-        web_version = Version()
+        from codechecker_web.cli.web_version import Version \
+                as WebVersion
+        web_version = WebVersion()
     except Exception:
         pass
 

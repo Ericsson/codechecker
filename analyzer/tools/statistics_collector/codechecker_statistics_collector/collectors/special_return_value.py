@@ -28,6 +28,8 @@ class SpecialReturnValueCollector:
     # Checker name which runs the analysis.
     checker_analyze = 'statisticsbased.SpecialReturnValue'
 
+    stats: dict[str, defaultdict[str, int]]
+
     def __init__(self, stats_min_sample_count, stats_relevance_threshold):
         self.stats_min_sample_count = stats_min_sample_count
         self.stats_relevance_threshold = stats_relevance_threshold
@@ -41,9 +43,10 @@ class SpecialReturnValueCollector:
             '.*:[0-9]*:[0-9]*.*,(.*),([0,1]),([0,1])'
         self.special_ret_val_regexp = re.compile(ptrn)
 
-        self.stats = {'total': defaultdict(int),
-                      'nof_negative': defaultdict(int),
-                      'nof_null': defaultdict(int)}
+        self.stats = {
+            'total': defaultdict(int),
+            'nof_negative': defaultdict(int),
+            'nof_null': defaultdict(int)}
 
     @staticmethod
     def stats_file(path):
@@ -82,9 +85,9 @@ class SpecialReturnValueCollector:
         neg = []
         null = []
         stats = self.stats
-        total = stats.get('total')
+        total = self.stats['total']
 
-        for key in sorted(stats.get('total').keys()):
+        for key in sorted(total.keys()):
             negative_ratio = stats['nof_negative'][key]/stats['total'][key]
             if (self.stats_relevance_threshold < negative_ratio < 1 and
                     total[key] >= self.stats_min_sample_count):

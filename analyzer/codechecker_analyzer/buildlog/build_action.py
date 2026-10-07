@@ -26,6 +26,20 @@ class BuildAction:
                  'arch',
                  'action_type']
 
+    # Type annotations for the attributes stored in __slots__.
+    analyzer_options: list[str]
+    compiler_includes: list[str]
+    compiler_standard: str
+    analyzer_type: int
+    original_command: str
+    directory: str
+    output: str
+    lang: str | None
+    target: str
+    source: str
+    arch: str
+    action_type: int | None
+
     LINK = 0
     COMPILE = 1
     PREPROCESS = 2

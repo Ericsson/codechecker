@@ -468,9 +468,9 @@ class ImplicitCompilerInfo:
         target = ""
 
         for line in lines.splitlines(True):
-            line = line.strip().split()
-            if len(line) > 1 and line[0] == target_label:
-                target = line[1]
+            parts = line.strip().split()
+            if len(parts) > 1 and parts[0] == target_label:
+                target = parts[1]
 
         return target
 
@@ -994,7 +994,7 @@ def parse_options(compilation_db_entry,
                        Clang analysis fails with error message related to
                        __builtin symbols.
     """
-    details = {
+    details: dict[str, Any] = {
         'analyzer_options': [],
         'compiler_includes': [],
         'compiler_standard': '',
@@ -1419,6 +1419,7 @@ def parse_unique_log(compilation_database,
                 elif build_action_uniqueing ==\
                         CompileActionUniqueingType.SOURCE_REGEX:
                     LOG.debug("uniqueing regex")
+                    assert uniqueing_re
                     if action.source not in uniqued_build_actions:
                         uniqued_build_actions[action.source] = action
                     elif uniqueing_re.match(action.original_command) and\

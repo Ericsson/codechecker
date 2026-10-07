@@ -123,7 +123,6 @@ def main(args):
 
         if args.dump_config == 'clang-tidy':
             subprocess.call([binary, '-dump-config', '-checks=*'],
-                            encoding="utf-8", errors="ignore",
                             env=environ)
         elif args.dump_config == 'clangsa':
             ret = subprocess.call([binary,
@@ -131,8 +130,6 @@ def main(args):
                                    '-analyzer-checker-option-help',
                                    '-analyzer-checker-option-help-alpha'],
                                   stderr=subprocess.PIPE,
-                                  encoding="utf-8",
-                                  errors="ignore",
                                   env=environ)
 
             if ret:
@@ -173,11 +170,11 @@ def main(args):
                         "be the case, try to update your analyzer or check "
                         "whether CodeChecker found the intended binary.")
 
-        rows = [
+        config_rows = [
             (':'.join((analyzer_name, c.option)), c.documentation)
             for c in configs]
 
-        print(twodim.to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, config_rows))
 
         for err_analyzer_name, err_reason in errored:
             if analyzer_name == err_analyzer_name:
@@ -196,10 +193,12 @@ def main(args):
             analyzer_types.supported_analyzers.items():
         version = analyzer_class.get_binary_version()
         if not version:
-            version = 'NOT FOUND'
+            version_str = 'NOT FOUND'
+        else:
+            version_str = str(version)
 
         binary = context.analyzer_binaries.get(analyzer_name)
-        rows.append([analyzer_name, binary, str(version)])
+        rows.append([analyzer_name, binary, version_str])
 
     assert rows
     print(twodim.to_str(args.output_format, header, rows))

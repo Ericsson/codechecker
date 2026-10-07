@@ -134,6 +134,8 @@ class MakeFileCreator:
         cmd = get_extdef_mapping_cmd(action, self.__config,
                                      action.source, self.__func_map_cmd)
 
+        assert self.__ctu_dir is not None
+        assert self.__ctu_temp_fnmap_folder is not None
         fnmap_tmp_dir = os.path.join(self.__ctu_dir, triple_arch,
                                      self.__ctu_temp_fnmap_folder)
         cmds.append(f'mkdir -p {fnmap_tmp_dir}')
@@ -163,6 +165,7 @@ class MakeFileCreator:
         stats_cmd, can_collect = build_stat_coll_cmd(action, self.__config,
                                                      action.source)
         if can_collect:
+            assert self.__stat_tmp_dir is not None
             cmds.append('mkdir -p ' + self.__stat_tmp_dir)
             _, source_filename = os.path.split(action.source)
             output_id = source_filename + str(uuid.uuid4()) + '.stat'

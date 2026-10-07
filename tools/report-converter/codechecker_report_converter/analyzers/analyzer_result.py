@@ -13,7 +13,7 @@ import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import hashlib
-from typing import Iterable
+from typing import Any, Iterable
 
 from codechecker_report_converter.report import Report, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
@@ -103,7 +103,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         """ Save metadata.json file to the output directory which will be used
         by CodeChecker.
         """
-        meta_info = {
+        meta_info: dict[str, Any] = {
             "version": 2,
             "num_of_report_dir": 1,
             "tools": []

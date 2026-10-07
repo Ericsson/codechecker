@@ -109,7 +109,7 @@ class Context(metaclass=Singleton):
         env_var_bins = {}
         if 'CC_ANALYZER_BIN' in self.cc_env:
             had_error = False
-            for value in self.__cc_env['CC_ANALYZER_BIN'].split(';'):
+            for value in self.cc_env['CC_ANALYZER_BIN'].split(';'):
                 try:
                     analyzer_name, path = analyzer_binary(value)
                 except ArgumentTypeError as e:

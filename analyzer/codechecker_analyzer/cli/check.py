@@ -1017,7 +1017,7 @@ def main(args):
     finally:
         if 'output_dir' not in args:
             shutil.rmtree(output_dir)
-        if 'command' in args:
+        if 'command' in args and logfile:
             os.remove(logfile)
 
     LOG.debug("Check finished.")

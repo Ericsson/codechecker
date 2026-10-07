@@ -19,7 +19,7 @@ import json
 import fnmatch
 
 from codechecker_report_converter.util import dump_json_output
-from codechecker_report_converter.report import report_file, \
+from codechecker_report_converter.report import File, report_file, \
     reports as reports_helper
 from codechecker_report_converter.report.output import baseline, codeclimate, \
     gerrit, sarif, json as report_to_json, plaintext
@@ -610,10 +610,10 @@ def main(args):
 
     all_reports = []
     statistics = Statistics()
-    file_cache = {}  # For memory effiency.
+    file_cache: dict[str, File] = {}  # For memory effiency.
     changed_files: set[str] = set()
-    processed_path_hashes = set()
-    processed_file_paths = set()
+    processed_path_hashes: set[str] = set()
+    processed_file_paths: set[str] = set()
     print_steps = 'print_steps' in args
     review_status_handler = ReviewStatusHandler()
 
@@ -669,7 +669,8 @@ def main(args):
                     sys.exit(1)
 
             reports = reports_helper.skip(
-                reports, processed_path_hashes, skip_handlers, suppr_handler,
+                reports, processed_path_hashes,
+                skip_handlers, suppr_handler,  # type: ignore
                 src_comment_status_filter)
 
             statistics.num_of_analyzer_result_files += 1
@@ -692,6 +693,7 @@ def main(args):
                     review_status_handler,
                     file_report_map, processed_file_paths, print_steps)
             elif export == 'html':
+                assert html_builder and output_dir_path
                 print(f"Parsing input file '{file_path}'.")
                 report_to_html.convert(
                     file_path, reports, output_dir_path,
@@ -703,24 +705,26 @@ def main(args):
     if export is None:  # Plain text output
         statistics.write()
     elif export == 'html':
+        assert html_builder and output_dir_path
         html_builder.finish(output_dir_path, statistics)
     elif export == 'json':
-        data = report_to_json.convert(all_reports)
-        dump_json_output(data, get_output_file_path("reports.json"))
+        json_data = report_to_json.convert(all_reports)
+        dump_json_output(json_data, get_output_file_path("reports.json"))
     elif export == 'codeclimate':
-        data = codeclimate.convert(all_reports)
-        dump_json_output(data, get_output_file_path("reports.json"))
+        codeclimate_data = codeclimate.convert(all_reports)
+        dump_json_output(
+            codeclimate_data, get_output_file_path("reports.json"))
     elif export == 'gerrit':
-        data = gerrit.convert(all_reports)
-        dump_json_output(data, get_output_file_path("reports.json"))
+        gerrit_data = gerrit.convert(all_reports)
+        dump_json_output(gerrit_data, get_output_file_path("reports.json"))
     elif export == 'sarif':
-        data = sarif.convert(all_reports, context.checker_labels)
-        dump_json_output(data, get_output_file_path("reports.json"))
+        sarif_data = sarif.convert(all_reports, context.checker_labels)
+        dump_json_output(sarif_data, get_output_file_path("reports.json"))
     elif export == 'baseline':
-        data = baseline.convert(all_reports)
+        baseline_data = baseline.convert(all_reports)
         output_path = get_output_file_path("reports.baseline")
         if output_path:
-            baseline.write(output_path, data)
+            baseline.write(output_path, baseline_data)
 
     reports_helper.dump_changed_files(changed_files)
 

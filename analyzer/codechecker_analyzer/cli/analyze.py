@@ -17,6 +17,7 @@ import shutil
 import sys
 from pathlib import Path
 from functools import partial
+from typing import Any, Callable
 
 from tu_collector import tu_collector
 
@@ -1246,7 +1247,7 @@ def main(args):
     __transform_deprecated_flags(args)
 
     # Validate analyzer and checker config (if any)
-    config_validator = {
+    config_validator: dict[str, Callable] = {
         'analyzer_config': partial(is_analyzer_config_valid, args),
         'checker_config': is_checker_config_valid
     }
@@ -1396,7 +1397,7 @@ def main(args):
         sys.exit(0)
     else:
         log_parser.ImplicitCompilerInfo.dump_compiler_info(
-            Path(args.output_path) / "compiler_info.json")
+            str(Path(args.output_path) / "compiler_info.json"))
 
     # TODO: I'm not sure that this directory should be created here.
     fixit_dir = os.path.join(args.output_path, 'fixit')
@@ -1410,7 +1411,7 @@ def main(args):
         json.dump(actions, f,
                   cls=log_parser.CompileCommandEncoder)
 
-    metadata = {
+    metadata: dict[str, Any] = {
         'version': 2,
         'tools': [{
             'name': 'codechecker',
@@ -1485,7 +1486,7 @@ def main(args):
 
     try:
         # pylint: disable=no-name-in-module
-        from codechecker_analyzer import analyzer_statistics
+        from codechecker_analyzer import analyzer_statistics  # type: ignore
         LOG.debug("Sending analyzer statistics started.")
         analyzer_statistics.collect(metadata, "analyze")
         LOG.debug("Sending analyzer statistics finished.")

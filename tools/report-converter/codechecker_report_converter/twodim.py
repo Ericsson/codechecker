@@ -15,7 +15,7 @@ import os
 import shutil
 
 from operator import itemgetter
-from typing import Iterable
+from typing import Any, Iterable
 
 from prettytable import HRuleStyle, PrettyTable, TableStyle
 
@@ -229,7 +229,7 @@ def _make_table(
 
 
 def to_table(
-    lines: Iterable[str],
+    lines: Iterable[Iterable[Any]],
     separate_head=True,
     separate_footer=False
 ) -> str:

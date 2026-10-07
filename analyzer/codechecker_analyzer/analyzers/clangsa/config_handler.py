@@ -20,6 +20,8 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for the clang static analyzer.
     """
 
+    add_gcc_include_dirs_with_isystem: bool
+
     def __init__(self, environ):
         super().__init__()
         self.ctu_dir = ''

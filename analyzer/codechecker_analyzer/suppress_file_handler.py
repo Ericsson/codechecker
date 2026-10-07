@@ -60,33 +60,33 @@ def get_suppress_data(suppress_file):
         src_suppress_format_match = re.match(src_suppress_format, line.strip())
         if src_suppress_format_match:
             LOG.debug('Match for source code suppress entry format:')
-            src_suppress_format_match = src_suppress_format_match.groupdict()
-            LOG.debug(src_suppress_format_match)
-            suppress_data.append((src_suppress_format_match['bug_hash'],
-                                  src_suppress_format_match['file_name'],
-                                  src_suppress_format_match['comment'],
-                                  src_suppress_format_match['status']))
+            src_suppress_data = src_suppress_format_match.groupdict()
+            LOG.debug(src_suppress_data)
+            suppress_data.append((src_suppress_data['bug_hash'],
+                                  src_suppress_data['file_name'],
+                                  src_suppress_data['comment'],
+                                  src_suppress_data['status']))
             continue
 
         new_format_match = re.match(new_format, line.strip())
         if new_format_match:
             LOG.debug('Match for new suppress entry format:')
-            new_format_match = new_format_match.groupdict()
-            LOG.debug(new_format_match)
-            suppress_data.append((new_format_match['bug_hash'],
-                                  new_format_match['file_name'],
-                                  new_format_match['comment'],
+            new_suppress_data = new_format_match.groupdict()
+            LOG.debug(new_suppress_data)
+            suppress_data.append((new_suppress_data['bug_hash'],
+                                  new_suppress_data['file_name'],
+                                  new_suppress_data['comment'],
                                   'false_positive'))
             continue
 
         old_format_match = re.match(old_format, line.strip())
         if old_format_match:
             LOG.debug('Match for old suppress entry format:')
-            old_format_match = old_format_match.groupdict()
-            LOG.debug(old_format_match)
-            suppress_data.append((old_format_match['bug_hash'],
+            old_suppress_data = old_format_match.groupdict()
+            LOG.debug(old_suppress_data)
+            suppress_data.append((old_suppress_data['bug_hash'],
                                   '',  # empty file name
-                                  old_format_match['comment'],
+                                  old_suppress_data['comment'],
                                   'false_positive'))
             continue
 

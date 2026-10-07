@@ -43,6 +43,9 @@ def execute_buildcmd(command, silent=False, environ=None, cwd=None):
         encoding="utf-8",
         errors="ignore")
 
+    if not proc.stdout:
+        return proc.returncode
+
     while True:
         line = proc.stdout.readline()
         if not line and proc.poll() is not None:
@@ -66,7 +69,7 @@ def perform_build_command(
     """
     LOG.info("Starting build...")
 
-    original_env = os.environ
+    original_env: dict[str, str] = dict(os.environ)
     try:
         original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
         if original_env_file:

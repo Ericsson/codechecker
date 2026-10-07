@@ -193,9 +193,9 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, reports,
                    diag_msg['FilePath'] == report['checkedFile']
                    for report in reports)
 
-    not_existing_files = set()
+    not_existing_files: set[str] = set()
     existing_files = set()
-    modified_files = set()
+    modified_files: set[str] = set()
 
     checker_names = make_regex(checker_names)
     file_paths = make_regex(file_paths)

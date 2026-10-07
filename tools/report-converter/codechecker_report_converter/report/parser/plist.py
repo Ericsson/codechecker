@@ -17,7 +17,7 @@ import traceback
 import sys
 
 from plistlib import _PlistParser  # type: ignore
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Callable
 
 from xml.parsers.expat import ExpatError
 import lxml
@@ -50,14 +50,10 @@ class _LXMLPlistEventHandler:
     """
     Basic lxml event handler.
     """
-    def start(self, tag, attrib):
-        pass
-
-    def end(self, tag):
-        pass
-
-    def data(self, data):
-        pass
+    def __init__(self, start: Callable, end: Callable, data: Callable):
+        self.start = start
+        self.end = end
+        self.data = data
 
     def comment(self, text):
         pass
@@ -90,13 +86,14 @@ class _LXMLPlistParser(_PlistParser):
             # After 3.9 interpreter.
             _PlistParser.__init__(self, dict_type)  # pylint: disable=E1120
 
-        self.event_handler = _LXMLPlistEventHandler()
-        self.event_handler.start = self.handle_begin_element
-        self.event_handler.end = self.handle_end_element
-        self.event_handler.data = self.handle_data
+        self.event_handler = _LXMLPlistEventHandler(
+                start=self.handle_begin_element,
+                end=self.handle_end_element,
+                data=self.handle_data)
 
         from lxml.etree import XMLParser  # pylint: disable=no-name-in-module
-        self.parser = XMLParser(target=self.event_handler)
+        self.parser = XMLParser(
+            target=self.event_handler)  # type: ignore[call-overload]
 
     def parse(self, fileobj):
         try:

@@ -17,6 +17,7 @@ class BuildAction:
     directory = '/tmp'
     analyzer_type = 'clangsa'
     original_command = None
+    source = 'main.cpp'
 
 
 class ResultHandlerTest(unittest.TestCase):

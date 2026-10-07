@@ -52,7 +52,8 @@ class InferResultHandler(ResultHandler):
         infer_dest_file_name = Path(infer_out_folder,
                                     self.buildaction_hash, "report.json")
 
-        reports = self.infer_analyzer_result.get_reports(infer_dest_file_name)
+        reports = self.infer_analyzer_result.get_reports(
+                str(infer_dest_file_name))
 
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':

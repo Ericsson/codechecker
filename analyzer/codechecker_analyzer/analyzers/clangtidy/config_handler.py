@@ -23,6 +23,8 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
     Configuration handler for Clang-tidy analyzer.
     """
 
+    add_gcc_include_dirs_with_isystem: bool
+
     def add_checker(self, checker_name, description='',
                     state=CheckerState.DISABLED):
         """

@@ -1,10 +1,12 @@
 [tool.mypy]
-verbosity = 1
 show_error_codes = true
 
 # Packages are explicitly defined at mypy_path/<package_name>,
 # rather than discovered via __init__.py.
 explicit_package_bases = true
+
+# Checks the body of every function, regardless of whether it has type annotation
+check_untyped_defs = true
 
 files = [
   "codechecker_common/",

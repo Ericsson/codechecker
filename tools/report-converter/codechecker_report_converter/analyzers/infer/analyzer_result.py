@@ -86,6 +86,7 @@ CodeChecker store ./codechecker_fbinfer_reports -n fbinfer"""
         if os.path.exists(source_path):
             return os.path.abspath(source_path)
 
+        assert self.__infer_out_parent_dir
         full_path = os.path.join(self.__infer_out_parent_dir, source_path)
         if os.path.exists(full_path):
             return full_path
