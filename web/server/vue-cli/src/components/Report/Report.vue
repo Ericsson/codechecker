@@ -521,6 +521,7 @@ class AdvancedLineWidget extends WidgetType {
 
   toDOM() {
     this.container = document.createElement("div");
+    this.container.style.userSelect = "text";
     const vnode = h(ReportStepMessage, this.data);
     vnode.appContext = this.appContext;
 
@@ -537,7 +538,7 @@ class AdvancedLineWidget extends WidgetType {
   }
 
   ignoreEvent() {
-    return false;
+    return true;
   }
 }
 
