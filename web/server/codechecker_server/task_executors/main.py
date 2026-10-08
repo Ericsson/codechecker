@@ -13,6 +13,7 @@ from datetime import timedelta
 import os
 from queue import Empty
 import signal
+import sys
 
 from sqlalchemy.orm import sessionmaker
 
@@ -65,13 +66,16 @@ def executor(queue: Queue,
                    "shutdown ...")
         kill_flag.value = True
 
-    signal.signal(signal.SIGHUP, executor_hangup_handler)
+    if sys.platform != "win32":
+        signal.signal(signal.SIGHUP, executor_hangup_handler)
 
     config_db_engine = config_db_sql_server.create_engine()
     tm = TaskManager(queue, task_pipes, sessionmaker(bind=config_db_engine),
                      server_environment, kill_flag, machine_id)
 
-    while not kill_flag.value:
+    # kill_flag is set by the SIGHUP handler, which is not registered on
+    # Windows, so also watch the flag the parent sets before joining us.
+    while not kill_flag.value and not server_shutdown_flag.value:
         try:
             # Do not block indefinitely when waiting for a job, to allow
             # checking whether the kill flags were set.
