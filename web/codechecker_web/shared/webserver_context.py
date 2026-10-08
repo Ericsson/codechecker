@@ -74,8 +74,8 @@ class Context(metaclass=Singleton):
         guidelines_dir = os.path.join(self._data_files_dir_path,
                                       'config', 'guidelines')
 
-        self._checker_labels = CheckerLabels(labels_dir)
         self._guidelines = Guidelines(guidelines_dir)
+        self._checker_labels = CheckerLabels(labels_dir, self._guidelines)
         self.__system_comment_map = load_json(self.system_comment_map_file, {})
         self.__git_commit_urls = self.__get_git_commit_urls()
         self.__package_version = None
