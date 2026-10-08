@@ -31,7 +31,8 @@ class GerritTestCase(unittest.TestCase):
 
     def tearDown(self):
         for env_var in ["CC_REPO_DIR", "CC_REPORT_URL", "CC_CHANGED_FILES",
-                        "CC_GERRIT_LABELS", "CC_GERRIT_TAG"]:
+                        "CC_GERRIT_LABELS", "CC_GERRIT_FAIL_ON_SEVERITY",
+                        "CC_GERRIT_TAG"]:
             os.environ.pop(env_var, None)
 
 
@@ -242,6 +243,65 @@ class TestReportToGerrit(GerritTestCase):
         self.assertEqual(res["labels"],
                          {"Code-Review": -1, "CI-Result": 0})
 
+    def test_report_to_gerrit_conversion_severity_gate(self):
+        """ Reports below the severity gate don't fail the review. """
+        report = Report(
+            self._src_files[0], 3, 3, 'some description', 'my_checker',
+            report_hash='dummy_hash',
+            severity='LOW')
+
+        os.environ["CC_REPO_DIR"] = self._test_files_dir
+        os.environ["CC_GERRIT_LABELS"] = "Code-Review=-1/0,Verified=-1/1"
+        os.environ["CC_GERRIT_FAIL_ON_SEVERITY"] = "HIGH"
+
+        res = gerrit.convert([report])
+
+        self.assertEqual(res["labels"],
+                         {"Code-Review": 0, "Verified": 1})
+
+        # The report is sent as a comment even if it doesn't fail the review.
+        self.assertEqual(len(res["comments"]["main.cpp"]), 1)
+        self.assertIn(
+            "None of them are at or above the 'HIGH' severity.",
+            res["message"])
+
+    def test_report_to_gerrit_conversion_severity_gate_failure(self):
+        """ Reports at or above the severity gate fail the review. """
+        report = Report(
+            self._src_files[0], 3, 3, 'some description', 'my_checker',
+            report_hash='dummy_hash',
+            severity='HIGH')
+
+        low_report = Report(
+            self._src_files[1], 3, 3, 'some description', 'my_checker',
+            report_hash='dummy_hash',
+            severity='LOW')
+
+        os.environ["CC_REPO_DIR"] = self._test_files_dir
+        os.environ["CC_GERRIT_LABELS"] = "Code-Review=-1/0,Verified=-1/1"
+        os.environ["CC_GERRIT_FAIL_ON_SEVERITY"] = "MEDIUM"
+
+        res = gerrit.convert([report, low_report])
+
+        self.assertEqual(res["labels"],
+                         {"Code-Review": -1, "Verified": -1})
+        self.assertIn(
+            "1 of them are at or above the 'MEDIUM' severity.",
+            res["message"])
+
+    def test_report_to_gerrit_conversion_severity_gate_no_severity(self):
+        """ Reports without severity don't reach a severity gate. """
+        report = Report(
+            self._src_files[0], 3, 3, 'some description', 'my_checker',
+            report_hash='dummy_hash')
+
+        os.environ["CC_REPO_DIR"] = self._test_files_dir
+        os.environ["CC_GERRIT_FAIL_ON_SEVERITY"] = "HIGH"
+
+        res = gerrit.convert([report])
+
+        self.assertEqual(res["labels"], {"Code-Review": 1, "Verified": 1})
+
     def test_report_to_gerrit_conversion_tag(self):
         """ The tag of the review can be configured. """
         report = Report(
@@ -268,8 +328,14 @@ class TestGerritConfigValidation(GerritTestCase):
 
     def test_valid_env_vars(self):
         os.environ["CC_GERRIT_LABELS"] = "Verified=-1/1,Code-Review=-1/0"
+        os.environ["CC_GERRIT_FAIL_ON_SEVERITY"] = "high"
 
         self.assertTrue(gerrit.mandatory_env_var_is_set())
+
+    def test_invalid_severity(self):
+        os.environ["CC_GERRIT_FAIL_ON_SEVERITY"] = "MINOR"
+
+        self.assertFalse(gerrit.mandatory_env_var_is_set())
 
     def test_invalid_label_name(self):
         os.environ["CC_GERRIT_LABELS"] = "=-1/1"

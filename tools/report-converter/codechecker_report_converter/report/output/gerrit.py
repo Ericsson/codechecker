@@ -21,6 +21,12 @@ CC_GERRIT_LABELS
     votes on 'Code-Review' and 'Verified' with -1/+1 whenever a report is
     found.
 
+CC_GERRIT_FAIL_ON_SEVERITY
+    The lowest severity level which makes the review fail, e.g. 'HIGH'.
+    Reports with a lower severity are still sent as comments but they
+    don't result in a negative vote. If this variable is not set then any
+    report makes the review fail (legacy behaviour).
+
 CC_GERRIT_TAG
     Tag of the Gerrit review. Defaults to 'jenkins'.
 """
@@ -40,6 +46,15 @@ from codechecker_report_converter.report import Report
 LOG = logging.getLogger('report-converter')
 
 
+# Severity levels ordered from the least to the most severe.
+SEVERITY_ORDER = [
+    'UNSPECIFIED', 'STYLE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+# Severity values which were already reported as unknown. It is used to
+# avoid logging the same warning for every report.
+UNKNOWN_SEVERITIES: set[str] = set()
+
+
 @dataclass
 class GerritLabel:
     """A Gerrit label voted by the review and the values voted with it."""
@@ -55,6 +70,9 @@ class GerritConfig:
 
     tag: str
     labels: list[GerritLabel]
+    # The lowest severity level which makes the review fail. If it is None
+    # then any report makes the review fail.
+    fail_severity: str | None = None
 
 
 def convert(reports: list[Report]) -> dict:
@@ -78,7 +96,9 @@ def convert(reports: list[Report]) -> dict:
             "found. Set this variable to choose which labels are voted on "
             "and with what values, e.g. "
             "'CC_GERRIT_LABELS=Verified=-1/1,Code-Review=-1/0', or set it to "
-            "an empty value to send the reports without any vote.")
+            "an empty value to send the reports without any vote. Use the "
+            "'CC_GERRIT_FAIL_ON_SEVERITY' variable to only fail the review "
+            "if an issue at or above the given severity level is found.")
 
     return __convert_reports(reports, repo_dir, report_url,
                              changed_files, changed_file_path,
@@ -126,7 +146,12 @@ def __read_config() -> GerritConfig:
     labels = __default_labels() if labels_value is None \
         else __parse_labels(labels_value)
 
-    return GerritConfig(tag=tag, labels=labels)
+    fail_severity = None
+    severity = os.environ.get('CC_GERRIT_FAIL_ON_SEVERITY')
+    if severity is not None:
+        fail_severity = __parse_severity(severity)
+
+    return GerritConfig(tag=tag, labels=labels, fail_severity=fail_severity)
 
 
 def __default_labels() -> list[GerritLabel]:
@@ -189,6 +214,46 @@ def __parse_vote(value: str, entry: str) -> int:
     return vote
 
 
+def __parse_severity(value: str) -> str:
+    """Parse the value of the 'CC_GERRIT_FAIL_ON_SEVERITY' env variable."""
+    severity = value.strip().upper()
+    if severity not in SEVERITY_ORDER:
+        raise ValueError(
+            f"Invalid severity '{value}' in the "
+            "'CC_GERRIT_FAIL_ON_SEVERITY' environment variable. It must be "
+            f"one of: {', '.join(SEVERITY_ORDER)}.")
+
+    return severity
+
+
+def __severity_rank(severity: str | None) -> int:
+    """Return the position of the given severity in SEVERITY_ORDER.
+
+    Unknown and missing severity values are considered as 'UNSPECIFIED'.
+    """
+    if severity is None:
+        return SEVERITY_ORDER.index('UNSPECIFIED')
+
+    severity = severity.upper()
+    if severity not in SEVERITY_ORDER:
+        if severity not in UNKNOWN_SEVERITIES:
+            UNKNOWN_SEVERITIES.add(severity)
+            LOG.warning("Unknown severity '%s' is considered as "
+                        "'UNSPECIFIED'.", severity)
+
+        return SEVERITY_ORDER.index('UNSPECIFIED')
+
+    return SEVERITY_ORDER.index(severity)
+
+
+def __num_of_reports_to_fail(reports: list[Report],
+                             fail_severity: str) -> int:
+    """Number of reports at or above the given severity level."""
+    threshold = SEVERITY_ORDER.index(fail_severity)
+    return sum(1 for report in reports
+               if __severity_rank(report.severity) >= threshold)
+
+
 def __convert_reports(reports: list[Report],
                       repo_dir: str | None,
                       report_url: str | None,
@@ -207,8 +272,8 @@ def __convert_reports(reports: list[Report],
       "http://jenkins_address/userContent/$JOB_NAME/$BUILD_NUM/index.html"
     changed_files - list of the changed files
     changed_file_path - Path of the changed files json from Gerrit.
-    config - Configuration of the review: the labels voted on and the tag
-             of the review.
+    config - Configuration of the review: the labels voted on and the
+             severity level which makes the review fail.
     """
     review_comments: dict[str, list[dict]] = {}
 
@@ -248,10 +313,26 @@ def __convert_reports(reports: list[Report],
                 "end_character": report.column},
             "message": review_comment_msg})
 
-    # Any report makes the review fail.
-    review_failed = len(reports) > 0
+    # Every report is sent as a comment but only the reports which reach the
+    # configured severity level make the review fail. If no severity level is
+    # configured then any report makes the review fail.
+    if config.fail_severity is None:
+        num_of_failing_reports = len(reports)
+    else:
+        num_of_failing_reports = __num_of_reports_to_fail(
+            reports, config.fail_severity)
+
+    review_failed = num_of_failing_reports > 0
 
     message = f"CodeChecker found {len(reports)} issue(s) in the code."
+
+    if config.fail_severity is not None:
+        if num_of_failing_reports:
+            message += (f" {num_of_failing_reports} of them are at or above "
+                        f"the '{config.fail_severity}' severity.")
+        else:
+            message += (" None of them are at or above the "
+                        f"'{config.fail_severity}' severity.")
 
     if not config.labels:
         message += " No vote was cast."
