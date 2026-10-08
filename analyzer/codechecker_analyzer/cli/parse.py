@@ -55,6 +55,19 @@ EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline', 'sarif']
 EPILOG_ENV_VAR = """
   CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
                          generating gerrit output.
+  CC_GERRIT_LABELS       Comma separated list of the Gerrit labels the review
+                         should vote on, e.g. 'Code-Review,Verified'. The vote
+                         values used on failure and on success can be given
+                         after a slash, e.g. 'Verified=-1/1'. An empty value
+                         sends the reports without any vote. If it is not set
+                         then the review votes on 'Code-Review' and 'Verified'
+                         with -1/+1 whenever a report is found.
+  CC_GERRIT_FAIL_ON_SEVERITY
+                         The lowest severity level which makes the review
+                         fail, e.g. 'HIGH'. Reports with a lower severity are
+                         still sent as comments but they don't result in a
+                         negative vote.
+  CC_GERRIT_TAG          Tag of the Gerrit review. Defaults to 'jenkins'.
   CC_REPO_DIR            Root directory of the sources, i.e. the directory
                          where the repository was cloned. Use it when
                          generating gerrit output.
