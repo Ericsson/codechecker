@@ -14,10 +14,11 @@ import os
 import re
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 from typing import Optional
 
+from authlib.integrations.base_client import OAuthError
 from authlib.integrations.requests_client import OAuth2Session
 from sqlalchemy.orm import sessionmaker
 
@@ -1125,8 +1126,7 @@ class SessionManager:
                         sess.revalidate()
                     return sess
 
-                if self.__try_extend_oauth_session(token):
-                    sess.last_access = datetime.now()
+                if self.__try_extend_oauth_session(sess):
                     return sess
                 break
 
@@ -1139,8 +1139,7 @@ class SessionManager:
                     local_session.revalidate()
                 return local_session
 
-            if self.__try_extend_oauth_session(token):
-                local_session.last_access = datetime.now()
+            if self.__try_extend_oauth_session(local_session):
                 self.__sessions.append(local_session)
                 return local_session
 
@@ -1148,14 +1147,16 @@ class SessionManager:
 
         return None
 
-    def __try_extend_oauth_session(self, token) -> bool:
+    def __try_extend_oauth_session(self, session: _Session) -> bool:
         """
         Extends an OAuth session whose lifetime has lapsed: locally
         while the access token is valid, then via a refresh token grant.
+        Updates last_access both in the DB and in the session.
         """
         if not self.__is_method_enabled('oauth'):
             return False
 
+        token = session.token
         transaction = None
         try:
             transaction = self.__config_db_sessionmaker()
@@ -1174,6 +1175,7 @@ class SessionManager:
             if oauth_token.expires_at and now < oauth_token.expires_at:
                 session_record.last_access = now
                 transaction.commit()
+                session.last_access = now
                 LOG.info("Extended session %s... locally, the %s access "
                          "token is valid until %s.",
                          token[:8], oauth_token.provider,
@@ -1198,24 +1200,26 @@ class SessionManager:
                 oauth_config['token_url'],
                 refresh_token=oauth_token.refresh_token)
 
-            if not new_token.get('access_token'):
-                return False
-
             oauth_token.access_token = new_token['access_token']
             oauth_token.refresh_token = new_token.get(
                 'refresh_token', oauth_token.refresh_token)
-            if new_token.get('expires_in') is not None:
-                oauth_token.expires_at = \
-                    now + timedelta(seconds=new_token['expires_in'])
+            oauth_token.expires_at = \
+                datetime.fromtimestamp(new_token['expires_at'])
             session_record.last_access = now
 
             transaction.commit()
+            session.last_access = now
             LOG.info("Refreshed session %s..., the new access token "
                      "expires at %s.", token[:8], oauth_token.expires_at)
             return True
+        except OAuthError as e:
+            LOG.info("Refresh token of session %s... was rejected by %s "
+                     "(%s), the user has to log in again.",
+                     token[:8], oauth_token.provider, e.error)
+            return False
         except Exception as e:
-            LOG.warning("OAuth session extension failed for %s...: %s",
-                        token[:8], str(e))
+            LOG.error("OAuth session extension failed for %s...: %s",
+                      token[:8], str(e))
             return False
         finally:
             if transaction:
