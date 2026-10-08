@@ -35,6 +35,7 @@ from codechecker_analyzer.cli.analyze import \
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
+import codechecker_analyzer.analyzer
 
 from libtest.cmd_line import create_analyze_argparse
 
@@ -820,6 +821,150 @@ class ClangTidyAllowNoChecksTest(unittest.TestCase):
     def test_not_added_when_version_unknown(self):
         cmd = self._cmd_with(None)
         self.assertNotIn('--allow-no-checks', cmd)
+
+
+class ClangTidyTakeConfigFromDirectoryTest(unittest.TestCase):
+    """
+    With 'take-config-from-directory=true' the checkers are described by the
+    '.clang-tidy' files, so CodeChecker must not configure the checkers of
+    clang-tidy and must not rely on its own checker states either.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        context = analyzer_context.get_context()
+        context._checker_labels = MockClangTidyCheckerLabels()
+
+    def setUp(self):
+        # The resolved checkers are cached by directory.
+        # pylint: disable=protected-access
+        ClangTidy._ClangTidy__effective_checkers = {}
+
+    def test_no_checker_config_in_command(self):
+        """
+        Neither the checker list nor the checker configuration is forwarded,
+        so that the '.clang-tidy' files are the only source of them.
+        """
+        analyzer = create_analyzer_tidy([
+            '--analyzer-config', 'clang-tidy:take-config-from-directory=true',
+            '--disable', 'default'])
+        result_handler = create_result_handler(analyzer)
+
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        self.assertFalse(any(arg.startswith('-checks') for arg in cmd))
+        self.assertFalse(any(arg.startswith('-config') for arg in cmd))
+
+    def test_analyzer_is_not_disabled_without_enabled_checkers(self):
+        """
+        '--disable-all' leaves no enabled checker in the config handler, but
+        the analysis must still be executed, because the checkers come from
+        the '.clang-tidy' files. This is what makes enabling a dummy checker
+        by hand unnecessary.
+        """
+        has_enabled_checker = getattr(
+            codechecker_analyzer.analyzer, '__has_enabled_checker')
+
+        cfg_handler = create_analyzer_tidy([
+            '--analyzer-config', 'clang-tidy:take-config-from-directory=true',
+            '--disable', 'default']).config_handler
+
+        self.assertFalse(any(
+            state == CheckerState.ENABLED
+            for state, _ in cfg_handler.checks().values()))
+        self.assertTrue(has_enabled_checker(cfg_handler))
+
+    def test_analyzer_is_disabled_without_the_option(self):
+        """
+        Without the option the analyzer is still skipped when it has no
+        enabled checker.
+        """
+        has_enabled_checker = getattr(
+            codechecker_analyzer.analyzer, '__has_enabled_checker')
+
+        cfg_handler = create_analyzer_tidy(
+            ['--disable', 'default']).config_handler
+
+        self.assertFalse(has_enabled_checker(cfg_handler))
+
+    def test_effective_checkers_of_directory(self):
+        """
+        The checkers of a directory are queried from the analyzer binary.
+        """
+        list_checks_output = \
+            "Enabled checks:\n" \
+            "    bugprone-sizeof-expression\n" \
+            "    clang-analyzer-core.NullDereference\n" \
+            "    misc-unused-parameters\n\n"
+
+        with mock.patch.object(ClangTidy, 'analyzer_binary',
+                               return_value='clang-tidy'), \
+                mock.patch('subprocess.check_output',
+                           return_value=list_checks_output) as check_output:
+            checkers = ClangTidy.get_effective_checkers_for_dir('/some/dir')
+
+        # Clang Static Analyzer checkers are reported by clang-tidy too, but
+        # they are not clang-tidy checkers.
+        self.assertEqual(
+            checkers,
+            {'bugprone-sizeof-expression', 'misc-unused-parameters'})
+
+        self.assertEqual(check_output.call_count, 1)
+        self.assertEqual(
+            check_output.call_args.kwargs['cwd'], os.path.abspath('/some/dir'))
+
+    def test_effective_checkers_are_cached(self):
+        """
+        Every source file of a directory has the same configuration, so the
+        analyzer binary is invoked only once per directory.
+        """
+        with mock.patch.object(ClangTidy, 'analyzer_binary',
+                               return_value='clang-tidy'), \
+                mock.patch('subprocess.check_output',
+                           return_value="Enabled checks:\n    misc-const-"
+                                        "correctness\n") as check_output:
+            first = ClangTidy.get_effective_checkers_for_dir('/some/dir')
+            second = ClangTidy.get_effective_checkers_for_dir('/some/dir')
+
+        self.assertEqual(first, second)
+        self.assertEqual(check_output.call_count, 1)
+
+    def test_effective_checkers_of_checker_groups(self):
+        """
+        A '.clang-tidy' file may enable a whole checker group with a glob.
+        The analyzer resolves these to concrete checker names, so no glob may
+        appear among the returned checkers.
+        """
+        list_checks_output = \
+            "Enabled checks:\n" \
+            "    bugprone-assert-side-effect\n" \
+            "    bugprone-sizeof-expression\n" \
+            "    readability-braces-around-statements\n\n"
+
+        with mock.patch.object(ClangTidy, 'analyzer_binary',
+                               return_value='clang-tidy'), \
+                mock.patch('subprocess.check_output',
+                           return_value=list_checks_output):
+            checkers = ClangTidy.get_effective_checkers_for_dir('/some/dir')
+
+        self.assertEqual(
+            checkers,
+            {'bugprone-assert-side-effect',
+             'bugprone-sizeof-expression',
+             'readability-braces-around-statements'})
+        self.assertFalse([c for c in checkers if '*' in c])
+
+    def test_effective_checkers_of_failing_analyzer(self):
+        """
+        A failing analyzer invocation must not break the analysis.
+        """
+        with mock.patch.object(ClangTidy, 'analyzer_binary',
+                               return_value='clang-tidy'), \
+                mock.patch('subprocess.check_output',
+                           side_effect=OSError("No such file")):
+            checkers = ClangTidy.get_effective_checkers_for_dir('/some/dir')
+
+        self.assertEqual(checkers, set())
 
 
 def create_analyzer_cppcheck(args, workspace):

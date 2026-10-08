@@ -1633,3 +1633,384 @@ class TestAnalyze(unittest.TestCase):
             for r in reports:
                 for file in r.files:
                     self.assertTrue(os.path.exists(file.original_path))
+
+
+@unittest.skipIf(shutil.which('clang-tidy') is None,
+                 "clang-tidy is not available")
+class TestTakeConfigFromDirectory(unittest.TestCase):
+    """
+    Test the 'clang-tidy:take-config-from-directory' analyzer configuration
+    option with hierarchical '.clang-tidy' files.
+
+    The test project has a '.clang-tidy' file in three directories:
+    'tidy_config_dir' enables two checkers, 'tidy_config_dir/child' inherits
+    these and enables one more, 'tidy_config_dir/child_narrow' inherits these
+    but disables one of them.
+    """
+
+    # Checkers enabled by the '.clang-tidy' files of the test project.
+    PARENT_CHECKER = 'bugprone-sizeof-expression'
+    INHERITED_CHECKER = 'misc-unused-parameters'
+    CHILD_CHECKER = 'readability-braces-around-statements'
+
+    def setup_class(self):
+        """Setup the environment for the tests."""
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('take_config_from_directory')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete the workspace associated with this test."""
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, _):
+        """Setup the environment for the tests."""
+        self.test_workspace = os.environ['TEST_WORKSPACE']
+        self._codechecker_cmd = env.codechecker_cmd()
+
+        self.report_dir = os.path.join(self.test_workspace, "reports")
+        self.source_dir = os.path.join(
+            os.path.dirname(__file__), 'test_files', 'tidy_config_dir')
+
+        # A compilation database has to contain absolute paths.
+        self.build_json = os.path.join(self.test_workspace, "build.json")
+        build_log = [
+            {"directory": directory,
+             "command": f"g++ -std=c++17 -c {source}",
+             "file": os.path.join(directory, source)}
+            for directory, source in [
+                (self.source_dir, "parent.cpp"),
+                (os.path.join(self.source_dir, "child"), "child.cpp"),
+                (os.path.join(self.source_dir, "child_narrow"),
+                 "narrow.cpp")]]
+
+        with open(self.build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+    def teardown_method(self, _):
+        """Restore environment after tests have ran."""
+        if os.path.isdir(self.report_dir):
+            shutil.rmtree(self.report_dir)
+
+    def __analyze(self, extra_options=None):
+        """Run the analysis and return its output and return code."""
+        analyze_cmd = [
+            self._codechecker_cmd, "analyze", self.build_json,
+            "-o", self.report_dir, "--clean",
+            "--disable-all",
+            "--analyzers", "clang-tidy",
+            "--analyzer-config",
+            "clang-tidy:take-config-from-directory=true"]
+
+        if extra_options:
+            analyze_cmd.extend(extra_options)
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        return out + err, process.returncode
+
+    def __get_reports(self):
+        """
+        Return the reports of the analysis as a list of
+        (source file name, checker name) pairs.
+        """
+        reports = []
+        for plist_file in glob.glob(os.path.join(self.report_dir, '*.plist')):
+            for report in report_file.get_reports(plist_file):
+                reports.append(
+                    (os.path.basename(report.file.original_path),
+                     report.checker_name))
+
+        return reports
+
+    def __get_metadata_checkers(self):
+        """Return the checker states of clang-tidy from the metadata file."""
+        metadata_file = os.path.join(self.report_dir, "metadata.json")
+        with open(metadata_file, 'r', encoding="utf-8", errors="ignore") as f:
+            metadata = json.load(f)
+
+        return metadata['tools'][0]['analyzers']['clang-tidy']['checkers']
+
+    def test_no_dummy_checker_needed(self):
+        """
+        The analysis has to run even if no checker is enabled from the command
+        line, because the checkers come from the '.clang-tidy' files. Earlier
+        a checker had to be enabled explicitly, otherwise clang-tidy was
+        skipped.
+        """
+        out, returncode = self.__analyze()
+
+        self.assertEqual(returncode, 0)
+        self.assertNotIn("No checkers enabled for clang-tidy", out)
+
+        self.assertTrue(self.__get_reports())
+
+    def test_hierarchical_config_files(self):
+        """
+        The '.clang-tidy' file of a directory may enable more or fewer
+        checkers than the one in its parent directory.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        reports = self.__get_reports()
+
+        # The parent directory enables two checkers.
+        self.assertIn(('parent.cpp', self.PARENT_CHECKER), reports)
+        self.assertIn(('parent.cpp', self.INHERITED_CHECKER), reports)
+        # The checker enabled by the child directory only.
+        self.assertNotIn(('parent.cpp', self.CHILD_CHECKER), reports)
+
+        # The child directory inherits the checkers of the parent directory
+        # and enables one more.
+        self.assertIn(('child.cpp', self.PARENT_CHECKER), reports)
+        self.assertIn(('child.cpp', self.INHERITED_CHECKER), reports)
+        self.assertIn(('child.cpp', self.CHILD_CHECKER), reports)
+
+        # This directory disables a checker which its parent enabled.
+        self.assertNotIn(('narrow.cpp', self.PARENT_CHECKER), reports)
+        self.assertIn(('narrow.cpp', self.INHERITED_CHECKER), reports)
+
+    def test_metadata_contains_the_enabled_checkers(self):
+        """
+        The checkers of the '.clang-tidy' files have to be reported as enabled
+        in the metadata file, because this is the information which the web UI
+        displays about the analysis.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        checkers = self.__get_metadata_checkers()
+        enabled = {checker for checker, is_enabled in checkers.items()
+                   if is_enabled}
+
+        # The union of the checkers of the '.clang-tidy' files, since the
+        # metadata stores one checker set for the whole analysis.
+        self.assertEqual(
+            enabled,
+            {self.PARENT_CHECKER, self.INHERITED_CHECKER, self.CHILD_CHECKER})
+
+    def test_dummy_checker_does_not_change_the_analysis(self):
+        """
+        Enabling a checker from the command line was the workaround for
+        running clang-tidy at all. It must not change the result any more.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+        reports = sorted(self.__get_reports())
+        checkers = self.__get_metadata_checkers()
+
+        _, returncode = self.__analyze(['-e', 'misc-unused-alias-decls'])
+        self.assertEqual(returncode, 0)
+
+        self.assertEqual(sorted(self.__get_reports()), reports)
+        self.assertEqual(self.__get_metadata_checkers(), checkers)
+
+
+@unittest.skipIf(shutil.which('clang-tidy') is None,
+                 "clang-tidy is not available")
+class TestTakeConfigFromDirectoryGlobs(unittest.TestCase):
+    """
+    Test hierarchical '.clang-tidy' files which enable or disable whole
+    checker groups with globs.
+
+    The test project has three '.clang-tidy' files:
+    - 'tidy_config_glob' enables the 'bugprone-*' group except one member,
+    - 'tidy_config_glob/group_narrowed' disables two more members of that
+      group (scenario 1: the child narrows the group of its parent),
+    - 'tidy_config_glob/group_widened' enables the whole 'readability-*'
+      group except one member (scenario 2: the child enables a group which
+      the parent didn't enable at all).
+    """
+
+    # Members of the group which the parent directory enables with a glob.
+    GROUP_CHECKER = 'bugprone-sizeof-expression'
+    GROUP_KEPT_CHECKER = 'bugprone-suspicious-string-compare'
+    # Disabled by the parent directory, so it is never enabled.
+    GROUP_EXCLUDED_CHECKER = 'bugprone-easily-swappable-parameters'
+    # Disabled by the 'group_narrowed' directory only.
+    NARROWED_CHECKER = 'bugprone-integer-division'
+    # Members of the group which 'group_widened' enables with a glob.
+    WIDENED_CHECKER = 'readability-braces-around-statements'
+    WIDENED_EXCLUDED_CHECKER = 'readability-magic-numbers'
+
+    def setup_class(self):
+        """Setup the environment for the tests."""
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('take_config_from_directory_glob')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete the workspace associated with this test."""
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, _):
+        """Setup the environment for the tests."""
+        self.test_workspace = os.environ['TEST_WORKSPACE']
+        self._codechecker_cmd = env.codechecker_cmd()
+
+        self.report_dir = os.path.join(self.test_workspace, "reports")
+        self.source_dir = os.path.join(
+            os.path.dirname(__file__), 'test_files', 'tidy_config_glob')
+
+        # A compilation database has to contain absolute paths.
+        self.build_json = os.path.join(self.test_workspace, "build.json")
+        build_log = [
+            {"directory": directory,
+             "command": f"g++ -std=c++17 -c {source}",
+             "file": os.path.join(directory, source)}
+            for directory, source in [
+                (self.source_dir, "parent.cpp"),
+                (os.path.join(self.source_dir, "group_narrowed"),
+                 "narrowed.cpp"),
+                (os.path.join(self.source_dir, "group_widened"),
+                 "widened.cpp")]]
+
+        with open(self.build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+    def teardown_method(self, _):
+        """Restore environment after tests have ran."""
+        if os.path.isdir(self.report_dir):
+            shutil.rmtree(self.report_dir)
+
+    def __analyze(self):
+        """Run the analysis and return its output and return code."""
+        analyze_cmd = [
+            self._codechecker_cmd, "analyze", self.build_json,
+            "-o", self.report_dir, "--clean",
+            "--disable-all",
+            "--analyzers", "clang-tidy",
+            "--analyzer-config",
+            "clang-tidy:take-config-from-directory=true"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        return out + err, process.returncode
+
+    def __get_reports(self):
+        """
+        Return the reports of the analysis as a list of
+        (source file name, checker name) pairs.
+        """
+        reports = []
+        for plist_file in glob.glob(os.path.join(self.report_dir, '*.plist')):
+            for report in report_file.get_reports(plist_file):
+                reports.append(
+                    (os.path.basename(report.file.original_path),
+                     report.checker_name))
+
+        return reports
+
+    def __get_metadata_checkers(self):
+        """Return the checker states of clang-tidy from the metadata file."""
+        metadata_file = os.path.join(self.report_dir, "metadata.json")
+        with open(metadata_file, 'r', encoding="utf-8", errors="ignore") as f:
+            metadata = json.load(f)
+
+        return metadata['tools'][0]['analyzers']['clang-tidy']['checkers']
+
+    def test_child_narrows_the_group_of_the_parent(self):
+        """
+        Scenario 1: the parent directory enables a checker group with a glob
+        and the child directory disables some of its members. The disabled
+        members must not report in the child directory, but the rest of the
+        group must still report there.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        reports = self.__get_reports()
+
+        # The group is enabled in the parent directory.
+        self.assertIn(('parent.cpp', self.GROUP_CHECKER), reports)
+        self.assertIn(('parent.cpp', self.GROUP_KEPT_CHECKER), reports)
+
+        # The child directory disabled this member of the group.
+        self.assertNotIn(('narrowed.cpp', self.GROUP_CHECKER), reports)
+        # ... but the other members of the group are still enabled there.
+        self.assertIn(('narrowed.cpp', self.GROUP_KEPT_CHECKER), reports)
+
+    def test_child_enables_a_whole_group(self):
+        """
+        Scenario 2: the child directory enables a checker group with a glob
+        which the parent directory didn't enable, and excludes one member of
+        it. The group must report in the child directory only.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        reports = self.__get_reports()
+
+        # The group is enabled in this directory only.
+        self.assertIn(('widened.cpp', self.WIDENED_CHECKER), reports)
+        self.assertNotIn(('parent.cpp', self.WIDENED_CHECKER), reports)
+        self.assertNotIn(('narrowed.cpp', self.WIDENED_CHECKER), reports)
+
+        # This member of the group is excluded by the glob.
+        self.assertNotIn(
+            ('widened.cpp', self.WIDENED_EXCLUDED_CHECKER), reports)
+
+        # The checkers inherited from the parent directory are kept.
+        self.assertIn(('widened.cpp', self.GROUP_CHECKER), reports)
+
+    def test_metadata_contains_the_resolved_group_members(self):
+        """
+        The globs have to be resolved to concrete checker names in the
+        metadata file, otherwise the web UI couldn't display them.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        checkers = self.__get_metadata_checkers()
+        enabled = {checker for checker, is_enabled in checkers.items()
+                   if is_enabled}
+
+        # A glob must not appear as a checker name.
+        self.assertFalse([c for c in checkers if '*' in c])
+
+        # Members of the groups enabled by the '.clang-tidy' files.
+        self.assertIn(self.GROUP_CHECKER, enabled)
+        self.assertIn(self.GROUP_KEPT_CHECKER, enabled)
+        self.assertIn(self.WIDENED_CHECKER, enabled)
+
+        # Members excluded by every '.clang-tidy' file which enabled their
+        # group are not enabled anywhere.
+        self.assertNotIn(self.GROUP_EXCLUDED_CHECKER, enabled)
+        self.assertNotIn(self.WIDENED_EXCLUDED_CHECKER, enabled)
+
+    def test_metadata_reports_the_union_of_the_directories(self):
+        """
+        The report database stores one checker set for an analysis, so a
+        checker which is enabled in one directory and disabled in another is
+        reported as enabled. This is a known limitation of the web UI.
+        """
+        _, returncode = self.__analyze()
+        self.assertEqual(returncode, 0)
+
+        checkers = self.__get_metadata_checkers()
+
+        # 'group_narrowed' disabled this checker, but the parent directory
+        # enables it, so the union contains it.
+        self.assertTrue(checkers[self.NARROWED_CHECKER])
+
+        reports = self.__get_reports()
+        self.assertNotIn(('narrowed.cpp', self.NARROWED_CHECKER), reports)

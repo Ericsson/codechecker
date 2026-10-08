@@ -1,0 +1,7 @@
+---
+# A whole checker group is enabled with a glob, except one of its members.
+# The 'Checks' key is a single string, because the list form of it is only
+# supported since clang-tidy 15.
+Checks: '-*,bugprone-*,-bugprone-easily-swappable-parameters'
+HeaderFilterRegex: '.*'
+...
