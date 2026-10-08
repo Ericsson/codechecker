@@ -5,18 +5,56 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""Helper and converter functions for the gerrit review json format."""
+"""Helper and converter functions for the gerrit review json format.
+
+Besides the environment variables which describe where the reports come
+from, the review itself can be configured with the following variables:
+
+CC_GERRIT_LABELS
+    Comma separated list of the Gerrit labels the review should vote on,
+    e.g. 'Code-Review,Verified'. A label can be assigned the vote values
+    used when the review fails and when it passes, separated by a slash,
+    e.g. 'Verified=-1/1,Code-Review=-1/0'. If the vote values are not
+    given then -1 is used on failure and +1 on success. An empty value
+    means that the reports are sent as comments without any vote. If this
+    variable is not set then the review keeps its legacy behaviour and
+    votes on 'Code-Review' and 'Verified' with -1/+1 whenever a report is
+    found.
+
+CC_GERRIT_TAG
+    Tag of the Gerrit review. Defaults to 'jenkins'.
+"""
 
 import json
 import logging
 import os
 import re
 
+from dataclasses import dataclass
+from typing import Any
+
 
 from codechecker_report_converter.report import Report
 
 
 LOG = logging.getLogger('report-converter')
+
+
+@dataclass
+class GerritLabel:
+    """A Gerrit label voted by the review and the values voted with it."""
+
+    name: str
+    on_failure: int = -1
+    on_success: int = 1
+
+
+@dataclass
+class GerritConfig:
+    """Configuration of the Gerrit review output."""
+
+    tag: str
+    labels: list[GerritLabel]
 
 
 def convert(reports: list[Report]) -> dict:
@@ -30,14 +68,27 @@ def convert(reports: list[Report]) -> dict:
     changed_file_path = os.environ.get('CC_CHANGED_FILES')
     changed_files = __get_changed_files(changed_file_path)
 
+    config = __read_config()
+
+    if os.environ.get('CC_GERRIT_LABELS') is None:
+        LOG.warning(
+            "The 'CC_GERRIT_LABELS' environment variable is not set, so the "
+            "gerrit review uses its legacy behaviour and votes on "
+            "'Code-Review' and 'Verified' with -1/+1 whenever a report is "
+            "found. Set this variable to choose which labels are voted on "
+            "and with what values, e.g. "
+            "'CC_GERRIT_LABELS=Verified=-1/1,Code-Review=-1/0', or set it to "
+            "an empty value to send the reports without any vote.")
+
     return __convert_reports(reports, repo_dir, report_url,
-                             changed_files, changed_file_path)
+                             changed_files, changed_file_path,
+                             config=config)
 
 
-def mandatory_env_var_is_set():
+def mandatory_env_var_is_set() -> bool:
     """
-    True if mandatory environment variables are set otherwise False and print
-    error messages.
+    True if mandatory environment variables are set and the Gerrit specific
+    ones have a valid value, otherwise False and print error messages.
     """
     no_missing_env_var = True
 
@@ -54,17 +105,100 @@ def mandatory_env_var_is_set():
                   "changed files json from Gerrit!")
         no_missing_env_var = False
 
+    try:
+        __read_config()
+    except ValueError as err:
+        LOG.error("%s", err)
+        no_missing_env_var = False
+
     return no_missing_env_var
+
+
+def __read_config() -> GerritConfig:
+    """Read the configuration of the review from the environment.
+
+    Raise a ValueError if any of the Gerrit specific environment variables
+    has an invalid value.
+    """
+    tag = os.environ.get('CC_GERRIT_TAG') or 'jenkins'
+
+    labels_value = os.environ.get('CC_GERRIT_LABELS')
+    labels = __default_labels() if labels_value is None \
+        else __parse_labels(labels_value)
+
+    return GerritConfig(tag=tag, labels=labels)
+
+
+def __default_labels() -> list[GerritLabel]:
+    """Labels voted by the review if 'CC_GERRIT_LABELS' is not set."""
+    return [GerritLabel('Code-Review'), GerritLabel('Verified')]
+
+
+def __parse_labels(value: str) -> list[GerritLabel]:
+    """Parse the value of the 'CC_GERRIT_LABELS' environment variable."""
+    labels: list[GerritLabel] = []
+
+    for entry in value.split(','):
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        name, _, votes = entry.partition('=')
+        name = name.strip()
+        if not name:
+            raise ValueError(
+                f"Invalid label '{entry}' in the 'CC_GERRIT_LABELS' "
+                "environment variable: the label name is missing. Expected "
+                "'<label name>' or '<label name>=<failure value>/<success "
+                "value>', e.g. 'Verified=-1/1,Code-Review=-1/0'.")
+
+        on_failure, on_success = -1, 1
+        if votes:
+            failure_value, separator, success_value = votes.partition('/')
+            if not separator:
+                raise ValueError(
+                    f"Invalid label '{entry}' in the 'CC_GERRIT_LABELS' "
+                    "environment variable: the failure and the success vote "
+                    "values must be separated by a slash, e.g. "
+                    "'Verified=-1/1'.")
+
+            on_failure = __parse_vote(failure_value, entry)
+            on_success = __parse_vote(success_value, entry)
+
+        labels.append(GerritLabel(name, on_failure, on_success))
+
+    return labels
+
+
+def __parse_vote(value: str, entry: str) -> int:
+    """Parse a vote value of a label of 'CC_GERRIT_LABELS'."""
+    try:
+        vote = int(value)
+    except ValueError:
+        raise ValueError(
+            f"Invalid vote value '{value}' in label '{entry}' of the "
+            "'CC_GERRIT_LABELS' environment variable: it must be an "
+            "integer.") from None
+
+    if not -2 <= vote <= 2:
+        raise ValueError(
+            f"Invalid vote value '{value}' in label '{entry}' of the "
+            "'CC_GERRIT_LABELS' environment variable: it must be between "
+            "-2 and 2.")
+
+    return vote
 
 
 def __convert_reports(reports: list[Report],
                       repo_dir: str | None,
                       report_url: str | None,
                       changed_files: list[str],
-                      changed_file_path: str | None) -> dict:
+                      changed_file_path: str | None,
+                      *,
+                      config: GerritConfig) -> dict:
     """Convert the given reports to gerrit json format.
 
-    This function will convert the given report to Gerrit json format.
+    This function will convert the given reports to Gerrit json format.
     reports - list of reports comming from a plist file or
               from the CodeChecker server (both types can be processed)
     repo_dir - Root directory of the sources, i.e. the directory where the
@@ -72,16 +206,15 @@ def __convert_reports(reports: list[Report],
     report_url - URL where the report can be found something like this:
       "http://jenkins_address/userContent/$JOB_NAME/$BUILD_NUM/index.html"
     changed_files - list of the changed files
-    checker_labels
+    changed_file_path - Path of the changed files json from Gerrit.
+    config - Configuration of the review: the labels voted on and the tag
+             of the review.
     """
     review_comments: dict[str, list[dict]] = {}
 
-    report_count = 0
     report_messages_in_unchanged_files = []
     for report in reports:
         file_name = report.file.path
-
-        report_count += 1
 
         # file_name can be without a path in the report.
         if repo_dir \
@@ -115,7 +248,13 @@ def __convert_reports(reports: list[Report],
                 "end_character": report.column},
             "message": review_comment_msg})
 
-    message = f"CodeChecker found {report_count} issue(s) in the code."
+    # Any report makes the review fail.
+    review_failed = len(reports) > 0
+
+    message = f"CodeChecker found {len(reports)} issue(s) in the code."
+
+    if not config.labels:
+        message += " No vote was cast."
 
     if report_messages_in_unchanged_files:
         message += ("\n\nThere following reports are introduced in files "
@@ -126,12 +265,20 @@ def __convert_reports(reports: list[Report],
     if report_url:
         message += f" See: {report_url}"
 
-    review = {"tag": "jenkins",
-              "message": message,
-              "labels": {
-                  "Code-Review": -1 if report_count else 1,
-                  "Verified": -1 if report_count else 1},
-              "comments": review_comments}
+    labels: dict[str, int] = {}
+    for label in config.labels:
+        labels[label.name] = \
+            label.on_failure if review_failed else label.on_success
+
+    review: dict[str, Any] = {"tag": config.tag,
+                              "message": message}
+
+    # A review without any vote is valid in Gerrit.
+    if labels:
+        review["labels"] = labels
+
+    review["comments"] = review_comments
+
     return review
 
 
