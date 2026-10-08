@@ -347,13 +347,14 @@
         </div>
         <v-treeview
           v-model:opened="openedTreeItems"
-          :items="sortedTreeItems"
+          :items="treeItems"
+          :load-children="loadChildren"
           item-value="fullPath"
           open-on-click
           density="compact"
         >
           <template #prepend="{ item, isOpen }">
-            <v-icon v-if="item.children && item.children.length > 0">
+            <v-icon v-if="item.isDir">
               {{ isOpen ? 'mdi-folder-open' : 'mdi-folder' }}
             </v-icon>
             <v-icon v-else>
@@ -596,6 +597,7 @@ const viewMode = ref(route.query["view"] === "tree" ? "tree" : "list");
 const openedTreeItems = ref(parseOpenedPaths(route.query["tree-open"]));
 const allReportsFileCounts = ref({});
 const fileSeverities = ref({});
+const fullTree = ref([]);
 const treeItems = ref([]);
 const treeSortKey = ref(null);
 const treeSortOrder = ref(null);
@@ -677,33 +679,6 @@ function getTreeStatValue(item, statKey) {
   return statKey === "all" ? (item.findings || 0) : (item.stats[statKey] || 0);
 }
 
-function sortTreeNodes(nodes) {
-  if (!nodes) return [];
-
-  const _sorted = nodes.map(node => ({ ...node }));
-  _sorted.forEach(node => {
-    if (node.children && node.children.length > 0) {
-      node.children = sortTreeNodes(node.children);
-    }
-  });
-
-  if (treeSortKey.value && treeSortOrder.value) {
-    _sorted.sort((a, b) => {
-      const _aVal = getTreeStatValue(a, treeSortKey.value);
-      const _bVal = getTreeStatValue(b, treeSortKey.value);
-      return treeSortOrder.value === "desc"
-        ? _bVal - _aVal
-        : _aVal - _bVal;
-    });
-  }
-
-  return _sorted;
-}
-
-const sortedTreeItems = computed(function() {
-  return sortTreeNodes(treeItems.value);
-});
-
 watch(
   [ page, itemsPerPage, sortBy ],
   () => {
@@ -733,6 +708,10 @@ watch(allReportsFileCounts, () => {
   buildTreeItems();
 }, { deep: true });
 
+watch([ treeSortKey, treeSortOrder ], () => {
+  rebuildTreeItems();
+});
+
 watch(
   [ viewMode, openedTreeItems ],
   () => {
@@ -761,8 +740,7 @@ const REVIEW_STATUS_STAT_KEYS = {
 };
 
 function getTreeItemFilePattern(item) {
-  const isDir = item.children && item.children.length > 0;
-  return isDir ? item.fullPath + "/*" : item.fullPath;
+  return item.isDir ? item.fullPath + "/*" : item.fullPath;
 }
 
 function setRefreshFilterState(state) {
@@ -923,7 +901,7 @@ function buildTreeItems() {
         if (!existing) {
           existing = {
             name: part, fullPath: currentPath,
-            children: [], findings: 0, stats: {}
+            children: [], findings: 0, stats: {}, isDir: true
           };
           currentLevel.push(existing);
         }
@@ -939,7 +917,7 @@ function buildTreeItems() {
         } else {
           currentLevel.push({
             name: fileName, fullPath: filePath,
-            findings: count, stats: fileStats
+            findings: count, stats: fileStats, isDir: false
           });
         }
       }
@@ -960,16 +938,103 @@ function buildTreeItems() {
     return node.findings;
   }
   items.forEach(aggregate);
-  treeItems.value = items;
+  fullTree.value = items;
+}
+
+const nodeIndex = computed(() => {
+  const index = new Map();
+  const walk = nodes => {
+    nodes.forEach(node => {
+      index.set(node.fullPath, node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(fullTree.value);
+  return index;
+});
+
+function toViewNode(node) {
+  const view = {
+    name: node.name,
+    fullPath: node.fullPath,
+    findings: node.findings,
+    stats: node.stats || {},
+    isDir: node.isDir
+  };
+  if (node.isDir) {
+    view.children = [];
+    view.loaded = false;
+  }
+  return view;
+}
+
+function sortNodes(nodes) {
+  if (!treeSortKey.value || !treeSortOrder.value) return nodes;
+  return [ ...nodes ].sort((a, b) => {
+    const aVal = getTreeStatValue(a, treeSortKey.value);
+    const bVal = getTreeStatValue(b, treeSortKey.value);
+    return treeSortOrder.value === "desc" ? bVal - aVal : aVal - bVal;
+  });
+}
+
+function fillChildrenNodes(item) {
+  if (!item.isDir) return [];
+  if (!item.loaded) {
+    item.loaded = true;
+    const source = nodeIndex.value.get(item.fullPath);
+    if (source?.children?.length) {
+      item.children.push(...sortNodes(source.children).map(toViewNode));
+    }
+  }
+  return item.children;
+}
+
+function autoExpandSingleChildChain(node, opened) {
+  let current = node;
+  while (current?.isDir) {
+    const children = fillChildrenNodes(current);
+    if (!opened.includes(current.fullPath)) opened.push(current.fullPath);
+    if (children.length !== 1) break;
+    const only = children[0];
+    if (!only.isDir) break;
+    current = only;
+  }
+}
+
+function rebuildTreeItems() {
+  treeItems.value = sortNodes(fullTree.value).map(toViewNode);
+  openedTreeItems.value.forEach(path => {
+    if (nodeIndex.value.get(path)?.isDir) ensureViewPath(path);
+  });
+}
+
+watch(fullTree, rebuildTreeItems);
+
+function loadChildren(item) {
+  const alreadyLoaded = item.loaded;
+  fillChildrenNodes(item);
+  if (!alreadyLoaded && item.children.length === 1 && item.children[0].isDir) {
+    autoExpandSingleChildChain(item.children[0], openedTreeItems.value);
+  }
+  return Promise.resolve();
+}
+
+function ensureViewPath(fullPath) {
+  const parts = fullPath.split("/").filter(Boolean);
+  let level = treeItems.value;
+  let current = "";
+  for (const part of parts) {
+    current += "/" + part;
+    const node = level.find(n => n.fullPath === current);
+    if (!node || !node.isDir) break;
+    level = fillChildrenNodes(node);
+  }
 }
 
 function collectSingleChildedNodes(nodes, opened) {
   nodes.forEach(node => {
-    if (!node.children || node.children.length === 0) return;
-    opened.push(node.fullPath);
-    if (node.children.length === 1) {
-      collectSingleChildedNodes(node.children, opened);
-    }
+    if (!node.isDir) return;
+    autoExpandSingleChildChain(node, opened);
   });
 }
 
