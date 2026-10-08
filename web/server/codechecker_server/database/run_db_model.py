@@ -181,6 +181,7 @@ class Run(Base):
         if self.duration == -1:
             self.duration = ceil((datetime.now() - self.date).total_seconds())
 
+
 class RunLock(Base):
     """
     Represents a lock record for a particular run name, constituting that the
@@ -692,6 +693,7 @@ class FilterPreset(Base):
     def __init__(self, preset_name, report_filter):
         self.preset_name = preset_name
         self.report_filter = report_filter
+
 
 class RunLabel(Base):
     __tablename__ = 'run_labels'
