@@ -19,9 +19,8 @@ import zlib
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Enum, \
     ForeignKey, Integer, LargeBinary, MetaData, String, UniqueConstraint, \
     Table, Text, JSON, case
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql.expression import true, false
 
 CC_META = MetaData(naming_convention={
