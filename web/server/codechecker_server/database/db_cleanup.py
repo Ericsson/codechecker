@@ -27,7 +27,7 @@ from .run_db_model import \
     Comment, Checker, \
     File, FileContent, \
     Report, ReportAnalysisInfo, ReportPathDataFile, RunHistoryAnalysisInfo, \
-    RunLock
+    RunLock, TestCoverage
 from .config_db_model import Session as SessionRecord
 
 LOG = get_logger('server')
@@ -95,8 +95,13 @@ def remove_unused_files(product):
             files = session.query(ReportPathDataFile.c.file_id) \
                 .group_by(ReportPathDataFile.c.file_id)
 
+            # Files which have test coverage data are still in use.
+            coverage_files = session.query(TestCoverage.file_id) \
+                .group_by(TestCoverage.file_id)
+
             files_to_delete = session.query(File.id) \
-                .filter(File.id.notin_(files))
+                .filter(File.id.notin_(files),
+                        File.id.notin_(coverage_files))
             files_to_delete = map(lambda x: x[0], files_to_delete)
 
             total_count = 0

@@ -38,7 +38,7 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
     CommentData, \
     DetectionStatus, DiffType, \
-    Encoding, ExportData, \
+    Encoding, ExportData, FileCoverage, FileLineCoverage, \
     Order, \
     ReportData, ReportDetails, ReportStatus, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
@@ -71,7 +71,7 @@ from ..database.run_db_model import \
     Report, ReportAnnotations, ReportAnalysisInfo, \
     ReportPathData, ReportPathDataFile, \
     ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent, SourceComponentFile, FilterPreset
+    SourceComponent, SourceComponentFile, FilterPreset, TestCoverage
 
 from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
@@ -4869,3 +4869,63 @@ class ThriftRequestHandler:
             session.close()
 
             return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFileCoverages(self, runIds):
+        """
+        Get the test coverage summary of the source files in the given runs.
+        """
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            q = session.query(TestCoverage.run_id,
+                              TestCoverage.file_id,
+                              File.filepath,
+                              TestCoverage.lines_found,
+                              TestCoverage.lines_hit,
+                              TestCoverage.functions_found,
+                              TestCoverage.functions_hit) \
+                .join(File, File.id == TestCoverage.file_id)
+
+            if runIds:
+                q = q.filter(TestCoverage.run_id.in_(runIds))
+
+            return [FileCoverage(
+                runId=run_id,
+                fileId=file_id,
+                filePath=file_path,
+                linesFound=lines_found,
+                linesHit=lines_hit,
+                functionsFound=functions_found,
+                functionsHit=functions_hit)
+                for run_id, file_id, file_path, lines_found, lines_hit,
+                functions_found, functions_hit
+                in q.order_by(File.filepath, TestCoverage.run_id)]
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFileLineCoverage(self, runId, fileId):
+        """
+        Get the covered and uncovered lines of the given source file in the
+        given run. The lists are empty if there is no coverage data.
+        """
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            row = session.query(TestCoverage.covered_lines,
+                                TestCoverage.uncovered_lines) \
+                .filter(TestCoverage.run_id == runId,
+                        TestCoverage.file_id == fileId) \
+                .one_or_none()
+
+            if row is None:
+                return FileLineCoverage(runId=runId, fileId=fileId,
+                                        coveredLines=[], uncoveredLines=[])
+
+            return FileLineCoverage(
+                runId=runId,
+                fileId=fileId,
+                coveredLines=TestCoverage.decode_lines(row.covered_lines),
+                uncoveredLines=TestCoverage.decode_lines(
+                    row.uncovered_lines))

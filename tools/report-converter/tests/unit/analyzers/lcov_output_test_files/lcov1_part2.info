@@ -1,0 +1,9 @@
+TN:integration_tests
+SF:/home/user/project/hello.c
+FN:12,helper
+FNDA:5,helper
+DA:12,5
+DA:13,0
+DA:20,abc
+garbage line without colon
+end_of_record
