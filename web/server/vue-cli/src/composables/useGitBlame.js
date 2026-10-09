@@ -111,7 +111,7 @@ export function useGitBlame(editor, sourceFile) {
       if (!blameEnabled.value) {
         return null;
       }
-      if (!view?.state?.doc || !line?.from) {
+      if (!view?.state?.doc || line?.from == null) {
         return null;
       }
 
