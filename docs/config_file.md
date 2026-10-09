@@ -108,8 +108,8 @@ parse:
   - --trim-path-prefix=$HOME/workspace
 
 server:
-  - --workspace=$HOME/workspace"
-  - --port=9090"
+  - --workspace=$HOME/workspace
+  - --port=9090
 
 store:
   - --name=run_name
@@ -118,3 +118,32 @@ store:
 ```
 
 These configuration files must have extension `yml` or `yaml`.
+
+Unlike JSON, a YAML list item may contain **several arguments**:
+
+```yaml
+analyze:
+  - --analyzers clangsa clang-tidy
+  - --enable=core.DivideZero
+```
+
+This is equivalent to:
+
+```sh
+CodeChecker analyze --analyzers clangsa clang-tidy --enable=core.DivideZero
+```
+
+Splitting follows shell rules, so an argument may be quoted to keep a space
+inside it:
+
+```yaml
+parse:
+  - --trim-path-prefix "/tmp/my project"
+```
+
+> Note: Because entries are split the way a shell would split them, a YAML
+> entry that contains a space but was written for the previous behavior (where
+> each entry was always exactly one argument) is now interpreted as several
+> arguments. CodeChecker logs an info message when an entry is split into more
+> than one argument. Entries without spaces are unaffected, and JSON config
+> files are unchanged.
