@@ -42,7 +42,6 @@ from codechecker_web.shared import convert, webserver_context
 
 from codechecker_client import report_type_converter
 from .client import login_user, setup_client, init_config_client
-from .credential_manager import UserCredentials
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_product_url, split_server_url
 
@@ -1827,16 +1826,20 @@ def handle_suppress(args):
                 client.changeReviewStatus(report.reportId, rw_status, comment)
 
 
+def _parse_server_url(url):
+    """Return (protocol, host, port) from either a product or server URL."""
+    try:
+        protocol, host, port, _ = split_product_url(url)
+    except ValueError:
+        protocol, host, port = split_server_url(url)
+    return protocol, host, port
+
+
 def print_banner(server_url):
     """Fetch and print the server banner if one is set."""
     try:
-        try:
-            protocol, host, port, _ = split_product_url(server_url)
-        except Exception:
-            protocol, host, port = split_server_url(server_url)
-        session_token = UserCredentials().get_token(host, port)
-        config_client = init_config_client(protocol, host, port,
-                                           session_token)
+        protocol, host, port = _parse_server_url(server_url)
+        config_client = init_config_client(protocol, host, port)
         encoded = config_client.getNotificationBannerText()
         if encoded:
             LOG.info("Announcement: %s", convert.from_b64(encoded))
