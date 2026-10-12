@@ -22,7 +22,7 @@ from typing import Any, Callable
 from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, \
-    compilation_database
+    compilation_database, self_contained
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
@@ -220,6 +220,21 @@ def add_arguments_to_parser(parser):
                         required=True,
                         default=argparse.SUPPRESS,
                         help="Store the analysis output in the given folder.")
+
+    parser.add_argument('--self-contained',
+                        dest="self_contained",
+                        required=False,
+                        action='store_true',
+                        default=argparse.SUPPRESS,
+                        help="Make the analysis output relocatable: after the "
+                             "analysis, copy every source and header file "
+                             "referenced by the plist result files into a "
+                             "'sources' directory inside the output path, and "
+                             "rewrite the plist files to reference those "
+                             "copies using paths relative to their own "
+                             "location. The resulting output directory can be "
+                             "moved to another machine and still be parsed. "
+                             "Note: only plist result files are processed.")
 
     parser.add_argument('--compiler-info-file',
                         dest="compiler_info_file",
@@ -1469,6 +1484,11 @@ def main(args):
     __update_skip_file(args)
     __update_review_status_config(args)
     __update_analysis_config_files(args)
+
+    if 'self_contained' in args:
+        LOG.debug("Making analysis output self-contained started.")
+        self_contained.make_self_contained(args.output_path)
+        LOG.debug("Making analysis output self-contained finished.")
 
     LOG.debug("Cleanup metadata file started.")
     __cleanup_metadata(metadata_prev, metadata)
