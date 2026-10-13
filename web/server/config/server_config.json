@@ -15,6 +15,90 @@
     "interval": 30,
     "max_probe": 10
   },
+  "ai": {
+    "enabled": false,
+    "default_model": "gpt-oss-120b",
+    "timeout": 60,
+    "max_source_lines": 400,
+    "max_path_events": 50,
+    "ericai": {
+      "api_url": "https://ray.sero.gic.ericsson.se/backendsso/v1",
+      "ca_bundle": "/etc/ssl/certs/ca-certificates.crt",
+      "token_command": "",
+      "token_command_dir": "",
+      "token_url": "https://login.microsoftonline.com/92e84ceb-fbfd-47ab-be52-080c6b87953f/oauth2/v2.0/token",
+      "client_id": "",
+      "client_secret": "",
+      "scope": "api://b46aa582-485a-4a7d-b30e-552dbd790b16/.default",
+      "user_header": "X-Authenticated-User",
+      "user_email_domain": ""
+    },
+    "discover_models": false,
+    "models": [
+      {
+        "id": "gpt-oss-120b",
+        "display_name": "GPT-OSS 120B",
+        "model": "openai/gpt-oss-120b",
+        "speed": "fast",
+        "reliability": "high"
+      },
+      {
+        "id": "deepseek-v4.1-flash",
+        "display_name": "DeepSeek V4.1 Flash",
+        "model": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "speed": "fast",
+        "reliability": "high"
+      },
+      {
+        "id": "gemma-4-31b",
+        "display_name": "Gemma 4 31B",
+        "model": "Google/Gemma-4-31B-it",
+        "speed": "fast",
+        "reliability": "medium"
+      },
+      {
+        "id": "qwen3.8-27b",
+        "display_name": "Qwen3.8 27B",
+        "model": "Qwen/Qwen3.8-27B-FP8-1M",
+        "speed": "medium",
+        "reliability": "high"
+      },
+      {
+        "id": "glm-5.2",
+        "display_name": "GLM 5.2",
+        "model": "zai-org/GLM-5.2-FP8",
+        "speed": "medium",
+        "reliability": "high"
+      },
+      {
+        "id": "claude-opus",
+        "display_name": "Claude Opus 5.5",
+        "provider": "anthropic",
+        "model": "claude-opus-5-5",
+        "api_key": "",
+        "speed": "medium",
+        "reliability": "high"
+      },
+      {
+        "id": "gemini-flash",
+        "display_name": "Gemini 3.6 Flash",
+        "provider": "gemini",
+        "model": "gemini-3.6-flash",
+        "api_key": "",
+        "speed": "fast",
+        "reliability": "medium"
+      },
+      {
+        "id": "deepseek-chat",
+        "display_name": "DeepSeek Chat",
+        "provider": "deepseek",
+        "model": "deepseek-chat",
+        "api_key": "",
+        "speed": "fast",
+        "reliability": "medium"
+      }
+    ]
+  },
   "authentication": {
     "enabled" : false,
     "super_user" : "",

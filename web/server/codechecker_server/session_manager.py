@@ -28,6 +28,7 @@ from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 from codechecker_web.server.oauth_templates import OAUTH_TEMPLATES
 
+from .ai import AIConfig
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import OAuthToken
 from .database.config_db_model import PersonalAccessToken
@@ -212,6 +213,7 @@ class SessionManager:
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__ai_config = AIConfig(self.scfg_dict.get('ai', {}))
         self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
@@ -1058,6 +1060,10 @@ class SessionManager:
     def get_keepalive_max_probe(self):
         """ Get keepalive max probe count. """
         return self.__keepalive_config.get('max_probe')
+
+    def get_ai_config(self):
+        """ Get the configuration of the AI report explanation feature. """
+        return self.__ai_config
 
     @property
     def session_lifetime_duration(self) -> int:

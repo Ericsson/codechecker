@@ -46,7 +46,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     RunReportCount, RunSortType, RunTagCount, \
     ReviewStatus as API_ReviewStatus, \
     SourceComponentData, SourceFileData, SortMode, SortType, \
-    SubmittedRunOptions
+    SubmittedRunOptions, \
+    AIExplanation, AIModel, AIVerdict
 
 from codechecker_api_shared.ttypes import ErrorCode, RequestFailed
 
@@ -60,6 +61,9 @@ from codechecker_web.shared import convert
 from codechecker_server.profiler import timeit
 
 from .. import permissions
+from ..ai import (
+    AIProviderError, PathEvent, ReportContext, explain_report)
+from ..ai.catalog import MODEL_CATALOG
 from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
@@ -4869,3 +4873,161 @@ class ThriftRequestHandler:
             session.close()
 
             return True
+
+    # ---------------------------------------------------------------------
+    # AI-assisted report explanation.
+    # ---------------------------------------------------------------------
+
+    def __get_ai_config(self):
+        return self._manager.get_ai_config()
+
+    def __checker_documentation(self, checker_name, analyzer_name):
+        """ The checker's labels, as documentation for the prompt. """
+        try:
+            labels = self._context.checker_labels.labels_of_checker(
+                checker_name, analyzer_name)
+        except Exception:
+            LOG.debug("No labels found for checker '%s'.", checker_name)
+            return None
+
+        if not labels:
+            return None
+
+        interesting = ('doc_url', 'guideline', 'profile', 'severity')
+        selected = [f"{key}: {value}" for key, value in labels
+                    if key in interesting]
+
+        return "\n".join(selected) if selected else None
+
+    def __get_file_content(self, session, source_file):
+        if source_file is None:
+            return None
+
+        content = session \
+            .query(FileContent.content) \
+            .filter(FileContent.content_hash == source_file.content_hash) \
+            .one_or_none()
+
+        if not content:
+            return None
+
+        return zlib.decompress(content.content).decode('utf-8',
+                                                       errors='ignore')
+
+    def __build_report_context(self, session, report_id):
+        """ Everything the model is told about ``report_id``. """
+        result = session \
+            .query(Report, File) \
+            .filter(Report.id == report_id) \
+            .join(Checker, Report.checker_id == Checker.id) \
+            .options(contains_eager(Report.checker)) \
+            .outerjoin(File, Report.file_id == File.id) \
+            .limit(1).one_or_none()
+
+        if not result:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "Report " + str(report_id) + " not found!")
+
+        report, source_file = result
+
+        details = get_report_details(session, [report_id]).get(report_id)
+        path_events = []
+        if details and details.pathEvents:
+            path_events = [
+                PathEvent(file_path=event.filePath,
+                          line=event.startLine,
+                          message=event.msg)
+                for event in details.pathEvents]
+
+        analyzer_name = report.checker.analyzer_name
+
+        return ReportContext(
+            checker_name=report.checker.checker_name,
+            checker_message=report.checker_message,
+            file_path=source_file.filepath if source_file else 'unknown',
+            line=report.line,
+            column=report.column,
+            analyzer_name=analyzer_name,
+            severity=ttypes.Severity._VALUES_TO_NAMES.get(
+                report.checker.severity),
+            file_content=self.__get_file_content(session, source_file),
+            checker_documentation=self.__checker_documentation(
+                report.checker.checker_name, analyzer_name),
+            path_events=path_events)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAIModels(self):
+        """ The AI models this server offers; empty when turned off. """
+        self.__require_view()
+
+        ai_config = self.__get_ai_config()
+
+        if not ai_config.is_available:
+            return []
+
+        models = MODEL_CATALOG.available_models(ai_config)
+        if not models:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "None of the AI models is loaded on EricAI right now. "
+                "Try again later.")
+
+        default = ai_config.pick_model(None, models)
+
+        return [
+            AIModel(id=model.id,
+                    displayName=model.display_name,
+                    isDefault=model is default,
+                    speed=model.speed,
+                    reliability=model.reliability,
+                    provider=model.provider)
+            for model in models]
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportExplanation(self, reportId, model):
+        """ Explain a report and assess its true/false positiveness. """
+        self.__require_view()
+
+        ai_config = self.__get_ai_config()
+
+        if not ai_config.is_available:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "AI report explanation is not enabled on this server.")
+
+        # Asking an unloaded model would load it, possibly evicting another
+        # team's, while this request times out.
+        models = MODEL_CATALOG.available_models(ai_config)
+        if not ai_config.pick_model(model, models):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                f"The AI model '{model}' is not available right now. "
+                "Choose another model." if model and models else
+                "None of the AI models is loaded on EricAI right now. "
+                "Try again later.")
+
+        # Closed before the call: it can take twenty seconds.
+        with DBSession(self._Session) as session:
+            context = self.__build_report_context(session, reportId)
+
+        try:
+            explanation = explain_report(
+                context, ai_config, model,
+                self._auth_session.user if self._auth_session else None,
+                models)
+        except AIProviderError as ex:
+            LOG.warning("Could not explain report %s: %s", reportId, ex)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                str(ex)) from ex
+
+        return AIExplanation(
+            background=explanation.background,
+            verdict=AIVerdict._NAMES_TO_VALUES[explanation.verdict],
+            confidence=explanation.confidence,
+            truePositiveCase=explanation.true_positive_case,
+            falsePositiveCase=explanation.false_positive_case,
+            model=explanation.model)

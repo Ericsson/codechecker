@@ -23,6 +23,10 @@ Table of Contents
     * [Idle time](#idle-time)
     * [Interval time](#interval-time)
     * [Probes](#probes)
+* [AI report explanation](#ai-report-explanation)
+  * [EricAI](#ericai)
+  * [Models](#models)
+  * [Limits](#limits-1)
 * [Authentication](#authentication)
 * [Secrets](#secrets)
   * [server_secrets.json](#server_secretsjson)
@@ -163,6 +167,102 @@ dead and notifying the application layer.
 By default the server will use the value from your host configured by the
 `net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
 `max_probe` key in the server configuration file.
+
+## AI report explanation
+The `ai` section turns on the **Explain** button of the *Report details* view.
+A large language model describes the background of the report and argues
+whether it is a true or a false positive. Each model is asked through
+[EricAI](https://eteamspace.internal.ericsson.com/display/BFSTOS/GenAI+Enablers)
+or directly at its provider with an API key, using
+[LiteLLM](https://docs.litellm.ai/).
+
+The feature is off by default. It is offered only when `enabled` is `true`
+and at least one model is usable; models that are not are skipped with a
+warning.
+
+The report, its bug path and the surrounding source are sent to the chosen
+model's provider. Only enable this for products whose source may be processed
+there.
+
+```json
+"ai": {
+  "enabled": true,
+  "default_model": "gpt-oss-120b",
+  "ericai": {
+    "api_url": "https://ray.sero.gic.ericsson.se/backendsso/v1",
+    "ca_bundle": "/etc/ssl/certs/ca-certificates.crt",
+    "token_command": "/path/to/venv/bin/ericai --ericsson-access-token --fail-on-interactive-login",
+    "token_command_dir": "~"
+  },
+  "models": [
+    {
+      "id": "gpt-oss-120b",
+      "display_name": "GPT-OSS 120B",
+      "model": "openai/gpt-oss-120b",
+      "speed": "fast",
+      "reliability": "high"
+    },
+    {
+      "id": "claude-opus",
+      "display_name": "Claude Opus 5.5",
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "api_key": "$SECRET:anthropic_api_key$"
+    }
+  ]
+}
+```
+
+Keep keys and secrets in `server_secrets.json` or the environment (see
+[Secrets](#secrets)). A `$SECRET:` or `$ENV:` value that cannot be resolved
+stops the server from starting.
+
+### EricAI
+EricAI takes short-lived OAuth2 access tokens instead of an API key. The server
+gets them in one of two ways:
+
+* `token_command`: a command that prints a signed in user's token, such as
+  the `ericai` client above. Sign in once with `ericai api models.list` as the
+  user the server runs as. It must not wait for an interactive login.
+* Otherwise, as a service principal through the OAuth2 client credentials
+  flow, with `token_url`, `client_id`, `client_secret` and `scope`.
+
+| Key | Meaning |
+| --- | --- |
+| `api_url` | The EricAI endpoint. |
+| `ca_bundle` | Certificates to verify EricAI with, as the Ericsson internal CA is not in Python's default bundle. |
+| `token_command` | Prints an access token as the last line of its output. |
+| `token_command_dir` | Where to run `token_command`; the `ericai` client finds its login only in the directory it was signed in from. |
+| `token_url`, `client_id`, `client_secret`, `scope` | The client credentials flow, used when `token_command` is empty. |
+| `user_header` | Optional. A header naming the logged in user to EricAI, e.g. `X-Authenticated-User`. |
+| `user_email_domain` | Optional. Appended to user names that are not e-mail addresses. |
+
+Most EricAI models are loaded on demand, and asking an unloaded one would load
+it and may evict another team's model. The server therefore offers only the
+EricAI models that are loaded right now. With `"discover_models": true`, the
+other loaded EricAI chat models are offered as well.
+
+### Models
+| Key | Meaning |
+| --- | --- |
+| `id` | Identifier used by the API. |
+| `display_name` | Name shown in the GUI. Defaults to `id`. |
+| `provider` | `ericai`, or a [LiteLLM provider](https://docs.litellm.ai/docs/providers) such as `anthropic`, `gemini` or `openai` to ask directly. *Default*: `ericai` |
+| `model` | The model name at EricAI or at the provider. Defaults to `id`. |
+| `api_key` | Direct models only: the provider's API key. |
+| `api_base` | Direct models only, optional: another endpoint, e.g. a self-hosted one, which may not need a key. |
+| `temperature` | Optional. *Default*: `0.2` for EricAI models, unset for direct ones. |
+| `speed`, `reliability` | Optional ratings shown in the GUI: `slow`, `medium` or `fast`, and `low`, `medium` or `high`. |
+
+`default_model` is used when a client does not ask for a specific model. If it
+is not available, the first model is used.
+
+### Limits
+| Key | Meaning | Default |
+| --- | --- | --- |
+| `timeout` | Seconds to wait for an answer. | `60` |
+| `max_source_lines` | Lines of the analysed file sent, centred on the report. | `400` |
+| `max_path_events` | Bug path steps sent. | `50` |
 
 ## Authentication
 For authentication configuration options and which options can be reloaded see
