@@ -249,7 +249,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             tool_name = old_mapping_tool_name
             mapping_file = old_mapping_file_name
 
-        tool_path = Path(cls.analyzer_binary()).with_name(tool_name)
+        # On Windows the mapping tool is an executable with '.exe' suffix,
+        # just like the analyzer binary.
+        exe_suffix = '.exe' if sys.platform == 'win32' else ''
+
+        tool_path = Path(cls.analyzer_binary()).with_name(
+            tool_name + exe_suffix)
         installed_dir = tool_path.parent
 
         if os.path.isfile(tool_path):
@@ -260,11 +265,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             "directory reported by Clang '%s'. Trying with version-postfixed "
             "filename...", tool_path, installed_dir)
 
-        postfixed_tool_path = ''.join(
-            [str(tool_path), '-', str(clang_version.major)])
+        postfixed_tool_path = tool_path.with_name(
+            f"{tool_name}-{clang_version.major}{exe_suffix}")
 
         if os.path.isfile(postfixed_tool_path):
-            return postfixed_tool_path, mapping_file
+            return str(postfixed_tool_path), mapping_file
 
         LOG.debug(
             "Postfixed mapping tool '%s' suggested by autodetection is not "
