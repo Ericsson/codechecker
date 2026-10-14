@@ -460,8 +460,7 @@ def get_schema_version_from_package(migration_root):
     return pckg_schema_ver.get_current_head()
 
 
-def check_product_db_status(cfg_sql_server, migration_root, environ,
-                            workspace_directory):
+def check_product_db_status(cfg_sql_server, migration_root, environ):
     """
     Check the products for database statuses.
 
@@ -496,9 +495,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ,
 
     prod_status = {}
     for pd in products:
-        connection_str = database.SQLServer.resolve_sqlite_relative_path(
-            pd.connection, workspace_directory)
-        db = database.SQLServer.from_connection_string(connection_str,
+        db = database.SQLServer.from_connection_string(pd.connection,
                                                        pd.endpoint,
                                                        RUN_META,
                                                        migration_root,
@@ -524,7 +521,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ,
 
 
 def __db_status_check(cfg_sql_server, migration_root, environ,
-                      workspace_directory, product_name=None) -> int:
+                      product_name=None) -> int:
     """
     Check and print database statuses for the given product.
     """
@@ -534,7 +531,7 @@ def __db_status_check(cfg_sql_server, migration_root, environ,
     LOG.debug("Checking database status for %s product.", product_name)
 
     prod_statuses = check_product_db_status(cfg_sql_server, migration_root,
-                                            environ, workspace_directory)
+                                            environ)
 
     if product_name != "all":
         avail = prod_statuses.get(product_name)
@@ -614,8 +611,7 @@ def __db_migration_multiple(
 
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             migration_root,
-                                            environ,
-                                            workspace_directory)
+                                            environ)
     products_to_upgrade: list[str] = []
     for endpoint in (products_requested_for_upgrade or []):
         avail = prod_statuses.get(endpoint)
@@ -648,9 +644,7 @@ def __db_migration_multiple(
                 if product is None:
                     raise NonExistentProductError(endpoint)
 
-                connection_str = database.SQLServer \
-                    .resolve_sqlite_relative_path(
-                        product.connection, workspace_directory)
+                connection_str = product.connection
             except NonExistentProductError as nepe:
                 LOG.error("Attempted to upgrade product '%s', but it was not "
                           "found in the server's configuration database.",
@@ -976,7 +970,6 @@ def server_init_start(args):
             ret = __db_status_check(cfg_sql_server,
                                     context.migration_root,
                                     environ,
-                                    workspace_dir,
                                     args.status)
             sys.exit(ret)
     except AttributeError:
@@ -1045,8 +1038,7 @@ def server_init_start(args):
 
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             context.run_migration_root,
-                                            environ,
-                                            workspace_dir)
+                                            environ)
 
     upgrade_available = {}
     for k, v in prod_statuses.items():

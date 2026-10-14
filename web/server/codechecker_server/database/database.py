@@ -526,7 +526,18 @@ class SQLServer(metaclass=ABCMeta):
                                     run_env=env)
         else:
             LOG.debug("Using SQLite:")
-            data_file = os.path.abspath(args['sqlite'])
+            # Resolve the database path against the workspace directory so
+            # that relative paths stored in config.sqlite work regardless of
+            # the server process's current working directory.  The workspace
+            # is available through the webserver context singleton which is
+            # initialised before any database connections are made.
+            from codechecker_web.shared import webserver_context
+            workspace = \
+                webserver_context.get_context().codechecker_workspace
+            if workspace and not os.path.isabs(args['sqlite']):
+                data_file = os.path.join(workspace, args['sqlite'])
+            else:
+                data_file = os.path.abspath(args['sqlite'])
             LOG.debug("Database at %s", data_file)
             return SQLiteDatabase(
                 name_in_log,
