@@ -705,7 +705,7 @@ class RunLabel(Base):
     label_name = Column(String, nullable=False, unique=True, index=True)
     description = Column(String, nullable=True)
 
-    def __init__(self, label_name, description=None):
+    def __init__(self, label_name: String, description: String = None):
         self.label_name = label_name
         self.description = description
 
@@ -724,6 +724,6 @@ class RunToRunLabel(Base):
         primary_key=True
     )
 
-    def __init__(self, run_id, run_label_id):
+    def __init__(self, run_id: int, run_label_id: int):
         self.run_id = run_id
         self.run_label_id = run_label_id
