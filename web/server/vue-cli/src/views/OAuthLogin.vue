@@ -1,37 +1,31 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-text class="px-0 pb-0">
-            <alerts
-              :success="success"
-              success-msg="Successfully logged in!"
-              :error="error"
-              :error-msg="errorMsg"
-            />
-          </v-card-text>
-        </v-card>
+  <v-container class="fill-height" fluid>
+    <v-row align="center" justify="center">
+      <v-col cols="auto" class="text-center">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="48"
+        />
+        <div class="text-grey mt-4">
+          Signing you in...
+        </div>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 
 import { LOGIN } from "@/store/actions.type";
-import Alerts from "@/components/Alerts.vue";
+import { ADD_ERROR, ADD_NOTIFICATION } from "@/store/mutations.type";
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
-
-const success = ref(false);
-const error = ref(false);
-const errorMsg = ref(null);
 
 const isAuthenticated = computed(function() {
   return store.getters["isAuthenticated"];
@@ -59,15 +53,19 @@ function detectCallback() {
         url: _url
       })
       .then(() => {
-        success.value = true;
-        error.value = false;
+        store.commit(ADD_NOTIFICATION, {
+          type: "success",
+          message: "Successfully logged in!"
+        });
 
         const returnTo = localStorage.getItem("return_to");
         localStorage.removeItem("return_to");
         router.replace(returnTo || { name: "products" });
       }).catch(_err => {
-        errorMsg.value = `Failed to log in! ${_err.message}`;
-        error.value = true;
+        store.commit(ADD_ERROR, {
+          title: "Login failed",
+          message: _err.message
+        });
         router.replace({ name: "login" });
       });
   }

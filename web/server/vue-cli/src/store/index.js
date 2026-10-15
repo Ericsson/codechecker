@@ -7,7 +7,7 @@ import {
 
 import auth from "./modules/auth";
 import config from "./modules/config";
-import error from "./modules/error";
+import notification from "./modules/notification";
 import product from "./modules/product";
 import run from "./modules/run";
 import serverInfo from "./modules/server-info";
@@ -24,7 +24,7 @@ export default createStore({
   modules: {
     auth,
     config,
-    error,
+    notification,
     product,
     run,
     serverInfo,
