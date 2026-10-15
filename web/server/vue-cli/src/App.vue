@@ -8,7 +8,7 @@
           <component :is="Component" />
         </keep-alive>
       </router-view>
-      <Errors />
+      <Notifications />
     </v-main>
   </v-app>
 </template>
@@ -16,7 +16,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
-import Errors from "@/components/Errors";
+import Notifications from "@/components/Notifications";
 import { TheHeader } from "@/components/Layout";
 
 const keepAliveList = ref([]);

@@ -575,6 +575,7 @@ import {
   handleThriftError,
   prodService } from "@cc-api";
 import { Permission } from "@cc/shared-types";
+import { ADD_ERROR } from "@/store/mutations.type";
 
 const props = defineProps({
   showRemoveFilteredReports: { type: Boolean, default: true },
@@ -853,11 +854,11 @@ async function savePreset(mode) {
     const activePresetId = presetMenuRef.value?.activePresetId;
     if (mode === "rename") {
       const new_name = presetName.value;
-      result = await new Promise(resolve => {
+      result = await new Promise((resolve, reject) => {
         ccService.getClient().renameFilterPreset(activePresetId, new_name,
           handleThriftError(result => {
             resolve(result);
-          })
+          }, reject)
         );
       });
     } else {
@@ -869,11 +870,11 @@ async function savePreset(mode) {
         reportFilter: presetReportFilter
       };
 
-      result = await new Promise(resolve => {
+      result = await new Promise((resolve, reject) => {
         ccService.getClient().storeFilterPreset(preset,
           handleThriftError(result => {
             resolve(result);
-          })
+          }, reject)
         );
       });
     }
@@ -882,7 +883,11 @@ async function savePreset(mode) {
     presetName.value = "";
     presetMenuRef.value?.selectPresetAfterSave(result);
   } catch (err) {
-    handleThriftError("Failed to save a preset: ", err);
+    store.commit(ADD_ERROR, {
+      title: "Could not save preset",
+      message: err?.message || "The preset could not be saved. "
+        + "Please check your connection and try again."
+    });
   }
 }
 
@@ -1163,7 +1168,10 @@ async function initFilterPreset(presetId) {
       });
     });
   } catch (err) {
-    handleThriftError("Failed to initialize a preset: ", err);
+    store.commit(ADD_ERROR, {
+      title: "Could not initialize preset",
+      message: err.message
+    });
     return;
   }
 

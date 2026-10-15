@@ -83,6 +83,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import { useStore } from "vuex";
 
 import { handleThriftError, prodService } from "@cc-api";
 import {
@@ -90,6 +91,7 @@ import {
   ProductConfiguration
 } from "@cc/prod-types";
 
+import { ADD_ERROR } from "@/store/mutations.type";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EditProductPermission from "./Permission/EditProductPermission";
 import ProductConfigForm from "./ProductConfigForm";
@@ -99,6 +101,7 @@ const props = defineProps({
   isSuperUser: { type: Boolean, default: false }
 });
 const emit = defineEmits([ "on-complete" ]);
+const store = useStore();
 const dialog = ref(false);
 const tab = ref(null);
 const loading = ref(false);
@@ -127,7 +130,10 @@ function save() {
   prodService.getClient().editProduct(props.product.id, productConfig.value,
     handleThriftError(_success => {
       if (!_success) {
-        error.value = true;
+        store.commit(ADD_ERROR, {
+          title: "Could not save product",
+          message: "The product changes could not be saved."
+        });
         return;
       }
 
