@@ -67,6 +67,9 @@ class OauthServer(BaseHTTPRequestHandler):
     # Store pkce code challenge
     code_challenges = {}
 
+    # Refresh tokens the mock honors, grows as refreshes issue new ones.
+    valid_refresh_tokens = set(tokens_by_code.values())
+
     users_by_token = {
         "github1": {
             "login": "admin_github",
@@ -165,6 +168,20 @@ class OauthServer(BaseHTTPRequestHandler):
         for field in raw.split('&'):
             key, value = field.split('=')
             params[key] = value
+        # refresh_token grant: issue a new, distinct access token.
+        if "code" not in params and "refresh_token" in params:
+            refresh_token = params['refresh_token']
+            if refresh_token in self.valid_refresh_tokens:
+                new_token = refresh_token + "_refreshed"
+                self.valid_refresh_tokens.add(new_token)
+                return self.show_json({
+                    'access_token': new_token,
+                    'refresh_token': new_token,
+                    'token_type': "bearer",
+                    'scope': "user:email",
+                    'expires_in': 3600
+                })
+            return self.show_rejection("Invalid refresh token")
         if "code" in params:
             code = params['code']
             # check for PKCE code challenge similarity
