@@ -73,8 +73,8 @@ def _db_timestamp_to_posix_epoch(d: datetime.datetime | None) \
 
 def _posix_epoch_to_db_timestamp(s: int | None) \
         -> datetime.datetime | None:
-    return datetime.datetime.fromtimestamp(s, datetime.timezone.utc) if s \
-        else None
+    return datetime.datetime.fromtimestamp(s, datetime.timezone.utc) \
+        .replace(tzinfo=None) if s else None
 
 
 def _make_task_info(t: DBTask) -> TaskInfo:
