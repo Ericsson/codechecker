@@ -35,8 +35,8 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
     StoreLimitKind, SubmittedRunOptions
 
 from codechecker_report_converter import twodim
-from codechecker_report_converter.report import Report, report_file, \
-    reports as reports_helper, statistics as report_statistics
+from codechecker_report_converter.report import Report, coverage, \
+    report_file, reports as reports_helper, statistics as report_statistics
 from codechecker_report_converter.report.hash import get_report_path_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
@@ -118,6 +118,7 @@ class StorageZipStatistics(report_statistics.Statistics):
         self.num_of_blame_information = 0
         self.num_of_source_files = 0
         self.num_of_source_files_with_source_code_comment = 0
+        self.num_of_source_files_with_coverage = 0
 
     def _write_summary(self, out=sys.stdout):
         """ Print summary. """
@@ -131,6 +132,10 @@ class StorageZipStatistics(report_statistics.Statistics):
              str(self.num_of_source_files_with_source_code_comment)],
             ["Number of blame information files",
              str(self.num_of_blame_information)]]
+        if self.num_of_source_files_with_coverage:
+            statistics_rows.append(
+                ["Number of source files with test coverage",
+                 str(self.num_of_source_files_with_coverage)])
         out.write(twodim.to_table(statistics_rows, False))
         out.write("\n----=================----\n")
 
@@ -483,6 +488,7 @@ def assemble_zip(inputs,
     """
     files_to_compress: dict[str, set] = defaultdict(set)
     analyzer_result_file_paths = []
+    coverage_source_files: set[str] = set()
     stats = StorageZipStatistics()
 
     for dir_path, file_paths in report_file.analyzer_result_files(inputs):
@@ -511,6 +517,22 @@ def assemble_zip(inputs,
         conf_dir = os.path.join(dir_path, "conf")
         if os.path.isdir(conf_dir):
             files_to_compress[dir_path].add(conf_dir)
+
+        # Add test coverage data created by e.g. 'report-converter -t lcov'.
+        # It is placed next to 'metadata.json' in the ZIP file.
+        coverage_file_path = coverage.get_coverage_file_path(dir_path)
+        if os.path.isfile(coverage_file_path):
+            try:
+                coverage_source_files.update(
+                    coverage.read(coverage_file_path).keys())
+                files_to_compress[dir_path].add(coverage_file_path)
+            except coverage.UnknownCoverageFileError as err:
+                # The file may have been created by another tool, so it is
+                # not an error, it is just not stored.
+                LOG.warning("%s It is not stored.", err)
+            except coverage.CoverageFileError as err:
+                LOG.error(err)
+                sys.exit(1)
 
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
@@ -567,6 +589,19 @@ def assemble_zip(inputs,
     if not file_paths:
         LOG.warning("There is no report to store. After uploading these "
                     "results the previous reports become resolved.")
+
+    # The source files of the test coverage data are uploaded too, so the
+    # coverage of files without any report can be shown.
+    missing_coverage_source_files = sorted(
+        f for f in coverage_source_files if not os.path.isfile(f))
+    if missing_coverage_source_files:
+        LOG.warning("The following source files of the test coverage data "
+                    "are missing, so their coverage will not be stored:\n%s",
+                    '\n'.join(missing_coverage_source_files))
+
+    coverage_source_files.difference_update(missing_coverage_source_files)
+    stats.num_of_source_files_with_coverage = len(coverage_source_files)
+    file_paths.update(coverage_source_files)
 
     hash_to_file: dict[str, str] = {}
 

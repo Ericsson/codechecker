@@ -835,6 +835,8 @@ grouped by checker names.
 grouped by severity levels.
 - [Component statistics](#component-statistics): shows the number of reports
 grouped by source components.
+- [Test Coverage](#test-coverage): shows the line and function test coverage
+of the source files of a run.
 
 ### Product overview
 This page shows an overview of the quality status of the current product.
@@ -875,6 +877,44 @@ Each row can be expanded by using the `^` button beside the component name. It
 will show a checker statistics table for the selected component.
 
 ![Component statististics](images/statistics/component_statistics_expanded.png)
+
+### Test Coverage
+Shows the test coverage which was stored together with a run. Test coverage
+data can be created from an LCOV tracefile by the `report-converter` tool, and
+it is uploaded by `CodeChecker store`. For more information
+[see](https://github.com/Ericsson/codechecker/blob/master/docs/tools/report-converter.md#supported-test-coverage-outputs).
+
+The coverage of **one run** is shown at a time, the coverage of multiple runs
+is never summed up. If exactly one run is selected in the *Run / Tag Filter*,
+the coverage of that run is shown. Otherwise (no run or multiple runs are
+selected) the run can be chosen in the run selector of the page, which lists
+the selected runs (or every run if no run is selected). Other filters do not
+apply to this page. Only the latest stored coverage of a run is available.
+
+The page shows the following information:
+- The overall line coverage (executed lines / executable lines) and function
+coverage (executed functions / functions) of the run.
+- A table of the directories and source files with their line and function
+coverage. The coverage of a directory is the sum of the coverage of the files
+in it. The coverage is coloured green if it is at least 80%, yellow if it is at
+least 50% and red otherwise. Click a directory to show its content and use the
+breadcrumb above the table to navigate back. The search field lists the files
+and directories of the current directory and its subdirectories whose name
+contains the search text. The table can be exported by the *Export CSV*
+button.
+- Click a source file to show its source code with the coverage of each line:
+executed lines are coloured green and marked by a check mark, executable lines
+which were never executed are coloured red and marked by a cross, and lines
+which are not executable (e.g. comments, blank lines) are neither coloured nor
+marked. The line types come from the coverage data (e.g. the `DA` records of
+the LCOV tracefile), they are not guessed by CodeChecker. The *Back* button
+returns to the directory of the table.
+
+The selected run, directory and file are stored in the URL, so the page can be
+bookmarked and shared.
+
+If the selected run has no test coverage data, a message is shown instead of
+the table.
 
 ## Filtering statistics
 We can get statistics only for specified runs, files, checker names etc. by

@@ -32,6 +32,8 @@ a CodeChecker server.
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
   * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
+* [Supported test coverage outputs](#supported-test-coverage-outputs)
+  * [LCOV](#lcov)
 * [Plist/Sarif to html tool](#plistsarif-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
@@ -76,9 +78,9 @@ options:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-tidy,
                         coccinelle, cppcheck, cpplint, eslint, fbinfer, gcc,
-                        golint, kernel-doc, lsan, mdl, msan, pyflakes, pylint,
-                        roslynator, smatch, sparse, sphinx, spotbugs, tsan,
-                        tslint, ubsan.
+                        golint, kernel-doc, lcov, lsan, mdl, msan, pyflakes,
+                        pylint, roslynator, smatch, sparse, sphinx, spotbugs,
+                        tsan, tslint, ubsan.
   -e EXPORT, --export EXPORT
                         Specify the export format of the converted reports.
                         Currently supported export types are: .plist, .sarif.
@@ -116,6 +118,7 @@ Supported analyzers:
   gcc - GNU Compiler Collection Static Analyzer, https://gcc.gnu.org/wiki/StaticAnalyzer
   golint - Golint, https://github.com/golang/lint
   kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
+  lcov - LCOV test coverage, https://github.com/linux-test-project/lcov
   lsan - LeakSanitizer, https://clang.llvm.org/docs/LeakSanitizer.html
   mdl - Markdownlint, https://github.com/markdownlint/markdownlint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
@@ -707,6 +710,76 @@ report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
 # Store the Roslynator report with CodeChecker
 CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
+
+## Supported test coverage outputs
+Besides analyzer results, `report-converter` can convert test coverage data.
+The coverage is written to the `coverage/coverage.json` file of the output
+directory. No analyzer report file is created, so `CodeChecker parse` is not
+affected by it.
+
+`CodeChecker store` uploads the coverage file together with the source files
+it refers to (source files which do not exist on the client machine are
+skipped with a warning). The server stores the line and function coverage of
+each source file for the stored run, and it can be viewed in the web GUI.
+
+Things to keep in mind:
+- Test coverage is stored per run: only the latest stored coverage of a run
+  is kept, the coverage of earlier storages (run history, tags) is not.
+- The coverage of a run is replaced when a store contains a coverage file
+  (even if none of its source files could be stored). A store without
+  coverage file keeps the previously stored coverage of the run.
+- Every store replaces the analysis reports of the run, so if the run also
+  has analysis results, store the analysis results and the coverage together,
+  in the same `CodeChecker store` command (or convert the coverage into the
+  analysis result directory with `-o`).
+- The `--trim-path-prefix` and the `skip_file` of the report directory are
+  applied to the coverage data too.
+
+### LCOV
+[LCOV](https://github.com/linux-test-project/lcov) collects the coverage data
+of programs compiled with GCC's or Clang's `--coverage` option into a
+*tracefile* (`.info` file). The `lcov` converter supports the tracefile
+formats of LCOV 1.x and 2.x. If multiple tracefiles are given, the execution
+counts of the same source file are summed up. Line (`DA`) and function (`FN`,
+`FNDA`, `FNL`, `FNA`, `FNF`, `FNH`) records are used; branch records are
+ignored. Relative source file paths are resolved against the current working
+directory.
+
+The following example shows you how to collect the test coverage of a project
+and store it to the CodeChecker database.
+
+```sh
+# Build the project with coverage instrumentation and run its tests.
+make CFLAGS="--coverage" LDFLAGS="--coverage"
+make test
+
+# Capture the coverage data into an LCOV tracefile.
+lcov --capture --directory . --output-file coverage.info
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# LCOV tracefile. The coverage data is written to
+# './codechecker_lcov_reports/coverage/coverage.json'.
+report-converter -t lcov -o ./codechecker_lcov_reports ./coverage.info
+
+# Store the coverage data together with the analysis results of the project.
+CodeChecker store ./reports ./codechecker_lcov_reports -n my_project
+```
+
+The stored coverage can be viewed in the web GUI on the *Test Coverage* tab of
+the *Statistics* page.
+
+Troubleshooting:
+- *Coverage of some source files is missing*: the source files listed in the
+  tracefile must exist at the same path on the machine where
+  `CodeChecker store` runs. Missing files are listed in a warning by
+  `CodeChecker store`, and the server log lists the files which could not be
+  matched (e.g. because of a different `--trim-path-prefix`).
+- *Only C (or only C++) files have coverage*: make sure that the coverage
+  instrumentation flags are given to every compiler of the project (e.g. both
+  `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`).
+- *`lcov` reports negative counts*: the counters of multi-threaded programs
+  can be corrupted. Compile with `-fprofile-update=atomic` or use the
+  `--ignore-errors negative` option of `lcov`.
 
 ## Plist/Sarif to html tool
 `plist-to-html` is a python tool which parses and creates HTML files from one
