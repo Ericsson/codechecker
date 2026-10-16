@@ -901,8 +901,10 @@ def server_init_start(args):
         LOG.info("'--force-authentication' was passed as a command-line "
                  "option. The server will ask for users to authenticate!")
 
+    workspace_dir = os.path.abspath(args.workspace)
+
     context = webserver_context.get_context()
-    context.codechecker_workspace = args.workspace
+    context.codechecker_workspace = workspace_dir
     context.db_username = args.dbusername
 
     environ = env.extend(context.path_env_extra,
@@ -988,7 +990,6 @@ def server_init_start(args):
 
     # Create the main database link from the arguments passed over the
     # command line.
-    workspace_dir = os.path.abspath(args.workspace)
     default_product_path = os.path.join(workspace_dir, 'Default.sqlite')
 
     # The 'Default' product should only be auto-created when the config
@@ -1022,7 +1023,12 @@ def server_init_start(args):
                 LOG.error("Failed to configure default product")
                 sys.exit(1)
 
-        product_conn_string = prod_server.get_connection_string()
+        # Store the database path relative to the workspace directory, so
+        # moving the workspace/config directory elsewhere does not break
+        # the product's database connection (see #3081).
+        product_conn_string = database.SQLiteDatabase(
+            "Default", 'Default.sqlite', RUN_META,
+            context.run_migration_root, environ).get_connection_string()
 
         server.add_initial_run_database(
             cfg_sql_server, product_conn_string)
@@ -1079,7 +1085,7 @@ def server_init_start(args):
 
     try:
         return server.start_server(args.config_directory,
-                                   args.workspace,
+                                   workspace_dir,
                                    package_data,
                                    args.view_port,
                                    cfg_sql_server,

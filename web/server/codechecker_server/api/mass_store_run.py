@@ -45,7 +45,7 @@ from codechecker_report_converter.report.hash import get_report_path_hash
 
 from ..database import db_cleanup
 from ..database.config_db_model import Product
-from ..database.database import DBSession
+from ..database.database import DBSession, SQLServer
 from ..database.run_db_model import \
     AnalysisInfo, AnalysisInfoFile, AnalyzerStatistic, \
     ReportPathData, ReportPathDataFile, \
@@ -649,10 +649,14 @@ class MassStoreRunTask(AbstractTask):
             if not db_product:
                 raise KeyError(f"No product with ID '{self._product_id}'")
 
+            connection_string = SQLServer.resolve_sqlite_relative_path(
+                db_product.connection,
+                self._package_context.codechecker_workspace)
+
             self._product = ServerProduct(db_product.id,
                                           db_product.endpoint,
                                           db_product.display_name,
-                                          db_product.connection,
+                                          connection_string,
                                           self._package_context,
                                           tm.environment)
 
