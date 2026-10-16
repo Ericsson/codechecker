@@ -1,0 +1,6 @@
+---
+# Scenario 1: the parent enabled a group, this directory disables two of its
+# members. Everything else of the group stays enabled.
+InheritParentConfig: true
+Checks: '-bugprone-sizeof-expression,-bugprone-integer-division'
+...

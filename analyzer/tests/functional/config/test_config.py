@@ -379,6 +379,87 @@ parse:
         print(out)
         self.assertEqual(returncode, 2)
 
+    def __run_analyze_with_joined_config(self, config_file_path: str):
+        """
+        Run the CodeChecker analyze command with the configuration file given
+        as "--config=<file>" instead of "--config <file>".
+        """
+        analyze_cmd = [self._codechecker_cmd, "analyze", self.build_json,
+                       "-o", self.reports_dir,
+                       f"--config={config_file_path}"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+        print(err)
+        return out + err, process.returncode
+
+    def test_yaml_analyzer_config(self):
+        """
+        Test that --analyzer-config options are also processed from a YAML
+        configuration file.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyzer:
+  - --analyzers=clangsa
+  # Analyzer configurations.
+  - --analyzer-config=clangsa:track-conditions=true
+  - --verbose=debug_analyzer
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+
+        self.assertNotEqual(returncode, 1)
+        self.assertIn("track-conditions=true", out)
+
+    def test_joined_config_file_argument(self):
+        """
+        Test that the configuration file can be given as "--config=<file>"
+        too, not only as "--config <file>".
+        """
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyze': [
+                    '--analyzers', 'clangsa',
+                    '--analyzer-config', 'clangsa:track-conditions=true',
+                    '--verbose', 'debug_analyzer'
+                ]}, config_f)
+
+        out, returncode = self.__run_analyze_with_joined_config(
+            self.config_file_json)
+
+        self.assertNotEqual(returncode, 1)
+        self.assertNotIn("Traceback", out)
+        self.assertIn("track-conditions=true", out)
+
+    def test_joined_config_file_argument_yaml(self):
+        """
+        The "--config=<file>" form has to work for YAML configuration files
+        too.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyzer:
+  - --analyzers=clangsa
+  - --analyzer-config=clangsa:track-conditions=true
+  - --verbose=debug_analyzer
+""")
+
+        out, returncode = self.__run_analyze_with_joined_config(
+            self.config_file_yaml)
+
+        self.assertNotEqual(returncode, 1)
+        self.assertNotIn("Traceback", out)
+        self.assertIn("track-conditions=true", out)
+
     def test_check_config(self):
         """
         Run check command with a config file which enables the clangsa
