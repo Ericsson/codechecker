@@ -421,7 +421,12 @@ async function validate() {
   return valid;
 }
 
+function resetValidation() {
+  form.value?.resetValidation();
+}
+
 defineExpose({
-  validate
+  validate,
+  resetValidation
 });
 </script>

@@ -66,12 +66,6 @@
               v-if="optionsShow"
             >
               <v-card-text class="px-0 pb-0">
-                <alerts
-                  :success="success"
-                  success-msg="Successfully logged in!"
-                  :error="error"
-                  :error-msg="errorMsg"
-                />
                 <v-form v-model="isDataValid">
                   <v-text-field
                     v-model="username"
@@ -167,8 +161,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
 import { LOGIN } from "@/store/actions.type";
+import { ADD_ERROR, ADD_NOTIFICATION } from "@/store/mutations.type";
 import { authService, handleThriftError } from "@cc-api";
-import Alerts from "@/components/Alerts";
 
 const store = useStore();
 const route = useRoute();
@@ -177,9 +171,6 @@ const router = useRouter();
 const placeholder = ref("");
 const username = ref("");
 const password = ref("");
-const success = ref(false);
-const error = ref(false);
-const errorMsg = ref(null);
 const isDataValid = ref(false);
 const providers = ref([]);
 const dialog = ref(false);
@@ -233,14 +224,18 @@ function login() {
   store.dispatch(LOGIN,
     { username: username.value, password: password.value, type: "password" }
   ).then(() => {
-    success.value = true;
-    error.value = false;
+    store.commit(ADD_NOTIFICATION, {
+      type: "success",
+      message: "Successfully logged in!"
+    });
 
     const returnTo = route.query["return_to"];
     router.replace(returnTo || { name: "products" });
   }).catch(err => {
-    errorMsg.value = `Failed to log in! ${err.message}`;
-    error.value = true;
+    store.commit(ADD_ERROR, {
+      title: "Login failed",
+      message: err.message
+    });
   });
 }
 
@@ -258,8 +253,10 @@ function getProviders() {
     }
     optionsShow.value = providers.value.length === 0;
   }).catch(err => {
-    errorMsg.value = `Providers list was passed incorrectly. ${err.message}`;
-    error.value = true;
+    store.commit(ADD_ERROR, {
+      title: "Could not load login providers",
+      message: `Providers list was passed incorrectly. ${err.message}`
+    });
   });
 }
 
@@ -276,17 +273,18 @@ function oauth(provider) {
       }));
   }).then(url => {
     if (url) {
-      success.value = false;
-      error.value = false;
-
       window.location.href = url;
     } else {
-      errorMsg.value = `Server returned an invalid URL: ${url}`;
-      error.value = true;
+      store.commit(ADD_ERROR, {
+        title: "Login failed",
+        message: `Server returned an invalid URL: ${url}`
+      });
     }
   }).catch(err => {
-    errorMsg.value = `Failed to access link. ${err.message}`;
-    error.value = true;
+    store.commit(ADD_ERROR, {
+      title: "Login failed",
+      message: `Failed to access link. ${err.message}`
+    });
   });
 }
 

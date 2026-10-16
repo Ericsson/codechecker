@@ -76,7 +76,7 @@ module.exports = {
       .assert.containsText("@userNameErrorMessages", "required")
       .assert.containsText("@passwordErrorMessages", "required")
       .login("dummy", "NoSuchUser")
-      .assert.containsText("@alertError", "Failed to log in!")
+      .assert.containsText("@notificationTitle", "Login failed")
       .end()
   },
 
