@@ -826,13 +826,15 @@ function toggleTreeSort(statKey) {
 }
 
 // "/a/b/c" -> ["/a", "/a/b", "/a/b/c"]
+// "a/b/c" -> ["a", "a/b", "a/b/c"]
 function ancestorChain(fullPath) {
   if (!fullPath) return [];
+  const isAbsolute = fullPath.startsWith("/");
   const parts = fullPath.split("/").filter(Boolean);
   const chain = [];
   let current = "";
   parts.forEach(part => {
-    current += "/" + part;
+    current += (current || isAbsolute) ? "/" + part : part;
     chain.push(current);
   });
   return chain;
@@ -913,12 +915,13 @@ function buildTreeItems() {
   Object.entries(allReportsFileCounts.value || {}).forEach(
     ([ filePath, count ]) => {
       if (!filePath) return;
+      const isAbsolute = filePath.startsWith("/");
       const pathParts = filePath.split("/").slice(0, -1);
       let currentLevel = items;
       let currentPath = "";
       pathParts.forEach(part => {
         if (part === "") return;
-        currentPath += "/" + part;
+        currentPath += (currentPath || isAbsolute) ? "/" + part : part;
         let existing = currentLevel.find(n => n.name === part);
         if (!existing) {
           existing = {
