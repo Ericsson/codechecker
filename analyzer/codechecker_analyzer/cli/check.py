@@ -171,6 +171,16 @@ def add_arguments_to_parser(parser):
                              "fails with error message related to __builtin "
                              "symbols.")
 
+    parser.add_argument('--keep-symlink',
+                        dest="keep_symlink",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="When calculating the absolute path of source "
+                             "files, do not resolve symbolic links. By "
+                             "default symbolic links in source paths are "
+                             "resolved to their real path.")
+
     parser.add_argument('--add-gcc-include-dirs-with-isystem',
                         dest="add_gcc_include_dirs_with_isystem",
                         required=False,
@@ -939,7 +949,8 @@ def main(args):
             output_format='plist',
             jobs=args.jobs,
             keep_gcc_include_fixed=args.keep_gcc_include_fixed,
-            keep_gcc_intrin=args.keep_gcc_intrin
+            keep_gcc_intrin=args.keep_gcc_intrin,
+            keep_symlink=args.keep_symlink
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error

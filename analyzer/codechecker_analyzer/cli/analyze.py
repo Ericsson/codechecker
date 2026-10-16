@@ -263,6 +263,16 @@ def add_arguments_to_parser(parser):
                              "fails with error message related to __builtin "
                              "symbols.")
 
+    parser.add_argument('--keep-symlink',
+                        dest="keep_symlink",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="When calculating the absolute path of source "
+                             "files, do not resolve symbolic links. By "
+                             "default symbolic links in source paths are "
+                             "resolved to their real path.")
+
     parser.add_argument('--add-gcc-include-dirs-with-isystem',
                         dest="add_gcc_include_dirs_with_isystem",
                         required=False,
@@ -1380,6 +1390,7 @@ def main(args):
         compiler_info_file,
         args.keep_gcc_include_fixed,
         args.keep_gcc_intrin,
+        args.keep_symlink,
         args.jobs,
         skip_handlers,
         pre_analysis_skip_handlers,
