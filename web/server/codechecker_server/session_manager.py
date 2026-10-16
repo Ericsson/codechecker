@@ -938,6 +938,12 @@ class SessionManager:
         if groups is None:
             groups = []
 
+        # If regex_groups is enabled, extend the groups provided by the
+        # OAuth provider.
+        extra_groups = self.__try_regex_groups(username)
+        if extra_groups:
+            groups = list(set(groups) | extra_groups)
+
         LOG.debug(f"Groups assigned to oauth_session: {groups}")
 
         if not self.__is_method_enabled('oauth'):

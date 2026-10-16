@@ -684,6 +684,57 @@ class DictAuth(unittest.TestCase):
         result = auth_client.destroySession()
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
+    def test_oauth_regex_groups(self):
+        """
+        Tests if regex_groups are applied to users logged in with OAuth.
+        """
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+        # First login as root.
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "root:root")
+        self.assertIsNotNone(self.session_token,
+                             "root was unable to login!")
+
+        # Then give SUPERUSER privs to admins_custom_group.
+        authd_auth_client = \
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=self.session_token)
+        ret = authd_auth_client.addPermission(Permission.SUPERUSER,
+                                              "admins_custom_group",
+                                              True, None)
+        self.assertTrue(ret)
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Login with OAuth as a user who is in admins_custom_group.
+        session_token = self.try_login("github", "admin_github", "admin")\
+            .get('session_token', None)
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        # Do something privileged.
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=session_token)
+        self.assertIsNotNone(client.allowsStoringAnalysisStatistics(),
+                             "Privileged call failed.")
+
+        # Finally try to do the same with an unprivileged OAuth user.
+        session_token = self.try_login("github", "user_github", "user")\
+            .get('session_token', None)
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=session_token)
+
+        with self.assertRaises(RequestFailed) as msg:
+            client.allowsStoringAnalysisStatistics()
+
+        self.assertIn("You are not authorized to execute this action",
+                      str(msg.exception))
+
     def test_personal_access_tokens(self):
         """ Test personal access token commands. """
         codechecker_cfg = self._test_cfg['codechecker_cfg']
