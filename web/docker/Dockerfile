@@ -49,12 +49,7 @@ ENV TINI_VERSION v0.18.0
 ENV WAIT_FOR_VERSION v2.1.2
 
 RUN set -x && apt-get update -qq \
-  # Prevent fail when install postgresql-client.
-  && mkdir -p /usr/share/man/man1 \
-  && mkdir -p /usr/share/man/man7 \
-  \
   && apt-get install -qqy --no-install-recommends ca-certificates \
-    postgresql-client \
     # To switch user and exec command.
     gosu
 
