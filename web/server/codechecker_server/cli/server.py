@@ -460,7 +460,7 @@ def get_schema_version_from_package(migration_root):
     return pckg_schema_ver.get_current_head()
 
 
-def check_product_db_status(cfg_sql_server, migration_root, environ):
+def check_product_db_status(cfg_sql_server, migration_root):
     """
     Check the products for database statuses.
 
@@ -498,9 +498,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
         db = database.SQLServer.from_connection_string(pd.connection,
                                                        pd.endpoint,
                                                        RUN_META,
-                                                       migration_root,
-                                                       interactive=False,
-                                                       env=environ)
+                                                       migration_root)
         db_location = db.get_db_location()
 
         try:
@@ -520,7 +518,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
     return prod_status
 
 
-def __db_status_check(cfg_sql_server, migration_root, environ,
+def __db_status_check(cfg_sql_server, migration_root,
                       product_name=None) -> int:
     """
     Check and print database statuses for the given product.
@@ -530,8 +528,7 @@ def __db_status_check(cfg_sql_server, migration_root, environ,
 
     LOG.debug("Checking database status for %s product.", product_name)
 
-    prod_statuses = check_product_db_status(cfg_sql_server, migration_root,
-                                            environ)
+    prod_statuses = check_product_db_status(cfg_sql_server, migration_root)
 
     if product_name != "all":
         avail = prod_statuses.get(product_name)
@@ -554,7 +551,6 @@ class NonExistentProductError(Exception):
 
 
 def __db_migration(migration_root,
-                   environ,
                    endpoint: str,
                    connection_string: str,
                    init_instead_of_upgrade: bool) -> DBStatus:
@@ -562,9 +558,7 @@ def __db_migration(migration_root,
         db = database.SQLServer.from_connection_string(connection_string,
                                                        endpoint,
                                                        RUN_META,
-                                                       migration_root,
-                                                       interactive=False,
-                                                       env=environ)
+                                                       migration_root)
         if init_instead_of_upgrade:
             LOG.info("[%s] Initialising...", endpoint)
             status = db.connect(init=True)
@@ -596,7 +590,7 @@ def __db_migration(migration_root,
 
 
 def __db_migration_multiple(
-    cfg_sql_server, migration_root, environ,
+    cfg_sql_server, migration_root,
     products_requested_for_upgrade: Optional[List[str]] = None,
     force_upgrade: bool = False
 ) -> int:
@@ -610,8 +604,7 @@ def __db_migration_multiple(
              if products_requested_for_upgrade else "<all products>")
 
     prod_statuses = check_product_db_status(cfg_sql_server,
-                                            migration_root,
-                                            environ)
+                                            migration_root)
     products_to_upgrade: List[str] = []
     for endpoint in (products_requested_for_upgrade or []):
         avail = prod_statuses.get(endpoint)
@@ -662,9 +655,7 @@ def __db_migration_multiple(
                     cast(str, connection_str),
                     endpoint,
                     RUN_META,
-                    migration_root,
-                    interactive=False,
-                    env=environ)
+                    migration_root)
                 db_status = db.connect()
 
                 status_str = database_status.db_status_msg.get(
@@ -725,9 +716,9 @@ def __db_migration_multiple(
                      "jobs...", thr_count)
             for product_cfg, return_status in \
                     zip(scheduled_upgrades_or_inits, executor.map(
-                        # Bind the first 2 non-changing arguments of
+                        # Bind the first non-changing argument of
                         # __db_migration, this is fixed for the execution.
-                        partial(__db_migration, migration_root, environ),
+                        partial(__db_migration, migration_root),
                         # Transform List[Tuple[str, str, bool]] into an
                         # Iterable[Tuple[str], Tuple[str], Tuple[bool]],
                         # and immediately unpack it, thus providing the other
@@ -905,12 +896,8 @@ def server_init_start(args):
     context.codechecker_workspace = args.workspace
     context.db_username = args.dbusername
 
-    environ = env.extend(context.path_env_extra,
-                         context.ld_lib_path_extra)
-
     cfg_sql_server = database.SQLServer.from_cmdline_args(
-        vars(args), "config", CONFIG_META, context.config_migration_root,
-        interactive=True, env=environ)
+        vars(args), "config", CONFIG_META, context.config_migration_root)
 
     LOG.info("Checking configuration database ...")
     db_status = cfg_sql_server.connect()
@@ -967,7 +954,6 @@ def server_init_start(args):
         if args.status:
             ret = __db_status_check(cfg_sql_server,
                                     context.migration_root,
-                                    environ,
                                     args.status)
             sys.exit(ret)
     except AttributeError:
@@ -978,7 +964,6 @@ def server_init_start(args):
             ret = __db_migration_multiple(
                 cfg_sql_server,
                 context.migration_root,
-                environ,
                 [args.product_to_upgrade]
                 if args.product_to_upgrade != "all" else None,
                 force_upgrade)
@@ -1011,7 +996,7 @@ def server_init_start(args):
 
         prod_server = database.SQLiteDatabase(
             "Default", default_product_path, RUN_META,
-            context.run_migration_root, environ)
+            context.run_migration_root)
 
         LOG.debug("Checking 'Default' product database.")
         db_status = prod_server.connect()
@@ -1031,8 +1016,7 @@ def server_init_start(args):
                  default_product_path)
 
     prod_statuses = check_product_db_status(cfg_sql_server,
-                                            context.run_migration_root,
-                                            environ)
+                                            context.run_migration_root)
 
     upgrade_available = {}
     for k, v in prod_statuses.items():
@@ -1045,13 +1029,11 @@ def server_init_start(args):
         LOG.warning("Multiple products can be upgraded, make a backup!")
         __db_migration_multiple(cfg_sql_server,
                                 context.run_migration_root,
-                                environ,
                                 None,
                                 force_upgrade)
 
         prod_statuses = check_product_db_status(cfg_sql_server,
-                                                context.run_migration_root,
-                                                environ)
+                                                context.run_migration_root)
     print_prod_status(prod_statuses)
 
     non_ok_db = False
@@ -1087,7 +1069,6 @@ def server_init_start(args):
                                    'force_auth' in args,
                                    args.skip_db_cleanup,
                                    context,
-                                   environ,
                                    machine_id,
                                    args.api_handler_processes,
                                    args.task_worker_processes)

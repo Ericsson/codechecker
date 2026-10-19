@@ -53,13 +53,11 @@ class TaskManager:
                  q: Queue,
                  task_pipes,
                  config_db_session_factory,
-                 server_environment,
                  executor_kill_flag: Value,
                  machine_id: str,
                  temp_dir: Optional[Path] = None):
         self._queue = q
         self._database_factory = config_db_session_factory
-        self._server_environment = server_environment
         self._is_shutting_down = executor_kill_flag
         self._machine_id = machine_id
         self._temp_dir_root = (temp_dir or Path(tempfile.gettempdir())) \
@@ -76,11 +74,6 @@ class TaskManager:
         configuration database.
         """
         return self._database_factory
-
-    @property
-    def environment(self):
-        """Returns the ``check_env`` injected into the task manager."""
-        return self._server_environment
 
     @property
     def machine_id(self) -> str:

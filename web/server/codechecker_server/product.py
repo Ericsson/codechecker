@@ -43,7 +43,7 @@ class Product:
     CONNECT_RETRY_TIMEOUT = 300
 
     def __init__(self, id_: int, endpoint: str, display_name: str,
-                 connection_string: str, context, check_env):
+                 connection_string: str, context):
         """
         Set up a new managed product object for the configuration given.
         """
@@ -53,7 +53,6 @@ class Product:
         self.__connection_string = connection_string
         self.__driver_name = None
         self.__context = context
-        self.__check_env = check_env
         self.__engine = None
         self.__session = None
         self.__db_status = DBStatus.MISSING
@@ -123,9 +122,7 @@ class Product:
             self.__connection_string,
             self.__endpoint,
             RUN_META,
-            self.__context.run_migration_root,
-            interactive=False,
-            env=self.__check_env)
+            self.__context.run_migration_root)
 
         if isinstance(sql_server, database.PostgreSQLServer):
             self.__driver_name = 'postgresql'
@@ -151,8 +148,8 @@ class Product:
                 self.__db_status = sql_server.connect(init_db)
 
         except Exception as ex:
-            LOG.exception("The database for product '%s' cannot be"
-                          " connected to.", self.endpoint)
+            LOG.error("The database for product '%s' cannot be"
+                      " connected to:\n%s", self.endpoint, str(ex))
             self.__db_status = DBStatus.FAILED_TO_CONNECT
             self.__last_connect_attempt = (datetime.now(), str(ex))
 

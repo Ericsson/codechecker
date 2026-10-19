@@ -653,8 +653,7 @@ class MassStoreRunTask(AbstractTask):
                                           db_product.endpoint,
                                           db_product.display_name,
                                           db_product.connection,
-                                          self._package_context,
-                                          tm.environment)
+                                          self._package_context)
 
         self._product.connect()
         if self._product.db_status != DBStatus.OK:

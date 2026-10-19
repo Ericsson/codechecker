@@ -186,22 +186,6 @@ class Context(metaclass=Singleton):
                             'report', 'output', 'html', 'static')
 
     @property
-    def path_env_extra(self):
-        extra_paths = self.pckg_layout.get('path_env_extra', [])
-        paths = []
-        for path in extra_paths:
-            paths.append(os.path.join(self._data_files_dir_path, path))
-        return paths
-
-    @property
-    def ld_lib_path_extra(self):
-        extra_lib = self.pckg_layout.get('ld_lib_path_extra', [])
-        ld_paths = []
-        for path in extra_lib:
-            ld_paths.append(os.path.join(self._data_files_dir_path, path))
-        return ld_paths
-
-    @property
     def data_files_dir_path(self):
         return self._data_files_dir_path
 
