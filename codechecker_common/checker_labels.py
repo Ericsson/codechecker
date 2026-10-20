@@ -8,8 +8,9 @@
 from collections import defaultdict
 import os
 
-from typing import Any, cast, Iterable, List
+from typing import Any, cast, Iterable
 
+from codechecker_common.guidelines import Guidelines
 from codechecker_common.util import load_json
 
 
@@ -44,7 +45,11 @@ class CheckerLabels:
         'blacklist': 'false',
         'description': ''}
 
-    def __init__(self, checker_labels_dir: str, guidelines=None):
+    def __init__(
+        self,
+        checker_labels_dir: str,
+        guidelines: Guidelines | None = None
+    ):
         if not os.path.isdir(checker_labels_dir):
             raise NotADirectoryError(
                 f'{checker_labels_dir} is not a directory.')
@@ -167,32 +172,39 @@ class CheckerLabels:
             if analyzer is None or a == analyzer:
                 yield a, c
 
-    def __expand_query_profiles(self, profiles: Iterable[str]) -> List[str]:
+    def __expand_query_profiles(self, profiles: Iterable[str]) -> list[str]:
         """
         Expand the requested profile values of a query through the
         profile-containment relation. The containment maps a profile to the
-        profiles it contains, e.g. {"extreme": ["sensitive"],
-        "sensitive": ["default"]}. Filtering by a profile also matches the
-        checkers of the profiles it contains, applied transitively:
+        full set of profiles it contains, e.g.
+        {"extreme": ["sensitive", "default"], "sensitive": ["default"]}.
+        Filtering by a profile also matches the checkers of the profiles it
+        contains.
 
-          query "default"   -> matches {default}
-          query "sensitive" -> matches {sensitive, default}
-          query "extreme"   -> matches {extreme, sensitive, default}
-
-        This way "default" is the smallest set (only default-labeled
-        checkers), "sensitive" additionally includes default-labeled checkers,
-        and "extreme" includes default- and sensitive-labeled checkers too.
-        The result preserves uniqueness.
+        Profile "default" is the smallest set (only default-labeled
+        checkers), "sensitive" additionally includes any checkers labeled as,
+        sensitive and "extreme" includes the "extreme" labeled checkers too.
         """
-        result: List[str] = []
-        stack = list(profiles)
+        result: list[str] = []
 
-        while stack:
-            profile = stack.pop()
-            if profile in result:
-                continue
-            result.append(profile)
-            stack.extend(self.__profile_containment.get(profile, []))
+        for profile in profiles:
+            for p in [profile, *self.__profile_containment.get(profile, [])]:
+                if p not in result:
+                    result.append(p)
+
+        return result
+
+    def profiles_containing(self, profile: str) -> list[str]:
+        """
+        Return the given profile and every profile that contains it. Inverse
+        of __expand_query_profiles, e.g. "default" ->
+        {default, sensitive, extreme}.
+        """
+        result = [profile]
+
+        for container, contained in self.__profile_containment.items():
+            if profile in contained and container not in result:
+                result.append(container)
 
         return result
 
@@ -219,7 +231,7 @@ class CheckerLabels:
     def __derived_guidelines(
         self,
         rule_values: Iterable[str]
-    ) -> List[tuple[str, str]]:
+    ) -> list[tuple[str, str]]:
         """
         Derive the guideline labels of a checker from its rule values. For
         every "rule:<rule_id>" of a checker the guidelines that contain the
@@ -230,7 +242,7 @@ class CheckerLabels:
         if self.__guidelines is None:
             return []
 
-        guidelines: List[tuple[str, str]] = []
+        guidelines: list[tuple[str, str]] = []
         seen: set[str] = set()
 
         for rule_id in rule_values:
@@ -243,8 +255,8 @@ class CheckerLabels:
 
     def __augment_labels(
         self,
-        labels: List[tuple[str, str]]
-    ) -> List[tuple[str, str]]:
+        labels: list[tuple[str, str]]
+    ) -> list[tuple[str, str]]:
         """
         Augment a checker's raw (label, value) pairs with the information that
         is derived in memory. Currently this derives the guideline labels from
@@ -254,7 +266,7 @@ class CheckerLabels:
         """
         rule_values = [value for key, value in labels if key == 'rule']
 
-        augmented: List[tuple[str, str]] = list(labels)
+        augmented: list[tuple[str, str]] = list(labels)
         augmented.extend(self.__derived_guidelines(rule_values))
 
         return augmented
@@ -406,7 +418,7 @@ class CheckerLabels:
         # Guidelines are derived from rules, so their values come from the
         # Guidelines object rather than from raw labels.
         if label == 'guideline' and self.__guidelines is not None:
-            return list(self.__guidelines.all_guidelines())
+            return self.__guidelines.all_guidelines()
 
         values = set()
 

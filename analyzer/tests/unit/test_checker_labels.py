@@ -17,7 +17,7 @@ import unittest
 from codechecker_common.checker_labels import CheckerLabels
 
 
-class _FakeGuidelines:
+class _MockGuidelines:
     """
     Minimal stand-in for the Guidelines object. Maps rule ids to the
     guidelines that contain them.
@@ -51,7 +51,7 @@ class TestCheckerLabels(unittest.TestCase):
               "UNSPECIFIED": "Unspecified documentation"
           },
           "profile-containment": {
-              "extreme": ["sensitive"],
+              "extreme": ["sensitive", "default"],
               "sensitive": ["default"]
           }
         }
@@ -119,7 +119,7 @@ class TestCheckerLabels(unittest.TestCase):
             json.dump(labels, f)
 
     def test_checker_labels(self):
-        guidelines = _FakeGuidelines({"err34-c": ["sei-cert-c"]})
+        guidelines = _MockGuidelines({"err34-c": ["sei-cert-c"]})
         cl = CheckerLabels(self.labels_dir.name, guidelines)
 
         self.assertEqual(
@@ -254,3 +254,21 @@ class TestCheckerLabels(unittest.TestCase):
                 'bugprone-undelegated-constructor',
                 'google-objc-global-variable-declaration',
                 'cert-err34-c']))
+
+    def test_profiles_containing(self):
+        cl = CheckerLabels(self.labels_dir.name)
+
+        # Containment is {extreme: [sensitive], sensitive: [default]}, so the
+        # inverse closure of a tier includes the profiles that contain it.
+        self.assertEqual(
+            sorted(cl.profiles_containing('default')),
+            ['default', 'extreme', 'sensitive'])
+        self.assertEqual(
+            sorted(cl.profiles_containing('sensitive')),
+            ['extreme', 'sensitive'])
+        self.assertEqual(
+            cl.profiles_containing('extreme'),
+            ['extreme'])
+        self.assertEqual(
+            cl.profiles_containing('nonexistent'),
+            ['nonexistent'])

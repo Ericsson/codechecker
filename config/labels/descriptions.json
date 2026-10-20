@@ -16,7 +16,8 @@
   },
   "profile-containment": {
     "extreme": [
-      "sensitive"
+      "sensitive",
+      "default"
     ],
     "sensitive": [
       "default"

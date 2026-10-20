@@ -203,9 +203,8 @@ def __guideline_to_label(
     label and a single-rule query as a "rule:<rule_id>" label.
     """
     guidelines = analyzer_context.get_context().guideline
-    all_guidelines = list(guidelines.all_guidelines())
 
-    if args.guideline in all_guidelines:
+    if args.guideline in guidelines.all_guidelines():
         return f'guideline:{args.guideline}'
     elif args.guideline.find(':') == -1:
         LOG.error('--guideline parameter is either <guideline> or '
@@ -214,7 +213,17 @@ def __guideline_to_label(
 
     # "<guideline>:<rule>" form -> query by the rule only, since the guideline
     # is derived from the rule in memory.
-    _, rule = args.guideline.split(':', 1)
+    guideline, rule = args.guideline.split(':', 1)
+
+    if guideline not in guidelines.all_guidelines():
+        LOG.error("The guideline '%s' does not exist.", guideline)
+        sys.exit(1)
+
+    if rule not in guidelines.rules_of_guideline(guideline):
+        LOG.error("The rule '%s' is not part of the guideline '%s'.",
+                  rule, guideline)
+        sys.exit(1)
+
     return f'rule:{rule}'
 
 
@@ -361,7 +370,14 @@ def __print_labels(args: argparse.Namespace, cl: CheckerLabels):
     if args.output_format in ['csv', 'json']:
         header = list(map(__uglify, header))
 
-    rows = list(map(lambda x: (x,), cl.labels()))
+    # Present each guideline name as a label and hide the internal "rule"
+    # label, matching the released output.
+    guidelines = analyzer_context.get_context().guideline
+    labels = set(cl.labels())
+    labels.discard('rule')
+    labels.update(guidelines.all_guidelines())
+
+    rows = list(map(lambda x: (x,), sorted(labels)))
 
     print(twodim.to_str(args.output_format, header, rows))
 
@@ -379,7 +395,14 @@ def __print_label_values(args: argparse.Namespace, cl: CheckerLabels):
     if args.output_format == 'custom':
         args.output_format = 'rows'
 
-    rows = list(map(lambda x: (x,), cl.occurring_values(args.label)))
+    # A guideline name as the label lists its rule ids.
+    guidelines = analyzer_context.get_context().guideline
+    if args.label in guidelines.all_guidelines():
+        values = list(guidelines.rules_of_guideline(args.label))
+    else:
+        values = cl.occurring_values(args.label)
+
+    rows = list(map(lambda x: (x,), values))
 
     if rows:
         print(twodim.to_str(args.output_format, header, rows))

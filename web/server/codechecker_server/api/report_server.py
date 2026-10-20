@@ -3089,6 +3089,9 @@ class ThriftRequestHandler:
         """ Return the list of labels to each checker. """
         self.__require_view()
 
+        checker_labels = self._context.checker_labels
+        guidelines = self._context.guideline
+
         labels = []
         for checker in checkers:
             analyzer_name = None if not checker.analyzerName \
@@ -3097,10 +3100,32 @@ class ThriftRequestHandler:
                 if (analyzer_name and analyzer_name.lower() != "unknown") \
                 else None
 
-            labels.append(list(map(
-                lambda x: f'{x[0]}:{x[1]}',
-                self._context.checker_labels.labels_of_checker(
-                    checker.checkerId, analyzer_name))))
+            pairs = checker_labels.labels_of_checker(
+                checker.checkerId, analyzer_name)
+
+            # The "rule" label is internal to the reworked labeling model and
+            # was not part of the released API. It is excluded here so the
+            # returned set stays byte-for-byte compatible with older clients;
+            # it is still used below to derive the legacy guideline labels.
+            checker_labels_set = {f'{key}:{value}' for key, value in pairs
+                                  if key != 'rule'}
+
+            # Backwards compatibility for older clients: along with the single
+            # stored profile, it also list every profile that contains it
+            # transitively like "default" is "sensitive" and "extreme" too.
+            for key, value in pairs:
+                if key == 'profile':
+                    for profile in checker_labels.profiles_containing(value):
+                        checker_labels_set.add(f'profile:{profile}')
+
+            # Backwards compatibility: emit the legacy "<guideline>:<rule>"
+            # labels from the checker's rules and their guidelines.
+            for key, value in pairs:
+                if key == 'rule':
+                    for guideline in guidelines.guidelines_of_rule(value):
+                        checker_labels_set.add(f'{guideline}:{value}')
+
+            labels.append(sorted(checker_labels_set))
 
         return labels
 
@@ -3127,10 +3152,10 @@ class ThriftRequestHandler:
                 guideline_rules[guideline.guidelineName].append(
                     Rule(
                         ruleId=rule.lower(),
-                        title=rules[rule].get("title", ""),
-                        url=rules[rule].get("rule_url", ""),
+                        title=rules[rule].title,
+                        url=rules[rule].rule_url,
                         checkers=checkers,
-                        level=rules[rule].get("level", "")
+                        level=""
                     )
                 )
 
