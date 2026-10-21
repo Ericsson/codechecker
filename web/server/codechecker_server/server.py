@@ -599,18 +599,27 @@ def _do_db_cleanups(config_database, context, check_env) \
 
     thr_count = util.clamp(1, len(products), cpu_count())
     overall_result, failures = True, []
-    with Pool(max_workers=thr_count) as executor:
-        LOG.info("Performing database cleanup using %d concurrent jobs...",
-                 thr_count)
-        for product, result in \
-                zip(products, executor.map(
-                    partial(_do_db_cleanup, context, check_env),
-                    *zip(*products))):
-            success, reason = result
-            if not success:
-                _, endpoint, _, _ = product
-                overall_result = False
-                failures.append((endpoint, reason))
+    if sys.platform == "win32":
+        # multiprocess.Pool, which the compatibility module gives us on
+        # Windows, takes processes= and a single iterable in map(). There are
+        # only a handful of products, so just do them in order.
+        LOG.info("Performing database cleanup...")
+        results = list(map(partial(_do_db_cleanup, context, check_env),
+                           *zip(*products)))
+    else:
+        with Pool(max_workers=thr_count) as executor:
+            LOG.info("Performing database cleanup using %d concurrent jobs...",
+                     thr_count)
+            results = list(executor.map(
+                partial(_do_db_cleanup, context, check_env),
+                *zip(*products)))
+
+    for product, result in zip(products, results):
+        success, reason = result
+        if not success:
+            _, endpoint, _, _ = product
+            overall_result = False
+            failures.append((endpoint, reason))
 
     return overall_result, failures
 
@@ -1345,8 +1354,10 @@ def start_server(config_directory: str, workspace_directory: str,
         bg_task_queue.join_thread()
         for pid in bg_processes:
             try:
-                signal_log(LOG, "DEBUG", f"SIGHUP! Task child PID: {pid} ...")
-                os.kill(pid, signal.SIGHUP)
+                if sys.platform != "win32":
+                    signal_log(LOG, "DEBUG",
+                               f"SIGHUP! Task child PID: {pid} ...")
+                    os.kill(pid, signal.SIGHUP)
             except (OSError, ValueError):
                 pass
         for pid in list(bg_processes.keys()):

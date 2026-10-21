@@ -720,21 +720,30 @@ def __db_migration_multiple(
         failed_products: list[tuple[str, DBStatus]] = []
         thr_count = util.clamp(1, len(scheduled_upgrades_or_inits),
                                cpu_count())
-        with Pool(max_workers=thr_count) as executor:
-            LOG.info("Initialising/upgrading products using %d concurrent "
-                     "jobs...", thr_count)
-            for product_cfg, return_status in \
-                    zip(scheduled_upgrades_or_inits, executor.map(
-                        # Bind the first 2 non-changing arguments of
-                        # __db_migration, this is fixed for the execution.
-                        partial(__db_migration, migration_root, environ),
-                        # Transform list[tuple[str, str, bool]] into an
-                        # Iterable[tuple[str], tuple[str], tuple[bool]],
-                        # and immediately unpack it, thus providing the other
-                        # 3 arguments of __db_migration as a parameter pack.
-                        *zip(*scheduled_upgrades_or_inits))):
-                if return_status != DBStatus.OK:
-                    failed_products.append((product_cfg[0], return_status))
+        # Bind the first 2 non-changing arguments of __db_migration, this is
+        # fixed for the execution. The *zip() transforms
+        # list[tuple[str, str, bool]] into an
+        # Iterable[tuple[str], tuple[str], tuple[bool]] and unpacks it, thus
+        # providing the other 3 arguments as a parameter pack.
+        migrate = partial(__db_migration, migration_root, environ)
+        if sys.platform == "win32":
+            # multiprocess.Pool, which the compatibility module gives us on
+            # Windows, takes processes= and a single iterable in map(). There
+            # are only a few products, so just do them in order.
+            LOG.info("Initialising/upgrading products...")
+            statuses = list(map(migrate,
+                                *zip(*scheduled_upgrades_or_inits)))
+        else:
+            with Pool(max_workers=thr_count) as executor:
+                LOG.info("Initialising/upgrading products using %d concurrent "
+                         "jobs...", thr_count)
+                statuses = list(executor.map(
+                    migrate, *zip(*scheduled_upgrades_or_inits)))
+
+        for product_cfg, return_status in \
+                zip(scheduled_upgrades_or_inits, statuses):
+            if return_status != DBStatus.OK:
+                failed_products.append((product_cfg[0], return_status))
 
         if failed_products:
             prod_status = []
