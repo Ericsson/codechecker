@@ -180,9 +180,9 @@ def check_supported_analyzers(analyzers):
             continue
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
+            bin_env = context.get_env_for_bin(analyzer_bin) or os.environ
             found_bin = supported_analyzers[analyzer_name].\
-                resolve_missing_binary(analyzer_bin,
-                                       context.get_env_for_bin(analyzer_bin))
+                resolve_missing_binary(analyzer_bin, bin_env)
 
             # found_bin is an absolute path, an executable in one of the
             # PATH folders.

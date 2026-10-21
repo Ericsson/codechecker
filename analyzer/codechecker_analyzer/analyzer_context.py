@@ -222,10 +222,14 @@ class Context(metaclass=Singleton):
         """
         bin_path = Path(binary).resolve()
         if not bin_path.exists():
-            LOG.error("Binary %s not found", binary)
-            return None
+            LOG.debug(
+                "Binary %s not found on filesystem, fallback to original env",
+                binary)
+            return (self.__original_env
+                    if self.__original_env is not None
+                    else os.environ)
 
-        codechecker_dir = Path(self._data_files_dir_path)
+        codechecker_dir = Path(self._data_files_dir_path).resolve()
 
         if str(bin_path).startswith(str(codechecker_dir)):
             LOG.debug("Package env is returned for %s", bin_path)
@@ -263,7 +267,7 @@ class Context(metaclass=Singleton):
                 if not compiler_binary:
                     LOG.debug("'%s' binary can not be found in your PATH!",
                               value)
-                    self.__analyzers[name] = None
+                    self.__analyzers[name] = value
                     continue
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
