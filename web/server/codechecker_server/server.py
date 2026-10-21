@@ -546,13 +546,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.send_error(405, "No permission to list directory")
 
 
-def _do_db_cleanup(context, check_env,
+def _do_db_cleanup(context,
                    id_: int, endpoint: str, display_name: str,
                    connection_str: str) -> tuple[bool | None, str]:
     # This functions is a concurrent job handler!
     try:
         prod = Product(id_, endpoint, display_name, connection_str,
-                       context, check_env)
+                       context)
         prod.connect(init_db=False)
         if prod.db_status != DBStatus.OK:
             status_str = database_status.db_status_msg.get(prod.db_status)
@@ -571,7 +571,7 @@ def _do_db_cleanup(context, check_env,
         return False, str(e)
 
 
-def _do_db_cleanups(config_database, context, check_env) \
+def _do_db_cleanups(config_database, context) \
         -> tuple[bool, list[tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -604,7 +604,7 @@ def _do_db_cleanups(config_database, context, check_env) \
                  thr_count)
         for product, result in \
                 zip(products, executor.map(
-                    partial(_do_db_cleanup, context, check_env),
+                    partial(_do_db_cleanup, context),
                     *zip(*products))):
             success, reason = result
             if not success:
@@ -642,7 +642,6 @@ class CCSimpleHttpServer(HTTPServer):
                  product_db_sql_server,
                  pckg_data,
                  context,
-                 check_env,
                  machine_id: str,
                  task_queue: Queue,
                  task_pipes,
@@ -662,7 +661,6 @@ class CCSimpleHttpServer(HTTPServer):
         self.doc_root = pckg_data['doc_root']
         self.version = pckg_data['version']
         self.context = context
-        self.check_env = check_env
         self.address, self.port = server_address
         self.__products = {}
 
@@ -696,7 +694,7 @@ class CCSimpleHttpServer(HTTPServer):
 
         self.__task_queue = task_queue
         self.task_manager = BackgroundTaskManager(
-            task_queue, task_pipes, self.config_session, self.check_env,
+            task_queue, task_pipes, self.config_session,
             server_shutdown_flag, machine_id,
             pathlib.Path(self.context.codechecker_workspace))
 
@@ -856,8 +854,7 @@ class CCSimpleHttpServer(HTTPServer):
                        orm_product.endpoint,
                        orm_product.display_name,
                        orm_product.connection,
-                       self.context,
-                       self.check_env)
+                       self.context)
 
         # Update the product database status.
         prod.connect()
@@ -1024,7 +1021,7 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
 def start_server(config_directory: str, workspace_directory: str,
                  package_data, port: int, config_sql_server,
                  listen_address: str, force_auth: bool,
-                 skip_db_cleanup: bool, context, check_env,
+                 skip_db_cleanup: bool, context,
                  machine_id: str,
                  api_handler_processes: int | None,
                  task_worker_processes: int | None) -> int:
@@ -1074,8 +1071,7 @@ def start_server(config_directory: str, workspace_directory: str,
         # is also cleaned up during server class __init__.
 
         all_success, fails = _do_db_cleanups(config_sql_server,
-                                             context,
-                                             check_env)
+                                             context)
         if not all_success:
             LOG.error("Failed to perform automatic cleanup on %d products! "
                       "Earlier logs might contain additional detailed "
@@ -1100,7 +1096,7 @@ def start_server(config_directory: str, workspace_directory: str,
         config_db = config_sql_server.create_engine()
         config_session_factory = sessionmaker(bind=config_db)
         task_manager = BackgroundTaskManager(
-            bg_task_queue, task_pipes, config_session_factory, check_env,
+            bg_task_queue, task_pipes, config_session_factory,
             is_server_shutting_down, machine_id,
             pathlib.Path(context.codechecker_workspace))
 
@@ -1138,7 +1134,6 @@ def start_server(config_directory: str, workspace_directory: str,
                                config_sql_server,
                                package_data,
                                context,
-                               check_env,
                                machine_id,
                                bg_task_queue,
                                task_pipes,
@@ -1238,7 +1233,6 @@ def start_server(config_directory: str, workspace_directory: str,
             args=(bg_task_queue,
                   task_pipes,
                   config_sql_server,
-                  check_env,
                   is_server_shutting_down,
                   machine_id,
                   ),
