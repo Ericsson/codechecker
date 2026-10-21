@@ -722,6 +722,8 @@ def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:
 
 
 def get_analysis_statistics(inputs, limits):
+    # This function handles failure ZIP limits incorrectly.
+    # Namely, there is no size limit for "should_be_zipped" files.
     """
     Collects analysis statistics information and returns them.
 
