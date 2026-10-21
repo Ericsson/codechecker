@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import unittest
 import zipfile
+import zlib
 
 from tempfile import TemporaryDirectory
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
@@ -241,8 +242,12 @@ int main()
         # Test that the product stat directory is not empty.
         self.assertTrue(os.listdir(product_stat_dir))
 
-        zip_file = os.path.join(product_stat_dir, f"{run_name}.zip")
+        zlib_file = os.path.join(product_stat_dir, f"{run_name}.zip.zlib")
         with TemporaryDirectory() as zip_dir:
+            # The server stores the zlib-compressed ZIP as uploaded.
+            zip_file = os.path.join(zip_dir, f"{run_name}.zip")
+            with open(zlib_file, 'rb') as src, open(zip_file, 'wb') as dst:
+                dst.write(zlib.decompress(src.read()))
             extract(zip_file, zip_dir)
 
             # Check that analyzer files exist in the uploaded zip.
