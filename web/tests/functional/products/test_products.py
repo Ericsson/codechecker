@@ -126,6 +126,33 @@ class TestProducts(unittest.TestCase):
             product_cfg.endpoint = "config.sqlite"
             self._root_client.addProduct(product_cfg)
 
+    def test_add_product_with_nested_sqlite_path(self):
+        """
+        SQLite product databases must be given by filename only: any path
+        with a directory component (relative or absolute) is rejected.
+        """
+        error = convert.to_b64("bogus")
+        product_cfg = ProductConfiguration(
+            displayedName_b64=error,
+            description_b64=error,
+            endpoint="nested_sqlite_path_test"
+        )
+
+        for invalid_database in ("sub/dir.sqlite", "../dir.sqlite",
+                                 "/abs/dir.sqlite"):
+            dbc = DatabaseConnection(
+                engine='sqlite',
+                host='',
+                port=0,
+                username_b64='',
+                password_b64='',
+                database=invalid_database
+            )
+            product_cfg.connection = dbc
+
+            with self.assertRaises(RequestFailed):
+                self._root_client.addProduct(product_cfg)
+
     def test_get_product_data(self):
         """
         Test getting product configuration from server.

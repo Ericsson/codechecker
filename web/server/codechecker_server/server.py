@@ -546,13 +546,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.send_error(405, "No permission to list directory")
 
 
-def _do_db_cleanup(context, check_env, workspace_directory,
+def _do_db_cleanup(context, check_env,
                    id_: int, endpoint: str, display_name: str,
                    connection_str: str) -> tuple[bool | None, str]:
     # This functions is a concurrent job handler!
     try:
-        connection_str = SQLServer.resolve_sqlite_relative_path(
-            connection_str, workspace_directory)
         prod = Product(id_, endpoint, display_name, connection_str,
                        context, check_env)
         prod.connect(init_db=False)
@@ -573,8 +571,7 @@ def _do_db_cleanup(context, check_env, workspace_directory,
         return False, str(e)
 
 
-def _do_db_cleanups(config_database, context, check_env,
-                    workspace_directory) \
+def _do_db_cleanups(config_database, context, check_env) \
         -> tuple[bool, list[tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -607,8 +604,7 @@ def _do_db_cleanups(config_database, context, check_env,
                  thr_count)
         for product, result in \
                 zip(products, executor.map(
-                    partial(_do_db_cleanup, context, check_env,
-                            workspace_directory),
+                    partial(_do_db_cleanup, context, check_env),
                     *zip(*products))):
             success, reason = result
             if not success:
@@ -856,13 +852,10 @@ class CCSimpleHttpServer(HTTPServer):
 
         LOG.debug("Setting up product '%s'", orm_product.endpoint)
 
-        connection_string = SQLServer.resolve_sqlite_relative_path(
-            orm_product.connection, self.workspace_directory)
-
         prod = Product(orm_product.id,
                        orm_product.endpoint,
                        orm_product.display_name,
-                       connection_string,
+                       orm_product.connection,
                        self.context,
                        self.check_env)
 
@@ -1089,8 +1082,7 @@ def start_server(config_directory: str, workspace_directory: str,
 
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
-                                             check_env,
-                                             workspace_directory)
+                                             check_env)
         if not all_success:
             LOG.error("Failed to perform automatic cleanup on %d products! "
                       "Earlier logs might contain additional detailed "

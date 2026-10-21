@@ -23,8 +23,7 @@ import codechecker_api.python.shared as codechecker_api_shared
 from codechecker_api.python.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import is_valid_postgresql_db_name, \
-    path_for_fake_root
+from codechecker_common.util import is_valid_postgresql_db_name
 
 from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
@@ -584,19 +583,12 @@ class ThriftProductHandler:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
 
-        # For SQLite-backed databases, make all paths relative. To create a
-        # SQLite-backed product in a different directory, we follow
-        # symlinks, but not when storing the path.
-        if dbc.engine == 'sqlite':
-            if os.path.isabs(dbc.database):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    "SQLite database must be given by relative path!")
-
-            resolved_path = path_for_fake_root(os.path.join(
-                "/", dbc.database), self.__server.workspace_directory)
-            dbc.database = os.path.relpath(
-                resolved_path, self.__server.workspace_directory)
+        # SQLite-backed databases live directly in the workspace directory,
+        # so only a bare filename is accepted.
+        if dbc.engine == 'sqlite' and os.path.split(dbc.database)[0] != '':
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "SQLite database must be given by filename only!")
 
         # Check if the database is already in use by another product.
         db_in_use = self.__server.is_database_used(product)
@@ -767,10 +759,9 @@ class ThriftProductHandler:
                 LOG.info("User renamed product '%s' to '%s'",
                          product.endpoint, new_config.endpoint)
 
-            # For SQLite-backed databases, make all paths relative. To create a
-            # SQLite-backed product in a different directory, we follow
-            # symlinks, but not when storing the path. Old absolute paths are
-            # preserved as is, if they are unchanged.
+            # SQLite-backed databases live directly in the workspace
+            # directory, so only a bare filename is accepted. Old absolute
+            # paths are preserved as is, if they are unchanged.
 
             old_args = SQLServer.connection_string_to_args(product.connection)
             if dbc.engine == 'sqlite':
@@ -786,17 +777,11 @@ class ThriftProductHandler:
                         old_sqlite_path = \
                             old_sqlite_path[len(config_dir):]
 
-                if dbc.database != old_sqlite_path:
-                    if os.path.isabs(dbc.database):
-                        raise codechecker_api_shared.ttypes.RequestFailed(
-                            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                            "SQLite database must be given by relative "
-                            "path!")
-                    resolved_path = path_for_fake_root(
-                        os.path.join("/", dbc.database),
-                        self.__server.workspace_directory)
-                    dbc.database = os.path.relpath(
-                        resolved_path, self.__server.workspace_directory)
+                if dbc.database != old_sqlite_path and \
+                        os.path.split(dbc.database)[0] != '':
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "SQLite database must be given by filename only!")
 
             # Some values come encoded as Base64, decode these.
             displayed_name = convert.from_b64(new_config.displayedName_b64) \
