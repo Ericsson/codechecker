@@ -64,7 +64,7 @@ from .api.server_info_handler import \
 from .api.tasks import ThriftTaskHandler as TaskHandler_v6
 from .database.config_db_model import Product as ORMProduct, \
     Configuration as ORMConfiguration
-from .database.database import DBSession
+from .database.database import DBSession, SQLServer
 from .database.run_db_model import Run
 from .database import db_cleanup
 from .product import Product
@@ -901,16 +901,23 @@ class CCSimpleHttpServer(HTTPServer):
         driver = \
             'pysqlite' if conn.connection.engine == 'sqlite' else 'psycopg2'
 
+        db_name = conn.connection.database
+        if conn.connection.engine == 'sqlite' and \
+                not os.path.isabs(db_name):
+            db_name = os.path.join(self.workspace_directory, db_name)
+
         # create a tuple of database that is going to be added for comparison
         to_add = (
             f"{conn.connection.engine}+{driver}",
-            conn.connection.database,
+            db_name,
             conn.connection.host,
             conn.connection.port)
 
         # create a tuple of database that is already connected for comparison
         def to_tuple(product):
-            url = make_url(product.connection)
+            connection_string = SQLServer.resolve_sqlite_relative_path(
+                product.connection, self.workspace_directory)
+            url = make_url(connection_string)
             return url.drivername, url.database, url.host, url.port
         # creates a list of currently connected databases
         current_connected_databases = list(map(
