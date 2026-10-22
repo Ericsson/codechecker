@@ -628,7 +628,7 @@ class ThriftProductHandler:
                              'dbname': dbc.database}
             conn_str = SQLServer \
                 .from_cmdline_args(conn_str_args, product.endpoint,
-                                   IDENTIFIER, None, False, None) \
+                                   IDENTIFIER, None) \
                 .get_connection_string()
         elif dbc.engine == 'sqlite':
             # Built directly (bypassing from_cmdline_args) so the relative
@@ -818,7 +818,7 @@ class ThriftProductHandler:
                                  'dbname': dbc.database}
                 conn_str = SQLServer \
                     .from_cmdline_args(conn_str_args, product.endpoint,
-                                       IDENTIFIER, None, False, None) \
+                                       IDENTIFIER, None) \
                     .get_connection_string()
             elif dbc.engine == 'sqlite':
                 # Built directly (bypassing from_cmdline_args) so the

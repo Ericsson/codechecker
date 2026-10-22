@@ -24,8 +24,8 @@ module.exports = {
     userName: "input[name='username']",
     password: "input[name='password']",
     submit: "#login-btn",
-    alertSuccess: "[role='alert']:nth-child(1)",
-    alertError: "[role='alert']:nth-child(2)",
+    notificationTitle: ".notification-toast__title",
+    notificationMessage: ".notification-toast__message",
     userNameErrorMessages: ".v-input:nth-child(1) .v-messages",
     passwordErrorMessages: ".v-input:nth-child(2) .v-messages"
   }

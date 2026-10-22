@@ -34,7 +34,8 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { useStore } from "vuex";
 
 import { handleThriftError, prodService } from "@cc-api";
 import {
@@ -42,6 +43,7 @@ import {
   ProductConfiguration
 } from "@cc/prod-types";
 
+import { ADD_ERROR } from "@/store/mutations.type";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ProductConfigForm from "./ProductConfigForm";
 
@@ -49,23 +51,44 @@ defineProps({
   isSuperUser: { type: Boolean, default: false }
 });
 const emit = defineEmits([ "on-complete" ]);
+const store = useStore();
 const dialog = ref(false);
 const isValid = ref(false);
 const form = ref(null);
-const productConfig = ref(new ProductConfiguration({
-  connection: new DatabaseConnection()
-}));
 
-function save() {
-  if (!form.value.validate()) return;
+function newProductConfig() {
+  return new ProductConfiguration({
+    connection: new DatabaseConnection()
+  });
+}
+
+const productConfig = ref(newProductConfig());
+
+function resetForm() {
+  productConfig.value = newProductConfig();
+  form.value?.resetValidation?.();
+}
+
+// Clear the dialog state whenever it is closed (cancel or close button).
+watch(dialog, isOpen => {
+  if (!isOpen) resetForm();
+});
+
+async function save() {
+  if (!await form.value.validate()) return;
 
   prodService.getClient().addProduct(productConfig.value,
     handleThriftError(() => {
       emit("on-complete", new ProductConfiguration(productConfig.value));
 
       dialog.value = false;
-      productConfig.value = new ProductConfiguration({
-        connection: new DatabaseConnection()
+      resetForm();
+    }, err => {
+      store.commit(ADD_ERROR, {
+        title: "Could not add product",
+        message: err instanceof Error
+          ? err.message
+          : "Failed to add the product."
       });
     }));
 }

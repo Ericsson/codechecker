@@ -18,7 +18,15 @@ export const SET_RUN_HISTORY_STORED_AFTER = "setStoredAfter";
 
 export const SET_ANNOUNCEMENT = "setAnnouncement";
 
+export const ADD_NOTIFICATION = "addNotification";
+export const REMOVE_NOTIFICATION = "removeNotification";
+export const CLEAR_NOTIFICATIONS = "clearNotifications";
+
+// Backward-compatible aliases. Existing callers commit ADD_ERROR with a
+// string or { title, message, timeout }; it is routed to ADD_NOTIFICATION
+// with type "error" by the notification store module.
 export const ADD_ERROR = "addError";
+export const REMOVE_ERROR = "removeError";
 export const CLEAR_ERRORS = "clearErrors";
 
 export const CLEAR_QUERIES = "clearQueries";

@@ -10,7 +10,7 @@ Database connection handling to a database backend.
 """
 from abc import ABCMeta, abstractmethod
 import os
-import subprocess
+import sys
 
 from alembic import command, config
 from alembic import script
@@ -22,6 +22,7 @@ from sqlalchemy import event
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
+from sqlalchemy.engine import Engine
 
 from codechecker_api.python.shared.ttypes import DBStatus
 
@@ -31,29 +32,6 @@ from codechecker_web.shared import host_check, pgpass
 
 
 LOG = get_logger('system')
-
-
-def call_command(cmd, env=None, cwd=None):
-    """ Call an external cmd and return with (output, return_code)."""
-
-    try:
-        LOG.debug('Run %s', ' '.join(cmd))
-        out = subprocess.check_output(cmd,
-                                      env=env,
-                                      stderr=subprocess.STDOUT,
-                                      cwd=cwd,
-                                      encoding="utf-8",
-                                      errors="ignore")
-        LOG.debug(out)
-        return out, 0
-    except subprocess.CalledProcessError as ex:
-        LOG.debug('Running command "%s" Failed.', ' '.join(cmd))
-        LOG.debug(str(ex.returncode))
-        LOG.debug(ex.output)
-        return ex.output, ex.returncode
-    except OSError as oerr:
-        LOG.warning(oerr.strerror)
-        return oerr.strerror, oerr.errno
 
 
 class DBSession:
@@ -88,7 +66,7 @@ class DBContext:
     setup was successful.
     """
 
-    def __init__(self, sql_server):
+    def __init__(self, sql_server: "SQLServer"):
         self.sql_server = sql_server
         self.db_engine = None
         self.db_session = None
@@ -102,10 +80,12 @@ class DBContext:
             self.db_session = sessionmaker(bind=self.engine)()
             self.db_connection = self.db_session.connection()
         except Exception as ex:
-            LOG.debug("Connection error:")
-            LOG.debug("%s", str(ex))
-            import traceback
-            traceback.print_exc()
+            # Print connection string without showing password.
+            connection_string = \
+                    make_url(self.sql_server.get_connection_string()). \
+                    render_as_string()
+            LOG.error("Database connection failed to '%s':\n%s",
+                      connection_string, str(ex))
             self.db_error = DBStatus.FAILED_TO_CONNECT
 
         return self
@@ -165,10 +145,12 @@ class SQLServer(metaclass=ABCMeta):
         self.__model_meta = model_meta
         self.migration_root = migration_root
 
-    def _create_schema(self):
+    def _create_schema(self) -> int:
         """
         Creates the database schema if needed.
         The database server has to be started before this method is called.
+
+        Returns the DBStatus as an int.
         """
 
         try:
@@ -195,22 +177,22 @@ class SQLServer(metaclass=ABCMeta):
                     command.upgrade(cfg, "head")
                     db.session.commit()
                     LOG.debug('Done.')
-                    return True
+                    return DBStatus.OK
 
-                return True
+                return DBStatus.OK
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
             LOG.error(str(alch_err))
             import traceback
             traceback.print_exc()
-            return False
+            return DBStatus.SCHEMA_INIT_ERROR
 
         except Exception as ex:
             LOG.error("Failed to create initial database schema")
             LOG.error(ex)
             import traceback
             traceback.print_exc()
-            return False
+            return DBStatus.SCHEMA_INIT_ERROR
 
     def get_schema_version(self):
         """
@@ -349,15 +331,18 @@ class SQLServer(metaclass=ABCMeta):
             LOG.error(str(cerr))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 
-    @abstractmethod
     def connect(self, init=False):
         """
-        Starts the database server and initializes the database server.
+        Connects to the database server and checks its schema.
 
         On init == True, this it also initializes the database data and schema
         if needed.
-
         """
+        if init:
+            if (schema_init := self._create_schema()) != DBStatus.OK:
+                return schema_init
+
+        return self.check_schema()
 
     @abstractmethod
     def get_connection_string(self) -> str:
@@ -386,13 +371,13 @@ class SQLServer(metaclass=ABCMeta):
         by create_engine.
         """
 
-    def create_engine(self):
+    def create_engine(self) -> Engine:
         """
         Creates a new SQLAlchemy engine.
         """
+        drivername = make_url(self.get_connection_string()).drivername
 
-        if make_url(self.get_connection_string()).drivername == \
-                'sqlite+pysqlite':
+        if drivername == "sqlite+pysqlite":
             # FIXME: workaround for locking errors
             # FIXME: why is the connection used by multiple threads
             # is that a problem ??? do we need some extra locking???
@@ -404,12 +389,29 @@ class SQLServer(metaclass=ABCMeta):
                 # we disable it for now.
                 query_cache_size=0,
                 poolclass=NullPool)
-        else:
+
+        elif drivername == "postgresql+psycopg2":
+            engine = sqlalchemy.create_engine(
+                self.get_connection_string(),
+                # Wait maximum 60 seconds when connecting before timing out.
+                # See: https://www.postgresql.org/docs/17/libpq-connect.html
+                connect_args={'connect_timeout': 60},
+                client_encoding='utf8',
+                query_cache_size=0,
+                poolclass=NullPool)
+
+        elif drivername == "postgresql+pg8000":
+            # pg8000 does not support initial connection timeout properly,
+            # therefore, it is not set.
             engine = sqlalchemy.create_engine(
                 self.get_connection_string(),
                 client_encoding='utf8',
                 query_cache_size=0,
                 poolclass=NullPool)
+        else:
+            LOG.error("Create SQLAlchemy engine failed! "
+                      "Unsupported driver: %s", drivername)
+            sys.exit(1)
 
         self._register_engine_hooks(engine)
         return engine
@@ -463,9 +465,7 @@ class SQLServer(metaclass=ABCMeta):
     def from_connection_string(connection_string: str,
                                name_in_log: str,
                                model_meta,
-                               migration_root,
-                               interactive=False,
-                               env=None):
+                               migration_root):
         """
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
@@ -477,20 +477,16 @@ class SQLServer(metaclass=ABCMeta):
                 in log output.
             model_meta: the meta identifier of the database model to use
             migration_root: path to the database migration scripts
-            env: a run environment dictionary.
         """
 
         args = SQLServer.connection_string_to_args(connection_string)
         return SQLServer.from_cmdline_args(args,
                                            name_in_log,
                                            model_meta,
-                                           migration_root,
-                                           interactive,
-                                           env)
+                                           migration_root)
 
     @staticmethod
-    def from_cmdline_args(args, name_in_log: str, model_meta, migration_root,
-                          interactive=False, env=None):
+    def from_cmdline_args(args, name_in_log: str, model_meta, migration_root):
         """
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
@@ -502,9 +498,6 @@ class SQLServer(metaclass=ABCMeta):
               logs.
             model_meta: the meta identifier of the database model to use
             migration_root: path to the database migration scripts
-            interactive: whether or not the database connection can be
-              interactive on the server's shell.
-            env: a run environment dictionary.
         """
 
         if not host_check.check_sql_driver(args['postgresql']):
@@ -521,9 +514,7 @@ class SQLServer(metaclass=ABCMeta):
                                     args['dbusername'],
                                     args['dbname'],
                                     password=args['dbpassword']
-                                    if 'dbpassword' in args else None,
-                                    interactive=interactive,
-                                    run_env=env)
+                                    if 'dbpassword' in args else None)
         else:
             LOG.debug("Using SQLite:")
             # Resolve the database path against the workspace directory so
@@ -543,8 +534,7 @@ class SQLServer(metaclass=ABCMeta):
                 name_in_log,
                 data_file,
                 model_meta,
-                migration_root,
-                run_env=env)
+                migration_root)
 
 
 class PostgreSQLServer(SQLServer):
@@ -553,8 +543,7 @@ class PostgreSQLServer(SQLServer):
     """
 
     def __init__(self, name_in_log, model_meta, migration_root,
-                 host, port, user, database, password=None,
-                 interactive=False, run_env=None):
+                 host, port, user, database, password=None):
         super().__init__(name_in_log, model_meta, migration_root)
 
         self.host = host
@@ -562,8 +551,6 @@ class PostgreSQLServer(SQLServer):
         self.user = user
         self.database = database
         self.password = password
-        self.interactive = interactive
-        self.run_env = run_env
 
     def _get_connection_string(self, database):
         """
@@ -600,55 +587,6 @@ class PostgreSQLServer(SQLServer):
             database=database,
             query=extra_args).render_as_string(hide_password=False)
 
-    def connect(self, init=False):
-        """
-        Connect to a PostgreSQL instance with given path, host and port.
-        """
-
-        LOG.debug("Connecting to database...")
-
-        LOG.debug("Checking if database is running at [%s:%s]",
-                  self.host, str(self.port))
-
-        if self.user:
-            # Try to connect to a specific database
-            # with a specific user.
-            check_db = ['psql',
-                        '-h', self.host,
-                        '-p', str(self.port),
-                        '-U', self.user,
-                        '-d', self.database,
-                        '-c', 'SELECT version();']
-        else:
-            # Try to connect with the default settings.
-            check_db = ['psql',
-                        '-h', self.host,
-                        '-p', str(self.port),
-                        '-c', 'SELECT version();']
-
-        if not self.interactive:
-            # Do not prompt for password in non-interactive mode.
-            check_db.append('--no-password')
-
-        # If the user has a password pre-specified, use that for the
-        # 'psql' call!
-        env = self.run_env if self.run_env else os.environ
-        env = env.copy()
-        if self.password:
-            env['PGPASSWORD'] = self.password
-
-        err, code = call_command(check_db, env)
-
-        if code:
-            LOG.debug(err)
-            return DBStatus.FAILED_TO_CONNECT
-
-        if init:
-            if not self._create_schema():
-                return DBStatus.SCHEMA_INIT_ERROR
-
-        return self.check_schema()
-
     def get_connection_string(self) -> str:
         return self._get_connection_string(self.database)
 
@@ -661,12 +599,9 @@ class SQLiteDatabase(SQLServer):
     Handler for SQLite.
     """
 
-    def __init__(self, name_in_log, data_file, model_meta, migration_root,
-                 run_env=None):
+    def __init__(self, name_in_log, data_file, model_meta, migration_root):
         super().__init__(name_in_log, model_meta, migration_root)
-
         self.dbpath = data_file
-        self.run_env = run_env
 
     def _register_engine_hooks(self, engine):
         """
@@ -679,14 +614,6 @@ class SQLiteDatabase(SQLServer):
             cursor.close()
 
         event.listen(engine, 'connect', _set_sqlite_pragma)
-
-    def connect(self, init=False):
-        if init:
-            if not self._create_schema():
-                LOG.error("Failed to create schema")
-                return DBStatus.SCHEMA_INIT_ERROR
-
-        return self.check_schema()
 
     def get_connection_string(self) -> str:
         return str(URL.create(
