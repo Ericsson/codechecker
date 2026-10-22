@@ -34,6 +34,7 @@ def get_argparser_ctor_args():
     return {
         'prog': 'CodeChecker analyzers',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'allow_abbrev': False,
 
         # Description is shown when the command's help is queried directly
         'description': "Get the list of available and supported analyzers, "

@@ -88,6 +88,7 @@ def get_argparser_ctor_args():
     return {
         'prog': 'CodeChecker webserver version',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'allow_abbrev': False,
 
         # Description is shown when the command's help is queried directly
         'description': "Print the version of CodeChecker server package that "
