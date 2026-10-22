@@ -138,6 +138,17 @@ class TestCmdline(unittest.TestCase):
         self.assertIn('severity', out)
         self.assertIn('guideline', out)
 
+        # Guideline names are presented as labels, while the internal "rule"
+        # label is hidden, for backwards compatibility.
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', '-o', 'json']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        label_keys = {row["label"] for row in json.loads(out)}
+        self.assertIn('sei-cert-c', label_keys)
+        self.assertIn('guideline', label_keys)
+        self.assertNotIn('rule', label_keys)
+
         checkers_cmd = [
             env.codechecker_cmd(), 'checkers', '--label', 'severity']
         exit_code, out, _ = run_cmd(checkers_cmd)
@@ -152,6 +163,13 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertIn('core.DivideZero', out)
         self.assertIn('core.CallAndMessage', out)
+
+        # A guideline name as the label lists its rule ids.
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'sei-cert-c']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('int33-c', out)
 
     def test_analyzers(self):
         """ Listing available analyzers. """
@@ -220,6 +238,18 @@ class TestCmdline(unittest.TestCase):
 
         self.assertTrue(out.strip().startswith('Guideline: cwe-top-25-2024'))
         self.assertIn('Guideline: sei-cert-cpp', out)
+
+        # A "<guideline>:<rule>" with a nonexistent guideline is an error.
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'nonexistent:mem35-c']
+        ret, _, _ = run_cmd(checkers_cmd)
+        self.assertNotEqual(ret, 0)
+
+        # A rule that is not part of the given guideline is an error.
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'sei-cert-c:nonexistent-rule']
+        ret, _, _ = run_cmd(checkers_cmd)
+        self.assertNotEqual(ret, 0)
 
     def test_checkers_warnings(self):
         """ Listing checkers for compiler warnings. """

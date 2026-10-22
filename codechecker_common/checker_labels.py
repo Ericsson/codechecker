@@ -7,8 +7,10 @@
 # -------------------------------------------------------------------------
 from collections import defaultdict
 import os
+
 from typing import Any, cast, Iterable
 
+from codechecker_common.guidelines import Guidelines
 from codechecker_common.util import load_json
 
 
@@ -43,10 +45,18 @@ class CheckerLabels:
         'blacklist': 'false',
         'description': ''}
 
-    def __init__(self, checker_labels_dir: str):
+    def __init__(
+        self,
+        checker_labels_dir: str,
+        guidelines: Guidelines | None = None
+    ):
         if not os.path.isdir(checker_labels_dir):
             raise NotADirectoryError(
                 f'{checker_labels_dir} is not a directory.')
+
+        # Optional Guidelines object. When provided, the guidelines a checker
+        # belongs to are derived in memory from its "rule:<rule_id>" labels.
+        self.__guidelines = guidelines
 
         label_json_files: Iterable[str] = os.listdir(
             os.path.join(checker_labels_dir, 'analyzers'))
@@ -56,6 +66,13 @@ class CheckerLabels:
         if 'descriptions.json' in os.listdir(checker_labels_dir):
             self.__descriptions = load_json(os.path.join(
                 checker_labels_dir, 'descriptions.json'))
+
+        # Profile containment maps a profile to the profiles it also implies.
+        # E.g. { "extreme": ["sensitive"], "sensitive": ["default"] } means a
+        # checker labeled with "extreme" also belongs to "sensitive" and
+        # "default". The relation is applied transitively.
+        self.__profile_containment = \
+            self.__descriptions.get('profile-containment', {})
 
         label_json_files = map(
             lambda f: os.path.join(checker_labels_dir, 'analyzers', f),
@@ -155,6 +172,105 @@ class CheckerLabels:
             if analyzer is None or a == analyzer:
                 yield a, c
 
+    def __expand_query_profiles(self, profiles: Iterable[str]) -> list[str]:
+        """
+        Expand the requested profile values of a query through the
+        profile-containment relation. The containment maps a profile to the
+        full set of profiles it contains, e.g.
+        {"extreme": ["sensitive", "default"], "sensitive": ["default"]}.
+        Filtering by a profile also matches the checkers of the profiles it
+        contains.
+
+        Profile "default" is the smallest set (only default-labeled
+        checkers), "sensitive" additionally includes any checkers labeled as,
+        sensitive and "extreme" includes the "extreme" labeled checkers too.
+        """
+        result: list[str] = []
+
+        for profile in profiles:
+            for p in [profile, *self.__profile_containment.get(profile, [])]:
+                if p not in result:
+                    result.append(p)
+
+        return result
+
+    def profiles_containing(self, profile: str) -> list[str]:
+        """
+        Return the given profile and every profile that contains it. Inverse
+        of __expand_query_profiles, e.g. "default" ->
+        {default, sensitive, extreme}.
+        """
+        result = [profile]
+
+        for container, contained in self.__profile_containment.items():
+            if profile in contained and container not in result:
+                result.append(container)
+
+        return result
+
+    def __expand_filter_labels(
+        self,
+        filter_labels: Iterable[tuple[str, str]]
+    ) -> set[tuple[str, str]]:
+        """
+        Expand the (label, value) pairs of a filter so that profile filters
+        also match the profiles they contain (see __expand_query_profiles).
+        Non-profile labels are kept unchanged.
+        """
+        expanded: set[tuple[str, str]] = set()
+
+        for key, value in filter_labels:
+            if key == 'profile':
+                for prof in self.__expand_query_profiles([value]):
+                    expanded.add(('profile', prof))
+            else:
+                expanded.add((key, value))
+
+        return expanded
+
+    def __derived_guidelines(
+        self,
+        rule_values: Iterable[str]
+    ) -> list[tuple[str, str]]:
+        """
+        Derive the guideline labels of a checker from its rule values. For
+        every "rule:<rule_id>" of a checker the guidelines that contain the
+        given rule are looked up and returned as ("guideline", <name>) pairs.
+        Requires a Guidelines object to be injected; without it an empty list
+        is returned.
+        """
+        if self.__guidelines is None:
+            return []
+
+        guidelines: list[tuple[str, str]] = []
+        seen: set[str] = set()
+
+        for rule_id in rule_values:
+            for guideline in self.__guidelines.guidelines_of_rule(rule_id):
+                if guideline not in seen:
+                    seen.add(guideline)
+                    guidelines.append(('guideline', guideline))
+
+        return guidelines
+
+    def __augment_labels(
+        self,
+        labels: list[tuple[str, str]]
+    ) -> list[tuple[str, str]]:
+        """
+        Augment a checker's raw (label, value) pairs with the information that
+        is derived in memory. Currently this derives the guideline labels from
+        the checker's rule values. The checker's profile label is left as its
+        single tier; the containment relation is applied on the query side
+        (see __expand_filter_labels) instead of expanding checker membership.
+        """
+        rule_values = [value for key, value in labels if key == 'rule']
+
+        augmented: list[tuple[str, str]] = list(labels)
+        augmented.extend(self.__derived_guidelines(rule_values))
+
+        return augmented
+
     def get_analyzers(self) -> Iterable[str]:
         return self.__data.keys()
 
@@ -174,11 +290,13 @@ class CheckerLabels:
         """
         collection = []
 
-        label_set = set(map(split_label_kv, filter_labels))
+        label_set = self.__expand_filter_labels(
+            map(split_label_kv, filter_labels))
 
         for _, checkers in self.__get_analyzer_data(analyzer):
             for checker, labels in checkers.items():
-                labels = set(map(split_label_kv, labels))
+                labels = set(self.__augment_labels(
+                    list(map(split_label_kv, labels))))
 
                 if labels.intersection(label_set):
                     collection.append(checker)
@@ -246,6 +364,8 @@ class CheckerLabels:
 
             labels.extend(map(split_label_kv, checkers.get(c, [])))
 
+        labels = self.__augment_labels(labels)
+
         # TODO set() is used for uniqueing results in case a checker name is
         # provided by multiple analyzers. This will be unnecessary when we
         # cover this case properly.
@@ -270,7 +390,9 @@ class CheckerLabels:
 
     def labels(self, analyzer: str | None = None) -> list[str]:
         """
-        Returns a list of occurring labels.
+        Returns a list of occurring labels. When a Guidelines object is
+        available the derived "guideline" label is also reported, since a
+        checker's guidelines are derived in memory from its "rule" labels.
         """
         collection: set[str] = set()
 
@@ -278,6 +400,9 @@ class CheckerLabels:
             for labels in checkers.values():
                 collection.update(map(
                     lambda x: split_label_kv(x)[0], labels))
+
+        if self.__guidelines is not None:
+            collection.add('guideline')
 
         return list(collection)
 
@@ -290,6 +415,11 @@ class CheckerLabels:
         Return the list of values belonging to the given label which were used
         for at least one checker.
         """
+        # Guidelines are derived from rules, so their values come from the
+        # Guidelines object rather than from raw labels.
+        if label == 'guideline' and self.__guidelines is not None:
+            return self.__guidelines.all_guidelines()
+
         values = set()
 
         for _, checkers in self.__get_analyzer_data(analyzer):

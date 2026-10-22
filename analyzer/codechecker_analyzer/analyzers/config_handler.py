@@ -213,6 +213,10 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
                 identifier_namespace = identifier.split(":")[0]
                 identifier = identifier.split(":", 1)[1]
 
+                guidelines = analyzer_context.get_context().guideline
+                if identifier_namespace in guidelines.all_guidelines():
+                    identifier_namespace = "rule"
+
                 if identifier_namespace not in all_namespaces:
                     LOG.error("The %s namespace is not known. Please select"
                               "one of these existing namespace options: %s.",

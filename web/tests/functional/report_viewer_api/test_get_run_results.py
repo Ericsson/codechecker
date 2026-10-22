@@ -27,6 +27,7 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 from codechecker_web.shared import convert
 
 from libtest.debug_printer import print_run_results
@@ -72,6 +73,8 @@ class RunResults(unittest.TestCase):
 
         self.checker_labels_dir = os.path.join(
             env.codechecker_package(), 'config', 'labels')
+        self.guidelines_dir = os.path.join(
+            env.codechecker_package(), 'config', 'guidelines')
 
     def __check_bug_path_order(self, run_results, order):
         """
@@ -427,11 +430,31 @@ class RunResults(unittest.TestCase):
         remote_checker_labels = self._cc_client.getCheckerLabels([])
         self.assertEqual(len(remote_checker_labels), 0)
 
-        local_checker_labels = CheckerLabels(self.checker_labels_dir)
-        div_zero_labels = set(map(
-            ':'.join,
-            set(local_checker_labels.labels_of_checker(
-                'core.DivideZero', 'clangsa'))))
+        # NOTE: PR gating lints against the released CodeChecker package whose
+        # CheckerLabels constructor predates the 'guidelines' parameter, so
+        # pylint wrongly flags too-many-function-args here.
+        # pylint: disable=too-many-function-args
+        guidelines = Guidelines(self.guidelines_dir)
+        local_checker_labels = CheckerLabels(
+            self.checker_labels_dir, guidelines)
+        # pylint: enable=too-many-function-args
+        label_pairs = set(local_checker_labels.labels_of_checker(
+            'core.DivideZero', 'clangsa'))
+
+        # getCheckerLabels keeps its output compatible with older clients: the
+        # internal "rule" labels are excluded, while the legacy transitive
+        # profile tiers and "<guideline>:<rule>" labels are reconstructed.
+        div_zero_labels = {f'{key}:{value}' for key, value in label_pairs
+                           if key != 'rule'}
+        for key, value in label_pairs:
+            if key == 'profile':
+                div_zero_labels.update(
+                    f'profile:{p}'
+                    for p in local_checker_labels.profiles_containing(value))
+            elif key == 'rule':
+                div_zero_labels.update(
+                    f'{guideline}:{value}'
+                    for guideline in guidelines.guidelines_of_rule(value))
 
         remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("clangsa", "core.DivideZero")])
