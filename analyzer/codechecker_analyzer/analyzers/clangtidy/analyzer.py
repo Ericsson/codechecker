@@ -84,6 +84,12 @@ def parse_checker_config_new(config_dump):
 
     config_dump -- clang-tidy config options YAML dump in post-LLVM15 format.
     """
+    # The dump is a single YAML document closed by a "..." line. Anything
+    # printed after that line is not part of the configuration and would
+    # make the YAML parser fail, so only the first document is parsed.
+    config_dump = re.split(r'^\.\.\.[ \t]*$', config_dump, maxsplit=1,
+                           flags=re.MULTILINE)[0]
+
     try:
         data = yaml.safe_load(config_dump)
         if 'CheckOptions' not in data:

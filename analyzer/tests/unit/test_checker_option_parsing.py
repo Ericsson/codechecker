@@ -90,6 +90,32 @@ CheckOptions:
             ["readability-suspicious-call-argument:PrefixSimilarAbove", "30"],
             result)
 
+    def test_new_format_with_trailing_output(self):
+        """
+        Test that text printed after the end of the YAML document is ignored.
+        Some clang-tidy builds print extra lines after the '...' document end
+        marker of 'clang-tidy -dump-config', which is not valid YAML.
+        """
+        new_format_example = """
+---
+Checks:          'clang-diagnostic-*,clang-analyzer-*,*'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
+CheckOptions:
+  readability-suspicious-call-argument.PrefixSimilarAbove: '30'
+  cert-dcl16-c.IgnoreMacros: 'true'
+...
+
+Resource filename: /path/to/clang_tidy/data/bin/clang-tidy
+"""
+        result = clangtidy_parse_checker_config(new_format_example)
+        result = [[k, v] for (k, v) in result]
+        self.assertEqual(len(result), 2)
+        self.assertIn(
+            ["readability-suspicious-call-argument:PrefixSimilarAbove", "30"],
+            result)
+
 
 class ClangTidyMentionedFilesTest(unittest.TestCase):
     """
