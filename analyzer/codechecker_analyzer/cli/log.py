@@ -76,6 +76,7 @@ build-logger/README.md#usage""" if not is_ldlogger else ""
     return {
         'prog': 'CodeChecker log',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
+        'allow_abbrev': False,
 
         # Description is shown when the command's help is queried directly
         'description': f"""

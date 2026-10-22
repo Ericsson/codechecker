@@ -49,6 +49,7 @@ def get_argparser_ctor_args():
     return {
         'prog': 'CodeChecker check',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
+        'allow_abbrev': False,
 
         # Description is shown when the command's help is queried directly
         'description': """

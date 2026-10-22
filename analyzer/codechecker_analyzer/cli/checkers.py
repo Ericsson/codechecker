@@ -41,6 +41,7 @@ def get_argparser_ctor_args():
     return {
         'prog': 'CodeChecker checkers',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
+        'allow_abbrev': False,
 
         # Description is shown when the command's help is queried directly
         'description': "Get the list of checkers available and their enabled "
