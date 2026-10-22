@@ -150,16 +150,19 @@ def get_diagtool_bin():
     clang_tidy_bin = Path(clang_tidy_bin).resolve()
 
     # Find diagtool next to the clang binary.
-    diagtool_bin = clang_tidy_bin.parent / 'diagtool'
+    exe_suffix = '.exe' if sys.platform == 'win32' else ''
+    diagtool_bin = clang_tidy_bin.parent / f'diagtool{exe_suffix}'
     if diagtool_bin.exists():
         return diagtool_bin
 
     # Sometimes diagtool binary has a version number in its name: diagtool-14.
     version = ClangTidy.get_binary_version()
 
-    if version and \
-            diagtool_bin.with_name(f'diagtool-{version.major}').exists():
-        return diagtool_bin
+    if version:
+        versioned_bin = diagtool_bin.with_name(
+            f'diagtool-{version.major}{exe_suffix}')
+        if versioned_bin.exists():
+            return versioned_bin
 
     LOG.warning(
         "'diagtool' can not be found next to the clang binary (%s)!",
