@@ -36,6 +36,7 @@ def get_argparser_ctor_args():
     return {
         'prog': 'CodeChecker fixit',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
+        'allow_abbrev': False,
         'description': """
 Some analyzers may suggest some automatic bugfixes. Most of the times these are
 style issues which can be fixed easily. This command handles the listing and
