@@ -1013,7 +1013,7 @@ def server_init_start(args):
         # the product's database connection (see #3081).
         product_conn_string = database.SQLiteDatabase(
             "Default", 'Default.sqlite', RUN_META,
-            context.run_migration_root, environ).get_connection_string()
+            context.run_migration_root).get_connection_string()
 
         server.add_initial_run_database(
             cfg_sql_server, product_conn_string)
