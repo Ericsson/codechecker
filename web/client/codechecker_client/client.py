@@ -74,11 +74,10 @@ def setup_auth_client(protocol, host, port, session_token=None):
     return client
 
 
-def init_config_client(protocol, host, port, session_token=None):
+def init_config_client(protocol, host, port):
     """ Setup a new config client. """
     config_client = ThriftConfigHelper(protocol, host, port, '/v' +
-                                       CLIENT_API + '/Configuration',
-                                       session_token)
+                                       CLIENT_API + '/Configuration')
     return config_client
 
 
