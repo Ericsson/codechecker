@@ -83,42 +83,79 @@ def __get_toolchain_compiler(command: list[str]) -> str | None:
     return None
 
 
-def __determine_compiler(gcc_command: list[str]) -> str:
+# Mapping from GCC-family compiler names to their Clang equivalents.
+_GCC_TO_CLANG = {
+    'gcc': 'clang',
+    'cc': 'clang',
+    'g++': 'clang++',
+    'c++': 'clang++',
+}
+
+
+def __get_clang_fallback(compiler: str) -> str | None:
+    """
+    If the given compiler is a GCC-family compiler that cannot be found on
+    PATH, return the equivalent Clang compiler if it is available.
+    Returns None if no fallback is needed or possible.
+    """
+    basename = os.path.basename(compiler)
+    if which(compiler) is not None or (os.path.isabs(compiler)
+                                       and os.path.isfile(compiler)):
+        return None  # compiler exists, no fallback needed
+    clang_equiv = _GCC_TO_CLANG.get(basename)
+    if clang_equiv and which(clang_equiv) is not None:
+        LOG.debug("Compiler '%s' not found, falling back to '%s'.",
+                  compiler, clang_equiv)
+        return clang_equiv
+    return None
+
+
+def __determine_compiler(compile_command: list[str]) -> str:
     """
     This function determines the compiler from the given compilation command.
-    If the first part of the gcc_command is ccache invocation then the rest
+    If the first part of the compile_command is ccache invocation then the rest
     should be a complete compilation command.
 
     CCache may have three forms:
     1. ccache g++ main.cpp
     2. ccache main.cpp
     3. /usr/lib/ccache/gcc main.cpp
-    In the first case this function drops "ccache" from gcc_command and returns
-    the next compiler name.
+    In the first case this function drops "ccache" from compile_command and
+    returns the next compiler name.
     In the second case the compiler can be given by config files or an
     environment variable. Currently we don't handle this version, and in this
-    case the compiler remanis "ccache" and the gcc_command is not changed.
+    case the compiler remanis "ccache" and the compile_command is not changed.
     The two cases are distinguished by checking whether the second parameter is
     an executable or not.
     In the third case gcc is a symlink to ccache, but we can handle
     it as a normal compiler.
 
-    gcc_command -- A split build action as a list which may or may not start
-                   with ccache.
+    compile_command -- A split build action as a list which may or may not
+                       start with ccache. In a clang-only environment, if the
+                       named GCC-family compiler is absent, the caller should
+                       substitute it with the equivalent Clang binary via
+                       __get_clang_fallback().
 
-    !!!WARNING!!! This function must always return an element of gcc_command
-    without modification (symlink resolve, absolute path conversion, etc.)
-    otherwise an exception is thrown at the caller side.
+    !!!WARNING!!! This function must always return an element of
+    compile_command without modification (symlink resolve, absolute path
+    conversion, etc.) otherwise an exception is thrown at the caller side.
 
     TODO: The second case could be handled if there was a way for querying the
     used compiler from ccache. This can be configured for ccache in config
     files or environment variables.
     """
-    if gcc_command[0].endswith('ccache'):
-        if which(gcc_command[1]) is not None:
-            return gcc_command[1]
+    if compile_command[0].endswith('ccache'):
+        if which(compile_command[1]) is not None:
+            return compile_command[1]
+        # compile_command[1] may be a GCC compiler not present in a
+        # clang-only environment; return it so __get_clang_fallback can
+        # remap it.
+        clang_equiv = _GCC_TO_CLANG.get(
+            os.path.basename(compile_command[1]))
+        if clang_equiv and which(clang_equiv) is not None:
+            return compile_command[1]
 
-    return gcc_command[0]
+    return compile_command[0]
 
 
 def __gather_dependencies(
@@ -195,6 +232,14 @@ def __gather_dependencies(
 
     # Build out custom invocation for dependency generation.
     compiler = __determine_compiler(command)
+
+    # In a clang-only environment the original compiler (e.g. gcc/g++) may
+    # not be present. Try to substitute it with the equivalent Clang binary.
+    clang_fallback = __get_clang_fallback(compiler)
+    if clang_fallback:
+        command[command.index(compiler)] = clang_fallback
+        compiler = clang_fallback
+
     command = [compiler, '-E', '-M', '-MT', '__dummy'] \
         + command[command.index(compiler) + 1:]
 
