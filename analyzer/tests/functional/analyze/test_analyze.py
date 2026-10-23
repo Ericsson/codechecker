@@ -862,6 +862,11 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(errcode, 1)
         self.assertFalse(os.path.isdir(failed_dir))
 
+        # Clean report_dir before none mode: previous sub-tests leave stale
+        # artifacts (.plist files, failed/ dir) that cause exit code 3.
+        shutil.rmtree(report_dir)
+        os.makedirs(report_dir)
+
         # Testing None mode.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", report_dir,

@@ -51,6 +51,7 @@ except ImportError:
         raise NotImplementedError()
 
 from codechecker_client import client as libclient, product
+from codechecker_client.cmd_line_client import init_logger, print_banner
 from codechecker_client.task_client import await_task_termination
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
@@ -905,7 +906,8 @@ def main(args):
     Store the defect results in the specified input list as bug reports in the
     database.
     """
-    logger.setup_logger(args.verbose if 'verbose' in args else None)
+    init_logger(args.verbose if 'verbose' in args else None)
+    print_banner(args.product_url)
 
     try:
         cmd_config.check_config_file(args)
