@@ -247,6 +247,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     # Cache object for get_analyzer_checkers().
     __analyzer_checkers = None
 
+    # Cache object for get_effective_checkers_for_dir(), the key is a
+    # directory, the value is the set of checkers enabled there.
+    __effective_checkers: dict[str, set[str]] = {}
+
     __additional_analyzer_config = [
         analyzer_base.AnalyzerConfig(
             'cc-verbatim-args-file',
@@ -332,6 +336,58 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return checker_description
         except (subprocess.CalledProcessError, OSError):
             return []
+
+    @classmethod
+    def get_effective_checkers_for_dir(cls, directory: str) -> set[str]:
+        """
+        Return the checkers which clang-tidy enables for the source files of
+        the given directory.
+
+        CodeChecker doesn't parse '.clang-tidy' files, so when the
+        'take-config-from-directory' analyzer configuration option is used, the
+        analyzer binary itself is asked which checkers it resolved. This way
+        the '.clang-tidy' files of the parent directories and their
+        'InheritParentConfig' setting are honored too.
+
+        The result is cached, because every source file of a directory has the
+        same configuration.
+        """
+        if not cls.analyzer_binary():
+            return set()
+
+        directory = os.path.abspath(directory)
+
+        if directory in cls.__effective_checkers:
+            return cls.__effective_checkers[directory]
+
+        checkers: set[str] = set()
+
+        environ = analyzer_context.get_context().get_env_for_bin(
+            cls.analyzer_binary())
+
+        # '--list-checks' reports the checkers of the configuration which
+        # belongs to the working directory. The empty compilation flag list
+        # after '--' prevents clang-tidy from looking for a compilation
+        # database.
+        cmd = [cls.analyzer_binary(), '--list-checks', '--']
+        try:
+            output = subprocess.check_output(
+                cmd,
+                cwd=directory,
+                env=environ,
+                stderr=subprocess.DEVNULL,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+
+            checkers = {checker for checker, _ in parse_checkers(output)}
+        except (subprocess.CalledProcessError, OSError) as oerr:
+            LOG.debug("Failed to get the checkers of the '.clang-tidy' "
+                      "configuration in '%s': %s", directory, oerr)
+
+        cls.__effective_checkers[directory] = checkers
+
+        return checkers
 
     @classmethod
     def get_checker_config(cls) -> list[analyzer_base.CheckerConfig]:

@@ -15,7 +15,7 @@ import shutil
 import unittest
 
 from codechecker_api.python.DBAccess_v6.ttypes \
-    import DetectionStatus, Encoding, ReportFilter
+    import AnalysisInfoFilter, DetectionStatus, Encoding, ReportFilter
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
@@ -458,6 +458,56 @@ int main()
             None, 100, 0, [], ReportFilter(), None, False)
         self.assertTrue([r for r in reports
                          if r.detectionStatus == DetectionStatus.UNRESOLVED])
+
+        # Remove .clang-tidy configuration file.
+        os.remove(self.clang_tidy_cfg)
+
+    def test_analysis_info_of_clang_tidy_cfg_groups(self):
+        """
+        Test that the checkers of a '.clang-tidy' config file are reported to
+        the server, so the web UI can display them.
+
+        The config file enables a whole checker group with a glob and disables
+        one of its members. The globs have to be resolved to concrete checker
+        names, because the UI displays the state of each checker.
+        """
+        cfg = dict(self._codechecker_cfg)
+        cfg['checkers'] = []
+        cfg['analyzer_config'] = ['clang-tidy:take-config-from-directory=true']
+
+        self._create_source_file(1)
+        self._create_clang_tidy_cfg_file(
+            ['-*', 'readability-*', '-readability-magic-numbers'])
+
+        return_code = self._check_source_file(cfg)
+        self.assertEqual(return_code, 0)
+
+        runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, None)
+        run_id = max(map(lambda run: run.runId, runs))
+
+        analysis_info = self._cc_client.getAnalysisInfo(
+            AnalysisInfoFilter(runId=run_id), None, 0)
+        self.assertTrue(analysis_info)
+
+        checkers = {}
+        for info in analysis_info:
+            checkers.update(info.checkers.get('clang-tidy', {}))
+
+        self.assertTrue(checkers)
+
+        # A glob is not a checker, it must have been resolved.
+        self.assertFalse([c for c in checkers if '*' in c])
+
+        enabled = {c for c, state in checkers.items() if state.enabled}
+
+        # Members of the group enabled by the config file.
+        self.assertIn('readability-braces-around-statements', enabled)
+
+        # This member of the group was disabled by the config file.
+        self.assertNotIn('readability-magic-numbers', enabled)
+
+        # A checker of another group was not enabled at all.
+        self.assertNotIn('bugprone-sizeof-expression', enabled)
 
         # Remove .clang-tidy configuration file.
         os.remove(self.clang_tidy_cfg)

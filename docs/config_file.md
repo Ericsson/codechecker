@@ -17,6 +17,9 @@ For example if you run the following command:
 CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
 ```
 
+The option and the file name may also be joined with an equal sign:
+`--config=./codechecker.json`.
+
 then the analyzer parameters from the
 [`codechecker.json`](https://github.com/Ericsson/codechecker/blob/master/config/config_files/codechecker.json) configuration
 file will be emplaced as command line arguments:
