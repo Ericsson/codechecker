@@ -1557,14 +1557,15 @@ usage: CodeChecker cmd serverside-tasks [-h] [-t [TOKEN [TOKEN ...]]]
                                         [--verbose {info,debug_analyzer,debug}]
 
 Query the status of and otherwise filter information for server-side
-background tasks executing on a CodeChecker server. In addition, for server
-administartors, allows requesting tasks to cancel execution.
+background tasks executing on a CodeChecker server. In addition, allows
+requesting tasks to cancel execution for task submitters, product
+administrators (PRODUCT_ADMIN), and server administrators (SUPERUSER).
 
 Normally, the querying of a task's status is available only to the following
 users:
   - The user who caused the creation of the task.
-  - For tasks that are associated with a specific product, the PRODUCT_ADMIN
-    users of that product.
+  - For tasks that are associated with a specific product, users with
+    PRODUCT_ACCESS on that product.
   - Accounts with SUPERUSER rights (server administrators).
 
 optional arguments:
@@ -1584,10 +1585,11 @@ optional arguments:
                         well. (default: False)
   --kill                Request the co-operative and graceful termination of
                         the tasks matching the filter(s) specified. '--kill'
-                        is only available to SUPERUSERs! Note, that this
-                        action only submits a *REQUEST* of termination to the
-                        server, and tasks are free to not support in-progress
-                        kills. Even for tasks that support getting killed, due
+                        is available to the task's submitter, PRODUCT_ADMINs of
+                        the task's associated product, and SUPERUSERs. Note,
+                        that this action only submits a *REQUEST* of
+                        termination to the server, and tasks are free to not
+                        support in-progress kills. Even for tasks that support getting killed, due
                         to its graceful nature, it might take a considerable
                         time for the killing to conclude. Killing a task that
                         has not started RUNNING yet results in it
@@ -1614,8 +1616,8 @@ task list filter arguments:
   "B"] and [the task was created by "John"]).
 
   Listing is only available for the following, privileged users:
-    - For tasks that are associated with a specific product, the PRODUCT_ADMINs
-     of that product.
+    - For tasks that are associated with a specific product, users with
+      PRODUCT_ACCESS on that product.
     - Server administrators (SUPERUSERs).
 
   Unprivileged users MUST use only the task's token to query information about
@@ -1641,7 +1643,7 @@ task list filter arguments:
   --product [PRODUCT [PRODUCT ...]]
                         Filter for tasks that execute in the context of
                         products specified by the given ENDPOINTs. This query
-                        is only available if you are a PRODUCT_ADMIN of the
+                        is only available if you have PRODUCT_ACCESS on the
                         specified product(s). (default: None)
   --no-product          Filter for server-wide tasks (not associated with any
                         products). This query is only available to SUPERUSERs.
@@ -1720,10 +1722,10 @@ task list filter arguments:
                         (midnight) is assumed instead. Timestamps for tasks
                         are always understood as Coordinated Universal Time
                         (UTC). (default: None)
-  --only-cancelled      Show only tasks that received a cancel request from a
-                        SUPERUSER (see '--kill'). (default: False)
+  --only-cancelled      Show only tasks that received a cancel request (see
+                        '--kill'). (default: False)
   --no-cancelled        Show only tasks that had not received a cancel request
-                        from a SUPERUSER (see '--kill'). (default: False)
+                        (see '--kill'). (default: False)
   --only-consumed       Show only tasks that concluded their execution and the
                         responsible user (see '--username') "downloaded" this
                         fact. (default: False)
@@ -1752,7 +1754,7 @@ task, as identified by the token:
 ```
 </details>
 
-The `serverside-tasks` subcommand allows users and administrators to query the status of (and for administrators, request the cancellation) of **server-side background tasks**.
+The `serverside-tasks` subcommand allows users and administrators to query the status of (and for task owners, product administrators, and server administrators, request the cancellation) of **server-side background tasks**.
 These background tasks are created by a limited set of user actions, where the user's client not waiting for the completion of the task can be beneficial.
 A task is always identified by its **token**, which is a random generated value.
 This token is presented to the user when appropriate.
@@ -1786,12 +1788,12 @@ A task can have the following statuses:
   * **Running**: The task is actively executing.
   * **Completed**: The task successfully finished executing. (The side effects of the operations are available at this point.)
   * **Failed**: The task's execution was started, but failed for some reason. This could be an error detected in the input, a database issue, or any other _Exception_. The "Comments" field of the task, when queried, will likely contain the details of the error.
-  * **Cancelled**: The task was cancelled by an administrator ([see later](#requesting-the-termination-of-a-task-only-for-SUPERUSERs)) and the task shut down to this request.
+  * **Cancelled**: The task was cancelled by an administrator ([see later](#requesting-the-termination-of-a-task)) and the task shut down to this request.
   * **Dropped**: The task's execution was interrupted due to an external reason (system crash, service shutdown).
 
 ##### Querying multiple tasks via filters
 
-For product and server administrators (`PRODUCT_ADMIN` and `SUPERUSER` rights), the `serverside-tasks` subcommand exposes various filter options, which can be used to create even a combination of criteria tasks must match to be returned.
+For users with access to a product and server administrators (`PRODUCT_ACCESS` and `SUPERUSER` rights), the `serverside-tasks` subcommand exposes various filter options, which can be used to create even a combination of criteria tasks must match to be returned.
 Please refer to the `--help` of the subcommand for the exact list of filters available.
 In this mode, the statuses of the tasks are printed in a concise table.
 
@@ -1806,7 +1808,7 @@ Token                                                            | Machine      
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
 
-##### Requesting the termination of a task (only for `SUPERUSER`s)
+##### Requesting the termination of a task
 
 Tasks matching the query filters can be requested for termination ("killed") by specifying `--kill` in addition to the filters.
 This will send a request to the server to shut the tasks down.

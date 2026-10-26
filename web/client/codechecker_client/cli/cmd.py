@@ -1321,7 +1321,8 @@ but will return '0' if the task(s) were successfully killed as well.
                         help="""
 Request the co-operative and graceful termination of the tasks matching the
 filter(s) specified.
-'--kill' is only available to SUPERUSERs!
+'--kill' is available to the task's submitter, PRODUCT_ADMINs of the task's
+associated product, and SUPERUSERs.
 Note, that this action only submits a *REQUEST* of termination to the server,
 and tasks are free to not support in-progress kills.
 Even for tasks that support getting killed, due to its graceful nature, it
@@ -1355,8 +1356,8 @@ be considered in a Boolean AND relation (meaning: [machine ID is either "A" or
 "B"] and [the task was created by "John"]).
 
 Listing is only available for the following, privileged users:
-  - For tasks that are associated with a specific product, the PRODUCT_ADMINs
-   of that product.
+  - For tasks that are associated with a specific product, users with
+    PRODUCT_ACCESS on that product.
   - Server administrators (SUPERUSERs).
 
 Unprivileged users MUST use only the task's token to query information about
@@ -1404,8 +1405,8 @@ the task.
                          nargs='*',
                          help="Filter for tasks that execute in the context "
                               "of products specified by the given ENDPOINTs. "
-                              "This query is only available if you are a "
-                              "PRODUCT_ADMIN of the specified product(s).")
+                              "This query is only available if you have "
+                              "PRODUCT_ACCESS on the specified product(s).")
     product.add_argument("--no-product",
                          action="store_true",
                          help="Filter for server-wide tasks (not associated "
@@ -1478,11 +1479,11 @@ Timestamps for tasks are always understood as Coordinated Universal Time (UTC).
     cancel.add_argument("--only-cancelled",
                         action="store_true",
                         help="Show only tasks that received a cancel request "
-                             "from a SUPERUSER (see '--kill').")
+                             "(see '--kill').")
     cancel.add_argument("--no-cancelled",
                         action="store_true",
                         help="Show only tasks that had not received a "
-                             "cancel request from a SUPERUSER "
+                             "cancel request "
                              "(see '--kill').")
 
     consumed = task_list.add_mutually_exclusive_group(required=False)
@@ -1907,14 +1908,15 @@ full runs.""",
         formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="""
 Query the status of and otherwise filter information for server-side
-background tasks executing on a CodeChecker server. In addition, for server
-administartors, allows requesting tasks to cancel execution.
+background tasks executing on a CodeChecker server. In addition, allows
+requesting tasks to cancel execution for task submitters, product
+administrators (PRODUCT_ADMIN), and server administrators (SUPERUSER).
 
 Normally, the querying of a task's status is available only to the following
 users:
   - The user who caused the creation of the task.
-  - For tasks that are associated with a specific product, the PRODUCT_ADMIN
-    users of that product.
+  - For tasks that are associated with a specific product, users with
+    PRODUCT_ACCESS on that product.
   - Accounts with SUPERUSER rights (server administrators).
 """,
         help="Await, query, and cancel background tasks executing on the "

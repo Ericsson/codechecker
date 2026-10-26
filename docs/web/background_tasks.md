@@ -173,9 +173,9 @@ class MyTask(AbstractTask):
             foo(element)
 ```
 
-### Abnormal path 1: admin cancellation
+### Abnormal path 1: task cancellation
 
-At any point following _`ALLOCATED`_ status, but most likely in the _`ENQUEUED`_ and _`RUNNING`_ statuses, a **`SUPERUSER`** may issue a _`cancelTask()`_ order.
+At any point following _`ALLOCATED`_ status, but most likely in the _`ENQUEUED`_ and _`RUNNING`_ statuses, the task's submitter or an administrator (**`PRODUCT_ADMIN`** or **`SUPERUSER`**) may issue a _`cancelTask()`_ order.
 This will set `BackgroundTask.cancel_flag`, and the task is expected (although not required!) to poll its own _`should_cancel()`_ status internally in checkpoints, and terminate gracefully to this request. This is done by **`_implementation()`** exiting by raising a **`TaskCancelHonoured`** exception.
 (If the task does not raise one, it will be allowed to conclude normally, or fail in some other manner.
 Tasks cancelled gracefully will have the _`CANCELLED`_ status.
