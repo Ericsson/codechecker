@@ -147,13 +147,6 @@ def __determine_compiler(compile_command: list[str]) -> str:
     if compile_command[0].endswith('ccache'):
         if which(compile_command[1]) is not None:
             return compile_command[1]
-        # compile_command[1] may be a GCC compiler not present in a
-        # clang-only environment; return it so __get_clang_fallback can
-        # remap it.
-        clang_equiv = _GCC_TO_CLANG.get(
-            os.path.basename(compile_command[1]))
-        if clang_equiv and which(clang_equiv) is not None:
-            return compile_command[1]
 
     return compile_command[0]
 
