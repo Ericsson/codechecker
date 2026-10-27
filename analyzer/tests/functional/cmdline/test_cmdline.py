@@ -12,8 +12,10 @@ This module tests the CodeChecker command line.
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
+import tempfile
 import unittest
 
 from libtest import env
@@ -174,6 +176,38 @@ class TestCmdline(unittest.TestCase):
         with open(log_file,
                   encoding="utf-8", errors="ignore") as log_f:
             self.assertFalse(json.load(log_f))
+
+    def test_log_missing_output_parents(self):
+        """Create nested output directories before logging a build."""
+        for empty_build in (False, True):
+            with self.subTest(empty_build=empty_build):
+                with tempfile.TemporaryDirectory(
+                        prefix='log output ',
+                        dir=self.test_workspace) as workspace:
+                    source = os.path.join(workspace, 'main.c')
+                    with open(source, 'w', encoding='utf-8') as source_file:
+                        source_file.write('int main(void) { return 0; }\n')
+                    log_file = os.path.join(
+                        workspace, 'build', 'codechecker',
+                        'compile_commands.json')
+                    build = '' if empty_build else shlex.join([
+                        'cc', '-c', source, '-o',
+                        os.path.join(workspace, 'main.o')])
+                    self.assertFalse(os.path.exists(os.path.dirname(log_file)))
+                    exit_code, out, err = run_cmd([
+                        self._codechecker_cmd, 'log', '-b', build,
+                        '-o', log_file])
+                    self.assertEqual(exit_code, 0, out + err)
+                    with open(log_file, encoding='utf-8') as database_file:
+                        database = json.load(database_file)
+                    if empty_build:
+                        self.assertEqual(database, [])
+                    else:
+                        self.assertEqual(len(database), 1)
+                        self.assertEqual(os.path.realpath(database[0]['file']),
+                                         os.path.realpath(source))
+                        self.assertTrue(os.path.isfile(
+                            os.path.join(workspace, 'main.o')))
 
     def test_checkers_guideline(self):
         """ Listing checkers by guideline. """
