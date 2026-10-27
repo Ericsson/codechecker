@@ -564,6 +564,27 @@ struct CleanupPlanFilter {
   3: bool         isOpen,
 }
 
+// Test coverage summary of a source file in a run.
+struct FileCoverage {
+  1: i64    runId,
+  2: i64    fileId,
+  3: string filePath,
+  4: i64    linesFound,     // Number of executable lines.
+  5: i64    linesHit,       // Number of executed lines.
+  6: i64    functionsFound, // Number of functions.
+  7: i64    functionsHit,   // Number of executed functions.
+}
+typedef list<FileCoverage> FileCoverageList
+
+// Line coverage of a source file in a run. Lines which are listed in neither
+// of the lists are not executable.
+struct FileLineCoverage {
+  1: i64       runId,
+  2: i64       fileId,
+  3: list<i64> coveredLines,
+  4: list<i64> uncoveredLines,
+}
+
 struct Checker {
   1: string analyzerName,
   2: string checkerId,
@@ -1211,4 +1232,18 @@ service codeCheckerDBAccess {
   bool unsetCleanupPlan(1: i64          cleanupPlanId,
                         2: list<string> reportHashes)
                         throws (1: shared.RequestFailed requestError),
+
+  // Get the test coverage summary of the source files in the given runs.
+  // One element is returned for each run and source file pair which has
+  // test coverage data. If runIds is empty, all runs are considered.
+  // PERMISSION: PRODUCT_VIEW
+  FileCoverageList getFileCoverages(1: list<i64> runIds)
+                                    throws (1: shared.RequestFailed requestError),
+
+  // Get the covered and uncovered lines of the given source file in the
+  // given run.
+  // PERMISSION: PRODUCT_VIEW
+  FileLineCoverage getFileLineCoverage(1: i64 runId,
+                                       2: i64 fileId)
+                                       throws (1: shared.RequestFailed requestError),
 }

@@ -571,6 +571,16 @@ then the results of the analysis can be stored with this command:
 CodeChecker store ./my_results -n my_project
 ```
 
+If a report directory contains test coverage data (a `coverage/coverage.json`
+file, created by e.g. [`report-converter -t lcov`](../tools/report-converter.md#lcov)),
+it is stored too, together with the source files it refers to. Store the
+coverage in the same command as the analysis results of the run, because each
+store replaces the reports of the run:
+
+```sh
+CodeChecker store ./my_results ./my_coverage -n my_project
+```
+
 #### Format of `PRODUCT_URL`
 
 Several sub-commands, such as `store` and `cmd` need a connection specification

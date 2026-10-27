@@ -119,6 +119,7 @@ router.afterEach(to => {
     || to.name === "component-statistics"
     || to.name === "checker-coverage-statistics"
     || to.name === "guideline-statistics"
+    || to.name === "test-coverage-statistics"
   ) {
     query_namespace = "report_filter";
   }
