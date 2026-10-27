@@ -12,7 +12,9 @@ Test parse --export sarif command.
 """
 
 import os
+import glob
 import json
+import plistlib
 import shutil
 import subprocess
 import unittest
@@ -125,6 +127,38 @@ class TestParseSarif(unittest.TestCase):
                 'level': 'error'
             }
         })
+
+    def test_parse_sarif_keeps_hash_and_analyzer(self):
+        """
+        The exported sarif contains the report hashes of the plist files
+        verbatim and a separate run for each analyzer.
+        """
+        self.__log_and_analyze()
+
+        plist_hashes = set()
+        plist_analyzers = set()
+        for plist_file in glob.glob(os.path.join(self.report_dir, '*.plist')):
+            with open(plist_file, 'rb') as f:
+                data = plistlib.load(f)
+            plist_analyzers.add(data['metadata']['analyzer']['name'])
+            for diag in data.get('diagnostics', []):
+                plist_hashes.add(diag['issue_hash_content_of_line_in_context'])
+        self.assertTrue(plist_hashes)
+
+        parse_sarif_cmd = [self._codechecker_cmd, "parse", self.report_dir,
+                           "-e", "sarif"]
+        out = self.__run_cmd(parse_sarif_cmd)
+        parsed_json = json.loads(out)
+
+        runs = parsed_json['runs']
+        self.assertEqual(
+            {run['tool']['driver']['name'] for run in runs}, plist_analyzers)
+        self.assertEqual(len(runs), len(plist_analyzers))
+
+        sarif_hashes = {
+            res['partialFingerprints']['codeCheckerReportHash/v1']
+            for run in runs for res in run['results']}
+        self.assertEqual(sarif_hashes, plist_hashes)
 
     def test_parse_sarif_suppression_source(self):
         self.__log_and_analyze()

@@ -1928,7 +1928,7 @@ optional arguments:
                         Set verbosity level.
 
 export arguments:
-  -e {html,json,codeclimate,gerrit,baseline}, --export {html,json,codeclimate,gerrit,baseline}
+  -e {html,json,codeclimate,gerrit,baseline,sarif}, --export {html,json,codeclimate,gerrit,baseline,sarif}
                         Specify extra output format type.
                         'codeclimate' format can be used for Code Climate and
                         for GitLab integration. For more information see:
@@ -1936,6 +1936,11 @@ export arguments:
                         'baseline' output can be used to integrate CodeChecker
                         into your local workflow without using a CodeChecker
                         server. For more information see our usage guide.
+                        'sarif' output (SARIF v2.1.0) contains all information
+                        of the analyzer result files with a separate run for
+                        each analyzer. Report hashes are kept unchanged in
+                        'partialFingerprints'. For more information see
+                        docs/tools/sarif.md.
                         (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the output in the given file/folder. Note:

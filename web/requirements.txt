@@ -17,6 +17,5 @@ thrift~=0.22
 gitpython~=3.0
 PyYAML~=6.0
 types-PyYAML~=6.0
-sarif-tools~=3.0
 argcomplete~=3.0
 prettytable~=3.0
