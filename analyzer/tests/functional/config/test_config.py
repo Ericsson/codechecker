@@ -17,6 +17,7 @@ import os
 import shutil
 import subprocess
 import unittest
+from argparse import Namespace
 
 from libtest import env
 
@@ -378,6 +379,130 @@ parse:
         out, returncode = self.__run_parse(self.config_file_yaml)
         print(out)
         self.assertEqual(returncode, 2)
+
+    def test_yaml_multiple_arguments_in_one_entry(self):
+        """
+        A single YAML entry containing several whitespace separated arguments
+        must select both analyzers, the same way the equivalent command line
+        invocation does.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyze:
+  - --analyzers clangsa clang-tidy
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_yaml_separate_entries_still_select_both_analyzers(self):
+        """
+        The pre-existing one-argument-per-entry syntax must keep working.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyze:
+  - --analyzers
+  - clangsa
+  - clang-tidy
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_yaml_quoted_value_with_space(self):
+        """
+        A quoted value containing a space must stay a single argument, and a
+        path with a space in it must be usable as a --trim-path-prefix value.
+        """
+        split_path = self.source_file.split(os.sep)
+        # Build a prefix whose last component contains a space, so the value
+        # can only survive if quoting is honoured during tokenization.
+        path_prefix = os.path.join(os.sep, *split_path[:3], "dir with space")
+        quoted_prefix = f'"{path_prefix}"'
+
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write(f"""
+analyze:
+  - --analyzers clangsa
+
+parse:
+  - --trim-path-prefix {quoted_prefix}
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+
+        # The value must reach the option parser as one argument holding the
+        # space; the prefix simply will not match this workspace.
+        out, returncode = self.__run_parse(self.config_file_yaml)
+        self.assertNotIn("error: unrecognized arguments", out)
+        self.assertNotIn("Invalid quoting", out)
+
+    def test_yaml_quoted_prefix_is_tokenized_as_one_argument(self):
+        """
+        The configuration reader must hand a quoted, space-containing value to
+        the option parser as a single argument, with the inner quotes removed.
+        """
+        from codechecker_common import cmd_config
+
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+parse:
+  - --trim-path-prefix "/tmp/my project"
+""")
+
+        args = Namespace(config_file=self.config_file_yaml)
+        options = cmd_config.process_config_file(args, 'parse')
+        self.assertEqual(options, ["--trim-path-prefix", "/tmp/my project"])
+
+    def test_yaml_cmd_overrides_config_file(self):
+        """
+        Argument precedence between the command line and a YAML config file is
+        unchanged: the command line wins.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyze:
+  - --analyzers clangsa clang-tidy
+""")
+
+        out, returncode = self.__run_analyze(
+            self.config_file_yaml, ['--analyzers', 'clangsa'])
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_yaml_invalid_quoting_reports_error(self):
+        """
+        An unterminated quote must fail with a message naming the config file,
+        instead of being silently mis-parsed.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyze:
+  - --trim-path-prefix "unterminated
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+
+        self.assertNotEqual(returncode, 0)
+        self.assertIn("Invalid quoting", out)
+        self.assertIn("codechecker.yaml", out)
 
     def test_check_config(self):
         """

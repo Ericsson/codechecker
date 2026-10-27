@@ -14,8 +14,8 @@ parse:
   - --trim-path-prefix=$HOME/workspace
 
 server:
-  - --workspace=$HOME/workspace"
-  - --port=9090"
+  - --workspace=$HOME/workspace
+  - --port=9090
 
 store:
   - --name=run_name
