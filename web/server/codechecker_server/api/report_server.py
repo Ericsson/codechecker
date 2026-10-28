@@ -3090,7 +3090,6 @@ class ThriftRequestHandler:
         self.__require_view()
 
         checker_labels = self._context.checker_labels
-        guidelines = self._context.guideline
 
         labels = []
         for checker in checkers:
@@ -3100,32 +3099,10 @@ class ThriftRequestHandler:
                 if (analyzer_name and analyzer_name.lower() != "unknown") \
                 else None
 
-            pairs = checker_labels.labels_of_checker(
-                checker.checkerId, analyzer_name)
-
-            # The "rule" label is internal to the reworked labeling model and
-            # was not part of the released API. It is excluded here so the
-            # returned set stays byte-for-byte compatible with older clients;
-            # it is still used below to derive the legacy guideline labels.
-            checker_labels_set = {f'{key}:{value}' for key, value in pairs
-                                  if key != 'rule'}
-
-            # Backwards compatibility for older clients: along with the single
-            # stored profile, it also list every profile that contains it
-            # transitively like "default" is "sensitive" and "extreme" too.
-            for key, value in pairs:
-                if key == 'profile':
-                    for profile in checker_labels.profiles_containing(value):
-                        checker_labels_set.add(f'profile:{profile}')
-
-            # Backwards compatibility: emit the legacy "<guideline>:<rule>"
-            # labels from the checker's rules and their guidelines.
-            for key, value in pairs:
-                if key == 'rule':
-                    for guideline in guidelines.guidelines_of_rule(value):
-                        checker_labels_set.add(f'{guideline}:{value}')
-
-            labels.append(sorted(checker_labels_set))
+            labels.append(sorted(
+                f'{key}:{value}' for key, value in
+                checker_labels.visible_labels_of_checker(
+                    checker.checkerId, analyzer_name)))
 
         return labels
 

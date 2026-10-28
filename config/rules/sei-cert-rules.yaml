@@ -104,10 +104,10 @@
   title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/containers-ctr/ctr58-cpp/
 - rule_id: dcl03-c
-  title: Use a static assertion to test the value of a constant expression
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/declarations-and-initialization-dcl/dcl03-c/
 - rule_id: dcl16-c
-  title: Use "L," not "l," to indicate a long value
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/declarations-and-initialization-dcl/dcl16-c/
 - rule_id: dcl30-c
   title: ''
@@ -380,10 +380,10 @@
   title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/floating-point-flp/flp37-c/
 - rule_id: int09-c
-  title: Ensure enumeration constants map to unique values
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int09-c/
 - rule_id: int10-c
-  title: Do not assume a positive remainder when using the % operator
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/integers-int/int10-c/
 - rule_id: int30-c
   title: ''
@@ -452,10 +452,10 @@
   title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/memory-management-mem/mem57-cpp/
 - rule_id: msc12-c
-  title: Detect and remove code that has no effect or is never executed
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc12-c/
 - rule_id: msc24-c
-  title: Do not use deprecated or obsolescent functions
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/miscellaneous-msc/msc24-c/
 - rule_id: msc30-c
   title: ''
@@ -494,7 +494,7 @@
   title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/miscellaneous-msc/msc53-cpp/
 - rule_id: msc54-cpp
-  title: A signal handler must be a plain old function
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-cpp-coding-standard/rules/miscellaneous-msc/msc54-cpp/
 - rule_id: oop50-cpp
   title: ''
@@ -572,7 +572,7 @@
   title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/posix-pos/pos54-c/
 - rule_id: pre02-c
-  title: Macro replacement lists should be parenthesized
+  title: ''
   rule_url: https://cmu-sei.github.io/secure-coding-standards/sei-cert-c-coding-standard/rules/preprocessor-pre/pre02-c/
 - rule_id: pre30-c
   title: ''

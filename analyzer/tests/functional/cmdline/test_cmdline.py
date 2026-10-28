@@ -114,63 +114,6 @@ class TestCmdline(unittest.TestCase):
         dummy_cmd = [env.codechecker_cmd(), "dummy"]
         self.assertEqual(1, run_cmd(dummy_cmd)[0])
 
-    def test_checkers(self):
-        """ Listing available checkers. """
-
-        checkers_cmd = [env.codechecker_cmd(), 'checkers']
-        self.assertEqual(0, run_cmd(checkers_cmd)[0])
-
-    def test_checkers_profile(self):
-        """ Listing available checker profiles. """
-
-        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--profile']
-        out = run_cmd(checkers_cmd)
-        self.assertEqual(0, out[0])
-        self.assertEqual(True, "default" in out[1])
-
-    def test_checkers_label(self):
-        """ Listing checkers with given label. """
-
-        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--label']
-        exit_code, out, _ = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        self.assertIn('profile', out)
-        self.assertIn('severity', out)
-        self.assertIn('guideline', out)
-
-        # Guideline names are presented as labels, while the internal "rule"
-        # label is hidden, for backwards compatibility.
-        checkers_cmd = [
-            env.codechecker_cmd(), 'checkers', '--label', '-o', 'json']
-        exit_code, out, _ = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        label_keys = {row["label"] for row in json.loads(out)}
-        self.assertIn('sei-cert-c', label_keys)
-        self.assertIn('guideline', label_keys)
-        self.assertNotIn('rule', label_keys)
-
-        checkers_cmd = [
-            env.codechecker_cmd(), 'checkers', '--label', 'severity']
-        exit_code, out, _ = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        self.assertIn('HIGH', out)
-        self.assertIn('MEDIUM', out)
-        self.assertIn('LOW', out)
-
-        checkers_cmd = [
-            env.codechecker_cmd(), 'checkers', '--label', 'severity:HIGH']
-        exit_code, out, _ = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        self.assertIn('core.DivideZero', out)
-        self.assertIn('core.CallAndMessage', out)
-
-        # A guideline name as the label lists its rule ids.
-        checkers_cmd = [
-            env.codechecker_cmd(), 'checkers', '--label', 'sei-cert-c']
-        exit_code, out, _ = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        self.assertIn('int33-c', out)
-
     def test_analyzers(self):
         """ Listing available analyzers. """
 
@@ -192,6 +135,144 @@ class TestCmdline(unittest.TestCase):
         with open(log_file,
                   encoding="utf-8", errors="ignore") as log_f:
             self.assertFalse(json.load(log_f))
+
+    def test_checkers(self):
+        """ Listing available checkers. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers']
+        self.assertEqual(0, run_cmd(checkers_cmd)[0])
+
+    def test_checkers_profile(self):
+        """ Listing available checker profiles. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--profile']
+        out = run_cmd(checkers_cmd)
+        self.assertEqual(0, out[0])
+        self.assertEqual(True, "default" in out[1])
+
+    def test_checkers_label(self):
+        """ Listing checkers available with label. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--label']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('profile', out)
+        self.assertIn('severity', out)
+        self.assertIn('guideline', out)
+
+    def test_checkers_label_severity(self):
+        """ Listing checkers available with label for severity. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('HIGH', out)
+        self.assertIn('MEDIUM', out)
+        self.assertIn('LOW', out)
+
+    def test_checkers_label_severity_high(self):
+        """ Listing checkers available with label for given severity. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'severity:HIGH']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('core.DivideZero', out)
+        self.assertIn('core.CallAndMessage', out)
+
+    def test_checkers_label_guideline(self):
+        """ Listing checkers available with label for given checker. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'sei-cert-c:str34-c']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('bugprone-signed-char-misuse', out)
+        self.assertNotIn('rule:', out)
+
+    def test_checkers_details(self):
+        """ Listing of checkers does not contain rule: entries. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--details']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertNotIn('rule:', out)
+        self.assertIn('sei-cert-c:str34-c', out)
+
+    def test_checkers_guideline_match_negative(self):
+        """ Listing a checker from a different guideline fails. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--label', 'sei-cert-c:cwe-476']
+        exit_code, out, err = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('No checkers with the given label found', err)
+        self.assertNotIn('core.CallAndMessage', out)
+
+    def test_checkers_guideline_match_positive(self):
+        """ Listing a checker from the guideline works. """
+        checkers_cmd = [
+            env.codechecker_cmd(),
+            'checkers',
+            '--label',
+            'cwe-top-25-2025:cwe-476']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+        self.assertIn('core.CallAndMessage', out)
+
+    def test_checkers_label_rule_in_multiple_guidelines(self):
+        """ A rule belonging to multiple guidelines matches through each. """
+        for guideline in ['sei-cert-c', 'sei-cert-cpp']:
+            checkers_cmd = [
+                env.codechecker_cmd(), 'checkers',
+                '--label', f'{guideline}:str34-c']
+            exit_code, out, _ = run_cmd(checkers_cmd)
+            self.assertEqual(0, exit_code)
+            self.assertIn('bugprone-signed-char-misuse', out)
+
+    def test_checkers_details_guideline_labels(self):
+        """ Detailed checker labels contain the legacy guideline labels. """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--analyzers', 'clang-tidy',
+            '--details', '-o', 'json']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+
+        checker = next(c for c in json.loads(out)
+                       if c['name'] == 'bugprone-signed-char-misuse')
+        labels = set(checker['labels'])
+
+        self.assertTrue({
+            'guideline:sei-cert-c',
+            'guideline:sei-cert-cpp',
+            'sei-cert-c:str34-c',
+            'sei-cert-cpp:str34-c'}.issubset(labels))
+        self.assertFalse(any(label.startswith('rule:') for label in labels))
+
+    def test_checkers_details_profiles(self):
+        """
+        Detailed checker labels contain every profile that includes the
+        checker, e.g. a "default" checker is also "sensitive" and "extreme".
+        """
+        checkers_cmd = [
+            env.codechecker_cmd(), 'checkers', '--analyzers', 'clang-tidy',
+            '--details', '-o', 'json']
+        exit_code, out, _ = run_cmd(checkers_cmd)
+        self.assertEqual(0, exit_code)
+
+        checkers = {c['name']: c['labels'] for c in json.loads(out)}
+
+        expected = {
+            'bugprone-signed-char-misuse':
+                {'profile:default', 'profile:sensitive', 'profile:extreme'},
+            'bugprone-branch-clone':
+                {'profile:sensitive', 'profile:extreme'},
+            'bugprone-macro-parentheses':
+                {'profile:extreme'}
+        }
+
+        for checker, profiles in expected.items():
+            tiers = {label for label in checkers[checker]
+                     if label.startswith('profile:')
+                     and label != 'profile:security'}
+            self.assertEqual(profiles, tiers, checker)
 
     def test_checkers_guideline(self):
         """ Listing checkers by guideline. """
@@ -238,18 +319,6 @@ class TestCmdline(unittest.TestCase):
 
         self.assertTrue(out.strip().startswith('Guideline: cwe-top-25-2024'))
         self.assertIn('Guideline: sei-cert-cpp', out)
-
-        # A "<guideline>:<rule>" with a nonexistent guideline is an error.
-        checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'nonexistent:mem35-c']
-        ret, _, _ = run_cmd(checkers_cmd)
-        self.assertNotEqual(ret, 0)
-
-        # A rule that is not part of the given guideline is an error.
-        checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'sei-cert-c:nonexistent-rule']
-        ret, _, _ = run_cmd(checkers_cmd)
-        self.assertNotEqual(ret, 0)
 
     def test_checkers_warnings(self):
         """ Listing checkers for compiler warnings. """

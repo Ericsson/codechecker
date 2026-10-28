@@ -272,3 +272,34 @@ class TestCheckerLabels(unittest.TestCase):
         self.assertEqual(
             cl.profiles_containing('nonexistent'),
             ['nonexistent'])
+
+    def test_legacy_guideline_rule_labels(self):
+        guidelines = _MockGuidelines(
+            {"err34-c": ["sei-cert-c", "sei-cert-cpp"]})
+        cl = CheckerLabels(self.labels_dir.name, guidelines)
+
+        labels = cl.labels_of_checker('cert-err34-c', 'clang-tidy')
+        self.assertIn(('sei-cert-c', 'err34-c'), labels)
+        self.assertIn(('sei-cert-cpp', 'err34-c'), labels)
+
+        self.assertEqual(
+            cl.checkers_by_labels(['sei-cert-c:err34-c']),
+            ['cert-err34-c'])
+        self.assertEqual(
+            cl.checkers_by_labels(['sei-cert-cpp:err34-c']),
+            ['cert-err34-c'])
+
+        # The rule is not part of this guideline.
+        self.assertEqual(
+            cl.checkers_by_labels(['misra-c:err34-c']),
+            [])
+
+    def test_legacy_guideline_rule_labels_without_guidelines(self):
+        cl = CheckerLabels(self.labels_dir.name)
+
+        labels = cl.labels_of_checker('cert-err34-c', 'clang-tidy')
+        self.assertIn(('rule', 'err34-c'), labels)
+        self.assertNotIn(('sei-cert-c', 'err34-c'), labels)
+        self.assertEqual(
+            cl.checkers_by_labels(['sei-cert-c:err34-c']),
+            [])

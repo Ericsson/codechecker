@@ -160,10 +160,6 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @thrift_client_call
-    def getGuidelineRules(self, guidelines):
-        pass
-
-    @thrift_client_call
     def exportData(self, runId):
         pass
 

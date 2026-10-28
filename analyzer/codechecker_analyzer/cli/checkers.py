@@ -276,7 +276,7 @@ def __get_detailed_checker_info(
         config_handler.initialize_checkers(checkers, profile_checkers)
 
         for checker, (state, description) in config_handler.checks().items():
-            labels = cl.labels_of_checker(checker, analyzer)
+            labels = cl.visible_labels_of_checker(checker, analyzer)
             state = CheckerState.ENABLED if ('profile', 'default') in labels \
                 else CheckerState.DISABLED
             checker_info[analyzer].append(

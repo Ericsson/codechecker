@@ -430,31 +430,19 @@ class RunResults(unittest.TestCase):
         remote_checker_labels = self._cc_client.getCheckerLabels([])
         self.assertEqual(len(remote_checker_labels), 0)
 
-        # NOTE: PR gating lints against the released CodeChecker package whose
-        # CheckerLabels constructor predates the 'guidelines' parameter, so
-        # pylint wrongly flags too-many-function-args here.
-        # pylint: disable=too-many-function-args
+        # pylint: disable=too-many-function-args,no-member
         guidelines = Guidelines(self.guidelines_dir)
         local_checker_labels = CheckerLabels(
             self.checker_labels_dir, guidelines)
-        # pylint: enable=too-many-function-args
-        label_pairs = set(local_checker_labels.labels_of_checker(
-            'core.DivideZero', 'clangsa'))
+        div_zero_labels = {
+            f'{key}:{value}' for key, value in
+            local_checker_labels.visible_labels_of_checker(
+                'core.DivideZero', 'clangsa')}
+        # pylint: enable=too-many-function-args,no-member
 
-        # getCheckerLabels keeps its output compatible with older clients: the
-        # internal "rule" labels are excluded, while the legacy transitive
-        # profile tiers and "<guideline>:<rule>" labels are reconstructed.
-        div_zero_labels = {f'{key}:{value}' for key, value in label_pairs
-                           if key != 'rule'}
-        for key, value in label_pairs:
-            if key == 'profile':
-                div_zero_labels.update(
-                    f'profile:{p}'
-                    for p in local_checker_labels.profiles_containing(value))
-            elif key == 'rule':
-                div_zero_labels.update(
-                    f'{guideline}:{value}'
-                    for guideline in guidelines.guidelines_of_rule(value))
+        self.assertIn('sei-cert-c:int33-c', div_zero_labels)
+        self.assertFalse(any(label.startswith('rule:')
+                             for label in div_zero_labels))
 
         remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("clangsa", "core.DivideZero")])

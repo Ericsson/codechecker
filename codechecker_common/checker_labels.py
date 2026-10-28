@@ -228,46 +228,26 @@ class CheckerLabels:
 
         return expanded
 
-    def __derived_guidelines(
-        self,
-        rule_values: Iterable[str]
-    ) -> list[tuple[str, str]]:
-        """
-        Derive the guideline labels of a checker from its rule values. For
-        every "rule:<rule_id>" of a checker the guidelines that contain the
-        given rule are looked up and returned as ("guideline", <name>) pairs.
-        Requires a Guidelines object to be injected; without it an empty list
-        is returned.
-        """
-        if self.__guidelines is None:
-            return []
-
-        guidelines: list[tuple[str, str]] = []
-        seen: set[str] = set()
-
-        for rule_id in rule_values:
-            for guideline in self.__guidelines.guidelines_of_rule(rule_id):
-                if guideline not in seen:
-                    seen.add(guideline)
-                    guidelines.append(('guideline', guideline))
-
-        return guidelines
-
     def __augment_labels(
         self,
         labels: list[tuple[str, str]]
     ) -> list[tuple[str, str]]:
         """
-        Augment a checker's raw (label, value) pairs with the information that
-        is derived in memory. Currently this derives the guideline labels from
-        the checker's rule values. The checker's profile label is left as its
-        single tier; the containment relation is applied on the query side
-        (see __expand_filter_labels) instead of expanding checker membership.
+        Extend a checker's labels with the "guideline:<guideline>" and
+        "<guideline>:<rule>" labels derived from its rules.
         """
-        rule_values = [value for key, value in labels if key == 'rule']
-
         augmented: list[tuple[str, str]] = list(labels)
-        augmented.extend(self.__derived_guidelines(rule_values))
+
+        if self.__guidelines is None:
+            return augmented
+
+        for key, rule_id in labels:
+            if key != 'rule':
+                continue
+
+            for guideline in self.__guidelines.guidelines_of_rule(rule_id):
+                augmented.append(('guideline', guideline))
+                augmented.append((guideline, rule_id))
 
         return augmented
 
@@ -370,6 +350,30 @@ class CheckerLabels:
         # provided by multiple analyzers. This will be unnecessary when we
         # cover this case properly.
         return list(set(labels))
+
+    def visible_labels_of_checker(
+        self,
+        checker: str,
+        analyzer: str | None = None
+    ) -> list[tuple[str, str]]:
+        """
+        Return the labels of a checker without the internal "rule" labels and
+        with every profile that contains the checker's profile.
+        """
+        labels: set[tuple[str, str]] = set()
+
+        for key, value in self.labels_of_checker(checker, analyzer):
+            if key == 'rule':
+                continue
+
+            if key == 'profile':
+                labels.update(
+                    ('profile', profile)
+                    for profile in self.profiles_containing(value))
+            else:
+                labels.add((key, value))
+
+        return list(labels)
 
     def get_description(self, label: str) -> dict[str, str]:
         """
