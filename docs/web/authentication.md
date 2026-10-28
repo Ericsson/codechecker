@@ -75,16 +75,14 @@ is handled.
 
  * `refresh_time`
 
-    (in seconds) Refresh time of the local session objects. We use local session
-    to prevent huge number of queries to the database. These sessions are stored
-    in the memory so if multiple CodeChecker servers use the same configuration
-    database these should be synced with each other and with the database. This
-    option defines the lifetime of the local session sets that after this many
-    seconds since last session access the local session is permanently
-    invalidated.
-
-    This option can be changed and reloaded without server restart by using the
-    `--reload` option of CodeChecker server command.
+    (in seconds, default: `60`) Defines how often active sessions are
+    re-validated against the central database. After a user logs out, their
+    session is invalidated on all server workers within at most `refresh_time`
+    seconds, and likewise an expired session may stay active for at most
+    `refresh_time` seconds. Lower this value to shorten that window at the cost
+    of more frequent database queries, or set it to `0` to validate on every
+    request. This option can be changed and reloaded without server restart by
+    using the `--reload` option of CodeChecker server command.
 If the server is shut down, every session is **immediately** invalidated. The
 running sessions are only stored in the server's memory, they are not written
 to storage.

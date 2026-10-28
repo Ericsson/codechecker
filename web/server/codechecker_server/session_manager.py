@@ -134,40 +134,70 @@ class _Session:
         return (datetime.now() - self.last_access).total_seconds() <= \
             self.session_lifetime
 
-    def revalidate(self):
+    def revalidate(self) -> bool:
         """
-        A session is only revalidated if it has yet to exceed its
-        lifetime. After a session hasn't been used for this interval,
-        it can NOT be resurrected at all --- the user needs to log in
-        to a brand-new session.
+        Revalidate the session against the database.
+
+        Returns True if the session is still valid, i.e. its token still
+        exists in the configuration database. The session is also considered
+        valid if the refresh_time has not expired yet.
+        Returns False if the token  has been removed
+        from the database-- for example because the user logged
+        out through a request that was served by a different worker process.
+        In that case the caller MUST drop this session from the local
+        in-memory store, as the cached copy is stale and can no longer be
+        trusted.
+
+        This function also writes the last_access time to the DB to
+        keep track of session expiry.
+
+        To avoid accessing the DB at every API request, the DB is
+        only after the refresh_time expired.
         """
 
         if not self.is_alive:
-            return
+            return False
 
-        if self.__database and self.is_refresh_time_expire:
+        if not self.__database:
+            return False
+
+        if not self.is_refresh_time_expire:
+            return True
+
+        transaction = None
+        try:
+            transaction = self.__database()
+            record = transaction.query(SessionRecord) \
+                .filter(SessionRecord.user_name == self.user) \
+                .filter(SessionRecord.token == self.token) \
+                .limit(1).one_or_none()
+
+            if not record:
+                # The session was invalidated elsewhere; this cached
+                # copy is no longer valid.
+                return False
+
             self.last_access = datetime.now()
 
-            # Update the timestamp in the database for the session's last
-            # access.
-            transaction = None
-            try:
-                transaction = self.__database()
-                record = transaction.query(SessionRecord) \
-                    .filter(SessionRecord.user_name == self.user) \
-                    .filter(SessionRecord.token == self.token) \
-                    .limit(1).one_or_none()
-
-                if record:
-                    record.last_access = self.last_access
-                    transaction.commit()
-            except Exception as e:
-                LOG.warning("Couldn't update usage timestamp of %s",
-                            self.token)
-                LOG.warning(str(e))
-            finally:
-                if transaction:
-                    transaction.close()
+            # Only write the timestamp back to the database if no other
+            # worker process refreshed it recently, to avoid redundant
+            # writes.
+            if not self.refresh_time or self.refresh_time < \
+                    (self.last_access
+                        - record.last_access).total_seconds():
+                record.last_access = self.last_access
+                transaction.commit()
+            return True
+        except Exception as e:
+            LOG.warning("Couldn't revalidate session for token %s",
+                        self.token)
+            LOG.warning(str(e))
+            # On a transient database error, avoid locking the user out by
+            # keeping the existing in-memory session.
+            return True
+        finally:
+            if transaction:
+                transaction.close()
 
 
 class SessionManager:
@@ -223,7 +253,7 @@ class SessionManager:
                       "server_config.authentication.")
 
         self.__refresh_time = self.__auth_config['refresh_time'] \
-            if 'refresh_time' in self.__auth_config else None
+            if 'refresh_time' in self.__auth_config else 60
 
         self.__regex_groups_enabled = False
 
@@ -1109,11 +1139,17 @@ class SessionManager:
         if not self.is_enabled:
             return None
 
-        for sess in self.__sessions:
+        for sess in self.__sessions[:]:
             if sess.is_alive and sess.token == token:
-                # If the session is alive but the should be re-validated.
-                if sess.is_refresh_time_expire:
-                    sess.revalidate()
+                # Re-validate a cached session against the database
+                # if refresh_time expires.
+                # The token may have been invalidated (e.g. by a logout)
+                # through a request served by another worker process, in which
+                # case this worker's in-memory copy is stale. If so, drop it
+                # from the local store and refuse the token.
+                if not sess.revalidate():
+                    self.invalidate_local_session(token)
+                    return None
                 return sess
 
         # Try to get a local session from the database.
