@@ -32,6 +32,7 @@ a CodeChecker server.
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
   * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
+  * [Valgrind](#valgrind)
 * [Plist/Sarif to html tool](#plistsarif-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
@@ -75,10 +76,10 @@ options:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-tidy,
-                        coccinelle, cppcheck, cpplint, eslint, fbinfer, gcc,
-                        golint, kernel-doc, lsan, mdl, msan, pyflakes, pylint,
-                        roslynator, smatch, sparse, sphinx, spotbugs, tsan,
-                        tslint, ubsan.
+                        coccinelle, cppcheck, cpplint, drd, eslint, fbinfer,
+                        gcc, golint, helgrind, kernel-doc, lsan, mdl,
+                        memcheck, msan, pyflakes, pylint, roslynator, smatch,
+                        sparse, sphinx, spotbugs, tsan, tslint, ubsan.
   -e EXPORT, --export EXPORT
                         Specify the export format of the converted reports.
                         Currently supported export types are: .plist, .sarif.
@@ -111,13 +112,16 @@ Supported analyzers:
   coccinelle - Coccinelle, https://github.com/coccinelle/coccinelle
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
   cpplint - cpplint, https://github.com/cpplint/cpplint
+  drd - Valgrind DRD, https://valgrind.org/docs/manual/drd-manual.html
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   gcc - GNU Compiler Collection Static Analyzer, https://gcc.gnu.org/wiki/StaticAnalyzer
   golint - Golint, https://github.com/golang/lint
+  helgrind - Valgrind Helgrind, https://valgrind.org/docs/manual/hg-manual.html
   kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
   lsan - LeakSanitizer, https://clang.llvm.org/docs/LeakSanitizer.html
   mdl - Markdownlint, https://github.com/markdownlint/markdownlint
+  memcheck - Valgrind Memcheck, https://valgrind.org/docs/manual/mc-manual.html
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
@@ -707,6 +711,63 @@ report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
 # Store the Roslynator report with CodeChecker
 CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
+
+### Valgrind
+
+[Valgrind](https://valgrind.org/) produces XML findings from Memcheck,
+Helgrind, and DRD. Build your program with debug information and without
+optimization so the findings have useful source locations. Keep the source
+files available when converting the XML: reports without a usable source file
+and line are skipped. The converter supports XML protocol versions 4–6.
+
+Create a new, empty directory for each run. `%p` gives each analyzed process
+its own XML file:
+
+```sh
+mkdir vg_out
+```
+
+Choose **one** Valgrind command for the way your program creates children.
+For a single process, or when you want to ignore children:
+
+```sh
+valgrind -q --tool=memcheck --leak-check=full --xml=yes \
+  --xml-file="$PWD/vg_out/vg-%p.xml" \
+  --child-silent-after-fork=yes ./program
+```
+
+To analyze children that launch new executables with `exec()`:
+
+```sh
+valgrind -q --tool=memcheck --leak-check=full --xml=yes \
+  --xml-file="$PWD/vg_out/vg-%p.xml" \
+  --trace-children=yes --child-silent-after-fork=yes ./program
+```
+
+To analyze workers that continue after `fork()` without calling `exec()`:
+
+```sh
+valgrind -q --tool=memcheck --leak-check=full --xml=yes \
+  --xml-file="$PWD/vg_out/vg-%p.xml" \
+  --child-silent-after-fork=no ./program
+```
+
+If those workers also launch executables that you want to analyze, add
+`--trace-children=yes` to the last command. For Helgrind or DRD, use
+`--tool=helgrind` or `--tool=drd` and omit Memcheck's `--leak-check=full`.
+Keep XML from each tool in a separate directory.
+
+Convert the XML directory, or pass a single XML file instead. The converter's
+`-t` value must match the Valgrind tool used above:
+
+```sh
+report-converter -t memcheck -o ./valgrind_reports ./vg_out
+CodeChecker store ./valgrind_reports -n memcheck
+```
+
+Use `-t helgrind` or `-t drd` for those tools. For more examples, run
+`report-converter --example memcheck`, `--example helgrind`, or
+`--example drd`.
 
 ## Plist/Sarif to html tool
 `plist-to-html` is a python tool which parses and creates HTML files from one

@@ -1,0 +1,16 @@
+{
+  "analyzer": "helgrind",
+  "labels": {
+    "Helgrind.FatalSignal": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#manual-core.signals"],
+    "Helgrind.FdBadClose": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Helgrind.FdBadUse": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Helgrind.FdNotClosed": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Helgrind.LockOrder": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.lock-orders"],
+    "Helgrind.Misc": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.overview"],
+    "Helgrind.PthAPIerror": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.api-checks"],
+    "Helgrind.Race": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.data-races.errmsgs"],
+    "Helgrind.UnlockBogus": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.api-checks"],
+    "Helgrind.UnlockForeign": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.api-checks"],
+    "Helgrind.UnlockUnlocked": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/hg-manual.html#hg-manual.api-checks"]
+  }
+}
