@@ -245,6 +245,18 @@ def add_arguments_to_parser(parser):
                         help="A custom textual description to be shown "
                              "alongside the run.")
 
+    parser.add_argument('--source-root',
+                        type=str,
+                        dest="source_root",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="The base directory that relative source file "
+                             "paths found in the analysis result (plist) "
+                             "files are resolved against. By default, "
+                             "relative paths are resolved against the "
+                             "directory of the result file "
+                             "that contains them.")
+
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -418,11 +430,13 @@ def filter_source_files_with_comments(
 
 def get_reports(
     analyzer_result_file_path: str,
-    checker_labels: CheckerLabels
+    checker_labels: CheckerLabels,
+    source_dir_path: str | None = None
 ) -> list[Report]:
     """ Get reports from the given analyzer result file. """
     reports = report_file.get_reports(
-        analyzer_result_file_path, checker_labels)
+        analyzer_result_file_path, checker_labels,
+        source_dir_path=source_dir_path)
     # If CppCheck is ran natively (without CodeChecker), it generates a '0'
     # value for the report hash by default. We used to correct this during the
     # store operation, but we no longer accept plists that are not compliant
@@ -438,7 +452,8 @@ def get_reports(
 def parse_analyzer_result_files(
     analyzer_result_files: Iterable[str],
     checker_labels: CheckerLabels,
-    jobs: int = cpu_count()
+    jobs: int = cpu_count(),
+    source_dir_path: str | None = None
 ) -> AnalyzerResultFileReports:
     """ Get reports from the given analyzer result files. """
     analyzer_result_file_reports: AnalyzerResultFileReports = defaultdict(list)
@@ -450,7 +465,10 @@ def parse_analyzer_result_files(
 
         for idx, (file_path, reports) in enumerate(zip(
             analyzer_result_files, map_fn(
-                functools.partial(get_reports, checker_labels=checker_labels),
+                functools.partial(
+                    get_reports,
+                    checker_labels=checker_labels,
+                    source_dir_path=source_dir_path),
                 analyzer_result_files))):
             LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
                       f"Parsed '{file_path}' ...")
@@ -474,7 +492,8 @@ def assemble_zip(inputs,
                  prod_client,
                  checker_labels: CheckerLabels,
                  tmp_dir: str,
-                 jobs: int):
+                 jobs: int,
+                 source_dir_path: str | None = None):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
@@ -517,7 +536,7 @@ def assemble_zip(inputs,
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
     analyzer_result_file_reports = parse_analyzer_result_files(
-        analyzer_result_file_paths, checker_labels, jobs)
+        analyzer_result_file_paths, checker_labels, jobs, source_dir_path)
 
     LOG.info("Processing report files done.")
 
@@ -983,6 +1002,12 @@ def main(args):
     try:
         context = webserver_context.get_context()
 
+        # Base directory that relative source file paths in the result files
+        # are resolved against. When not given, each result file's own
+        # directory is used (handled downstream by the parser).
+        source_root = os.path.abspath(args.source_root) \
+            if 'source_root' in args else None
+
         LOG.debug("Assembling zip file.")
         try:
             assemble_zip(args.input,
@@ -991,7 +1016,8 @@ def main(args):
                          prod_client,
                          context.checker_labels,
                          temp_dir_path,
-                         args.jobs)
+                         args.jobs,
+                         source_root)
         except ReportLimitExceedError:
             sys.exit(1)
         except Exception as ex:
