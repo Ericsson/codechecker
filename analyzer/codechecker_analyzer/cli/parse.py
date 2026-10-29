@@ -141,7 +141,13 @@ def add_arguments_to_parser(parser):
                                   "'baseline' output can be used to integrate "
                                   "CodeChecker into your local workflow "
                                   "without using a CodeChecker server. For "
-                                  "more information see our usage guide.")
+                                  "more information see our usage guide.\n"
+                                  "'sarif' output (SARIF v2.1.0) contains all "
+                                  "information of the analyzer result files "
+                                  "with a separate run for each analyzer. "
+                                  "Report hashes are kept unchanged in "
+                                  "'partialFingerprints'. For more "
+                                  "information see docs/tools/sarif.md.")
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
