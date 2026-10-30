@@ -18,11 +18,11 @@ from alembic import migration
 
 from alembic.util import CommandError
 import sqlalchemy
-from sqlalchemy import event
+from sqlalchemy import event, text, Connection as SA_Connection
 from sqlalchemy.engine.url import URL, make_url
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session as SA_Session
 from sqlalchemy.pool import NullPool
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine as SA_Engine
 
 from codechecker_api.python.shared.ttypes import DBStatus
 
@@ -66,6 +66,12 @@ class DBContext:
     setup was successful.
     """
 
+    sql_server: "SQLServer"
+    db_engine: SA_Engine | None
+    db_session: SA_Session | None
+    db_connection: SA_Connection | None
+    db_error: int | None
+
     def __init__(self, sql_server: "SQLServer"):
         self.sql_server = sql_server
         self.db_engine = None
@@ -91,23 +97,23 @@ class DBContext:
         return self
 
     @property
-    def error(self):
+    def error(self) -> int | None:
         # Indicate that there is some problem with the
         # database setup.
         return self.db_error
 
     @property
-    def engine(self):
+    def engine(self) -> SA_Engine | None:
         # Get the configured engine.
         return self.db_engine
 
     @property
-    def connection(self):
+    def connection(self) -> SA_Connection | None:
         # Get the configured connection.
         return self.db_connection
 
     @property
-    def session(self):
+    def session(self) -> SA_Session | None:
         # Get the configured session.
         return self.db_session
 
@@ -305,6 +311,8 @@ class SQLServer(metaclass=ABCMeta):
                 if db.error:
                     return db.error
 
+                assert db.session
+
                 LOG.debug("Create/update database schema for %s",
                           self.__model_meta['identifier'])
 
@@ -312,6 +320,8 @@ class SQLServer(metaclass=ABCMeta):
                 cfg.set_main_option("script_location", self.migration_root)
                 cfg.attributes["connection"] = db.connection
                 cfg.attributes["database_name"] = self.name_in_log
+
+                disable_transaction_timeouts(db.session)
 
                 command.upgrade(cfg, "head")
                 db.session.commit()
@@ -371,7 +381,7 @@ class SQLServer(metaclass=ABCMeta):
         by create_engine.
         """
 
-    def create_engine(self) -> Engine:
+    def create_engine(self) -> SA_Engine:
         """
         Creates a new SQLAlchemy engine.
         """
@@ -638,3 +648,17 @@ def escape_like(string, escape_char='*'):
     return string.replace(escape_char, escape_char * 2) \
                  .replace('%', escape_char + '%') \
                  .replace('_', escape_char + '_')
+
+
+def disable_transaction_timeouts(db_session: SA_Session):
+    """
+    Disable PostgreSQL timeouts only for the current transaction.
+    This is typically used during long-running queries that need to complete,
+    e.g. garbage collection and schema migration.
+    SQLite has no statement_timeout or idle_in_transaction_session_timeout.
+    """
+    if db_session.get_bind().dialect.name == "postgresql":
+        db_session.execute(
+            text("SET LOCAL statement_timeout = 0"))
+        db_session.execute(
+            text("SET LOCAL idle_in_transaction_session_timeout = 0"))
