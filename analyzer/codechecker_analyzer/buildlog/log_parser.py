@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------
 
 
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from shutil import which
 from enum import Enum
@@ -345,7 +346,7 @@ class ImplicitCompilerInfo:
             return hash(
                 (self.compiler, self.language, tuple(self.compiler_flags)))
 
-    compiler_info: dict[ImplicitInfoSpecifierKey, dict] = {}
+    compiler_info: MutableMapping[ImplicitInfoSpecifierKey, dict] = {}
     compiler_isexecutable: dict[str, bool] = {}
     # Store the already detected compiler version information.
     # If the value is False the compiler is not clang otherwise the value
