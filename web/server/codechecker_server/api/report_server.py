@@ -3089,6 +3089,8 @@ class ThriftRequestHandler:
         """ Return the list of labels to each checker. """
         self.__require_view()
 
+        checker_labels = self._context.checker_labels
+
         labels = []
         for checker in checkers:
             analyzer_name = None if not checker.analyzerName \
@@ -3097,10 +3099,10 @@ class ThriftRequestHandler:
                 if (analyzer_name and analyzer_name.lower() != "unknown") \
                 else None
 
-            labels.append(list(map(
-                lambda x: f'{x[0]}:{x[1]}',
-                self._context.checker_labels.labels_of_checker(
-                    checker.checkerId, analyzer_name))))
+            labels.append(sorted(
+                f'{key}:{value}' for key, value in
+                checker_labels.visible_labels_of_checker(
+                    checker.checkerId, analyzer_name)))
 
         return labels
 
@@ -3122,15 +3124,15 @@ class ThriftRequestHandler:
                 continue
             for rule in rules:
                 checkers = self._context.checker_labels.checkers_by_labels(
-                    [f"{guideline.guidelineName}:{rule}"])
+                    [f"rule:{rule}"])
 
                 guideline_rules[guideline.guidelineName].append(
                     Rule(
                         ruleId=rule.lower(),
-                        title=rules[rule].get("title", ""),
-                        url=rules[rule].get("rule_url", ""),
+                        title=rules[rule].title,
+                        url=rules[rule].rule_url,
                         checkers=checkers,
-                        level=rules[rule].get("level", "")
+                        level=""
                     )
                 )
 

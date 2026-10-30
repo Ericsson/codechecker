@@ -1,0 +1,5 @@
+guideline: misra-c
+guideline_title: MISRA C
+guideline_url: https://www.misra.org.uk/
+rules:
+- rule_id: '14.9'
