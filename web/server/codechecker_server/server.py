@@ -1009,7 +1009,8 @@ class CCSimpleHttpServer(HTTPServer):
         db_cleanup.delete_expired_auth_sessions(
                 self.config_session,
                 self.manager.session_lifetime_duration,
-                None)
+                None,
+                True)
         LOG.info("Finished garbage collection on the config database.")
 
 

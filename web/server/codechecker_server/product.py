@@ -197,9 +197,9 @@ class Product:
         """
         LOG.info("[%s] Garbage collection started...", self.endpoint)
 
-        db_cleanup.remove_expired_data(self)
-        db_cleanup.remove_unused_data(self)
-        db_cleanup.update_contextual_data(self, self.__context)
+        db_cleanup.remove_expired_data(self, True)
+        db_cleanup.remove_unused_data(self, True)
+        db_cleanup.update_contextual_data(self, self.__context, True)
 
         LOG.info("[%s] Garbage collection finished.", self.endpoint)
         return True
