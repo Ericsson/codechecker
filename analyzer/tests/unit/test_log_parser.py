@@ -11,6 +11,7 @@
 
 import json
 import os
+import shlex
 import shutil
 import tempfile
 import unittest
@@ -120,6 +121,71 @@ class LogParserTest(unittest.TestCase):
         build_action = log_parser.parse_options(entry)
 
         self.assertEqual(build_action.target, 'aarch64-linux-gnu')
+
+    def test_windows_paths_in_command(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4277
+
+        Compilation databases generated on Windows (e.g. by CMake) contain
+        backslash-separated paths. Since 'shlex.split()' runs in POSIX
+        mode - where a backslash is an escape character - those separators
+        used to be eaten, mangling
+        'A:\\tools\\...\\arm-zephyr-eabi-gcc.exe' into
+        'A:toolsarm-zephyr-eabi-gcc.exe' and making the compiler
+        undetectable.
+        """
+        command = (r'A:\tools\zephyr\zephyr-sdk-0.16.8\arm-zephyr-eabi'
+                   r'\bin\arm-zephyr-eabi-gcc.exe -c main.c')
+
+        self.assertEqual(
+            shlex.split(log_parser.normalize_windows_paths(command))[0],
+            'A:/tools/zephyr/zephyr-sdk-0.16.8/arm-zephyr-eabi/bin/'
+            'arm-zephyr-eabi-gcc.exe')
+
+    def test_windows_paths_in_include_options(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/4277
+
+        Windows path separators must also survive in the compile options
+        themselves, not just in the compiler's own path.
+        """
+        entry = {
+            'directory': '/tmp',
+            'command':
+                r'gcc -DDEBUG '
+                r'-IA:\projects\div\grp\board\firmware\modules\board\inc '
+                r'-c main.c',
+            'file': 'main.c'}
+        build_action = log_parser.parse_options(entry)
+
+        # The include path is made absolute relative to 'directory' when
+        # running the tests on a non-Windows host (where 'A:/...' is not
+        # an absolute path), so check that the separators survived rather
+        # than matching the whole option.
+        self.assertTrue(
+            any('A:/projects/div/grp/board/firmware/modules/board/inc' in opt
+                for opt in build_action.analyzer_options),
+            f"Windows separators were mangled: "
+            f"{build_action.analyzer_options}")
+
+    def test_posix_escapes_are_not_treated_as_windows_paths(self):
+        """
+        Companion to the tests above: a POSIX compilation command must be
+        left completely untouched. A blanket 'shlex.split(posix=False)'
+        would break these, which is why the conversion is gated on the
+        command actually containing a Windows drive-letter path.
+        """
+        posix_commands = [
+            r'g++ -DVARIABLE=\"some value\" -c main.cpp',
+            'g++ -I/home/my\\ dir -c main.cpp',
+            'g++ -DNAME="some value" -c main.cpp']
+
+        for command in posix_commands:
+            self.assertEqual(
+                log_parser.normalize_windows_paths(command), command,
+                f"POSIX command was modified: {command}")
 
     def test_new_ldlogger(self):
         """
