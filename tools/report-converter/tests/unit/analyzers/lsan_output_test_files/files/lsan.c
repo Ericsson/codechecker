@@ -1,3 +1,5 @@
+// COMPILE: clang -fsanitize=address -fomit-frame-pointer -g lsan2.c
+
 #include <stdlib.h>
 void *p;
 int main()
