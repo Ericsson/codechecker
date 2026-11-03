@@ -20,7 +20,7 @@ from codechecker_api.python.DBAccess_v6.ttypes import Severity
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 
-from .database import DBSession
+from .database import DBSession, disable_transaction_timeouts
 from .run_db_model import \
     AnalysisInfo, AnalysisInfoFile, \
     CheckerSet, \
@@ -35,32 +35,38 @@ RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
 SQLITE_LIMIT_COMPOUND_SELECT = 500
 
 
-def remove_expired_data(product):
+def remove_expired_data(product, disable_database_timeouts: bool = False):
     """Remove information that has timed out from the database."""
-    remove_expired_run_locks(product)
+    remove_expired_run_locks(product, disable_database_timeouts)
 
 
-def remove_unused_data(product):
+def remove_unused_data(product, disable_database_timeouts: bool = False):
     """Remove dangling data (files, comments, etc.) from the database."""
-    remove_unused_files(product)
-    remove_unused_comments(product)
-    remove_unused_analysis_info(product)
-    remove_unused_checker_sets(product)
+    remove_unused_files(product, disable_database_timeouts)
+    remove_unused_comments(product, disable_database_timeouts)
+    remove_unused_analysis_info(product, disable_database_timeouts)
+    remove_unused_checker_sets(product, disable_database_timeouts)
 
 
-def update_contextual_data(product, context):
+def update_contextual_data(product, context,
+                           disable_database_timeouts: bool = False):
     """
     Updates information in the database that comes from potentially changing
     contextual configuration of the server package.
     """
-    upgrade_severity_levels(product, context.checker_labels)
+    upgrade_severity_levels(product, context.checker_labels,
+                            disable_database_timeouts)
 
 
-def remove_expired_run_locks(product):
+def remove_expired_run_locks(product,
+                             disable_database_timeouts: bool = False):
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of expired run locks started...",
                   product.endpoint)
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             locks_expired_at = datetime.now() - timedelta(
                 seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
 
@@ -80,7 +86,7 @@ def remove_expired_run_locks(product):
                       product.endpoint, str(ex))
 
 
-def remove_unused_files(product):
+def remove_unused_files(product, disable_database_timeouts: bool = False):
     # File deletion is a relatively slow operation due to database cascades.
     # Removing files in big chunks prevents reaching a potential database
     # statement timeout. This hard-coded value is a safe choice according to
@@ -92,6 +98,9 @@ def remove_unused_files(product):
         LOG.debug("[%s] Garbage collection of dangling files started...",
                   product.endpoint)
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             files = session.query(ReportPathDataFile.c.file_id) \
                 .group_by(ReportPathDataFile.c.file_id)
 
@@ -127,11 +136,14 @@ def remove_unused_files(product):
                       product.endpoint, str(ex))
 
 
-def remove_unused_comments(product):
+def remove_unused_comments(product, disable_database_timeouts: bool = False):
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of dangling comments started...",
                   product.endpoint)
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             sub = session.query(Comment.id) \
                 .join(Report,
                       Comment.bug_hash == Report.bug_id,
@@ -153,7 +165,8 @@ def remove_unused_comments(product):
                       product.endpoint, str(ex))
 
 
-def remove_unused_analysis_info(product):
+def remove_unused_analysis_info(product,
+                                disable_database_timeouts: bool = False):
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of dangling analysis info "
                   "started...", product.endpoint)
@@ -167,7 +180,8 @@ def remove_unused_analysis_info(product):
                 )
                 drop_foreign_keys(session,
                                   RunHistoryAnalysisInfo.name,
-                                  rh_ai_foreign_keys)
+                                  rh_ai_foreign_keys,
+                                  disable_database_timeouts)
 
                 rep_ai_foreign_keys = get_foreign_keys(
                     session,
@@ -176,7 +190,11 @@ def remove_unused_analysis_info(product):
                 )
                 drop_foreign_keys(session,
                                   ReportAnalysisInfo.name,
-                                  rep_ai_foreign_keys)
+                                  rep_ai_foreign_keys,
+                                  disable_database_timeouts)
+
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
 
             to_delete = session.query(AnalysisInfo.id) \
                 .join(
@@ -214,17 +232,23 @@ def remove_unused_analysis_info(product):
             if session.bind.dialect.name == "postgresql":
                 add_foreign_keys(session,
                                  RunHistoryAnalysisInfo.name,
-                                 rh_ai_foreign_keys)
+                                 rh_ai_foreign_keys,
+                                 disable_database_timeouts)
                 add_foreign_keys(session,
                                  ReportAnalysisInfo.name,
-                                 rep_ai_foreign_keys)
+                                 rep_ai_foreign_keys,
+                                 disable_database_timeouts)
 
 
-def remove_unused_checker_sets(product):
+def remove_unused_checker_sets(product,
+                               disable_database_timeouts: bool = False):
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of checker sets started...",
                   product.endpoint)
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             used_checker_sets = session.query(AnalysisInfo.checker_set_id) \
                 .filter(AnalysisInfo.checker_set_id.is_not(None)) \
                 .group_by(AnalysisInfo.checker_set_id)
@@ -243,7 +267,8 @@ def remove_unused_checker_sets(product):
                       product.endpoint, str(ex))
 
 
-def upgrade_severity_levels(product, checker_labels):
+def upgrade_severity_levels(product, checker_labels,
+                            disable_database_timeouts: bool = False):
     """
     Updates the potentially changed severities to reflect the data in the
     current label configuration files.
@@ -252,6 +277,9 @@ def upgrade_severity_levels(product, checker_labels):
         LOG.debug("[%s] Upgrading severity levels started...",
                   product.endpoint)
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             count = 0
             for analyzer in sorted(checker_labels.get_analyzers()):
                 checkers_for_analyzer_in_database = session \
@@ -381,7 +409,12 @@ def get_foreign_keys(
     return foreign_keys
 
 
-def drop_foreign_keys(session, table_name, foreign_keys):
+def drop_foreign_keys(session, table_name, foreign_keys,
+                      disable_database_timeouts: bool = False):
+
+    if disable_database_timeouts:
+        disable_transaction_timeouts(session)
+
     for fk in foreign_keys:
         session.execute(sqlalchemy.text(
             f"ALTER TABLE {table_name} "
@@ -390,7 +423,12 @@ def drop_foreign_keys(session, table_name, foreign_keys):
     session.commit()
 
 
-def add_foreign_keys(session, table_name, foreign_keys):
+def add_foreign_keys(session, table_name, foreign_keys,
+                     disable_database_timeouts: bool = False):
+
+    if disable_database_timeouts:
+        disable_transaction_timeouts(session)
+
     for fk in foreign_keys:
         constraint_name = fk["name"]
         constrained_columns = ", ".join(fk["constrained_columns"])
@@ -418,7 +456,8 @@ def add_foreign_keys(session, table_name, foreign_keys):
 
 def delete_expired_auth_sessions(config_db_sessionmaker: sessionmaker,
                                  session_lifetime: int,
-                                 user_name: str | None):
+                                 user_name: str | None,
+                                 disable_database_timeouts: bool = False):
     """
     Cleanup expired auth_sessions from the config database.
     If 'user_name' is specified, we only remove expired auth_sessions
@@ -434,6 +473,9 @@ def delete_expired_auth_sessions(config_db_sessionmaker: sessionmaker,
 
     with DBSession(config_db_sessionmaker) as session:
         try:
+            if disable_database_timeouts:
+                disable_transaction_timeouts(session)
+
             cutoff_date = (datetime.now() - timedelta(
                 seconds=session_lifetime))
 
