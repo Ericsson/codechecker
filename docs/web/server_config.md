@@ -23,6 +23,9 @@ Table of Contents
     * [Idle time](#idle-time)
     * [Interval time](#interval-time)
     * [Probes](#probes)
+* [AI report explanation](#ai-report-explanation)
+  * [Models](#models)
+  * [Limits](#limits-1)
 * [Authentication](#authentication)
 * [Secrets](#secrets)
   * [server_secrets.json](#server_secretsjson)
@@ -163,6 +166,77 @@ dead and notifying the application layer.
 By default the server will use the value from your host configured by the
 `net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
 `max_probe` key in the server configuration file.
+
+## AI report explanation
+The `ai` section turns on the **Explain** button of the *Report details* view.
+A large language model describes the background of the report and argues
+whether it is a true or a false positive. Each model is asked through
+[LiteLLM](https://docs.litellm.ai/), directly at its provider or through a
+LiteLLM proxy.
+
+The feature is off by default. It is offered only when `enabled` is `true`
+and at least one model is usable; models that are not are skipped with a
+warning.
+
+The report, its bug path and the surrounding source are sent to the chosen
+model's provider. Only enable this for products whose source may be processed
+there.
+
+```json
+"ai": {
+  "enabled": true,
+  "default_model": "gpt-oss-120b",
+  "models": [
+    {
+      "id": "gpt-oss-120b",
+      "display_name": "GPT-OSS 120B",
+      "provider": "litellm_proxy",
+      "model": "openai/gpt-oss-120b",
+      "api_base": "https://litellm.example.com",
+      "api_key": "$SECRET:litellm_proxy_key$",
+      "speed": "fast",
+      "reliability": "high"
+    },
+    {
+      "id": "claude-opus",
+      "display_name": "Claude Opus 5.5",
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "api_key": "$SECRET:anthropic_api_key$"
+    }
+  ]
+}
+```
+
+Keep keys and secrets in `server_secrets.json` or the environment (see
+[Secrets](#secrets)). A `$SECRET:` or `$ENV:` value that cannot be resolved
+stops the server from starting.
+
+### Models
+| Key | Meaning |
+| --- | --- |
+| `id` | Identifier used by the API. |
+| `display_name` | Name shown in the GUI. Defaults to `id`. |
+| `provider` | A [LiteLLM provider](https://docs.litellm.ai/docs/providers) such as `anthropic`, `gemini`, `openai` or `litellm_proxy`. |
+| `model` | The model name at the provider. Defaults to `id`. |
+| `api_key` | The provider's API key. |
+| `token_command` | Optional, instead of `api_key`: prints a short-lived access token as the last line of its output. It is run again before the token expires, and must not wait for an interactive login. |
+| `token_command_dir` | Optional. Where to run `token_command`. |
+| `api_base` | Optional: another endpoint, e.g. a LiteLLM proxy or a self-hosted model, which may not need a key. |
+| `temperature` | Optional. |
+| `speed`, `reliability` | Optional ratings shown in the GUI: `slow`, `medium` or `fast`, and `low`, `medium` or `high`. |
+
+`default_model` is used when a client does not ask for a specific model. If it
+is not available, the first model is used. `ca_bundle` names the certificates
+to verify every provider with, e.g. when one uses a private certificate
+authority.
+
+### Limits
+| Key | Meaning | Default |
+| --- | --- | --- |
+| `timeout` | Seconds to wait for an answer. | `90` |
+| `max_source_lines` | Lines of the analysed file sent, centred on the report. | `400` |
+| `max_path_events` | Bug path steps sent. | `50` |
 
 ## Authentication
 For authentication configuration options and which options can be reloaded see
