@@ -1,5 +1,4 @@
 pytest<=7.3.1
-sarif-tools~=3.0
 pycodestyle<=2.12.0
 pylint<3.3
 portalocker~=3.0
