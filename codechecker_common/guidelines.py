@@ -18,15 +18,15 @@ LOG = get_logger('system')
 @dataclass(frozen=True)
 class Rule:
     """Detailed descriptor of a single rule."""
-    rule_id: str
+    id: str
     title: str = ""
-    rule_url: str = ""
+    url: str = ""
 
 
 @dataclass
 class Guideline:
     """A named grouping of rules, mapping rule id to its Rule descriptor."""
-    guideline_id: str
+    id: str
     title: str = ""
     rules: dict[str, Rule] = field(default_factory=dict)
 
@@ -108,9 +108,9 @@ class Guidelines:
 
                 rule_id = rule['rule_id']
                 rule_details[rule_id] = Rule(
-                    rule_id=rule_id,
+                    id=rule_id,
                     title=rule.get('title', ''),
-                    rule_url=rule.get('rule_url', ''))
+                    url=rule.get('rule_url', ''))
 
         return rule_details
 
@@ -171,7 +171,7 @@ class Guidelines:
 
                 guideline_id = guideline_data["guideline"]
                 guidelines[guideline_id] = Guideline(
-                    guideline_id=guideline_id,
+                    id=guideline_id,
                     title=guideline_data["guideline_title"],
                     rules={rule["rule_id"]: self.__rule_of(rule)
                            for rule in guideline_data["rules"]})
@@ -194,9 +194,9 @@ class Guidelines:
             return self.__rule_details[rule_id]
 
         return Rule(
-            rule_id=rule_id,
+            id=rule_id,
             title=rule.get("title", ""),
-            rule_url=rule.get("rule_url", ""))
+            url=rule.get("rule_url", ""))
 
     def rules_of_guideline(self, guideline_id: str) -> dict[str, Rule]:
         """
@@ -216,7 +216,7 @@ class Guidelines:
         Return the Rule of a single rule id. If the rule id is unknown a Rule
         with empty details is returned.
         """
-        return self.__rule_details.get(rule_id, Rule(rule_id=rule_id))
+        return self.__rule_details.get(rule_id, Rule(id=rule_id))
 
     def all_guidelines(self) -> list[str]:
         """

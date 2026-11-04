@@ -21,6 +21,7 @@ from codechecker_api.python.DBAccess_v6.ttypes import CommentData, \
     ReportFilter, ReviewStatus, RunFilter, Severity
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 
 from libtest import codechecker
 from libtest import env
@@ -83,6 +84,8 @@ class TestDbCleanup(unittest.TestCase):
 
         self.orig_checker_labels_dir = os.path.join(
             cc_package, 'config', 'labels')
+        self.guidelines_dir = os.path.join(
+            cc_package, 'config', 'guidelines')
         self.workspace_labels_dir = os.path.join(
             self.test_workspace, 'config', 'labels')
 
@@ -194,7 +197,10 @@ int f(int x) { return 1 / x; }
         reports = self._cc_client.getRunResults(
             [run_id], 10, 0, [], ReportFilter(), None, False)
 
-        checker_labels = CheckerLabels(self.workspace_labels_dir)
+        # pylint: disable=too-many-function-args
+        checker_labels = CheckerLabels(
+            self.workspace_labels_dir, Guidelines(self.guidelines_dir))
+        # pylint: enable=too-many-function-args
         for report in reports:
             severity_id = checker_labels.severity(report.checkerId)
             self.assertEqual(Severity._VALUES_TO_NAMES[report.severity],

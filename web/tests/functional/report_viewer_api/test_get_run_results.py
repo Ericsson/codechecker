@@ -430,19 +430,15 @@ class RunResults(unittest.TestCase):
         remote_checker_labels = self._cc_client.getCheckerLabels([])
         self.assertEqual(len(remote_checker_labels), 0)
 
-        # pylint: disable=too-many-function-args,no-member
+        # pylint: disable=too-many-function-args
         guidelines = Guidelines(self.guidelines_dir)
         local_checker_labels = CheckerLabels(
             self.checker_labels_dir, guidelines)
         div_zero_labels = {
             f'{key}:{value}' for key, value in
-            local_checker_labels.visible_labels_of_checker(
+            local_checker_labels.labels_of_checker(
                 'core.DivideZero', 'clangsa')}
-        # pylint: enable=too-many-function-args,no-member
-
-        self.assertIn('sei-cert-c:int33-c', div_zero_labels)
-        self.assertFalse(any(label.startswith('rule:')
-                             for label in div_zero_labels))
+        # pylint: enable=too-many-function-args
 
         remote_checker_labels = self._cc_client.getCheckerLabels([
             Checker("clangsa", "core.DivideZero")])

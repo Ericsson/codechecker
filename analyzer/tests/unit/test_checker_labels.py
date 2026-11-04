@@ -256,7 +256,7 @@ class TestCheckerLabels(unittest.TestCase):
                 'cert-err34-c']))
 
     def test_profiles_containing(self):
-        cl = CheckerLabels(self.labels_dir.name)
+        cl = CheckerLabels(self.labels_dir.name, _MockGuidelines({}))
 
         # Containment is {extreme: [sensitive], sensitive: [default]}, so the
         # inverse closure of a tier includes the profiles that contain it.
@@ -273,14 +273,17 @@ class TestCheckerLabels(unittest.TestCase):
             cl.profiles_containing('nonexistent'),
             ['nonexistent'])
 
-    def test_legacy_guideline_rule_labels(self):
+    def test_guideline_rule_labels(self):
         guidelines = _MockGuidelines(
             {"err34-c": ["sei-cert-c", "sei-cert-cpp"]})
         cl = CheckerLabels(self.labels_dir.name, guidelines)
 
         labels = cl.labels_of_checker('cert-err34-c', 'clang-tidy')
+        self.assertIn(('guideline', 'sei-cert-c'), labels)
+        self.assertIn(('guideline', 'sei-cert-cpp'), labels)
         self.assertIn(('sei-cert-c', 'err34-c'), labels)
         self.assertIn(('sei-cert-cpp', 'err34-c'), labels)
+        self.assertNotIn(('rule', 'err34-c'), labels)
 
         self.assertEqual(
             cl.checkers_by_labels(['sei-cert-c:err34-c']),
@@ -288,18 +291,21 @@ class TestCheckerLabels(unittest.TestCase):
         self.assertEqual(
             cl.checkers_by_labels(['sei-cert-cpp:err34-c']),
             ['cert-err34-c'])
+        self.assertEqual(cl.checkers_by_labels(['rule:err34-c']), [])
 
         # The rule is not part of this guideline.
         self.assertEqual(
             cl.checkers_by_labels(['misra-c:err34-c']),
             [])
 
-    def test_legacy_guideline_rule_labels_without_guidelines(self):
-        cl = CheckerLabels(self.labels_dir.name)
+    def test_profile_labels(self):
+        cl = CheckerLabels(self.labels_dir.name, _MockGuidelines({}))
 
-        labels = cl.labels_of_checker('cert-err34-c', 'clang-tidy')
-        self.assertIn(('rule', 'err34-c'), labels)
-        self.assertNotIn(('sei-cert-c', 'err34-c'), labels)
         self.assertEqual(
-            cl.checkers_by_labels(['sei-cert-c:err34-c']),
-            [])
+            sorted(cl.label_of_checker(
+                'core.DivideZero', 'profile', 'clangsa')),
+            ['extreme', 'sensitive'])
+        self.assertEqual(
+            cl.label_of_checker(
+                'core.builtin.NoReturnFunctions', 'profile', 'clangsa'),
+            ['extreme'])

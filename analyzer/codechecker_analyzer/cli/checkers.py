@@ -196,11 +196,7 @@ def __guideline_to_label(
     Transforms --guideline parameter as if they were given through --label.
     For example "--guideline sei-cert-c" is equivalent with
     "--label guideline:sei-cert-c" and "--guideline sei-cert-c:str38-c" is the
-    same as "--label rule:str38-c".
-
-    A guideline is derived in memory from the "rule:<rule_id>" labels of a
-    checker, so a whole-guideline query is expressed as a "guideline:<name>"
-    label and a single-rule query as a "rule:<rule_id>" label.
+    same as "--label sei-cert-c:str38-c".
     """
     guidelines = analyzer_context.get_context().guideline
 
@@ -211,8 +207,6 @@ def __guideline_to_label(
                   '<guideline>:<rule>')
         sys.exit(1)
 
-    # "<guideline>:<rule>" form -> query by the rule only, since the guideline
-    # is derived from the rule in memory.
     guideline, rule = args.guideline.split(':', 1)
 
     if guideline not in guidelines.all_guidelines():
@@ -224,7 +218,7 @@ def __guideline_to_label(
                   rule, guideline)
         sys.exit(1)
 
-    return f'rule:{rule}'
+    return args.guideline
 
 
 def __get_detailed_checker_info(
@@ -276,7 +270,7 @@ def __get_detailed_checker_info(
         config_handler.initialize_checkers(checkers, profile_checkers)
 
         for checker, (state, description) in config_handler.checks().items():
-            labels = cl.visible_labels_of_checker(checker, analyzer)
+            labels = cl.labels_of_checker(checker, analyzer)
             state = CheckerState.ENABLED if ('profile', 'default') in labels \
                 else CheckerState.DISABLED
             checker_info[analyzer].append(
@@ -370,14 +364,7 @@ def __print_labels(args: argparse.Namespace, cl: CheckerLabels):
     if args.output_format in ['csv', 'json']:
         header = list(map(__uglify, header))
 
-    # Present each guideline name as a label and hide the internal "rule"
-    # label, matching the released output.
-    guidelines = analyzer_context.get_context().guideline
-    labels = set(cl.labels())
-    labels.discard('rule')
-    labels.update(guidelines.all_guidelines())
-
-    rows = list(map(lambda x: (x,), sorted(labels)))
+    rows = list(map(lambda x: (x,), cl.labels()))
 
     print(twodim.to_str(args.output_format, header, rows))
 
@@ -395,14 +382,7 @@ def __print_label_values(args: argparse.Namespace, cl: CheckerLabels):
     if args.output_format == 'custom':
         args.output_format = 'rows'
 
-    # A guideline name as the label lists its rule ids.
-    guidelines = analyzer_context.get_context().guideline
-    if args.label in guidelines.all_guidelines():
-        values = list(guidelines.rules_of_guideline(args.label))
-    else:
-        values = cl.occurring_values(args.label)
-
-    rows = list(map(lambda x: (x,), values))
+    rows = list(map(lambda x: (x,), cl.occurring_values(args.label)))
 
     if rows:
         print(twodim.to_str(args.output_format, header, rows))

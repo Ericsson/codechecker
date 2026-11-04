@@ -95,21 +95,21 @@ class TestGuidelines(unittest.TestCase):
             g.rules_of_guideline("sei-cert-cpp"),
             {
                 "con50-cpp": Rule(
-                    rule_id="con50-cpp",
+                    id="con50-cpp",
                     title="",
-                    rule_url=f"{base_url}/con50-cpp/"),
+                    url=f"{base_url}/con50-cpp/"),
                 "con51-cpp": Rule(
-                    rule_id="con51-cpp",
+                    id="con51-cpp",
                     title="",
-                    rule_url=f"{base_url}/con51-cpp/"),
+                    url=f"{base_url}/con51-cpp/"),
                 "con52-cpp": Rule(
-                    rule_id="con52-cpp",
+                    id="con52-cpp",
                     title="",
-                    rule_url=f"{base_url}/con52-cpp/"),
+                    url=f"{base_url}/con52-cpp/"),
                 "con53-cpp": Rule(
-                    rule_id="con53-cpp",
+                    id="con53-cpp",
                     title="",
-                    rule_url=f"{base_url}/con53-cpp/"),
+                    url=f"{base_url}/con53-cpp/"),
             })
 
     def test_guidelines_of_rule(self):
@@ -128,9 +128,9 @@ class TestGuidelines(unittest.TestCase):
         self.assertEqual(
             g.rule_details("con51-cpp"),
             Rule(
-                rule_id="con51-cpp",
+                id="con51-cpp",
                 title="",
-                rule_url=f"{base_url}/con51-cpp/"))
+                url=f"{base_url}/con51-cpp/"))
         self.assertEqual(
             g.rule_details("nonexistent"),
-            Rule(rule_id="nonexistent", title="", rule_url=""))
+            Rule(id="nonexistent", title="", url=""))

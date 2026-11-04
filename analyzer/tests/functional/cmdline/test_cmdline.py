@@ -201,10 +201,9 @@ class TestCmdline(unittest.TestCase):
         """ Listing a checker from a different guideline fails. """
         checkers_cmd = [
             env.codechecker_cmd(), 'checkers', '--label', 'sei-cert-c:cwe-476']
-        exit_code, out, err = run_cmd(checkers_cmd)
-        self.assertEqual(0, exit_code)
-        self.assertIn('No checkers with the given label found', err)
-        self.assertNotIn('core.CallAndMessage', out)
+        exit_code, _, err = run_cmd(checkers_cmd)
+        self.assertEqual(1, exit_code)
+        self.assertIn('identifier does not exist', err)
 
     def test_checkers_guideline_match_positive(self):
         """ Listing a checker from the guideline works. """
