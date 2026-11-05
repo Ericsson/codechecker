@@ -4531,6 +4531,23 @@ class ThriftRequestHandler:
     def storeAnalysisStatistics(self, run_name, b64zip):
         self.__require_store()
 
+        # By the client, the failure files are zipped
+        # (without any ZIP compression!), then compressed by Python's
+        # zlib library, and finally converted to a base64 string
+        # (this is the input parameter b64zip).
+        #
+        # Due to a flawed implementation, the client does not check sizes for
+        # some of the files, therefore, the ZIP's max size can be larger than:
+        # StoreLimitKind.FAILURE_ZIP_SIZE +
+        # StoreLimitKind.COMPILATION_DATABASE_SIZE.
+        # We add additional 10M for these unchecked files.
+        # In the end, the uploaded data size should be smaller
+        # since it is ZLIB compressed.
+        max_file_size = \
+            (self._manager.get_failure_zip_size() or 0) + \
+            (self._manager.get_compilation_database_size() or 0) + \
+            10 * 1024 * 1024  # 10 MiB
+
         report_dir_store = self._manager.get_analysis_statistics_dir()
         if report_dir_store:
             try:
@@ -4542,15 +4559,22 @@ class ThriftRequestHandler:
 
                 # Removes and replaces special characters in the run name.
                 run_name = slugify(run_name)
-                run_zip_file = os.path.join(product_dir, run_name + '.zip')
-                with open(run_zip_file, 'wb') as run_zip:
-                    run_zip.write(zlib.decompress(
-                        base64.b64decode(b64zip.encode('utf-8'))))
+                out_file = os.path.join(product_dir,
+                                        run_name + '.zip.zlib')
+                uploaded_zlib_data: bytes = base64.b64decode(b64zip)
+                if len(uploaded_zlib_data) > max_file_size:
+                    LOG.warning("Failed to process storeAnalysisStatistics, "
+                                "upload size limit was reached "
+                                "(product: %s, run: %s)!",
+                                self._product.endpoint, run_name)
+                    return False
 
-                # Change permission, so only current user and group have access
-                # to this file.
-                os.chmod(
-                    run_zip_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
+                with open(out_file, 'wb') as f:
+                    f.write(uploaded_zlib_data)
+
+                # Change permission, so only current user and group have
+                # access to this file.
+                os.chmod(out_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
 
                 return True
             except Exception as ex:
