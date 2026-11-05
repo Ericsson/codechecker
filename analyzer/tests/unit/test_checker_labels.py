@@ -256,7 +256,8 @@ class TestCheckerLabels(unittest.TestCase):
                 'cert-err34-c']))
 
     def test_profiles_containing(self):
-        cl = CheckerLabels(self.labels_dir.name, _MockGuidelines({}))
+        cl = CheckerLabels(
+            self.labels_dir.name, _MockGuidelines({"err34-c": ["sei-cert-c"]}))
 
         # Containment is {extreme: [sensitive], sensitive: [default]}, so the
         # inverse closure of a tier includes the profiles that contain it.
@@ -298,8 +299,15 @@ class TestCheckerLabels(unittest.TestCase):
             cl.checkers_by_labels(['misra-c:err34-c']),
             [])
 
+    def test_rule_without_guideline(self):
+        # cert-err34-c has "rule:err34-c", which the mock maps to no
+        # guideline, so loading the labels must fail.
+        with self.assertRaises(ValueError):
+            CheckerLabels(self.labels_dir.name, _MockGuidelines({}))
+
     def test_profile_labels(self):
-        cl = CheckerLabels(self.labels_dir.name, _MockGuidelines({}))
+        cl = CheckerLabels(
+            self.labels_dir.name, _MockGuidelines({"err34-c": ["sei-cert-c"]}))
 
         self.assertEqual(
             sorted(cl.label_of_checker(

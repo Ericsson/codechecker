@@ -88,6 +88,7 @@ class CheckerLabels:
         Convert the labels of a checker from the label file format:
           - "rule:<rule_id>" is replaced by "guideline:<guideline>" and
             "<guideline>:<rule_id>" for every guideline containing the rule.
+            A rule that is part of no guideline raises a ValueError.
           - "profile:<profile>" is extended with every profile that contains
             the given profile, e.g. "default" with "sensitive" and "extreme".
         """
@@ -97,7 +98,11 @@ class CheckerLabels:
             key, value = split_label_kv(label)
 
             if key == 'rule':
-                for guideline in self.__guidelines.guidelines_of_rule(value):
+                guidelines = self.__guidelines.guidelines_of_rule(value)
+                if not guidelines:
+                    raise ValueError(
+                        f'Rule "{value}" is not part of any guideline.')
+                for guideline in guidelines:
                     normalized.append(f'guideline:{guideline}')
                     normalized.append(f'{guideline}:{value}')
             elif key == 'profile':
@@ -357,3 +362,15 @@ class CheckerLabels:
                         values.add(value)
 
         return list(values)
+
+    def all_guidelines(self) -> list[str]:
+        """
+        Return the ids of all existing guidelines.
+        """
+        return self.__guidelines.all_guidelines()
+
+    def rules_of_guideline(self, guideline: str) -> list[str]:
+        """
+        Return the rule ids that belong to the given guideline.
+        """
+        return list(self.__guidelines.rules_of_guideline(guideline))

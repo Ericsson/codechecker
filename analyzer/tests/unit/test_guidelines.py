@@ -118,19 +118,3 @@ class TestGuidelines(unittest.TestCase):
         self.assertEqual(
             g.guidelines_of_rule("con50-cpp"), ["sei-cert-cpp"])
         self.assertEqual(g.guidelines_of_rule("nonexistent"), [])
-
-    def test_rule_details(self):
-        g = Guidelines(self.guidelines_dir)
-
-        base_url = ("https://cmu-sei.github.io/secure-coding-standards/"
-                    "sei-cert-cpp-coding-standard/rules/concurrency-con")
-
-        self.assertEqual(
-            g.rule_details("con51-cpp"),
-            Rule(
-                id="con51-cpp",
-                title="",
-                url=f"{base_url}/con51-cpp/"))
-        self.assertEqual(
-            g.rule_details("nonexistent"),
-            Rule(id="nonexistent", title="", url=""))

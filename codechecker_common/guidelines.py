@@ -173,7 +173,9 @@ class Guidelines:
                 guidelines[guideline_id] = Guideline(
                     id=guideline_id,
                     title=guideline_data["guideline_title"],
-                    rules={rule["rule_id"]: self.__rule_of(rule)
+                    rules={rule["rule_id"]:
+                           self.__rule_details.get(
+                               rule["rule_id"], Rule(id=rule["rule_id"]))
                            for rule in guideline_data["rules"]})
             except ValueError as ex:
                 LOG.warning("%s does not have a correct guideline format.",
@@ -181,22 +183,6 @@ class Guidelines:
                 LOG.warning(ex)
 
         return guidelines
-
-    def __rule_of(self, rule: dict) -> Rule:
-        """
-        Return the Rule for a guideline's rule reference. The rules descriptor
-        is the single source of truth; a guideline's inline 'title'/'rule_url'
-        (legacy format) is used as a fallback when the rule is unknown.
-        """
-        rule_id = rule["rule_id"]
-
-        if rule_id in self.__rule_details:
-            return self.__rule_details[rule_id]
-
-        return Rule(
-            id=rule_id,
-            title=rule.get("title", ""),
-            url=rule.get("rule_url", ""))
 
     def rules_of_guideline(self, guideline_id: str) -> dict[str, Rule]:
         """
@@ -210,13 +196,6 @@ class Guidelines:
         Return the list of guidelines that contain the given rule id.
         """
         return list(self.__rule_to_guidelines.get(rule_id, []))
-
-    def rule_details(self, rule_id: str) -> Rule:
-        """
-        Return the Rule of a single rule id. If the rule id is unknown a Rule
-        with empty details is returned.
-        """
-        return self.__rule_details.get(rule_id, Rule(id=rule_id))
 
     def all_guidelines(self) -> list[str]:
         """
