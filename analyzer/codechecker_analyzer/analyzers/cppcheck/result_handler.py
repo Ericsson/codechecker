@@ -9,6 +9,8 @@
 Result handler for Cppcheck.
 """
 
+from pathlib import Path
+
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
     AnalyzerResult
@@ -61,6 +63,12 @@ class CppcheckResultHandler(ResultHandler):
         checkers = list(map(
             lambda x: x[0], self.analyzer.get_analyzer_checkers()))
 
+        # Addons report their findings as <addon>-<errorId>, which are not
+        # listed by Cppcheck as checkers.
+        addon_prefixes = tuple(
+            f"cppcheck-{Path(addon).stem}-" for addon
+            in self.analyzer.config_handler.analyzer_config.get("addons", []))
+
         all_reports = report_file.get_reports(
             self.analyzer_result_file, self.checker_labels,
             source_dir_path=self.source_dir_path)
@@ -74,9 +82,10 @@ class CppcheckResultHandler(ResultHandler):
 
             # Cppcheck generates informative diagnostics that are not related
             # to defects, e.g. normalCheckLevelMaxBranches. Reports that are
-            # not coming from a checker are filtered here.
-            if report.skip(skip_handlers) or \
-                    report.checker_name not in checkers:
+            # not coming from a checker or an enabled addon are filtered here.
+            if report.skip(skip_handlers) or (
+                    report.checker_name not in checkers and
+                    not report.checker_name.startswith(addon_prefixes)):
                 continue
 
             report.report_hash = get_report_hash(report, hash_type)
