@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 
 import html
-import io
 import json
 import logging
 import os
@@ -17,6 +16,7 @@ import sys
 from collections import defaultdict
 from string import Template
 from typing import Callable
+from urllib.parse import quote
 
 from codechecker_report_converter.report import BugPathEvent, \
     InvalidFileContentMsg, File, MacroExpansion, Report, report_file, \
@@ -138,7 +138,8 @@ class HtmlBuilder:
             'clike_js': os.path.join(codemirror_dir, 'clike.min.js'),
             'bug_viewer': os.path.join(js_dir, 'bugviewer.js'),
             'bug_list': os.path.join(js_dir, 'buglist.js'),
-            'browser_support': os.path.join(js_dir, 'browsersupport.js')
+            'browser_support': os.path.join(js_dir, 'browsersupport.js'),
+            'statistics': os.path.join(js_dir, 'statistics.js')
         }
 
         # Get the HTML layout file content.
@@ -176,7 +177,7 @@ class HtmlBuilder:
 
         self.files[file.id] = {
             'id': file.id, 'filePath': file.path,
-            'content': html.escape(file_content)
+            'content': file_content
         }
 
         return self.files[file.id]
@@ -186,9 +187,39 @@ class HtmlBuilder:
         if self._checker_labels:
             doc_urls = self._checker_labels.label_of_checker(
                 report.checker_name, 'doc_url', report.analyzer_name)
-            return doc_urls[0] if doc_urls else None
+            doc_url = doc_urls[0] if doc_urls else ''
+            valid_url = doc_url.startswith('http://') or \
+                doc_url.startswith('https://')
+            return doc_url if valid_url else None
 
         return None
+
+    @staticmethod
+    def _html_escape_strings(obj):
+        """Recursively HTML-escape all strings in a nested data structure."""
+
+        if isinstance(obj, str):
+            return html.escape(obj)
+
+        elif isinstance(obj, dict):
+            return {
+                HtmlBuilder._html_escape_strings(key):
+                    HtmlBuilder._html_escape_strings(value)
+                for key, value in obj.items()
+            }
+
+        elif isinstance(obj, list):
+            return [HtmlBuilder._html_escape_strings(item) for item in obj]
+
+        elif isinstance(obj, tuple):
+            return tuple(
+                HtmlBuilder._html_escape_strings(item) for item in obj)
+
+        elif isinstance(obj, set):
+            return {HtmlBuilder._html_escape_strings(item) for item in obj}
+
+        else:
+            return obj
 
     def _get_html_reports(
         self,
@@ -287,10 +318,10 @@ class HtmlBuilder:
 
         substitute_data = self._tag_contents
         substitute_data.update({
-            'report_data': json.dumps({
+            'report_data': json.dumps(HtmlBuilder._html_escape_strings({
                 'files': files,
                 'reports': html_reports
-            })
+            }))
         })
 
         content = self._layout.substitute(substitute_data)
@@ -314,7 +345,7 @@ class HtmlBuilder:
                 html_report_links.append({'link': html_file, 'report': report})
 
         table_reports = map(lambda data: {
-            'link': os.path.basename(data['link']),
+            'link': quote(os.path.basename(data['link'])),
             'file-path': data['report']['path'],
             'report-hash': data['report']['reportHash'],
             'checker-name': data['report']['checker']['name'],
@@ -329,7 +360,8 @@ class HtmlBuilder:
             'chronological-order': data['report']['chronologicalOrder']
         }, html_report_links)
 
-        self._tag_contents['table_reports'] = json.dumps(list(table_reports))
+        self._tag_contents['table_reports'] = json.dumps(
+            HtmlBuilder._html_escape_strings(list(table_reports)))
 
         content = self._index.substitute(self._tag_contents)
         output_path = os.path.join(output_dir, 'index.html')
@@ -359,54 +391,36 @@ class HtmlBuilder:
             num_of_reports += len(reports)
 
         checker_statistics: dict[str, int] = defaultdict(int)
+        severity_statistics: dict[str, int] = defaultdict(int)
         for reports in self.generated_html_reports.values():
             for report in reports:
                 checker = report['checker']['name']
                 checker_statistics[checker] += 1
+                severity_statistics[self.get_severity(checker)] += 1
 
-        checker_rows: list[list[str]] = []
-        severity_statistics: dict[str, int] = defaultdict(int)
+        checker_statistics_data: list[dict] = []
+        for checker_name in sorted(checker_statistics):
+            checker_statistics_data.append({
+                'checker_name': checker_name,
+                'severity': self.get_severity(checker_name).lower(),
+                'value': checker_statistics[checker_name]
+            })
 
-        with io.StringIO() as string:
-            for checker_name in sorted(checker_statistics):
-                severity = self.get_severity(checker_name)
-                string.write(f'''
-    <tr>
-    <td>{checker_name}</td>
-    <td class="severity" severity="{severity.lower()}">
-        <i class="severity-{severity.lower()}" title="{severity.lower()}"></i>
-    </td>
-    <td>{checker_statistics[checker_name]}</td>
-    </tr>
-''')
-                checker_rows.append([checker_name, severity,
-                                    str(checker_statistics[checker_name])])
-                severity_statistics[severity] += \
-                    checker_statistics[checker_name]
-            checker_statistics_content = string.getvalue()
-
-        severity_rows: list[list[str]] = []
-
-        with io.StringIO() as string:
-            for severity in sorted(severity_statistics, key=severity_order):
-                num = severity_statistics[severity]
-                string.write(f'''
-    <tr>
-    <td class="severity" severity="{severity.lower()}">
-        <i class="severity-{severity.lower()}" title="{severity.lower()}"></i>
-    </td>
-    <td>{num}</td>
-    </tr>
-''')
-                severity_rows.append([severity, str(num)])
-            severity_statistics_content = string.getvalue()
+        severity_statistics_data: list[dict] = []
+        for severity in sorted(severity_statistics, key=severity_order):
+            severity_statistics_data.append({
+                'severity': severity.lower(),
+                'value': severity_statistics[severity]
+            })
 
         substitute_data = self._tag_contents
         substitute_data.update({
             'num_of_analyzer_result_files': str(num_of_analyzer_result_files),
             'number_of_reports': str(num_of_reports),
-            'checker_statistics': checker_statistics_content,
-            'severity_statistics': severity_statistics_content})
+            'checker_statistics_data': json.dumps(
+                HtmlBuilder._html_escape_strings(checker_statistics_data)),
+            'severity_statistics_data': json.dumps(
+                HtmlBuilder._html_escape_strings(severity_statistics_data))})
 
         content = self._statistics.substitute(substitute_data)
 

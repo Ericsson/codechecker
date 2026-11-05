@@ -108,15 +108,13 @@ var BugList = {
     let row = document.createElement('tr');
 
     let id_col = document.createElement('td');
-    id_col.appendChild(document.createTextNode(id));
+    id_col.innerHTML = id;
     row.appendChild(id_col);
 
     let file_col = document.createElement('td');
-    let file_col_a = document.createElement('a');
-    file_col_a.setAttribute(
-      'href', data.link + '#reportHash=' + data['report-hash']);
-    file_col_a.innerHTML = data['file-path'] + ' @ Line&nbsp;' + data.line;
-    file_col.appendChild(file_col_a);
+    file_col.innerHTML = '<a href="' + data.link + '#reportHash=' +
+      data['report-hash'] + '">' + data['file-path'] + ' @ Line&nbsp;' +
+      data.line + '</a>';
     row.appendChild(file_col);
 
     let severity_col = document.createElement('td');
@@ -129,44 +127,37 @@ var BugList = {
     row.appendChild(severity_col);
 
     let checker_col = document.createElement('td');
-    let checker_col_a = document.createElement('a');
-    checker_col_a.setAttribute('href', data['checker-url']);
-    checker_col_a.setAttribute('target', '_blank');
-    checker_col_a.appendChild(
-      document.createTextNode(data['checker-name']));
-    checker_col.appendChild(checker_col_a);
+    checker_col.innerHTML = '<a href="' + data['checker-url'] +
+      '" target="_blank">' + data['checker-name'] + '</a>';
     row.appendChild(checker_col);
 
     let message_col = document.createElement('td');
-    message_col.appendChild(document.createTextNode(data.message));
+    message_col.innerHTML = data.message;
     row.appendChild(message_col);
 
     let length_col = document.createElement('td');
     length_col.setAttribute('class', 'bug-path-length');
-    length_col.appendChild(document.createTextNode(data['bug-path-length']));
+    length_col.innerHTML = data['bug-path-length'];
     row.appendChild(length_col);
 
     let review_col = document.createElement('td');
-    review_col.appendChild(document.createTextNode(data['review-status']));
+    review_col.innerHTML = data['review-status'];
     row.appendChild(review_col);
 
     let testcase_col = document.createElement('td');
     testcase_col.setAttribute('class', 'dynamic');
-    testcase_col.appendChild(
-      document.createTextNode(data['testcase'] || ''));
+    testcase_col.innerHTML = data['testcase'] || '';
     row.appendChild(testcase_col);
 
     let timestamp_col = document.createElement('td');
     timestamp_col.setAttribute('class', 'dynamic');
-    timestamp_col.appendChild(
-      document.createTextNode(data['timestamp'] || ''));
+    timestamp_col.innerHTML = data['timestamp'] || '';
     row.appendChild(timestamp_col);
 
     let chronological_col = document.createElement('td');
     chronological_col.setAttribute('class', 'dynamic');
-    chronological_col.appendChild(
-      document.createTextNode(data['chronological-order'] || ''));
-      row.appendChild(chronological_col);
+    chronological_col.innerHTML = data['chronological-order'] || '';
+    row.appendChild(chronological_col);
 
     return row;
   },

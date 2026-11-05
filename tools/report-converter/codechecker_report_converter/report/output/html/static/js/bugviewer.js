@@ -16,34 +16,6 @@ var BugViewer = {
   init : function (files, reports) {
     this._files = files;
     this._reports = reports;
-
-    this.initEscapeChars();
-  },
-
-  initEscapeChars : function () {
-    this.escapeChars = {
-      ' ' : 'nbsp',
-      '<' : 'lt',
-      '>' : 'gt',
-      '"' : 'quot',
-      '&' : 'amp'
-    };
-
-    var regexString = '[';
-    for (var key in this.escapeChars) {
-      regexString += key;
-    }
-    regexString += ']';
-
-    this.escapeRegExp = new RegExp( regexString, 'g');
-  },
-
-  escapeHTML : function (str) {
-    var that = this;
-
-    return str.replace(this.escapeRegExp, function (m) {
-      return '&' + that.escapeChars[m] + ';';
-    });
   },
 
   initByUrl : function () {
@@ -111,15 +83,15 @@ var BugViewer = {
     var nav = document.getElementById('report-nav');
     var list = document.createElement('ul');
     this._reports.forEach(function (report) {
-      var events = report.events;
-      var lastBugEvent = events[events.length - 1];
       var item = document.createElement('li');
 
       var severity = document.createElement('i');
       severity.className = 'severity-' + report.severity.toLowerCase();
-
       item.appendChild(severity);
-      item.appendChild(document.createTextNode(report.message));
+
+      var message = document.createElement('span');
+      message.innerHTML = report.message;
+      item.appendChild(message);
 
       item.addEventListener('click', function () {
         that.navigate(report, item);
@@ -222,10 +194,10 @@ var BugViewer = {
       var name = 'macro expansion' + (event.name ? ': ' + event.name : '');
 
       return '<span class="tag macro">' + name + '</span>'
-        + this.escapeHTML(event.message).replace(/(?:\r\n|\r|\n)/g, '<br>');
+        + event.message.replace(/(?:\r\n|\r|\n)/g, '<br>');
     } else if (kind === 'note') {
       return '<span class="tag note">note</span>'
-        +  this.escapeHTML(event.message).replace(/(?:\r\n|\r|\n)/g, '<br>');
+        + event.message.replace(/(?:\r\n|\r|\n)/g, '<br>');
     }
   },
 
@@ -317,8 +289,7 @@ var BugViewer = {
       }
 
       var msg = document.createElement('span');
-      msg.innerHTML = that.escapeHTML(event.message)
-        .replace(/(?:\r\n|\r|\n)/g, '<br>');
+      msg.innerHTML = event.message.replace(/(?:\r\n|\r|\n)/g, '<br>');
 
       element.appendChild(msg);
 
@@ -350,7 +321,7 @@ var BugViewer = {
       error_tag.innerHTML = "E";
       element.appendChild(error_tag);
       var msg = document.createElement('span');
-      msg.innerHTML = that.escapeHTML(this._currentReport.message)
+      msg.innerHTML = this._currentReport.message
         .replace(/(?:\r\n|\r|\n)/g, '<br>');
       element.appendChild(msg);
       that._lineWidgets.push(that._codeMirror.addLineWidget(

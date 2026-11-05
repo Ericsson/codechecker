@@ -14,10 +14,16 @@
 
     <script>
       ${browser_support}
+      ${statistics}
+
+      var checker_statistics_data = ${checker_statistics_data};
+      var severity_statistics_data = ${severity_statistics_data};
 
       window.onload = function () {
         if (!browserCompatible) {
           setNonCompatibleBrowserMessage();
+        } else {
+          Statistics.init();
         }
       }
     </script>
@@ -44,7 +50,6 @@
           <th>Severity</th>
           <th>Number of reports</th>
         </tr>
-        ${checker_statistics}
       </table>
       <h1>Severity statistics</h1>
       <table id="severity-statistics">
@@ -52,7 +57,6 @@
           <th>Severity</th>
           <th>Number of reports</th>
         </tr>
-        ${severity_statistics}
       </table>
     </div>
   </body>
