@@ -97,3 +97,17 @@ class TestMergeClangExtdefMappingsTest(unittest.TestCase):
                           "c:@F@h# path/to/file2.cpp.ast"]
         for expected_line in expected_lines:
             self.assertTrue(expected_line in lines)
+        self.assertNotIn("c:@F@both# path/to/file.cpp.ast", lines)
+        self.assertNotIn("c:@F@both# path/to/file2.cpp.ast", lines)
+
+    def test_merge_warns_on_duplicate_usr(self):
+        """ Test that dropping a multiply defined USR is reported. """
+
+        output_file = os.path.join(self.test_workspace, 'externalDefMap.txt')
+        with self.assertLogs('MergeClangExtdefMappings',
+                             level='WARNING') as logs:
+            merge_clang_extdef_mappings.merge(self.extdef_maps_dir,
+                                              output_file)
+
+        self.assertEqual(len(logs.records), 1)
+        self.assertIn("1 function(s)", logs.records[0].getMessage())

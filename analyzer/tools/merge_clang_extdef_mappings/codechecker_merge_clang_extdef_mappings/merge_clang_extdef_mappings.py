@@ -7,7 +7,10 @@
 # -------------------------------------------------------------------------
 
 import glob
+import logging
 import os
+
+LOG = logging.getLogger('MergeClangExtdefMappings')
 
 
 def _generate_func_map_lines(func_map_dir):
@@ -50,10 +53,21 @@ def _create_global_ctu_function_map(func_map_lines):
             mangled_to_asts[mangled_name].add(ast_file)
 
     mangled_ast_pairs = []
+    dropped = 0
 
     for mangled_name, ast_files in mangled_to_asts.items():
         if len(ast_files) == 1:
             mangled_ast_pairs.append((mangled_name, ast_files.pop()))
+        else:
+            dropped += 1
+            LOG.debug("'%s' is defined in multiple translation units (%s), "
+                      "it is left out of CTU analysis.",
+                      mangled_name, ', '.join(sorted(ast_files)))
+
+    if dropped:
+        LOG.warning("%d function(s) are defined in multiple translation "
+                    "units, so they are left out of CTU analysis. Enable "
+                    "debug logging to list them.", dropped)
 
     return mangled_ast_pairs
 
