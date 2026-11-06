@@ -62,8 +62,8 @@ class Context(metaclass=Singleton):
         lcfg_dict = self.__get_package_layout()
         self.pckg_layout = lcfg_dict['runtime']
 
-        self._checker_labels = CheckerLabels(labels_dir)
         self._guidelines = Guidelines(guidelines_dir)
+        self._checker_labels = CheckerLabels(labels_dir, self._guidelines)
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None

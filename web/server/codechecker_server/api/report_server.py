@@ -3127,10 +3127,10 @@ class ThriftRequestHandler:
                 guideline_rules[guideline.guidelineName].append(
                     Rule(
                         ruleId=rule.lower(),
-                        title=rules[rule].get("title", ""),
-                        url=rules[rule].get("rule_url", ""),
+                        title=rules[rule].title,
+                        url=rules[rule].url,
                         checkers=checkers,
-                        level=rules[rule].get("level", "")
+                        level=""
                     )
                 )
 
