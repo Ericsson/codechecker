@@ -129,10 +129,10 @@ standalone_package: venv package
 
 # This target will check if the 'dist' directory exists and the vue-cli folder
 # is changed. In this case it will remove the dist directory so the UI will
-# be built again.
+# be built again. Dependencies are installed by the $(DIST_DIR) target.
 check_dist:
 	if [ "$(BUILD_UI_DIST)" = "YES" ] && [ -d $(DIST_DIR) ] && [ "$(LATEST_COMMIT)" != "$(LATEST_BUILD_COMMIT)" ]; then \
-	  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
+	  rm -rf $(DIST_DIR); \
 	fi
 
 clean_package:
