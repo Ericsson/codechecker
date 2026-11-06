@@ -145,6 +145,25 @@ def configure_utf8_output():
     )
 
 
+def find_config_option(argv: list[str]) -> tuple[int, int]:
+    """
+    Find the "--config" option in the given argument list.
+
+    The option and its value may be written as two separate arguments
+    ("--config file") or joined with an equal sign ("--config=file"). Return
+    the index of the option and the number of arguments it occupies, so the
+    caller can replace exactly those arguments.
+    """
+    for i, arg in enumerate(argv):
+        if arg == "--config":
+            return i, 2
+
+        if arg.startswith("--config="):
+            return i, 1
+
+    raise ValueError("'--config' is not in the argument list.")
+
+
 def main():
     """
     CodeChecker main command line.
@@ -248,9 +267,9 @@ output.
 
                 # Replace --config option with the options inside the config
                 # file.
-                cfg_idx = sys.argv.index("--config")
+                cfg_idx, cfg_len = find_config_option(sys.argv)
                 sys.argv = sys.argv[:cfg_idx] + cfg_args + \
-                    sys.argv[cfg_idx + 2:]
+                    sys.argv[cfg_idx + cfg_len:]
 
                 args = parser.parse_args()
                 log.info("Full extended command: %s", ' '.join(sys.argv))
