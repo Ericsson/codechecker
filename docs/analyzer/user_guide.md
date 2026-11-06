@@ -708,7 +708,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -o LOGFILE, --output LOGFILE
                         Path of the file to write the collected compilation
-                        commands to. If the file already exists, it will be
+                        commands to. Missing parent directories will be
+                        created. If the file already exists, it will be
                         overwritten.
   -b COMMAND, --build COMMAND
                         The build command to execute. Build commands can be

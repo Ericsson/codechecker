@@ -111,8 +111,9 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         required=True,
                         help="Path of the file to write the collected "
-                             "compilation commands to. If the file already "
-                             "exists, it will be overwritten.")
+                             "compilation commands to. Missing parent "
+                             "directories will be created. If the file "
+                             "already exists, it will be overwritten.")
 
     parser.add_argument('-b', '--build',
                         type=str,
@@ -175,6 +176,7 @@ def main(args):
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     args.logfile = os.path.realpath(args.logfile)
+    os.makedirs(os.path.dirname(args.logfile), exist_ok=True)
 
     # It is possible that the log file will not be created or it will be empty
     # for example when the build command is an empty string or when there is no
