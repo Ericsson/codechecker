@@ -19,13 +19,16 @@ def add_option(parser):
     """ Add config file option to the given parser. """
     parser.add_argument('--config',
                         dest='config_file',
+                        default=os.getenv('CC_CONFIG_FILE'),
                         required=False,
                         help="R|Allow the configuration from an explicit "
                              "configuration file. The values configured in "
-                             "the config file will overwrite the values set "
-                             "in the command line.\n"
+                             "the config file are expanded at this option's "
+                             "position in the command line.\n"
+                             "Defaults to the CC_CONFIG_FILE environment "
+                             "variable when --config is not specified.\n"
                              "You can use any environment variable inside "
-                             "this file and it will be expaneded.\n"
+                             "this file and it will be expanded.\n"
                              "For more information see the docs: "
                              "https://github.com/Ericsson/codechecker/tree/"
                              "master/docs/config_file.md")
@@ -49,11 +52,36 @@ def get_analyze_options(cfg) -> list[str]:
     return analyzer_cfg
 
 
+def get_cmd_options(cfg, commands):
+    """Get a cmd action's argument list, validating its configuration path."""
+    if cfg is None:
+        return []
+
+    options = cfg
+    path = []
+    for command in ['cmd', *commands]:
+        if not isinstance(options, dict):
+            section = '.'.join(path) or 'root'
+            raise ValueError(f"Configuration section '{section}' must be "
+                             "a mapping.")
+        if command not in options:
+            return []
+        options = options[command]
+        path.append(command)
+
+    if not isinstance(options, list) or \
+            not all(isinstance(option, str) for option in options):
+        raise ValueError(f"Configuration section '{'.'.join(path)}' must "
+                         "be a list of strings.")
+    return options
+
+
 def process_config_file(args, subcommand_name):
     """ Handler to get config file options. """
     if 'config_file' not in args:
-        return {}
+        return []
 
+    check_config_file(args)
     config_file = args.config_file
     if config_file and os.path.exists(config_file):
         if config_file.endswith(('.yaml', '.yml')):
@@ -72,6 +100,10 @@ def process_config_file(args, subcommand_name):
                 *get_analyze_options(cfg),
                 *cfg.get("parse", [])
             ]
+        elif subcommand_name == 'cmd':
+            # A command group without an action should display its help.
+            options = get_cmd_options(cfg, args.config_commands) \
+                if 'func' in args else []
         else:
             options = cfg.get(subcommand_name, [])
 
@@ -82,7 +114,7 @@ def process_config_file(args, subcommand_name):
 
         return options
 
-    return {}
+    return []
 
 
 def check_config_file(args):

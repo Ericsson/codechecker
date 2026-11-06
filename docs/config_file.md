@@ -7,9 +7,52 @@ multiple commands through the `--config` option:
 - `CodeChecker parse`
 - `CodeChecker server`
 - `CodeChecker store`
+- `CodeChecker cmd` actions that connect to a server or product
 
-The values configured in the config file will overwrite the values set in the
-command line.
+Set `CC_CONFIG_FILE` to use a configuration file without passing `--config`
+each time:
+
+```sh
+export CC_CONFIG_FILE="$HOME/.codechecker/codechecker.json"
+CodeChecker store ./reports -n myproject
+CodeChecker cmd runs
+```
+
+An explicit `--config FILE` (or `--config=FILE`) selects that file instead of
+`CC_CONFIG_FILE`. A selected file must exist. No configuration file is loaded
+automatically when neither is set.
+
+Options from `CC_CONFIG_FILE` are appended to the command line, so they take
+precedence over earlier scalar options. An explicit `--config` is expanded at
+its position in the command line; options after it can override scalar values
+from the file. Repeatable options retain their normal command-line behavior.
+
+For `cmd`, nest configuration by action name, including any intermediate
+subcommands. For example:
+
+```json
+{
+  "store": ["--url=https://codechecker.example.com:9090/MyProduct"],
+  "cmd": {
+    "runs": ["--url=https://codechecker.example.com:9090/MyProduct"],
+    "results": ["--url=https://codechecker.example.com:9090/MyProduct"],
+    "login": ["--url=https://codechecker.example.com:9090"],
+    "products": {
+      "list": ["--url=https://codechecker.example.com:9090"]
+    }
+  }
+}
+```
+
+Product actions and `store` require a product URL including its endpoint.
+Server actions such as `login` and `products list` require a server URL.
+CodeChecker passes these URLs through unchanged; it does not derive one from
+the other. The same nesting is supported in YAML. Actions without a matching
+section keep their normal defaults. Use `--config` after the action name, for
+example `CodeChecker cmd products list --config codechecker.json`.
+
+Configuration options are expanded as command-line arguments as described
+above.
 
 For example if you run the following command:
 
