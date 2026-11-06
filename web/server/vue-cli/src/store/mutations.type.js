@@ -18,6 +18,9 @@ export const SET_RUN_HISTORY_STORED_AFTER = "setStoredAfter";
 
 export const SET_ANNOUNCEMENT = "setAnnouncement";
 
+export const SET_SERVER_DOWN = "setServerDown";
+export const CLEAR_SERVER_DOWN = "clearServerDown";
+
 export const ADD_NOTIFICATION = "addNotification";
 export const REMOVE_NOTIFICATION = "removeNotification";
 export const CLEAR_NOTIFICATIONS = "clearNotifications";
