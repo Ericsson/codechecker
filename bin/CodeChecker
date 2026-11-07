@@ -47,6 +47,15 @@ def run_codechecker(checker_env, subcommand=None) -> int:
     codechecker_main = \
         os.path.join(lib_dir_path, 'codechecker_common', 'cli.py')
 
+    if not os.path.isfile(codechecker_main):
+        print(
+            'CodeChecker package entry point is missing: ' + codechecker_main +
+            '\nFrom the repository root, run "make package" '
+            '(or "make dev_package"), then run '
+            '"build/CodeChecker/bin/CodeChecker".',
+            file=sys.stderr)
+        return 1
+
     checker_cmd = [sys.executable, codechecker_main]
 
     if subcommand:
