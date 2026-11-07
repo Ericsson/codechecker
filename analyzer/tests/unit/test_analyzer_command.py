@@ -7,8 +7,13 @@
 # -------------------------------------------------------------------------
 
 import argparse
+import os
 import unittest
+from unittest import mock
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
+from codechecker_analyzer.analyzers.gcc.analyzer import Gcc
+from codechecker_analyzer.analyzers.gcc.config_handler import \
+    GccConfigHandler
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.cli import analyze
 from libtest.cmd_line import create_analyze_argparse
@@ -139,3 +144,28 @@ class AnalyzerCommandClangSATest(unittest.TestCase):
 
         std_flags = [x for x in cmd if x.startswith(('-std=', '--std='))]
         self.assertEqual(len(std_flags), 1)
+
+
+class AnalyzerCommandGccTest(unittest.TestCase):
+    def test_output_is_os_devnull(self):
+        """
+        The GCC analyzer must discard the object file through os.devnull, so
+        that it also works on Windows, where /dev/null can't be created.
+        """
+        action = {
+            'file': 'main.cpp',
+            'command': 'g++ -o main main.cpp',
+            'directory': '/'}
+        build_action = log_parser.parse_options(action)
+        analyzer = Gcc(GccConfigHandler(), build_action)
+
+        with mock.patch.object(Gcc, 'analyzer_binary',
+                               return_value='gcc'):
+            cmd = analyzer.construct_analyzer_cmd(None)
+
+        self.assertIn(f'-o{os.devnull}', cmd)
+        with mock.patch('os.devnull', 'NUL'), \
+                mock.patch.object(Gcc, 'analyzer_binary',
+                                  return_value='gcc'):
+            cmd = analyzer.construct_analyzer_cmd(None)
+        self.assertIn('-oNUL', cmd)
