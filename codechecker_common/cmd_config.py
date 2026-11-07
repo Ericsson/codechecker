@@ -58,7 +58,7 @@ def get_cmd_options(cfg, commands):
         return []
 
     options = cfg
-    path = []
+    path: list[str] = []
     for command in ['cmd', *commands]:
         if not isinstance(options, dict):
             section = '.'.join(path) or 'root'
