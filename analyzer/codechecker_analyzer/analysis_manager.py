@@ -33,6 +33,7 @@ from . import gcc_toolchain
 
 from .analyzers import analyzer_types
 from .analyzers.clangsa.analyzer import ClangSA
+from .analyzers.clangsa.ctu_triple_arch import get_compile_command
 from .analyzers.config_handler import CheckerState
 from tu_collector import tu_collector
 
@@ -252,12 +253,14 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
         'file': action.source,
         'command': action.original_command,
         'directory': action.directory}]
+    dependency_actions = [action]
 
     for of in other_files:
         mentioned_file = os.path.abspath(os.path.join(action.directory, of))
         key = mentioned_file, action.target
         mentioned_file_action = actions_map.get(key)
         if mentioned_file_action is not None:
+            dependency_actions.append(mentioned_file_action)
             buildactions.append({
                 'file': mentioned_file_action.source,
                 'command': mentioned_file_action.original_command,
@@ -265,7 +268,13 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
         else:
             LOG.debug("Could not find %s in build actions.", key)
 
-    tu_collector.zip_tu_files(zip_file, buildactions)
+    dependency_commands = None
+    if isinstance(source_analyzer, ClangSA):
+        dependency_commands = [
+            get_compile_command(a, source_analyzer.config_handler, a.source)
+            for a in dependency_actions]
+    tu_collector.zip_tu_files(zip_file, buildactions,
+                              dependency_commands=dependency_commands)
 
     # TODO: What about the dependencies of the other_files?
     tu_collector.add_sources_to_zip(

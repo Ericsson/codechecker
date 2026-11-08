@@ -16,9 +16,12 @@ These files are compressed in a .zip file. This test intends to check if the
 import inspect
 import json
 import os
+import shlex
+import shutil
 import tempfile
 import unittest
 import zipfile
+from unittest import mock
 
 from tu_collector import tu_collector
 
@@ -93,3 +96,163 @@ class TUCollectorTest(unittest.TestCase):
 
         self.assertTrue(any(
             [path.endswith(os.path.join('/', 'zero.h')) for path in files]))
+
+    @unittest.skipUnless(shutil.which('gcc') and shutil.which('clang'),
+                         'GCC and Clang are required for this regression test')
+    def test_gcc_build_collects_clang_only_header(self):
+        """Issue #3161: a Clang reproducer needs Clang-only dependencies."""
+        with tempfile.TemporaryDirectory() as build_dir:
+            source = os.path.join(build_dir, 'source.c')
+            gcc_header = os.path.join(build_dir, 'gcc_only.h')
+            clang_header = os.path.join(build_dir, 'clang_only.h')
+
+            with open(source, 'w', encoding='utf-8') as output:
+                output.write('#if defined(__GNUC__) && !defined(__clang__)\n'
+                             '#include "gcc_only.h"\n'
+                             '#endif\n'
+                             '#ifdef __clang__\n'
+                             '#include "clang_only.h"\n'
+                             '#endif\n')
+            for header in (gcc_header, clang_header):
+                with open(header, 'w', encoding='utf-8') as output:
+                    output.write('/* Synthetic dependency. */\n')
+
+            gcc_command = f"{shlex.quote(shutil.which('gcc'))} -c source.c"
+            clang_command = f"{shlex.quote(shutil.which('clang'))} -c source.c"
+            check_output = tu_collector.subprocess.check_output
+
+            def bounded_check_output(*args, **kwargs):
+                kwargs['timeout'] = 10
+                return check_output(*args, **kwargs)
+
+            with mock.patch.object(tu_collector.subprocess, 'check_output',
+                                   side_effect=bounded_check_output):
+                gcc_files, gcc_error = tu_collector.get_dependent_headers(
+                    gcc_command, build_dir)
+                clang_files, clang_error = tu_collector.get_dependent_headers(
+                    clang_command, build_dir)
+
+                self.assertFalse(gcc_error)
+                self.assertFalse(clang_error)
+                self.assertIn(gcc_header, gcc_files)
+                self.assertNotIn(clang_header, gcc_files)
+                self.assertIn(clang_header, clang_files)
+                self.assertNotIn(gcc_header, clang_files)
+
+                archive_path = os.path.join(build_dir, 'reproducer.zip')
+                tu_collector.zip_tu_files(archive_path, [{
+                    'file': 'source.c',
+                    'command': gcc_command,
+                    'directory': build_dir,
+                }], dependency_commands=[[
+                    shutil.which('clang'), '-x', 'c', 'source.c']])
+
+            with zipfile.ZipFile(archive_path) as archive:
+                archived_files = archive.namelist()
+                stored_command = json.loads(archive.read(
+                    'compilation_database.json'))[0]['command']
+
+            self.assertEqual(stored_command, gcc_command)
+            self.assertIn(os.path.join('sources-root', source.lstrip(os.sep)),
+                          archived_files)
+            self.assertIn(os.path.join('sources-root',
+                                       clang_header.lstrip(os.sep)),
+                          archived_files)
+
+    @unittest.skipUnless(shutil.which('g++') and shutil.which('clang'),
+                         'G++ and Clang are required')
+    def test_gpp_build_uses_clang_cpp_mode_for_dependencies(self):
+        """A G++ build command must scan dependencies in Clang C++ mode."""
+        with tempfile.TemporaryDirectory() as build_dir:
+            source = os.path.join(build_dir, 'source.cpp')
+            clang_header = os.path.join(build_dir, 'clang_only.hpp')
+            with open(source, 'w', encoding='utf-8') as output:
+                output.write('#if defined(__clang__) && defined(__cplusplus)\n'
+                             '#include "clang_only.hpp"\n'
+                             '#endif\n')
+            with open(clang_header, 'w', encoding='utf-8') as output:
+                output.write('/* Synthetic C++ dependency. */\n')
+
+            command = f"{shlex.quote(shutil.which('g++'))} -c source.cpp"
+            check_output = tu_collector.subprocess.check_output
+            used_compilers = []
+
+            def bounded_check_output(args, **kwargs):
+                used_compilers.append(args[0])
+                kwargs['timeout'] = 10
+                return check_output(args, **kwargs)
+
+            archive_path = os.path.join(build_dir, 'reproducer.zip')
+            with mock.patch.object(tu_collector.subprocess, 'check_output',
+                                   side_effect=bounded_check_output):
+                tu_collector.zip_tu_files(archive_path, [{
+                    'file': 'source.cpp',
+                    'command': command,
+                    'directory': build_dir,
+                }], dependency_commands=[[
+                    shutil.which('clang'), '-x', 'c++', 'source.cpp']])
+
+            with zipfile.ZipFile(archive_path) as archive:
+                archived_files = archive.namelist()
+                stored_command = json.loads(archive.read(
+                    'compilation_database.json'))[0]['command']
+
+            self.assertIn(os.path.join('sources-root',
+                                       clang_header.lstrip(os.sep)),
+                          archived_files)
+            self.assertEqual(stored_command, command)
+            self.assertEqual(used_compilers, [shutil.which('clang')])
+
+    @unittest.skipUnless(shutil.which('clang'), 'Clang is required')
+    def test_dependency_commands_follow_actions_after_ctu_filtering(self):
+        """CTU expansion must not pair commands with reordered actions."""
+        with tempfile.TemporaryDirectory() as root:
+            actions = []
+            for name in ('a', 'b'):
+                build_dir = os.path.join(root, name)
+                os.mkdir(build_dir)
+                with open(os.path.join(build_dir, name + '.c'), 'w',
+                          encoding='utf-8') as output:
+                    output.write(f'#include "{name}.h"\n')
+                with open(os.path.join(build_dir, name + '.h'), 'w',
+                          encoding='utf-8') as output:
+                    output.write('/* Synthetic dependency. */\n')
+                actions.append({
+                    'file': name + '.c',
+                    'command': f'gcc -c {name}.c',
+                    'directory': build_dir,
+                })
+
+            ctu_dir = os.path.join(root, 'ctu')
+            os.mkdir(ctu_dir)
+            hash_fun = dict(inspect.getmembers(tu_collector))[
+                '__analyzer_action_hash']
+            with open(os.path.join(ctu_dir, hash_fun(actions[1])), 'w',
+                      encoding='utf-8') as output:
+                output.write(os.path.join(actions[0]['directory'], 'a.c'))
+
+            dependency_commands = [
+                [shutil.which('clang'), '-x', 'c', name + '.c']
+                for name in ('a', 'b')]
+            check_output = tu_collector.subprocess.check_output
+
+            def bounded_check_output(*args, **kwargs):
+                kwargs['timeout'] = 10
+                return check_output(*args, **kwargs)
+
+            archive_path = os.path.join(root, 'reproducer.zip')
+            with mock.patch.object(tu_collector.subprocess, 'check_output',
+                                   side_effect=bounded_check_output):
+                tu_collector.zip_tu_files(
+                    archive_path, actions, file_filter='b.c',
+                    ctu_deps_dir=ctu_dir,
+                    dependency_commands=dependency_commands)
+
+            with zipfile.ZipFile(archive_path) as archive:
+                archived_files = archive.namelist()
+
+            self.assertNotIn('no-sources', archived_files)
+            for name, action in zip(('a', 'b'), actions):
+                self.assertIn(os.path.join(
+                    'sources-root', action['directory'].lstrip(os.sep),
+                    name + '.h'), archived_files)

@@ -424,7 +424,8 @@ def zip_tu_files(
     compilation_db: str | CompilationDB,
     file_filter='*',
     write_mode='w',
-    ctu_deps_dir: str | None = None
+    ctu_deps_dir: str | None = None,
+    dependency_commands: list[list[str]] | None = None
 ):
     """
     Collects all files to a zip file which are required for the compilation of
@@ -452,6 +453,9 @@ def zip_tu_files(
                     database in the first argument which contains the build
                     commands of these files otherwise the files of this folder
                     can't be identified.
+    dependency_commands -- Commands to use only for gathering dependencies,
+                           in the order of the input compilation database.
+                           The original commands are preserved in the ZIP.
     """
     if isinstance(compilation_db, str):
         with open(compilation_db, encoding="utf-8", errors="ignore") as f:
@@ -462,6 +466,13 @@ def zip_tu_files(
     no_sources = 'no-sources'
     tu_files: set[str] = set()
     error_messages = ''
+
+    if dependency_commands is not None and \
+            len(dependency_commands) != len(compilation_database):
+        raise ValueError("Expected one dependency command per build action")
+    commands_by_action = {
+        id(action): command for action, command in
+        zip(compilation_database, dependency_commands or [])}
 
     filtered_compilation_database = list(filter(
         lambda action: fnmatch.fnmatch(action['file'], file_filter),
@@ -479,9 +490,10 @@ def zip_tu_files(
                 filtered_compilation_database.append(action)
 
     for buildaction in filtered_compilation_database:
+        command = commands_by_action.get(
+            id(buildaction), buildaction['command'])
         files, err = get_dependent_headers(
-            buildaction['command'],
-            buildaction['directory'])
+            command, buildaction['directory'])
 
         tu_files |= files
 
