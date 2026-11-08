@@ -7,11 +7,22 @@
 # -------------------------------------------------------------------------
 
 import argparse
+import json
+import os
+import shlex
+import shutil
+import tempfile
 import unittest
+import zipfile
+from types import SimpleNamespace
+from unittest import mock
+
+from codechecker_analyzer import analysis_manager
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.cli import analyze
 from libtest.cmd_line import create_analyze_argparse
+from tu_collector import tu_collector
 
 
 def create_analyzer_sa(args=None, command="g++ -o main main.cpp"):
@@ -47,6 +58,83 @@ def create_result_handler(analyzer):
 
 
 class AnalyzerCommandClangSATest(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('gcc') and shutil.which('clang'),
+                         'GCC and Clang are required')
+    def test_reproducer_filters_gcc_only_flag_for_clang_dependencies(self):
+        """Issue #3161: use transformed Clang options to collect headers."""
+        with tempfile.TemporaryDirectory() as build_dir:
+            source = os.path.join(build_dir, 'source.c')
+            include_dir = os.path.join(build_dir, 'include')
+            os.mkdir(include_dir)
+            clang_header = os.path.join(include_dir, 'clang_only.h')
+            with open(source, 'w', encoding='utf-8') as output:
+                output.write('#if defined(__GNUC__) && !defined(__clang__)\n'
+                             '#include "gcc_only.h"\n'
+                             '#endif\n'
+                             '#ifdef __clang__\n'
+                             '#include "clang_only.h"\n'
+                             '#endif\n')
+            with open(os.path.join(include_dir, 'gcc_only.h'), 'w',
+                      encoding='utf-8') as output:
+                output.write('/* GCC-only header. */\n')
+            with open(clang_header, 'w', encoding='utf-8') as output:
+                output.write('/* Clang-only header. */\n')
+
+            gcc_command = (f"{shlex.quote(shutil.which('gcc'))} "
+                           '-fno-var-tracking-assignments '
+                           '-DTEST_DEFINE=1 -Iinclude -std=gnu11 '
+                           '-c source.c')
+            entry = {'file': 'source.c', 'command': gcc_command,
+                     'directory': build_dir}
+            with mock.patch.object(log_parser.ImplicitCompilerInfo, 'set'):
+                action = log_parser.parse_options(entry)
+            self.assertEqual(action.original_command, gcc_command)
+            self.assertNotIn('-fno-var-tracking-assignments',
+                             action.analyzer_options)
+
+            clang = shutil.which('clang')
+            analyzer = mock.Mock(spec=ClangSA)
+            analyzer.config_handler = SimpleNamespace(
+                analyzer_extra_arguments=[],
+                add_gcc_include_dirs_with_isystem=False)
+            analyzer.get_analyzer_mentioned_files.return_value = set()
+            result = SimpleNamespace(
+                buildaction=action, analyzer_stdout='', analyzer_stderr='',
+                analyzer_cmd=[clang], analyzer_returncode=1,
+                workspace=build_dir)
+            archive_path = os.path.join(build_dir, 'reproducer.zip')
+            check_output = tu_collector.subprocess.check_output
+            scanned_commands = []
+
+            def bounded_check_output(command, **kwargs):
+                scanned_commands.append(command)
+                kwargs['timeout'] = 10
+                return check_output(command, **kwargs)
+
+            with mock.patch.object(ClangSA, 'analyzer_binary',
+                                   return_value=clang), \
+                    mock.patch.object(tu_collector.subprocess, 'check_output',
+                                      side_effect=bounded_check_output):
+                analysis_manager.handle_reproducer(
+                    analyzer, result, archive_path, {})
+
+            with zipfile.ZipFile(archive_path) as archive:
+                archived_files = archive.namelist()
+                self.assertEqual(archive.read('build-action').decode(),
+                                 gcc_command)
+                stored_command = json.loads(archive.read(
+                    'compilation_database.json'))[0]['command']
+
+            self.assertEqual(stored_command, gcc_command)
+            self.assertIn(os.path.join('sources-root',
+                                       clang_header.lstrip(os.sep)),
+                          archived_files)
+            self.assertNotIn('no-sources', archived_files)
+            self.assertEqual(len(scanned_commands), 1)
+            self.assertEqual(scanned_commands[0][0], clang)
+            self.assertNotIn('-fno-var-tracking-assignments',
+                             scanned_commands[0])
+
     def test_isystem_idirafter(self):
         """
         Test that the implicit include paths are added to the analyzer command
