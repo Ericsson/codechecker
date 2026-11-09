@@ -6,6 +6,7 @@
 #
 # -------------------------------------------------------------------------
 from semver.version import Version
+import os
 import shlex
 import subprocess
 import sys
@@ -62,7 +63,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # We don't want GCC do start linking, but -fsyntax-only stops the
         # compilation process too early for proper diagnostics generation.
         analyzer_cmd = [Gcc.analyzer_binary(), '-fanalyzer', '-c',
-                        '-o/dev/null']
+                        f'-o{os.devnull}']
 
         # Add extra arguments.
         analyzer_cmd.extend(config.analyzer_extra_arguments)
