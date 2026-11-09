@@ -151,7 +151,11 @@ async function fetchStatistics() {
     ids: baseStats.runIds.value
   });
 
-  runs.value = await ccService.getRuns(_run_filter);
+  runs.value = (await ccService.getRuns(_run_filter)).map(_run => ({
+    runId: _run.runId,
+    runName: _run.name,
+    codeCheckerVersion: _run.codeCheckerVersion
+  }));
 
   const _filter = new ReportFilter(baseStats.reportFilter.value);
 
