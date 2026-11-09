@@ -38,7 +38,45 @@
           v-html="cmd"
         />
       </div>
-      <span>Checker statistics</span>
+      <div class="checker-statistics-header">
+        <span>Checker statistics</span>
+        <span
+          v-if="postProcessedAnalysisInfoReady &&
+            analysisInfo.checkerInfoAvailability
+            === CheckerInfoAvailability.Available"
+          class="checker-count-legend"
+        >
+          <span class="legend-separator">|</span>
+          <span class="legend-item">
+            <v-chip
+              color="var(--color-soft-green)"
+              :ripple="false"
+              variant="outlined"
+              size="x-small"
+              prepend-icon="mdi-check"
+            >
+              N
+            </v-chip>
+            <span class="legend-text">
+              Checkers enabled
+            </span>
+          </span>
+          <span class="legend-item">
+            <v-chip
+              color="var(--color-soft-red)"
+              :ripple="false"
+              variant="outlined"
+              size="x-small"
+              prepend-icon="mdi-close"
+            >
+              N
+            </v-chip>
+            <span class="legend-text">
+              Checkers disabled
+            </span>
+          </span>
+        </span>
+      </div>
       <v-expansion-panels
         v-if="postProcessedAnalysisInfoReady &&
           analysisInfo.checkerInfoAvailability
@@ -261,6 +299,35 @@ async function getAnalysisInfo() {
 </script>
 
 <style lang="scss">
+.checker-statistics-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+.checker-count-legend {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+
+  .legend-separator {
+    color: rgba(0, 0, 0, 0.26);
+    user-select: none;
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .legend-text {
+    margin-left: 6px;
+    font-size: 0.875rem;
+  }
+}
+
 .analyze-command-container {
   max-height: 60vh;
   overflow-y: scroll;

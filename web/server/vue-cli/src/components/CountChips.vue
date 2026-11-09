@@ -55,7 +55,7 @@
         size="x-small"
         prepend-icon="mdi-minus"
       >
-        0
+        N/A
       </v-chip>
 
     </component>
