@@ -84,7 +84,7 @@
                   :simplify-showing-if-all="true"
                   :show-total="true"
                   :show-dividers="true"
-                  :show-zero-chips="false"
+                  :show-no-data-chips="false"
                 />
               </v-col>
             </v-row>

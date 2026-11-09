@@ -31,6 +31,7 @@
       >
         {{ numBad }}
       </v-chip>
+
       <v-chip
         v-if="props.numUnknown > 0 "
         color="var(--color-soft-orange)"
@@ -42,6 +43,19 @@
         @click="emit('showing-unknown-click')"
       >
         {{ numUnknown }}
+      </v-chip>
+
+      <v-chip
+        v-if="showNoDataChips && props.numGood === 0
+          && props.numBad === 0 && props.numUnknown === 0"
+        color="grey"
+        :ripple="false"
+        title="No information available"
+        variant="outlined"
+        size="x-small"
+        prepend-icon="mdi-minus"
+      >
+        0
       </v-chip>
 
     </component>
@@ -58,7 +72,7 @@ const props = defineProps({
   goodText: { type: String, default: "" },
   badText: { type: String, default: "" },
   unknownText: { type: String, default: "" },
-  showZeroChips: { type: Boolean, default: false },
+  showNoDataChips: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([ "showing-good-click",
