@@ -1,25 +1,44 @@
 <template>
   <v-app-bar
-    extension-height="24"
+    :extension-height="extensionHeight"
     color="primary"
     density="default"
   >
     <template
-      v-if="announcement && announcement.length"
+      v-if="serverDown || (announcement && announcement.length)"
       v-slot:extension
     >
-      <div
-        class="d-flex justify-center align-center w-100"
-        style="background-color: #ff9800; height: 24px; color: #573300;"
-      >
-        <v-icon
-          size="x-small"
+      <div class="d-flex flex-column w-100">
+        <div
+          v-if="serverDown"
+          class="d-flex justify-center align-center w-100"
+          style="background-color: #e53935; height: 24px; color: #ffffff;"
         >
-          mdi-bullhorn-outline
-        </v-icon>
-        <span class="font-weight-semibold ml-1 text-caption">
-          {{ announcement }}
-        </span>
+          <v-icon
+            size="x-small"
+          >
+            mdi-alert-outline
+          </v-icon>
+          <span class="font-weight-semibold ml-1 text-caption">
+            Unable to reach the server. Please wait a moment and refresh the
+            page to check whether it is back online.
+          </span>
+        </div>
+
+        <div
+          v-if="announcement && announcement.length"
+          class="d-flex justify-center align-center w-100"
+          style="background-color: #ff9800; height: 24px; color: #573300;"
+        >
+          <v-icon
+            size="x-small"
+          >
+            mdi-bullhorn-outline
+          </v-icon>
+          <span class="font-weight-semibold ml-1 text-caption">
+            {{ announcement }}
+          </span>
+        </div>
       </div>
     </template>
 
@@ -200,7 +219,16 @@ const queries = computed(() => store.getters.queries);
 const authParams = computed(() => store.getters.authParams);
 const isAuthenticated = computed(() => store.getters.isAuthenticated);
 const announcement = computed(() => store.getters.announcement);
+const serverDown = computed(() => store.getters.serverDown);
 const packageVersion = computed(() => store.getters.packageVersion);
+
+// Each stacked banner (server-down, announcement) is 24px tall.
+const extensionHeight = computed(() => {
+  let height = 0;
+  if (serverDown.value) height += 24;
+  if (announcement.value && announcement.value.length) height += 24;
+  return height;
+});
 const currentProduct = computed(() => store.getters.currentProduct);
 
 const currentProductDisplayName = computed(() => {
