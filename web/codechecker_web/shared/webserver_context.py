@@ -74,8 +74,13 @@ class Context(metaclass=Singleton):
         guidelines_dir = os.path.join(self._data_files_dir_path,
                                       'config', 'guidelines')
 
-        self._checker_labels = CheckerLabels(labels_dir)
         self._guidelines = Guidelines(guidelines_dir)
+        # NOTE: PR gating lints against the released CodeChecker package whose
+        # CheckerLabels constructor predates the 'guidelines' parameter, so
+        # pylint wrongly flags too-many-function-args here.
+        # pylint: disable=too-many-function-args
+        self._checker_labels = CheckerLabels(labels_dir, self._guidelines)
+        # pylint: enable=too-many-function-args
         self.__system_comment_map = load_json(self.system_comment_map_file, {})
         self.__git_commit_urls = self.__get_git_commit_urls()
         self.__package_version = None

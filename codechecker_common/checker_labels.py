@@ -7,8 +7,10 @@
 # -------------------------------------------------------------------------
 from collections import defaultdict
 import os
+
 from typing import Any, cast, Iterable
 
+from codechecker_common.guidelines import Guidelines
 from codechecker_common.util import load_json
 
 
@@ -43,10 +45,18 @@ class CheckerLabels:
         'blacklist': 'false',
         'description': ''}
 
-    def __init__(self, checker_labels_dir: str):
+    def __init__(
+        self,
+        checker_labels_dir: str,
+        guidelines: Guidelines
+    ):
         if not os.path.isdir(checker_labels_dir):
             raise NotADirectoryError(
                 f'{checker_labels_dir} is not a directory.')
+
+        # Used at loading time to resolve the "rule:<rule_id>" labels of the
+        # label files.
+        self.__guidelines = guidelines
 
         label_json_files: Iterable[str] = os.listdir(
             os.path.join(checker_labels_dir, 'analyzers'))
@@ -57,12 +67,52 @@ class CheckerLabels:
             self.__descriptions = load_json(os.path.join(
                 checker_labels_dir, 'descriptions.json'))
 
+        # Maps a profile to the profiles it contains, e.g.
+        # { "extreme": ["sensitive", "default"], "sensitive": ["default"] }.
+        self.__profile_containment = \
+            self.__descriptions.get('profile-containment', {})
+
         label_json_files = map(
             lambda f: os.path.join(checker_labels_dir, 'analyzers', f),
             label_json_files)
 
         self.__data = self.__union_label_files(label_json_files)
         self.__check_json_format(self.__data)
+
+        for checkers in self.__data.values():
+            for checker, labels in checkers.items():
+                checkers[checker] = self.__normalize_labels(labels)
+
+    def __normalize_labels(self, labels: list[str]) -> list[str]:
+        """
+        Convert the labels of a checker from the label file format:
+          - "rule:<rule_id>" is replaced by "guideline:<guideline>" and
+            "<guideline>:<rule_id>" for every guideline containing the rule.
+            A rule that is part of no guideline raises a ValueError.
+          - "profile:<profile>" is extended with every profile that contains
+            the given profile, e.g. "default" with "sensitive" and "extreme".
+        """
+        normalized: list[str] = []
+
+        for label in labels:
+            key, value = split_label_kv(label)
+
+            if key == 'rule':
+                guidelines = self.__guidelines.guidelines_of_rule(value)
+                if not guidelines:
+                    raise ValueError(
+                        f'Rule "{value}" is not part of any guideline.')
+                for guideline in guidelines:
+                    normalized.append(f'guideline:{guideline}')
+                    normalized.append(f'{guideline}:{value}')
+            elif key == 'profile':
+                normalized.extend(
+                    f'profile:{profile}'
+                    for profile in self.profiles_containing(value))
+            else:
+                normalized.append(label)
+
+        return list(dict.fromkeys(normalized))
 
     def __union_label_files(
         self,
@@ -154,6 +204,19 @@ class CheckerLabels:
         for a, c in self.__data.items():
             if analyzer is None or a == analyzer:
                 yield a, c
+
+    def profiles_containing(self, profile: str) -> list[str]:
+        """
+        Return the given profile and every profile that contains it, e.g.
+        "default" -> [default, sensitive, extreme].
+        """
+        result = [profile]
+
+        for container, contained in self.__profile_containment.items():
+            if profile in contained and container not in result:
+                result.append(container)
+
+        return result
 
     def get_analyzers(self) -> Iterable[str]:
         return self.__data.keys()
@@ -299,3 +362,15 @@ class CheckerLabels:
                         values.add(value)
 
         return list(values)
+
+    def all_guidelines(self) -> list[str]:
+        """
+        Return the ids of all existing guidelines.
+        """
+        return self.__guidelines.all_guidelines()
+
+    def rules_of_guideline(self, guideline: str) -> list[str]:
+        """
+        Return the rule ids that belong to the given guideline.
+        """
+        return list(self.__guidelines.rules_of_guideline(guideline))

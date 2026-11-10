@@ -200,15 +200,22 @@ def __guideline_to_label(
     "--label guideline:sei-cert-c" and "--guideline sei-cert-c:str38-c" is the
     same as "--label sei-cert-c:str38-c".
     """
-    guidelines = []
-    for analyzer in args.analyzers:
-        guidelines.extend(cl.occurring_values('guideline', analyzer))
-
-    if args.guideline in guidelines:
+    if args.guideline in cl.all_guidelines():
         return f'guideline:{args.guideline}'
     elif args.guideline.find(':') == -1:
         LOG.error('--guideline parameter is either <guideline> or '
                   '<guideline>:<rule>')
+        sys.exit(1)
+
+    guideline, rule = args.guideline.split(':', 1)
+
+    if guideline not in cl.all_guidelines():
+        LOG.error("The guideline '%s' does not exist.", guideline)
+        sys.exit(1)
+
+    if rule not in cl.rules_of_guideline(guideline):
+        LOG.error("The rule '%s' is not part of the guideline '%s'.",
+                  rule, guideline)
         sys.exit(1)
 
     return args.guideline
@@ -257,7 +264,8 @@ def __get_detailed_checker_info(
             profile_checkers.append((f'severity:{args.severity}', True))
 
         if 'guideline' in args:
-            profile_checkers.append((__guideline_to_label(args, cl), True))
+            profile_checkers.append(
+                (__guideline_to_label(args, cl), True))
 
         config_handler.initialize_checkers(checkers, profile_checkers)
 
@@ -322,9 +330,8 @@ def __print_guidelines(args: argparse.Namespace, cl: CheckerLabels):
         args.output_format = 'rows'
 
     result = {}
-
-    for guideline in cl.get_description('guideline'):
-        result[guideline] = set(cl.occurring_values(guideline))
+    for guideline in cl.all_guidelines():
+        result[guideline] = set(cl.rules_of_guideline(guideline))
 
     header = ['Guideline', 'Rules']
     if args.output_format in ['csv', 'json']:
