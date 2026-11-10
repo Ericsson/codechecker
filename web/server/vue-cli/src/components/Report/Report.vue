@@ -8,15 +8,15 @@
       class="ma-0"
     >
       <v-col
-        class="py-0"
-        :cols="editorCols"
+        class="editor-col py-0"
+        :cols="showAiPanel ? undefined : editorCols"
       >
         <v-container
           fluid
           class="pa-0 mb-2"
         >
           <v-row
-            class="ma-0"
+            class="report-toolbar ma-0"
           >
             <v-col
               cols="auto"
@@ -88,6 +88,29 @@
             </v-col>
 
             <v-spacer />
+
+            <v-col
+              cols="auto"
+              class="py-0 pr-0"
+              align-self="center"
+            >
+              <v-btn
+                class="explain-report-btn"
+                color="primary"
+                :variant="showAiPanel ? 'flat' : 'outlined'"
+                size="small"
+                :title="showAiPanel
+                  ? 'Hide the AI explanation panel'
+                  : 'Explain this report with AI'"
+                :disabled="!report || loading"
+                @click="showAiPanel = !showAiPanel"
+              >
+                <v-icon class="mr-1" size="small">
+                  mdi-lightbulb-on-outline
+                </v-icon>
+                Explain
+              </v-btn>
+            </v-col>
 
             <v-col
               cols="auto"
@@ -240,6 +263,25 @@
         </v-container>
       </v-col>
       <v-col
+        v-if="showAiPanel"
+        class="ai-panel-col pa-0"
+        cols="auto"
+        :style="{ width: aiWidth + 'px' }"
+      >
+        <div
+          class="ai-panel-resizer"
+          :class="{ dragging: resizing }"
+          title="Drag to resize"
+          @mousedown.prevent="startResize"
+        />
+        <ai-explanation-panel
+          v-fill-height
+          :report-id="report?.reportId"
+          @close="showAiPanel = false"
+          @go-to-line="goToReportLine"
+        />
+      </v-col>
+      <v-col
         v-if="showComments"
         class="pa-0"
         :cols="commentCols"
@@ -320,6 +362,7 @@ import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 
 import { useGitBlame } from "@/composables/useGitBlame";
+import { AiExplanationPanel } from "./AiExplanation";
 import { ReportComments } from "./Comment";
 import ToggleBlameViewBtn from "./Git/ToggleBlameViewBtn";
 import { ShowReportInfoDialog } from "./ReportInfo";
@@ -355,6 +398,14 @@ const numOfComments = ref(0);
 const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
+const showAiPanel = ref(false);
+
+// Width of the explanation panel, dragged by its left edge. The bounds keep
+// it readable without letting it crowd out the source view.
+const AI_MIN_WIDTH = 320;
+const AI_MAX_WIDTH = 900;
+const aiWidth = ref(460);
+const resizing = ref(false);
 const loading = ref(true);
 const bus = mitt();
 const selectedChecker = ref(null);
@@ -438,10 +489,9 @@ const lineWidgetField = context => {
 
 const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
-const editorCols = computed(() => {
-  const maxCols = 12;
-  return showComments.value ? maxCols - commentCols.value : maxCols;
-});
+const editorCols = computed(() =>
+  showComments.value ? 12 - commentCols.value : 12
+);
 const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
 );
@@ -608,6 +658,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  stopResize();
   document.removeEventListener("keydown", findText);
 });
 
@@ -1029,6 +1080,21 @@ function highlightRange(_from, _to) {
     });
 }
 
+// A line the AI explanation refers to. The model only saw the report's own
+// file, so show that one if a bug path step in another file is open.
+async function goToReportLine(line) {
+  if (!report.value) return;
+
+  if (!sourceFile.value?.fileId.equals(report.value.fileId)) {
+    await setSourceFileData(report.value.fileId);
+    await drawBugPath();
+  }
+
+  if (line < 1 || line > editor.value.state.doc.lines) return;
+
+  jumpTo(line, 0);
+}
+
 function jumpTo(line, column) {
   const position = editor.value.state.doc.line(line).from + column;
   editor.value.dispatch({
@@ -1052,6 +1118,24 @@ function confirmReviewStatusChange(comment, status, author) {
     }));
 }
 
+function startResize() {
+  resizing.value = true;
+  window.addEventListener("mousemove", onResize);
+  window.addEventListener("mouseup", stopResize, { once: true });
+}
+
+function onResize(event) {
+  // The panel is anchored to the right, so its width grows as the pointer
+  // moves left.
+  const width = window.innerWidth - event.clientX;
+  aiWidth.value = Math.min(AI_MAX_WIDTH, Math.max(AI_MIN_WIDTH, width));
+}
+
+function stopResize() {
+  resizing.value = false;
+  window.removeEventListener("mousemove", onResize);
+}
+
 function truncate(text, length) {
   if (!text) return "";
   if (text.length <= length) return text;
@@ -1060,6 +1144,49 @@ function truncate(text, length) {
 </script>
 
 <style lang="scss">
+.editor-col {
+  min-width: 0;
+}
+
+.ai-panel-col {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.ai-panel-resizer {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+
+  &:hover,
+  &.dragging {
+    background: rgb(var(--v-theme-primary));
+    opacity: 0.35;
+  }
+}
+
+/* Reflow rather than push the right hand group out of reach when the
+   side panels narrow this column: the spacer gives up its width first. */
+.report-toolbar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  min-width: 0;
+
+  .v-spacer {
+    flex-basis: 0;
+    min-width: 0;
+  }
+
+  > .v-col {
+    min-width: 0;
+  }
+}
+
 #editor {
   width: 100%;
   height: 100%;
