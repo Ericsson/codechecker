@@ -255,6 +255,20 @@ function checker_stat(stat) {
 function downloadCSV() {
   const _values = [];
   statistics.value.forEach(stat => {
+    if (!stat.checkers.length) {
+      _values.push([
+        stat.guidelineName,
+        stat.guidelineRule,
+        stat.guidelineRuleTitle,
+        "none",
+        "",
+        "",
+        "",
+        ""
+      ]);
+      return;
+    }
+
     stat.checkers.forEach(checker => {
       const _value = [
         stat.guidelineName,
