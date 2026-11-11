@@ -16,12 +16,15 @@ import plistlib
 import traceback
 import sys
 
+
 from plistlib import _PlistParser  # type: ignore
 from typing import Any, BinaryIO, Callable
 
 from xml.parsers.expat import ExpatError
 import lxml
 
+
+from codechecker_report_converter.util import resolve_path
 from codechecker_report_converter.report import \
     BugPathEvent, BugPathPosition, \
     File, \
@@ -177,7 +180,7 @@ def get_file_index_map(
     file_index_map: dict[int, File] = {}
 
     for i, orig_file_path in enumerate(plist.get('files', [])):
-        file_path = os.path.normpath(os.path.join(
+        file_path = resolve_path(os.path.join(
             source_dir_path, orig_file_path))
         file_index_map[i] = get_or_create_file(file_path, file_cache)
 
