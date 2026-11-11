@@ -40,6 +40,8 @@ class EnvVarTest(unittest.TestCase):
         # Reset the environment, and some some initializer methods to hopefully
         # reset the state of the analyzer context.
         context = analyzer_context.get_context()
+        context.cc_env.pop("CC_ANALYZERS_FROM_PATH", None)
+        context.cc_env.pop("CC_ANALYZER_BIN", None)
         context._Context__populate_analyzers()
 
     def _get_analyzer_bin_for_cc_analyzer_bin(self, analyzer_bin_conf: str):
@@ -137,6 +139,8 @@ class EnvVarTest(unittest.TestCase):
         context = analyzer_context.get_context()
         context._data_files_dir_path = data_files_dir
 
+        context.cc_env.pop("CC_ANALYZERS_FROM_PATH", None)
+
         lcfg_dict = context._Context__get_package_layout()
         context._data_files_dir_path = data_files_dir
         context.pckg_layout = lcfg_dict['runtime']
@@ -148,6 +152,7 @@ class EnvVarTest(unittest.TestCase):
         clang_env = context.get_env_for_bin(
             context.analyzer_binaries["clangsa"])
         env_txt = str(clang_env)
+
         self.assertTrue(env_txt.find("internal_package_lib") != -1)
 
         # clang-tidy is not part of the codechecker package
