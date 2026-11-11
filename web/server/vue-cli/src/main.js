@@ -38,6 +38,7 @@ import {
   SET_QUERIES
 } from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
+import getLoginRedirect from "./router/login-redirect";
 
 import fromUnixTime from "./filters/from-unix-time";
 import prettifyDate from "./filters/prettify-date";
@@ -79,6 +80,10 @@ router.beforeResolve((to, from, next) => {
   }
 
   store.dispatch(GET_AUTH_PARAMS).then(() => {
+    const loginRedirect = getLoginRedirect(to, store.getters.authParams);
+    if (loginRedirect)
+      return next(loginRedirect);
+
     if (to.matched.some(record => record.meta.requiresAuth)) {
       if (store.getters.authParams.requiresAuthentication &&
         (!store.getters.authParams.sessionStillActive ||
