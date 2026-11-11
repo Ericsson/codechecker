@@ -352,3 +352,25 @@ class TestCmdline(unittest.TestCase):
         _, _, err = run_cmd(cmd)
 
         self.assertNotIn("Checker option in wrong format", err)
+
+    def test_flag_prefix(self):
+        """
+        Test if flag enabling through prefixing is declined.
+        """
+        test_file = os.path.join(self.test_workspace, 'main.cpp')
+
+        with open(test_file, 'w', encoding="utf-8", errors="ignore") as f:
+            f.write("int main() {}")
+
+        cmd = [env.codechecker_cmd(), 'check', '--z3', 'off',
+               '-b', f'g++ {test_file}']
+
+        return_code, _, err = run_cmd(cmd)
+        self.assertEqual(return_code, 1)
+        self.assertIn("error: unrecognized arguments: --z3", err)
+
+        cmd = [env.codechecker_cmd(), 'check', '--z3-refutation', 'on',
+               '-b', f'g++ {test_file}']
+
+        return_code, _, err = run_cmd(cmd)
+        self.assertNotIn("error: unrecognized arguments: --z3-refutation", err)
