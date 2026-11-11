@@ -119,6 +119,9 @@
       "json",
       "vue"
     ],
+    "modulePaths": [
+      "<rootDir>/node_modules"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "@cc/report-server-types": "<rootDir>/../../../codechecker_api/js/report_server_types.js",
