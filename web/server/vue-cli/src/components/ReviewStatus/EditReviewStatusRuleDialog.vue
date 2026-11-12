@@ -26,6 +26,7 @@
           class="mb-2"
           label="Select review status*"
           :clearable="false"
+          :exclude-unreviewed="true"
           :rules="rules.selectReviewStatus"
         />
 
