@@ -121,6 +121,47 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(build_action.target, 'aarch64-linux-gnu')
 
+    def test_keep_symlink_flag(self):
+        """
+        The source path resolution is toggleable via the keep_symlink flag.
+
+        By default (keep_symlink=False) symbolic links in the source path
+        are resolved to their real path. When keep_symlink=True the symlink
+        is preserved (only the path is made absolute).
+        """
+        tmp_dir = tempfile.mkdtemp()
+        try:
+            real_dir = os.path.join(tmp_dir, "real")
+            os.makedirs(real_dir)
+            real_file = os.path.join(real_dir, "main.cpp")
+            with open(real_file, "w", encoding="utf-8") as f:
+                f.write("int main() { return 0; }")
+
+            link_dir = os.path.join(tmp_dir, "link")
+            try:
+                os.symlink(real_dir, link_dir)
+            except (OSError, NotImplementedError):
+                self.skipTest("Symlinks are not supported on this platform.")
+
+            entry = {
+                'file': 'main.cpp',
+                'command': 'g++ -c main.cpp',
+                'directory': link_dir}
+
+            # Default behaviour: symlink is resolved.
+            default_action = log_parser.parse_options(entry)
+            self.assertEqual(
+                default_action.source,
+                os.path.join(os.path.realpath(real_dir), 'main.cpp'))
+
+            # keep_symlink=True: symlink is preserved.
+            kept_action = log_parser.parse_options(entry, keep_symlink=True)
+            self.assertEqual(
+                kept_action.source,
+                os.path.join(link_dir, 'main.cpp'))
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
     def test_new_ldlogger(self):
         """
         Test log file parsing escape behaviour with after-#631 LD-LOGGER.
