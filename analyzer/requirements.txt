@@ -10,7 +10,6 @@ portalocker~=3.0
 psutil~=7.0
 PyYAML~=6.0
 types-PyYAML~=6.0
-sarif-tools~=3.0
 multiprocess~=0.70
 setuptools~=80.0
 types-setuptools~=80.0
