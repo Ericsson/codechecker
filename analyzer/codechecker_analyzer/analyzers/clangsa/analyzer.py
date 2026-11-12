@@ -47,6 +47,7 @@ def clang_command_output(command: list[str]) -> str:
     """
     return subprocess.check_output(
         command,
+        stdin=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
         env=analyzer_context.get_context().get_env_for_bin(command[0]),
         universal_newlines=True,
