@@ -118,14 +118,15 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - exactly 64 characters, lowercase hex digits only (`^[0-9a-f]{64}$`), i.e. a sha256 hex digest
 - `contents` (writeCache):
   - not empty
-  - at most `max_files_per_entry` entries (server config, default: 16)
+  - at most `max_files_per_entry` entries (server config, default: 3, matching the three fixed file roles `result.plist`, `stdout.txt`, `stderr.txt`)
+  - there is no separate limit for the total request size; the worst case size of a writeCache request is `max_files_per_entry` × `max_content_size` (default: 3 × 20 MiB = 60 MiB), so the two limits together bound the request size
   - the `filename` values are unique within the request
 - `filename`:
   - matches `^[A-Za-z0-9._-]{1,255}$` (a plain basename: no path separators `/` or `\`, no whitespace or control characters)
   - not `.` or `..`
 - `content`:
   - valid base64 (strict decoding, invalid characters are rejected)
-  - the server does not decompress the content and does not verify the decompressed size; it only limits the size of the received (encoded) content: at most `max_file_size` per file (server config, default: 20 MiB) and at most `max_entry_size` for all files of the request (server config, default: 50 MiB)
+  - the server does not decompress the content and does not verify the decompressed size; it only limits the raw size of every uploaded `content` string, as it was received from the user (the base64(zlib()) encoded form): at most `max_content_size` bytes per `CacheContent` (server config, default: 20 MiB)
 - `ActionResult` read from bazel-remote (readCache): it is validated with the same `filename` rules and digest format (64 hex characters) as the writeCache input; an invalid entry is handled as a cache miss
 - decompression is the client's responsibility, the client validates the readCache response:
   - it accepts only the expected file roles (result file, stdout, stderr)
@@ -139,7 +140,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - bazel-remote user
   - bazel-remote password file
   - cache timeout: timeout of the cache connect+read/write
-  - input validation limits: `max_files_per_entry`, `max_file_size`, `max_entry_size`
+  - input validation limits: `max_files_per_entry`, `max_content_size`
 - the configuration block in `server_config.json` (with the default values):
   ```json
   "analysis_cache": {
@@ -147,14 +148,13 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
     "user": null,
     "password_file": null,
     "timeout": 30,
-    "max_files_per_entry": 16,
-    "max_file_size": 20971520,
-    "max_entry_size": 52428800
+    "max_files_per_entry": 3,
+    "max_content_size": 20971520
   }
   ```
   - `user` / `password_file`: optional basic authentication; the password is read from the file, it is not stored in `server_config.json`
   - `timeout`: seconds, used for connect and read/write of every bazel-remote request
-  - `max_file_size`, `max_entry_size`: bytes, limits of the encoded content (see Input validation)
+  - `max_content_size`: bytes, the limit of the raw size of one uploaded `content` (see Input validation)
 - if the `analysis_cache` block is missing (or has no `url`), the cache is not configured: writeCache and readCache throw `RequestFailed` (`ErrorCode.GENERAL`, message `analysis cache is not configured`); the client handles it as a cache miss and continues the analysis
 - HTTPS certificate verification uses the system CA bundle (see Future work for custom CA support)
 
@@ -173,9 +173,11 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - cache miss:
     - run the analysis as before (`source_analyzer.analyze()`)
     - if the analyzer return code is 0 (and the analysis did not time out), read the raw result file (`rh.analyzer_result_file`) and the analyzer stdout/stderr immediately after `analyze()` returns, before `post_analyze()` is called
+    - replace the source root with `__SOURCE_ROOT__` in the raw result file (plist) (see source root replacement)
     - store these raw outputs into the cache with writeCache
     - continue with the unchanged post-processing path (`post_analyze()` → `handle_success()`)
   - cache hit:
+    - replace `__SOURCE_ROOT__` back with the user defined source root in the cached plist
     - write the cached raw result file to `rh.analyzer_result_file`
     - set `rh.analyzer_cmd` to the constructed analyzer command, `rh.analyzer_returncode = 0`, and `rh.analyzer_stdout` / `rh.analyzer_stderr` from the cached content
     - skip the analyzer invocation and continue with the same post-processing path as a successful analysis (`post_analyze()` → `handle_success()`), so the current run's checker, skip, review status and report hash settings are applied to the cached result
@@ -196,30 +198,53 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
 - client side limits and timeouts:
   - decompressed size limit: 20 MiB per file (zip bomb protection, see Input validation)
   - AnalysisCache API timeout: 5 s connect, 30 s read
-- the preprocessed_source_key and the analyzer_binary_key should be computed by a central CodeChecker library which can be accessed by all analyzer plugins.
-- The analysis_invocation_key should be calculated locally in the analyzer plugin.
-- In case of clang static analyzer, the analysis_invocation_key should be (analysis invocation string) eg ("/usr/bin/clang --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o /workspace/test-projects/tinyxml2/reports/xmltest.cpp_clangsa_3e85aaf332fe01343c3163ef26e631f7.plist -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,core")
+- the `preprocessed_source_key` and the `analyzer_binary_key` should be computed by a central CodeChecker library which can be accessed by all analyzer plugins.
+- The `analysis_invocation_key` should be calculated locally in the analyzer plugin.
+- In case of clang static analyzer, the `analysis_invocation_key` should be (analysis invocation string) eg ("/usr/bin/clang --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o /workspace/test-projects/tinyxml2/reports/xmltest.cpp_clangsa_3e85aaf332fe01343c3163ef26e631f7.plist -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,core")
   - the invocation string is `shlex.join()` of the analyzer command list (with the `-o` value replaced, see below), so the quoting of the arguments is unambiguous
-- in this first prototype we don't want to rewrite the absolute paths to relative paths. we will handle that in a later iteration.
-- the output file path must be removed from the analysis_invocation_key
+- in this first prototype only the source root directory (`--source-root`, see below) is made location independent; other absolute paths are not rewritten. we will handle that in a later iteration.
+- the output file path must be removed from the `analysis_invocation_key`
   - the `-o <result file>` argument is an output location, not an analysis input; it contains the report directory, so different report directories (users, CI workspaces) would otherwise never get a cache hit, even for identical analyses
-  - when computing the analysis_invocation_key, replace the value of the `-o` argument with a fixed placeholder (e.g. `-o <OUTPUT>`); the real command line used for the analysis is not changed
-  - this is not path rewriting: all other absolute paths (source file, include paths, etc.) remain in the key unchanged
-- the analyzer_binary_key is computed from the analyzer version, not from the binary file
-  - analyzer_binary_key = sha256(<full output of `<analyzer binary> --version`>)
+  - when computing the `analysis_invocation_key`, replace the value of the `-o` argument with a fixed placeholder (e.g. `-o <OUTPUT>`); the real command line used for the analysis is not changed
+  - this is not path rewriting: all other absolute paths (source file, include paths, etc.) remain in the key unchanged (except the paths under the source root, see below)
+- source root replacement (`--source-root`)
+  - new parameter of `CodeChecker analyze` and `CodeChecker check`: `--source-root <dir>`; it specifies the directory where the analyzed source code is located (e.g. the root of the repository checkout)
+    - the value must be an existing directory, otherwise the command stops with an error before the analysis starts
+    - the value is normalized to an absolute path without a trailing path separator (`os.path.abspath()`); symbolic links are not resolved, the source root is replaced in the form given by the user
+    - `--source-root` is mandatory if caching is used, i.e. if `--url` is given (and caching is not switched off with `--no-cache`); if it is missing, the command stops with an error before the analysis starts
+    - without caching (no `--url`, or `--no-cache`) the parameter is not required; if it is given, it is ignored
+  - purpose: the same source code checked out into different directories (users, CI workspaces) gets the same cache key, and a cached result can be reused at another location
+  - the replacement: every occurrence of the source root path is replaced with the fixed string `__SOURCE_ROOT__`
+    - only whole path prefixes are replaced: the source root must be followed by a path separator, a quote, whitespace or the end of the string (e.g. with source root `/work/src`, `/work/src/a.cpp` → `__SOURCE_ROOT__/a.cpp`, but `/work/src2/a.cpp` is not changed)
+    - the source root itself is not part of the cache key
+  - the replacement is applied in these places:
+    1. `analysis_invocation_key`: in the analyzer command (after the `-o` placeholder rule), e.g. `-I/workspace/test-projects/tinyxml2` → `-I__SOURCE_ROOT__` and `/workspace/test-projects/tinyxml2/xmltest.cpp` → `__SOURCE_ROOT__/xmltest.cpp` with `--source-root /workspace/test-projects/tinyxml2`
+    2. `preprocessed_source_key`: in the preprocessed output before hashing (e.g. the line markers `# 1 "__SOURCE_ROOT__/xmltest.cpp"` and the expansions of `__FILE__`)
+    3. cached content, before writeCache: in the raw result file (plist) only; the cached analyzer stdout and stderr are stored unchanged
+       - in the plist the source root is matched in its XML escaped form (e.g. `&` → `&amp;`), as it appears in the file
+       - the placeholder `__SOURCE_ROOT__` contains no XML special characters, so the stored plist stays a valid XML file
+       - limitation: a literal `__SOURCE_ROOT__` string in the original plist would also be replaced on restore; this is accepted, as such a string is not expected in analyzer results
+  - restore on cache hit: after readCache and decompression, every `__SOURCE_ROOT__` string in the plist is replaced back with the user defined source root (XML escaped in the plist) of the current run; then the processing continues as described in "cache hit" (the restored plist is written to `rh.analyzer_result_file`, then `post_analyze()` → `handle_success()`)
+  - consequence: a cache hit at another location returns a result which refers to the files of the current location, if the project layout under the source root is the same
+  - limitation: paths outside the source root are not replaced (e.g. system headers, an out of source build directory with generated headers); they remain location dependent, so they can only cause cache misses, not wrong results
+  - the replacement and the restore functions are implemented in the central cache library, so that every analyzer plugin uses the same implementation
+- the `analyzer_binary_key` is computed from the analyzer version, not from the binary file
+  - `analyzer_binary_key` = sha256(<full output of `<analyzer binary> --version`>)
   - the configured analyzer binary can be a compiler wrapper (e.g. `/usr/lib/ccache/clang` → ccache); hashing the binary file would identify the wrapper instead of clang, while `--version` is forwarded by the wrapper to the real clang, so it identifies the real analyzer
   - the full `--version` output is used (not only the version number), because it also contains the vendor, the source revision and the default target
-  - the analyzer_binary_key is computed only once per `CodeChecker analyze` run in the main process and passed to the analysis worker processes
-- the preprocessed_source_key is computed from the output of a dedicated preprocessor command
+  - the `analyzer_binary_key` is computed only once per `CodeChecker analyze` run in the main process and passed to the analysis worker processes
+- the `preprocessed_source_key` is computed from the output of a dedicated preprocessor command
   - the ClangSA plugin provides a separate `construct_preprocess_cmd()` method next to `construct_analyzer_cmd()`, built from the same parts of the analyzer command which influence preprocessing:
     - analyzer binary, `-E`, `-x <language>`, `-arch` (if any), analyzer extra arguments, the build action's analyzer options (defines, include paths, etc.), `--target`, `-std`, the compiler implicit include directories (`-idirafter` / `-isystem`), and the source file
   - not included: `--analyze`, the `-Xclang -analyzer-*` options, plugin loading options and the `-o <result file>` argument; the preprocessed output is streamed into the hash, it is not written to a file
+  - the source root is replaced with `__SOURCE_ROOT__` in the preprocessed output before it is hashed (see source root replacement)
   - the preprocessor command must run in the same working directory (`buildaction.directory`) and with the same environment as the analyzer command, otherwise relative include paths and environment variables (e.g. `CPATH`) could produce a different preprocessed output
   - preprocessing runs before every cache lookup, so it also adds to the runtime on cache hits; its overhead should be measured on a reference project
   - if preprocessing fails, the action is analyzed without the cache (no readCache, no writeCache)
 - CodeChecker analyze command line arguments must be extended with an optional --url parameter. The url must contain a codechecker server product endpoint which will be used for accessing the AnalysisCache api. e.g https://codechecker.gic.ericsson.se/Test
 - add also --no-cache parameter which switches off the caching. By specifying --url caching is automatically turned on.
   - both `--url` and `--no-cache` are added to `CodeChecker analyze` (`analyzer/codechecker_analyzer/cli/analyze.py`) and to `CodeChecker check` (`analyzer/codechecker_analyzer/cli/check.py`), which forwards them to the analysis
+- add also the `--source-root <dir>` parameter to `CodeChecker analyze` and `CodeChecker check`; it is mandatory if `--url` is given (see source root replacement)
 - after each analysis print a small statistics about how many analysis actions were successfully fetched from the cache
   - `check()` in `analysis_manager.py` returns a tuple which is unpacked by `worker_result_handler()`; it is extended with a `cache_hit` field, also in the exception path of `check()`
   - `worker_result_handler()` counts the cache hits, and prints them in the summary, e.g. `Fetched from analysis cache: 42 / 50`
