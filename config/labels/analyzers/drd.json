@@ -1,0 +1,23 @@
+{
+  "analyzer": "drd",
+  "labels": {
+    "DRD.BarrierErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.CondDestrErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.CondErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.CondRaceErr": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.CondWaitErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.ConflictingAccess": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.data-races"],
+    "DRD.FatalSignal": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#manual-core.signals"],
+    "DRD.FdBadClose": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "DRD.FdBadUse": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "DRD.FdNotClosed": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "DRD.GenericErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.overview"],
+    "DRD.HoldtimeErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.lock-contention"],
+    "DRD.InvalidThreadId": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.MutexErr": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.RwlockErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.SemaphoreErr": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.api-checks"],
+    "DRD.UnimpDrdClReq": ["severity:UNSPECIFIED", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.clientreqs"],
+    "DRD.UnimpHgClReq": ["severity:UNSPECIFIED", "doc_url:https://valgrind.org/docs/manual/drd-manual.html#drd-manual.clientreqs"]
+  }
+}
