@@ -30,8 +30,8 @@ typedef list<CacheContent> CacheContents
 service AnalysisCache {
 
   // Store the given files for the given analysis key.
-  // Returns true if the files were stored.
-  bool writeCache(1: string        key,
+  // Throws RequestFailed if the files could not be stored.
+  void writeCache(1: string        key,
                   2: CacheContents contents)
                   throws (1: shared.RequestFailed requestError),
 
@@ -42,7 +42,7 @@ service AnalysisCache {
 }
 ```
 
-- the file content is transferred as `base64(zlib(file bytes))`, the same encoding as the one used by `massStoreRun`; plist result files compress well (typically 5-10x), so this keeps the request size of large (up to 10 MB) result files small
+- the file content is transferred as `base64(zlib(file bytes))`, the same encoding as the one used by `massStoreRun`; plist result files compress well (typically 5-10x), so this keeps the request size of large result files small (for the size limits see Input validation)
 
 ### Integration of the new endpoint
 - `web/server/codechecker_server/server.py` (`RequestHandler.do_POST`): add a dispatch branch for the `AnalysisCache` request endpoint, which requires a product route (raise `ProductNotFoundError` if there is no product, like `CodeCheckerService`), and creates the new handler with `AnalysisCache_v6.Processor`
@@ -101,7 +101,7 @@ service AnalysisCache {
 2. compute the sha256 digest and size of every encoded file content
 3. upload every encoded file content into the CAS
 4. only after all CAS uploads succeeded, upload the `ActionResult` into the AC with the ac_key; this order makes sure that an AC entry never refers to a missing CAS blob at the time of writing
-5. return true if all uploads succeeded; if the bazel-remote backend is not available or returns an error, throw `RequestFailed` (`ErrorCode.IOERROR`)
+5. writeCache has no return value: it returns normally if all uploads succeeded; on any failure it throws `RequestFailed`: `ErrorCode.GENERAL` for invalid input (see Input validation), `ErrorCode.IOERROR` if the bazel-remote backend is not available or returns an error
 
 ### readCache(analysis_key)
 1. validate the analysis_key (see Input validation)
@@ -128,10 +128,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - valid base64 (strict decoding, invalid characters are rejected)
   - the server does not decompress the content and does not verify the decompressed size; it only limits the raw size of every uploaded `content` string, as it was received from the user (the base64(zlib()) encoded form): at most `max_content_size` bytes per `CacheContent` (server config, default: 20 MiB)
 - `ActionResult` read from bazel-remote (readCache): it is validated with the same `filename` rules and digest format (64 hex characters) as the writeCache input; an invalid entry is handled as a cache miss
-- decompression is the client's responsibility, the client validates the readCache response:
-  - it accepts only the expected file roles (result file, stdout, stderr)
-  - it decodes the base64 content, and decompresses the zlib stream incrementally with an output size limit (`zlib.decompressobj().decompress(data, max_length)`), so a highly compressed input (zip bomb) is rejected before it is fully decompressed into memory; a response exceeding the limit is handled as a cache miss
-  - it writes the cached result only into the report directory, to its own computed output path (see the client side implementation)
+- decompression is the client's responsibility: the client side validation of the readCache response (file roles, decompression size limit, path traversal protection) is described in the client side implementation
 
 ### Server configuration
 - the codechecker server should connect to the bazel-remote with http or with https with optional basic authentication
@@ -159,11 +156,11 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
 - HTTPS certificate verification uses the system CA bundle (see Future work for custom CA support)
 
 
-## Specification of the Client side implementation:
+## Specification of the Client side implementation
 - add the analysis cache access before the clang static analyzer analysis invocation in codechecker
 - analysis cache workflow
-  - before the analysis invocation check wether the analysis is cached by the readCache() function
-  - if there was a cache hit, write out the returned files to the same location as the original analysis invocation would have written
+  - before the analysis invocation check whether the analysis is cached by the readCache() function
+  - if there was a cache hit, write the returned result file (plist) to the location where the analysis would have written it, and use the returned stdout/stderr in the result handler (see cache hit below)
   - if there is a cache miss, execute the analysis and in case of successful analysis store the output into the cache using the writeCache thrift function
 - cache the raw analyzer output, not the post-processed result
   - after the analyzer run, CodeChecker modifies the result file depending on settings which are not part of the cache key:
@@ -181,32 +178,38 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
     - write the cached raw result file to `rh.analyzer_result_file`
     - set `rh.analyzer_cmd` to the constructed analyzer command, `rh.analyzer_returncode = 0`, and `rh.analyzer_stdout` / `rh.analyzer_stderr` from the cached content
     - skip the analyzer invocation and continue with the same post-processing path as a successful analysis (`post_analyze()` → `handle_success()`), so the current run's checker, skip, review status and report hash settings are applied to the cached result
-  - the client must write the cached result only to its own computed output path (`rh.analyzer_result_file`); the files returned by the server are identified by their role (result file, stdout, stderr), the server-provided filename must not be used as a file system path
+  - the returned files are identified by their role names (see file roles below); writing them is restricted by the path traversal protection (see below)
 - protection against local path traversal: cached content may be written only into the report directory (the `--output` directory of `CodeChecker analyze`)
   - the cache content is never written to a path derived from server provided data; the target path is always computed locally (`rh.analyzer_result_file`)
   - before writing, the target path is resolved with `os.path.realpath()` and must be inside the resolved report directory (`os.path.commonpath([real_target, real_report_dir]) == real_report_dir`); otherwise the entry is not written, and it is handled as a cache miss with a warning
   - the target file must not be a symbolic link (an existing symlink in the report directory could point outside of it); the file is first written to a temporary file in the report directory, and then moved to the target path with `os.replace()`, which replaces the symlink itself and does not follow it
   - cached stdout / stderr are not written to files directly; they are set into the result handler (`rh.analyzer_stdout`, `rh.analyzer_stderr`) and written by the existing post-processing code (e.g. `--capture-analysis-output`), into the report directory
 - the client side checks are implemented in the central cache library, so that every analyzer plugin uses the same protection
-- in the readCache, writeCache operations use this key: `analysis_id_key = sha256("v1:" + analysis_invocation_key + ":" + preprocessed_source_key + ":" + analyzer_binary_key)`
+- in the readCache, writeCache operations use this key (the `analysis_key`, i.e. the `key` parameter of the API): `analysis_key = sha256("v1:" + analysis_invocation_key + ":" + preprocessed_source_key + ":" + analyzer_binary_key)`
   - `v1` is the version of the cache entry format; bumping it invalidates all existing entries (e.g. if the format of the cached content changes), as the API has no delete operation
 - the files of a cache entry are identified by fixed role names in `CacheContent.filename`:
   - `result.plist`: the raw analyzer result file
   - `stdout.txt`: the analyzer stdout
   - `stderr.txt`: the analyzer stderr
   - on readCache, the client ignores any other filename; an entry without `result.plist` is a cache miss
+  - the server provided filename is used only to identify the role, it is never used as a file system path
 - client side limits and timeouts:
-  - decompressed size limit: 20 MiB per file (zip bomb protection, see Input validation)
+  - decompressed size limit: 20 MiB per file (zip bomb protection): the client decodes the base64 content, and decompresses the zlib stream incrementally with an output size limit (`zlib.decompressobj().decompress(data, max_length)`), so a highly compressed input is rejected before it is fully decompressed into memory; a response exceeding the limit is handled as a cache miss
   - AnalysisCache API timeout: 5 s connect, 30 s read
 - the `preprocessed_source_key` and the `analyzer_binary_key` should be computed by a central CodeChecker library which can be accessed by all analyzer plugins.
 - The `analysis_invocation_key` should be calculated locally in the analyzer plugin.
-- In case of clang static analyzer, the `analysis_invocation_key` should be (analysis invocation string) eg ("/usr/bin/clang --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o /workspace/test-projects/tinyxml2/reports/xmltest.cpp_clangsa_3e85aaf332fe01343c3163ef26e631f7.plist -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,core")
-  - the invocation string is `shlex.join()` of the analyzer command list (with the `-o` value replaced, see below), so the quoting of the arguments is unambiguous
+- In case of clang static analyzer, the `analysis_invocation_key` is the sanitized analysis invocation string, e.g. with `--source-root /workspace/test-projects/tinyxml2`:
+  ```
+  <ANALYZER> --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o <OUTPUT> -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,... -x c++ -DTINYXML2_IMPORT -D_FILE_OFFSET_BITS=64 -I__SOURCE_ROOT__ ... -idirafter /usr/include __SOURCE_ROOT__/xmltest.cpp
+  ```
+  - the invocation string is `shlex.join()` of the analyzer command list, after the `<ANALYZER>` and `-o` placeholder rules and the source root replacement (see below), so the quoting of the arguments is unambiguous
 - in this first prototype only the source root directory (`--source-root`, see below) is made location independent; other absolute paths are not rewritten. we will handle that in a later iteration.
+- the analyzer binary path must be removed from the `analysis_invocation_key`
+  - the first argument of the analyzer command (the analyzer binary, e.g. `/usr/lib/ccache/clang` or `/usr/bin/clang`) is replaced with the fixed placeholder `<ANALYZER>`; the real command line used for the analysis is not changed
+  - the identity of the analyzer is already in the `analyzer_binary_key`, so the installation path of the analyzer (or the use of a compiler wrapper) does not prevent cache sharing between machines
 - the output file path must be removed from the `analysis_invocation_key`
   - the `-o <result file>` argument is an output location, not an analysis input; it contains the report directory, so different report directories (users, CI workspaces) would otherwise never get a cache hit, even for identical analyses
   - when computing the `analysis_invocation_key`, replace the value of the `-o` argument with a fixed placeholder (e.g. `-o <OUTPUT>`); the real command line used for the analysis is not changed
-  - this is not path rewriting: all other absolute paths (source file, include paths, etc.) remain in the key unchanged (except the paths under the source root, see below)
 - source root replacement (`--source-root`)
   - new parameter of `CodeChecker analyze` and `CodeChecker check`: `--source-root <dir>`; it specifies the directory where the analyzed source code is located (e.g. the root of the repository checkout)
     - the value must be an existing directory, otherwise the command stops with an error before the analysis starts
@@ -218,7 +221,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
     - only whole path prefixes are replaced: the source root must be followed by a path separator, a quote, whitespace or the end of the string (e.g. with source root `/work/src`, `/work/src/a.cpp` → `__SOURCE_ROOT__/a.cpp`, but `/work/src2/a.cpp` is not changed)
     - the source root itself is not part of the cache key
   - the replacement is applied in these places:
-    1. `analysis_invocation_key`: in the analyzer command (after the `-o` placeholder rule), e.g. `-I/workspace/test-projects/tinyxml2` → `-I__SOURCE_ROOT__` and `/workspace/test-projects/tinyxml2/xmltest.cpp` → `__SOURCE_ROOT__/xmltest.cpp` with `--source-root /workspace/test-projects/tinyxml2`
+    1. `analysis_invocation_key`: in the analyzer command (after the `<ANALYZER>` and `-o` placeholder rules), e.g. `-I/workspace/test-projects/tinyxml2` → `-I__SOURCE_ROOT__` and `/workspace/test-projects/tinyxml2/xmltest.cpp` → `__SOURCE_ROOT__/xmltest.cpp` with `--source-root /workspace/test-projects/tinyxml2`
     2. `preprocessed_source_key`: in the preprocessed output before hashing (e.g. the line markers `# 1 "__SOURCE_ROOT__/xmltest.cpp"` and the expansions of `__FILE__`)
     3. cached content, before writeCache: in the raw result file (plist) only; the cached analyzer stdout and stderr are stored unchanged
        - in the plist the source root is matched in its XML escaped form (e.g. `&` → `&amp;`), as it appears in the file
@@ -272,28 +275,30 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - the analyzer return code is 0
   - the analysis did not time out (`--timeout`)
   - CTU analysis was not active for the action (see Future work: the CTU result depends on other TUs which are not part of the key); for CTU actions neither readCache nor writeCache is called
+  - the raw (uncompressed) size of every cached file is at most the client side decompressed size limit (20 MiB); a larger entry could never be read back by a client, so it is not written into the cache, and a warning is printed (e.g. `Analysis result of xmltest.cpp is too large for the analysis cache (25 MiB > 20 MiB), it is not cached`)
 
 ## Testing
 - there is no bazel-remote in the test environment; the tests use a mock bazel-remote server
   - a small HTTP server implemented in the test suite (Python `http.server`, started in a thread or process by the test setup) which implements the used part of the bazel-remote HTTP API:
     - `PUT /cas/<sha256>`: stores the blob, rejects it with HTTP 400 if the sha256 of the body does not match the key
     - `GET /cas/<sha256>`: returns the blob or HTTP 404
-    - `PUT /ac/<key>`: parses the body as an `ActionResult` (with the same protobuf module as the server), rejects it with HTTP 400 if it cannot be parsed or if a referenced CAS blob is missing; this mimics the AC validation of bazel-remote
+    - `PUT /ac/<key>`: parses the body as an `ActionResult` (with the same protobuf module as the server), rejects it with HTTP 400 if it cannot be parsed or fails the validation (digest format); whether a real bazel-remote also rejects an `ActionResult` which references a missing CAS blob is not confirmed, so the mock does not check it
     - `GET /ac/<key>`: returns the entry or HTTP 404
     - optional basic authentication check
     - test hooks to delete single CAS blobs (to simulate the LRU eviction) and to return errors / delays (to simulate an unavailable backend)
-  - the mock does not reproduce every detail of bazel-remote (e.g. LRU eviction, compression); the compatibility with a real bazel-remote has to be checked manually before the release
+  - the mock does not reproduce every detail of bazel-remote (e.g. LRU eviction, compression); the compatibility with a real bazel-remote has to be checked manually before the release (including the AC validation behavior of bazel-remote for missing CAS blobs)
 - unit tests:
   - server: input validation (key, filenames, base64, size limits), AC key computation (product hashing), `ActionResult` building and parsing, readCache miss cases (AC 404, missing CAS blob, digest mismatch, invalid `ActionResult`)
-  - client: key computation (`-o` placeholder, `shlex.join`, version prefix), decompression limit, path traversal protection (target outside the report directory, symlink target), role filtering, fail open behavior
+  - client: key computation (`<ANALYZER>` and `-o` placeholders, `shlex.join`, version prefix), source root replacement and restore (in the invocation key, the preprocessed output and the plist; whole path prefix rule, e.g. `/work/src2` is not replaced with source root `/work/src`; XML escaping of the restored source root), `--source-root` is mandatory with `--url`, an entry larger than the client limit is not written and a warning is printed, decompression limit, path traversal protection (target outside the report directory, symlink target), role filtering, fail open behavior
 - functional tests (`web/tests/functional/`), with a CodeChecker server configured to use the mock bazel-remote:
   - permission: calls without `PRODUCT_CACHE` are rejected, calls with it succeed
   - product isolation: the same key in two products does not share the entry
   - end to end: `CodeChecker analyze --url` on a small test project; the first run writes the cache (0 hits), the second run fetches all actions from the cache and produces the same reports as the first run
+  - location independence: the same test project copied into two different directories; the run in the second directory (with its own `--source-root`) fetches all actions from the cache, and its reports refer to the files of the second directory
   - `--no-cache`, server without cache configuration, unavailable mock backend: the analysis succeeds without the cache
 
 ## Documentation updates
-- `docs/analyzer/user_guide.md`: the new `--url` and `--no-cache` options of `CodeChecker analyze` and `CodeChecker check`, the cache statistics in the summary, and the conditions when the cache is (not) used (successful, non-timed out, non-CTU ClangSA analyses)
+- `docs/analyzer/user_guide.md`: the new `--url`, `--no-cache` and `--source-root` options (`--source-root` is mandatory with `--url`) of `CodeChecker analyze` and `CodeChecker check`, the cache statistics in the summary, and the conditions when the cache is (not) used (successful, non-timed out, non-CTU ClangSA analyses)
 - `docs/web/server_config.md`: the new `analysis_cache` block of `server_config.json`, and the required bazel-remote setup (validation of the AC entries must stay enabled, the `--max_size` option controls the cache size)
 - `docs/web/permissions.md`: the new `PRODUCT_CACHE` permission (it is not inherited from other product permissions, it must be granted explicitly)
 - `docs/web/db_schema_guide.md` / upgrade notes: the config database schema upgrade for the new permission
@@ -315,37 +320,28 @@ Some inputs change the analysis result, but in the MVP only their paths (or flag
 | ClangSA checker plugins (`-load <plugin>.so`) | the plugin paths only | add the hash of the plugin `.so` files' content to the `analyzer_binary_key` |
 | Z3 refutation (`crosscheck-with-z3=true`) | the flag only | add the Z3 library version to the `analyzer_binary_key` |
 
-
-
-Examples:
+## Examples
 
 analyzer invocation:
+```
 /usr/bin/clang --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o /workspace/test-projects/tinyxml2/reports/xmltest.cpp_clangsa_3e85aaf332fe01343c3163ef26e631f7.plist -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,core.DivideZero,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.VLASize,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.NewArraySize,core.uninitialized.UndefReturn,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.PlacementNew,cplusplus.PureVirtualCall,cplusplus.StringChecker,deadcode.DeadStores,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull,optin.cplusplus.UninitializedObject,optin.cplusplus.VirtualCall,optin.portability.UnixAPI,security.FloatLoopCounter,security.cert.env.InvalidPtr,security.insecureAPI.UncheckedReturn,security.insecureAPI.getpw,security.insecureAPI.gets,security.insecureAPI.mkstemp,security.insecureAPI.mktemp,security.insecureAPI.rand,security.insecureAPI.vfork,unix.API,unix.Malloc,unix.MallocSizeof,unix.MismatchedDeallocator,unix.StdCLibraryFunctions,unix.Vfork,unix.cstring.BadSizeArg,unix.cstring.NullArg,valist.CopyToSelf,valist.Uninitialized,valist.Unterminated -Xclang -analyzer-config -Xclang aggressive-binary-operation-simplification=true -x c++ -DTINYXML2_IMPORT -D_FILE_OFFSET_BITS=64 -I/workspace/test-projects/tinyxml2 -fvisibility=hidden -fvisibility-inlines-hidden --target=x86_64-linux-gnu -std=gnu++17 -idirafter /usr/include/c++/13 -idirafter /usr/include/x86_64-linux-gnu/c++/13 -idirafter /usr/include/c++/13/backward -idirafter /usr/local/include -idirafter /usr/include/x86_64-linux-gnu -idirafter /usr/include /workspace/test-projects/tinyxml2/xmltest.cpp
+```
 
-
-preprocessing:
-Drop --analyze, the -Xclang -analyzer-* flags and the plist -o, then add -E. Everything that affects preprocessing stays: language, defines, include paths, target and standard. I also
-  called clang directly instead of going through the /usr/lib/ccache wrapper, because ccache adds nothing for -E.
-
-  clang -E \
-    -x c++ \
-    -DTINYXML2_IMPORT \
-    -D_FILE_OFFSET_BITS=64 \
-    -I/workspace/test-projects/tinyxml2 \
-    -fvisibility=hidden -fvisibility-inlines-hidden \
-    --target=x86_64-linux-gnu \
-    -std=gnu++17 \
-    -idirafter /usr/include/c++/13 \
-    -idirafter /usr/include/x86_64-linux-gnu/c++/13 \
-    -idirafter /usr/include/c++/13/backward \
-    -idirafter /usr/local/include \
-    -idirafter /usr/include/x86_64-linux-gnu \
-    -idirafter /usr/include \
-    /workspace/test-projects/tinyxml2/xmltest.cpp \
-    -o /workspace/test-projects/tinyxml2/reports/xmltest.cpp.ii
-
-  - The -fvisibility* flags don't change preprocessing. I kept them only so the command stays close to the original, and you can remove them.
-  - To get output without # line markers, add -P. To keep comments as well, add -C.
-  - To get the defined macros instead of the expanded source, use -E -dM (or -dD to get both).
-  - To reproduce the analysis from the .ii file, run the original command but point it at xmltest.cpp.ii and change -x c++ to -x c++-cpp-output. This way the include and define flags are no
-  longer needed.
+the corresponding preprocessor command (`construct_preprocess_cmd()`), the output is streamed into the hash:
+```
+/usr/bin/clang -E \
+  -x c++ \
+  -DTINYXML2_IMPORT \
+  -D_FILE_OFFSET_BITS=64 \
+  -I/workspace/test-projects/tinyxml2 \
+  -fvisibility=hidden -fvisibility-inlines-hidden \
+  --target=x86_64-linux-gnu \
+  -std=gnu++17 \
+  -idirafter /usr/include/c++/13 \
+  -idirafter /usr/include/x86_64-linux-gnu/c++/13 \
+  -idirafter /usr/include/c++/13/backward \
+  -idirafter /usr/local/include \
+  -idirafter /usr/include/x86_64-linux-gnu \
+  -idirafter /usr/include \
+  /workspace/test-projects/tinyxml2/xmltest.cpp
+```
