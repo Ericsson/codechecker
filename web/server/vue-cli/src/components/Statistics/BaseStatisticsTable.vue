@@ -442,6 +442,7 @@
                   :num-good="checker.enabledRunLength"
                   :num-bad="checker.disabledRunLength"
                   :num-unknown="checker.unknownRunLength"
+                  :show-no-data-chips="true"
                   :good-text="'Number of runs where checker was enabled'"
                   :bad-text="'Number of runs where checker was disabled'"
                   :unknown-text="'Number of runs where checker was unknown'"
