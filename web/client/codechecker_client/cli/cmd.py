@@ -29,7 +29,7 @@ from codechecker_client import \
     filter_preset_client
 from codechecker_client.filter_defaults import DEFAULT_FILTER_VALUES
 
-from codechecker_common import arg, logger, util
+from codechecker_common import arg, cmd_config, logger, util
 from codechecker_common.output import USER_FORMATS
 
 
@@ -165,6 +165,12 @@ def __add_common_arguments(parser,
 
     common_group = parser.add_argument_group('common arguments')
     __add_url_arguments(common_group, needs_product_url)
+    if needs_product_url is not None:
+        cmd_config.add_option(common_group)
+        # Match the config hierarchy to the action path after CodeChecker cmd.
+        parser.set_defaults(
+            func_process_config_file=cmd_config.process_config_file,
+            config_commands=parser.prog.split()[2:])
 
     if output_formats:
         __add_output_formats(parser, output_formats, allow_multiple_outputs,
