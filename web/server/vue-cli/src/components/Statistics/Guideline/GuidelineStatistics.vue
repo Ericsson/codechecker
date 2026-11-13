@@ -333,7 +333,11 @@ async function fetchStatistics() {
     ids: baseStatistics.runIds.value
   });
 
-  runs.value = await ccService.getRuns(_filter);
+  runs.value = (await ccService.getRuns(_filter)).map(_run => ({
+    runId: _run.runId,
+    runName: _run.name,
+    codeCheckerVersion: _run.codeCheckerVersion
+  }));
 
   await getAllGuidelineRules();
 
