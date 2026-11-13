@@ -1,0 +1,5 @@
+---
+# Disables one of the checkers enabled by the parent directory.
+InheritParentConfig: true
+Checks: '-bugprone-sizeof-expression'
+...
