@@ -102,6 +102,13 @@ const router = createRouter({
                 "@/components/Statistics/Guideline/GuidelineStatistics"
               ),
             },
+            {
+              path: "test-coverage",
+              name: "test-coverage-statistics",
+              component: () => import(
+                "@statistics/TestCoverage/TestCoverageStatistics"
+              ),
+            },
           ]
         },
         {
