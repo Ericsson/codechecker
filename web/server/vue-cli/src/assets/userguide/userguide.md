@@ -835,8 +835,8 @@ grouped by checker names.
 grouped by severity levels.
 - [Component statistics](#component-statistics): shows the number of reports
 grouped by source components.
-- [Test Coverage](#test-coverage): shows the line and function test coverage
-of the source files of a run.
+- [Test Coverage](#test-coverage): shows the line, function, region, branch
+and MC/DC test coverage of the source files of a run.
 
 ### Product overview
 This page shows an overview of the quality status of the current product.
@@ -880,8 +880,9 @@ will show a checker statistics table for the selected component.
 
 ### Test Coverage
 Shows the test coverage which was stored together with a run. Test coverage
-data can be created from an LCOV tracefile by the `report-converter` tool, and
-it is uploaded by `CodeChecker store`. For more information
+data can be created from an LCOV tracefile or from the output of
+`llvm-cov export` by the `report-converter` tool, and it is uploaded by
+`CodeChecker store`. For more information
 [see](https://github.com/Ericsson/codechecker/blob/master/docs/tools/report-converter.md#supported-test-coverage-outputs).
 
 The coverage of **one run** is shown at a time, the coverage of multiple runs
@@ -891,11 +892,24 @@ selected) the run can be chosen in the run selector of the page, which lists
 the selected runs (or every run if no run is selected). Other filters do not
 apply to this page. Only the latest stored coverage of a run is available.
 
+The following coverage metrics are shown:
+- **Line**: executed lines / executable lines.
+- **Function**: executed functions / functions.
+- **Region**: executed code regions / code regions. A code region is e.g. a
+statement or an operand of a `&&` operator. Only LLVM source-based coverage
+(`llvm-cov`) has region coverage, so it is not shown for LCOV data.
+- **Branch**: taken branches / branches. An `if` has a true and a false branch.
+- **MC/DC**: covered conditions / conditions of the decisions. A condition is
+covered if it was shown to independently affect the outcome of its decision
+(Modified Condition/Decision Coverage). LLVM counts a condition once, LCOV
+counts its true and false sense separately.
+
+A metric which was not measured in the selected run is hidden. The CSV export
+always contains every metric.
+
 The page shows the following information:
-- The overall line coverage (executed lines / executable lines) and function
-coverage (executed functions / functions) of the run.
-- A table of the directories and source files with their line and function
-coverage. The coverage of a directory is the sum of the coverage of the files
+- The overall coverage of each metric of the run.
+- A table of the directories and source files with their coverage. The coverage of a directory is the sum of the coverage of the files
 in it. The coverage is coloured green if it is at least 80%, yellow if it is at
 least 50% and red otherwise. Click a directory to show its content and use the
 breadcrumb above the table to navigate back. The search field lists the files
@@ -907,7 +921,13 @@ executed lines are coloured green and marked by a check mark, executable lines
 which were never executed are coloured red and marked by a cross, and lines
 which are not executable (e.g. comments, blank lines) are neither coloured nor
 marked. The line types come from the coverage data (e.g. the `DA` records of
-the LCOV tracefile), they are not guessed by CodeChecker. The *Back* button
+the LCOV tracefile), they are not guessed by CodeChecker. Lines with branches
+or MC/DC conditions get a branch marker in a second gutter: green if every
+branch was taken and every condition was covered, yellow if only some of
+them, red if none of them. Its tooltip lists the taken / all branches, the
+covered / all conditions and the names of the uncovered conditions. Code
+regions which were never executed are highlighted with a red wavy underline.
+The header above the source shows the counts of the file. The *Back* button
 returns to the directory of the table.
 
 The selected run, directory and file are stored in the URL, so the page can be

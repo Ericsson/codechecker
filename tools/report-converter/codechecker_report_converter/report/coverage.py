@@ -26,10 +26,30 @@ Format (version 1):
           "covered_lines": [3, 4],
           "uncovered_lines": [5],
           "functions_found": 2,
-          "functions_hit": 1
+          "functions_hit": 1,
+          "branches_found": 4,
+          "branches_hit": 3,
+          "mcdc_found": 4,
+          "mcdc_hit": 1,
+          "regions_found": 6,
+          "regions_hit": 5,
+          "line_branches": [[4, 3, 4]],
+          "line_mcdc": [[4, 1, 4, ["C1 true", "C2 false"]]],
+          "uncovered_regions": [[5, 3, 5, 11]]
         }
       }
     }
+
+All keys of a file entry are optional. The branch, MC/DC and region keys
+were added later, so a missing key means that the metric was not measured
+(e.g. LCOV tracefiles have no region coverage):
+
+- 'line_branches': [line, hit, found] per line with branches.
+- 'line_mcdc': [line, hit, found, [labels of the uncovered conditions]] per
+  line with MC/DC conditions.
+- 'uncovered_regions': [start line, start column, end line, end column]
+  of the code regions which were never executed. Lines and columns are
+  1-based, the end column is exclusive.
 """
 
 from dataclasses import dataclass, field
@@ -62,13 +82,41 @@ class UnknownCoverageFileError(CoverageFileError):
     """
 
 
+# Maximum number of uncovered condition labels of a line and the maximum
+# length of a label.
+MAX_LABELS = 64
+MAX_LABEL_LENGTH = 256
+
+# Names of the (found, hit) count pairs of the optional metrics.
+COUNT_KEYS = (('branches_found', 'branches_hit'),
+              ('mcdc_found', 'mcdc_hit'),
+              ('regions_found', 'regions_hit'))
+
+
 @dataclass
 class FileCoverage:
-    """ Line and function coverage of a single source file. """
+    """ Test coverage of a single source file. """
     covered_lines: list[int] = field(default_factory=list)
     uncovered_lines: list[int] = field(default_factory=list)
     functions_found: int = 0
     functions_hit: int = 0
+    branches_found: int = 0
+    branches_hit: int = 0
+    mcdc_found: int = 0
+    mcdc_hit: int = 0
+    regions_found: int = 0
+    regions_hit: int = 0
+
+    # [line, hit, found] of the lines with branches.
+    line_branches: list[list[int]] = field(default_factory=list)
+
+    # [line, hit, found, [uncovered condition labels]] of the lines with
+    # MC/DC conditions.
+    line_mcdc: list[list] = field(default_factory=list)
+
+    # [start line, start column, end line, end column] of the code regions
+    # which were never executed.
+    uncovered_regions: list[list[int]] = field(default_factory=list)
 
     @property
     def lines_found(self) -> int:
@@ -94,11 +142,26 @@ def write(
     """ Write the given coverage data to the given file. """
     files = {}
     for source_path, cov in sorted(coverage.items()):
-        files[source_path] = {
+        entry = {
             "covered_lines": sorted(cov.covered_lines),
             "uncovered_lines": sorted(cov.uncovered_lines),
             "functions_found": cov.functions_found,
             "functions_hit": cov.functions_hit}
+
+        # The optional metrics are written only if they were measured.
+        for found_key, hit_key in COUNT_KEYS:
+            if getattr(cov, found_key):
+                entry[found_key] = getattr(cov, found_key)
+                entry[hit_key] = getattr(cov, hit_key)
+
+        if cov.line_branches:
+            entry["line_branches"] = sorted(cov.line_branches)
+        if cov.line_mcdc:
+            entry["line_mcdc"] = sorted(cov.line_mcdc)
+        if cov.uncovered_regions:
+            entry["uncovered_regions"] = sorted(cov.uncovered_regions)
+
+        files[source_path] = entry
 
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
     with open(file_path, 'w', encoding='utf-8') as f:
@@ -130,6 +193,86 @@ def _get_count(source_path: str, entry: dict, key: str) -> int:
             f"'{key}' of '{source_path}' must be a non-negative integer "
             f"not greater than {MAX_VALUE}.")
     return value
+
+
+def _is_int_list(value, length: int) -> bool:
+    return isinstance(value, list) and len(value) == length and \
+        all(_is_non_negative_int(v) for v in value)
+
+
+def _get_line_branches(source_path: str, entry: dict) -> list[list[int]]:
+    """ Validate the [line, hit, found] items of 'line_branches'. """
+    items = entry.get("line_branches", [])
+    error = CoverageFileError(
+        f"'line_branches' of '{source_path}' must be a list of "
+        "[line, hit, found] items with distinct positive line numbers and "
+        f"hit <= found <= {MAX_VALUE}.")
+
+    if not isinstance(items, list):
+        raise error
+
+    lines = set()
+    for item in items:
+        if not _is_int_list(item, 3) or item[0] == 0 or \
+                item[1] > item[2] or item[0] in lines:
+            raise error
+        lines.add(item[0])
+
+    return sorted(list(item) for item in items)
+
+
+def _get_line_mcdc(source_path: str, entry: dict) -> list[list]:
+    """ Validate the [line, hit, found, [labels]] items of 'line_mcdc'. """
+    items = entry.get("line_mcdc", [])
+    error = CoverageFileError(
+        f"'line_mcdc' of '{source_path}' must be a list of "
+        "[line, hit, found, [labels]] items with distinct positive line "
+        f"numbers, hit <= found <= {MAX_VALUE} and at most {MAX_LABELS} "
+        f"labels of at most {MAX_LABEL_LENGTH} characters.")
+
+    if not isinstance(items, list):
+        raise error
+
+    lines = set()
+    for item in items:
+        if not isinstance(item, list) or len(item) != 4 or \
+                not _is_int_list(item[:3], 3) or item[0] == 0 or \
+                item[1] > item[2] or item[0] in lines:
+            raise error
+
+        labels = item[3]
+        if not isinstance(labels, list) or len(labels) > MAX_LABELS or \
+                not all(isinstance(label, str) and
+                        len(label) <= MAX_LABEL_LENGTH for label in labels):
+            raise error
+
+        lines.add(item[0])
+
+    return sorted([item[0], item[1], item[2], list(item[3])]
+                  for item in items)
+
+
+def _get_uncovered_regions(
+    source_path: str,
+    entry: dict
+) -> list[list[int]]:
+    """ Validate the [line1, col1, line2, col2] items of the regions. """
+    items = entry.get("uncovered_regions", [])
+    error = CoverageFileError(
+        f"'uncovered_regions' of '{source_path}' must be a list of "
+        "[start line, start column, end line, end column] items of positive "
+        f"numbers not greater than {MAX_VALUE} where the start is not after "
+        "the end.")
+
+    if not isinstance(items, list):
+        raise error
+
+    for item in items:
+        if not _is_int_list(item, 4) or 0 in item or \
+                (item[0], item[1]) > (item[2], item[3]):
+            raise error
+
+    return [list(r) for r in sorted({tuple(item) for item in items})]
 
 
 def parse(data) -> dict[str, FileCoverage]:
@@ -171,9 +314,22 @@ def parse(data) -> dict[str, FileCoverage]:
                 f"'functions_hit' of '{source_path}' is greater than "
                 "'functions_found'.")
 
+        counts = {}
+        for found_key, hit_key in COUNT_KEYS:
+            counts[found_key] = _get_count(source_path, entry, found_key)
+            counts[hit_key] = _get_count(source_path, entry, hit_key)
+            if counts[hit_key] > counts[found_key]:
+                raise CoverageFileError(
+                    f"'{hit_key}' of '{source_path}' is greater than "
+                    f"'{found_key}'.")
+
         result[source_path] = FileCoverage(
             sorted(covered), sorted(uncovered),
-            functions_found, functions_hit)
+            functions_found, functions_hit,
+            line_branches=_get_line_branches(source_path, entry),
+            line_mcdc=_get_line_mcdc(source_path, entry),
+            uncovered_regions=_get_uncovered_regions(source_path, entry),
+            **counts)
 
     return result
 

@@ -30,8 +30,18 @@
             shown. Otherwise the run can be chosen on this page from the
             selected runs (or from all runs if the filter is empty).
             <br><br>
-            Test coverage data can be created from LCOV tracefiles by the
-            <strong>report-converter</strong> tool.
+            Test coverage data can be created from LCOV tracefiles
+            (line, function, branch and MC/DC coverage) and from
+            <strong>llvm-cov export</strong> files (also region coverage) by
+            the <strong>report-converter</strong> tool. A metric which was
+            not measured in the run is not shown.
+            <br><br>
+            <strong>Region</strong>: a code region (e.g. a statement or an
+            operand of a logical operator) which was executed.
+            <strong>Branch</strong>: an outcome of a decision (e.g. the true
+            and the false branch of an <code>if</code>) which was taken.
+            <strong>MC/DC</strong>: a condition of a decision which was shown
+            to independently affect the outcome of the decision.
           </tooltip-help-icon>
         </h3>
       </v-row>
@@ -59,6 +69,7 @@
         <test-coverage-summary
           v-if="files.length"
           :counts="counts"
+          :metrics="metrics"
         />
       </v-row>
 
@@ -99,6 +110,7 @@
           :run-id="selectedRunId"
           :file-id="fileId"
           :file-coverage="fileCoverage"
+          :metrics="metrics"
           :back-link="backLink"
         />
         <test-coverage-table
@@ -106,6 +118,7 @@
           v-model:search="search"
           :items="items"
           :breadcrumbs="breadcrumbs"
+          :metrics="metrics"
           :loading="loading"
           :get-directory-link="getDirectoryLink"
           :get-file-link="getFileLink"
@@ -136,6 +149,7 @@ import {
   getBreadcrumbs,
   getDirectoryItems,
   getDirectoryOfFile,
+  getShownMetrics,
   normalizeFileCoverage,
   summarize,
   toCSVRows
@@ -201,6 +215,9 @@ const breadcrumbs = computed(() =>
   getBreadcrumbs(tree.value, currentDirectory.value.path));
 
 const counts = computed(() => summarize(files.value));
+
+// Metrics which were not measured in the run are hidden.
+const metrics = computed(() => getShownMetrics(counts.value));
 
 const fileId = computed(() => queryNumber(FILE_QUERY));
 

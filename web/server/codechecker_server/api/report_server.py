@@ -36,9 +36,10 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
     BlameData, BlameInfo, \
     CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
-    CommentData, \
+    CommentData, CoverageRegion, \
     DetectionStatus, DiffType, \
     Encoding, ExportData, FileCoverage, FileLineCoverage, \
+    LineBranchCoverage, LineMcdcCoverage, \
     Order, \
     ReportData, ReportDetails, ReportStatus, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
@@ -4885,47 +4886,74 @@ class ThriftRequestHandler:
                               TestCoverage.lines_found,
                               TestCoverage.lines_hit,
                               TestCoverage.functions_found,
-                              TestCoverage.functions_hit) \
+                              TestCoverage.functions_hit,
+                              TestCoverage.branches_found,
+                              TestCoverage.branches_hit,
+                              TestCoverage.mcdc_found,
+                              TestCoverage.mcdc_hit,
+                              TestCoverage.regions_found,
+                              TestCoverage.regions_hit) \
                 .join(File, File.id == TestCoverage.file_id)
 
             if runIds:
                 q = q.filter(TestCoverage.run_id.in_(runIds))
 
             return [FileCoverage(
-                runId=run_id,
-                fileId=file_id,
-                filePath=file_path,
-                linesFound=lines_found,
-                linesHit=lines_hit,
-                functionsFound=functions_found,
-                functionsHit=functions_hit)
-                for run_id, file_id, file_path, lines_found, lines_hit,
-                functions_found, functions_hit
-                in q.order_by(File.filepath, TestCoverage.run_id)]
+                runId=row.run_id,
+                fileId=row.file_id,
+                filePath=row.filepath,
+                linesFound=row.lines_found,
+                linesHit=row.lines_hit,
+                functionsFound=row.functions_found,
+                functionsHit=row.functions_hit,
+                branchesFound=row.branches_found,
+                branchesHit=row.branches_hit,
+                mcdcFound=row.mcdc_found,
+                mcdcHit=row.mcdc_hit,
+                regionsFound=row.regions_found,
+                regionsHit=row.regions_hit)
+                for row in q.order_by(File.filepath, TestCoverage.run_id)]
 
     @exc_to_thrift_reqfail
     @timeit
     def getFileLineCoverage(self, runId, fileId):
         """
-        Get the covered and uncovered lines of the given source file in the
-        given run. The lists are empty if there is no coverage data.
+        Get the line coverage, the branch and MC/DC coverage of the lines and
+        the uncovered code regions of the given source file in the given run.
+        The lists are empty if there is no coverage data.
         """
         self.__require_view()
 
         with DBSession(self._Session) as session:
             row = session.query(TestCoverage.covered_lines,
-                                TestCoverage.uncovered_lines) \
+                                TestCoverage.uncovered_lines,
+                                TestCoverage.details) \
                 .filter(TestCoverage.run_id == runId,
                         TestCoverage.file_id == fileId) \
                 .one_or_none()
 
             if row is None:
                 return FileLineCoverage(runId=runId, fileId=fileId,
-                                        coveredLines=[], uncoveredLines=[])
+                                        coveredLines=[], uncoveredLines=[],
+                                        lineBranches=[], lineMcdc=[],
+                                        uncoveredRegions=[])
+
+            details = TestCoverage.decode_details(row.details)
 
             return FileLineCoverage(
                 runId=runId,
                 fileId=fileId,
                 coveredLines=TestCoverage.decode_lines(row.covered_lines),
                 uncoveredLines=TestCoverage.decode_lines(
-                    row.uncovered_lines))
+                    row.uncovered_lines),
+                lineBranches=[
+                    LineBranchCoverage(line=line, hit=hit, found=found)
+                    for line, hit, found in details['line_branches']],
+                lineMcdc=[
+                    LineMcdcCoverage(line=line, hit=hit, found=found,
+                                     uncoveredConditions=labels)
+                    for line, hit, found, labels in details['line_mcdc']],
+                uncoveredRegions=[
+                    CoverageRegion(startLine=r[0], startCol=r[1],
+                                   endLine=r[2], endCol=r[3])
+                    for r in details['uncovered_regions']])

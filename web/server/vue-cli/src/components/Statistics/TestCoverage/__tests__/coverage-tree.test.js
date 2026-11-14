@@ -1,4 +1,5 @@
 import {
+  METRICS,
   buildCoverageTree,
   commonDirectory,
   coverageLevel,
@@ -7,6 +8,7 @@ import {
   getBreadcrumbs,
   getDirectoryItems,
   getDirectoryOfFile,
+  getShownMetrics,
   normalizeFileCoverage,
   percentage,
   summarize,
@@ -14,13 +16,19 @@ import {
 } from "@/components/Statistics/TestCoverage/coverage-tree";
 
 function file(fileId, filePath, linesHit, linesFound, functionsHit = 0,
-  functionsFound = 0
+  functionsFound = 0, extra = {}
 ) {
   return {
     runId: 1, fileId, filePath, linesHit, linesFound, functionsHit,
-    functionsFound
+    functionsFound, regionsHit: 0, regionsFound: 0, branchesHit: 0,
+    branchesFound: 0, mcdcHit: 0, mcdcFound: 0, ...extra
   };
 }
+
+const ZERO_COUNTS = {
+  regionsFound: 0, regionsHit: 0, branchesFound: 0, branchesHit: 0,
+  mcdcFound: 0, mcdcHit: 0
+};
 
 const files = [
   file(1, "/home/user/project/src/main.c", 8, 10, 2, 2),
@@ -39,7 +47,12 @@ describe("Test coverage helpers", () => {
       linesFound: int64(10),
       linesHit: int64(5),
       functionsFound: 3,
-      functionsHit: null
+      functionsHit: null,
+      branchesFound: int64(4),
+      branchesHit: int64(3),
+      mcdcFound: 2,
+      mcdcHit: 1,
+      regionsFound: int64(6)
     })).toEqual({
       runId: 1,
       fileId: 2,
@@ -47,8 +60,36 @@ describe("Test coverage helpers", () => {
       linesFound: 10,
       linesHit: 5,
       functionsFound: 3,
-      functionsHit: 0
+      functionsHit: 0,
+      branchesFound: 4,
+      branchesHit: 3,
+      mcdcFound: 2,
+      mcdcHit: 1,
+      regionsFound: 6,
+      regionsHit: 0
     });
+  });
+
+  test("metrics which were not measured are hidden", () => {
+    const ids = counts => getShownMetrics(counts).map(metric => metric.id);
+
+    expect(METRICS.map(metric => metric.id))
+      .toEqual([ "line", "function", "region", "branch", "mcdc" ]);
+
+    // LCOV data: no regions.
+    expect(ids({
+      linesFound: 3, functionsFound: 1, branchesFound: 2, mcdcFound: 2,
+      regionsFound: 0
+    })).toEqual([ "line", "function", "branch", "mcdc" ]);
+
+    // llvm-cov data: every metric.
+    expect(ids({
+      linesFound: 3, functionsFound: 1, regionsFound: 4, branchesFound: 2,
+      mcdcFound: 2
+    })).toEqual([ "line", "function", "region", "branch", "mcdc" ]);
+
+    // The line coverage is always shown.
+    expect(ids(summarize([]))).toEqual([ "line" ]);
   });
 
   test("percentage, level and format", () => {
@@ -74,10 +115,12 @@ describe("Test coverage helpers", () => {
 
   test("summarize", () => {
     expect(summarize(files)).toEqual({
-      linesFound: 30, linesHit: 19, functionsFound: 9, functionsHit: 5
+      linesFound: 30, linesHit: 19, functionsFound: 9, functionsHit: 5,
+      ...ZERO_COUNTS
     });
     expect(summarize([])).toEqual({
-      linesFound: 0, linesHit: 0, functionsFound: 0, functionsHit: 0
+      linesFound: 0, linesHit: 0, functionsFound: 0, functionsHit: 0,
+      ...ZERO_COUNTS
     });
   });
 
@@ -107,6 +150,39 @@ describe("Test coverage helpers", () => {
     expect(findDirectory(root, "/home/user/project/src/main.c")).toBeNull();
     expect(findDirectory(root, "/home/user/projectX/src")).toBeNull();
     expect(findDirectory(root, "/other")).toBeNull();
+  });
+
+  test("tree aggregates region, branch and MC/DC coverage", () => {
+    const root = buildCoverageTree([
+      file(1, "/p/src/a.c", 1, 1, 0, 0, {
+        regionsHit: 17, regionsFound: 20, branchesHit: 8, branchesFound: 12,
+        mcdcHit: 1, mcdcFound: 4
+      }),
+      file(2, "/p/src/b.c", 1, 1, 0, 0, {
+        regionsHit: 3, regionsFound: 5, branchesHit: 0, branchesFound: 4
+      }),
+      file(3, "/p/lib/c.c", 1, 1)
+    ]);
+
+    expect(root).toMatchObject({
+      regionsHit: 20, regionsFound: 25, branchesHit: 8, branchesFound: 16,
+      mcdcHit: 1, mcdcFound: 4
+    });
+
+    const items = getDirectoryItems(root);
+    expect(items.map(item => item.name)).toEqual([ "lib", "src" ]);
+    expect(items[0]).toMatchObject({
+      regionPercent: null, branchPercent: null, mcdcPercent: null
+    });
+    expect(items[1]).toMatchObject({
+      regionPercent: 80, branchPercent: 50, mcdcPercent: 25
+    });
+
+    const src = getDirectoryItems(findDirectory(root, "/p/src"));
+    expect(src[0]).toMatchObject({
+      name: "a.c", regionPercent: 85, branchPercent: 800 / 12,
+      mcdcPercent: 25
+    });
   });
 
   test("directory items: directories first, then files by name", () => {
@@ -173,16 +249,30 @@ describe("Test coverage helpers", () => {
 
   test("CSV export", () => {
     const rows = toCSVRows([
-      file(2, "/b\"q\".c", 0, 0), file(1, "/a.c", 1, 3, 1, 2)
+      file(2, "/b\"q\".c", 0, 0),
+      file(1, "/a.c", 1, 3, 1, 2, {
+        regionsHit: 17, regionsFound: 20, branchesHit: 8, branchesFound: 12,
+        mcdcHit: 1, mcdcFound: 4
+      })
     ]);
 
+    // Every metric is exported, even if it was not measured.
     expect(rows).toEqual([
       [
         "File", "Executed lines", "Executable lines", "Line coverage",
-        "Executed functions", "Functions", "Function coverage"
+        "Executed functions", "Functions", "Function coverage",
+        "Executed regions", "Regions", "Region coverage",
+        "Taken branches", "Branches", "Branch coverage",
+        "Covered MC/DC conditions", "MC/DC conditions", "MC/DC coverage"
       ],
-      [ "\"/a.c\"", 1, 3, "33.3%", 1, 2, "50.0%" ],
-      [ "\"/b\"\"q\"\".c\"", 0, 0, "-", 0, 0, "-" ]
+      [
+        "\"/a.c\"", 1, 3, "33.3%", 1, 2, "50.0%", 17, 20, "85.0%",
+        8, 12, "66.6%", 1, 4, "25.0%"
+      ],
+      [
+        "\"/b\"\"q\"\".c\"", 0, 0, "-", 0, 0, "-", 0, 0, "-", 0, 0, "-",
+        0, 0, "-"
+      ]
     ]);
   });
 });

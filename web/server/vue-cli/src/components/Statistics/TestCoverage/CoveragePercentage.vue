@@ -31,7 +31,9 @@ import {
 const props = defineProps({
   hit: { type: Number, required: true },
   found: { type: Number, required: true },
-  unit: { type: String, default: "lines" }
+  unit: { type: String, default: "lines" },
+  // Describes a hit entity, e.g. "executed" lines or "taken" branches.
+  verb: { type: String, default: "executed" }
 });
 
 const LEVEL_COLORS = {
@@ -47,9 +49,9 @@ const color = computed(() => LEVEL_COLORS[coverageLevel(percent.value)]);
 
 const title = computed(() => {
   if (percent.value === null)
-    return `No executable ${props.unit}`;
+    return `No ${props.unit} to cover`;
 
-  return `${props.hit} of ${props.found} ${props.unit} executed ` +
+  return `${props.hit} of ${props.found} ${props.unit} ${props.verb} ` +
     `(${formatPercentage(percent.value)})`;
 });
 </script>

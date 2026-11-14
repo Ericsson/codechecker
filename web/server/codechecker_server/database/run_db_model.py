@@ -683,12 +683,20 @@ class TestCoverage(Base):
     and the executable but uncovered lines are stored as zlib compressed JSON
     arrays, the counts are stored separately so statistics can be computed
     without decompressing the line data.
+
+    The branch and MC/DC coverage of the lines and the uncovered code regions
+    are stored in the 'details' column as a zlib compressed JSON object. It
+    is NULL if the coverage file contained none of them. A found count of 0
+    means that the metric was not measured.
     """
     __tablename__ = 'test_coverage'
 
     __table_args__ = (
         UniqueConstraint('run_id', 'file_id'),
     )
+
+    # Keys of the 'details' JSON object.
+    DETAIL_KEYS = ('line_branches', 'line_mcdc', 'uncovered_regions')
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     run_id = Column(Integer,
@@ -707,33 +715,62 @@ class TestCoverage(Base):
     lines_hit = Column(Integer, nullable=False)
     functions_found = Column(Integer, nullable=False)
     functions_hit = Column(Integer, nullable=False)
+    branches_found = Column(Integer, nullable=False, server_default='0')
+    branches_hit = Column(Integer, nullable=False, server_default='0')
+    mcdc_found = Column(Integer, nullable=False, server_default='0')
+    mcdc_hit = Column(Integer, nullable=False, server_default='0')
+    regions_found = Column(Integer, nullable=False, server_default='0')
+    regions_hit = Column(Integer, nullable=False, server_default='0')
     covered_lines = Column(LargeBinary, nullable=False)
     uncovered_lines = Column(LargeBinary, nullable=False)
+    details = Column(LargeBinary, nullable=True)
 
-    def __init__(self,
-                 run_id: int,
-                 file_id: int,
-                 covered_lines: list[int],
-                 uncovered_lines: list[int],
-                 functions_found: int,
-                 functions_hit: int):
+    def __init__(self, run_id: int, file_id: int, file_coverage):
+        """
+        'file_coverage' is a
+        codechecker_report_converter.report.coverage.FileCoverage object.
+        """
         self.run_id = run_id
         self.file_id = file_id
-        self.lines_found = len(covered_lines) + len(uncovered_lines)
-        self.lines_hit = len(covered_lines)
-        self.functions_found = functions_found
-        self.functions_hit = functions_hit
-        self.covered_lines = TestCoverage.encode_lines(covered_lines)
-        self.uncovered_lines = TestCoverage.encode_lines(uncovered_lines)
+        self.lines_found = file_coverage.lines_found
+        self.lines_hit = file_coverage.lines_hit
+        self.functions_found = file_coverage.functions_found
+        self.functions_hit = file_coverage.functions_hit
+        self.branches_found = file_coverage.branches_found
+        self.branches_hit = file_coverage.branches_hit
+        self.mcdc_found = file_coverage.mcdc_found
+        self.mcdc_hit = file_coverage.mcdc_hit
+        self.regions_found = file_coverage.regions_found
+        self.regions_hit = file_coverage.regions_hit
+        self.covered_lines = TestCoverage.encode_lines(
+            sorted(file_coverage.covered_lines))
+        self.uncovered_lines = TestCoverage.encode_lines(
+            sorted(file_coverage.uncovered_lines))
+
+        details = {key: getattr(file_coverage, key)
+                   for key in TestCoverage.DETAIL_KEYS
+                   if getattr(file_coverage, key)}
+        self.details = TestCoverage.encode_lines(details) \
+            if details else None
 
     @staticmethod
-    def encode_lines(lines: list[int]) -> bytes:
+    def encode_lines(lines) -> bytes:
         return zlib.compress(json.dumps(lines).encode('utf-8'),
                              zlib.Z_BEST_COMPRESSION)
 
     @staticmethod
-    def decode_lines(data: bytes) -> list[int]:
+    def decode_lines(data: bytes):
         return json.loads(zlib.decompress(data).decode('utf-8'))
+
+    @staticmethod
+    def decode_details(data: bytes | None) -> dict:
+        """
+        Decode the 'details' column. Every key of DETAIL_KEYS is present in
+        the result.
+        """
+        details = TestCoverage.decode_lines(data) if data else {}
+        return {key: details.get(key) or []
+                for key in TestCoverage.DETAIL_KEYS}
 
 
 IDENTIFIER = {

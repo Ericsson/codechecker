@@ -5,6 +5,74 @@
 export const HIGH_COVERAGE_LIMIT = 80;
 export const MEDIUM_COVERAGE_LIMIT = 50;
 
+/**
+ * The coverage metrics in the order they are shown. "found" and "hit" are
+ * the names of the count properties of the file coverages, "verb" describes
+ * a hit entity (e.g. "4 of 6 branches taken"). The titles are used by the
+ * table and the CSV export.
+ */
+export const METRICS = [
+  {
+    id: "line",
+    title: "Line",
+    unit: "lines",
+    verb: "executed",
+    icon: "mdi-format-list-numbered",
+    found: "linesFound",
+    hit: "linesHit",
+    foundTitle: "Executable lines",
+    hitTitle: "Executed lines"
+  },
+  {
+    id: "function",
+    title: "Function",
+    unit: "functions",
+    verb: "executed",
+    icon: "mdi-function-variant",
+    found: "functionsFound",
+    hit: "functionsHit",
+    foundTitle: "Functions",
+    hitTitle: "Executed functions"
+  },
+  {
+    id: "region",
+    title: "Region",
+    unit: "regions",
+    verb: "executed",
+    icon: "mdi-code-braces",
+    found: "regionsFound",
+    hit: "regionsHit",
+    foundTitle: "Regions",
+    hitTitle: "Executed regions"
+  },
+  {
+    id: "branch",
+    title: "Branch",
+    unit: "branches",
+    verb: "taken",
+    icon: "mdi-source-branch",
+    found: "branchesFound",
+    hit: "branchesHit",
+    foundTitle: "Branches",
+    hitTitle: "Taken branches"
+  },
+  {
+    id: "mcdc",
+    title: "MC/DC",
+    unit: "conditions",
+    verb: "covered",
+    icon: "mdi-call-split",
+    found: "mcdcFound",
+    hit: "mcdcHit",
+    foundTitle: "MC/DC conditions",
+    hitTitle: "Covered MC/DC conditions"
+  }
+];
+
+// The line coverage is always shown, the other metrics only if they were
+// measured.
+const ALWAYS_SHOWN_METRICS = new Set([ "line" ]);
+
 function toNumber(value) {
   if (value === null || value === undefined)
     return 0;
@@ -20,15 +88,26 @@ function toNumber(value) {
  * Converts a FileCoverage Thrift object to a plain object with numbers.
  */
 export function normalizeFileCoverage(fileCoverage) {
-  return {
+  const result = {
     runId: toNumber(fileCoverage.runId),
     fileId: toNumber(fileCoverage.fileId),
-    filePath: fileCoverage.filePath,
-    linesFound: toNumber(fileCoverage.linesFound),
-    linesHit: toNumber(fileCoverage.linesHit),
-    functionsFound: toNumber(fileCoverage.functionsFound),
-    functionsHit: toNumber(fileCoverage.functionsHit)
+    filePath: fileCoverage.filePath
   };
+  METRICS.forEach(metric => {
+    result[metric.found] = toNumber(fileCoverage[metric.found]);
+    result[metric.hit] = toNumber(fileCoverage[metric.hit]);
+  });
+  return result;
+}
+
+/**
+ * Returns the metrics which should be shown for the given summed counts.
+ * A metric which was not measured (e.g. region coverage of LCOV data) is
+ * hidden.
+ */
+export function getShownMetrics(counts) {
+  return METRICS.filter(metric =>
+    ALWAYS_SHOWN_METRICS.has(metric.id) || counts?.[metric.found] > 0);
 }
 
 /**
@@ -71,14 +150,19 @@ export function formatPercentage(percent) {
 }
 
 function emptyCounts() {
-  return { linesFound: 0, linesHit: 0, functionsFound: 0, functionsHit: 0 };
+  const counts = {};
+  METRICS.forEach(metric => {
+    counts[metric.found] = 0;
+    counts[metric.hit] = 0;
+  });
+  return counts;
 }
 
 function addCounts(target, source) {
-  target.linesFound += source.linesFound;
-  target.linesHit += source.linesHit;
-  target.functionsFound += source.functionsFound;
-  target.functionsHit += source.functionsHit;
+  METRICS.forEach(metric => {
+    target[metric.found] += source[metric.found] || 0;
+    target[metric.hit] += source[metric.hit] || 0;
+  });
 }
 
 /**
@@ -197,19 +281,28 @@ export function findDirectory(root, path) {
   return node;
 }
 
+/**
+ * Returns the name of the percentage property of the table items of the
+ * given metric (e.g. "linePercent").
+ */
+export function percentKey(metric) {
+  return `${metric.id}Percent`;
+}
+
 function toItem(node, name) {
-  return {
+  const item = {
     name,
     path: node.path,
     isFile: node.isFile,
-    fileId: node.isFile ? node.fileId : null,
-    linesFound: node.linesFound,
-    linesHit: node.linesHit,
-    linePercent: percentage(node.linesHit, node.linesFound),
-    functionsFound: node.functionsFound,
-    functionsHit: node.functionsHit,
-    functionPercent: percentage(node.functionsHit, node.functionsFound)
+    fileId: node.isFile ? node.fileId : null
   };
+  METRICS.forEach(metric => {
+    item[metric.found] = node[metric.found];
+    item[metric.hit] = node[metric.hit];
+    item[percentKey(metric)] =
+      percentage(node[metric.hit], node[metric.found]);
+  });
+  return item;
 }
 
 function compareItems(a, b) {
@@ -279,25 +372,27 @@ export function getDirectoryOfFile(filePath) {
 
 /**
  * Returns the rows (with a header) of the CSV export of the given files.
+ * Every metric is exported, even if it was not measured.
  */
 export function toCSVRows(files) {
   const quote = value => `"${String(value).replace(/"/g, "\"\"")}"`;
 
   return [
     [
-      "File", "Executed lines", "Executable lines", "Line coverage",
-      "Executed functions", "Functions", "Function coverage"
+      "File",
+      ...METRICS.flatMap(metric => [
+        metric.hitTitle, metric.foundTitle, `${metric.title} coverage`
+      ])
     ],
     ...[ ...files ]
       .sort((a, b) => a.filePath.localeCompare(b.filePath))
       .map(file => [
         quote(file.filePath),
-        file.linesHit,
-        file.linesFound,
-        formatPercentage(percentage(file.linesHit, file.linesFound)),
-        file.functionsHit,
-        file.functionsFound,
-        formatPercentage(percentage(file.functionsHit, file.functionsFound))
+        ...METRICS.flatMap(metric => [
+          file[metric.hit] || 0,
+          file[metric.found] || 0,
+          formatPercentage(percentage(file[metric.hit], file[metric.found]))
+        ])
       ])
   ];
 }

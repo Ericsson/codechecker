@@ -564,7 +564,8 @@ struct CleanupPlanFilter {
   3: bool         isOpen,
 }
 
-// Test coverage summary of a source file in a run.
+// Test coverage summary of a source file in a run. A metric whose found
+// count is 0 was not measured (e.g. LCOV has no region coverage).
 struct FileCoverage {
   1: i64    runId,
   2: i64    fileId,
@@ -573,16 +574,49 @@ struct FileCoverage {
   5: i64    linesHit,       // Number of executed lines.
   6: i64    functionsFound, // Number of functions.
   7: i64    functionsHit,   // Number of executed functions.
+  8: i64    branchesFound,  // Number of branches.
+  9: i64    branchesHit,    // Number of taken branches.
+  10: i64   mcdcFound,      // Number of MC/DC conditions.
+  11: i64   mcdcHit,        // Number of covered MC/DC conditions.
+  12: i64   regionsFound,   // Number of code regions.
+  13: i64   regionsHit,     // Number of executed code regions.
 }
 typedef list<FileCoverage> FileCoverageList
+
+// Branch coverage of a source line.
+struct LineBranchCoverage {
+  1: i64 line,
+  2: i64 hit,   // Number of taken branches.
+  3: i64 found, // Number of branches.
+}
+
+// MC/DC coverage of a source line.
+struct LineMcdcCoverage {
+  1: i64          line,
+  2: i64          hit,                 // Number of covered conditions.
+  3: i64          found,               // Number of conditions.
+  4: list<string> uncoveredConditions, // Names of the uncovered conditions.
+}
+
+// Source range of a code region. Lines and columns are 1-based, the end
+// column is exclusive (like in LLVM).
+struct CoverageRegion {
+  1: i64 startLine,
+  2: i64 startCol,
+  3: i64 endLine,
+  4: i64 endCol,
+}
 
 // Line coverage of a source file in a run. Lines which are listed in neither
 // of the lists are not executable.
 struct FileLineCoverage {
-  1: i64       runId,
-  2: i64       fileId,
-  3: list<i64> coveredLines,
-  4: list<i64> uncoveredLines,
+  1: i64                      runId,
+  2: i64                      fileId,
+  3: list<i64>                coveredLines,
+  4: list<i64>                uncoveredLines,
+  5: list<LineBranchCoverage> lineBranches,     // Lines with branches.
+  6: list<LineMcdcCoverage>   lineMcdc,         // Lines with conditions.
+  7: list<CoverageRegion>     uncoveredRegions, // Never executed regions.
 }
 
 struct Checker {
@@ -1240,7 +1274,8 @@ service codeCheckerDBAccess {
   FileCoverageList getFileCoverages(1: list<i64> runIds)
                                     throws (1: shared.RequestFailed requestError),
 
-  // Get the covered and uncovered lines of the given source file in the
+  // Get the covered and uncovered lines, the branch and MC/DC coverage of
+  // the lines and the uncovered code regions of the given source file in the
   // given run.
   // PERMISSION: PRODUCT_VIEW
   FileLineCoverage getFileLineCoverage(1: i64 runId,

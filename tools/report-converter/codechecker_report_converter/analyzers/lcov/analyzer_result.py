@@ -30,10 +30,87 @@ class _SourceCoverage:
         # Function name -> execution count.
         self.function_hits: dict[str, int] = defaultdict(int)
 
+        # (line, block, branch) -> execution count of the branch.
+        self.branch_hits: dict[tuple[int, str, str], int] = defaultdict(int)
+
+        # (line, group size, condition index, sense) -> number of times the
+        # condition was shown to independently affect the outcome of its
+        # decision with the given sense, and the expression of the condition.
+        self.mcdc_hits: dict[tuple[int, int, int, bool], int] = \
+            defaultdict(int)
+        self.mcdc_expressions: dict[tuple[int, int, int, bool], str] = {}
+
         # Values of the FNF and FNH summary records. These are used only if
-        # the tracefile does not list the functions one by one.
+        # the tracefile does not list the functions one by one. The same
+        # holds for the BRF/BRH and MCF/MCH records.
         self.functions_found = 0
         self.functions_hit = 0
+        self.branches_found = 0
+        self.branches_hit = 0
+        self.mcdc_found = 0
+        self.mcdc_hit = 0
+
+    @staticmethod
+    def _per_line(hits: dict) -> dict[int, list[int]]:
+        """ Line -> [hit, found] of the given records. """
+        result: dict[int, list[int]] = {}
+        for key, count in hits.items():
+            item = result.setdefault(key[0], [0, 0])
+            item[0] += 1 if count > 0 else 0
+            item[1] += 1
+        return result
+
+    def _mcdc_label(self, key: tuple[int, int, int, bool]) -> str:
+        """ Name of an MC/DC condition shown to the user. """
+        expression = self.mcdc_expressions.get(key, '')
+        name = expression if expression and not expression.isdigit() \
+            else f"C{key[2] + 1}"
+        sense = 'true' if key[3] else 'false'
+
+        # The label must fit in the limit of the coverage file.
+        max_name_length = coverage.MAX_LABEL_LENGTH - len(sense) - 1
+        if len(name) > max_name_length:
+            name = name[:max_name_length - 3] + '...'
+        return f"{name} {sense}"
+
+    def _branch_coverage(self) -> dict:
+        """ Branch and MC/DC fields of the coverage of this file. """
+        result = {}
+
+        if self.branch_hits:
+            per_line = self._per_line(self.branch_hits)
+            result['line_branches'] = [
+                [line, hit, found]
+                for line, (hit, found) in sorted(per_line.items())]
+            result['branches_found'] = min(
+                len(self.branch_hits), coverage.MAX_VALUE)
+            result['branches_hit'] = min(
+                sum(hit for hit, _ in per_line.values()), coverage.MAX_VALUE)
+        else:
+            result['branches_found'] = self.branches_found
+            result['branches_hit'] = min(
+                self.branches_hit, self.branches_found)
+
+        if self.mcdc_hits:
+            per_line = self._per_line(self.mcdc_hits)
+            uncovered: dict[int, list[str]] = defaultdict(list)
+            for key, count in sorted(self.mcdc_hits.items()):
+                if count == 0 and \
+                        len(uncovered[key[0]]) < coverage.MAX_LABELS:
+                    uncovered[key[0]].append(self._mcdc_label(key))
+
+            result['line_mcdc'] = [
+                [line, hit, found, uncovered.get(line, [])]
+                for line, (hit, found) in sorted(per_line.items())]
+            result['mcdc_found'] = min(
+                len(self.mcdc_hits), coverage.MAX_VALUE)
+            result['mcdc_hit'] = min(
+                sum(hit for hit, _ in per_line.values()), coverage.MAX_VALUE)
+        else:
+            result['mcdc_found'] = self.mcdc_found
+            result['mcdc_hit'] = min(self.mcdc_hit, self.mcdc_found)
+
+        return result
 
     def to_file_coverage(self) -> coverage.FileCoverage:
         covered = [ln for ln, cnt in self.line_hits.items() if cnt > 0]
@@ -49,7 +126,14 @@ class _SourceCoverage:
 
         return coverage.FileCoverage(
             sorted(covered), sorted(uncovered),
-            functions_found, functions_hit)
+            functions_found, functions_hit,
+            **self._branch_coverage())
+
+
+def _to_line(value: str) -> int | None:
+    """ Convert the given LCOV field to a line number which can be stored. """
+    line_no = _to_int(value)
+    return line_no if line_no and line_no <= coverage.MAX_VALUE else None
 
 
 def _to_int(value: str) -> int | None:
@@ -138,8 +222,9 @@ CodeChecker store ./reports ./codechecker_lcov_reports -n my_run"""
         binaries), the execution counts are summed up.
 
         Both the 'FN'/'FNDA' function records of LCOV 1.x and the
-        'FNL'/'FNA' records of LCOV 2.2+ are supported. Branch records are
-        ignored.
+        'FNL'/'FNA' records of LCOV 2.2+ are supported, as well as the 'BRDA'
+        branch and the 'MCDC' condition records (LCOV 2.2+, GCC 14+ with
+        '-fcondition-coverage'). Records with the same key are summed up.
         """
         try:
             with open(file_path, 'r', encoding='utf-8',
@@ -195,6 +280,37 @@ CodeChecker store ./reports ./codechecker_lcov_reports -n my_run"""
                 count = _to_int(fields[1])
                 if count is not None:
                     current.function_hits[','.join(fields[2:])] += count
+            elif key == 'BRDA' and len(fields) >= 4:
+                # BRDA:<line>,[e]<block>,<branch>,<taken>
+                # The taken field is '-' if the block was never executed.
+                line_no = _to_line(fields[0])
+                taken = 0 if fields[-1] == '-' else _to_int(fields[-1])
+                if line_no and taken is not None:
+                    branch_key = (line_no, fields[1], ','.join(fields[2:-1]))
+                    current.branch_hits[branch_key] = min(
+                        current.branch_hits[branch_key] + taken,
+                        coverage.MAX_VALUE)
+            elif key == 'MCDC' and len(fields) >= 5:
+                # MCDC:<line>,<group size>,<t|f>,<taken>,<index>,<expression>
+                line_no = _to_line(fields[0])
+                group_size = _to_int(fields[1])
+                taken = _to_int(fields[3])
+                index = _to_int(fields[4])
+                if line_no and group_size is not None and \
+                        fields[2] in ('t', 'f') and taken is not None and \
+                        index is not None:
+                    mcdc_key = (line_no, group_size, index, fields[2] == 't')
+                    current.mcdc_hits[mcdc_key] = min(
+                        current.mcdc_hits[mcdc_key] + taken,
+                        coverage.MAX_VALUE)
+                    current.mcdc_expressions.setdefault(
+                        mcdc_key, ','.join(fields[5:]).strip())
+            elif key in ('BRF', 'BRH', 'MCF', 'MCH'):
+                attr = {'BRF': 'branches_found', 'BRH': 'branches_hit',
+                        'MCF': 'mcdc_found', 'MCH': 'mcdc_hit'}[key]
+                setattr(current, attr, max(
+                    getattr(current, attr),
+                    min(_to_int(value) or 0, coverage.MAX_VALUE)))
             elif key == 'FNF':
                 current.functions_found = max(
                     current.functions_found,

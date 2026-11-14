@@ -69,39 +69,36 @@
         </router-link>
       </template>
 
-      <template #item.linePercent="{ item }">
+      <template
+        v-for="metric in metrics"
+        :key="metric.id"
+        #[`item.${percentKey(metric)}`]="{ item }"
+      >
         <coverage-percentage
-          :hit="item.linesHit"
-          :found="item.linesFound"
-          unit="lines"
+          :hit="item[metric.hit]"
+          :found="item[metric.found]"
+          :unit="metric.unit"
+          :verb="metric.verb"
         />
-      </template>
-
-      <template #item.lines="{ item }">
-        {{ item.linesHit }} / {{ item.linesFound }}
-      </template>
-
-      <template #item.functionPercent="{ item }">
-        <coverage-percentage
-          :hit="item.functionsHit"
-          :found="item.functionsFound"
-          unit="functions"
-        />
-      </template>
-
-      <template #item.functions="{ item }">
-        {{ item.functionsHit }} / {{ item.functionsFound }}
+        <div class="text-caption text-medium-emphasis">
+          {{ item[metric.hit] }} / {{ item[metric.found] }}
+        </div>
       </template>
     </v-data-table>
   </div>
 </template>
 
 <script setup>
-import CoveragePercentage from "./CoveragePercentage";
+import { computed } from "vue";
 
-defineProps({
+import CoveragePercentage from "./CoveragePercentage";
+import { percentKey } from "./coverage-tree";
+
+const props = defineProps({
   items: { type: Array, required: true },
   breadcrumbs: { type: Array, required: true },
+  // The shown metrics (elements of METRICS of coverage-tree.js).
+  metrics: { type: Array, required: true },
   loading: { type: Boolean, default: false },
   search: { type: String, default: "" },
   // Functions which return the route location of a directory path and of a
@@ -112,38 +109,22 @@ defineProps({
 
 const emit = defineEmits([ "update:search" ]);
 
-// Percentages of entities without executable lines or functions are null.
-// They are sorted as -1 so they are placed before the 0% entities.
+// Percentages of entities without measured data are null. They are sorted
+// as -1 so they are placed before the 0% entities.
 const sortPercent = (a, b) => (a ?? -1) - (b ?? -1);
 
-const headers = [
+// One column per metric: the percentage bar with the "hit / found" counts.
+const headers = computed(() => [
   {
     title: "Name",
     key: "name"
   },
-  {
-    title: "Line coverage",
-    key: "linePercent",
+  ...props.metrics.map(metric => ({
+    title: `${metric.title} coverage`,
+    key: percentKey(metric),
     sort: sortPercent
-  },
-  {
-    title: "Executed / executable lines",
-    key: "lines",
-    align: "end",
-    value: item => item.linesFound,
-  },
-  {
-    title: "Function coverage",
-    key: "functionPercent",
-    sort: sortPercent
-  },
-  {
-    title: "Executed functions / functions",
-    key: "functions",
-    align: "end",
-    value: item => item.functionsFound
-  }
-];
+  }))
+]);
 
 const itemsPerPageOptions = [
   { value: 25, title: "25" },
@@ -166,5 +147,15 @@ const itemsPerPageOptions = [
   font-family: monospace;
   text-decoration: none;
   white-space: nowrap;
+}
+
+// Narrower coverage bars, so a column of every metric fits next to each
+// other on a laptop screen.
+:deep(.coverage-percentage) {
+  min-width: 112px;
+
+  .coverage-bar {
+    max-width: 56px;
+  }
 }
 </style>

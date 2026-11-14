@@ -18,9 +18,10 @@
           :hit="tile.hit"
           :found="tile.found"
           :unit="tile.unit"
+          :verb="tile.verb"
         />
         <div class="text-caption mt-1">
-          {{ tile.hit }} / {{ tile.found }} {{ tile.unit }} executed
+          {{ tile.hit }} / {{ tile.found }} {{ tile.unit }} {{ tile.verb }}
         </div>
       </v-card-text>
     </v-card>
@@ -33,31 +34,26 @@ import { computed } from "vue";
 import CoveragePercentage from "./CoveragePercentage";
 
 const props = defineProps({
-  // Summed coverage counts: linesFound, linesHit, functionsFound,
-  // functionsHit.
-  counts: { type: Object, required: true }
+  // Summed coverage counts, e.g. linesFound, linesHit.
+  counts: { type: Object, required: true },
+  // The shown metrics (elements of METRICS of coverage-tree.js).
+  metrics: { type: Array, required: true }
 });
 
-const tiles = computed(() => [
-  {
-    label: "Line coverage",
-    icon: "mdi-format-list-numbered",
-    unit: "lines",
-    hit: props.counts.linesHit,
-    found: props.counts.linesFound
-  },
-  {
-    label: "Function coverage",
-    icon: "mdi-function-variant",
-    unit: "functions",
-    hit: props.counts.functionsHit,
-    found: props.counts.functionsFound
-  }
-]);
+const tiles = computed(() => props.metrics.map(metric => ({
+  label: `${metric.title} coverage`,
+  icon: metric.icon,
+  unit: metric.unit,
+  verb: metric.verb,
+  hit: props.counts[metric.hit],
+  found: props.counts[metric.found]
+})));
 </script>
 
 <style lang="scss" scoped>
+// The tiles share one row on wide screens and wrap on narrow ones.
 .coverage-summary-tile {
-  min-width: 240px;
+  flex: 1 1 0;
+  min-width: 170px;
 }
 </style>

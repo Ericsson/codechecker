@@ -453,22 +453,102 @@ def get_skip_handler(report_dir: Path) -> skiplist_handler.SkipListHandler:
         raise
 
 
+def _merge_line_items(items1: list[list], items2: list[list]) -> list[list]:
+    """
+    Merge the [line, hit, found, ...] items of the branch or MC/DC coverage
+    of the same file: the maximum of the counts of a line is kept. The
+    uncovered MC/DC conditions of a line are the ones which are uncovered in
+    both. If both label lists are complete, the hit count is raised to match
+    the merged labels.
+    """
+    merged = {item[0]: list(item) for item in items1}
+    for item in items2:
+        prev = merged.get(item[0])
+        if prev is None:
+            merged[item[0]] = list(item)
+            continue
+
+        hit = max(prev[1], item[1])
+        found = max(prev[2], item[2])
+        if len(prev) > 3 and prev[2] != item[2]:
+            # The conditions were counted differently (e.g. LCOV counts the
+            # true and false sense of a condition separately, LLVM does not),
+            # so the labels can not be matched: keep the labels of the item
+            # with the most conditions.
+            if item[2] > prev[2]:
+                prev[3] = list(item[3])
+        elif len(prev) > 3:
+            labels = [label for label in prev[3] if label in item[3]]
+            if len(prev[3]) == prev[2] - prev[1] and \
+                    len(item[3]) == item[2] - item[1]:
+                hit = max(hit, found - len(labels))
+            prev[3] = labels
+
+        prev[1] = min(hit, found)
+        prev[2] = found
+
+    return [merged[line] for line in sorted(merged)]
+
+
 def merge_file_coverage(
     cov1: coverage.FileCoverage,
     cov2: coverage.FileCoverage
 ) -> coverage.FileCoverage:
     """
     Merge the coverage of the same source file coming from multiple report
-    directories. A line is covered if it is covered in any of them.
+    directories. A line is covered if it is covered in any of them. The
+    branch and MC/DC totals are derived from the merged per-line items if
+    both sides have them, otherwise the maximum is kept (as for functions).
+    A region is uncovered if it is uncovered in all report directories which
+    measured region coverage.
     """
     covered = set(cov1.covered_lines) | set(cov2.covered_lines)
     uncovered = (set(cov1.uncovered_lines) | set(cov2.uncovered_lines)) \
         - covered
 
+    if not cov1.regions_found:
+        uncovered_regions = cov2.uncovered_regions
+    elif not cov2.regions_found:
+        uncovered_regions = cov1.uncovered_regions
+    else:
+        regions2 = {tuple(r) for r in cov2.uncovered_regions}
+        uncovered_regions = [r for r in cov1.uncovered_regions
+                             if tuple(r) in regions2]
+
+    def max_pair(found_key: str, hit_key: str) -> dict[str, int]:
+        found = max(getattr(cov1, found_key), getattr(cov2, found_key))
+        hit = min(max(getattr(cov1, hit_key), getattr(cov2, hit_key)), found)
+        return {found_key: found, hit_key: hit}
+
+    counts: dict[str, int] = {}
+    for found_key, hit_key in coverage.COUNT_KEYS:
+        counts.update(max_pair(found_key, hit_key))
+
+    line_branches = _merge_line_items(cov1.line_branches, cov2.line_branches)
+    line_mcdc = _merge_line_items(cov1.line_mcdc, cov2.line_mcdc)
+
+    def sum_items(items: list[list]) -> tuple[int, int]:
+        return (min(sum(item[2] for item in items), coverage.MAX_VALUE),
+                min(sum(item[1] for item in items), coverage.MAX_VALUE))
+
+    if cov1.line_branches and cov2.line_branches:
+        counts['branches_found'], counts['branches_hit'] = \
+            sum_items(line_branches)
+    if cov1.line_mcdc and cov2.line_mcdc:
+        counts['mcdc_found'], counts['mcdc_hit'] = sum_items(line_mcdc)
+
+    if cov1.regions_found and cov2.regions_found:
+        found = counts['regions_found']
+        counts['regions_hit'] = min(found, max(
+            counts['regions_hit'], found - len(uncovered_regions)))
+
     return coverage.FileCoverage(
         sorted(covered), sorted(uncovered),
-        max(cov1.functions_found, cov2.functions_found),
-        max(cov1.functions_hit, cov2.functions_hit))
+        line_branches=line_branches,
+        line_mcdc=line_mcdc,
+        uncovered_regions=sorted(list(r) for r in uncovered_regions),
+        **max_pair('functions_found', 'functions_hit'),
+        **counts)
 
 
 def checker_name_for_report(report: Report) -> tuple[str, str]:
@@ -1862,11 +1942,7 @@ class MassStoreRun:
             .delete(synchronize_session=False)
 
         session.add_all(
-            TestCoverage(run_id, file_id,
-                         file_coverage.covered_lines,
-                         file_coverage.uncovered_lines,
-                         file_coverage.functions_found,
-                         file_coverage.functions_hit)
+            TestCoverage(run_id, file_id, file_coverage)
             for file_id, file_coverage in self.__file_coverages.items())
 
     def store(self,

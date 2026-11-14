@@ -65,9 +65,16 @@ class TestCoverageTest(unittest.TestCase):
             session.commit()
 
             session.add_all([
-                CoverageRow(1, 1, [1, 2, 3], [4], 2, 1),
-                CoverageRow(1, 2, [10], [], 0, 0),
-                CoverageRow(2, 1, [1], [2, 3, 4], 2, 0)])
+                CoverageRow(1, 1, FileCoverage(
+                    [1, 2, 3], [4], 2, 1,
+                    branches_found=4, branches_hit=3,
+                    mcdc_found=2, mcdc_hit=1,
+                    regions_found=5, regions_hit=4,
+                    line_branches=[[2, 1, 2], [3, 2, 2]],
+                    line_mcdc=[[2, 1, 2, ['C2']]],
+                    uncovered_regions=[[4, 3, 4, 9]])),
+                CoverageRow(1, 2, FileCoverage([10], [], 0, 0)),
+                CoverageRow(2, 1, FileCoverage([1], [2, 3, 4], 2, 0))])
             session.commit()
 
         self.handler = ThriftRequestHandler.__new__(ThriftRequestHandler)
@@ -95,6 +102,17 @@ class TestCoverageTest(unittest.TestCase):
         self.assertEqual([(c.runId, c.fileId, c.linesHit) for c in result],
                          [(2, 1, 1)])
 
+    def test_file_coverages_branch_mcdc_region_counts(self):
+        """
+        The branch, MC/DC and region counts are returned, 0 if they were not
+        measured.
+        """
+        result = self.handler.getFileCoverages([1])
+        self.assertEqual(
+            [(c.branchesFound, c.branchesHit, c.mcdcFound, c.mcdcHit,
+              c.regionsFound, c.regionsHit) for c in result],
+            [(4, 3, 2, 1, 5, 4), (0, 0, 0, 0, 0, 0)])
+
     def test_file_coverages_of_all_runs(self):
         """ An empty run list means all runs. """
         result = self.handler.getFileCoverages([])
@@ -111,11 +129,40 @@ class TestCoverageTest(unittest.TestCase):
         self.assertEqual(result.coveredLines, [1])
         self.assertEqual(result.uncoveredLines, [2, 3, 4])
 
+    def test_file_line_coverage_details(self):
+        """
+        The branch and MC/DC coverage of the lines and the uncovered regions
+        are returned. They are empty if they were not measured.
+        """
+        result = self.handler.getFileLineCoverage(1, 1)
+        self.assertEqual(
+            [(b.line, b.hit, b.found) for b in result.lineBranches],
+            [(2, 1, 2), (3, 2, 2)])
+        self.assertEqual(
+            [(m.line, m.hit, m.found, m.uncoveredConditions)
+             for m in result.lineMcdc],
+            [(2, 1, 2, ['C2'])])
+        self.assertEqual(
+            [(r.startLine, r.startCol, r.endLine, r.endCol)
+             for r in result.uncoveredRegions],
+            [(4, 3, 4, 9)])
+
+        result = self.handler.getFileLineCoverage(2, 1)
+        self.assertEqual(
+            (result.lineBranches, result.lineMcdc, result.uncoveredRegions),
+            ([], [], []))
+
+        with self.session_factory() as session:
+            self.assertIsNone(session.query(CoverageRow.details)
+                              .filter(CoverageRow.run_id == 2).scalar())
+
     def test_file_line_coverage_without_data(self):
         """ Empty lists are returned if there is no coverage data. """
         result = self.handler.getFileLineCoverage(2, 2)
         self.assertEqual(result.coveredLines, [])
         self.assertEqual(result.uncoveredLines, [])
+        self.assertEqual(result.lineBranches, [])
+        self.assertEqual(result.uncoveredRegions, [])
 
     def test_require_view_permission(self):
         """ The handlers check the product view permission. """
@@ -178,10 +225,17 @@ class TestCoverageTest(unittest.TestCase):
 
     def test_store_replaces_coverage_of_run(self):
         """ Storing coverage replaces the coverage of that run only. """
-        self.__store_coverage(1, {2: FileCoverage([1, 2], [3], 0, 0)})
+        self.__store_coverage(1, {2: FileCoverage(
+            [1, 2], [3], 0, 0, regions_found=2, regions_hit=1,
+            uncovered_regions=[[3, 1, 3, 4]])})
 
         self.assertEqual(self.__coverage_of_run(1), {(2, 3, 2)})
         self.assertEqual(self.__coverage_of_run(2), {(1, 4, 1)})
+        self.assertEqual(
+            [(c.regionsFound, c.regionsHit)
+             for c in self.handler.getFileCoverages([1])], [(2, 1)])
+        self.assertEqual(
+            len(self.handler.getFileLineCoverage(1, 2).uncoveredRegions), 1)
 
     def test_store_empty_coverage_clears_run(self):
         """
@@ -199,6 +253,89 @@ class TestCoverageTest(unittest.TestCase):
             FileCoverage([1, 2], [3, 4], 2, 1),
             FileCoverage([3], [1, 5], 3, 2))
         self.assertEqual(merged, FileCoverage([1, 2, 3], [4, 5], 3, 2))
+
+    def test_merge_branch_mcdc_region_coverage(self):
+        """
+        The branch and MC/DC totals follow the merged per-line items, a
+        region is uncovered only if every report dir measuring regions says
+        so, and the region hit count is consistent with it.
+        """
+        llvm1 = FileCoverage(
+            [1], [], 0, 0,
+            branches_found=4, branches_hit=1, mcdc_found=2, mcdc_hit=0,
+            regions_found=3, regions_hit=1,
+            line_branches=[[1, 1, 2], [2, 0, 2]],
+            line_mcdc=[[1, 0, 2, ['C1', 'C2']]],
+            uncovered_regions=[[1, 1, 1, 5], [2, 1, 2, 5]])
+        llvm2 = FileCoverage(
+            [1], [], 0, 0,
+            branches_found=4, branches_hit=3, mcdc_found=2, mcdc_hit=1,
+            regions_found=3, regions_hit=2,
+            line_branches=[[1, 2, 2], [3, 1, 2]],
+            line_mcdc=[[1, 1, 2, ['C2']]],
+            uncovered_regions=[[2, 1, 2, 5]])
+
+        merged = merge_file_coverage(llvm1, llvm2)
+        self.assertEqual((merged.branches_found, merged.branches_hit),
+                         (6, 3))
+        self.assertEqual((merged.mcdc_found, merged.mcdc_hit), (2, 1))
+        self.assertEqual((merged.regions_found, merged.regions_hit), (3, 2))
+        self.assertEqual(merged.line_branches,
+                         [[1, 2, 2], [2, 0, 2], [3, 1, 2]])
+        self.assertEqual(merged.line_mcdc, [[1, 1, 2, ['C2']]])
+        self.assertEqual(merged.uncovered_regions, [[2, 1, 2, 5]])
+
+        # LCOV data has no regions, so it doesn't hide uncovered regions.
+        lcov = FileCoverage([1], [], 0, 0)
+        for merged in [merge_file_coverage(llvm1, lcov),
+                       merge_file_coverage(lcov, llvm1)]:
+            self.assertEqual(merged.uncovered_regions,
+                             llvm1.uncovered_regions)
+            self.assertEqual(merged.line_mcdc, llvm1.line_mcdc)
+            self.assertEqual((merged.mcdc_found, merged.mcdc_hit), (2, 0))
+
+        # The region hit count follows the intersected uncovered regions.
+        merged = merge_file_coverage(
+            FileCoverage([1], [], 0, 0, regions_found=4, regions_hit=1,
+                         uncovered_regions=[[1, 1, 1, 2], [2, 1, 2, 2],
+                                            [3, 1, 3, 2]]),
+            FileCoverage([1], [], 0, 0, regions_found=4, regions_hit=1,
+                         uncovered_regions=[[1, 1, 1, 2], [4, 1, 4, 2],
+                                            [5, 1, 5, 2]]))
+        self.assertEqual(merged.uncovered_regions, [[1, 1, 1, 2]])
+        self.assertEqual((merged.regions_found, merged.regions_hit), (4, 3))
+
+    def test_merge_lcov_and_llvm_mcdc(self):
+        """
+        LCOV-style (per sense) and llvm-style (per condition) MC/DC data of
+        the same file is merged into consistent per-line items and totals:
+        the hit count of a line never contradicts its uncovered labels.
+        """
+        lcov = FileCoverage(
+            [5, 7], [], 0, 0, mcdc_found=8, mcdc_hit=4,
+            line_mcdc=[[5, 3, 4, ['C1 false']],
+                       [7, 1, 4, ['C1 false', 'C1 true', 'C2 false']]])
+        llvm = FileCoverage(
+            [5, 7], [], 0, 0, mcdc_found=4, mcdc_hit=1,
+            line_mcdc=[[5, 1, 2, ['C1']], [7, 0, 2, ['C1', 'C2']],
+                       [9, 0, 1, ['C1']]])
+
+        for merged in [merge_file_coverage(lcov, llvm),
+                       merge_file_coverage(llvm, lcov)]:
+            for line, hit, found, labels in merged.line_mcdc:
+                self.assertLessEqual(hit, found)
+                self.assertEqual(found - hit, len(labels), line)
+
+            self.assertEqual(
+                (merged.mcdc_found, merged.mcdc_hit),
+                (sum(item[2] for item in merged.line_mcdc),
+                 sum(item[1] for item in merged.line_mcdc)))
+            self.assertEqual([item[0] for item in merged.line_mcdc],
+                             [5, 7, 9])
+
+            # The labels of the two tools can not be matched, so a line is
+            # never reported fully covered because of an empty intersection.
+            self.assertEqual(merged.line_mcdc[0], [5, 3, 4, ['C1 false']])
 
 
 class ParseCoverageFilesTest(unittest.TestCase):

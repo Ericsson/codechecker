@@ -11,6 +11,7 @@
 Test storing test coverage data and querying it through the API.
 """
 
+import json
 import os
 import shutil
 import unittest
@@ -24,6 +25,8 @@ from codechecker_report_converter.analyzers.clang_tidy import \
     analyzer_result as tidy_result
 from codechecker_report_converter.analyzers.lcov import \
     analyzer_result as lcov_result
+from codechecker_report_converter.analyzers.llvm_cov import \
+    analyzer_result as llvm_cov_result
 from codechecker_report_converter.report import coverage
 
 from libtest import codechecker
@@ -64,6 +67,10 @@ end_of_record
 SF:$DIR$/lib/util.c
 FNF:2
 FNH:1
+BRDA:2,0,0,0
+BRDA:2,0,1,1
+MCDC:2,1,t,1,0,x < 0
+MCDC:2,1,f,0,0,x < 0
 DA:1,1
 DA:2,1
 DA:3,0
@@ -83,6 +90,35 @@ DA:1,0
 DA:2,0
 end_of_record
 """
+
+# 'llvm-cov export' output of 'lib/util.c'. Line 3 and the region of the
+# 'return 0;' statement were never executed.
+LLVM_COV_EXPORT = json.dumps({
+    "type": "llvm.coverage.json.export",
+    "version": "2.0.1",
+    "data": [{
+        "files": [{
+            "filename": "$DIR$/lib/util.c",
+            "segments": [[1, 17, 4, True, True, False],
+                         [2, 13, 0, True, False, True],
+                         [3, 5, 0, True, True, False],
+                         [3, 14, 4, True, False, False],
+                         [6, 2, 0, False, False, False]],
+            "branches": [[2, 7, 2, 12, 0, 4, 0, 0, 4]],
+            "mcdc_records": [[2, 7, 2, 12, 0, 5, [False]]],
+            "expansions": [],
+            "summary": {
+                "functions": {"count": 1, "covered": 1},
+                "regions": {"count": 3, "covered": 2},
+                "branches": {"count": 2, "covered": 1},
+                "mcdc": {"count": 1, "covered": 0}}}],
+        "functions": [{
+            "name": "util",
+            "count": 4,
+            "filenames": ["$DIR$/lib/util.c"],
+            "regions": [[1, 17, 6, 2, 4, 0, 0, 0],
+                        [2, 7, 2, 12, 4, 0, 0, 0],
+                        [3, 5, 3, 14, 0, 0, 0, 0]]}]}]})
 
 # A clang-tidy output which contains one report in 'main.c'.
 TIDY_OUTPUT = \
@@ -176,6 +212,17 @@ class TestCoverage(unittest.TestCase):
             coverage.get_coverage_file_path(out_dir)))
         return out_dir
 
+    def __llvm_cov_dir(self, name: str, template: str) -> str:
+        """
+        Create a report directory from an 'llvm-cov export' file, the same
+        way as 'report-converter -t llvm-cov' does.
+        """
+        export_file = self.__write_input(name + '.json', template)
+        out_dir = os.path.join(self._proj_dir, name)
+        self.assertTrue(llvm_cov_result.AnalyzerResult().transform(
+            [export_file], out_dir, 'plist'))
+        return out_dir
+
     def __report_dir(self) -> str:
         """ Create a report directory which contains a single report. """
         tidy_file = self.__write_input('tidy.out', TIDY_OUTPUT)
@@ -247,9 +294,65 @@ class TestCoverage(unittest.TestCase):
         self.assertEqual(line_cov.coveredLines, [1, 2, 5])
         self.assertEqual(line_cov.uncoveredLines, [3])
 
+        # Branch and MC/DC coverage of LCOV, LCOV has no region coverage.
+        self.assertEqual((main.branchesFound, main.mcdcFound), (0, 0))
+        self.assertEqual((util.branchesFound, util.branchesHit), (2, 1))
+        self.assertEqual((util.mcdcFound, util.mcdcHit), (2, 1))
+        self.assertEqual((util.regionsFound, util.regionsHit), (0, 0))
+        self.assertEqual(
+            [(b.line, b.hit, b.found) for b in line_cov.lineBranches],
+            [(2, 1, 2)])
+        self.assertEqual(
+            [(m.line, m.hit, m.found, m.uncoveredConditions)
+             for m in line_cov.lineMcdc],
+            [(2, 1, 2, ['x < 0 false'])])
+        self.assertEqual(line_cov.uncoveredRegions, [])
+
         # The source code of a file with coverage is available.
         source = self._cc_client.getSourceFileData(util.fileId, True, None)
         self.assertEqual(source.fileContent, SOURCES['lib/util.c'])
+
+    def test_store_llvm_cov(self):
+        """
+        Store the coverage of an 'llvm-cov export' file: line, function,
+        region, branch and MC/DC coverage.
+        """
+        run_id = self.__store('coverage_llvm_cov', [
+            self.__llvm_cov_dir('llvm_cov', LLVM_COV_EXPORT)])
+
+        util = self.__coverages(run_id)[self.__path('lib/util.c')]
+        self.assertEqual((util.linesFound, util.linesHit), (6, 5))
+        self.assertEqual((util.functionsFound, util.functionsHit), (1, 1))
+        self.assertEqual((util.regionsFound, util.regionsHit), (3, 2))
+        self.assertEqual((util.branchesFound, util.branchesHit), (2, 1))
+        self.assertEqual((util.mcdcFound, util.mcdcHit), (1, 0))
+
+        line_cov = self._cc_client.getFileLineCoverage(run_id, util.fileId)
+        self.assertEqual(line_cov.uncoveredLines, [3])
+        self.assertEqual(
+            [(b.line, b.hit, b.found) for b in line_cov.lineBranches],
+            [(2, 1, 2)])
+        self.assertEqual(
+            [(m.line, m.hit, m.found, m.uncoveredConditions)
+             for m in line_cov.lineMcdc],
+            [(2, 0, 1, ['C1'])])
+        self.assertEqual(
+            [(r.startLine, r.startCol, r.endLine, r.endCol)
+             for r in line_cov.uncoveredRegions],
+            [(3, 5, 3, 14)])
+
+    def test_invalid_coverage_file_is_refused(self):
+        """ A coverage file with invalid values fails the storage. """
+        cov_dir = self.__coverage_dir('cov', LCOV_EXTRA)
+        with open(coverage.get_coverage_file_path(cov_dir), 'w',
+                  encoding='utf-8') as f:
+            json.dump({"version": 1, "files": {self.__path('lib/extra.c'): {
+                "branches_found": 1, "branches_hit": 2}}}, f)
+
+        cfg = dict(self._codechecker_cfg)
+        cfg['reportdir'] = [cov_dir]
+        self.assertNotEqual(
+            codechecker.store(cfg, 'coverage_invalid'), 0)
 
     def test_store_coverage_only(self):
         """

@@ -11,6 +11,7 @@ This module tests the correctness of the LCOV AnalyzerResult, which
 transforms LCOV tracefiles to a CodeChecker coverage file.
 """
 
+import json
 import os
 import shutil
 import tempfile
@@ -87,6 +88,125 @@ class LcovAnalyzerResultTestCase(unittest.TestCase):
         utils = result['/home/user/project/utils.c']
         self.assertEqual(utils.functions_found, 4)
         self.assertEqual(utils.functions_hit, 3)
+
+    def test_transform_branch_and_mcdc_records(self):
+        """
+        Test the BRDA and MCDC records of a tracefile created by LCOV 2.3
+        from the coverage of GCC 15 with '-fcondition-coverage'.
+        """
+        result = self.__transform('mcdc.info')
+
+        calc = result['/home/user/project/calc.c']
+        self.assertEqual((calc.functions_found, calc.functions_hit), (4, 3))
+        self.assertEqual((calc.branches_found, calc.branches_hit), (12, 8))
+        self.assertEqual((calc.mcdc_found, calc.mcdc_hit), (12, 7))
+
+        # LCOV has no region coverage.
+        self.assertEqual((calc.regions_found, calc.regions_hit), (0, 0))
+        self.assertEqual(calc.uncovered_regions, [])
+
+        self.assertEqual(calc.line_branches,
+                         [[5, 3, 4], [7, 2, 4], [14, 2, 2], [16, 1, 2]])
+        self.assertEqual(calc.line_mcdc, [
+            [5, 3, 4, ['C1 false']],
+            [7, 1, 4, ['C1 false', 'C1 true', 'C2 false']],
+            [14, 2, 2, []],
+            [16, 1, 2, ['C1 true']]])
+
+        # The new keys are written to the coverage file only if measured.
+        with open(coverage.get_coverage_file_path(self.cc_result_dir),
+                  encoding='utf-8') as f:
+            entry = json.load(f)['files']['/home/user/project/calc.c']
+        self.assertNotIn('regions_found', entry)
+        self.assertNotIn('uncovered_regions', entry)
+
+    def test_branch_records(self):
+        """
+        A branch of a block which was never executed ('-') is found but not
+        hit. Records with the same key are summed up, exception branches are
+        distinct branches.
+        """
+        result = self.__transform_text(
+            "SF:/src/a.c\n"
+            "BRDA:3,0,0,-\n"
+            "BRDA:3,0,1,-\n"
+            "BRDA:4,0,0,0\n"
+            "BRDA:4,0,1,2\n"
+            "BRDA:4,e0,1,0\n"
+            "BRDA:x,0,0,1\n"
+            "BRDA:5,0,0\n"
+            "BRF:100\n"
+            "BRH:50\n"
+            "end_of_record\n"
+            "SF:/src/a.c\n"
+            "BRDA:4,0,0,1\n"
+            "end_of_record\n")
+
+        a = result['/src/a.c']
+        self.assertEqual((a.branches_found, a.branches_hit), (5, 2))
+        self.assertEqual(a.line_branches, [[3, 0, 2], [4, 2, 3]])
+
+    def test_branch_and_mcdc_summary_only(self):
+        """
+        If a tracefile has only the BRF/BRH and MCF/MCH summary records, the
+        counts come from them and there are no per-line details.
+        """
+        result = self.__transform_text(
+            "SF:/src/a.c\n"
+            "DA:1,1\n"
+            "BRF:12\n"
+            "BRH:8\n"
+            "MCF:4\n"
+            "MCH:9\n"
+            "end_of_record\n")
+
+        a = result['/src/a.c']
+        self.assertEqual((a.branches_found, a.branches_hit), (12, 8))
+        self.assertEqual((a.mcdc_found, a.mcdc_hit), (4, 4))
+        self.assertEqual(a.line_branches, [])
+        self.assertEqual(a.line_mcdc, [])
+
+    def test_mcdc_records(self):
+        """
+        MC/DC records with the same key are summed up, conditions are named
+        by their expression if it is not just an index.
+        """
+        result = self.__transform_text(
+            "SF:/src/a.c\n"
+            "MCDC:2,2,t,0,0,a > 0\n"
+            "MCDC:2,2,f,1,0,a > 0\n"
+            "MCDC:2,2,t,0,1,f(b, c)\n"
+            "MCDC:2,2,f,0,1,f(b, c)\n"
+            "MCDC:2,2,x,0,1,bad sense\n"
+            "MCDC:2,2,t,1\n"
+            "end_of_record\n"
+            "SF:/src/a.c\n"
+            "MCDC:2,2,t,3,0,a > 0\n"
+            "end_of_record\n")
+
+        a = result['/src/a.c']
+        self.assertEqual((a.mcdc_found, a.mcdc_hit), (4, 2))
+        self.assertEqual(a.line_mcdc,
+                         [[2, 2, 4, ['f(b, c) false', 'f(b, c) true']]])
+
+    def test_long_mcdc_expression(self):
+        """
+        Labels of long condition expressions are truncated, so the written
+        coverage file is always valid.
+        """
+        expression = 'x' * 300
+        result = self.__transform_text(
+            "SF:/src/a.c\n"
+            f"MCDC:2,1,t,0,0,{expression}\n"
+            f"MCDC:2,1,f,0,0,{expression}\n"
+            "end_of_record\n")
+
+        labels = result['/src/a.c'].line_mcdc[0][3]
+        self.assertEqual(len(labels), 2)
+        for label in labels:
+            self.assertLessEqual(len(label), coverage.MAX_LABEL_LENGTH)
+        self.assertTrue(labels[0].endswith('... false'))
+        self.assertTrue(labels[1].endswith('... true'))
 
     def test_merge_multiple_tracefiles(self):
         """

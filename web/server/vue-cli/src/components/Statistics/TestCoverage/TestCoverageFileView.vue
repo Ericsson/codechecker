@@ -11,17 +11,16 @@
         Back
       </v-btn>
 
-      <span class="text-body-2 mr-4">
+      <span
+        v-for="header in headerCounts"
+        :key="header.id"
+        class="text-body-2 mr-4"
+        :title="header.title"
+      >
         <v-icon size="small" class="mr-1">
-          mdi-format-list-numbered
+          {{ header.icon }}
         </v-icon>
-        Lines: {{ formatCounts(lineCounts) }}
-      </span>
-      <span class="text-body-2 mr-4">
-        <v-icon size="small" class="mr-1">
-          mdi-function-variant
-        </v-icon>
-        Functions: {{ formatCounts(functionCounts) }}
+        {{ header.label }}: {{ formatCounts(header.counts) }}
       </span>
 
       <v-spacer />
@@ -38,8 +37,31 @@
           <v-icon size="small" color="error">mdi-close</v-icon>
           Not executed
         </span>
-        <span class="legend-item">
+        <span class="legend-item mr-3">
           No marker: not executable
+        </span>
+        <template v-if="hasBranchData">
+          <span class="legend-item mr-1">Branches:</span>
+          <span class="legend-item mr-3">
+            <v-icon size="small" color="success">mdi-source-branch</v-icon>
+            all taken
+          </span>
+          <span class="legend-item mr-3">
+            <v-icon size="small" color="warning">mdi-source-branch</v-icon>
+            partially
+          </span>
+          <span class="legend-item mr-3">
+            <v-icon size="small" color="error">mdi-source-branch</v-icon>
+            none taken
+          </span>
+        </template>
+        <span
+          v-if="hasRegionData"
+          class="legend-item"
+          title="Code region which was not executed"
+        >
+          <span class="legend-region">code</span>
+          Region not executed
         </span>
       </div>
     </v-row>
@@ -103,6 +125,8 @@ const props = defineProps({
   fileId: { type: Number, required: true },
   // Normalized FileCoverage summary of the file (if known).
   fileCoverage: { type: Object, default: null },
+  // The shown metrics (elements of METRICS of coverage-tree.js).
+  metrics: { type: Array, default: () => [] },
   // Route location of the directory view.
   backLink: { type: Object, required: true }
 });
@@ -138,10 +162,26 @@ const lineCounts = computed(() => {
   } : null;
 });
 
-const functionCounts = computed(() => props.fileCoverage ? {
-  hit: props.fileCoverage.functionsHit,
-  found: props.fileCoverage.functionsFound
-} : null);
+// The counts of the shown metrics. The line counts come from the loaded
+// line data, the others from the summary of the file.
+const headerCounts = computed(() => props.metrics.map(metric => ({
+  id: metric.id,
+  icon: metric.icon,
+  label: metric.title,
+  title: `${metric.title} coverage: ${metric.hitTitle.toLowerCase()} / ` +
+    metric.foundTitle.toLowerCase(),
+  counts: metric.id === "line" ? lineCounts.value : props.fileCoverage ? {
+    hit: props.fileCoverage[metric.hit],
+    found: props.fileCoverage[metric.found]
+  } : null
+})));
+
+const hasBranchData = computed(() => !!lineData.value &&
+  (lineData.value.lineBranches.length > 0 ||
+    lineData.value.lineMcdc.length > 0));
+
+const hasRegionData = computed(() => !!lineData.value &&
+  lineData.value.uncoveredRegions.length > 0);
 
 function formatCounts(counts) {
   if (!counts)
@@ -165,9 +205,13 @@ function getFileLineCoverage(runId, fileId) {
   });
 }
 
+function toNumber(value) {
+  return typeof value?.toNumber === "function"
+    ? value.toNumber() : Number(value);
+}
+
 function toNumbers(lines) {
-  return (lines || []).map(line =>
-    typeof line?.toNumber === "function" ? line.toNumber() : Number(line));
+  return (lines || []).map(toNumber);
 }
 
 async function load() {
@@ -191,7 +235,25 @@ async function load() {
     sourceFilePath.value = sourceFile.filePath;
     lineData.value = {
       coveredLines: toNumbers(lineCoverageData.coveredLines),
-      uncoveredLines: toNumbers(lineCoverageData.uncoveredLines)
+      uncoveredLines: toNumbers(lineCoverageData.uncoveredLines),
+      lineBranches: (lineCoverageData.lineBranches || []).map(item => ({
+        line: toNumber(item.line),
+        hit: toNumber(item.hit),
+        found: toNumber(item.found)
+      })),
+      lineMcdc: (lineCoverageData.lineMcdc || []).map(item => ({
+        line: toNumber(item.line),
+        hit: toNumber(item.hit),
+        found: toNumber(item.found),
+        uncoveredConditions: item.uncoveredConditions || []
+      })),
+      uncoveredRegions: (lineCoverageData.uncoveredRegions || []).map(
+        region => ({
+          startLine: toNumber(region.startLine),
+          startCol: toNumber(region.startCol),
+          endLine: toNumber(region.endLine),
+          endCol: toNumber(region.endCol)
+        }))
     };
 
     editor.value.dispatch({
@@ -278,5 +340,12 @@ onUnmounted(() => {
   :deep(.cm-editor) {
     font-size: 12px;
   }
+}
+
+.legend-region {
+  font-family: monospace;
+  background-color: rgba(var(--v-theme-error), 0.3);
+  text-decoration: underline wavy rgb(var(--v-theme-error));
+  text-decoration-skip-ink: none;
 }
 </style>

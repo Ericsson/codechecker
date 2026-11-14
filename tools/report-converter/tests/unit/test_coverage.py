@@ -50,6 +50,51 @@ class CoverageFileTestCase(unittest.TestCase):
         self.assertEqual(result['/src/a.c'].lines_found, 3)
         self.assertEqual(result['/src/a.c'].lines_hit, 2)
 
+    def test_write_and_read_branch_mcdc_region(self):
+        """ The optional branch, MC/DC and region data can be read back. """
+        path = coverage.get_coverage_file_path(self.tmp_dir)
+        cov = coverage.FileCoverage(
+            [1], [2], 1, 1,
+            branches_found=4, branches_hit=3,
+            mcdc_found=2, mcdc_hit=1,
+            regions_found=5, regions_hit=4,
+            line_branches=[[2, 1, 2], [1, 2, 2]],
+            line_mcdc=[[1, 1, 2, ['C2']]],
+            uncovered_regions=[[2, 3, 2, 9], [1, 1, 1, 4], [1, 1, 1, 4]])
+        coverage.write(path, {'/src/a.c': cov}, 'llvm-cov')
+
+        result = coverage.read(path)['/src/a.c']
+        self.assertEqual((result.branches_found, result.branches_hit),
+                         (4, 3))
+        self.assertEqual((result.mcdc_found, result.mcdc_hit), (2, 1))
+        self.assertEqual((result.regions_found, result.regions_hit), (5, 4))
+        self.assertEqual(result.line_branches, [[1, 2, 2], [2, 1, 2]])
+        self.assertEqual(result.line_mcdc, [[1, 1, 2, ['C2']]])
+        self.assertEqual(result.uncovered_regions,
+                         [[1, 1, 1, 4], [2, 3, 2, 9]])
+
+    def test_missing_optional_keys(self):
+        """
+        Files written before the branch, MC/DC and region keys were added
+        are valid: the metrics were not measured.
+        """
+        path = self.__write_raw({
+            "version": 1, "tool": "lcov",
+            "files": {"/a.c": {"covered_lines": [1], "uncovered_lines": [2],
+                               "functions_found": 1, "functions_hit": 1}}})
+        result = coverage.read(path)['/a.c']
+        self.assertEqual(result, coverage.FileCoverage([1], [2], 1, 1))
+        self.assertEqual(result.branches_found, 0)
+        self.assertEqual(result.line_mcdc, [])
+
+        # Metrics which were not measured are not written.
+        out_path = os.path.join(self.tmp_dir, 'out.json')
+        coverage.write(out_path, {'/a.c': result}, 'lcov')
+        with open(out_path, encoding='utf-8') as f:
+            self.assertEqual(set(json.load(f)['files']['/a.c']), {
+                "covered_lines", "uncovered_lines", "functions_found",
+                "functions_hit"})
+
     def test_covered_line_wins(self):
         """ A line listed both as covered and uncovered is covered. """
         result = coverage.parse({
@@ -78,6 +123,40 @@ class CoverageFileTestCase(unittest.TestCase):
                                               "functions_hit": 2}}},
             {"version": 1, "files": {"/a.c": {"covered_lines": [2**31]}}},
             {"version": 1, "files": {"/a.c": {"functions_found": 2**31}}},
+            {"version": 1, "files": {"/a.c": {"branches_hit": 1}}},
+            {"version": 1, "files": {"/a.c": {"mcdc_found": -1}}},
+            {"version": 1, "files": {"/a.c": {"regions_found": 1,
+                                              "regions_hit": 2}}},
+            {"version": 1, "files": {"/a.c": {"line_branches": {}}}},
+            {"version": 1, "files": {"/a.c": {"line_branches": [[1, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_branches": [[1, 3, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_branches": [[0, 1, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_branches": [[1, 1, 2], [1, 0, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 1, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 1, 2, "C1"]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 1, 2, [1]]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 3, 2, []]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 1, 2, ["x" * 257]]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "line_mcdc": [[1, 1, 2, ["C"] * 65]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "uncovered_regions": [[1, 1, 1]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "uncovered_regions": [[1, 0, 1, 2]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "uncovered_regions": [[2, 1, 1, 5]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "uncovered_regions": [[1, 5, 1, 4]]}}},
+            {"version": 1, "files": {"/a.c": {
+                "uncovered_regions": [[1, 1, 1, 2**31]]}}},
         ]
         for data in invalid:
             with self.subTest(data=data):
@@ -132,5 +211,5 @@ class CoverageFileTestCase(unittest.TestCase):
         """ Unknown keys are ignored for forward compatibility. """
         result = coverage.read(self.__write_raw({
             "version": 1, "tool": "x", "extra": 1,
-            "files": {"/a.c": {"covered_lines": [1], "branches": []}}}))
+            "files": {"/a.c": {"covered_lines": [1], "regions": []}}}))
         self.assertEqual(result['/a.c'].covered_lines, [1])
