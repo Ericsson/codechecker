@@ -147,6 +147,10 @@ class Parser(BaseParser):
 
         while self.message_line_re.match(line) is None and \
                 self.note_line_re.match(line) is None:
+            if not line.strip():
+                line = next(it)
+                continue
+
             new_match = self.fixit_new_re.match(line)
             old_match = self.fixit_old_re.match(line)
             if new_match:
