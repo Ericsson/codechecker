@@ -145,6 +145,29 @@ class AnalyzerCommandClangSATest(unittest.TestCase):
         std_flags = [x for x in cmd if x.startswith(('-std=', '--std='))]
         self.assertEqual(len(std_flags), 1)
 
+    def test_mllvm_param_starting_with_x(self):
+        """
+        Regression test for
+        https://github.com/Ericsson/codechecker/issues/3973
+
+        The -x86-speculative-load-hardening parameter of -mllvm must not be
+        turned into a "-x 86-speculative-load-hardening" language flag.
+        """
+        analyzer = create_analyzer_sa(
+            command="g++ -mllvm -x86-speculative-load-hardening "
+                    "-o main main.cpp")
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        self.assertNotIn('86-speculative-load-hardening', cmd)
+
+        x_pos = cmd.index('-x')
+        self.assertEqual(cmd[x_pos + 1], 'c++')
+
+        mllvm_pos = cmd.index('-mllvm')
+        self.assertEqual(cmd[mllvm_pos + 1],
+                         '-x86-speculative-load-hardening')
+
 
 class AnalyzerCommandGccTest(unittest.TestCase):
     def test_output_is_os_devnull(self):

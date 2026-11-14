@@ -771,6 +771,21 @@ def __collect_transform_xclang_opts(flag_iterator, details):
     return False
 
 
+def __collect_mllvm_opts(flag_iterator, details):
+    """
+    Keep -mllvm together with its parameter. The parameter is an LLVM backend
+    option, e.g. -x86-speculative-load-hardening, so it must not be processed
+    as a separate compiler flag. Otherwise it could be mistaken for a -x
+    language flag.
+    """
+    if flag_iterator.item == '-mllvm':
+        next(flag_iterator)
+        details['analyzer_options'].extend(['-mllvm', flag_iterator.item])
+        return True
+
+    return False
+
+
 def __collect_transform_include_opts(flag_iterator, details):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
@@ -1033,6 +1048,7 @@ def parse_options(compilation_db_entry,
         __skip_sources,
         __skip_clang,
         __collect_transform_xclang_opts,
+        __collect_mllvm_opts,
         __get_output,
         __determine_action_type,
         __get_arch,
@@ -1045,6 +1061,7 @@ def parse_options(compilation_db_entry,
     gcc_flag_transformers = [
         __skip_gcc,
         __replace,
+        __collect_mllvm_opts,
         __collect_transform_include_opts,
         __collect_compile_opts,
         __determine_action_type,

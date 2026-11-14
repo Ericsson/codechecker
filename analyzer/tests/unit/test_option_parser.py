@@ -424,6 +424,58 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, keep)
 
+    def test_mllvm_param_is_not_language_clang(self):
+        """
+        The parameter of -mllvm may start with -x, but it is not a language.
+        """
+        action = {
+            'file': 'test.c',
+            'command': 'clang -g -o test -mllvm '
+                       '-x86-speculative-load-hardening test.c',
+            'directory': '/tmp'}
+
+        class FakeClangVersion:
+            installed_dir = "/tmp/clang/install"
+            major_version = "16"
+
+        log_parser.ImplicitCompilerInfo.compiler_versions["clang"] = \
+            FakeClangVersion()
+
+        res = log_parser.parse_options(action)
+        self.assertEqual(res.lang, 'c')
+        self.assertEqual(res.analyzer_options,
+                         ['-g', '-mllvm', '-x86-speculative-load-hardening'])
+
+    def test_mllvm_param_is_not_language_gcc(self):
+        """
+        Same as above, when the compiler is not detected as clang.
+        """
+        action = {
+            'file': 'main.cpp',
+            'command': 'g++ -mllvm -x86-speculative-load-hardening '
+                       '-c main.cpp',
+            'directory': '/tmp'}
+
+        res = log_parser.parse_options(action)
+        self.assertEqual(res.lang, 'c++')
+        self.assertEqual(res.analyzer_options,
+                         ['-mllvm', '-x86-speculative-load-hardening'])
+
+    def test_mllvm_does_not_hide_language(self):
+        """
+        A real -x flag after -mllvm and its parameter is still detected.
+        """
+        action = {
+            'file': 'main.c',
+            'command': 'gcc -mllvm -x86-speculative-load-hardening '
+                       '-x c++ -c main.c',
+            'directory': '/tmp'}
+
+        res = log_parser.parse_options(action)
+        self.assertEqual(res.lang, 'c++')
+        self.assertEqual(res.analyzer_options,
+                         ['-mllvm', '-x86-speculative-load-hardening'])
+
     def test_preserve_flags(self):
         """
         Test if special compiler options are preserved properly.
