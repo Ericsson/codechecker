@@ -24,7 +24,8 @@ class BuildAction:
                  'target',
                  'source',
                  'arch',
-                 'action_type']
+                 'action_type',
+                 'secondary']
 
     # Type annotations for the attributes stored in __slots__.
     analyzer_options: list[str]
@@ -39,6 +40,8 @@ class BuildAction:
     source: str
     arch: str
     action_type: int | None
+    # True if compile uniqueing did not choose this compilation in CTU mode.
+    secondary: bool
 
     LINK = 0
     COMPILE = 1

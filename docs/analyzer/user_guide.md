@@ -148,6 +148,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--timeout TIMEOUT]
                          [--ctu | --ctu-collect | --ctu-analyze]
                          [--ctu-reanalyze-on-failure]
+                         [--secondary-compile-analysis {skip,stu}]
                          [--ctu-ast-mode {load-from-pch,parse-on-demand}]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--disable-all] [--print-steps]
@@ -354,6 +355,18 @@ cross translation unit analysis arguments:
                         If Cross-TU analysis is enabled and fails for some
                         reason, try to re analyze the same translation unit
                         without Cross-TU enabled.
+  --secondary-compile-analysis {skip,stu}
+                        Choose what happens with the secondary compilations of
+                        a source file in CTU mode. In CTU mode, '--compile-
+                        uniqueing' ('alpha' or a regex) keeps only one
+                        compilation per source file. For the rest of the
+                        compilations of that source file: mode 'skip' does not
+                        analyze them, mode 'stu' analyzes them without CTU, so
+                        bugs only visible in those compilations are still
+                        found. The primary compilation chosen by '--compile-
+                        uniqueing' is analyzed with CTU as usual and is the
+                        only one used to build the CTU index. NOTE: Only
+                        available if CTU mode is enabled. (default: skip)
   --ctu-ast-mode {load-from-pch,parse-on-demand}
                         Choose the way ASTs are loaded during CTU analysis. Only
                         available if CTU mode is enabled. Mode 'load-from-pch'
@@ -1020,6 +1033,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--ctu | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
                            [--ctu-reanalyze-on-failure]
+                           [--secondary-compile-analysis {skip,stu}]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--disable-all]
@@ -1693,6 +1707,18 @@ cross translation unit analysis arguments:
                         analysis, using already available extra files in
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
+  --secondary-compile-analysis {skip,stu}
+                        Choose what happens with the secondary compilations of
+                        a source file in CTU mode. In CTU mode, '--compile-
+                        uniqueing' ('alpha' or a regex) keeps only one
+                        compilation per source file. For the rest of the
+                        compilations of that source file: mode 'skip' does not
+                        analyze them, mode 'stu' analyzes them without CTU, so
+                        bugs only visible in those compilations are still
+                        found. The primary compilation chosen by '--compile-
+                        uniqueing' is analyzed with CTU as usual and is the
+                        only one used to build the CTU index. NOTE: Only
+                        available if CTU mode is enabled. (default: skip)
   --ctu-ast-mode {load-from-pch,parse-on-demand}
                         Choose the way ASTs are loaded during CTU analysis. Only
                         available if CTU mode is enabled. Mode 'load-from-pch'

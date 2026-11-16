@@ -579,6 +579,29 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                "same translation unit without "
                                "Cross-TU enabled.")
 
+    ctu_opts.add_argument('--secondary-compile-analysis',
+                          action='store',
+                          dest='secondary_compile_analysis',
+                          choices=['skip', 'stu'],
+                          default=argparse.SUPPRESS,
+                          help="Choose what happens with the secondary "
+                               "compilations of a source file in CTU "
+                               "mode. In CTU mode, "
+                               "'--compile-uniqueing' ('alpha' or a "
+                               "regex) keeps only one compilation per "
+                               "source file. For the rest of the "
+                               "compilations of that source file: mode "
+                               "'skip' does not analyze them, mode "
+                               "'stu' analyzes them without CTU, so "
+                               "bugs only visible in those compilations "
+                               "are still found. The primary "
+                               "compilation chosen by "
+                               "'--compile-uniqueing' is analyzed with "
+                               "CTU as usual and is the only one used "
+                               "to build the CTU index. NOTE: Only "
+                               "available if CTU mode is enabled. "
+                               "(default: skip)")
+
     # Only check for AST loading modes if CTU is available.
     ctu_opts.add_argument('--ctu-ast-mode',
                           action='store',
@@ -1269,6 +1292,11 @@ def main(args):
         LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
         sys.exit(1)
 
+    if 'secondary_compile_analysis' in args and 'ctu_phases' not in args:
+        LOG.error("Analyzer option 'secondary-compile-analysis' requires "
+                  "CTU mode enabled")
+        sys.exit(1)
+
     check_satisfied_capabilities(args)
 
     try:
@@ -1295,6 +1323,9 @@ def main(args):
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
         args.compile_uniqueing = "alpha"
+
+    keep_secondary = 'secondary_compile_analysis' in args and \
+        args.secondary_compile_analysis == 'stu' and args.ctu_phases[1]
 
     compiler_info_file = None
     if 'compiler_info_file' in args:
@@ -1384,7 +1415,8 @@ def main(args):
         args.jobs,
         skip_handlers,
         pre_analysis_skip_handlers,
-        ctu_or_stats_enabled)
+        ctu_or_stats_enabled,
+        keep_secondary)
 
     if not actions:
         LOG.warning("No analysis is required.")
@@ -1409,8 +1441,19 @@ def main(args):
         args.output_path, "unique_compile_commands.json")
     with open(uniqued_compilation_db_file, 'w',
               encoding="utf-8", errors="ignore") as f:
-        json.dump(actions, f,
+        json.dump([a for a in actions if not a.secondary], f,
                   cls=log_parser.CompileCommandEncoder)
+
+    if keep_secondary:
+        secondary_actions = [a for a in actions if a.secondary]
+        LOG.info("%d secondary compilation(s) will be analyzed without CTU.",
+                 len(secondary_actions))
+        secondary_compilation_db_file = os.path.join(
+            args.output_path, "secondary_compile_commands.json")
+        with open(secondary_compilation_db_file, 'w',
+                  encoding="utf-8", errors="ignore") as f:
+            json.dump(secondary_actions, f,
+                      cls=log_parser.CompileCommandEncoder)
 
     metadata: dict[str, Any] = {
         'version': 2,

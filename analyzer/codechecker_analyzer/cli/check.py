@@ -546,6 +546,29 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                "same translation unit without "
                                "Cross-TU enabled.")
 
+    ctu_opts.add_argument('--secondary-compile-analysis',
+                          action='store',
+                          dest='secondary_compile_analysis',
+                          choices=['skip', 'stu'],
+                          default=argparse.SUPPRESS,
+                          help="Choose what happens with the secondary "
+                               "compilations of a source file in CTU "
+                               "mode. In CTU mode, "
+                               "'--compile-uniqueing' ('alpha' or a "
+                               "regex) keeps only one compilation per "
+                               "source file. For the rest of the "
+                               "compilations of that source file: mode "
+                               "'skip' does not analyze them, mode "
+                               "'stu' analyzes them without CTU, so "
+                               "bugs only visible in those compilations "
+                               "are still found. The primary "
+                               "compilation chosen by "
+                               "'--compile-uniqueing' is analyzed with "
+                               "CTU as usual and is the only one used "
+                               "to build the CTU index. NOTE: Only "
+                               "available if CTU mode is enabled. "
+                               "(default: skip)")
+
     # Only check for AST loading modes if CTU is available.
     ctu_opts.add_argument('--ctu-ast-mode',
                           action='store',
@@ -881,6 +904,11 @@ def main(args):
         LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
         sys.exit(1)
 
+    if 'secondary_compile_analysis' in args and 'ctu_phases' not in args:
+        LOG.error("Analyzer option 'secondary-compile-analysis' requires "
+                  "CTU mode enabled")
+        sys.exit(1)
+
     def __update_if_key_exists(source, target, key):
         """Append the source Namespace's element with 'key' to target with
         the same key, but only if it exists."""
@@ -962,6 +990,7 @@ def main(args):
                           'ctu_ast_mode',
                           'ctu_phases',
                           'ctu_reanalyze_on_failure',
+                          'secondary_compile_analysis',
                           'stats_output',
                           'stats_dir',
                           'stats_enabled',

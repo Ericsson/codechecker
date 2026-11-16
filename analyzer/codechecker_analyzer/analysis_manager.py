@@ -163,7 +163,8 @@ def prepare_check(action, analyzer_config, output_dir,
     source_analyzer = \
         analyzer_types.construct_analyzer(action, analyzer_config)
 
-    if disable_ctu:
+    if disable_ctu or (action.secondary and
+                       action.analyzer_type == ClangSA.ANALYZER_NAME):
         # WARNING! can be called only on ClangSA
         # Needs to be called before construct_analyzer_cmd
         source_analyzer.disable_ctu()
@@ -568,9 +569,10 @@ def check(check_data):
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
-            LOG.info("[%d/%d] %s analyzed %s successfully.",
+            LOG.info("[%d/%d] %s analyzed %s%s successfully.",
                      PROGRESS_CHECKED_NUM.value, PROGRESS_ACTIONS.value,
-                     action.analyzer_type, source_file_name)
+                     action.analyzer_type, source_file_name,
+                     " (secondary, without CTU)" if action.secondary else "")
 
             if result_file_exists:
                 LOG.debug("Previous analysis results in '%s' has been "
