@@ -173,13 +173,39 @@ def analysis_invocation_key(analyzer_cmd: list[str],
     return shlex.join(sanitize_analyzer_cmd(analyzer_cmd, source_root))
 
 
+# Line marker of the preprocessor output, e.g. '# 12 "a.h" 2' or
+# '#line 12 "a.h"'. Groups: line number, file name, the rest (flags).
+LINE_MARKER_PATTERN = re.compile(
+    rb'^#\s*(?:line\s+)?([0-9]+)(\s+"(?:[^"\\]|\\.)*")?(.*?)(\r?\n)?$',
+    re.DOTALL)
+
+
+def strip_line_marker_file_names(data: bytes) -> bytes:
+    """
+    Remove the file names from the line markers of the preprocessed output
+    ('# 12 "/x/a.h" 2' -> '# 12 2'). The line numbers and the flags are kept,
+    so a change which shifts lines changes the key. Other lines (e.g.
+    '#pragma') are kept unchanged.
+    """
+    result = []
+    for line in data.splitlines(keepends=True):
+        match = LINE_MARKER_PATTERN.match(line) \
+            if line.startswith(b'#') else None
+        if match:
+            newline = match.group(4) or b''
+            line = b'# ' + match.group(1) + match.group(3) + newline
+        result.append(line)
+    return b''.join(result)
+
+
 def preprocessed_source_key(preprocess_cmd: list[str], cwd: str | None,
                             env: dict | None,
                             source_root: str | None) -> str | None:
     """
     Run the preprocessor command and return the sha256 hex digest of its
-    output (with the source root replaced). Returns None if preprocessing
-    failed.
+    output (file names removed from the line markers, the source root
+    replaced).
+    Returns None if preprocessing failed.
     """
     try:
         proc = subprocess.run(preprocess_cmd, cwd=cwd, env=env,
@@ -195,7 +221,8 @@ def preprocessed_source_key(preprocess_cmd: list[str], cwd: str | None,
         LOG.debug(proc.stderr.decode('utf-8', errors='replace'))
         return None
 
-    output = replace_source_root_bytes(proc.stdout, source_root)
+    output = replace_source_root_bytes(
+        strip_line_marker_file_names(proc.stdout), source_root)
     return hashlib.sha256(output).hexdigest()
 
 

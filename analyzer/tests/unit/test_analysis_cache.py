@@ -159,6 +159,35 @@ class SourceRootTest(unittest.TestCase):
             shutil.rmtree(d1)
             shutil.rmtree(d2)
 
+    def test_strip_line_marker_file_names(self):
+        data = (b'# 1 "/a/b.c"\nint x;\n#pragma pack(1)\n  # 2 "q"\n'
+                b'#\n#12\nint y; # 4 "z"\n# 3 "/c \\"d\\".h" 2 3\r\n'
+                b'#line 7 "/e.h"\n# 9 "<built-in>" 1')
+        self.assertEqual(ac.strip_line_marker_file_names(data),
+                         b'# 1\nint x;\n#pragma pack(1)\n  # 2 "q"\n#\n'
+                         b'# 12\nint y; # 4 "z"\n# 3 2 3\r\n# 7\n# 9 1')
+
+    def test_preprocessed_source_key_line_markers(self):
+        d = tempfile.mkdtemp()
+        try:
+            k1 = ac.preprocessed_source_key(
+                ['printf', '# 1 "x.c"\nint x;\n'], d, None, d)
+            k2 = ac.preprocessed_source_key(
+                ['printf', '# 1 "/other/x.c"\nint x;\n'], d, None, d)
+            k3 = ac.preprocessed_source_key(
+                ['printf', '# 1 "x.c"\nint y;\n'], d, None, d)
+            k4 = ac.preprocessed_source_key(
+                ['printf', '# 1 "x.c"\n#pragma pack(1)\nint x;\n'], d,
+                None, d)
+            k5 = ac.preprocessed_source_key(
+                ['printf', '# 2 "x.c"\nint x;\n'], d, None, d)
+            self.assertEqual(k1, k2)
+            self.assertNotEqual(k1, k3)
+            self.assertNotEqual(k1, k4)
+            self.assertNotEqual(k1, k5)
+        finally:
+            shutil.rmtree(d)
+
 
 class ContentTest(unittest.TestCase):
 

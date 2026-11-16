@@ -1716,16 +1716,19 @@ Notes:
   is printed.
 - The cache key is computed from the analyzer version (`--version` output),
   the analyzer command (without the analyzer binary path, the output file
-  and the source root) and the preprocessed source (with the source root
-  replaced). Every change of the source code, the included headers, the
+  and the source root) and the preprocessed source (without the file names
+  of the line markers, and with the source root replaced). Every change of the source code, the included headers, the
   compiler flags or the enabled checkers results in a cache miss.
 - The raw analyzer output is cached. Skip files, review status
   configuration and `--report-hash` are applied to the cached result of the
   current run, so they do not need to be the same in the runs which share the
   cache.
-- Paths outside of the source root (e.g. system headers, out of source build
-  directories) remain location dependent: they only cause cache misses, not
-  wrong results.
+- Paths outside of the source root in the analyzer command (e.g. include
+  paths of system headers or of out of source build directories) remain
+  location dependent: they only cause cache misses, not wrong results.
+- The file names are not part of the cache key: renaming or moving a
+  header without changing its content can result in a cache hit whose
+  reports refer to the old file name.
 - The content of some analysis inputs is not part of the cache key: the
   statistics files of the statistical checkers, ClangSA checker plugins
   (`.so` files) and the Z3 library. If only their content changes, a stale

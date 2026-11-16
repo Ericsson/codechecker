@@ -222,7 +222,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
     - the source root itself is not part of the cache key
   - the replacement is applied in these places:
     1. `analysis_invocation_key`: in the analyzer command (after the `<ANALYZER>` and `-o` placeholder rules), e.g. `-I/workspace/test-projects/tinyxml2` → `-I__SOURCE_ROOT__` and `/workspace/test-projects/tinyxml2/xmltest.cpp` → `__SOURCE_ROOT__/xmltest.cpp` with `--source-root /workspace/test-projects/tinyxml2`
-    2. `preprocessed_source_key`: in the preprocessed output before hashing (e.g. the line markers `# 1 "__SOURCE_ROOT__/xmltest.cpp"` and the expansions of `__FILE__`)
+    2. `preprocessed_source_key`: in the preprocessed output before hashing (e.g. the expansions of `__FILE__`; the line markers are removed, see below)
     3. cached content, before writeCache: in the raw result file (plist) only; the cached analyzer stdout and stderr are stored unchanged
        - in the plist the source root is matched in its XML escaped form (e.g. `&` → `&amp;`), as it appears in the file
        - the placeholder `__SOURCE_ROOT__` contains no XML special characters, so the stored plist stays a valid XML file
@@ -240,7 +240,11 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - the ClangSA plugin provides a separate `construct_preprocess_cmd()` method next to `construct_analyzer_cmd()`, built from the same parts of the analyzer command which influence preprocessing:
     - analyzer binary, `-E`, `-x <language>`, `-arch` (if any), analyzer extra arguments, the build action's analyzer options (defines, include paths, etc.), `--target`, `-std`, the compiler implicit include directories (`-idirafter` / `-isystem`), and the source file
   - not included: `--analyze`, the `-Xclang -analyzer-*` options, plugin loading options and the `-o <result file>` argument; the preprocessed output is streamed into the hash, it is not written to a file
-  - the source root is replaced with `__SOURCE_ROOT__` in the preprocessed output before it is hashed (see source root replacement)
+  - the file names are removed from the line markers of the preprocessed output before hashing (e.g. `# 12 "/usr/include/stdio.h" 2 3` → `# 12 2 3`); the line numbers and the flags are kept, so a change which shifts lines results in a different key; all other lines (e.g. `#pragma`) are kept unchanged
+    - the preprocessed output is generated with line markers (no `-P`): `-P` drops the blank lines (clang 18), so line shifts (e.g. edited comments) would not change the key
+    - consequence: the file paths in the preprocessed output do not cause cache misses; paths outside the source root in the analyzer command (e.g. `-I`, `-isystem`) still do
+    - limitation: renaming or moving a header without changing its content results in the same key, so the cached result can refer to the old file name
+  - the source root is replaced with `__SOURCE_ROOT__` in the remaining preprocessed output before it is hashed (see source root replacement)
   - the preprocessor command must run in the same working directory (`buildaction.directory`) and with the same environment as the analyzer command, otherwise relative include paths and environment variables (e.g. `CPATH`) could produce a different preprocessed output
   - preprocessing runs before every cache lookup, so it also adds to the runtime on cache hits; its overhead should be measured on a reference project
   - if preprocessing fails, the action is analyzed without the cache (no readCache, no writeCache)
