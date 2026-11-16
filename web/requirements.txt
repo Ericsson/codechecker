@@ -14,6 +14,7 @@ psutil~=7.0
 types-psutil~=7.0
 multiprocess~=0.70
 thrift~=0.22
+protobuf~=6.31  # Bazel REAPI messages of the analysis cache.
 gitpython~=3.0
 PyYAML~=6.0
 types-PyYAML~=6.0

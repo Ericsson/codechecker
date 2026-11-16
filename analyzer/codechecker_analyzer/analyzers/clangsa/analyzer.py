@@ -21,7 +21,8 @@ from semver.version import Version
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import analyzer_context, env, host_check
+from codechecker_analyzer import analysis_cache, analyzer_context, env, \
+    host_check
 from codechecker_statistics_collector.collectors.special_return_value import \
     SpecialReturnValueCollector
 from codechecker_statistics_collector.collectors.return_value import \
@@ -611,6 +612,58 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         except Exception as ex:
             LOG.error(ex)
             return []
+
+    def construct_preprocess_cmd(self, result_handler) -> list[str] | None:
+        """
+        Construct the preprocessor command of the analyzed source file for
+        the analysis cache. It is built from the same parts of the analyzer
+        command which influence preprocessing (see construct_analyzer_cmd()),
+        without the analyzer options and the output file. The output is
+        written to the standard output.
+        """
+        try:
+            config = self.config_handler
+
+            cmd = [ClangSA.analyzer_binary(), '-E', '-Qunused-arguments',
+                   '-x', self.buildaction.lang]
+
+            if self.buildaction.arch != "":
+                cmd.extend(["-arch", self.buildaction.arch])
+
+            cmd.extend(config.analyzer_extra_arguments)
+            cmd.extend(self.buildaction.analyzer_options)
+
+            if not has_flag('--target', cmd) and \
+                    not has_flag('-target', cmd) and \
+                    self.buildaction.target != "":
+                cmd.append(f"--target={self.buildaction.target}")
+
+            if not has_flag('-std', cmd) and \
+                    not has_flag('--std', cmd) and \
+                    self.buildaction.compiler_standard != "":
+                cmd.append(self.buildaction.compiler_standard)
+
+            cmd.extend(prepend_all(
+                '-isystem' if config.add_gcc_include_dirs_with_isystem else
+                '-idirafter',
+                self.buildaction.compiler_includes))
+
+            cmd.append(self.source_file)
+            return cmd
+        except Exception as ex:
+            LOG.debug("Failed to construct the preprocessor command: %s", ex)
+            return None
+
+    def analysis_invocation_key(self, analyzer_cmd: list[str],
+                                source_root: str | None) -> str | None:
+        """
+        The analysis invocation string with the location dependent parts
+        (analyzer binary, output file, source root) replaced.
+        """
+        if not analyzer_cmd:
+            return None
+        return analysis_cache.analysis_invocation_key(analyzer_cmd,
+                                                      source_root)
 
     def get_ctu_dir(self):
         """

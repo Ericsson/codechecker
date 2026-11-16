@@ -1,0 +1,37 @@
+// -------------------------------------------------------------------------
+//  Part of the CodeChecker project, under the Apache License v2.0 with
+//  LLVM Exceptions. See LICENSE for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// -------------------------------------------------------------------------
+//
+// Reduced copy of the Bazel Remote Execution API (REAPI) v2:
+//   build/bazel/remote/execution/v2/remote_execution.proto
+//   https://github.com/bazelbuild/remote-apis
+//
+// Only the messages used by the CodeChecker analysis cache are kept. The
+// package name, the message names, the field names and the field numbers are
+// the same as in the original file, so the serialized messages are wire
+// compatible with the original ones. Unused fields are omitted.
+//
+// Regenerate the Python module (protoc 31.x, protobuf runtime >= 6.31):
+//   python -m grpc_tools.protoc -I. --python_out=. remote_execution.proto
+
+syntax = "proto3";
+
+package build.bazel.remote.execution.v2;
+
+message Digest {
+  string hash = 1;
+  int64 size_bytes = 2;
+}
+
+message OutputFile {
+  string path = 1;
+  Digest digest = 2;
+  bool is_executable = 4;
+}
+
+message ActionResult {
+  repeated OutputFile output_files = 2;
+  int32 exit_code = 4;
+}

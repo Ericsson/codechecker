@@ -23,8 +23,8 @@ from multiprocess.managers import SyncManager  # type: ignore
 from codechecker_common.logger import get_logger, DEBUG
 from codechecker_common.review_status_handler import ReviewStatusHandler
 
-from . import analyzer_context, analysis_manager, pre_analysis_manager, \
-    checkers
+from . import analysis_cache, analyzer_context, analysis_manager, \
+    pre_analysis_manager, checkers
 from .analyzers import analyzer_types
 from .analyzers.config_handler import AnalyzerConfigHandler, CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
@@ -131,6 +131,35 @@ def __has_enabled_checker(ch: AnalyzerConfigHandler):
     """
     return any(state == CheckerState.ENABLED
                for _, (state, _) in ch.checks().items())
+
+
+def __setup_analysis_cache(args, analyzers):
+    """
+    Set up the server-side analysis cache in the main process, if it is
+    turned on (--url without --no-cache). Returns None if caching is off or
+    the cache can not be used.
+    """
+    url = getattr(args, 'cache_url', None)
+    if not url or getattr(args, 'no_cache', False):
+        return None
+
+    # In the MVP only the Clang Static Analyzer results are cached.
+    cached_analyzers = {
+        a: analyzer_types.supported_analyzers[a].analyzer_binary()
+        for a in analyzers if a == ClangSA.ANALYZER_NAME}
+    if not cached_analyzers:
+        LOG.info("Analysis cache: none of the enabled analyzers supports "
+                 "caching.")
+        return None
+
+    context = analyzer_context.get_context()
+    settings = analysis_cache.setup_cache(
+        url, args.source_root, args.output_path, cached_analyzers,
+        context.get_env_for_bin)
+    if settings:
+        LOG.info("Analysis cache is enabled: %s (source root: %s)",
+                 url, settings.source_root)
+    return settings
 
 
 def perform_analysis(args, skip_handlers, filter_handlers,
@@ -370,6 +399,8 @@ def perform_analysis(args, skip_handlers, filter_handlers,
 
     if ctu_analyze or statistics_data or (not ctu_analyze and not ctu_collect):
 
+        cache_settings = __setup_analysis_cache(args, analyzers)
+
         LOG.info("Starting static analysis ...")
         analysis_manager.start_workers(actions_map, actions,
                                        config_map, args.jobs,
@@ -386,7 +417,8 @@ def perform_analysis(args, skip_handlers, filter_handlers,
                                        ctu_reanalyze_on_failure,
                                        statistics_data,
                                        manager,
-                                       compile_cmd_count)
+                                       compile_cmd_count,
+                                       cache_settings)
         LOG.info("Analysis finished.")
         LOG.info("To view results in the terminal use the "
                  "\"CodeChecker parse\" command.")

@@ -62,6 +62,26 @@ class SourceAnalyzer(metaclass=ABCMeta):
     def construct_analyzer_cmd(self, result_handler):
         raise NotImplementedError("Subclasses should implement this!")
 
+    # pylint: disable=unused-argument
+    def construct_preprocess_cmd(self, result_handler) -> list[str] | None:
+        """
+        Construct the preprocessor command of the analyzed source file. Its
+        output is used to compute the preprocessed_source_key of the analysis
+        cache. Returns None if the analyzer does not support the analysis
+        cache.
+        """
+        return None
+
+    # pylint: disable=unused-argument
+    def analysis_invocation_key(self, analyzer_cmd: list[str],
+                                source_root: str | None) -> str | None:
+        """
+        Return the analysis_invocation_key of the analysis cache for the
+        given analyzer command. Returns None if the analyzer does not support
+        the analysis cache.
+        """
+        return None
+
     @classmethod
     def resolve_missing_binary(cls, configured_binary, environ):
         """

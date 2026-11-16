@@ -35,6 +35,7 @@ Table of Contents
     - [`PRODUCT_ACCESS` ](#product_access-)
     - [`PRODUCT_STORE` ](#product_store-)
     - [`PRODUCT_VIEW` ](#product_view-)
+    - [`PRODUCT_CACHE` ](#product_cache-)
 
 # The master superuser (root) <a name="the-master-superuser"></a>
 
@@ -180,3 +181,19 @@ delete existing analysis runs from the server.
 | Granted | `PRODUCT_ADMIN` | `PRODUCT_ADMIN`, `PRODUCT_STORE`, `PRODUCT_ACCESS` |
 
 Users need the `PRODUCT_VIEW` permission to `view` analysis runs without modifying any properties of the runs.
+
+### `PRODUCT_CACHE` <a name="product-cache"></a>
+
+|   Default   |    Managed by   | Inherited from |
+|-------------|-----------------|----------------|
+| Not granted | `PRODUCT_ADMIN` | (none)         |
+
+Users need the `PRODUCT_CACHE` permission to read and write the
+[analysis cache](../analyzer/user_guide.md#analysis-cache) of the product
+(`CodeChecker analyze --url`).
+
+This permission is not inherited from any other product permission (only
+`SUPERUSER` has it implicitly), it must be granted explicitly. A user with this
+permission can write analysis results into the cache which are used by every
+other user of the product, so it should be given only to trusted users, e.g.
+to the CI accounts.

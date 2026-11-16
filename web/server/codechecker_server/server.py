@@ -34,6 +34,8 @@ from thrift.Thrift import TApplicationException
 from thrift.Thrift import TMessageType
 
 from codechecker_api.python.shared.ttypes import DBStatus
+from codechecker_api.python.AnalysisCache_v6 import \
+    AnalysisCache as AnalysisCacheAPI_v6
 from codechecker_api.python.Authentication_v6 import \
     codeCheckerAuthentication as AuthAPI_v6
 from codechecker_api.python.Configuration_v6 import \
@@ -55,6 +57,8 @@ from codechecker_common.logger import get_logger, signal_log
 from codechecker_web.shared import database_status
 
 from . import instance_manager, permissions, routing, session_manager
+from .api.analysis_cache import \
+    ThriftAnalysisCacheHandler as AnalysisCacheHandler_v6
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
@@ -495,6 +499,20 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             api_ver,
                             self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
+                    elif request_endpoint == "AnalysisCache":
+                        # This endpoint is a product's analysis cache.
+                        if not product:
+                            raise ProductNotFoundError(
+                                "Requested AnalysisCache on a "
+                                f"nonexistent product: '{product_endpoint}'.")
+
+                        cache_handler = AnalysisCacheHandler_v6(
+                            self.server.manager,
+                            self.auth_session,
+                            self.server.config_session,
+                            product)
+                        processor = AnalysisCacheAPI_v6.Processor(
+                            cache_handler)
                     else:
                         raise ProductNotFoundError(
                             f"No API endpoint named '{self.path}'.")

@@ -733,3 +733,10 @@ PRODUCT_VIEW = _create_permission(ProductPermission, 'PRODUCT_VIEW',
                                                   PRODUCT_ADMIN,
                                                   PRODUCT_STORE],
                                   managed_by=[PRODUCT_ADMIN])
+
+# Access to the analysis cache (AnalysisCache API) of the product.
+# It is intentionally not inherited from any other product permission
+# (only SUPERUSER grants it implicitly), it must be granted explicitly.
+PRODUCT_CACHE = _create_permission(ProductPermission, 'PRODUCT_CACHE',
+                                   default_enable=False,
+                                   managed_by=[PRODUCT_ADMIN])

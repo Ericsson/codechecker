@@ -29,7 +29,7 @@ from codechecker_common.review_status_handler import ReviewStatusHandler
 from codechecker_statistics_collector.collectors.special_return_value import \
     SpecialReturnValueCollector
 
-from . import gcc_toolchain
+from . import analysis_cache, analyzer_context, gcc_toolchain
 
 from .analyzers import analyzer_types
 from .analyzers.clangsa.analyzer import ClangSA
@@ -59,16 +59,23 @@ def print_analyzer_statistic_summary(metadata_analyzers, status, msg=None):
             LOG.info("  %s: %s", analyzer_type, res)
 
 
-def worker_result_handler(results, metadata_tool, output_path):
+def worker_result_handler(results, metadata_tool, output_path,
+                          cache_enabled=False):
     """ Print the analysis summary. """
     skipped_num = 0
     reanalyzed_num = 0
+    cache_hit_num = 0
+    analyzed_num = 0
     metadata_analyzers = metadata_tool['analyzers']
-    for res, skipped, reanalyzed, analyzer_type, _, sources in results:
+    for res, skipped, reanalyzed, analyzer_type, _, sources, cache_hit \
+            in results:
         statistics = metadata_analyzers[analyzer_type]['analyzer_statistics']
         if skipped:
             skipped_num += 1
         else:
+            analyzed_num += 1
+            if cache_hit:
+                cache_hit_num += 1
             if reanalyzed:
                 reanalyzed_num += 1
 
@@ -90,6 +97,9 @@ def worker_result_handler(results, metadata_tool, output_path):
 
     if reanalyzed_num:
         LOG.info("Reanalyzed compilation commands: %d", reanalyzed_num)
+    if cache_enabled:
+        LOG.info("Fetched from analysis cache: %d / %d",
+                 cache_hit_num, analyzed_num)
     if skipped_num:
         LOG.info("Skipped compilation commands: %d", skipped_num)
 
@@ -119,11 +129,91 @@ def worker_result_handler(results, metadata_tool, output_path):
 PROGRESS_CHECKED_NUM: Any = None
 PROGRESS_ACTIONS: Any = None
 
+# Analysis cache access of the worker process (None if caching is off).
+CACHE_SESSION: analysis_cache.CacheSession | None = None
 
-def init_worker(checked_num, action_num):
-    global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS
+
+def init_worker(checked_num, action_num, cache_settings=None):
+    global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS, CACHE_SESSION
     PROGRESS_CHECKED_NUM = checked_num
     PROGRESS_ACTIONS = action_num
+    CACHE_SESSION = analysis_cache.CacheSession(cache_settings) \
+        if cache_settings else None
+
+
+def get_cache_key(source_analyzer, rh, analyzer_cmd) -> str | None:
+    """
+    Compute the analysis cache key of the action. Returns None if the
+    action must be analyzed without the cache (caching is off, the analyzer
+    does not support it, CTU analysis is active, preprocessing failed).
+    """
+    if CACHE_SESSION is None or CACHE_SESSION.disabled or not analyzer_cmd:
+        return None
+
+    settings = CACHE_SESSION.settings
+    binary_key = settings.binary_keys.get(source_analyzer.ANALYZER_NAME)
+    if not binary_key:
+        return None
+
+    # The CTU analysis result depends on other TUs which are not part of
+    # the cache key.
+    if isinstance(source_analyzer, ClangSA) and \
+            source_analyzer.is_ctu_available() and \
+            source_analyzer.is_ctu_enabled():
+        return None
+
+    invocation_key = source_analyzer.analysis_invocation_key(
+        analyzer_cmd, settings.source_root)
+    preprocess_cmd = source_analyzer.construct_preprocess_cmd(rh)
+    if not invocation_key or not preprocess_cmd:
+        return None
+
+    env = analyzer_context.get_context().get_env_for_bin(preprocess_cmd[0])
+    preprocessed_key = analysis_cache.preprocessed_source_key(
+        preprocess_cmd, rh.buildaction.directory, env, settings.source_root)
+    if not preprocessed_key:
+        LOG.debug("Preprocessing of %s failed, it is analyzed without the "
+                  "analysis cache.", rh.buildaction.source)
+        return None
+
+    return analysis_cache.compute_analysis_key(
+        invocation_key, preprocessed_key, binary_key)
+
+
+def fetch_from_cache(cache_key, rh, analyzer_cmd) -> bool:
+    """
+    Read the cached result of the action and fill the result handler as if
+    the analyzer was run successfully. Returns True on cache hit.
+    """
+    entry = CACHE_SESSION.read(cache_key)
+    if entry is None:
+        return False
+
+    if not analysis_cache.safe_write_file(CACHE_SESSION.settings.report_dir,
+                                          rh.analyzer_result_file,
+                                          entry.result):
+        return False
+
+    rh.analyzer_cmd = analyzer_cmd
+    rh.analyzer_returncode = 0
+    rh.analyzer_stdout = entry.stdout
+    rh.analyzer_stderr = entry.stderr
+    return True
+
+
+def store_to_cache(cache_key, rh):
+    """ Store the raw (not post-processed) analyzer outputs. """
+    try:
+        with open(rh.analyzer_result_file, 'rb') as f:
+            result = f.read()
+    except OSError as ex:
+        LOG.debug("Analysis result is not cached, failed to read %s: %s",
+                  rh.analyzer_result_file, ex)
+        return
+
+    CACHE_SESSION.write(cache_key, result, rh.analyzer_stdout,
+                        rh.analyzer_stderr,
+                        os.path.basename(rh.buildaction.source))
 
 
 def save_output(base_file_name, out, err):
@@ -447,6 +537,7 @@ def check(check_data):
         # If one analysis fails the check fails.
         return_codes = 0
         reanalyzed = False
+        cache_hit = False
 
         result_file = ''
 
@@ -490,11 +581,16 @@ def check(check_data):
 
         result_file_exists = os.path.exists(rh.analyzer_result_file)
 
-        # Fills up the result handler with the analyzer information.
-        source_analyzer.analyze(analyzer_cmd, rh, __create_timeout)
+        cache_key = get_cache_key(source_analyzer, rh, analyzer_cmd)
+        if cache_key:
+            cache_hit = fetch_from_cache(cache_key, rh, analyzer_cmd)
+
+        if not cache_hit:
+            # Fills up the result handler with the analyzer information.
+            source_analyzer.analyze(analyzer_cmd, rh, __create_timeout)
 
         # If execution reaches this line, the analyzer process has quit.
-        if timeout_cleanup[0]():
+        if not cache_hit and timeout_cleanup[0]():
             LOG.warning("Analyzer ran too long, exceeding time limit "
                         "of %d seconds.", analysis_timeout)
             LOG.warning("Considering this analysis as failed...")
@@ -502,6 +598,10 @@ def check(check_data):
             rh.analyzer_stderr = \
                 ">>> CodeChecker: Analysis timed out after " \
                 f"{analysis_timeout} seconds. <<<\n{rh.analyzer_stderr}"
+
+        # Cache the raw analyzer output, before post-processing changes it.
+        if cache_key and not cache_hit and rh.analyzer_returncode == 0:
+            store_to_cache(cache_key, rh)
 
         source_analyzer.post_analyze(rh)
 
@@ -568,9 +668,11 @@ def check(check_data):
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
-            LOG.info("[%d/%d] %s analyzed %s successfully.",
+            LOG.info("[%d/%d] %s analyzed %s successfully%s.",
                      PROGRESS_CHECKED_NUM.value, PROGRESS_ACTIONS.value,
-                     action.analyzer_type, source_file_name)
+                     action.analyzer_type, source_file_name,
+                     " (fetched from the analysis cache)" if cache_hit
+                     else "")
 
             if result_file_exists:
                 LOG.debug("Previous analysis results in '%s' has been "
@@ -641,13 +743,13 @@ def check(check_data):
         PROGRESS_CHECKED_NUM.value += 1
 
         return return_codes, False, reanalyzed, action.analyzer_type, \
-            result_file, action.source
+            result_file, action.source, cache_hit
 
     except Exception as e:
         LOG.debug(str(e))
         traceback.print_exc(file=sys.stdout)
         return 1, False, reanalyzed, action.analyzer_type, None, \
-            action.source
+            action.source, False
 
 
 def skip_cpp(compile_actions, skip_handlers):
@@ -676,7 +778,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
                   rs_handler: ReviewStatusHandler, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
-                  compile_cmd_count):
+                  compile_cmd_count, cache_settings=None):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -700,7 +802,8 @@ def start_workers(actions_map, actions, analyzer_config_map,
     actions_num = multiprocess.Value('i', len(actions))
     pool = multiprocess.Pool(jobs,
                              initializer=init_worker,
-                             initargs=(checked_var, actions_num))
+                             initargs=(checked_var, actions_num,
+                                       cache_settings))
     signal.signal(signal.SIGINT, signal_handler)
 
     # If the analysis has failed, we help debugging.
@@ -775,7 +878,8 @@ def start_workers(actions_map, actions, analyzer_config_map,
                            analyzed_actions,
                            1,
                            callback=lambda results: worker_result_handler(
-                               results, metadata_tool, output_path)
+                               results, metadata_tool, output_path,
+                               cache_settings is not None)
                            ).get(timeout)
 
             pool.close()

@@ -30,6 +30,7 @@
       - [Checker profiles](#checker-profiles)
         - [`--enable-all`](#--enable-all)
         - [`--disable-all`](#--disable-all)
+      - [Analysis cache](#analysis-cache)
       - [Cross Translation Unit (CTU) analysis mode](#cross-translation-unit-ctu-analysis-mode)
       - [Taint analysis configuration](#taint-analysis-configuration)
       - [Statistical analysis mode](#statistical-analysis-mode)
@@ -1664,6 +1665,73 @@ enable one specific checker and disable everything else:
 ```sh
 CodeChecker check -l compile_commands.json --disable-all --enable core.DivideZero
 ```
+
+#### Analysis cache
+
+The results of the Clang Static Analyzer can be fetched from, and stored to,
+the analysis cache of a CodeChecker server product. Identical analyses (same
+analyzer version, analyzer command and preprocessed source) are executed only
+once: subsequent `CodeChecker analyze` or `CodeChecker check` runs, also on
+other machines or in other checkout directories, fetch the result from the
+cache instead of running the analyzer.
+
+```
+analysis cache arguments:
+  --url PRODUCT_URL     The URL of the CodeChecker server product whose
+                        analysis cache is used, in the format of
+                        '[http[s]://]host:port/Endpoint', e.g.
+                        'https://codechecker.example.com/MyProduct'. Requires
+                        '--source-root'.
+  --no-cache            Switch off the analysis cache, even if '--url' is
+                        given.
+  --source-root DIR     The existing directory where the analyzed source code
+                        is located (e.g. the root of the repository checkout).
+                        The paths under this directory are made location
+                        independent in the analysis cache, so the cached
+                        results can be reused in other checkout directories.
+                        Mandatory if '--url' is given.
+```
+
+Example:
+
+```sh
+CodeChecker analyze compile_commands.json -o ./reports \
+  --url https://codechecker.example.com/MyProduct \
+  --source-root "$(git rev-parse --show-toplevel)"
+```
+
+At the end of the analysis the summary shows how many analysis actions were
+fetched from the cache, e.g. `Fetched from analysis cache: 42 / 50`.
+
+Notes:
+
+- The user needs the [`PRODUCT_CACHE`](../web/permissions.md#product-cache)
+  permission on the product. Authentication is done the same way as for
+  `CodeChecker store` (`CodeChecker cmd login`, or the credentials in
+  `.codechecker.passwords.json`).
+- Only Clang Static Analyzer actions are cached. Actions of other analyzers
+  and CTU analyses are always executed.
+- Only successful analyses are written into the cache (return code 0, not
+  timed out). Analysis results larger than 20 MiB are not cached, a warning
+  is printed.
+- The cache key is computed from the analyzer version (`--version` output),
+  the analyzer command (without the analyzer binary path, the output file
+  and the source root) and the preprocessed source (with the source root
+  replaced). Every change of the source code, the included headers, the
+  compiler flags or the enabled checkers results in a cache miss.
+- The raw analyzer output is cached. Skip files, review status
+  configuration and `--report-hash` are applied to the cached result of the
+  current run, so they do not need to be the same in the runs which share the
+  cache.
+- Paths outside of the source root (e.g. system headers, out of source build
+  directories) remain location dependent: they only cause cache misses, not
+  wrong results.
+- The content of some analysis inputs is not part of the cache key: the
+  statistics files of the statistical checkers, ClangSA checker plugins
+  (`.so` files) and the Z3 library. If only their content changes, a stale
+  result can be fetched from the cache.
+- The cache never breaks the analysis: if the server or its cache backend is
+  not available, the analysis continues without the cache.
 
 #### Cross Translation Unit (CTU) analysis mode
 
