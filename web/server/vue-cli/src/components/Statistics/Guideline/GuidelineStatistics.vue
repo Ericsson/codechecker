@@ -72,6 +72,64 @@
               />
             </v-col>
           </v-row>
+          <v-row class="ma-0 mb-2 checker-status-legend" align="center">
+            <span class="legend-item">
+              <v-chip
+                color="var(--color-soft-green)"
+                :ripple="false"
+                variant="outlined"
+                size="x-small"
+                prepend-icon="mdi-check"
+              >
+                N
+              </v-chip>
+              <span class="legend-text">
+                Runs where this checker was enabled.
+              </span>
+            </span>
+            <span class="legend-item">
+              <v-chip
+                color="var(--color-soft-red)"
+                :ripple="false"
+                variant="outlined"
+                size="x-small"
+                prepend-icon="mdi-close"
+              >
+                N
+              </v-chip>
+              <span class="legend-text">
+                Runs where this checker was disabled.
+              </span>
+            </span>
+            <span class="legend-item">
+              <v-chip
+                color="var(--color-soft-orange)"
+                :ripple="false"
+                variant="outlined"
+                size="x-small"
+                prepend-icon="mdi-help"
+              >
+                N
+              </v-chip>
+              <span class="legend-text">
+                Runs where this checker was unknown.
+              </span>
+            </span>
+            <span class="legend-item">
+              <v-chip
+                color="grey"
+                :ripple="false"
+                variant="outlined"
+                size="x-small"
+                prepend-icon="mdi-minus"
+              >
+                N/A
+              </v-chip>
+              <span class="legend-text">
+                Runs with no checker information available.
+              </span>
+            </span>
+          </v-row>
           <guideline-statistics-table
             :items="filteredStatistics"
             :loading="loading"
@@ -382,5 +440,20 @@ function showingRuns(_type, _checker_name) {
   .selection-item {
     display: block;
     width: 100%;
+  }
+
+  .checker-status-legend {
+    gap: 8px 24px;
+    flex-wrap: wrap;
+  }
+
+  .checker-status-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .checker-status-legend .legend-text {
+    margin-left: 6px;
+    font-size: 0.875rem;
   }
 </style>
