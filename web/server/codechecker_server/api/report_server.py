@@ -3130,7 +3130,7 @@ class ThriftRequestHandler:
                         title=rules[rule].title,
                         url=rules[rule].url,
                         checkers=checkers,
-                        level=""
+                        level=rules[rule].level
                     )
                 )
 

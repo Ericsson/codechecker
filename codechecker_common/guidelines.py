@@ -21,6 +21,7 @@ class Rule:
     id: str
     title: str = ""
     url: str = ""
+    level: str = ""
 
 
 @dataclass
@@ -110,7 +111,8 @@ class Guidelines:
                 rule_details[rule_id] = Rule(
                     id=rule_id,
                     title=rule.get('title', ''),
-                    url=rule.get('rule_url', ''))
+                    url=rule.get('rule_url', ''),
+                    level=rule.get('level', ''))
 
         return rule_details
 
