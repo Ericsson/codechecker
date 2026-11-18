@@ -39,6 +39,23 @@ module.exports = {
     dialog.click("@selectReviewStatus");
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.be.present.before(5000);
+
+    // "Unreviewed" is not a valid value for a review status rule, so it must
+    // not be offered in this form.
+    selectReviewStatusMenu.expect.element({ selector: "@item", index: 0 })
+      .text.to.not.contain("Unreviewed");
+    browser.elements("css selector",
+      ".select-review-status-menu .v-list-item", result => {
+        browser.assert.ok(result.value.length > 0, "menu has items");
+        result.value.forEach(item => {
+          browser.elementIdText(Object.values(item)[0], text => {
+            browser.assert.ok(
+              !/unreviewed/i.test(text.value),
+              "'Unreviewed' is not offered");
+          });
+        });
+      });
+
     selectReviewStatusMenu.click({ selector: "@item", index: 2 });
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.not.be.present.before(5000);
