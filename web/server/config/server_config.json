@@ -15,6 +15,43 @@
     "interval": 30,
     "max_probe": 10
   },
+  "ai": {
+    "enabled": false,
+    "default_model": "claude-opus",
+    "timeout": 90,
+    "max_source_lines": 400,
+    "max_path_events": 50,
+    "ca_bundle": "",
+    "models": [
+      {
+        "id": "claude-opus",
+        "display_name": "Claude Opus 5.5",
+        "provider": "anthropic",
+        "model": "claude-opus-5-5",
+        "api_key": "",
+        "speed": "medium",
+        "reliability": "high"
+      },
+      {
+        "id": "gemini-flash",
+        "display_name": "Gemini 3.6 Flash",
+        "provider": "gemini",
+        "model": "gemini-3.6-flash",
+        "api_key": "",
+        "speed": "fast",
+        "reliability": "medium"
+      },
+      {
+        "id": "deepseek-chat",
+        "display_name": "DeepSeek Chat",
+        "provider": "deepseek",
+        "model": "deepseek-chat",
+        "api_key": "",
+        "speed": "fast",
+        "reliability": "medium"
+      }
+    ]
+  },
   "authentication": {
     "enabled" : false,
     "super_user" : "",
