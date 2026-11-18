@@ -1,15 +1,23 @@
 import { confService, handleThriftError } from "@cc-api";
 
 import { GET_ANNOUNCEMENT } from "../actions.type";
-import { SET_ANNOUNCEMENT } from "../mutations.type";
+import {
+  CLEAR_SERVER_DOWN,
+  SET_ANNOUNCEMENT,
+  SET_SERVER_DOWN
+} from "../mutations.type";
 
 const state = {
-  announcement: undefined
+  announcement: undefined,
+  serverDown: false
 };
 
 const getters = {
   announcement(state) {
     return state.announcement;
+  },
+  serverDown(state) {
+    return state.serverDown;
   }
 };
 
@@ -32,6 +40,12 @@ const actions = {
 const mutations = {
   [SET_ANNOUNCEMENT](state, announcement) {
     state.announcement = announcement;
+  },
+  [SET_SERVER_DOWN](state) {
+    state.serverDown = true;
+  },
+  [CLEAR_SERVER_DOWN](state) {
+    state.serverDown = false;
   }
 };
 
