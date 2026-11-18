@@ -200,6 +200,16 @@ class TestComponent(unittest.TestCase):
             {
                 'name': 'exclude_all',
                 'value': '-*'
+            },
+            {
+                'name': 'include_one_exclude_rest',
+                'value': '\n'.join(['+*/divide_zero.cpp',
+                                    '-*'])
+            },
+            {
+                'name': 'exclude_rest_include_one',
+                'value': '\n'.join(['-*',
+                                    '+*/divide_zero.cpp'])
             }
         ]
 
@@ -455,6 +465,37 @@ class TestComponent(unittest.TestCase):
 
         # No reports for this component.
         self.assertEqual(len(run_results), 0)
+
+    def test_filter_report_by_include_then_exclude_all_component(self):
+        """
+        Test that a specific include rule beats a catch-all exclude rule,
+        whichever order they are given in (issue #2564).
+        """
+        components = self.__get_user_defined_source_components()
+        self.assertEqual(len(components), 0)
+
+        for test_component in self.components[6:8]:
+            self.__add_new_component(test_component)
+
+            r_filter = ReportFilter(componentNames=[test_component['name']])
+            run_results = self._cc_client.getRunResults(None,
+                                                        MAX_QUERY_SIZE,
+                                                        0,
+                                                        None,
+                                                        r_filter,
+                                                        None,
+                                                        False)
+            self.assertIsNotNone(run_results)
+
+            # Reports from the included file are listed.
+            divide_zero_reports = [r for r in run_results if
+                                   r.checkedFile.endswith('divide_zero.cpp')]
+            self.assertNotEqual(len(divide_zero_reports), 0,
+                                test_component['name'])
+
+            # Reports from every other file are excluded by '-*'.
+            self.assertEqual(len(divide_zero_reports), len(run_results),
+                             test_component['name'])
 
     def test_component_name_with_whitespaces(self):
         """
