@@ -20,6 +20,7 @@ import unittest
 from libtest import env
 
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.guidelines import Guidelines
 
 
 class TestParseSarif(unittest.TestCase):
@@ -62,6 +63,8 @@ class TestParseSarif(unittest.TestCase):
 
         self.workspace_labels_dir = os.path.join(
             env.codechecker_package(), 'config', 'labels')
+        self.workspace_guidelines_dir = os.path.join(
+            env.codechecker_package(), 'config', 'guidelines')
 
     def __run_cmd(self, cmd):
         process = subprocess.Popen(
@@ -111,7 +114,11 @@ class TestParseSarif(unittest.TestCase):
         rules = parsed_json['runs'][0]['tool']['driver']['rules']
         self.assertEqual(len(rules), 1)
 
-        checker_labels = CheckerLabels(self.workspace_labels_dir)
+        # pylint: disable=too-many-function-args
+        checker_labels = CheckerLabels(
+            self.workspace_labels_dir,
+            Guidelines(self.workspace_guidelines_dir))
+        # pylint: enable=too-many-function-args
         div_zero_doc_urls = checker_labels.label_of_checker(
             'core.DivideZero', 'doc_url', 'clangsa')
 
