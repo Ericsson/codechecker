@@ -1,4 +1,14 @@
 export function useToCSV() {
+  function escapeCSVField(value) {
+    const _str = value === null || value === undefined ? "" : String(value);
+
+    if (/[",\n\r]/.test(_str)) {
+      return `"${_str.replace(/"/g, "\"\"")}"`;
+    }
+
+    return _str;
+  }
+
   /**
    * Exports the given data with the given file name.
    * @param {Array.<Array.<string>>} data - csv data. The first item is the
@@ -6,7 +16,9 @@ export function useToCSV() {
    * @param {string} fileName - default file name for export.
    */
   function toCSV(data, fileName) {
-    const _content = data.map(_d => _d.join(",")).join("\n");
+    const _content = data
+      .map(_d => _d.map(_field => escapeCSVField(_field)).join(","))
+      .join("\n");
 
     const _csvContent = `data:text/csv;charset=utf-8,${
       encodeURIComponent(_content)}`;
