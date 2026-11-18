@@ -476,10 +476,10 @@ watch(enableBlameView, async () => {
   await nextTick();
   addArrowLines();
 
+  const _step = props.treeItem.step;
   jumpTo(
-    props.treeItem.step?.startLine.toNumber() ||
-      props.treeItem.report.line.toNumber(),
-    0
+    _step?.startLine.toNumber() || props.treeItem.report.line.toNumber(),
+    _step ? _step.startCol : props.treeItem.report.column
   );
 });
 
@@ -587,7 +587,8 @@ onMounted(() => {
     loadReportStep(report.value, {
       stepId: attrs.$id,
       fileId: attrs.fileId,
-      startLine: attrs.startLine
+      startLine: attrs.startLine,
+      startCol: attrs.startCol
     });
   });
 
@@ -595,7 +596,8 @@ onMounted(() => {
     loadReportStep(report.value, {
       stepId: attrs.$id,
       fileId: attrs.fileId,
-      startLine: attrs.startLine
+      startLine: attrs.startLine,
+      startCol: attrs.startCol
     });
   });
 
@@ -639,7 +641,9 @@ function updateCommentCount(report) {
     }));
 }
 
-async function loadReportStep(_report, { stepId, fileId, startLine }) {
+async function loadReportStep(
+  _report, { stepId, fileId, startLine, startCol }
+) {
   if (!report.value ||
       !report.value.reportId.equals(_report.reportId) ||
       !sourceFile.value ||
@@ -652,7 +656,7 @@ async function loadReportStep(_report, { stepId, fileId, startLine }) {
   }
 
   const _line = startLine.toNumber();
-  jumpTo(_line, 0);
+  jumpTo(_line, startCol);
   highlightReportStep(stepId);
 
   loading.value = false;
@@ -668,7 +672,7 @@ async function loadReport(_report) {
   await drawBugPath();
 
   const _line = _report.line.toNumber();
-  jumpTo(_line, 0);
+  jumpTo(_line, _report.column);
   highlightReport(_report);
 
   loading.value = false;
@@ -1029,11 +1033,24 @@ function highlightRange(_from, _to) {
     });
 }
 
+/**
+ * Move the cursor to the given position and scroll it into view, both
+ * vertically and horizontally, so that reports which are located far to the
+ * right in a long line are visible without manual scrolling.
+ *
+ * @param line 1-based line number.
+ * @param column 1-based column number as stored in the reports (may be an
+ *        Int64 object). Values out of the line's range are clamped.
+ */
 function jumpTo(line, column) {
-  const position = editor.value.state.doc.line(line).from + column;
+  const docLine = editor.value.state.doc.line(line);
+  const offset = Math.min(
+    Math.max((Number(column) || 1) - 1, 0), docLine.length);
+  const position = docLine.from + offset;
+
   editor.value.dispatch({
     selection: { anchor: position },
-    effects: EditorView.scrollIntoView(position, { y: "center" })
+    effects: EditorView.scrollIntoView(position, { y: "center", x: "center" })
   });
 }
 
