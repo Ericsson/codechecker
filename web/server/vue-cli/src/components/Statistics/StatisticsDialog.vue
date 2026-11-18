@@ -1,55 +1,72 @@
 <template>
   <ConfirmDialog
     v-model="dialog"
-    max-width="70%"
+    max-width="640px"
     :title="title"
+    :icon="headerIcon"
     :buttons="false"
   >
     <template v-slot:content>
-      <div 
-        v-for="run in runs"
-        :key="run.message"
-      >
-        <div class="font-alert-message">
-          <span 
-            v-if="run.message && run.runNames.length"
+      <div class="statistics-dialog-content">
+        <div class="run-count-summary mb-3">
+          <v-chip
+            :color="type === 'enabled' ? 'success' : 'error'"
+            variant="tonal"
+            size="small"
+            label
           >
-            {{ run.runNames.length > 1 ? "These runs are": "This run is" }}
-            {{ run.message }}
-          </span>
+            {{ totalRunCount }}
+            {{ totalRunCount === 1 ? "run" : "runs" }}
+          </v-chip>
         </div>
-        <v-container class="checker-rows-in-columns">
-          <v-row
-            v-for="runName in run.runNames"
-            :key="runName"
-            no-gutters
-            align="center"
+
+        <div
+          v-for="(run, groupIndex) in runs"
+          :key="run.message || groupIndex"
+          class="run-group"
+        >
+          <v-alert
+            v-if="run.message && run.runNames.length"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-2"
           >
-            <v-col cols="auto" align-self="center">
-              <v-icon 
-                v-if="type == 'enabled'"
-                class="mr-1"
-                color="success"
-              >
-                mdi-check 
-              </v-icon>
-              <v-icon 
-                v-else
-                class="mr-1"
-                color="error"
-              >
-                mdi-close
-              </v-icon>
-            </v-col>
-            <v-col
-              col="auto"
-              align-self="center" 
-              style="font-size: larger;"
+            {{ run.runNames.length > 1 ? "These runs are" : "This run is" }}
+            {{ run.message }}
+          </v-alert>
+
+          <v-list
+            class="run-list pa-0"
+            density="compact"
+            lines="one"
+          >
+            <v-list-item
+              v-for="runName in run.runNames"
+              :key="runName"
+              class="run-list-item px-2"
             >
-              {{ runName }}
-            </v-col>
-          </v-row>
-        </v-container>
+              <template v-slot:prepend>
+                <v-icon
+                  :color="type === 'enabled' ? 'success' : 'error'"
+                  :icon="type === 'enabled' ? 'mdi-check-circle'
+                    : 'mdi-close-circle'"
+                  size="small"
+                />
+              </template>
+              <v-list-item-title class="run-name">
+                {{ runName }}
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </div>
+
+        <div
+          v-if="!totalRunCount"
+          class="text-medium-emphasis text-center py-4"
+        >
+          No runs to display.
+        </div>
       </div>
     </template>
   </ConfirmDialog>
@@ -84,6 +101,17 @@ const title = computed(function() {
     _title += ` for the "${props.checkerName}" checker`;
   }
   return _title;
+});
+
+const headerIcon = computed(function() {
+  return props.type === "enabled"
+    ? "mdi-check-circle-outline"
+    : "mdi-close-circle-outline";
+});
+
+const totalRunCount = computed(function() {
+  return runs.value.reduce(
+    (_sum, _run) => _sum + _run.runNames.length, 0);
 });
 
 const runs = computed(function() {
@@ -121,13 +149,24 @@ const runs = computed(function() {
 </script>
 
 <style lang="scss" scoped>
-.checker-rows-in-columns {
-  columns: 32em auto;
-}
-.font-alert-message {
-  margin-top: 10px;
-  font-size: 125%;
-  font-weight: bold;
+.statistics-dialog-content {
+  .run-group:not(:last-child) {
+    margin-bottom: 12px;
+  }
+
+  .run-list {
+    border: thin solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .run-list-item:not(:last-child) {
+    border-bottom: thin solid rgba(0, 0, 0, 0.06);
+  }
+
+  .run-name {
+    font-size: 0.95rem;
+  }
 }
 </style>
 
