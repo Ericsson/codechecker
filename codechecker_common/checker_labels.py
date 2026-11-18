@@ -92,7 +92,7 @@ class CheckerLabels:
           - "profile:<profile>" is extended with every profile that contains
             the given profile, e.g. "default" with "sensitive" and "extreme".
         """
-        normalized: list[str] = []
+        normalized: set[str] = set()
 
         for label in labels:
             key, value = split_label_kv(label)
@@ -103,16 +103,16 @@ class CheckerLabels:
                     raise ValueError(
                         f'Rule "{value}" is not part of any guideline.')
                 for guideline in guidelines:
-                    normalized.append(f'guideline:{guideline}')
-                    normalized.append(f'{guideline}:{value}')
+                    normalized.add(f'guideline:{guideline}')
+                    normalized.add(f'{guideline}:{value}')
             elif key == 'profile':
-                normalized.extend(
+                normalized.update(
                     f'profile:{profile}'
                     for profile in self.profiles_containing(value))
             else:
-                normalized.append(label)
+                normalized.add(label)
 
-        return list(dict.fromkeys(normalized))
+        return sorted(normalized)
 
     def __union_label_files(
         self,

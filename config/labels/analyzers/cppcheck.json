@@ -785,10 +785,12 @@
     "cppcheck-nullPointerOutOfResources": [
       "profile:sensitive",
       "rule:err33-c",
+      "rule:exp34-c",
       "severity:MEDIUM"
     ],
     "cppcheck-nullPointerRedundantCheck": [
       "profile:default",
+      "rule:exp34-c",
       "severity:MEDIUM"
     ],
     "cppcheck-objectIndex": [

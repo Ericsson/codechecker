@@ -565,30 +565,36 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullpassedtononnull-objc",
       "profile:default",
       "rule:cwe-476",
+      "rule:exp34-c",
       "severity:HIGH"
     ],
     "nullability.NullReturnedFromNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullreturnedfromnonnull-c-c-objc",
       "profile:default",
       "rule:cwe-476",
+      "rule:exp34-c",
       "severity:HIGH"
     ],
     "nullability.NullabilityBase": [
-      "profile:sensitive"
+      "profile:sensitive",
+      "rule:exp34-c"
     ],
     "nullability.NullableDereferenced": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullabledereferenced-objc",
       "profile:sensitive",
+      "rule:exp34-c",
       "severity:MEDIUM"
     ],
     "nullability.NullablePassedToNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablepassedtononnull-objc",
       "profile:sensitive",
+      "rule:exp34-c",
       "severity:MEDIUM"
     ],
     "nullability.NullableReturnedFromNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablereturnedfromnonnull-objc",
       "profile:sensitive",
+      "rule:exp34-c",
       "severity:MEDIUM"
     ],
     "optin.core.EnumCastOutOfRange": [

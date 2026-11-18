@@ -21,7 +21,7 @@ class Rule:
     id: str
     title: str = ""
     url: str = ""
-    level: str = ""
+    level: str = ""  # FIXME: Level field is currently unused.
 
 
 @dataclass
