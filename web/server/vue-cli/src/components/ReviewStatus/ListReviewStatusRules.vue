@@ -84,7 +84,7 @@
     v-model:page="page"
     v-model:items-per-page="itemsPerPage"
     v-model:sort-by="sortBy"
-    v-model:items-per-page-options="itemsPerPageOptions"
+    :items-per-page-options="itemsPerPageOptions"
     class="review-status-rules-table"
     :headers="headers"
     :items="rules"

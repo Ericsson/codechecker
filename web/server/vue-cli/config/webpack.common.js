@@ -94,11 +94,14 @@ module.exports = {
       {
         test: /\.js$/,
         loader: "babel-loader",
+        // Dependencies already ship code for the browsers listed in the
+        // "browserslist" field of package.json, so only our own sources go
+        // through babel.
         // The Thrift API stubs (in `codechecker_api/js`) are plain CommonJS.
         // Exclude them like node_modules so babel doesn't turn them into ES
         // modules and break their `module.exports`.
         exclude: [
-          /node_modules\/(?!vuetify)/,
+          /[\\/]node_modules[\\/]/,
           /[\\/]codechecker_api[\\/]js[\\/]/
         ],
         options: {
@@ -244,8 +247,15 @@ module.exports = {
   },
   cache: {
     type: "filesystem",
+    // Invalidate the cache when any of the build configuration changes.
     buildDependencies: {
-      config: [ __filename ]
+      config: [
+        __filename,
+        helpers.root("config", "webpack.dev.js"),
+        helpers.root("config", "webpack.prod.js"),
+        helpers.root("package.json"),
+        helpers.root(".babelrc")
+      ]
     }
   },
   snapshot: {
