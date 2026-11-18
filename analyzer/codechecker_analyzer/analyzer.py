@@ -59,6 +59,8 @@ def create_actions_map(actions, manager):
 
     check_for_unique_actions = LOG.isEnabledFor(DEBUG)
     for act in actions:
+        if act.secondary:
+            continue
         key = act.source, act.target
         if check_for_unique_actions and (key in result):
             LOG.debug("Multiple entries in compile database "
@@ -339,7 +341,8 @@ def perform_analysis(args, skip_handlers, filter_handlers,
             ctu_data = manager.dict(__get_ctu_data(ctu_dir))
 
         pre_analyze = [a for a in actions
-                       if a.analyzer_type == ClangSA.ANALYZER_NAME]
+                       if a.analyzer_type == ClangSA.ANALYZER_NAME and
+                       not a.secondary]
         pre_anal_skip_handlers = None
 
         # Skip list is applied only in pre-analysis

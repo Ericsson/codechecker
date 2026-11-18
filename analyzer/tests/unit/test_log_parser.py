@@ -749,3 +749,66 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 3)
         self.assertEqual(build_action.source, file_c_symdir)
+
+    def __secondary_compile_db(self):
+        """
+        Compile commands of one source file with different macros. The
+        command of "b.o" is listed twice.
+        """
+        def entry(flags):
+            return {"directory": self.tmp_dir,
+                    "command": f"g++ -c {self.src_file_path} {flags}",
+                    "file": self.src_file_path}
+
+        return [entry("-DB -o b.o"),
+                entry("-DA -o a.o"),
+                entry("-DB -o b.o"),
+                entry("-DC -o c.o")]
+
+    def test_secondary_not_kept_by_default(self):
+        """
+        Without keep_secondary only the primary compile command is returned.
+        """
+        build_actions, _ = log_parser.parse_unique_log(
+            self.__secondary_compile_db(), "alpha")
+
+        self.assertEqual(len(build_actions), 1)
+        self.assertEqual(build_actions[0].output, "a.o")
+        self.assertFalse(build_actions[0].secondary)
+
+    def test_secondary_alpha(self):
+        """
+        Alpha uniqueing keeps the removed compile commands as secondary,
+        without duplicates.
+        """
+        build_actions, _ = log_parser.parse_unique_log(
+            self.__secondary_compile_db(), "alpha", keep_secondary=True)
+
+        primary = [a.output for a in build_actions if not a.secondary]
+        secondary = [a.output for a in build_actions if a.secondary]
+
+        self.assertEqual(primary, ["a.o"])
+        self.assertEqual(sorted(secondary), ["b.o", "c.o"])
+
+    def test_secondary_regex(self):
+        """
+        Regex uniqueing keeps the not matching compile commands as secondary.
+        """
+        build_actions, _ = log_parser.parse_unique_log(
+            self.__secondary_compile_db(), ".*-DC.*", keep_secondary=True)
+
+        primary = [a.output for a in build_actions if not a.secondary]
+        secondary = [a.output for a in build_actions if a.secondary]
+
+        self.assertEqual(primary, ["c.o"])
+        self.assertEqual(sorted(secondary), ["a.o", "b.o"])
+
+    def test_secondary_symlink_and_none(self):
+        """
+        Uniqueing modes which only remove duplicates have no secondaries.
+        """
+        for mode in ("symlink", "none"):
+            build_actions, _ = log_parser.parse_unique_log(
+                self.__secondary_compile_db(), mode, keep_secondary=True)
+
+            self.assertFalse(any(a.secondary for a in build_actions))

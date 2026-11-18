@@ -284,8 +284,9 @@ class MakeFileCreator:
 
                 post_pre_all_target = ''
                 if need_pre_analysis_targets:
-                    self.__write_pre_analysis_targets(mfile, action,
-                                                      pre_all_target)
+                    if not action.secondary:
+                        self.__write_pre_analysis_targets(mfile, action,
+                                                          pre_all_target)
                     post_pre_all_target = 'post_' + pre_all_target
 
                 self.__write_analysis_targets(mfile, action,

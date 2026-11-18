@@ -14,6 +14,7 @@ report_directory/
 ├── compiler_info.json                  # Compiler details and flags. (for debugging)
 ├── compile_cmd.json                    # Compilation commands. (for debugging)
 ├── unique_compile_commands.json        # Deduplicated compilation commands (for debugging)
+├── secondary_compile_commands.json     # Compilations analyzed without CTU (--secondary-compile-analysis stu)
 ├── <file>_<analyzer>_<hash>.plist      # Successful analysis results (used by parse and store)
 ├── <file>_<analyzer>_<hash>.plist.err  # Analysis error logs (used by parse --status)
 ├── cppcheck/                           # Cppcheck backup files
