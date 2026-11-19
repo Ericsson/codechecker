@@ -657,8 +657,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def analysis_invocation_key(self, analyzer_cmd: list[str],
                                 source_root: str | None) -> str | None:
         """
-        The analysis invocation string with the location dependent parts
-        (analyzer binary, output file, source root) replaced.
+        sha256 of the analysis invocation string with the location dependent
+        parts (analyzer binary, output file, source root) replaced.
         """
         if not analyzer_cmd:
             return None

@@ -198,7 +198,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
   - AnalysisCache API timeout: 30 s; the Thrift `THttpClient` has a single timeout for connect and read, so a separate (shorter) connect timeout is not possible
 - the `preprocessed_source_key` and the `analyzer_binary_key` should be computed by a central CodeChecker library which can be accessed by all analyzer plugins.
 - The `analysis_invocation_key` should be calculated locally in the analyzer plugin.
-- In case of clang static analyzer, the `analysis_invocation_key` is the sanitized analysis invocation string, e.g. with `--source-root /workspace/test-projects/tinyxml2`:
+- In case of clang static analyzer, the `analysis_invocation_key` is the sha256 hex digest of the sanitized analysis invocation string (like the `preprocessed_source_key` and the `analyzer_binary_key`); the invocation string looks like this, e.g. with `--source-root /workspace/test-projects/tinyxml2`:
   ```
   <ANALYZER> --analyze -Qunused-arguments -Xclang -analyzer-output=plist-multi-file -o <OUTPUT> -Xclang -analyzer-config -Xclang expand-macros=true -Xclang -analyzer-checker=core.BitwiseShift,core.CallAndMessage,... -x c++ -DTINYXML2_IMPORT -D_FILE_OFFSET_BITS=64 -I__SOURCE_ROOT__ ... -idirafter /usr/include __SOURCE_ROOT__/xmltest.cpp
   ```

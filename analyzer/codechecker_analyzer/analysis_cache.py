@@ -16,6 +16,7 @@ caching is turned on.
 Cache key:
   analysis_key = sha256("v1:" + analysis_invocation_key + ":" +
                         preprocessed_source_key + ":" + analyzer_binary_key)
+  analysis_invocation_key = sha256(<sanitized analysis invocation string>)
 """
 
 import base64
@@ -165,12 +166,22 @@ def sanitize_analyzer_cmd(analyzer_cmd: list[str],
     return result
 
 
-def analysis_invocation_key(analyzer_cmd: list[str],
-                            source_root: str | None) -> str:
+def analysis_invocation_string(analyzer_cmd: list[str],
+                               source_root: str | None) -> str:
     """
     The sanitized analysis invocation string (see sanitize_analyzer_cmd()).
     """
     return shlex.join(sanitize_analyzer_cmd(analyzer_cmd, source_root))
+
+
+def analysis_invocation_key(analyzer_cmd: list[str],
+                            source_root: str | None) -> str:
+    """
+    sha256 hex digest of the sanitized analysis invocation string.
+    """
+    return hashlib.sha256(
+        analysis_invocation_string(analyzer_cmd, source_root).encode(
+            'utf-8', errors='surrogateescape')).hexdigest()
 
 
 # Line marker of the preprocessor output, e.g. '# 12 "a.h" 2' or

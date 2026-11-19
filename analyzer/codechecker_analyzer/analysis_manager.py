@@ -18,7 +18,7 @@ import zipfile
 
 from functools import lru_cache
 from threading import Timer
-from typing import Any
+from typing import Any, NamedTuple
 
 import multiprocess  # type: ignore
 
@@ -141,7 +141,29 @@ def init_worker(checked_num, action_num, cache_settings=None):
         if cache_settings else None
 
 
-def get_cache_key(source_analyzer, rh, analyzer_cmd) -> str | None:
+class CacheKey(NamedTuple):
+    """ The analysis cache key of an action and its components. """
+    key: str
+    invocation_key: str
+    preprocessed_key: str
+    binary_key: str
+
+
+def log_cache_key(operation: str, cache_key: CacheKey, source: str):
+    """
+    Log the components of the cache key in debug_analyzer (and debug) mode.
+    """
+    LOG.debug_analyzer("Analysis cache %s: %s\n"
+                       "  analysis_key: %s\n"
+                       "  invocation_key: %s\n"
+                       "  preprocessed_key: %s\n"
+                       "  binary_key: %s",
+                       operation, source, cache_key.key,
+                       cache_key.invocation_key, cache_key.preprocessed_key,
+                       cache_key.binary_key)
+
+
+def get_cache_key(source_analyzer, rh, analyzer_cmd) -> CacheKey | None:
     """
     Compute the analysis cache key of the action. Returns None if the
     action must be analyzed without the cache (caching is off, the analyzer
@@ -176,16 +198,19 @@ def get_cache_key(source_analyzer, rh, analyzer_cmd) -> str | None:
                   "analysis cache.", rh.buildaction.source)
         return None
 
-    return analysis_cache.compute_analysis_key(
+    return CacheKey(
+        analysis_cache.compute_analysis_key(
+            invocation_key, preprocessed_key, binary_key),
         invocation_key, preprocessed_key, binary_key)
 
 
-def fetch_from_cache(cache_key, rh, analyzer_cmd) -> bool:
+def fetch_from_cache(cache_key: CacheKey, rh, analyzer_cmd) -> bool:
     """
     Read the cached result of the action and fill the result handler as if
     the analyzer was run successfully. Returns True on cache hit.
     """
-    entry = CACHE_SESSION.read(cache_key)
+    log_cache_key("read", cache_key, rh.buildaction.source)
+    entry = CACHE_SESSION.read(cache_key.key)
     if entry is None:
         return False
 
@@ -201,7 +226,7 @@ def fetch_from_cache(cache_key, rh, analyzer_cmd) -> bool:
     return True
 
 
-def store_to_cache(cache_key, rh):
+def store_to_cache(cache_key: CacheKey, rh):
     """ Store the raw (not post-processed) analyzer outputs. """
     try:
         with open(rh.analyzer_result_file, 'rb') as f:
@@ -211,7 +236,8 @@ def store_to_cache(cache_key, rh):
                   rh.analyzer_result_file, ex)
         return
 
-    CACHE_SESSION.write(cache_key, result, rh.analyzer_stdout,
+    log_cache_key("write", cache_key, rh.buildaction.source)
+    CACHE_SESSION.write(cache_key.key, result, rh.analyzer_stdout,
                         rh.analyzer_stderr,
                         os.path.basename(rh.buildaction.source))
 
@@ -583,7 +609,10 @@ def check(check_data):
 
         cache_key = get_cache_key(source_analyzer, rh, analyzer_cmd)
         if cache_key:
+            LOG.debug_analyzer("Fetching from cache key:%s\n",cache_key)
             cache_hit = fetch_from_cache(cache_key, rh, analyzer_cmd)
+            LOG.debug_analyzer("Cache hit:%s",cache_hit)
+
 
         if not cache_hit:
             # Fills up the result handler with the analyzer information.
@@ -601,6 +630,7 @@ def check(check_data):
 
         # Cache the raw analyzer output, before post-processing changes it.
         if cache_key and not cache_hit and rh.analyzer_returncode == 0:
+            LOG.debug_analyzer("Storing to cache key: %s\n",cache_key)
             store_to_cache(cache_key, rh)
 
         source_analyzer.post_analyze(rh)

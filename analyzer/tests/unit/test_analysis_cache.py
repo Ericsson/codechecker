@@ -10,6 +10,7 @@ Unit tests of the client side analysis cache library.
 """
 
 import base64
+import hashlib
 import os
 import shutil
 import tempfile
@@ -92,8 +93,11 @@ class InvocationKeyTest(unittest.TestCase):
             ac.analysis_invocation_key(moved, '/home/u/checkout'))
 
     def test_shlex_join(self):
-        key = ac.analysis_invocation_key(['clang', '-DX=a b', 'f.c'], None)
-        self.assertEqual(key, "'<ANALYZER>' '-DX=a b' f.c")
+        cmd = ['clang', '-DX=a b', 'f.c']
+        invocation = ac.analysis_invocation_string(cmd, None)
+        self.assertEqual(invocation, "'<ANALYZER>' '-DX=a b' f.c")
+        self.assertEqual(ac.analysis_invocation_key(cmd, None),
+                         hashlib.sha256(invocation.encode()).hexdigest())
 
     def test_input_not_modified(self):
         cmd = list(self.CMD)
