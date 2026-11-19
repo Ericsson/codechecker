@@ -14,7 +14,6 @@ Called via `report_server`, but factored out here for readability.
 import base64
 from collections import defaultdict
 from datetime import datetime, timedelta
-import fnmatch
 from hashlib import sha256
 import json
 import os
@@ -302,33 +301,12 @@ def assign_file_to_source_components(
 
     associations = []
 
-    from .report_server import get_component_values
+    from .report_server import file_in_component, get_component_values
 
     for component in components:
         include, skip = get_component_values(component)
 
-        # If no patterns are defined, the component matches nothing.
-        if not skip and not include:
-            continue
-
-        is_included = False
-        if include:
-            for pattern in include:
-                if fnmatch.fnmatch(filepath, pattern):
-                    is_included = True
-                    break
-        else:
-            # If only skip is defined, it matches everything except skips.
-            is_included = True
-
-        is_skipped = False
-        if skip:
-            for pattern in skip:
-                if fnmatch.fnmatch(filepath, pattern):
-                    is_skipped = True
-                    break
-
-        if is_included and not is_skipped:
+        if file_in_component(filepath, include, skip):
             associations.append({
                 'source_component_name': component.name,
                 'file_id': file_id

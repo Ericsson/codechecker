@@ -10,6 +10,7 @@ Handle Thrift requests.
 """
 
 import base64
+import fnmatch
 import html
 import json
 import os
@@ -26,7 +27,8 @@ from typing import Any, Collection
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column, cast, true
+    asc, desc, union, union_all, select, bindparam, literal_column, cast, \
+    true
 from sqlalchemy.orm import contains_eager, Session as SA_Session
 from sqlalchemy.types import ARRAY, String
 
@@ -186,6 +188,83 @@ def get_component_values(
     return include, skip
 
 
+def component_rule_specificity(pattern: str) -> int:
+    """
+    Returns how specific a source component path pattern is: the number of
+    its non-wildcard characters.
+
+    When a file matches both an include and a skip rule of a component, the
+    more specific rule decides. On a tie the skip rule wins.
+    """
+    return len(pattern) - pattern.count('*')
+
+
+def file_in_component(
+    filepath: str,
+    include: list[str],
+    skip: list[str]
+) -> bool:
+    """
+    Returns True if the file belongs to a source component with the given
+    include and skip patterns.
+
+    A component with only skip patterns contains every file not skipped. A
+    component with include patterns contains only the files matching one of
+    them, unless an at least as specific skip pattern also matches the file.
+    The order of the patterns does not matter.
+    """
+    if not include and not skip:
+        return False
+
+    matching_skip = [p for p in skip if fnmatch.fnmatch(filepath, p)]
+
+    if not include:
+        return not matching_skip
+
+    matching_include = [p for p in include if fnmatch.fnmatch(filepath, p)]
+    if not matching_include:
+        return False
+
+    best_include = max(map(component_rule_specificity, matching_include))
+    return all(component_rule_specificity(p) < best_include
+               for p in matching_skip)
+
+
+def get_component_file_ids_query(
+    include: list[str],
+    skip: list[str]
+):
+    """
+    Returns a query for the IDs of the files that belong to a source
+    component, following the same rules as 'file_in_component()'.
+
+    Returns None if the component has no patterns.
+    """
+    if include:
+        # Each include pattern is only overridden by the skip patterns that
+        # are at least as specific as it is.
+        queries = []
+        for include_pattern in include:
+            specificity = component_rule_specificity(include_pattern)
+            stronger_skip = [p for p in skip
+                             if component_rule_specificity(p) >= specificity]
+
+            q = select(File.id) \
+                .where(File.filepath.like(conv(include_pattern)))
+            if stronger_skip:
+                q = q.where(not_(or_(*[
+                    File.filepath.like(conv(p)) for p in stronger_skip])))
+            queries.append(q)
+
+        return union(*queries)
+
+    if skip:
+        _, skip_q = get_include_skip_queries([], skip)
+        return select(File.id).where(File.id.notin_(skip_q))
+
+    return None
+
+
 def update_source_component_files(
     session: DBSession,
     component: SourceComponent | None = None
@@ -208,17 +287,7 @@ def update_source_component_files(
     for comp in all_components:
         # 2. Re-calculate associations
         include, skip = get_component_values(comp)
-
-        file_ids_query = None
-        if skip and include:
-            include_q, skip_q = get_include_skip_queries(include, skip)
-            file_ids_query = include_q.except_(skip_q)
-        elif include:
-            include_q, _ = get_include_skip_queries(include, [])
-            file_ids_query = include_q
-        elif skip:
-            _, skip_q = get_include_skip_queries([], skip)
-            file_ids_query = select(File.id).where(File.id.notin_(skip_q))
+        file_ids_query = get_component_file_ids_query(include, skip)
 
         if file_ids_query is not None:
             file_ids = session.execute(file_ids_query).fetchall()

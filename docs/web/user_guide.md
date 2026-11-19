@@ -932,14 +932,27 @@ Example 2:
 Results will be listed only from the directories which name begin with
 `test` except the results form the directories which name begin with `test_p`.
 
+If a file matches both a `+` and a `-` pattern, the more specific pattern
+decides: the one with more characters that are not `*` wildcards. If the two
+patterns are equally specific, the `-` pattern wins. In Example 2,
+`*/test_p*` is more specific than `*/test*`, so the `test_proj` directory is
+not listed.
+
+This lets you list a single file and nothing else:
+```
++*/myproj/a.cpp
+-*
+```
+Only the results from `a.cpp` will be listed.
+
 Note: the order of the source component value is not important. E.g.:
 ```
 +/a/b/x.cpp
--/a/b/
+-/a/b/*
 ```
 means the same as
 ```
--/a/b/
+-/a/b/*
 +/a/b/x.cpp
 ```
 `x.cpp` will be included in the run results and all other files under `/a/b/`
