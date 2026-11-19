@@ -461,6 +461,7 @@ import {
 } from "@cc/report-server-types";
 import { SET_REPORT_FILTER } from "@/store/mutations.type";
 
+import { formatDateTime } from "@/composables/useDateUtils";
 import { useGradientColor } from "@/composables/useGradientColor";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { useSeverity } from "@/composables/useSeverity";
@@ -653,9 +654,9 @@ const formattedReports = computed(function() {
     const _detectionStatus =
       detectionStatus.detectionStatusFromCodeToString(_report.detectionStatus);
     const _detectedAt = _report.detectedAt
-      ? prettifyDate(_report.detectedAt) : null;
+      ? formatDateTime(_report.detectedAt) : null;
     const _fixedAt = _report.fixedAt
-      ? prettifyDate(_report.fixedAt) : null;
+      ? formatDateTime(_report.fixedAt) : null;
 
     const _detectionStatusTitle = [
       `Status: ${_detectionStatus}`,
@@ -1201,18 +1202,6 @@ function truncate(text, length) {
   if (!text) return "";
   if (text.length <= length) return text;
   return text.substring(0, length) + "...";
-}
-
-function prettifyDate(date) {
-  if (!date) return "";
-  const _d = new Date(date);
-  const _year = _d.getFullYear();
-  const _month = String(_d.getMonth() + 1).padStart(2, "0");
-  const _day = String(_d.getDate()).padStart(2, "0");
-  const _hours = String(_d.getHours()).padStart(2, "0");
-  const _minutes = String(_d.getMinutes()).padStart(2, "0");
-  const _seconds = String(_d.getSeconds()).padStart(2, "0");
-  return `${_year}-${_month}-${_day} ${_hours}:${_minutes}:${_seconds}`;
 }
 
 function getBugPathLenColor(length) {

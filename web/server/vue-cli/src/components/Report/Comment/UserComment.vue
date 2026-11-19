@@ -28,7 +28,7 @@
             </v-list-item-title>
 
             <v-list-item-subtitle
-              :title="comment.createdAt"
+              :title="formatDateTime(comment.createdAt)"
             >
               {{ createdAt }}
             </v-list-item-subtitle>
@@ -60,10 +60,11 @@
 </template>
 
 <script setup>
-import { formatDistanceToNow, parse } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { computed } from "vue";
 
 import { UserIcon } from "@/components/Icons";
+import { formatDateTime, toDate } from "@/composables/useDateUtils";
 
 const props = defineProps({
   comment: { type: Object, required: true }
@@ -72,9 +73,8 @@ const props = defineProps({
 const emit = defineEmits([ "update:comment", "remove:comment" ]);
 
 const createdAt = computed(() => {
-  const created = parse(props.comment.createdAt,
-    "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
-  return formatDistanceToNow(created);
+  const created = toDate(props.comment.createdAt);
+  return created ? formatDistanceToNow(created) : "";
 });
 </script>
 

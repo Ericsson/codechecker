@@ -110,7 +110,7 @@
           variant="tonal"
           prepend-icon="mdi-calendar-range"
         >
-          {{ prettifyDate(item.runDate) }}
+          {{ formatDateTime(item.runDate) }}
         </v-chip>
       </template>
 
@@ -169,6 +169,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 
+import { formatDateTime } from "@/composables/useDateUtils";
 import { useVersion } from "@/composables/useVersion";
 
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
@@ -560,18 +561,6 @@ function getStatisticsFilterQuery(run) {
   return {
     run: run.name
   };
-}
-
-function prettifyDate(date) {
-  if (!date) return "";
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const seconds = String(d.getSeconds()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 </script>
 

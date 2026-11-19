@@ -291,7 +291,7 @@ async function getSelectedTagItems(tags) {
         id: tags[0].id,
         runName: runName ? runName : tags[0].runName,
         runId: tags[0].runId.toNumber(),
-        time: tags[0].time,
+        time: prettifyDate(tags[0].time),
         tagName,
         title: s,
         count: "N/A"
