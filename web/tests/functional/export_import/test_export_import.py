@@ -11,7 +11,9 @@
 Report exporting and importing tests
 """
 
+from datetime import datetime, timezone
 import os
+import re
 import shutil
 import unittest
 import logging
@@ -21,7 +23,7 @@ import uuid
 import tempfile
 
 from codechecker_api.python.DBAccess_v6.ttypes import CommentData, \
-    ReviewStatus, CommentKind, RunFilter
+    ReviewStatus, CommentKind, ExportData, RunFilter
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 from libtest import codechecker
@@ -252,3 +254,61 @@ class TestExport(unittest.TestCase):
             # Check if the last and second last comments
             self.assertEqual(new_comments[-2].message, comment1.message)
             self.assertEqual(new_comments[-1].message, updated_message)
+
+    def test_import_dates_with_other_offset(self):
+        """
+        Exported dates carry a UTC offset. Importing the same instants written
+        with a different offset must be recognised as already present, so no
+        comment or review status is duplicated.
+        """
+        api_date = re.compile(
+            r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}$')
+
+        run_filter = RunFilter(names=[self.test_runs[0].name])
+        run_results = get_all_run_results(
+            self._cc_client, self.test_runs[0].runId)
+        bug = run_results[-1]
+
+        self.assertTrue(self._cc_client.addComment(
+            bug.reportId, CommentData(author='anybody', message='Tz msg')))
+        self.assertTrue(self._cc_client.changeReviewStatus(
+            bug.reportId, ReviewStatus.INTENTIONAL, 'Tz review'))
+
+        exported = self._cc_client.exportData(run_filter)
+        for c in exported.comments[bug.bugHash]:
+            self.assertRegex(c.createdAt, api_date)
+        self.assertRegex(exported.reviewData[bug.bugHash].date, api_date)
+
+        # The first import creates the review status rule of the report hash,
+        # which also adds a system comment.
+        self.assertTrue(self._cc_client.importData(
+            ExportData(comments={bug.bugHash: exported.comments[bug.bugHash]},
+                       reviewData={
+                           bug.bugHash: exported.reviewData[bug.bugHash]})))
+
+        before = self._cc_client.exportData(run_filter)
+
+        def to_utc(date_str):
+            return datetime.fromisoformat(date_str) \
+                .astimezone(timezone.utc) \
+                .isoformat(sep=' ', timespec='microseconds')
+
+        # Import the same data again with every date written in UTC.
+        to_import = self._cc_client.exportData(run_filter)
+        comments = to_import.comments[bug.bugHash]
+        review = to_import.reviewData[bug.bugHash]
+        for c in comments:
+            c.createdAt = to_utc(c.createdAt)
+        review.date = to_utc(review.date)
+        self.assertTrue(self._cc_client.importData(
+            ExportData(comments={bug.bugHash: comments},
+                       reviewData={bug.bugHash: review})))
+
+        after = self._cc_client.exportData(run_filter)
+        self.assertEqual(
+            [(c.kind, c.message, c.createdAt)
+             for c in after.comments[bug.bugHash]],
+            [(c.kind, c.message, c.createdAt)
+             for c in before.comments[bug.bugHash]])
+        self.assertEqual(after.reviewData[bug.bugHash].date,
+                         before.reviewData[bug.bugHash].date)

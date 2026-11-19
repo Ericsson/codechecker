@@ -178,7 +178,9 @@ class TestStore(unittest.TestCase):
 
         product = self._pr_client.getCurrentProduct()
         self.assertTrue(product.runCount)
-        self.assertTrue(product.latestStoreToProduct)
+        self.assertRegex(
+            product.latestStoreToProduct,
+            r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}$')
 
         rm_cmd = [
             env.codechecker_cmd(), "cmd", "del",
