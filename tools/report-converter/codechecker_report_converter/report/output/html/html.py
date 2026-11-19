@@ -32,6 +32,8 @@ else:
 
 LOG = logging.getLogger('report-converter')
 
+PAGE_TITLE_SUFFIX = 'CodeChecker'
+
 
 SkipReportHandler = Callable[
     [str, str, int, str, dict, dict[int, str]],
@@ -78,6 +80,7 @@ class HTMLReport(TypedDict):
     testcase: str | None
     timestamp: str | None
     chronologicalOrder: str | None
+    title: str
 
 
 HTMLReports = list[HTMLReport]
@@ -95,6 +98,30 @@ FileSources = dict[str, FileSource]
 class HtmlReportLink(TypedDict):
     report: HTMLReport
     link: str
+
+
+def get_page_title(name: str) -> str:
+    """ Get the browser page title for the given page name. """
+    return f"{name} - {PAGE_TITLE_SUFFIX}"
+
+
+def get_report_title(report: Report) -> str:
+    """ Get the browser page title for the given report. """
+    return get_page_title(
+        f"{os.path.basename(report.file.path)}:{report.line} "
+        f"[{report.checker_name}]")
+
+
+def to_script_json(obj) -> str:
+    """
+    Serialize the given object to JSON which can be embedded into a <script>
+    tag safely: the characters which could close the tag or start an HTML
+    construct are written as JSON unicode escapes.
+    """
+    return json.dumps(obj) \
+        .replace('<', '\\u003c') \
+        .replace('>', '\\u003e') \
+        .replace('&', '\\u0026')
 
 
 def get_file_content(file_path: str) -> str:
@@ -195,8 +222,12 @@ class HtmlBuilder:
         return None
 
     @staticmethod
-    def _html_escape_strings(obj):
-        """Recursively HTML-escape all strings in a nested data structure."""
+    def _html_escape_strings(obj, skip_keys: frozenset[str] = frozenset()):
+        """
+        Recursively HTML-escape all strings in a nested data structure.
+
+        Values of dictionary keys in skip_keys are left unescaped.
+        """
 
         if isinstance(obj, str):
             return html.escape(obj)
@@ -204,19 +235,23 @@ class HtmlBuilder:
         elif isinstance(obj, dict):
             return {
                 HtmlBuilder._html_escape_strings(key):
-                    HtmlBuilder._html_escape_strings(value)
+                    value if key in skip_keys else
+                    HtmlBuilder._html_escape_strings(value, skip_keys)
                 for key, value in obj.items()
             }
 
         elif isinstance(obj, list):
-            return [HtmlBuilder._html_escape_strings(item) for item in obj]
+            return [HtmlBuilder._html_escape_strings(item, skip_keys)
+                    for item in obj]
 
         elif isinstance(obj, tuple):
             return tuple(
-                HtmlBuilder._html_escape_strings(item) for item in obj)
+                HtmlBuilder._html_escape_strings(item, skip_keys)
+                for item in obj)
 
         elif isinstance(obj, set):
-            return {HtmlBuilder._html_escape_strings(item) for item in obj}
+            return {HtmlBuilder._html_escape_strings(item, skip_keys)
+                    for item in obj}
 
         else:
             return obj
@@ -293,7 +328,8 @@ class HtmlBuilder:
                 if report.annotations else None,
                 'chronologicalOrder':
                     report.annotations.get('chronological_order')
-                if report.annotations else None
+                if report.annotations else None,
+                'title': get_report_title(report)
             })
 
         return html_reports, files
@@ -316,13 +352,19 @@ class HtmlBuilder:
 
         self.generated_html_reports[output_file_path] = html_reports
 
-        substitute_data = self._tag_contents
-        substitute_data.update({
-            'report_data': json.dumps(HtmlBuilder._html_escape_strings({
+        # The title is set through document.title which doesn't decode HTML
+        # entities, so it is not HTML-escaped here. The JSON is still safe to
+        # embed into the <script> tag, see to_script_json().
+        substitute_data = {
+            **self._tag_contents,
+            'page_title': html.escape(
+                html_reports[0]['title'] if html_reports
+                else get_page_title('Reports')),
+            'report_data': to_script_json(HtmlBuilder._html_escape_strings({
                 'files': files,
                 'reports': html_reports
-            }))
-        })
+            }, skip_keys=frozenset({'title'})))
+        }
 
         content = self._layout.substitute(substitute_data)
 
@@ -360,10 +402,14 @@ class HtmlBuilder:
             'chronological-order': data['report']['chronologicalOrder']
         }, html_report_links)
 
-        self._tag_contents['table_reports'] = json.dumps(
-            HtmlBuilder._html_escape_strings(list(table_reports)))
+        substitute_data = {
+            **self._tag_contents,
+            'page_title': html.escape(get_page_title('Reports')),
+            'table_reports': json.dumps(
+                HtmlBuilder._html_escape_strings(list(table_reports)))
+        }
 
-        content = self._index.substitute(self._tag_contents)
+        content = self._index.substitute(substitute_data)
         output_path = os.path.join(output_dir, 'index.html')
         with open(output_path, 'w+', encoding='utf-8',
                   errors='replace') as html_output:
@@ -413,14 +459,15 @@ class HtmlBuilder:
                 'value': severity_statistics[severity]
             })
 
-        substitute_data = self._tag_contents
-        substitute_data.update({
+        substitute_data = {
+            **self._tag_contents,
+            'page_title': html.escape(get_page_title('Statistics')),
             'num_of_analyzer_result_files': str(num_of_analyzer_result_files),
             'number_of_reports': str(num_of_reports),
             'checker_statistics_data': json.dumps(
                 HtmlBuilder._html_escape_strings(checker_statistics_data)),
             'severity_statistics_data': json.dumps(
-                HtmlBuilder._html_escape_strings(severity_statistics_data))})
+                HtmlBuilder._html_escape_strings(severity_statistics_data))}
 
         content = self._statistics.substitute(substitute_data)
 
