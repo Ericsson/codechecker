@@ -14,14 +14,31 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
+import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import Notifications from "@/components/Notifications";
 import { TheHeader } from "@/components/Layout";
+import { buildPageTitle, usePageTitle } from "@/composables/usePageTitle";
 
 const keepAliveList = ref([]);
+const route = useRoute();
 const store = useStore();
+const { pageTitleDetail } = usePageTitle();
 const isAuthenticated = computed(() => store.getters.isAuthenticated);
+const currentProduct = computed(() => store.getters.currentProduct);
+
+// The current product is loaded asynchronously after the navigation, so the
+// title is updated whenever the route, the product or the detail changes.
+watchEffect(() => {
+  document.title = buildPageTitle({
+    detail: pageTitleDetail.value,
+    page: route.meta.title,
+    product: currentProduct.value
+      ? window.atob(currentProduct.value.displayedName_b64)
+      : null
+  });
+});
 
 watch(isAuthenticated, newValue => {
   if (newValue) {

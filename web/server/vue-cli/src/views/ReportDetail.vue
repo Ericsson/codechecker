@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Pane, Splitpanes } from "splitpanes";
@@ -119,6 +119,10 @@ import {
 import { FillHeight } from "@/directives";
 import { Report } from "@/components/Report";
 import { ReportTree } from "@/components/Report/ReportTree";
+import {
+  buildReportTitle,
+  usePageTitle
+} from "@/composables/usePageTitle";
 
 const vFillHeight = FillHeight;
 
@@ -131,6 +135,7 @@ const treeItem = ref(null);
 const showComments = ref(true);
 const reportNotFound = ref(false);
 const reviewStatus = ref(null);
+const { pageTitleDetail } = usePageTitle();
 
 const runIds = computed(function() {
   return store.state.runIds;
@@ -142,6 +147,17 @@ const reportFilter = computed(function() {
 
 const cmpData = computed(function() {
   return store.state.cmpData;
+});
+
+watch(report, _report => {
+  pageTitleDetail.value = _report
+    ? buildReportTitle(_report.checkedFile, _report.line.toNumber(),
+      _report.checkerId)
+    : null;
+});
+
+onUnmounted(function() {
+  pageTitleDetail.value = null;
 });
 
 onMounted(function() {

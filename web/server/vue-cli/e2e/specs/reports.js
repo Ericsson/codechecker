@@ -49,6 +49,10 @@ module.exports = {
     });
   },
 
+  "page title" (browser) {
+    browser.assert.titleEquals("Reports - e2e - CodeChecker");
+  },
+
   "clear all filters" (browser) {
     const reportPage = browser.page.report();
 

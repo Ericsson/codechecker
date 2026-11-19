@@ -18,6 +18,10 @@ module.exports = {
     browser.end();
   },
 
+  "page title" (browser) {
+    browser.assert.titleEquals("Products - CodeChecker");
+  },
+
   "set announcement" (browser) {
     const header = browser.page.header();
     const login = browser.page.login();

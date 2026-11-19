@@ -23,6 +23,11 @@ module.exports = {
     });
   },
 
+  "page title" (browser) {
+    // E.g. "main.cpp:42 [core.DivideZero] - e2e - CodeChecker".
+    browser.assert.titleMatches(/^[^/\\]+:\d+ \[\S+\] - e2e - CodeChecker$/);
+  },
+
   "show documentation" (browser) {
     const reportDetailPage = browser.page.reportDetail();
     reportDetailPage.expect.element('@showDocumentationBtn')

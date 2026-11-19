@@ -211,7 +211,7 @@ module.exports = {
     new HTMLWebpackPlugin({
       showErrors: true,
       cache: true,
-      title: "CodeChecker viewer",
+      title: "CodeChecker",
       favicon: helpers.root("src", "assets", "favicon.ico"),
       template: helpers.root("src", "index.html")
     }),
