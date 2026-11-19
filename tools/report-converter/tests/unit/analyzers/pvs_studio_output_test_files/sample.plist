@@ -48,7 +48,7 @@
 	</array>
 	<key>files</key>
 	<array>
-		<string>files\sample.cpp</string>
+		<string>/home/mudasir/dev/codechecker/tools/report-converter/tests/unit/analyzers/pvs_studio_output_test_files/files/sample.cpp</string>
 	</array>
 	<key>metadata</key>
 	<dict>

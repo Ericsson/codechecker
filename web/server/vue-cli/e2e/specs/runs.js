@@ -19,6 +19,10 @@ module.exports = {
     browser.end();
   },
 
+  "page title" (browser) {
+    browser.assert.titleEquals("Runs - e2e - CodeChecker");
+  },
+
   "sort runs by run name" (browser) {
     const col = 3;
     const runsPage = browser.page.runs();
@@ -194,8 +198,11 @@ module.exports = {
       .assert.urlContains("detection-status=New")
       .assert.urlContains("detection-status=Reopened")
       .assert.urlContains("detection-status=Unresolved")
-      .waitForElementVisible("@page")
-      .backToRunsPage();
+      .waitForElementVisible("@page");
+
+    browser.assert.titleEquals("Product Overview - e2e - CodeChecker");
+
+    runsPage.backToRunsPage();
   },
 
   "open run detection status"(browser) {
