@@ -15,12 +15,16 @@ jobs:
     name: Linters (pylint, pycodestyle)
 
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
       - name: Install dependencies
         run: |
           pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
@@ -31,12 +35,16 @@ jobs:
     name: Type checker (mypy)
 
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
       - name: Create venv-dev
         run: |
           make venv_dev
@@ -47,12 +55,16 @@ jobs:
   tools:
     name: Tools (report-converter, etc.)
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
       - name: Setup Bazel
         uses: abhinavsingh/setup-bazel@v3
         with:
@@ -109,12 +121,16 @@ jobs:
   analyzer:
     name: Analyzer
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
 
       - name: Install dependencies
         run: sh .github/workflows/install-deps.sh
@@ -150,14 +166,16 @@ jobs:
           --health-retries 5
 
     strategy:
+      fail-fast: false
       matrix:
+        python: ['3.11', '3.14']
         database: [sqlite, psql_pg8000, psql_psycopg2]
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
 
       - name: Install dependencies
         run: sh .github/workflows/install-deps.sh
@@ -192,7 +210,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     strategy:
+      fail-fast: false
       matrix:
+        python: ['3.11', '3.14']
         # FIXME: in Chrome the UI test cases run non-deterministically and
         # sometimes fail. For this reason we will not run GUI test cases
         # in Chrome.
@@ -202,7 +222,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
       - uses: actions/setup-node@v1
         with:
           node-version: '24.x'
