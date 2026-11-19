@@ -79,6 +79,26 @@ const vFillHeight = FillHeight;
 const router = useRouter();
 const store = useStore();
 
+// Filters which are hidden on the tabs where only the run filter applies.
+const runFilterOnlyHiddenFilters = [
+  "baseline-open-reports-date-filter",
+  "group:compareTo",
+  "file-path-filter",
+  "checker-name-filter",
+  "severity-filter",
+  "report-status-filter",
+  "review-status-filter",
+  "detection-status-filter",
+  "analyzer-name-filter",
+  "source-component-filter",
+  "cleanup-plan-filter",
+  "checker-message-filter",
+  "group:dateFilter",
+  "report-hash-filter",
+  "bug-path-length-filter",
+  "testcase-filter"
+];
+
 const tabs = [
   {
     name: "Product Overview",
@@ -108,47 +128,19 @@ const tabs = [
     name: "Checker Coverage",
     icon: "mdi-clipboard-check-outline",
     to: { name: "checker-coverage-statistics" },
-    hiddenFiltersByTab: [
-      "baseline-open-reports-date-filter",
-      "group:compareTo",
-      "file-path-filter",
-      "checker-name-filter",
-      "severity-filter",
-      "report-status-filter",
-      "review-status-filter",
-      "detection-status-filter",
-      "analyzer-name-filter",
-      "source-component-filter",
-      "cleanup-plan-filter",
-      "checker-message-filter",
-      "group:dateFilter",
-      "report-hash-filter",
-      "bug-path-length-filter",
-      "testcase-filter"
-    ]
+    hiddenFiltersByTab: runFilterOnlyHiddenFilters
   },
   {
     name: "Guideline Statistics",
     icon: "mdi-clipboard-text-outline",
     to: { name: "guideline-statistics" },
-    hiddenFiltersByTab: [
-      "baseline-open-reports-date-filter",
-      "group:compareTo",
-      "file-path-filter",
-      "checker-name-filter",
-      "severity-filter",
-      "report-status-filter",
-      "review-status-filter",
-      "detection-status-filter",
-      "analyzer-name-filter",
-      "source-component-filter",
-      "cleanup-plan-filter",
-      "checker-message-filter",
-      "group:dateFilter",
-      "report-hash-filter",
-      "bug-path-length-filter",
-      "testcase-filter"
-    ]
+    hiddenFiltersByTab: runFilterOnlyHiddenFilters
+  },
+  {
+    name: "Test Coverage",
+    icon: "mdi-test-tube",
+    to: { name: "test-coverage-statistics" },
+    hiddenFiltersByTab: runFilterOnlyHiddenFilters
   },
 ];
 

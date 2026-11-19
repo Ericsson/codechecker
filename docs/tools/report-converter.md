@@ -32,6 +32,9 @@ a CodeChecker server.
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
   * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
+* [Supported test coverage outputs](#supported-test-coverage-outputs)
+  * [LCOV](#lcov)
+  * [llvm-cov](#llvm-cov)
 * [Plist/Sarif to html tool](#plistsarif-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
@@ -76,9 +79,9 @@ options:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-tidy,
                         coccinelle, cppcheck, cpplint, eslint, fbinfer, gcc,
-                        golint, kernel-doc, lsan, mdl, msan, pyflakes, pylint,
-                        roslynator, smatch, sparse, sphinx, spotbugs, tsan,
-                        tslint, ubsan.
+                        golint, kernel-doc, lcov, llvm-cov, lsan, mdl, msan,
+                        pyflakes, pylint, roslynator, smatch, sparse, sphinx,
+                        spotbugs, tsan, tslint, ubsan.
   -e EXPORT, --export EXPORT
                         Specify the export format of the converted reports.
                         Currently supported export types are: .plist, .sarif.
@@ -116,6 +119,8 @@ Supported analyzers:
   gcc - GNU Compiler Collection Static Analyzer, https://gcc.gnu.org/wiki/StaticAnalyzer
   golint - Golint, https://github.com/golang/lint
   kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
+  lcov - LCOV test coverage, https://github.com/linux-test-project/lcov
+  llvm-cov - LLVM source-based test coverage, https://llvm.org/docs/CommandGuide/llvm-cov.html
   lsan - LeakSanitizer, https://clang.llvm.org/docs/LeakSanitizer.html
   mdl - Markdownlint, https://github.com/markdownlint/markdownlint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
@@ -707,6 +712,149 @@ report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
 # Store the Roslynator report with CodeChecker
 CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
+
+## Supported test coverage outputs
+Besides analyzer results, `report-converter` can convert test coverage data.
+The coverage is written to the `coverage/coverage.json` file of the output
+directory. No analyzer report file is created, so `CodeChecker parse` is not
+affected by it.
+
+`CodeChecker store` uploads the coverage file together with the source files
+it refers to (source files which do not exist on the client machine are
+skipped with a warning). The server stores the coverage of each source file
+for the stored run, and it can be viewed in the web GUI. The following
+metrics are supported (a metric which the input does not contain is shown as
+`-` or hidden in the GUI):
+
+| Metric   | Meaning                                                         | `lcov` | `llvm-cov` |
+|----------|-----------------------------------------------------------------|:------:|:----------:|
+| Line     | Executable lines which were executed.                           |  yes   |    yes     |
+| Function | Functions which were called.                                    |  yes   |    yes     |
+| Region   | Code regions (statements, operands of `&&`, ...) executed.      |   no   |    yes     |
+| Branch   | Outcomes (true / false) of the decisions which were taken.      |  yes   |    yes     |
+| MC/DC    | Conditions shown to independently affect their decision.        |  yes   |    yes     |
+
+LCOV counts each MC/DC condition per sense (true and false separately), while
+`llvm-cov` counts each condition once, so the MC/DC numbers of the same code
+differ between the two tools.
+
+Besides the counts of each file, the branch and MC/DC coverage of each line
+(including the names of the uncovered conditions) and the source ranges of
+the uncovered regions are stored, so they can be shown in the source view.
+
+Things to keep in mind:
+- Test coverage is stored per run: only the latest stored coverage of a run
+  is kept, the coverage of earlier storages (run history, tags) is not.
+- The coverage of a run is replaced when a store contains a coverage file
+  (even if none of its source files could be stored). A store without
+  coverage file keeps the previously stored coverage of the run.
+- Every store replaces the analysis reports of the run, so if the run also
+  has analysis results, store the analysis results and the coverage together,
+  in the same `CodeChecker store` command (or convert the coverage into the
+  analysis result directory with `-o`).
+- The `--trim-path-prefix` and the `skip_file` of the report directory are
+  applied to the coverage data too.
+
+### LCOV
+[LCOV](https://github.com/linux-test-project/lcov) collects the coverage data
+of programs compiled with GCC's or Clang's `--coverage` option into a
+*tracefile* (`.info` file). The `lcov` converter supports the tracefile
+formats of LCOV 1.x and 2.x. If multiple tracefiles are given, the execution
+counts of the same source file are summed up. Line (`DA`), function (`FN`,
+`FNDA`, `FNL`, `FNA`, `FNF`, `FNH`), branch (`BRDA`, `BRF`, `BRH`) and MC/DC
+(`MCDC`, `MCF`, `MCH`) records are used. A branch whose block was never
+executed (`BRDA:<line>,<block>,<branch>,-`) counts as not taken. MC/DC records
+are written by LCOV 2.2 and newer from the coverage of GCC 14 and newer with
+the `-fcondition-coverage` option (`lcov --mcdc-coverage`). LCOV has no region
+coverage. Relative source file paths are resolved against the current working
+directory.
+
+The following example shows you how to collect the test coverage of a project
+and store it to the CodeChecker database.
+
+```sh
+# Build the project with coverage instrumentation and run its tests.
+make CFLAGS="--coverage" LDFLAGS="--coverage"
+make test
+
+# Capture the coverage data into an LCOV tracefile.
+lcov --capture --directory . --output-file coverage.info
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# LCOV tracefile. The coverage data is written to
+# './codechecker_lcov_reports/coverage/coverage.json'.
+report-converter -t lcov -o ./codechecker_lcov_reports ./coverage.info
+
+# Store the coverage data together with the analysis results of the project.
+CodeChecker store ./reports ./codechecker_lcov_reports -n my_project
+```
+
+The stored coverage can be viewed in the web GUI on the *Test Coverage* tab of
+the *Statistics* page.
+
+Troubleshooting:
+- *Coverage of some source files is missing*: the source files listed in the
+  tracefile must exist at the same path on the machine where
+  `CodeChecker store` runs. Missing files are listed in a warning by
+  `CodeChecker store`, and the server log lists the files which could not be
+  matched (e.g. because of a different `--trim-path-prefix`).
+- *Only C (or only C++) files have coverage*: make sure that the coverage
+  instrumentation flags are given to every compiler of the project (e.g. both
+  `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`).
+- *`lcov` reports negative counts*: the counters of multi-threaded programs
+  can be corrupted. Compile with `-fprofile-update=atomic` or use the
+  `--ignore-errors negative` option of `lcov`.
+- *No branch or MC/DC coverage*: LCOV 2.x writes branch records only with
+  `--rc branch_coverage=1` (LCOV 1.x: `--rc lcov_branch_coverage=1`) and MC/DC
+  records only with `--mcdc-coverage`.
+
+### llvm-cov
+[llvm-cov](https://llvm.org/docs/CommandGuide/llvm-cov.html) reports the
+*source-based* coverage of programs compiled by Clang with
+`-fprofile-instr-generate -fcoverage-mapping`. The `llvm-cov` converter reads
+the JSON output of `llvm-cov export -format=text` and stores line, function,
+region, branch and MC/DC coverage (MC/DC needs Clang 18 or newer with the
+`-fcoverage-mcdc` option). The counts of a file are taken from the
+summary of the export, the line coverage is computed from the coverage
+segments in the same way as `llvm-cov report` does. A code region of a
+template or inline function with multiple instances is uncovered only if none
+of its instances was executed. It is recommended to merge every `.profraw`
+file with `llvm-profdata merge` and to export once, so the counts are the same
+as the ones of `llvm-cov report`. If multiple export files are given, a line
+is covered if it was executed according to any of them, and the region,
+branch and MC/DC counts of a file found in several exports are computed from
+the merged details.
+
+```sh
+# Build the project with source-based coverage instrumentation and run its
+# tests. For MC/DC coverage (Clang 18+) add '-fcoverage-mcdc' to CFLAGS.
+make CC=clang CFLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+  LDFLAGS="-fprofile-instr-generate"
+LLVM_PROFILE_FILE="test-%p.profraw" make test
+
+# Merge every raw profile into one and export the coverage data once.
+llvm-profdata merge -sparse test-*.profraw -o test.profdata
+llvm-cov export -format=text -instr-profile=test.profdata ./my_binary \
+  > coverage.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# exported data. The coverage data is written to
+# './codechecker_llvm_cov_reports/coverage/coverage.json'.
+report-converter -t llvm-cov -o ./codechecker_llvm_cov_reports ./coverage.json
+
+# Store the coverage data together with the analysis results of the project.
+CodeChecker store ./reports ./codechecker_llvm_cov_reports -n my_project
+```
+
+Troubleshooting:
+- *No line coverage*: `llvm-cov export -summary-only` does not export the
+  coverage segments, so only the counts of the other metrics are available.
+  Export without `-summary-only`.
+- *Coverage of multiple binaries*: merge their `.profraw` files with
+  `llvm-profdata merge` and give every binary to a single `llvm-cov export`
+  (`./bin1 -object ./bin2`). Converting one export file per binary in the same
+  `report-converter` command works too, but the counts are then computed from
+  the merged details.
 
 ## Plist/Sarif to html tool
 `plist-to-html` is a python tool which parses and creates HTML files from one

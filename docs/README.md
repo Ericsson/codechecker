@@ -193,6 +193,11 @@ For details see
 [supported code analyzers](supported_code_analyzers.md) documentation and the
 [Report Converter Tool](tools/report-converter.md).
 
+Test coverage data (line, function, region, branch and MC/DC coverage)
+collected by [LCOV](tools/report-converter.md#lcov) or
+[llvm-cov](tools/report-converter.md#llvm-cov) can be stored and viewed
+together with the analysis results.
+
 ## Common Tools
 Useful tools that can also be used outside CodeChecker.
 
