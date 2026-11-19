@@ -44,6 +44,21 @@ module.exports = {
     });
   },
 
+  "run date shows the timezone" (browser) {
+    // The columns are: select, expand, name, unresolved reports,
+    // analyzer statistics, latest storage date.
+    const dateCol = 6;
+    const runsPage = browser.page.runs();
+
+    runsPage.getTableRows("@tableRows", runs => {
+      browser.assert.ok(runs.length > 0, "there are runs to check");
+      browser.assert.ok(runs.every(r =>
+        /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \(UTC[+-]\d{2}:\d{2}\)$/
+          .test(r[dateCol - 1].trim())),
+      "run dates end with a UTC offset label");
+    });
+  },
+
   "filter by run name" (browser) {
     const runName = "simple";
     const tag = "v0.0.9";

@@ -251,7 +251,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                     0,
                     None) if run.name == run2_name][0]
 
-        date_run2 = datetime.strptime(run2.runDate, '%Y-%m-%d %H:%M:%S.%f')
+        date_run2 = datetime.fromisoformat(run2.runDate)
         date_run2 = \
             str(date_run2.year) + ':' + \
             str(date_run2.month) + ':' + \

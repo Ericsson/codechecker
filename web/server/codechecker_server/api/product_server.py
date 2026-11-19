@@ -34,6 +34,7 @@ from ..database.database import DBSession, SQLServer, SQLiteDatabase, \
     conv, escape_like
 from ..routing import is_valid_product_endpoint
 
+from .common import datetime_to_api_str
 from .thrift_enum_helper import confidentiality_enum, \
         confidentiality_str
 
@@ -182,8 +183,8 @@ class ThriftProductHandler:
         connected = server_product.db_status ==\
             codechecker_api_shared.ttypes.DBStatus.OK
 
-        latest_storage_date = str(product.latest_storage_date) \
-            if product.latest_storage_date else None
+        latest_storage_date = \
+            datetime_to_api_str(product.latest_storage_date)
 
         if product.confidentiality is None:
             confidentiality = ttypes.Confidentiality.CONFIDENTIAL

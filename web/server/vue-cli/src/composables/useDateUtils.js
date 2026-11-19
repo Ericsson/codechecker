@@ -1,6 +1,6 @@
 import { ref } from "vue";
 
-import { format, parse } from "date-fns";
+import { format, isValid, parse, parseISO } from "date-fns";
 
 export function useDateUtils() {
   const dateFormat = ref("yyyy-MM-dd HH:mm:ss");
@@ -32,15 +32,33 @@ export function useDateUtils() {
     return parseInt(milliseconds / 1000);
   };
 
-  const prettifyDate = date => {
-    return date ? date.split(/[.]+/)[0] : "";
-  };
+  const prettifyDate = date => formatDateTime(date);
 
   return {
     dateFormat,
     dateTimeToStr,
     strToDateTime,
     getUnixTime,
+    toDate,
+    formatDateTime,
     prettifyDate
   };
+}
+
+// Convert a Date or an API date string to a Date. API strings look like
+// "2024-07-01 12:00:00.000000+02:00". Strings without an offset come from
+// older servers and are treated as local time. Returns null if the value is
+// missing or invalid.
+export function toDate(value) {
+  if (!value) return null;
+
+  const date = value instanceof Date ? value : parseISO(value);
+  return isValid(date) ? date : null;
+}
+
+// Format a date in the browser's timezone, followed by its UTC offset, e.g.
+// "2024-07-01 12:00:00 (UTC+02:00)".
+export function formatDateTime(value) {
+  const date = toDate(value);
+  return date ? format(date, "yyyy-MM-dd HH:mm:ss '(UTC'xxx')'") : "";
 }

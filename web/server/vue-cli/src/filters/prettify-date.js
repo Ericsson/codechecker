@@ -1,3 +1,5 @@
+import { formatDateTime } from "@/composables/useDateUtils";
+
 export default function prettifyDate(date) {
-  return date.split(/[.]+/)[0];
+  return formatDateTime(date);
 }
