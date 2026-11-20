@@ -397,7 +397,89 @@ class TestCtuFailure(unittest.TestCase):
         # Ctu should fail during analysis of main.c
         self.assertIn("main.c", failed_files[0])
 
-    def __do_ctu_all(self, on_demand, extra_args=None):
+    @skipUnlessCTUCapable
+    def test_ctu_collect_failure_zip(self):
+        """ A failing clang-extdef-mapping in the CTU collect phase leaves a
+        failure archive in the failed directory.
+        """
+        self.__check_ctu_collect_failure_zip(on_demand=False)
+
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_on_demand_collect_failure_zip(self):
+        """ A failing clang-extdef-mapping in the CTU collect phase leaves a
+        failure archive in the failed directory when using on-demand mode.
+        """
+        self.__check_ctu_collect_failure_zip(on_demand=True)
+
+    def __check_ctu_collect_failure_zip(self, on_demand):
+        self.__set_up_test_dir('ctu_failure')
+        analyze_env = self.__failing_mapping_tool_env()
+
+        output, result = self.__do_ctu_all(on_demand=on_demand,
+                                           analyze_env=analyze_env)
+
+        # The analysis phase itself still succeeds.
+        self.assertEqual(result, 0, "Analysis failed.")
+
+        failed_dir = os.path.join(self.report_dir, "failed")
+        self.assertTrue(os.path.isdir(failed_dir),
+                        "No failed directory after a CTU collect failure.")
+        self.assertIn("CTU collect phase failed", output)
+
+        collect_zips = sorted(f for f in os.listdir(failed_dir)
+                              if "ctu_collect" in f)
+        self.assertEqual(len(collect_zips), 2, collect_zips)
+        self.assertTrue(collect_zips[0].startswith("lib.c"))
+        self.assertTrue(collect_zips[1].startswith("main.c"))
+
+        main_zip = os.path.join(failed_dir, collect_zips[1])
+        with zipfile.ZipFile(main_zip, 'r') as archive:
+            files = archive.namelist()
+            for member in ["stdout", "stderr", "build-action",
+                           "analyzer-command", "return-code"]:
+                self.assertIn(member, files)
+
+            self.assertIn(b"FAKE clang-extdef-mapping failure",
+                          archive.read("stderr"))
+            self.assertEqual(archive.read("return-code"), b"1")
+            self.assertIn(b"clang-extdef-mapping",
+                          archive.read("analyzer-command"))
+
+            main_c = os.path.join(self.test_dir, "main.c")
+            self.assertIn(os.path.join("sources-root", main_c.lstrip('/')),
+                          files)
+
+    def __failing_mapping_tool_env(self):
+        """
+        Return an environment in which clangsa is a symlink to the real Clang
+        placed next to a clang-extdef-mapping wrapper that passes the version
+        probe but fails on every real mapping run.
+        """
+        fake_bin = os.path.join(self.test_workspace, 'fake_bin')
+        shutil.rmtree(fake_bin, ignore_errors=True)
+        os.makedirs(fake_bin)
+
+        fake_clang = os.path.join(fake_bin, 'clang')
+        os.symlink(os.path.realpath(self.__get_clangsa_path()), fake_clang)
+
+        mapping_tool = os.path.join(fake_bin, 'clang-extdef-mapping')
+        with open(mapping_tool, 'w', encoding="utf-8") as f:
+            f.write('#!/bin/sh\n'
+                    'if [ "$1" = "-version" ]; then\n'
+                    '  echo "LLVM version 99.0.0"\n'
+                    '  exit 0\n'
+                    'fi\n'
+                    'echo "FAKE clang-extdef-mapping failure: $1" >&2\n'
+                    'exit 1\n')
+        os.chmod(mapping_tool, 0o755)
+
+        analyze_env = self.env.copy()
+        analyze_env['CC_ANALYZER_BIN'] = 'clangsa:' + fake_clang
+        return analyze_env
+
+    def __do_ctu_all(self, on_demand, extra_args=None,
+                     analyze_env=None):
         """
         Execute a full CTU run.
         @param extra_args: list of additional arguments
@@ -414,7 +496,8 @@ class TestCtuFailure(unittest.TestCase):
             cmd.extend(extra_args)
         cmd.append(self.buildlog)
 
-        out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(cmd, cwd=self.test_dir,
+                                      env=analyze_env or self.env)
         return out, result
 
     def __get_clangsa_path(self):

@@ -357,7 +357,8 @@ def perform_analysis(args, skip_handlers, filter_handlers,
                                                   pre_anal_skip_handlers,
                                                   ctu_data,
                                                   statistics_data,
-                                                  manager)
+                                                  manager,
+                                                  args.output_path)
         else:
             LOG.error("Can not run pre analysis without clang "
                       "static analyzer configuration.")
