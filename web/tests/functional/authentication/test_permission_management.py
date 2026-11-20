@@ -103,7 +103,8 @@ class PermissionManagement(unittest.TestCase):
         expected_permissions = [Permission.PRODUCT_ADMIN,
                                 Permission.PRODUCT_ACCESS,
                                 Permission.PRODUCT_STORE,
-                                Permission.PRODUCT_VIEW]
+                                Permission.PRODUCT_VIEW,
+                                Permission.PRODUCT_CACHE]
         self.assertSetEqual(
             set(expected_permissions), set(product_permissions),
             "PRODUCT permission set in the database is different.")

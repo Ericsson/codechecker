@@ -21,8 +21,8 @@ from typing import Any, Callable
 
 from tu_collector import tu_collector
 
-from codechecker_analyzer import analyzer, analyzer_context, \
-    compilation_database
+from codechecker_analyzer import analysis_cache, analyzer, \
+    analyzer_context, compilation_database
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
@@ -152,6 +152,79 @@ format, please see the commands 'CodeChecker parse' or 'CodeChecker store'.
         'help': "Execute the supported code analyzers for the files "
                 "recorded in a JSON Compilation Database."
     }
+
+
+def add_analysis_cache_arguments(parser):
+    """
+    Add the arguments of the server-side analysis cache. Shared by the
+    'analyze' and the 'check' commands.
+    """
+    cache_opts = parser.add_argument_group(
+        "analysis cache arguments",
+        "Fetch the results of the Clang Static Analyzer from the analysis "
+        "cache of a CodeChecker server product, and store the results of "
+        "the cache misses there. Caching is turned on by '--url'. The user "
+        "needs the PRODUCT_CACHE permission on the product.")
+
+    cache_opts.add_argument('--url',
+                            type=str,
+                            metavar='PRODUCT_URL',
+                            dest='cache_url',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="The URL of the CodeChecker server product "
+                                 "whose analysis cache is used, in the "
+                                 "format of "
+                                 "'[http[s]://]host:port/Endpoint', e.g. "
+                                 "'https://codechecker.example.com/MyProduct'"
+                                 ". Requires '--source-root'.")
+
+    cache_opts.add_argument('--no-cache',
+                            dest='no_cache',
+                            action='store_true',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="Switch off the analysis cache, even if "
+                                 "'--url' is given.")
+
+    cache_opts.add_argument('--source-root',
+                            type=str,
+                            metavar='DIR',
+                            dest='source_root',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="The existing directory where the analyzed "
+                                 "source code is located (e.g. the root of "
+                                 "the repository checkout). The paths under "
+                                 "this directory are made location "
+                                 "independent in the analysis cache, so the "
+                                 "cached results can be reused in other "
+                                 "checkout directories. Mandatory if "
+                                 "'--url' is given.")
+
+
+def check_analysis_cache_args(args):
+    """
+    Validate the analysis cache arguments. Exits on error, before the
+    analysis starts.
+    """
+    if 'cache_url' not in args or 'no_cache' in args:
+        return
+
+    if 'source_root' not in args:
+        LOG.error("'--source-root' is mandatory if the analysis cache is "
+                  "used ('--url' is given).")
+        sys.exit(1)
+
+    if not os.path.isdir(args.source_root):
+        LOG.error("The source root given by '--source-root' is not an "
+                  "existing directory: %s", args.source_root)
+        sys.exit(1)
+
+    if not analysis_cache.is_web_client_available():
+        LOG.error("The analysis cache ('--url') requires the CodeChecker web "
+                  "client, which is not available in this installation.")
+        sys.exit(1)
 
 
 def add_arguments_to_parser(parser):
@@ -526,6 +599,8 @@ def add_arguments_to_parser(parser):
                                     "SMT solver. This should not cause "
                                     "that much of a slowdown compared to "
                                     "using only the Z3 solver.")
+
+    add_analysis_cache_arguments(parser)
 
     ctu_opts = parser.add_argument_group(
         "cross translation unit analysis arguments",
@@ -1270,6 +1345,8 @@ def main(args):
         sys.exit(1)
 
     check_satisfied_capabilities(args)
+
+    check_analysis_cache_args(args)
 
     try:
         cmd_config.check_config_file(args)

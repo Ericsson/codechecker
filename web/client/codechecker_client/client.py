@@ -23,7 +23,7 @@ from codechecker_common.logger import get_logger
 from codechecker_web.shared import env
 from codechecker_web.shared.webserver_context import get_context
 
-from .credential_manager import UserCredentials
+from .credential_manager import USER_CREDENTIALS
 from .helpers.authentication import ThriftAuthHelper
 from .helpers.configuration import ThriftConfigHelper
 from .helpers.product import ThriftProductHelper
@@ -51,7 +51,7 @@ def init_auth_client(protocol, host, port):
     auth_client = setup_auth_client(protocol, host, port)
 
     # Check if local token is available.
-    cred_manager = UserCredentials()
+    cred_manager = USER_CREDENTIALS
     session_token = cred_manager.get_token(host, port)
 
     if not session_token:
@@ -86,7 +86,7 @@ def login_user(protocol, host, port, username, login=False):
 
     If login is False the user will be logged out.
     """
-    session = UserCredentials()
+    session = USER_CREDENTIALS
 
     if not login:
         auth_client = init_auth_client(protocol, host, port)
@@ -215,7 +215,7 @@ def setup_product_client(protocol, host, port, auth_client=None,
                          product_name=None,
                          session_token=None):
     """Setup the Thrift client for the product management endpoint."""
-    cred_manager = UserCredentials()
+    cred_manager = USER_CREDENTIALS
     session_token = cred_manager.get_token(host, port)
 
     if not session_token:
@@ -270,7 +270,7 @@ def setup_client(product_url) -> ThriftResultsHelper:
         sys.exit(2)  # 2 for argument error.
 
     # Check if local token is available.
-    cred_manager = UserCredentials()
+    cred_manager = USER_CREDENTIALS
     session_token = cred_manager.get_token(host, port)
 
     # Local token is missing ask remote server.
@@ -292,7 +292,7 @@ def setup_task_client(protocol, host, port, auth_client=None,
     """
     Setup the Thrift client for the server-side task management endpoint.
     """
-    cred_manager = UserCredentials()
+    cred_manager = USER_CREDENTIALS
     session_token = cred_manager.get_token(host, port)
 
     if not session_token:
