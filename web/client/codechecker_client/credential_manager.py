@@ -14,6 +14,7 @@ import json
 import os
 import re
 import stat
+import threading
 
 import portalocker
 
@@ -92,6 +93,8 @@ class UserCredentials:
             scfg_dict['credentials'] = {}
 
         self.__save = scfg_dict
+        # Serializes the token updates of the threads of this process.
+        self.__lock = threading.Lock()
         self.__autologin = scfg_dict.get('client_autologin', True)
         # Check and load token storage for user.
         self.token_file = get_session_file()
@@ -137,16 +140,45 @@ class UserCredentials:
         return ret
 
     def save_token(self, host, port, token, destroy=False):
-        if destroy:
-            self.__tokens.pop(f'{host}:{port}', None)
-        else:
-            self.__tokens[f'{host}:{port}'] = token
+        """
+        Save the session token of the server (or remove it if destroy is
+        True).
 
-        with open(self.token_file, 'w',
-                  encoding="utf-8", errors="ignore") as scfg:
+        The session file is shared by every CodeChecker process of the user
+        (e.g. the analysis workers or parallel commands). The file is updated
+        under an exclusive lock, and this change is merged into its current
+        content, so the tokens saved by other processes in the meantime are
+        kept. The file is not truncated before the lock is acquired, and the
+        content is written to the disk before the lock is released.
+        """
+        key = f'{host}:{port}'
+
+        with self.__lock, open(self.token_file, 'a+',
+                               encoding="utf-8", errors="ignore") as scfg:
             portalocker.lock(scfg, portalocker.LOCK_EX)
-            json.dump({'tokens': self.__tokens}, scfg,
-                      indent=2, sort_keys=True)
-            portalocker.unlock(scfg)
+            try:
+                scfg.seek(0)
+                try:
+                    tokens = json.loads(scfg.read()).get('tokens', {})
+                except (json.JSONDecodeError, AttributeError):
+                    tokens = {}
+
+                if destroy:
+                    tokens.pop(key, None)
+                else:
+                    tokens[key] = token
+
+                # In 'a+' mode every write goes to the end of the file, which
+                # is the beginning after the truncation.
+                scfg.truncate(0)
+                json.dump({'tokens': tokens}, scfg, indent=2, sort_keys=True)
+                scfg.flush()
+                os.fsync(scfg.fileno())
+            finally:
+                portalocker.unlock(scfg)
+
+            # The tokens of the other servers are refreshed from the file.
+            self.__tokens = tokens
+
 
 USER_CREDENTIALS = UserCredentials()
