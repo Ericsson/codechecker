@@ -1370,7 +1370,7 @@ def print_reports(
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
-        sys.exit(1)
+
 
 def handle_diff_results(args):
     # If the given output format is not 'table', redirect logger's output to
