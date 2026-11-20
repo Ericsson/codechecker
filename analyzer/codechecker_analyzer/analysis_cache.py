@@ -26,6 +26,7 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 import tempfile
 import zlib
 from dataclasses import dataclass, field
@@ -395,7 +396,7 @@ class CacheSession:
                 CONNECT_TIMEOUT, READ_TIMEOUT)
         return self.__client
 
-    def __error(self, operation: str, ex: Exception):
+    def __error(self, operation: str, ex: BaseException):
         self.__errors += 1
         LOG.debug("Analysis cache %s failed: %s", operation, ex)
         if self.__errors >= MAX_CONSECUTIVE_ERRORS and not self.disabled:
@@ -410,7 +411,8 @@ class CacheSession:
             return None
         try:
             contents = self.__get_client().read_cache(key)
-        except Exception as ex:
+        # The Thrift client helpers call sys.exit() on errors.
+        except (Exception, SystemExit) as ex:
             self.__error('read', ex)
             return None
         self.__errors = 0
@@ -462,7 +464,8 @@ class CacheSession:
                     (ROLE_STDERR, encode_content(stderr_b))]
         try:
             self.__get_client().write_cache(key, contents)
-        except Exception as ex:
+        # The Thrift client helpers call sys.exit() on errors.
+        except (Exception, SystemExit) as ex:
             self.__error('write', ex)
             return False
         self.__errors = 0
@@ -473,9 +476,11 @@ def setup_cache(url: str, source_root: str, report_dir: str,
                 analyzer_binaries: dict, env_for_bin) -> CacheSettings | None:
     """
     Set up the analysis cache in the main process, before the analysis
-    workers are started: authenticate to the server and compute the
-    analyzer binary keys. Returns None (and prints a warning) if the cache
-    can not be used; the analysis continues without the cache.
+    workers are started: authenticate to the server, check that the product
+    exists and compute the analyzer binary keys. Returns None (and prints a
+    warning) if the cache can not be used; the analysis continues without
+    the cache. Exits with an error if the server is available, but the
+    product of the URL does not exist.
 
     :param analyzer_binaries: analyzer name -> analyzer binary path.
     :param env_for_bin: function which returns the environment of a binary.
@@ -492,6 +497,15 @@ def setup_cache(url: str, source_root: str, report_dir: str,
         LOG.warning("Analysis cache: failed to connect to '%s' (%s), the "
                     "analysis continues without the cache.", url, ex)
         return None
+
+    # The server is available (the authentication succeeded): a product
+    # which can not be used is a user error.
+    try:
+        module.check_product(protocol, host, port, product)
+    except SystemExit:
+        LOG.error("Analysis cache: the product '%s' given by '--url %s' "
+                  "cannot be used.", product, url)
+        sys.exit(1)
 
     binary_keys = {}
     for name, binary in analyzer_binaries.items():

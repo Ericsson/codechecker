@@ -16,16 +16,20 @@ import subprocess
 import unittest
 
 import multiprocess
+from thrift.protocol import TJSONProtocol
+from thrift.transport import THttpClient
 
+from codechecker_api.python.AnalysisCache_v6 import AnalysisCache
+from codechecker_api.python.AnalysisCache_v6.ttypes import CacheContent
 from codechecker_api.python.shared.ttypes import Permission, RequestFailed, \
     ErrorCode
-from codechecker_client.analysis_cache_client import AnalysisCacheClient
 
 from codechecker_common.util import load_json
 
 from libtest import codechecker
 from libtest import env
 from libtest.mock_bazel_remote import MockBazelRemote
+from libtest.thrift_client_to_db import VERSION
 
 
 PRODUCT = 'analysis_cache'
@@ -63,6 +67,40 @@ def create_checkout(path):
     with open(os.path.join(path, 'compile_commands.json'), 'w',
               encoding='utf-8') as f:
         json.dump(compile_commands, f)
+
+
+class RawCacheClient:
+    """
+    Plain Thrift client of the AnalysisCache API, which raises the server
+    errors (RequestFailed) instead of exiting, so the API tests can check
+    them.
+    """
+
+    def __init__(self, host, port, product, token):
+        self.__transport = THttpClient.THttpClient(
+            f"http://{host}:{port}/{product}/v{VERSION}/AnalysisCache")
+        if token:
+            self.__transport.setCustomHeaders(
+                {'Authorization': 'Bearer ' + token})
+        self.__client = AnalysisCache.Client(
+            TJSONProtocol.TJSONProtocol(self.__transport))
+
+    def read_cache(self, key):
+        self.__transport.open()
+        try:
+            contents = self.__client.readCache(key) or []
+        finally:
+            self.__transport.close()
+        return [(c.filename, c.content) for c in contents]
+
+    def write_cache(self, key, contents):
+        self.__transport.open()
+        try:
+            self.__client.writeCache(
+                key, [CacheContent(filename=n, content=c)
+                      for n, c in contents])
+        finally:
+            self.__transport.close()
 
 
 class TestAnalysisCache(unittest.TestCase):
@@ -130,8 +168,7 @@ class TestAnalysisCache(unittest.TestCase):
     def __api(self, user, password, product=PRODUCT):
         token = self._auth_client.performLogin("Username:Password",
                                                f"{user}:{password}")
-        return AnalysisCacheClient('http', self._host, self._port, product,
-                                   token)
+        return RawCacheClient(self._host, self._port, product, token)
 
     def __analyze(self, checkout, report_dir, extra_args=None):
         cmd = [env.codechecker_cmd(), 'analyze',
