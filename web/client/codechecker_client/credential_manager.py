@@ -100,7 +100,6 @@ class UserCredentials:
         with open(self.token_file, 'a+',
                   encoding="utf-8", errors="ignore") as f:
             f.seek(0)
-
             try:
                 portalocker.lock(f, portalocker.LOCK_EX)
 
@@ -149,3 +148,5 @@ class UserCredentials:
             json.dump({'tokens': self.__tokens}, scfg,
                       indent=2, sort_keys=True)
             portalocker.unlock(scfg)
+
+USER_CREDENTIALS = UserCredentials()

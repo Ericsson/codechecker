@@ -359,7 +359,6 @@ class CacheSettings:
     host: str
     port: int
     product: str
-    session_token: str | None
     source_root: str
     report_dir: str
     # analyzer name -> analyzer_binary_key
@@ -392,7 +391,7 @@ class CacheSession:
             module = importlib.import_module(CLIENT_MODULE)
             s = self.settings
             self.__client = module.AnalysisCacheClient(
-                s.protocol, s.host, s.port, s.product, s.session_token,
+                s.protocol, s.host, s.port, s.product,
                 CONNECT_TIMEOUT, READ_TIMEOUT)
         return self.__client
 
@@ -498,7 +497,7 @@ def setup_cache(url: str, source_root: str, report_dir: str,
     # The server is available: a failing authentication, a product which
     # can not be used and a missing permission are user errors.
     try:
-        protocol, host, port, product, token = module.authenticate(url)
+        protocol, host, port, product = module.authenticate(url)
     except SystemExit:
         LOG.error("Analysis cache: failed to authenticate to the CodeChecker "
                   "server of '%s'. Log in with 'CodeChecker cmd login' or "
@@ -508,7 +507,7 @@ def setup_cache(url: str, source_root: str, report_dir: str,
     try:
         product_id = module.check_product(protocol, host, port, product)
         has_permission = module.has_cache_permission(
-            protocol, host, port, token, product_id)
+            protocol, host, port, product_id)
     except SystemExit:
         LOG.error("Analysis cache: the product '%s' given by '--url %s' "
                   "cannot be used.", product, url)
@@ -537,7 +536,7 @@ def setup_cache(url: str, source_root: str, report_dir: str,
         return None
 
     return CacheSettings(protocol=protocol, host=host, port=port,
-                         product=product, session_token=token,
+                         product=product,
                          source_root=normalize_source_root(source_root),
                          report_dir=os.path.abspath(report_dir),
                          binary_keys=binary_keys)

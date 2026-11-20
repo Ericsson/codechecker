@@ -22,8 +22,7 @@ from codechecker_analyzer import analysis_cache as ac
 
 
 SETTINGS = {'protocol': 'http', 'host': 'h', 'port': 1, 'product': 'P',
-            'session_token': None, 'source_root': '/work/src',
-            'report_dir': '/tmp'}
+            'source_root': '/work/src', 'report_dir': '/tmp'}
 
 
 class FakeClient:

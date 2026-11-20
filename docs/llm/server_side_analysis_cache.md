@@ -265,7 +265,7 @@ Every invalid request is rejected with `RequestFailed` (`ErrorCode.GENERAL`) and
 - the analysis runs in a pool of worker processes; the existing `codechecker_client.client.setup_client()` can prompt for a password and calls `sys.exit()` on authentication failure, which must not happen inside a worker process
 - therefore authentication is done once, in the main process, before the worker pool is started:
   - the main process sets up the connection to the product's AnalysisCache endpoint, authenticates (using the stored credentials / session token, like `CodeChecker store`), and checks that the product is reachable
-  - the session token and the connection parameters are passed to the workers in the pool initializer (`init_worker`)
+  - the session token is stored in the `USER_CREDENTIALS` singleton of the client (and in the session file); the workers take it from there, only the connection parameters are passed to them in the pool initializer (`init_worker`)
   - if the server is not reachable (network error), a warning is printed and the analysis continues without the cache
   - if the server is reachable, but the authentication fails, the product does not exist or the user does not have the `PRODUCT_CACHE` permission (checked with the `hasPermission()` API of the Authentication service), `CodeChecker analyze` stops with an error before the analysis starts: `--url` expresses the intent of using the cache, so these user errors are not hidden
 - every worker process creates its own thrift client lazily, at the first cache access; thrift clients are not shared between processes (they cannot be pickled)

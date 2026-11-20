@@ -28,7 +28,7 @@ from codechecker_common.logger import get_logger
 from codechecker_web.shared.webserver_context import get_context
 
 from .client import get_new_token, setup_auth_client, setup_product_client
-from .credential_manager import UserCredentials
+from .credential_manager import USER_CREDENTIALS
 from .helpers.analysis_cache import ThriftAnalysisCacheHelper
 from .product import split_product_url
 
@@ -80,17 +80,15 @@ def authenticate(url: str):
     in the main process: it can prompt for credentials and it calls
     sys.exit() on authentication failure.
 
-    Returns (protocol, host, port, product, session_token). The session token
-    is None if the server does not require authentication.
+    The session token is stored in USER_CREDENTIALS, the subsequent API
+    calls take it from there. Returns (protocol, host, port, product).
     """
     protocol, host, port, product = split_product_url(url)
 
-    cred_manager = UserCredentials()
-    token = cred_manager.get_token(host, port)
-    if not token:
-        token = get_new_token(protocol, host, port, cred_manager)
+    if not USER_CREDENTIALS.get_token(host, port):
+        get_new_token(protocol, host, port, USER_CREDENTIALS)
 
-    return protocol, host, port, product, token
+    return protocol, host, port, product
 
 
 def check_product(protocol, host, port, product) -> int:
@@ -104,15 +102,15 @@ def check_product(protocol, host, port, product) -> int:
     return product_client.getCurrentProduct().id
 
 
-def has_cache_permission(protocol, host, port, session_token,
-                         product_id: int) -> bool:
+def has_cache_permission(protocol, host, port, product_id: int) -> bool:
     """
     Returns whether the user has the PRODUCT_CACHE permission on the
     product. Calls sys.exit() with an error message if the API call fails.
     """
     # Called right after the authentication in the main process, so the
     # session token is fresh (ThriftAuthHelper does not renew tokens).
-    auth_client = setup_auth_client(protocol, host, port, session_token)
+    auth_client = setup_auth_client(protocol, host, port,
+                                    USER_CREDENTIALS.get_token(host, port))
     return auth_client.hasPermission(Permission.PRODUCT_CACHE,
                                      json.dumps({'productID': product_id}))
 
@@ -120,14 +118,13 @@ def has_cache_permission(protocol, host, port, session_token,
 class AnalysisCacheClient:
     """ Client of the AnalysisCache API of a product. """
 
-    def __init__(self, protocol, host, port, product, session_token,
+    def __init__(self, protocol, host, port, product,
                  connect_timeout=5, read_timeout=30):
         api = get_context().api_version
-        cred_manager = UserCredentials()
         self.__helper = ThriftAnalysisCacheHelper(
             protocol, host, port, f"/{product}/v{api}/AnalysisCache",
-            session_token,
-            lambda: get_new_token(protocol, host, port, cred_manager),
+            USER_CREDENTIALS.get_token(host, port),
+            lambda: get_new_token(protocol, host, port, USER_CREDENTIALS),
             timeout=max(connect_timeout, read_timeout))
 
     def read_cache(self, key: str) -> list[tuple[str, str]]:
