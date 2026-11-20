@@ -23,6 +23,7 @@ thrift_stubs: clean_thrift_stubs
 	# Generate Thrift Python and JS stubs
 	docker run \
 	  --rm \
+	  --userns host \
 	  -u "$(uid):$(guid)" \
 	  -v $(API_DIR):/data \
 	  ${THRIFT_DOCKER_IMAGE} \
