@@ -722,8 +722,10 @@ def main(args):
         if output_path:
             baseline.write(output_path, data)
 
-    reports_helper.dump_changed_files(changed_files)
-
+    if changed_files:
+        reports_helper.dump_changed_files(changed_files)
+        sys.exit(1)
+        
     input_dir = args.input[0]
     compile_cmd_json = os.path.join(input_dir, "compile_cmd.json")
     if os.path.isdir(input_dir) and os.path.isfile(compile_cmd_json):

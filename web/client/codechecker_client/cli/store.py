@@ -560,7 +560,7 @@ def assemble_zip(inputs,
             files_to_compress[dirname].add(tmpfile)
 
     if changed_files:
-        reports_helper.dump_changed_files(changed_files, as_error=True)
+        reports_helper.dump_changed_files(changed_files)
         shutil.rmtree(temp_dir)
         sys.exit(1)
 
