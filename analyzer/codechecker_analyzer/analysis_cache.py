@@ -476,35 +476,49 @@ def setup_cache(url: str, source_root: str, report_dir: str,
                 analyzer_binaries: dict, env_for_bin) -> CacheSettings | None:
     """
     Set up the analysis cache in the main process, before the analysis
-    workers are started: authenticate to the server, check that the product
-    exists and compute the analyzer binary keys. Returns None (and prints a
-    warning) if the cache can not be used; the analysis continues without
-    the cache. Exits with an error if the server is available, but the
-    product of the URL does not exist.
+    workers are started: authenticate to the server, check the product and
+    the PRODUCT_CACHE permission, and compute the analyzer binary keys.
+    Returns None (and prints a warning) if the server is not reachable; the
+    analysis continues without the cache. Exits with an error if the server
+    is available, but the authentication fails, the product of the URL does
+    not exist or the user does not have the PRODUCT_CACHE permission.
 
     :param analyzer_binaries: analyzer name -> analyzer binary path.
     :param env_for_bin: function which returns the environment of a binary.
     """
     module = importlib.import_module(CLIENT_MODULE)
 
+    protocol, host, port, product = module.split_product_url(url)
+    if not module.is_server_reachable(protocol, host, port):
+        LOG.warning("Analysis cache: failed to connect to the CodeChecker "
+                    "server of '%s', the analysis continues without the "
+                    "cache.", url)
+        return None
+
+    # The server is available: a failing authentication, a product which
+    # can not be used and a missing permission are user errors.
     try:
         protocol, host, port, product, token = module.authenticate(url)
     except SystemExit:
-        LOG.warning("Analysis cache: authentication to '%s' failed, the "
-                    "analysis continues without the cache.", url)
-        return None
-    except Exception as ex:
-        LOG.warning("Analysis cache: failed to connect to '%s' (%s), the "
-                    "analysis continues without the cache.", url, ex)
-        return None
+        LOG.error("Analysis cache: failed to authenticate to the CodeChecker "
+                  "server of '%s'. Log in with 'CodeChecker cmd login' or "
+                  "set the credentials in the password file.", url)
+        sys.exit(1)
 
-    # The server is available (the authentication succeeded): a product
-    # which can not be used is a user error.
     try:
-        module.check_product(protocol, host, port, product)
+        product_id = module.check_product(protocol, host, port, product)
+        has_permission = module.has_cache_permission(
+            protocol, host, port, token, product_id)
     except SystemExit:
         LOG.error("Analysis cache: the product '%s' given by '--url %s' "
                   "cannot be used.", product, url)
+        sys.exit(1)
+
+    if not has_permission:
+        LOG.error("Analysis cache: you are not authorized to use the "
+                  "analysis cache of the product '%s' (PRODUCT_CACHE "
+                  "permission is required). Ask the product admin for the "
+                  "permission, or run the analysis without '--url'.", product)
         sys.exit(1)
 
     binary_keys = {}

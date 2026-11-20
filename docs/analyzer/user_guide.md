@@ -1733,8 +1733,11 @@ Notes:
   statistics files of the statistical checkers, ClangSA checker plugins
   (`.so` files) and the Z3 library. If only their content changes, a stale
   result can be fetched from the cache.
-- The cache never breaks the analysis: if the server or its cache backend is
-  not available, the analysis continues without the cache.
+- `CodeChecker analyze` stops with an error before the analysis if the
+  server is available, but the authentication fails, the product does not
+  exist or the user does not have the `PRODUCT_CACHE` permission.
+- Otherwise the cache never breaks the analysis: if the server or its cache
+  backend is not available, the analysis continues without the cache.
 
 #### Cross Translation Unit (CTU) analysis mode
 
