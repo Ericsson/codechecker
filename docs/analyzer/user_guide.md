@@ -894,6 +894,56 @@ export CC_LOGGER_GCC_LIKE
 CodeChecker log -o ../compile_commands.json -b "bitbake myProject"
 ```
 
+#### Tup
+
+[Tup](https://gittup.org/tup/manual.html) filters the environment passed to
+build commands. To capture compiler calls, explicitly export CodeChecker's
+logging variables before the compilation rules in your `Tupfile`:
+
+```text
+export LD_PRELOAD
+export LD_LIBRARY_PATH
+export CC_LOGGER_FILE
+export CC_LOGGER_GCC_LIKE
+
+: foreach *.c |> gcc -c %f -o %o |> %B.o
+```
+
+For `Tupfile.lua`, use the equivalent
+[`tup.export()`](https://gittup.org/tup/lua_parser.html) calls before defining
+compilation rules:
+
+```lua
+tup.export("LD_PRELOAD")
+tup.export("LD_LIBRARY_PATH")
+tup.export("CC_LOGGER_FILE")
+tup.export("CC_LOGGER_GCC_LIKE")
+
+tup.foreach_rule({"*.c"}, "gcc -c %f -o %o", {"%B.o"})
+```
+
+CodeChecker sets these variables when starting the build. From the Tup project
+root, run the following command to write the compilation database outside the
+Tup build directory:
+
+```sh
+CodeChecker log -o ../compile_commands.json -b "tup upd"
+```
+
+Compilation must actually run to produce compiler entries. Use a fresh build
+tree or ensure the sources need recompiling; an incremental build with no
+compiler invocations cannot populate the compilation database.
+
+Tup normally refreshes exported environment values on each update. Omit
+`--no-environ-check` while logging, including in build scripts that invoke Tup,
+so it reads CodeChecker's current logging environment instead of cached values.
+The documented option has two leading dashes; `-no-environ-check` is not the
+documented spelling.
+
+The optional CodeChecker flag `--use-absolute-ldpreload-path` avoids relying on
+`LD_LIBRARY_PATH` to locate the logger library. It does not replace the exports
+needed to pass the logging environment through Tup.
+
 #### CCache
 If your build system setup uses CCache then it can be logged too. If
 `CC_LOGGER_GCC_LIKE` contains "cc" or "ccache" directly then these actions will
