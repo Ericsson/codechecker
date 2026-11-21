@@ -58,7 +58,7 @@ def get_line(file_path: str, line_no: int, errors: str = 'ignore') -> str:
         with open(file_path, mode='r', encoding='utf-8', errors=errors) as f:
             return get_linef(f, line_no)
     except IOError:
-        LOG.error("Failed to open file %s", file_path)
+        LOG.warning("Failed to open file %s", file_path)
         return ''
 
 
