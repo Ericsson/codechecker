@@ -121,3 +121,25 @@ def dump_json_output(
         out.write(f"{data_str}\n")
 
     return data_str
+
+
+def resolve_path(path: str) -> str:
+    """
+    Safely resolves paths containing symlinks and '..' occurrences.
+
+    If the path contains '..', it resolves the actual reference using the
+    filesystem (avoiding the incorrect lexical truncation of os.path.normpath).
+    If the file does not exist on disk, it falls back to the normpath result.
+    """
+    if not path:
+        return path
+
+    if ".." in path:
+        try:
+            real = os.path.realpath(path)
+            if os.path.exists(real):
+                return real
+        except (OSError, ValueError):
+            pass
+
+    return os.path.normpath(path)
