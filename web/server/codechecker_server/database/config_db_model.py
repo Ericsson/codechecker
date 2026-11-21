@@ -233,6 +233,18 @@ class OAuthToken(Base):
         self.auth_session_id = auth_session_id
 
 
+def _utc_now() -> datetime:
+    """
+    Returns the current UTC time as a naive `datetime`.
+
+    The timestamp columns of `BackgroundTask` are timezone-less. An aware
+    value would be converted by PostgreSQL (through psycopg2) to the wall
+    time of the session's time zone, which shifts the value on servers that
+    do not run in UTC.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class BackgroundTask(Base):
     """
     Information about background tasks executed on a CodeChecker service,
@@ -351,7 +363,7 @@ class BackgroundTask(Base):
         self.status = "allocated"
         self.summary = summary
         self.username = user_name
-        self.last_seen_at = datetime.now(timezone.utc)
+        self.last_seen_at = _utc_now()
 
         if product:
             self.product_id = product.id
@@ -368,7 +380,7 @@ class BackgroundTask(Base):
     def heartbeat(self):
         """Update `last_seen_at`."""
         if self.status in ["enqueued", "running"]:
-            self.last_seen_at = datetime.now(timezone.utc)
+            self.last_seen_at = _utc_now()
 
     def set_enqueued(self):
         """Marks the job as successfully enqueued."""
@@ -377,7 +389,7 @@ class BackgroundTask(Base):
                 f"Invalid transition '{str(self.status)}' -> 'enqueued'")
 
         self.status = "enqueued"
-        self.enqueued_at = datetime.now(timezone.utc)
+        self.enqueued_at = _utc_now()
 
     def set_running(self):
         """Marks the job as currently executing."""
@@ -386,7 +398,7 @@ class BackgroundTask(Base):
                 f"Invalid transition '{str(self.status)}' -> 'running'")
 
         self.status = "running"
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = _utc_now()
 
     def set_finished(self, successfully: bool = True):
         """Marks the job as successfully completed or failed."""
@@ -396,7 +408,7 @@ class BackgroundTask(Base):
                 f"Invalid transition '{str(self.status)}' -> '{new_status}'")
 
         self.status = new_status
-        self.finished_at = datetime.now(timezone.utc)
+        self.finished_at = _utc_now()
 
     def set_abandoned(self, force_dropped_status: bool = False):
         """
@@ -408,7 +420,7 @@ class BackgroundTask(Base):
             else "dropped"
 
         self.status = new_status
-        self.finished_at = datetime.now(timezone.utc)
+        self.finished_at = _utc_now()
 
     @property
     def is_in_terminated_state(self) -> bool:
