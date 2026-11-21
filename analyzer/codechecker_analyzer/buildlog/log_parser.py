@@ -973,7 +973,8 @@ def __skip_gcc(flag_iterator, _):
 def parse_options(compilation_db_entry,
                   compiler_info_file=None,
                   keep_gcc_include_fixed=False,
-                  keep_gcc_intrin=False):
+                  keep_gcc_intrin=False,
+                  keep_symlink=False):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -993,6 +994,8 @@ def parse_options(compilation_db_entry,
                        kept among the implicit include paths. Use this flag if
                        Clang analysis fails with error message related to
                        __builtin symbols.
+    keep_symlink -- When calculating the absolute path of the source file, do
+                    not resolve symbolic links. By default (False).
     """
     details: dict[str, Any] = {
         'analyzer_options': [],
@@ -1082,9 +1085,15 @@ def parse_options(compilation_db_entry,
     details['source'] = compilation_db_entry['file']
     # Calculate absolute path to file if not already abs
     if not Path(details['source']).is_absolute():
-        details['source'] = str(Path(
-            Path(compilation_db_entry['directory']).absolute(),
-            compilation_db_entry['file']).resolve())
+        if keep_symlink:
+            # Do not resolve symbolic links in the source path.
+            details['source'] = os.path.abspath(os.path.join(
+                compilation_db_entry['directory'],
+                compilation_db_entry['file']))
+        else:
+            details['source'] = str(Path(
+                Path(compilation_db_entry['directory']).absolute(),
+                compilation_db_entry['file']).resolve())
 
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
@@ -1250,16 +1259,18 @@ def _process_entry_worker(args):
     Worker function for processing compilation database entries in parallel.
 
     args -- Tuple containing (entry, compiler_info_file,
-            keep_gcc_include_fixed, keep_gcc_intrin, analyzer_clang_version)
+            keep_gcc_include_fixed, keep_gcc_intrin, keep_symlink,
+            analyzer_clang_version)
     """
     (entry, compiler_info_file, keep_gcc_include_fixed,
-     keep_gcc_intrin) = args
+     keep_gcc_intrin, keep_symlink) = args
 
     try:
         action = parse_options(entry,
                                compiler_info_file,
                                keep_gcc_include_fixed,
-                               keep_gcc_intrin)
+                               keep_gcc_intrin,
+                               keep_symlink)
         return action
     except Exception as e:
         LOG.error("Error processing entry: %s", e)
@@ -1271,6 +1282,7 @@ def parse_unique_log(compilation_database,
                      compiler_info_file=None,
                      keep_gcc_include_fixed=False,
                      keep_gcc_intrin=False,
+                     keep_symlink=False,
                      jobs=None,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
@@ -1309,6 +1321,8 @@ def parse_unique_log(compilation_database,
                        kept among the implicit include paths. Use this flag if
                        Clang analysis fails with error message related to
                        __builtin symbols.
+    keep_symlink -- When calculating the absolute path of source files, do not
+                    resolve symbolic links. By default (False).
     jobs -- Number of processes to use for parsing the compilation_database
 
     Separate skip handlers are required because it is possible that different
@@ -1350,7 +1364,7 @@ def parse_unique_log(compilation_database,
 
         # Create arguments for worker function as generator
         worker_args = ((entry, compiler_info_file, keep_gcc_include_fixed,
-                       keep_gcc_intrin)
+                       keep_gcc_intrin, keep_symlink)
                        for entry in entries)
 
         # Here we overwrite ImplicitCompilerInfo.compiker_info with a dict type
