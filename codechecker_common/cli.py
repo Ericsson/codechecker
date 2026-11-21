@@ -240,19 +240,34 @@ output.
             log = logger.get_logger('system')
 
             called_sub_command = sys.argv[1]
+            config_file = args.config_file
 
-            cfg_args = args.func_process_config_file(args, called_sub_command)
+            try:
+                cfg_args = args.func_process_config_file(
+                    args, called_sub_command)
+            except (FileNotFoundError, ValueError) as err:
+                parser.error(str(err))
             if cfg_args:
                 # Expand environment variables in the arguments.
                 cfg_args = [os.path.expandvars(cfg) for cfg in cfg_args]
 
-                # Replace --config option with the options inside the config
-                # file.
-                cfg_idx = sys.argv.index("--config")
-                sys.argv = sys.argv[:cfg_idx] + cfg_args + \
-                    sys.argv[cfg_idx + 2:]
+                # Replace the explicit --config option with the options
+                # from the configuration file, or append them when the
+                # configuration file is provided through the environment.
+                cfg_idx = next((idx for idx, value in
+                                reversed(list(enumerate(sys.argv)))
+                                if value == "--config" or
+                                value.startswith("--config=")), None)
+                if cfg_idx is not None:
+                    cfg_end = cfg_idx + (1 if '=' in sys.argv[cfg_idx] else 2)
+                    sys.argv = sys.argv[:cfg_idx] + cfg_args + \
+                        sys.argv[cfg_end:]
+                else:
+                    sys.argv.extend(cfg_args)
 
                 args = parser.parse_args()
+                # Keep the selected file when its explicit flag was replaced.
+                args.config_file = config_file
                 log.info("Full extended command: %s", ' '.join(sys.argv))
 
         if 'func' in args:
