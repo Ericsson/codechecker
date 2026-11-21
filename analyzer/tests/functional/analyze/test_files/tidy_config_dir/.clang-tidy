@@ -1,0 +1,4 @@
+---
+Checks: '-*,bugprone-sizeof-expression,misc-unused-parameters'
+HeaderFilterRegex: '.*'
+...
