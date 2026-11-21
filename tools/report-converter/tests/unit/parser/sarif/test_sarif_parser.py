@@ -57,11 +57,13 @@ class SarifParserTestCase(unittest.TestCase):
         data = sarif.Parser().convert([report])
         result = data['runs'][0]['results'][0]
 
-        self.assertEqual(
-            result['locations'][0]['physicalLocation']
-            ['artifactLocation']['uri'],
-            'file://src/main.c')
-        self.assertEqual(
-            result['codeFlows'][0]['threadFlows'][0]['locations'][0]
-            ['location']['physicalLocation']['artifactLocation']['uri'],
-            'file://src/util.c')
+        # Trimmed (relative) paths are relative references (§3.4.3).
+        main_loc = result['locations'][0]['physicalLocation'][
+            'artifactLocation']
+        self.assertEqual(main_loc['uri'], 'src/main.c')
+        self.assertEqual(main_loc['uriBaseId'], 'SRCROOT')
+
+        event_loc = result['codeFlows'][0]['threadFlows'][0]['locations'][
+            0]['location']['physicalLocation']['artifactLocation']
+        self.assertEqual(event_loc['uri'], 'src/util.c')
+        self.assertEqual(event_loc['uriBaseId'], 'SRCROOT')

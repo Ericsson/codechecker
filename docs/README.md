@@ -416,6 +416,7 @@ you should be greeted with a web application showing you the analysis results.
 * [Architecture](architecture.md)
 * [Report Directory Specification](report_directory.md)
 * [Plist Report Format Specification](tools/plist.md)
+* [SARIF Export Format Specification](tools/sarif.md)
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
