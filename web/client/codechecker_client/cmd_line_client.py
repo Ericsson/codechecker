@@ -1370,7 +1370,8 @@ def print_reports(
     if 'plaintext' in output_formats:
         statistics.write()
 
-    reports_helper.dump_changed_files(changed_files)
+    if changed_files:
+        reports_helper.dump_changed_files(changed_files)
 
 
 def handle_diff_results(args):

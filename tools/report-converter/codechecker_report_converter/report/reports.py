@@ -47,9 +47,9 @@ def dump_changed_files(changed_files: set[str]):
         return
 
     file_paths = '\n'.join([' - ' + f for f in changed_files])
-    LOG.warning("The following source file contents changed or missing since "
-                "the latest analysis:\n%s\nPlease re-analyze your "
-                "project to update the reports!", file_paths)
+    LOG.error("The following source file contents changed or missing since "
+              "the latest analysis:\n%s\nPlease re-analyze your "
+              "project to update the reports!", file_paths)
 
 
 def skip(
