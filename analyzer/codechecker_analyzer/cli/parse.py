@@ -185,6 +185,18 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
+    parser.add_argument('--source-root',
+                        type=str,
+                        dest="source_root",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="The base directory that relative source file "
+                             "paths found in the analysis result (plist) "
+                             "files are resolved against. By default, "
+                             "relative paths are resolved against the "
+                             "directory of the result file "
+                             "that contains them.")
+
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -609,6 +621,12 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
+    # Base directory that relative source file paths in the result files are
+    # resolved against. When not given, each result file's own directory is
+    # used (handled downstream by the parser).
+    source_root = os.path.abspath(args.source_root) \
+        if 'source_root' in args else None
+
     all_reports = []
     statistics = Statistics()
     file_cache: dict[str, File] = {}  # For memory effiency.
@@ -653,7 +671,8 @@ def main(args):
 
         for file_path in file_paths:
             reports = report_file.get_reports(
-                file_path, context.checker_labels, file_cache)
+                file_path, context.checker_labels, file_cache,
+                source_dir_path=source_root)
 
             for report in reports:
                 try:
