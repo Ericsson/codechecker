@@ -188,6 +188,24 @@ generate the gerrit review data:
   repository was cloned.
 - `CC_REPORT_URL`: URL where the report can be found.
 - `CC_CHANGED_FILES`: Path of changed files json from Gerrit.
+- `CC_GERRIT_LABELS`: Comma separated list of the Gerrit labels the review
+  should vote on, e.g. `Code-Review,Verified`. The vote values used when the
+  review fails and when it passes can be given after a slash, e.g.
+  `Verified=-1/1,Code-Review=-1/0`. If the vote values are not given then -1
+  is used on failure and +1 on success. An empty value means that the reports
+  are sent without any vote.
+- `CC_GERRIT_FAIL_ON_SEVERITY`: The lowest severity level which makes the
+  review fail, e.g. `HIGH`.
+- `CC_GERRIT_TAG`: Tag of the Gerrit review. Defaults to `jenkins`.
+
+The reports are always sent as inline comments, but the votes can be
+decoupled from them with `CC_GERRIT_FAIL_ON_SEVERITY`: lower severity reports
+are still shown as comments, they just don't result in a negative vote. So
+with `CC_GERRIT_FAIL_ON_SEVERITY="HIGH"` a change which only introduces a
+`STYLE` or a `LOW` severity issue gets the comments without rejecting the
+change. If `CC_GERRIT_LABELS` is not set then the review keeps its legacy
+behaviour and votes on `Code-Review` and `Verified` with -1/+1 whenever a
+report is found.
 
 The following script is an example of what could be added to an Execute shell
 build step, to achieve the above:
@@ -202,6 +220,11 @@ make tests
 
 export CC_CHANGED_FILES="$WORKSPACE/files-changed"
 export CC_SKIPFILE="$WORKSPACE/skipfile"
+
+# Send the reports as comments but only reject the change if an issue at or
+# above this severity level is introduced.
+export CC_GERRIT_LABELS="Verified=-1/1,Code-Review=-1/0"
+export CC_GERRIT_FAIL_ON_SEVERITY="HIGH"
 
 # gerrit_changed_files_to_skipfile.py script can be found in the bin directory in the CodeChecker package.
 python gerrit_changed_files_to_skipfile.py $CC_CHANGED_FILES $CC_SKIPFILE
