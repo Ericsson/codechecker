@@ -1,0 +1,565 @@
+{
+  "analyzer": "clazy",
+  "analyzer_version": "1.11",
+  "labels": {
+    "clazy-assert-with-side-effects": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-assert-with-side-effects.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-auto-unexpected-qstringbuilder": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-auto-unexpected-qstringbuilder.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-base-class-event": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-base-class-event.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-child-event-qobject-cast": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-child-event-qobject-cast.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-connect-3arg-lambda": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-connect-3arg-lambda.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-connect-by-name": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-connect-by-name.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-connect-non-signal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-connect-non-signal.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-connect-not-normalized": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-connect-not-normalized.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-const-signal-or-slot": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-const-signal-or-slot.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-container-anti-pattern": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-container-anti-pattern.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-container-inside-loop": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-container-inside-loop.md",
+      "severity:LOW"
+    ],
+    "clazy-copyable-polymorphic": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-copyable-polymorphic.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-ctor-missing-parent-argument": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-ctor-missing-parent-argument.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-detaching-member": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-detaching-member.md",
+      "severity:LOW"
+    ],
+    "clazy-detaching-temporary": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-detaching-temporary.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-empty-qstringliteral": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-empty-qstringliteral.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-foreach": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-foreach.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-fully-qualified-moc-types": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-fully-qualified-moc-types.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-function-args-by-ref": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-function-args-by-ref.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-function-args-by-value": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-function-args-by-value.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-global-const-char-pointer": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-global-const-char-pointer.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-heap-allocated-small-trivial-type": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-heap-allocated-small-trivial-type.md",
+      "severity:LOW"
+    ],
+    "clazy-ifndef-define-typo": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-ifndef-define-typo.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-implicit-casts": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-implicit-casts.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-incorrect-emit": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-incorrect-emit.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "clazy-install-event-filter": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-install-event-filter.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-isempty-vs-count": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-isempty-vs-count.md",
+      "severity:STYLE"
+    ],
+    "clazy-jni-signatures": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-jni-signatures.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-lambda-in-connect": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-lambda-in-connect.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-lambda-unique-connection": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-lambda-unique-connection.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-lowercase-qml-type-name": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-lowercase-qml-type-name.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-missing-qobject-macro": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-missing-qobject-macro.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-missing-typeinfo": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-missing-typeinfo.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-mutable-container-key": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-mutable-container-key.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-non-pod-global-static": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-non-pod-global-static.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-old-style-connect": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-old-style-connect.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-overloaded-signal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-overloaded-signal.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "clazy-overridden-signal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-overridden-signal.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-post-event": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-post-event.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qcolor-from-literal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qcolor-from-literal.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qdatetime-utc": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qdatetime-utc.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qdeleteall": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qdeleteall.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qenums": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qenums.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "clazy-qfileinfo-exists": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qfileinfo-exists.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qgetenv": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qgetenv.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qhash-namespace": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qhash-namespace.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qhash-with-char-pointer-key": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qhash-with-char-pointer-key.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-qlatin1string-non-ascii": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qlatin1string-non-ascii.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qmap-with-pointer-key": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qmap-with-pointer-key.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qproperty-type-mismatch": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qproperty-type-mismatch.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-qproperty-without-notify": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qproperty-without-notify.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qrequiredresult-candidates": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qrequiredresult-candidates.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-qstring-allocations": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-allocations.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qstring-arg": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-arg.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qstring-comparison-to-implicit-char": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-comparison-to-implicit-char.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qstring-insensitive-allocation": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-insensitive-allocation.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qstring-left": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-left.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qstring-ref": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-ref.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-qstring-varargs": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qstring-varargs.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-qt-keywords": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt-keywords.md",
+      "severity:STYLE"
+    ],
+    "clazy-qt-macros": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt-macros.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-qt4-qstring-from-array": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt4-qstring-from-array.md",
+      "severity:LOW"
+    ],
+    "clazy-qt6-deprecated-api-fixes": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt6-deprecated-api-fixes.md",
+      "severity:LOW"
+    ],
+    "clazy-qt6-fwd-fixes": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt6-fwd-fixes.md",
+      "severity:STYLE"
+    ],
+    "clazy-qt6-header-fixes": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt6-header-fixes.md",
+      "severity:STYLE"
+    ],
+    "clazy-qt6-qhash-signature": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt6-qhash-signature.md",
+      "severity:LOW"
+    ],
+    "clazy-qt6-qlatin1stringchar-to-u": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qt6-qlatin1stringchar-to-u.md",
+      "severity:LOW"
+    ],
+    "clazy-qvariant-template-instantiation": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-qvariant-template-instantiation.md",
+      "severity:STYLE"
+    ],
+    "clazy-range-loop-detach": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-range-loop-detach.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-range-loop-reference": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-range-loop-reference.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-raw-environment-function": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-raw-environment-function.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-reserve-candidates": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-reserve-candidates.md",
+      "severity:LOW"
+    ],
+    "clazy-returning-data-from-temporary": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-returning-data-from-temporary.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-returning-void-expression": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-returning-void-expression.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "clazy-rule-of-three": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-rule-of-three.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-rule-of-two-soft": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-rule-of-two-soft.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-signal-with-return-value": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-signal-with-return-value.md",
+      "severity:STYLE"
+    ],
+    "clazy-skipped-base-method": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-skipped-base-method.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-static-pmf": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-static-pmf.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-strict-iterators": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-strict-iterators.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-temporary-iterator": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-temporary-iterator.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-thread-with-slots": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-thread-with-slots.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-tr-non-literal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-tr-non-literal.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-unexpected-flag-enumerator-value": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-unexpected-flag-enumerator-value.md",
+      "severity:MEDIUM"
+    ],
+    "clazy-unneeded-cast": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-unneeded-cast.md",
+      "severity:STYLE"
+    ],
+    "clazy-unused-non-trivial-variable": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-unused-non-trivial-variable.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "clazy-use-arrow-operator-instead-of-data": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-use-arrow-operator-instead-of-data.md",
+      "severity:STYLE"
+    ],
+    "clazy-use-chrono-in-qtimer": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-use-chrono-in-qtimer.md",
+      "severity:STYLE"
+    ],
+    "clazy-use-static-qregularexpression": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-use-static-qregularexpression.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "clazy-virtual-call-ctor": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-virtual-call-ctor.md",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-virtual-signal": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-virtual-signal.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-writing-to-temporary": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-writing-to-temporary.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-wrong-qevent-cast": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-wrong-qevent-cast.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "clazy-wrong-qglobalstatic": [
+      "doc_url:https://invent.kde.org/sdk/clazy/-/blob/1.11/docs/checks/README-wrong-qglobalstatic.md",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+files/compile_error.cpp:5:9: error: unused variable 'unused' [-Werror,-Wunused-variable]
+    int unused;
+        ^
+files/compile_error.cpp:12:12: error: use of undeclared identifier 'missing'; did you mean 'using'?
+    return missing;
+           ^~~~~~~
+           using
+files/compile_error.cpp:12:12: error: expected expression
+3 errors generated.
+Error while processing files/compile_error.cpp.

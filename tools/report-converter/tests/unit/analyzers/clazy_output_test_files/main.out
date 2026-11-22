@@ -1,0 +1,17 @@
+files/main.cpp:8:5: warning: Old Style Connect [-Wclazy-old-style-connect]
+    QObject::connect(timer, SIGNAL(timeout()), receiver, SLOT(deleteLater()));
+    ^                       ~~~~~~~~~~~~~~~~~            ~~~~~~~~~~~~~~~~~~~
+                            &QTimer::timeout             &QObject::deleteLater
+In file included from files/main.cpp:11:
+files/value.h:4:1: warning: Value has dtor, copy-ctor but not copy-assignment [-Wclazy-rule-of-three]
+struct Value
+^
+files/main.cpp:16:5: warning: allocating an unneeded temporary container [-Wclazy-container-anti-pattern]
+    for (auto v : map.values())
+    ^
+files/main.cpp:16:5: warning: c++11 range-loop might detach Qt container (QList) [-Wclazy-range-loop-detach]
+files/main.cpp:23:17: warning: QString(const char*) being called [-Wclazy-qstring-allocations]
+    QString s = "hello";
+                ^
+                QStringLiteral( )
+5 warnings generated.
