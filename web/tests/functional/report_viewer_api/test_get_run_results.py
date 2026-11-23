@@ -362,6 +362,7 @@ class RunResults(unittest.TestCase):
                                                     [sort_mode_1],
                                                     simple_filter,
                                                     None,
+                                                    False,
                                                     False)
         self.__check_bug_path_order(run_results, Order.ASC)
 
@@ -371,6 +372,7 @@ class RunResults(unittest.TestCase):
                                                     [sort_mode_2],
                                                     unique_filter,
                                                     None,
+                                                    False,
                                                     False)
         self.__check_bug_path_order(run_results, Order.DESC)
 
@@ -386,7 +388,8 @@ class RunResults(unittest.TestCase):
                                                     None,
                                                     simple_filter,
                                                     None,
-                                                    True)
+                                                    True,
+                                                    False)
 
         self.assertTrue(any(res.details for res in run_results))
 
@@ -403,7 +406,8 @@ class RunResults(unittest.TestCase):
                                                     None,
                                                     unique_filter,
                                                     None,
-                                                    True)
+                                                    True,
+                                                    False)
 
         self.assertTrue(any(res.details for res in run_results))
 
@@ -418,7 +422,8 @@ class RunResults(unittest.TestCase):
             filepath=['*path_begin.cpp'])
 
         report = self._cc_client.getRunResults(
-            [self._runid], 1, 0, [sort_mode], report_filter, None, True)[0]
+            [self._runid], 1, 0, [sort_mode], report_filter, None, True,
+            False)[0]
 
         self.assertEqual(len(report.details.executionPath), 7)
         self.assertEqual(len(report.details.pathEvents), 5)
@@ -486,9 +491,53 @@ class RunResults(unittest.TestCase):
                                                     None,
                                                     simple_filter,
                                                     None,
-                                                    True)
+                                                    True,
+                                                    False)
 
         self.assertTrue(any(res.blameInfo for res in run_results))
+
+    def test_report_blame_info_in_execution_path(self):
+        """
+        Blame info is only added to the path events and to the elements of
+        the execution path when extendedBlameInfo is set (together with
+        get_details).
+        """
+        simple_filter = ReportFilter()
+
+        def get_results(get_details, extended_blame_info):
+            return self._cc_client.getRunResults([self._runid],
+                                                 100,
+                                                 0,
+                                                 None,
+                                                 simple_filter,
+                                                 None,
+                                                 get_details,
+                                                 extended_blame_info)
+
+        def get_path_elements(run_results):
+            return [elem
+                    for res in run_results
+                    for elem in [*res.details.pathEvents,
+                                 *res.details.executionPath]]
+
+        # Not requested: no blame info on the path elements.
+        elements = get_path_elements(get_results(True, False))
+        self.assertTrue(elements)
+        self.assertFalse(any(elem.blameInfo for elem in elements))
+
+        # Requested: every element has blame info which belongs to the
+        # start line of the element.
+        elements = get_path_elements(get_results(True, True))
+        self.assertTrue(elements)
+        self.assertTrue(any(elem.blameInfo and elem.blameInfo.blame
+                            for elem in elements))
+
+        for elem in elements:
+            self.assertIsNotNone(elem.blameInfo)
+            for blame in elem.blameInfo.blame:
+                self.assertTrue(blame.startLine <= elem.startLine
+                                <= blame.endLine)
+                self.assertIn(blame.commitHash, elem.blameInfo.commits)
 
     def test_report_blame_info_for_simple_project(self):
         """
@@ -545,7 +594,7 @@ class RunResults(unittest.TestCase):
                 filepath=[f'*{source_file_name}'])
 
             run_results = self._cc_client.getRunResults(
-                [run_id], 100, 0, None, report_filter, None, True)
+                [run_id], 100, 0, None, report_filter, None, True, False)
             self.assertTrue(run_results)
             self.assertTrue(any(res.blameInfo for res in run_results))
             self.assertTrue(all(getattr(res, 'blameInfo', None)

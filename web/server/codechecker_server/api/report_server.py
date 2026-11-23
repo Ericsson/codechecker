@@ -2165,7 +2165,8 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
-                      report_filter, cmp_data, get_details):
+                      report_filter, cmp_data, get_details,
+                      extended_blame_info=False):
         self.__require_view()
 
         limit = verify_limit_range(limit)
@@ -2312,15 +2313,21 @@ class ThriftRequestHandler:
                 # Get report details if it is required.
                 report_details = {}
                 blame_infos = {}
+                blame_cache = {}
 
                 if get_details and query_result:
                     report_ids = []
 
                     for r in query_result:
                         report_ids.append(r.id)
-                        blame_infos[r.id] = self.getBlameInfo(r.file_id)
+                        blame_infos[r.id] = self.__get_cached_blame_info(
+                            r.file_id, blame_cache)
 
                     report_details = get_report_details(session, report_ids)
+
+                    if extended_blame_info:
+                        self.__add_blame_to_path_elements(
+                            report_details, blame_cache)
 
                 for row in query_result:
                     annotations = {
@@ -2429,15 +2436,21 @@ class ThriftRequestHandler:
                 # Get report details if it is required.
                 report_details = {}
                 blame_infos = {}
+                blame_cache = {}
 
                 if get_details and query_result:
                     report_ids = []
 
                     for r in query_result:
                         report_ids.append(r[0].id)
-                        blame_infos[r[0].id] = self.getBlameInfo(r[0].file_id)
+                        blame_infos[r[0].id] = self.__get_cached_blame_info(
+                            r[0].file_id, blame_cache)
 
                     report_details = get_report_details(session, report_ids)
+
+                    if extended_blame_info:
+                        self.__add_blame_to_path_elements(
+                            report_details, blame_cache)
 
                 for row in query_result:
                     report, filepath = row[0], row[1]
@@ -2505,6 +2518,36 @@ class ThriftRequestHandler:
                 blame=blame_data)
 
         return blame_info
+
+    def __get_cached_blame_info(
+        self,
+        file_id: int,
+        blame_cache: dict[int, BlameInfo]
+    ) -> BlameInfo:
+        """
+        Returns the cached blame information of the given file. Each file is
+        loaded only once for the lifetime of the cache.
+        """
+        if file_id not in blame_cache:
+            blame_cache[file_id] = self.getBlameInfo(file_id)
+
+        return blame_cache[file_id]
+
+    def __add_blame_to_path_elements(
+        self,
+        report_details: dict[int, ReportDetails],
+        blame_cache: dict[int, BlameInfo]
+    ):
+        """
+        Fills the blame information of every path event and execution path
+        element in the given report details. The blame is filtered to the
+        line where the given element starts.
+        """
+        for details in report_details.values():
+            for elem in [*details.pathEvents, *details.executionPath]:
+                elem.blameInfo = self.__filter_blame_info_on_line(
+                    self.__get_cached_blame_info(elem.fileId, blame_cache),
+                    elem.startLine)
 
     @exc_to_thrift_reqfail
     @timeit

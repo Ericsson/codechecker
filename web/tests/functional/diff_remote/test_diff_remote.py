@@ -407,6 +407,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  ReportFilter(),
                                                  cmp_data,
+                                                 False,
                                                  False)
         # 4 new core.NullDereference issues.
         self.assertEqual(len(diff_res), 4)
@@ -427,6 +428,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  ReportFilter(),
                                                  cmp_data,
+                                                 False,
                                                  False)
         # 4 resolved core.CallAndMessage
         self.assertEqual(len(diff_res), 4)
@@ -468,6 +470,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  ReportFilter(),
                                                  cmp_data,
+                                                 False,
                                                  False)
         self.assertEqual(len(diff_res), 26)
 
@@ -843,6 +846,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
 
         # 5 new core.CallAndMessage issues (as the checker was enabled from
@@ -856,6 +860,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
 
         # 3 core.StackAddressEscape reports are resolved (as the checker was
@@ -869,6 +874,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
         self.assertEqual(len(diff_res), 27)
 
@@ -879,7 +885,7 @@ class DiffRemote(unittest.TestCase):
         d = datetime(1992, 1, 1)
         tag_filter = ReportFilter(openReportsDate=int(d.timestamp()))
         res = self._cc_client.getRunResults(
-            None, MAX_QUERY_SIZE, 0, [], tag_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, [], tag_filter, None, False, False)
 
         self.assertEqual(len(res), 0)
 
@@ -916,6 +922,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
 
         # 5 new core.CallAndMessage issues (as the checker was enabled from
@@ -929,6 +936,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
 
         # 3 core.StackAddressEscape reports are resolved (as the checker was
@@ -942,6 +950,7 @@ class DiffRemote(unittest.TestCase):
                                                  [],
                                                  tag_filter,
                                                  cmp_data,
+                                                 False,
                                                  False)
         self.assertEqual(len(diff_res), 27)
 

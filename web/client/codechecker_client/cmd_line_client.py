@@ -307,7 +307,7 @@ def get_diff_base_results(
     while True:
         results = client.getRunResults(
             baseids, limit, offset, sort_mode, report_filter, None,
-            get_details)
+            get_details, False)
 
         base_results.extend(results)
         offset += limit
@@ -409,11 +409,15 @@ def get_run_results(client,
                     sort_type,
                     report_filter,
                     compare_data,
-                    query_report_details):
+                    query_report_details,
+                    extended_blame_info=False):
     """Get all the results with multiple api request.
 
     In each api request get the limit ammount of reports.
     Collect and return all the reports based on the filters.
+    If extended_blame_info is set, the blame information is also queried for
+    every path event and execution path element (requires
+    query_report_details).
     """
 
     all_results = []
@@ -424,7 +428,8 @@ def get_run_results(client,
                                        sort_type,
                                        report_filter,
                                        compare_data,
-                                       query_report_details)
+                                       query_report_details,
+                                       extended_blame_info)
         all_results.extend(results)
         offset += limit
         if len(results) < limit:
@@ -815,6 +820,14 @@ def handle_list_results(args):
     query_report_details = 'details' in args and args.details and \
         args.output_format == 'json'
 
+    extended_blame_info = 'extended_blame_info' in args and \
+        args.extended_blame_info
+
+    if extended_blame_info and not query_report_details:
+        LOG.error("The --extended-blame-info option can be used only "
+                  "together with --details.")
+        sys.exit(1)
+
     all_results = get_run_results(client,
                                   run_ids,
                                   constants.MAX_QUERY_SIZE,
@@ -822,12 +835,22 @@ def handle_list_results(args):
                                   None,
                                   report_filter,
                                   None,
-                                  query_report_details)
+                                  query_report_details,
+                                  extended_blame_info)
 
     if args.output_format == 'json':
         run_id2name = {run.runId: run.name for run in run_data}
         for report in all_results:
             report.runName = run_id2name[report.runId]
+
+            # The object blameInfo is coming from the server regardless of
+            # the state of the argument --extended-blame-info. This is a
+            # workaround not to show it if not required by the users.
+            if not extended_blame_info and report.details:
+                for elem in [*report.details.pathEvents,
+                             *report.details.executionPath]:
+                    elem.__dict__.pop('blameInfo', None)
+
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         rows = []
@@ -1814,7 +1837,7 @@ def handle_suppress(args):
                                                   reportHash=[bug_id])
             reports = client.getRunResults([run.runId], limit, 0, None,
                                            bug_hash_filter,
-                                           None, False)
+                                           None, False, False)
 
             for report in reports:
                 rw_status = ttypes.ReviewStatus.FALSE_POSITIVE

@@ -163,7 +163,7 @@ int f(int x) { return 1 / x; }
         run_id = self.__get_run_id([run_name])
 
         reports = self._cc_client.getRunResults(
-            [run_id], 10, 0, [], ReportFilter(), None, False)
+            [run_id], 10, 0, [], ReportFilter(), None, False, False)
 
         details = self._cc_client.getReportDetails(reports[0].reportId)
 
@@ -192,7 +192,7 @@ int f(int x) { return 1 / x; }
         run_id = runs[0].runId
 
         reports = self._cc_client.getRunResults(
-            [run_id], 10, 0, [], ReportFilter(), None, False)
+            [run_id], 10, 0, [], ReportFilter(), None, False, False)
 
         checker_labels = CheckerLabels(self.workspace_labels_dir)
         for report in reports:
@@ -238,7 +238,7 @@ int f(int x) { return 1 / x; }
 
         run_id1 = self.__get_run_id([run_name1])
         report = self._cc_client.getRunResults(
-            None, 1, 0, [], ReportFilter(), None, False)[0]
+            None, 1, 0, [], ReportFilter(), None, False, False)[0]
 
         report_hash = report.bugHash
         report_id = report.reportId
@@ -263,6 +263,7 @@ int f(int x) { return 1 / x; }
         r_filter = ReportFilter(reviewStatus=[ReviewStatus.CONFIRMED])
         run_results = self._cc_client.getRunResults([run_id2], 1, 0,
                                                     None, r_filter, None,
+                                                    False,
                                                     False)
         self.assertTrue(run_results)
 
@@ -277,7 +278,7 @@ int f(int x) { return 1 / x; }
 
         r_filter = ReportFilter(reportHash=[report_hash])
         report = self._cc_client.getRunResults(None, 1, 0, None, r_filter,
-                                               None, False)[0]
+                                               None, False, False)[0]
         report_id = report.reportId
 
         comments = self._cc_client.getComments(report_id)
@@ -285,7 +286,7 @@ int f(int x) { return 1 / x; }
 
         r_filter = ReportFilter(reviewStatus=[ReviewStatus.CONFIRMED])
         run_results = self._cc_client.getRunResults(None, 1, 0, None, r_filter,
-                                                    None, False)
+                                                    None, False, False)
         self.assertTrue(run_results)
 
         # Checker severity levels.

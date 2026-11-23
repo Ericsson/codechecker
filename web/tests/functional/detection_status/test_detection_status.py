@@ -209,6 +209,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
 
         self.assertEqual(len(reports), 5)
@@ -224,6 +225,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
@@ -246,6 +248,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.RESOLVED:
@@ -294,6 +297,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
@@ -317,6 +321,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
         for report in reports:
             if report.detectionStatus == DetectionStatus.UNRESOLVED:
@@ -368,6 +373,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
 
         self.assertEqual(len(reports), 5)
@@ -390,6 +396,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
@@ -410,6 +417,7 @@ int main()
                                                 [],
                                                 ReportFilter(),
                                                 None,
+                                                False,
                                                 False)
 
         offed_reports = [r for r in reports
@@ -436,7 +444,7 @@ int main()
         return_code = self._check_source_file(cfg)
         self.assertEqual(return_code, 0)
         reports = self._cc_client.getRunResults(
-            None, 100, 0, [], ReportFilter(), None, False)
+            None, 100, 0, [], ReportFilter(), None, False, False)
 
         readability_results = [
             r for r in reports if r.checkerId.startswith('readability')]
@@ -455,7 +463,7 @@ int main()
         self._check_source_file(cfg)
 
         reports = self._cc_client.getRunResults(
-            None, 100, 0, [], ReportFilter(), None, False)
+            None, 100, 0, [], ReportFilter(), None, False, False)
         self.assertTrue([r for r in reports
                          if r.detectionStatus == DetectionStatus.UNRESOLVED])
 
@@ -504,7 +512,7 @@ int main()
 
         # Check that no reports are marked as OFF.
         reports = self._cc_client.getRunResults(
-            None, 100, 0, [], ReportFilter(), None, False)
+            None, 100, 0, [], ReportFilter(), None, False, False)
 
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
