@@ -9,7 +9,7 @@
     >
       <v-col
         class="editor-col py-0"
-        :cols="showAiPanel ? undefined : editorCols"
+        :cols="editorCols"
       >
         <v-container
           fluid
@@ -97,13 +97,13 @@
               <v-btn
                 class="explain-report-btn"
                 color="primary"
-                :variant="showAiPanel ? 'flat' : 'outlined'"
+                :variant="aiPanelOpen ? 'flat' : 'outlined'"
                 size="small"
-                :title="showAiPanel
+                :title="aiPanelOpen
                   ? 'Hide the AI explanation panel'
                   : 'Explain this report with AI'"
                 :disabled="!report || loading"
-                @click="showAiPanel = !showAiPanel"
+                @click="emit('toggle:ai-panel')"
               >
                 <v-icon class="mr-1" size="small">
                   mdi-lightbulb-on-outline
@@ -263,25 +263,6 @@
         </v-container>
       </v-col>
       <v-col
-        v-if="showAiPanel"
-        class="ai-panel-col pa-0"
-        cols="auto"
-        :style="{ width: aiWidth + 'px' }"
-      >
-        <div
-          class="ai-panel-resizer"
-          :class="{ dragging: resizing }"
-          title="Drag to resize"
-          @mousedown.prevent="startResize"
-        />
-        <ai-explanation-panel
-          v-fill-height
-          :report-id="report?.reportId"
-          @close="showAiPanel = false"
-          @go-to-line="goToReportLine"
-        />
-      </v-col>
-      <v-col
         v-if="showComments"
         class="pa-0"
         :cols="commentCols"
@@ -362,7 +343,6 @@ import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 
 import { useGitBlame } from "@/composables/useGitBlame";
-import { AiExplanationPanel } from "./AiExplanation";
 import { ReportComments } from "./Comment";
 import ToggleBlameViewBtn from "./Git/ToggleBlameViewBtn";
 import { ShowReportInfoDialog } from "./ReportInfo";
@@ -374,13 +354,17 @@ import ReportStepMessage from "./ReportStepMessage";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 
 const props = defineProps({
-  treeItem: { type: Object, default: null }
+  treeItem: { type: Object, default: null },
+  aiPanelOpen: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([
+  "toggle:ai-panel",
   "update-review-data",
   "update:report"
 ]);
+
+defineExpose({ goToReportLine });
 
 const route = useRoute();
 const { prettifyDate } = useDateUtils();
@@ -398,14 +382,6 @@ const numOfComments = ref(0);
 const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
-const showAiPanel = ref(false);
-
-// Width of the explanation panel, dragged by its left edge. The bounds keep
-// it readable without letting it crowd out the source view.
-const AI_MIN_WIDTH = 320;
-const AI_MAX_WIDTH = 900;
-const aiWidth = ref(460);
-const resizing = ref(false);
 const loading = ref(true);
 const bus = mitt();
 const selectedChecker = ref(null);
@@ -658,7 +634,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  stopResize();
   document.removeEventListener("keydown", findText);
 });
 
@@ -1118,24 +1093,6 @@ function confirmReviewStatusChange(comment, status, author) {
     }));
 }
 
-function startResize() {
-  resizing.value = true;
-  window.addEventListener("mousemove", onResize);
-  window.addEventListener("mouseup", stopResize, { once: true });
-}
-
-function onResize(event) {
-  // The panel is anchored to the right, so its width grows as the pointer
-  // moves left.
-  const width = window.innerWidth - event.clientX;
-  aiWidth.value = Math.min(AI_MAX_WIDTH, Math.max(AI_MIN_WIDTH, width));
-}
-
-function stopResize() {
-  resizing.value = false;
-  window.removeEventListener("mousemove", onResize);
-}
-
 function truncate(text, length) {
   if (!text) return "";
   if (text.length <= length) return text;
@@ -1146,28 +1103,6 @@ function truncate(text, length) {
 <style lang="scss">
 .editor-col {
   min-width: 0;
-}
-
-.ai-panel-col {
-  position: relative;
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.ai-panel-resizer {
-  position: absolute;
-  top: 0;
-  left: -3px;
-  width: 7px;
-  height: 100%;
-  cursor: col-resize;
-  z-index: 2;
-
-  &:hover,
-  &.dragging {
-    background: rgb(var(--v-theme-primary));
-    opacity: 0.35;
-  }
 }
 
 /* Reflow rather than push the right hand group out of reach when the
