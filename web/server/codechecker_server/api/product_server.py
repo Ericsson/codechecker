@@ -407,6 +407,27 @@ class ThriftProductHandler:
         return prods
 
     @timeit
+    def getDefaultProductConnection(self):
+        """
+        Get the default database connection settings for new products from
+        the server configuration file --- WITHOUT ANY DB PASSWORD.
+        """
+        # Only super users can add products, so only they need the defaults.
+        # The defaults may contain internal information (e.g. the database
+        # host), so they are not exposed to other users.
+        self.__require_permission([permissions.SUPERUSER])
+
+        defaults = self.__server.manager.get_product_default_connection()
+
+        username = defaults.get("username")
+
+        return ttypes.DatabaseConnection(
+            engine=defaults.get("engine"),
+            host=defaults.get("host"),
+            port=defaults.get("port"),
+            username_b64=convert.to_b64(username) if username else None)
+
+    @timeit
     def getProductConfiguration(self, product_id):
         """
         Get the product configuration --- WITHOUT THE DB PASSWORD --- of the

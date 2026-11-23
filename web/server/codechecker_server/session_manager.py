@@ -86,6 +86,70 @@ def get_worker_processes(scfg_dict):
     return worker_processes, background_worker_processes
 
 
+PRODUCT_DEFAULT_DB_ENGINES = ("sqlite", "postgresql")
+
+
+def get_product_default_connection(scfg_dict):
+    """
+    Return the default database connection settings for new products from
+    the "product_defaults.connection" section of the config dictionary.
+
+    Only the "engine", "host", "port" and "username" keys are supported.
+    Keys which are missing, null or have an invalid value are left out of the
+    returned dictionary (invalid values are reported in the log), so an empty
+    dictionary means that no defaults are configured.
+    """
+    product_defaults = scfg_dict.get("product_defaults") or {}
+    if not isinstance(product_defaults, dict):
+        LOG.warning("'product_defaults' in the server configuration file "
+                    "must be an object. Ignoring it.")
+        return {}
+
+    connection = product_defaults.get("connection") or {}
+    if not isinstance(connection, dict):
+        LOG.warning("'product_defaults.connection' in the server "
+                    "configuration file must be an object. Ignoring it.")
+        return {}
+
+    defaults = {}
+
+    engine = connection.get("engine")
+    if engine is not None:
+        if engine in PRODUCT_DEFAULT_DB_ENGINES:
+            defaults["engine"] = engine
+        else:
+            LOG.warning("Invalid 'product_defaults.connection.engine' value "
+                        "'%s'. Supported values: %s. Ignoring it.",
+                        engine, ", ".join(PRODUCT_DEFAULT_DB_ENGINES))
+
+    for key in ("host", "username"):
+        value = connection.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and value:
+            defaults[key] = value
+        else:
+            LOG.warning("'product_defaults.connection.%s' must be a "
+                        "non-empty string. Ignoring it.", key)
+
+    port = connection.get("port")
+    if port is not None:
+        # bool is a subclass of int, but "port": true makes no sense.
+        if isinstance(port, int) and not isinstance(port, bool) \
+                and 0 < port < 65536:
+            defaults["port"] = port
+        else:
+            LOG.warning("'product_defaults.connection.port' must be an "
+                        "integer between 1 and 65535. Ignoring it.")
+
+    if connection.get("password") is not None:
+        LOG.warning("'product_defaults.connection.password' is not "
+                    "supported: database passwords are never sent to the "
+                    "clients. Ignoring it.")
+
+    return defaults
+
+
 class _Session:
     """A session for an authenticated, privileged client connection."""
 
@@ -241,6 +305,8 @@ class SessionManager:
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__product_default_connection = \
+            get_product_default_connection(self.scfg_dict)
         self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
@@ -526,6 +592,16 @@ class SessionManager:
                 self.__store_config = new_store_config_val
                 LOG.debug("Updating 'store' config from %s to %s",
                           prev_store_config, new_store_config)
+
+            new_product_default_connection = \
+                get_product_default_connection(cfg_dict)
+            if self.__product_default_connection != \
+                    new_product_default_connection:
+                LOG.debug("Updating 'product_defaults.connection' config "
+                          "from %s to %s", self.__product_default_connection,
+                          new_product_default_connection)
+                self.__product_default_connection = \
+                    new_product_default_connection
 
             update_sessions = False
             auth_fields_to_update = ['session_lifetime', 'refresh_time',
@@ -1044,6 +1120,12 @@ class SessionManager:
         we can upload unlimited number of runs.
         """
         return self.__max_run_count
+
+    def get_product_default_connection(self):
+        """
+        Returns the default database connection settings for new products.
+        """
+        return dict(self.__product_default_connection)
 
     def get_analysis_statistics_dir(self):
         """

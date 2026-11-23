@@ -107,6 +107,14 @@ service codeCheckerProductService {
   ProductConfiguration getProductConfiguration(1: i64 productId)
                                                throws (1: shared.RequestFailed requestError),
 
+  // Returns the default database connection settings for new products, as
+  // set in the "product_defaults" section of the server configuration file.
+  // Fields which are not configured are left unset. The password is never
+  // part of the returned value.
+  // PERMISSION: SUPERUSER
+  DatabaseConnection getDefaultProductConnection()
+                                                 throws (1: shared.RequestFailed requestError),
+
   // PERMISSION: SUPERUSER
   bool addProduct(1: ProductConfiguration product)
                   throws (1: shared.RequestFailed requestError),
