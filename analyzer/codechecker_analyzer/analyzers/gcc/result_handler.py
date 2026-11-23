@@ -42,6 +42,20 @@ def codechecker_name_to_actual_name_disabled(codechecker_name: str):
     return codechecker_name.replace("gcc-", "-Wno-", 1)
 
 
+def strip_sarif_preamble(gcc_stderr: str) -> str:
+    """
+    cc1 can print plain-text diagnostics (e.g. "cc1: warning: command-line
+    option '-Waliasing' is valid for Fortran but not for C") before the SARIF
+    document. Drop everything before the line where the JSON object starts.
+    """
+    offset = 0
+    for line in gcc_stderr.splitlines(keepends=True):
+        if line.startswith('{'):
+            return gcc_stderr[offset:]
+        offset += len(line)
+    return gcc_stderr
+
+
 class GccResultHandler(ResultHandler):
     """
     Create analyzer result file for Gcc output.
@@ -77,7 +91,7 @@ class GccResultHandler(ResultHandler):
                      self.buildaction_hash + ".sarif"))
 
         with open(gcc_dest_file_name, 'w', encoding="utf-8") as f:
-            f.write(gcc_stderr)
+            f.write(strip_sarif_preamble(gcc_stderr))
         assert os.path.exists(gcc_dest_file_name)
 
         reports = report_file.get_reports(
