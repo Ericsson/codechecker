@@ -21,6 +21,7 @@
     "timeout": 90,
     "max_source_lines": 400,
     "max_path_events": 50,
+    "max_path_context_lines": 200,
     "ca_bundle": "",
     "models": [
       {

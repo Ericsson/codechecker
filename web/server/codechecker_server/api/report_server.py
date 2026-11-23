@@ -4913,6 +4913,19 @@ class ThriftRequestHandler:
         return zlib.decompress(content.content).decode('utf-8',
                                                        errors='ignore')
 
+    def __get_path_files(self, session, path_events):
+        """ The content of the files that ``path_events`` pass through. """
+        file_ids = {event.fileId for event in path_events}
+        if not file_ids:
+            return {}
+
+        files = session.query(File).filter(File.id.in_(file_ids))
+        contents = {f.filepath: self.__get_file_content(session, f)
+                    for f in files}
+
+        return {path: content for path, content in contents.items()
+                if content is not None}
+
     def __build_report_context(self, session, report_id):
         """ Everything the model is told about ``report_id``. """
         result = session \
@@ -4932,7 +4945,9 @@ class ThriftRequestHandler:
 
         details = get_report_details(session, [report_id]).get(report_id)
         path_events = []
+        path_files = {}
         if details and details.pathEvents:
+            path_files = self.__get_path_files(session, details.pathEvents)
             path_events = [
                 PathEvent(file_path=event.filePath,
                           line=event.startLine,
@@ -4953,7 +4968,8 @@ class ThriftRequestHandler:
             file_content=self.__get_file_content(session, source_file),
             checker_documentation=self.__checker_documentation(
                 report.checker.checker_name, analyzer_name),
-            path_events=path_events)
+            path_events=path_events,
+            path_files=path_files)
 
     @exc_to_thrift_reqfail
     @timeit

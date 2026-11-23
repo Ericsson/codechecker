@@ -41,6 +41,8 @@ class ReportContext:
     file_content: str = None
     checker_documentation: str = None
     path_events: list = field(default_factory=list)
+    # The files the bug path passes through: path -> content.
+    path_files: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -99,7 +101,8 @@ def explain_report(context, ai_config, model_id=None):
 
     user_prompt = build_user_prompt(context,
                                     ai_config.max_source_lines,
-                                    ai_config.max_path_events)
+                                    ai_config.max_path_events,
+                                    ai_config.max_path_context_lines)
 
     LOG.debug("Requesting an explanation of %s from '%s'.",
               context.checker_name, model_config.id)

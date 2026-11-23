@@ -27,7 +27,9 @@ from codechecker_server.ai import client, explain
 from codechecker_server.ai.config import AIConfig, AIModelConfig
 from codechecker_server.ai.explain import (
     PathEvent, ReportContext, explain_report)
-from codechecker_server.ai.prompt import build_source_window, format_bug_path
+from codechecker_server.ai.prompt import (
+    build_path_excerpts, build_source_window, build_user_prompt, find_macros,
+    format_bug_path)
 
 
 class SourceWindowTestCase(unittest.TestCase):
@@ -85,6 +87,66 @@ class BugPathTestCase(unittest.TestCase):
 
     def test_empty_path_is_stated_explicitly(self):
         self.assertIn("did not record", format_bug_path([], 50))
+
+
+class PathContextTestCase(unittest.TestCase):
+    """ A macro or a callee in another file can decide the verdict. """
+
+    def setUp(self):
+        self.files = {
+            "a.c": ["#include \"b.h\"", "void f() {", "  CLOSE(fd);",
+                    "  use(fd);", "}"],
+            "b.h": ["#define CLOSE(x) \\", "  do { if (x) return; } while (0)",
+                    "int g();"]}
+
+    def test_excerpts_skip_the_shown_lines(self):
+        text, missing = build_path_excerpts(
+            self.files, [("a.c", 3), ("b.h", 2)], ("a.c", 1, 5), 100)
+
+        self.assertNotIn("### a.c", text)
+        self.assertIn("### b.h", text)
+        self.assertIn("2 |   do { if (x) return; } while (0)", text)
+        self.assertEqual(missing, [])
+
+    def test_excerpts_respect_the_limit(self):
+        text, _ = build_path_excerpts(
+            self.files, [("b.h", 2)], ("a.c", 1, 5), 1)
+
+        self.assertEqual(len(text.splitlines()), 2)
+
+    def test_files_without_content_are_missing(self):
+        _, missing = build_path_excerpts(
+            self.files, [("c.c", 1)], ("a.c", 1, 5), 100)
+
+        self.assertEqual(missing, ["c.c"])
+
+    def test_macros_on_the_path_are_found(self):
+        macros, undefined = find_macros(self.files, [("a.c", 3)])
+
+        self.assertEqual([(m[0], m[1]) for m in macros], [("b.h", 1)])
+        self.assertIn("return", macros[0][2])
+        self.assertEqual(undefined, [])
+
+    def test_macros_without_definition_are_listed(self):
+        files = {"a.c": ["  TDB_CLOSE(fd);"]}
+
+        macros, undefined = find_macros(files, [("a.c", 1)])
+
+        self.assertEqual(macros, [])
+        self.assertEqual(undefined, ["TDB_CLOSE"])
+
+    def test_prompt_lists_what_is_not_provided(self):
+        context = ReportContext(
+            checker_name="c", analyzer_name="a", severity="HIGH",
+            checker_message="m", file_path="a.c", line=4, column=1,
+            file_content="\n".join(["x"] * 3 + ["  OPEN(fd);"]),
+            path_events=[PathEvent("d.c", 7, "step")])
+
+        prompt = build_user_prompt(context, 400, 50, 200)
+
+        self.assertIn("## Not provided", prompt)
+        self.assertIn("File: d.c", prompt)
+        self.assertIn("Macro definition: OPEN", prompt)
 
 
 def ai_config(models=None, **raw):

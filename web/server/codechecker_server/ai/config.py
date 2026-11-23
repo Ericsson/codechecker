@@ -20,6 +20,7 @@ LOG = get_logger('server')
 DEFAULT_TIMEOUT = 90  # seconds
 DEFAULT_MAX_SOURCE_LINES = 400
 DEFAULT_MAX_PATH_EVENTS = 50
+DEFAULT_MAX_PATH_CONTEXT_LINES = 200
 
 # The ratings an administrator may give a model, shown in the GUI.
 SPEEDS = ('slow', 'medium', 'fast')
@@ -98,6 +99,8 @@ class AIConfig:
                                         DEFAULT_MAX_SOURCE_LINES)
         self.max_path_events = raw.get('max_path_events',
                                        DEFAULT_MAX_PATH_EVENTS)
+        self.max_path_context_lines = raw.get('max_path_context_lines',
+                                              DEFAULT_MAX_PATH_CONTEXT_LINES)
 
         # CA certificates for every provider.
         self.ca_bundle = raw.get('ca_bundle') or None

@@ -237,6 +237,7 @@ authority.
 | `timeout` | Seconds to wait for an answer. | `90` |
 | `max_source_lines` | Lines of the analysed file sent, centred on the report. | `400` |
 | `max_path_events` | Bug path steps sent. | `50` |
+| `max_path_context_lines` | Lines sent around the bug path steps outside the shown part of the analysed file, also from other files. | `200` |
 
 ## Authentication
 For authentication configuration options and which options can be reloaded see
