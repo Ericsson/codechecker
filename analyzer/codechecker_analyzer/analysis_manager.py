@@ -619,10 +619,9 @@ def check(check_data):
 
         cache_key = get_cache_key(source_analyzer, rh, analyzer_cmd)
         if cache_key:
-            LOG.debug_analyzer("Fetching from cache key:%s\n",cache_key)
+            LOG.debug_analyzer("Fetching from cache key:%s\n", cache_key)
             cache_hit = fetch_from_cache(cache_key, rh, analyzer_cmd)
-            LOG.debug_analyzer("Cache hit:%s",cache_hit)
-
+            LOG.debug_analyzer("Cache hit:%s", cache_hit)
 
         if not cache_hit:
             # Fills up the result handler with the analyzer information.
@@ -640,7 +639,7 @@ def check(check_data):
 
         # Cache the raw analyzer output, before post-processing changes it.
         if cache_key and not cache_hit and rh.analyzer_returncode == 0:
-            LOG.debug_analyzer("Storing to cache key: %s\n",cache_key)
+            LOG.debug_analyzer("Storing to cache key: %s\n", cache_key)
             store_to_cache(cache_key, rh)
 
         source_analyzer.post_analyze(rh)
