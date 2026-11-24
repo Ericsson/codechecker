@@ -987,7 +987,8 @@ def main(args):
                           'enable_z3_refutation',
                           'cache_url',
                           'no_cache',
-                          'source_root']
+                          'source_root',
+                          'debug_cache']
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
         if 'clean' in args:

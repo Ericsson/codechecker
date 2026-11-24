@@ -1690,6 +1690,18 @@ analysis cache arguments:
                         independent in the analysis cache, so the cached
                         results can be reused in other checkout directories.
                         Mandatory if '--url' is given.
+  --debug-cache         Debug mode of the analysis cache, to find the reason
+                        of a cache miss of the same analysis action on two
+                        computers. A 'debug-cache' directory is created in the
+                        output directory, with one file per analysis action
+                        (the name of the result plist file with '.debug'
+                        extension). The file contains the contents which are
+                        hashed into the cache key components, each after a
+                        line with the component name and separated by an
+                        empty line: 'binary_key:' (the analyzer version
+                        output), 'invocation_key:' (the analysis invocation)
+                        and 'preprocessed_key:' (the preprocessed source).
+                        Requires '--url'.
 ```
 
 Example:
@@ -1702,6 +1714,38 @@ CodeChecker analyze compile_commands.json -o ./reports \
 
 At the end of the analysis the summary shows how many analysis actions were
 fetched from the cache, e.g. `Fetched from analysis cache: 42 / 50`.
+
+To find out why the same analysis action is a cache miss on another computer
+(or in another checkout), run the analysis with `--debug-cache` on both, and
+compare the debug files of the action:
+
+```sh
+diff reports_a/debug-cache/main.c_clangsa_<hash>.debug \
+     reports_b/debug-cache/main.c_clangsa_<hash>.debug
+```
+
+The debug file looks like this:
+
+```
+binary_key:
+Ubuntu clang version 18.1.3 (1ubuntu1)
+Target: x86_64-pc-linux-gnu
+...
+
+invocation_key:
+'<ANALYZER>' --analyze -Qunused-arguments ... __SOURCE_ROOT__/src/main.c
+
+preprocessed_key:
+# 1 1
+...
+```
+
+The section of the differing lines shows the changed cache key component:
+the analyzer version (`binary_key`), the analysis invocation, e.g. a
+different flag or checker set (`invocation_key`), or the preprocessed source,
+e.g. a different header or macro (`preprocessed_key`).
+The file name hash can differ between the computers if the source file paths
+differ; in that case compare the files of the same source file.
 
 Notes:
 

@@ -654,16 +654,16 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             LOG.debug("Failed to construct the preprocessor command: %s", ex)
             return None
 
-    def analysis_invocation_key(self, analyzer_cmd: list[str],
-                                source_root: str | None) -> str | None:
+    def analysis_invocation_string(self, analyzer_cmd: list[str],
+                                   source_root: str | None) -> str | None:
         """
-        sha256 of the analysis invocation string with the location dependent
-        parts (analyzer binary, output file, source root) replaced.
+        The analysis invocation string with the location dependent parts
+        (analyzer binary, output file, source root) replaced.
         """
         if not analyzer_cmd:
             return None
-        return analysis_cache.analysis_invocation_key(analyzer_cmd,
-                                                      source_root)
+        return analysis_cache.analysis_invocation_string(analyzer_cmd,
+                                                         source_root)
 
     def get_ctu_dir(self):
         """

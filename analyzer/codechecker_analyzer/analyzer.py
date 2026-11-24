@@ -155,7 +155,7 @@ def __setup_analysis_cache(args, analyzers):
     context = analyzer_context.get_context()
     settings = analysis_cache.setup_cache(
         url, args.source_root, args.output_path, cached_analyzers,
-        context.get_env_for_bin)
+        context.get_env_for_bin, getattr(args, 'debug_cache', False))
     if settings:
         LOG.info("Analysis cache is enabled: %s (source root: %s)",
                  url, settings.source_root)

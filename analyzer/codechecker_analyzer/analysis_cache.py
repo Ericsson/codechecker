@@ -210,14 +210,18 @@ def strip_line_marker_file_names(data: bytes) -> bytes:
     return b''.join(result)
 
 
-def preprocessed_source_key(preprocess_cmd: list[str], cwd: str | None,
-                            env: dict | None,
-                            source_root: str | None) -> str | None:
+def hash_bytes(data: bytes) -> str:
+    """ sha256 hex digest of the data. """
+    return hashlib.sha256(data).hexdigest()
+
+
+def preprocessed_source(preprocess_cmd: list[str], cwd: str | None,
+                        env: dict | None,
+                        source_root: str | None) -> bytes | None:
     """
-    Run the preprocessor command and return the sha256 hex digest of its
-    output (file names removed from the line markers, the source root
-    replaced).
-    Returns None if preprocessing failed.
+    Run the preprocessor command and return its output as it is hashed into
+    the preprocessed_source_key (file names removed from the line markers,
+    the source root replaced). Returns None if preprocessing failed.
     """
     try:
         proc = subprocess.run(preprocess_cmd, cwd=cwd, env=env,
@@ -233,16 +237,27 @@ def preprocessed_source_key(preprocess_cmd: list[str], cwd: str | None,
         LOG.debug(proc.stderr.decode('utf-8', errors='replace'))
         return None
 
-    output = replace_source_root_bytes(
+    return replace_source_root_bytes(
         strip_line_marker_file_names(proc.stdout), source_root)
-    return hashlib.sha256(output).hexdigest()
 
 
-def analyzer_binary_key(analyzer_binary: str, env: dict | None) -> str | None:
+def preprocessed_source_key(preprocess_cmd: list[str], cwd: str | None,
+                            env: dict | None,
+                            source_root: str | None) -> str | None:
     """
-    sha256 of the full '<analyzer binary> --version' output. Compiler
-    wrappers (e.g. ccache) forward --version to the real compiler.
-    Returns None if the version could not be queried.
+    sha256 hex digest of preprocessed_source(). Returns None if
+    preprocessing failed.
+    """
+    output = preprocessed_source(preprocess_cmd, cwd, env, source_root)
+    return hash_bytes(output) if output is not None else None
+
+
+def analyzer_version_output(analyzer_binary: str,
+                            env: dict | None) -> bytes | None:
+    """
+    The full '<analyzer binary> --version' output, as it is hashed into the
+    analyzer_binary_key. Compiler wrappers (e.g. ccache) forward --version
+    to the real compiler. Returns None if the version could not be queried.
     """
     try:
         proc = subprocess.run([analyzer_binary, '--version'], env=env,
@@ -254,7 +269,59 @@ def analyzer_binary_key(analyzer_binary: str, env: dict | None) -> str | None:
 
     if proc.returncode != 0 or not proc.stdout:
         return None
-    return hashlib.sha256(proc.stdout).hexdigest()
+    return proc.stdout
+
+
+def analyzer_binary_key(analyzer_binary: str, env: dict | None) -> str | None:
+    """
+    sha256 of the full '<analyzer binary> --version' output. Returns None if
+    the version could not be queried.
+    """
+    output = analyzer_version_output(analyzer_binary, env)
+    return hash_bytes(output) if output else None
+
+
+DEBUG_DIR_NAME = 'debug-cache'
+
+
+def debug_file_path(debug_dir: str, analyzer_result_file: str) -> str:
+    """
+    The debug file of an analysis action: the name of the result (plist)
+    file with '.debug' extension instead of '.plist'.
+    """
+    name = os.path.basename(analyzer_result_file)
+    base, ext = os.path.splitext(name)
+    return os.path.join(debug_dir,
+                        (base if ext == '.plist' else name) + '.debug')
+
+
+def write_debug_file(path: str, preprocessed: bytes, invocation: str,
+                     binary_version: bytes):
+    """
+    Write the contents which are hashed into the cache key components of an
+    analysis action (--debug-cache), in this order: the analyzer version
+    output (binary_key), the analysis invocation string (invocation_key)
+    and the preprocessed source (preprocessed_key). Every section starts
+    with a line of the key component name ('binary_key:'), and the sections
+    are separated by an empty line. Comparing the debug files of the same
+    action on two computers shows the reason of a cache miss.
+    """
+    def section(name: str, data: bytes) -> bytes:
+        if not data.endswith(b'\n'):
+            data += b'\n'
+        return name.encode() + b':\n' + data
+
+    content = b'\n'.join([
+        section('binary_key', binary_version),
+        section('invocation_key',
+                invocation.encode('utf-8', errors='surrogateescape')),
+        section('preprocessed_key', preprocessed)])
+    try:
+        with open(path, 'wb') as f:
+            f.write(content)
+    except OSError as ex:
+        LOG.warning("Failed to write the analysis cache debug file %s: %s",
+                    path, ex)
 
 
 def compute_analysis_key(invocation_key: str, preprocessed_key: str,
@@ -363,6 +430,10 @@ class CacheSettings:
     report_dir: str
     # analyzer name -> analyzer_binary_key
     binary_keys: dict = field(default_factory=dict)
+    # --debug-cache: the directory of the debug files (None: off), and
+    # analyzer name -> '--version' output (hashed into analyzer_binary_key).
+    debug_dir: str | None = None
+    binary_versions: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -472,7 +543,8 @@ class CacheSession:
 
 
 def setup_cache(url: str, source_root: str, report_dir: str,
-                analyzer_binaries: dict, env_for_bin) -> CacheSettings | None:
+                analyzer_binaries: dict, env_for_bin,
+                debug: bool = False) -> CacheSettings | None:
     """
     Set up the analysis cache in the main process, before the analysis
     workers are started: authenticate to the server, check the product and
@@ -484,6 +556,9 @@ def setup_cache(url: str, source_root: str, report_dir: str,
 
     :param analyzer_binaries: analyzer name -> analyzer binary path.
     :param env_for_bin: function which returns the environment of a binary.
+    :param debug: --debug-cache: write the contents of the cache key
+      components of every action into the debug-cache directory of the
+      report directory.
     """
     module = importlib.import_module(CLIENT_MODULE)
 
@@ -521,12 +596,14 @@ def setup_cache(url: str, source_root: str, report_dir: str,
         sys.exit(1)
 
     binary_keys = {}
+    binary_versions = {}
     for name, binary in analyzer_binaries.items():
         if not binary:
             continue
-        key = analyzer_binary_key(binary, env_for_bin(binary))
-        if key:
-            binary_keys[name] = key
+        version = analyzer_version_output(binary, env_for_bin(binary))
+        if version:
+            binary_keys[name] = hash_bytes(version)
+            binary_versions[name] = version
         else:
             LOG.warning("Analysis cache: failed to get the version of the "
                         "%s analyzer (%s), it is analyzed without the cache.",
@@ -535,11 +612,20 @@ def setup_cache(url: str, source_root: str, report_dir: str,
     if not binary_keys:
         return None
 
+    debug_dir = None
+    if debug:
+        debug_dir = os.path.join(os.path.abspath(report_dir), DEBUG_DIR_NAME)
+        os.makedirs(debug_dir, exist_ok=True)
+        LOG.info("Analysis cache debug mode: the cache key contents are "
+                 "written into %s", debug_dir)
+
     return CacheSettings(protocol=protocol, host=host, port=port,
                          product=product,
                          source_root=normalize_source_root(source_root),
                          report_dir=os.path.abspath(report_dir),
-                         binary_keys=binary_keys)
+                         binary_keys=binary_keys,
+                         debug_dir=debug_dir,
+                         binary_versions=binary_versions if debug else {})
 
 
 def is_web_client_available() -> bool:

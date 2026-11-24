@@ -184,6 +184,8 @@ def get_cache_key(source_analyzer, rh, analyzer_cmd) -> CacheKey | None:
             source_analyzer.is_ctu_enabled():
         return None
 
+    invocation = source_analyzer.analysis_invocation_string(
+        analyzer_cmd, settings.source_root)
     invocation_key = source_analyzer.analysis_invocation_key(
         analyzer_cmd, settings.source_root)
     preprocess_cmd = source_analyzer.construct_preprocess_cmd(rh)
@@ -191,12 +193,20 @@ def get_cache_key(source_analyzer, rh, analyzer_cmd) -> CacheKey | None:
         return None
 
     env = analyzer_context.get_context().get_env_for_bin(preprocess_cmd[0])
-    preprocessed_key = analysis_cache.preprocessed_source_key(
+    preprocessed = analysis_cache.preprocessed_source(
         preprocess_cmd, rh.buildaction.directory, env, settings.source_root)
-    if not preprocessed_key:
+    if preprocessed is None:
         LOG.debug("Preprocessing of %s failed, it is analyzed without the "
                   "analysis cache.", rh.buildaction.source)
         return None
+    preprocessed_key = analysis_cache.hash_bytes(preprocessed)
+
+    if settings.debug_dir:
+        analysis_cache.write_debug_file(
+            analysis_cache.debug_file_path(settings.debug_dir,
+                                           rh.analyzer_result_file),
+            preprocessed, invocation,
+            settings.binary_versions.get(source_analyzer.ANALYZER_NAME, b''))
 
     return CacheKey(
         analysis_cache.compute_analysis_key(

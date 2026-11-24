@@ -202,12 +202,38 @@ def add_analysis_cache_arguments(parser):
                                  "checkout directories. Mandatory if "
                                  "'--url' is given.")
 
+    cache_opts.add_argument('--debug-cache',
+                            dest='debug_cache',
+                            action='store_true',
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="Debug mode of the analysis cache, to find "
+                                 "the reason of a cache miss of the same "
+                                 "analysis action on two computers. A "
+                                 "'debug-cache' directory is created in the "
+                                 "output directory, with one file per "
+                                 "analysis action (the name of the result "
+                                 "plist file with '.debug' extension). The "
+                                 "file contains the contents which are "
+                                 "hashed into the cache key components, each "
+                                 "after a line with the component name and "
+                                 "separated by an empty line: "
+                                 "'binary_key:' (the analyzer version "
+                                 "output), 'invocation_key:' (the analysis "
+                                 "invocation) and 'preprocessed_key:' (the "
+                                 "preprocessed source). Requires '--url'.")
+
 
 def check_analysis_cache_args(args):
     """
     Validate the analysis cache arguments. Exits on error, before the
     analysis starts.
     """
+    if 'debug_cache' in args and 'cache_url' not in args:
+        LOG.error("'--debug-cache' can be used only with the analysis cache "
+                  "('--url' is given).")
+        sys.exit(1)
+
     if 'cache_url' not in args or 'no_cache' in args:
         return
 
