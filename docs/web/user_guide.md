@@ -1373,7 +1373,7 @@ can use suppress files, to indicate which report is **false positive**.
   </summary>
 
 ```
-usage: CodeChecker cmd suppress [-h] [-f] -i SUPPRESS_FILE [--url PRODUCT_URL]
+usage: CodeChecker cmd suppress [-h] -i SUPPRESS_FILE [--url PRODUCT_URL]
                                 [--verbose {info,debug,debug_analyzer}]
                                 RUN_NAME
 
@@ -1385,10 +1385,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -f, --force           Enable suppression of already suppressed reports.
   -i SUPPRESS_FILE, --import SUPPRESS_FILE
                         Import suppression from the suppress file into the
-                        database.
+                        database. The review status of the matching reports is
+                        always overwritten, even if they already have one.
 ```
 </details>
 
