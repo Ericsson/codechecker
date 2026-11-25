@@ -926,6 +926,20 @@ def convert_report_data_to_report(
     """
     reports = []
 
+    # The source file of a report may not be available on the server, e.g.
+    # if it was removed by the database garbage collection. These reports
+    # can't be converted, so they are skipped.
+    available_reports_data = []
+    for report_data in reports_data:
+        if report_data.checkedFile is None:
+            LOG.warning("Report of checker '%s' (bug hash: %s) is skipped, "
+                        "because its source file (file id: %d) is not "
+                        "available on the server.", report_data.checkerId,
+                        report_data.bugHash, report_data.fileId)
+        else:
+            available_reports_data.append(report_data)
+    reports_data = available_reports_data
+
     if not reports_data:
         return reports
 
@@ -958,8 +972,19 @@ def convert_report_data_to_report(
             if 'html' in output_formats:
                 source = client.getSourceFileData(
                     file_id, True, ttypes.Encoding.BASE64)
-                file_cache[file_id].content = convert.from_b64(
-                    source.fileContent)
+
+                # The server returns no content if the file is no longer in
+                # the database, e.g. it was removed by the garbage collection.
+                # The content is then loaded from the local file system if
+                # the file exists there.
+                if source.fileContent is None:
+                    LOG.warning("The content of source file '%s' (file id: "
+                                "%d) is not available on the server. Its "
+                                "local version is used in the HTML output "
+                                "if it exists.", file_path, file_id)
+                else:
+                    file_cache[file_id].content = convert.from_b64(
+                        source.fileContent)
 
         return file_cache[file_id]
 
