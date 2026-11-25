@@ -46,10 +46,9 @@ def is_valid_product_endpoint(uripart):
     """
     # FIXME: Endpoint "all" should be disallowed, as commit
     # fd59927013d5482ff10e80994511971770753d0c in Dec 2017 added the ability
-    # for "CodeChecker server" to specify "--db-status all" and
-    # "--db-upgrade-schema all" for the case where *every* product needs to
-    # be checked/upgraded, essentially blocking the ability to status-check
-    # or schema migrate the product at the endpoint literal "all".
+    # for "CodeChecker server" to specify "--db-status all" for the case
+    # where *every* product needs to be checked, essentially blocking the
+    # ability to status-check the product at the endpoint literal "all".
 
     # There are some forbidden keywords.
     if uripart in NON_PRODUCT_ENDPOINTS:

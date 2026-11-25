@@ -321,29 +321,20 @@ databases.
                                 help="Name of the product to get "
                                      "the database status for. "
                                      "Use 'all' to list the database "
-                                     "statuses for all of the products.")
-
-    database_mgmnt.add_argument('--db-upgrade-schema',
-                                type=str,
-                                dest='product_to_upgrade',
-                                action='store',
-                                default=argparse.SUPPRESS,
-                                required=False,
-                                help="Name of the product to upgrade to the "
-                                     "latest database schema available in "
-                                     "the package. Use 'all' to upgrade all "
-                                     "of the products. "
-                                     "NOTE: Before migration it is advised"
-                                     " to create a full backup of "
-                                     "the product databases.")
+                                     "statuses for all of the products. "
+                                     "The server is not started, the "
+                                     "command exits after printing the "
+                                     "statuses.")
 
     database_mgmnt.add_argument('--db-force-upgrade',
                                 dest='force_upgrade',
                                 action='store_true',
                                 default=argparse.SUPPRESS,
                                 required=False,
-                                help="Force the server to do database "
-                                     "migration without user interaction. "
+                                help="Upgrade the schema of the "
+                                     "configuration database and of all "
+                                     "product databases without user "
+                                     "interaction, then start the server. "
                                      "NOTE: Please use with caution and "
                                      "before automatic migration it is "
                                      "advised to create a full backup of the "
@@ -592,28 +583,15 @@ def __db_migration(migration_root,
 
 def __db_migration_multiple(
     cfg_sql_server, migration_root,
-    products_requested_for_upgrade: list[str] | None = None,
     force_upgrade: bool = False
 ) -> int:
     """
-    Migrates the schema for the product database
-    ``products_requested_for_upgrade`` if specified, or all configured
-    products (default).
+    Migrates the schema of all configured product databases.
     """
-    LOG.info("Preparing schema upgrade for '%s'",
-             "', '".join(products_requested_for_upgrade)
-             if products_requested_for_upgrade else "<all products>")
+    LOG.info("Preparing schema upgrade for <all products>")
 
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             migration_root)
-    products_to_upgrade: list[str] = []
-    for endpoint in (products_requested_for_upgrade or []):
-        avail = prod_statuses.get(endpoint)
-        if not avail:
-            LOG.error("No product was found with endpoint '%s'", endpoint)
-            return 1
-        products_to_upgrade.append(endpoint)
-
     products_to_upgrade = list(prod_statuses.keys())
     products_to_upgrade.sort()
 
@@ -953,26 +931,10 @@ def server_init_start(args):
 
     # Configuration database setup and check is needed before database
     # statuses can be checked.
-    try:
-        if args.status:
-            ret = __db_status_check(cfg_sql_server,
-                                    context.migration_root,
-                                    args.status)
-            sys.exit(ret)
-    except AttributeError:
-        LOG.debug('Status was not in the arguments.')
-
-    try:
-        if args.product_to_upgrade:
-            ret = __db_migration_multiple(
-                cfg_sql_server,
-                context.migration_root,
-                [args.product_to_upgrade]
-                if args.product_to_upgrade != "all" else None,
-                force_upgrade)
-            sys.exit(ret)
-    except AttributeError:
-        LOG.debug('Product upgrade was not in the arguments.')
+    if 'status' in args:
+        sys.exit(__db_status_check(cfg_sql_server,
+                                   context.run_migration_root,
+                                   args.status))
 
     # Create the main database link from the arguments passed over the
     # command line.
@@ -1036,7 +998,6 @@ def server_init_start(args):
         LOG.warning("Multiple products can be upgraded, make a backup!")
         __db_migration_multiple(cfg_sql_server,
                                 context.run_migration_root,
-                                None,
                                 force_upgrade)
 
         prod_statuses = check_product_db_status(cfg_sql_server,

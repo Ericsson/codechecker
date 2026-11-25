@@ -185,15 +185,17 @@ the product databases can be checked.
 
 ### Product migration
 
-Schema upgrade can be done for each product independently or in a row for all
-of the products with the `CodeChecker server --db-upgrade-schema PRODUCT_NAME`
-command.
+Product databases are upgraded when the server starts. For every product that
+needs a schema upgrade (or a new schema), a prompt will ask you whether to do
+it, no schema modification is done without asking the user.
 
 ```sh
-$ CodeChecker server --db-upgrade-schema Default
+$ CodeChecker server
 [15:01] - Checking configuration database ...
 [15:01] - Database is OK.
-[15:01] - Preparing schema upgrade for 'Default'
+...
+[WARNING] [15:01] - Multiple products can be upgraded, make a backup!
+[15:01] - Preparing schema upgrade for <all products>
 [WARNING] [15:01] - Please note after migration only newer CodeChecker versions can be used to start the server
 [WARNING] [15:01] - It is advised to make a full backup of your run databases.
 [15:01] - Checking: Default
@@ -205,12 +207,10 @@ Do you want to upgrade 'Default' to new schema? Y(es)/n(o) y
 [15:03] - [Default] Done upgrading.
 ```
 
-Schema upgrade can be done for multiple products in a row if the
-`CodeChecker server --db-upgrade-schema all` command is used. A prompt will ask
-for user input for each product, no schema modification is done without asking
-the user.
 If you want to do the migration without user interaction you can use the
-`--db-force-upgrade` option of the server command.
+`--db-force-upgrade` option of the server command. It upgrades the
+configuration database and all of the product databases, then starts the
+server.
 
 # Further reading
 
