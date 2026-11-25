@@ -222,18 +222,8 @@ class TestCmdline(unittest.TestCase):
         self.assertIn('Guideline: sei-cert-cpp', out)
 
     def test_checkers_warnings(self):
-        """ Listing checkers for compiler warnings. """
+        """ Compiler warnings are included in the checker list. """
 
-        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--warnings']
-        retcode, out, _ = run_cmd(checkers_cmd)
-
-        self.assertEqual(retcode, 0)
-        self.assertIn('clang-diagnostic-vla', out)
-        # Make sure the header from `diagtool --tree` is ignored.
-        self.assertNotIn('GREEN', out)
-
-        # --warnings flag is deprecated. Warnings are included in checker list
-        # by default.
         checkers_cmd = [env.codechecker_cmd(), 'checkers']
         retcode, out, _ = run_cmd(checkers_cmd)
 

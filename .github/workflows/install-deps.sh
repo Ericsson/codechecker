@@ -17,7 +17,7 @@ sudo apt-get install \
   libssl-dev \
   clang-14 \
   clang-tidy-14 \
-  cppcheck 
+  cppcheck
 
 # Source: https://fbinfer.com/docs/getting-started
 VERSION=1.1.0; \
