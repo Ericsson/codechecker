@@ -12,7 +12,6 @@ analyzers available in CodeChecker.
 
 
 import argparse
-import subprocess
 
 from codechecker_report_converter import twodim
 
@@ -65,21 +64,6 @@ def add_arguments_to_parser(parser):
                         required=False,
                         help="DEPRECATED.")
 
-    parser.add_argument('--dump-config',
-                        dest='dump_config',
-                        required=False,
-                        choices=analyzer_types.supported_analyzers,
-                        help="Dump the available checker options for the "
-                             "given analyzer to the standard output. "
-                             "Currently only clang-tidy supports this option. "
-                             "The output can be redirected to a file named "
-                             ".clang-tidy. If this file is placed to the "
-                             "project directory then the options are applied "
-                             "to the files under that directory. This config "
-                             "file can also be provided via "
-                             "'CodeChecker analyze' and 'CodeChecker check' "
-                             "commands.")
-
     parser.add_argument('--analyzer-config',
                         dest='analyzer_config',
                         required=False,
@@ -116,37 +100,6 @@ def main(args):
     _, errored = \
         analyzer_types.check_supported_analyzers(
             analyzer_types.supported_analyzers)
-
-    if args.dump_config:
-        binary = context.analyzer_binaries.get(args.dump_config)
-        environ = analyzer_context.get_context().get_env_for_bin(
-            binary)
-
-        if args.dump_config == 'clang-tidy':
-            subprocess.call([binary, '-dump-config', '-checks=*'],
-                            env=environ)
-        elif args.dump_config == 'clangsa':
-            ret = subprocess.call([binary,
-                                   '-cc1',
-                                   '-analyzer-checker-option-help',
-                                   '-analyzer-checker-option-help-alpha'],
-                                  stderr=subprocess.PIPE,
-                                  env=environ)
-
-            if ret:
-                # This flag is supported from Clang 9.
-                LOG.warning("'--dump-config clangsa' is not supported yet. "
-                            "Please make sure that you are using Clang 9 or "
-                            "newer.")
-        elif args.dump_config == 'cppcheck':
-            # TODO: Not supported by CppCheck yet!
-            LOG.warning("'--dump-config cppcheck' is not supported.")
-        elif args.dump_config == 'gcc':
-            raise NotImplementedError('--dump-config')
-        elif args.dump_config == 'infer':
-            raise NotImplementedError('--dump-config')
-
-        return
 
     def uglify(text):
         """
