@@ -10,9 +10,14 @@ The contract of an explanation: the prompt, and the verdicts it allows.
 """
 
 import re
+from typing import Any, Optional
+
+from codechecker_common.util import clamp
 
 
 VERDICTS = ('LIKELY_TRUE_POSITIVE', 'LIKELY_FALSE_POSITIVE', 'UNCERTAIN')
+
+CONFIDENCES = ('LOW', 'MEDIUM', 'HIGH')
 
 ANSWER_FIELDS = ('background', 'verdict', 'confidence', 'true_positive_case',
                  'false_positive_case')
@@ -30,14 +35,14 @@ IDENTIFIER = re.compile(r'\b[A-Za-z_]\w*\b')
 MACRO_CALL = re.compile(r'\b([A-Z][A-Z0-9_]+)\s*\(')
 
 
-def answer_schema():
+def answer_schema() -> dict:
     """ For providers that enforce a schema; LiteLLM translates it. """
     return {
         'type': 'object',
         'properties': {
             'background': {'type': 'string'},
             'verdict': {'type': 'string', 'enum': list(VERDICTS)},
-            'confidence': {'type': 'integer'},
+            'confidence': {'type': 'string', 'enum': list(CONFIDENCES)},
             'true_positive_case': {'type': 'string'},
             'false_positive_case': {'type': 'string'}
         },
@@ -62,8 +67,9 @@ that the surrounding code rules out, that is strong evidence of a false \
 positive.
 
 You are given the analysed file, the source around each bug path step and the \
-definitions of the macros used on the path. Read those definitions before \
-deciding which statements run: a macro can hide a return or a goto.
+macros used on the path, as the analyser expanded them or as they are \
+defined. Read those macros before deciding which statements run: a macro can \
+hide a return or a goto.
 
 Do not guess what code you were not given does. If the verdict depends on a \
 macro or a function whose definition is not shown, such as one listed under \
@@ -104,45 +110,38 @@ Answer with a single JSON object and nothing else, using exactly these keys:
   "background"          - HTML: what the checker detects and why it fired here
   "verdict"             - one of LIKELY_TRUE_POSITIVE, LIKELY_FALSE_POSITIVE, \
 UNCERTAIN
-  "confidence"          - integer 0-100, how sure you are of the verdict
+  "confidence"          - one of LOW, MEDIUM, HIGH: how sure you are of the \
+verdict
   "true_positive_case"  - HTML: the strongest argument that this is a real \
 defect
   "false_positive_case" - HTML: the strongest argument that this is spurious
 """
 
 
-def build_source_window(file_content, report_line, max_lines):
+def build_source_window(file_content: Optional[str],
+                        report_line: int,
+                        max_lines: int) -> tuple[str, int, int]:
     """
-    A numbered excerpt centred on ``report_line`` -- a report often sits
-    far into a file, where truncating from the front would miss it.
+    A numbered excerpt centred on ``report_line``: a report often sits far
+    into a file, where truncating from the front would miss it.
     """
-    if not file_content:
-        return '', 0, 0
-
-    lines = file_content.splitlines()
+    lines = file_content.splitlines() if file_content else []
     if not lines:
         return '', 0, 0
 
-    if len(lines) <= max_lines:
-        start = 1
-        end = len(lines)
-    else:
-        half = max_lines // 2
-        start = max(1, report_line - half)
-        end = min(len(lines), start + max_lines - 1)
-
-        if end - start + 1 < max_lines:
-            start = max(1, end - max_lines + 1)
+    start = clamp(1, report_line - max_lines // 2,
+                  max(1, len(lines) - max_lines + 1))
+    end = min(len(lines), start + max_lines - 1)
 
     width = len(str(end))
     numbered = '\n'.join(
-        f"{str(no).rjust(width)} | {lines[no - 1]}"
-        for no in range(start, end + 1))
+        f"{str(line_number).rjust(width)} | {lines[line_number - 1]}"
+        for line_number in range(start, end + 1))
 
     return numbered, start, end
 
 
-def format_bug_path(path_events, max_events):
+def format_bug_path(path_events: list, max_events: int) -> str:
     """ The bug path: the execution the analyser assumed. """
     if not path_events:
         return 'The analyser did not record a bug path for this report.'
@@ -161,14 +160,17 @@ def format_bug_path(path_events, max_events):
     return '\n'.join(lines)
 
 
-def path_locations(context, max_events):
+def path_locations(context: Any, max_events: int) -> list[tuple[str, int]]:
     """ (file, line) of the report and of every bug path step sent. """
     return [(context.file_path, context.line)] + [
         (event.file_path, event.line)
         for event in context.path_events[:max_events]]
 
 
-def build_path_excerpts(files, locations, shown, max_lines):
+def build_path_excerpts(files: dict[str, list[str]],
+                        locations: list[tuple[str, int]],
+                        shown: tuple[str, int, int],
+                        max_lines: int) -> tuple[str, list[str]]:
     """
     Numbered source around ``locations``, leaving out the lines of ``shown``:
     (path, first line, last line). Gives back the text and the locations
@@ -189,15 +191,15 @@ def build_path_excerpts(files, locations, shown, max_lines):
         first = max(1, line - PATH_CONTEXT_RADIUS)
         last = min(len(lines), line + PATH_CONTEXT_RADIUS)
 
-        for no in range(first, last + 1):
+        for line_number in range(first, last + 1):
             if remaining == 0:
                 break
 
-            if no in numbers or \
-                    (path == shown[0] and shown[1] <= no <= shown[2]):
+            if line_number in numbers or (path == shown[0] and
+                                          shown[1] <= line_number <= shown[2]):
                 continue
 
-            numbers.add(no)
+            numbers.add(line_number)
             remaining -= 1
 
     sections = []
@@ -208,18 +210,20 @@ def build_path_excerpts(files, locations, shown, max_lines):
         width = len(str(max(numbers)))
         rows = []
         previous = None
-        for no in sorted(numbers):
-            if previous is not None and no != previous + 1:
+        for line_number in sorted(numbers):
+            if previous is not None and line_number != previous + 1:
                 rows.append('...')
-            rows.append(f"{str(no).rjust(width)} | {files[path][no - 1]}")
-            previous = no
+            rows.append(f"{str(line_number).rjust(width)} | "
+                        f"{files[path][line_number - 1]}")
+            previous = line_number
 
         sections.append(f"### {path}\n" + '\n'.join(rows))
 
     return '\n\n'.join(sections), missing
 
 
-def _macro_definitions(files):
+def _macro_definitions(files: dict[str, list[str]]) \
+        -> dict[str, list[tuple[str, int, str]]]:
     """ Every macro defined in ``files``: name -> [(path, line, text)]. """
     definitions = {}
 
@@ -240,7 +244,9 @@ def _macro_definitions(files):
     return definitions
 
 
-def find_macros(files, locations):
+def find_macros(files: dict[str, list[str]],
+                locations: list[tuple[str, int]]) \
+        -> tuple[list[tuple[str, int, str]], list[str]]:
     """
     The definitions in ``files`` of the macros used on ``locations`` and of
     the macros those use, and the names that look like a macro but have no
@@ -274,15 +280,15 @@ def find_macros(files, locations):
     return found[:MAX_MACROS], undefined
 
 
-def format_macros(macros):
+def format_macros(macros: list[tuple[str, int, str]]) -> str:
     return '\n\n'.join(f"{path}:{line}\n{text}"
                        for path, line, text in macros)
 
 
-def build_user_prompt(context,
-                      max_source_lines,
-                      max_path_events,
-                      max_path_context_lines):
+def build_user_prompt(context: Any,
+                      max_source_lines: int,
+                      max_path_events: int,
+                      max_path_context_lines: int) -> str:
     """ Assemble the user half of the prompt from a report context. """
     source, start, end = build_source_window(
         context.file_content, context.line, max_source_lines)
@@ -296,65 +302,52 @@ def build_user_prompt(context,
     excerpts, missing = build_path_excerpts(
         files, locations, (context.file_path, start, end),
         max_path_context_lines)
-    macros, undefined = find_macros(files, locations)
 
-    sections = [
-        "## Report",
+    # Only some analysers record macro expansions, e.g. the Clang Static
+    # Analyzer. For the others, look up the definitions in the source.
+    if context.macro_expansions:
+        macros = [(m.file_path, m.line, m.text)
+                  for m in context.macro_expansions[:MAX_MACROS]]
+        macros_title = "Macros on the bug path, as the analyser expanded them"
+        undefined = []
+    else:
+        macros, undefined = find_macros(files, locations)
+        macros_title = "Macros used on the bug path"
+
+    sections = []
+
+    def add(title: str, body: str):
+        sections.append(f"## {title}\n{body}")
+
+    add("Report", '\n'.join([
         f"Checker: {context.checker_name}",
         f"Analyzer: {context.analyzer_name or 'unknown'}",
         f"Severity: {context.severity or 'unknown'}",
         f"Message: {context.checker_message}",
-        f"Location: {context.file_path}:{context.line}:{context.column}",
-    ]
+        f"Location: {context.file_path}:{context.line}:{context.column}"]))
 
     if context.checker_documentation:
-        sections += [
-            "",
-            "## Checker documentation",
-            context.checker_documentation
-        ]
+        add("Checker documentation", context.checker_documentation)
 
-    sections += [
-        "",
-        "## Analyser bug path",
-        format_bug_path(context.path_events, max_path_events)
-    ]
+    add("Analyser bug path",
+        format_bug_path(context.path_events, max_path_events))
 
     if source:
-        sections += [
-            "",
-            f"## Source of {context.file_path} (lines {start}-{end}, "
-            f"the report is on line {context.line})",
-            source
-        ]
+        add(f"Source of {context.file_path} (lines {start}-{end}, the "
+            f"report is on line {context.line})", source)
     else:
-        sections += [
-            "",
-            "## Source",
-            "The source of the analysed file is not available on the server."
-        ]
+        add("Source",
+            "The source of the analysed file is not available on the server.")
 
     if excerpts:
-        sections += [
-            "",
-            "## Source around the bug path, beyond the lines above",
-            excerpts
-        ]
+        add("Source around the bug path, beyond the lines above", excerpts)
 
     if macros:
-        sections += [
-            "",
-            "## Macros used on the bug path",
-            format_macros(macros)
-        ]
+        add(macros_title, format_macros(macros))
 
     not_provided = [f"File: {path}" for path in missing] + \
         [f"Macro definition: {name}" for name in undefined]
     if not_provided:
-        sections += [
-            "",
-            "## Not provided",
-            '\n'.join(not_provided)
-        ]
+        add("Not provided", '\n'.join(not_provided))
 
-    return '\n'.join(sections)
+    return '\n\n'.join(sections)

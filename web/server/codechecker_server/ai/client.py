@@ -9,17 +9,21 @@
 Asks a model through LiteLLM.
 """
 
-import base64
+import functools
 import json
 import os
-import re
 import shlex
 import subprocess
 import threading
 import time
+from typing import Any, Optional
+
+from authlib.common.encoding import to_bytes, urlsafe_b64decode
 
 from codechecker_common.logger import get_logger
+from codechecker_common.util import clamp
 
+from .config import AIModelConfig
 from .prompt import answer_schema
 
 LOG = get_logger('server')
@@ -29,56 +33,58 @@ LOG = get_logger('server')
 RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 
 MAX_ATTEMPTS = 3
-BACKOFF_SCHEDULE = (1.0, 3.0)  # before the 2nd and 3rd
 
 
 class AIProviderError(Exception):
-    """ Raised when the model could not produce a usable answer. """
+    """
+    The model could not produce a usable answer. The message is shown to the
+    user, so it must not contain details of the server's environment.
+    """
 
 
-class OAuth2TokenCache:
-    """ Tokens of a ``token_command``, shared until they near expiry. """
+class TokenCommandCache:
+    """ Access tokens printed by a ``token_command``, reused until expiry. """
 
     # Renew this long before expiry, so a token never lapses mid-request.
     EXPIRY_MARGIN = 120  # seconds
 
-    def __init__(self):
-        self._lock = threading.Lock()
-        self._tokens = {}
-
     # Assumed when a token does not tell its own expiry.
     DEFAULT_LIFETIME = 3000  # seconds
 
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._tokens: dict[tuple, tuple[str, float]] = {}
+
     @staticmethod
-    def _key(model):
+    def _key(model: AIModelConfig) -> tuple:
         return (model.token_command, model.token_command_dir)
 
-    def get(self, model, timeout):
-        # Held during the request, so concurrent explanations wait for one
+    def get(self, model: AIModelConfig, timeout: float) -> str:
+        # Held while the command runs, so concurrent requests wait for one
         # token rather than each fetching their own.
         with self._lock:
             cached = self._tokens.get(self._key(model))
             if cached and cached[1] > time.monotonic() + self.EXPIRY_MARGIN:
                 return cached[0]
 
-            token, lifetime = self._run_token_command(
-                model.token_command, timeout, model.token_command_dir)
+            token = self._run_token_command(model, timeout)
             self._tokens[self._key(model)] = \
-                (token, time.monotonic() + lifetime)
+                (token, time.monotonic() + self._jwt_lifetime(token))
             return token
 
-    def invalidate(self, model):
+    def invalidate(self, model: AIModelConfig):
         with self._lock:
             self._tokens.pop(self._key(model), None)
 
-    @classmethod
-    def _run_token_command(cls, command, timeout, cwd=None):
+    @staticmethod
+    def _run_token_command(model: AIModelConfig, timeout: float) -> str:
         """
         The command prints the token on its standard output. It must not
         wait for an interactive login, which nobody would ever complete.
         """
+        cwd = model.token_command_dir
         try:
-            result = subprocess.run(shlex.split(command),
+            result = subprocess.run(shlex.split(model.token_command),
                                     capture_output=True,
                                     text=True,
                                     timeout=timeout,
@@ -86,42 +92,48 @@ class OAuth2TokenCache:
                                     if cwd else None,
                                     check=False)
         except (OSError, ValueError, subprocess.TimeoutExpired) as ex:
+            LOG.warning("Could not run the token command of AI model '%s': "
+                        "%s", model.id, ex)
             raise AIProviderError(
-                f"Could not run the token command: {ex}") from ex
+                f"The token command of AI model '{model.id}' failed. See the "
+                "server log for details.") from ex
 
         # Never the output: it is the token, or part of one.
         if result.returncode != 0:
-            detail = (result.stderr or '').strip()[-300:]
+            LOG.warning("The token command of AI model '%s' failed with exit "
+                        "code %d: %s", model.id, result.returncode,
+                        (result.stderr or '').strip()[-300:])
             raise AIProviderError(
-                "The token command failed with exit code "
-                f"{result.returncode}. {detail}".strip())
+                f"The token command of AI model '{model.id}' failed. See the "
+                "server log for details.")
 
         lines = (result.stdout or '').strip().splitlines()
         token = lines[-1].strip() if lines else ''
         if not token:
             raise AIProviderError(
-                "The token command did not print a token.")
+                f"The token command of AI model '{model.id}' did not print a "
+                "token.")
 
-        return token, cls._jwt_lifetime(token)
+        return token
 
     @classmethod
-    def _jwt_lifetime(cls, token):
+    def _jwt_lifetime(cls, token: str) -> float:
         """ Seconds until the ``exp`` claim, read without verification. """
         try:
-            payload = token.split('.')[1]
-            payload += '=' * (-len(payload) % 4)
-            claims = json.loads(base64.urlsafe_b64decode(payload))
-            return int(claims['exp'] - time.time())
+            payload = urlsafe_b64decode(to_bytes(token.split('.')[1]))
+            return json.loads(payload)['exp'] - time.time()
         except (IndexError, KeyError, TypeError, ValueError):
             return cls.DEFAULT_LIFETIME
 
 
-OAUTH2_TOKENS = OAuth2TokenCache()
+TOKEN_CACHE = TokenCommandCache()
 
 
-def _litellm():
-    """ Imported late: optional and slow to import. """
-    # Otherwise it downloads its price list on import.
+@functools.cache
+def _litellm() -> Any:
+    """ Imported on the first request: it is optional and slow to import. """
+    # Otherwise LiteLLM downloads its model price list from GitHub on import,
+    # which slows down or fails on a server without internet access.
     os.environ.setdefault('LITELLM_LOCAL_MODEL_COST_MAP', 'True')
 
     try:
@@ -129,189 +141,190 @@ def _litellm():
     except ImportError as ex:
         raise AIProviderError(
             "The 'litellm' package is required for AI report explanation. "
-            "Install web/requirements.txt.") from ex
+            "Install web/requirements_py/ai/requirements.txt.") from ex
 
     litellm.suppress_debug_info = True
     return litellm
 
 
-def _completion(**kwargs):
-    """ Replaced by the tests. """
-    return _litellm().completion(**kwargs)
+def request_completion(model: AIModelConfig,
+                       system_prompt: str,
+                       user_prompt: str,
+                       timeout: float,
+                       ca_bundle: Optional[str] = None) -> str:
+    """
+    Ask ``model`` and return its raw answer. Retries and a renewed token all
+    fit into ``timeout`` seconds.
+    """
+    litellm = _litellm()
 
-
-class AIClient:
-    """ Asks one model for a completion. """
-
-    def __init__(self, model_config, timeout, ca_bundle=None):
-        self._model = model_config
-        self._timeout = timeout
-        self._ca_bundle = ca_bundle
-
-    @property
-    def _where(self):
-        return self._model.provider
-
-    def complete(self, system_prompt, user_prompt):
-        """ Send the prompts, return the raw answer as a JSON string. """
-        if not self._model.token_command:
-            return self._complete(system_prompt, user_prompt)
-
-        try:
-            return self._complete(system_prompt, user_prompt)
-        except _TokenRejected:
-            # A token can be revoked before it expires; fetch a new one
-            # and try once more.
-            OAUTH2_TOKENS.invalidate(self._model)
-
-        try:
-            return self._complete(system_prompt, user_prompt)
-        except _TokenRejected as ex:
-            raise AIProviderError(
-                f"{self._where} rejected the access token.") from ex
-
-    def _complete(self, system_prompt, user_prompt):
-        litellm = _litellm()
-
-        kwargs = {
-            'model': self._model.litellm_model,
-            'messages': [
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': user_prompt}
-            ],
-            'response_format': self._response_format(litellm),
-            'timeout': self._timeout,
-            # Retried in _call.
-            'max_retries': 0,
-            'drop_params': True
-        }
-
-        if self._model.temperature is not None:
-            kwargs['temperature'] = self._model.temperature
-
+    if ca_bundle:
         # LiteLLM takes it only globally.
-        if self._ca_bundle:
-            litellm.ssl_verify = self._ca_bundle
+        litellm.ssl_verify = ca_bundle
 
-        kwargs['api_key'] = self._model.api_key
-        if self._model.token_command:
-            kwargs['api_key'] = OAUTH2_TOKENS.get(self._model, self._timeout)
-        if self._model.api_base:
-            kwargs['api_base'] = self._model.api_base
+    messages = [{'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt}]
+    deadline = time.monotonic() + timeout
 
-        return self._send(litellm, kwargs)
+    try:
+        response = _completion_with_retries(model, messages, deadline,
+                                            timeout)
+    except litellm.exceptions.AuthenticationError as ex:
+        LOG.warning("AI model '%s' rejected the credentials: %s", model.id, ex)
+        if not model.token_command:
+            raise AIProviderError(
+                f"{model.provider} rejected the API key of model "
+                f"'{model.id}'.") from ex
 
-    def _response_format(self, litellm):
-        """ The answer schema where supported, else plain JSON. """
-        # Unknown for the models behind a proxy.
-        if self._model.provider != 'litellm_proxy':
-            try:
-                strict = litellm.supports_response_schema(
-                    model=self._model.litellm_model)
-            except Exception:
-                strict = False
-
-            if strict:
-                return {'type': 'json_schema',
-                        'json_schema': {'name': 'report_explanation',
-                                        'schema': answer_schema(),
-                                        'strict': True}}
-
-        return {'type': 'json_object'}
-
-    @staticmethod
-    def _is_retryable(ex):
-        """ Whether a failed request is worth sending again. """
-        return getattr(ex, 'status_code', None) in RETRYABLE_STATUS
-
-    @staticmethod
-    def _retry_delay(ex, attempt):
-        """ Retry-After when the provider sends one, else the schedule. """
-        response = getattr(ex, 'response', None)
-        headers = getattr(response, 'headers', None) or {}
-        retry_after = headers.get('Retry-After')
-        if retry_after:
-            try:
-                return max(0.0, min(float(retry_after), 30.0))
-            except ValueError:
-                pass  # an HTTP date rather than seconds
-
-        return BACKOFF_SCHEDULE[min(attempt, len(BACKOFF_SCHEDULE) - 1)]
-
-    def _call(self, kwargs):
-        """ litellm.completion, retried on transient failures. """
-        for attempt in range(MAX_ATTEMPTS - 1):
-            try:
-                return _completion(**kwargs)
-            except Exception as ex:
-                if not self._is_retryable(ex):
-                    raise
-
-                delay = self._retry_delay(ex, attempt)
-                LOG.info("%s answered with HTTP %s; retrying in %.1fs "
-                         "(attempt %d of %d).", self._where, ex.status_code,
-                         delay, attempt + 1, MAX_ATTEMPTS)
-                time.sleep(delay)
-
-        return _completion(**kwargs)
-
-    def _send(self, litellm, kwargs):
-        """ The answer text of the completion. """
+        # A token can be revoked before it expires; fetch a new one and try
+        # once more.
+        TOKEN_CACHE.invalidate(model)
         try:
-            response = self._call(kwargs)
-        except litellm.exceptions.AuthenticationError as ex:
-            if self._model.token_command:
-                raise _TokenRejected(_reason(ex)) from ex
+            response = _completion_with_retries(model, messages, deadline,
+                                                timeout)
+        except litellm.exceptions.AuthenticationError as retry_ex:
             raise AIProviderError(
-                f"{self._where} rejected the API key of model "
-                f"'{self._model.id}'.") from ex
-        except litellm.exceptions.Timeout as ex:
+                f"{model.provider} rejected the access token.") from retry_ex
+
+    return _answer_text(model, response)
+
+
+def _completion_with_retries(model: AIModelConfig,
+                             messages: list[dict],
+                             deadline: float,
+                             timeout: float) -> Any:
+    """
+    The completion, sent again while the provider is busy. An
+    AuthenticationError is raised as it is, every other failure as an
+    AIProviderError.
+    """
+    litellm = _litellm()
+
+    for attempt in range(MAX_ATTEMPTS):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
             raise AIProviderError(
-                f"{self._where} did not answer within {self._timeout} "
-                "seconds.") from ex
-        except litellm.exceptions.RateLimitError as ex:
-            raise AIProviderError(
-                f"{self._where} refused the request: rate limit or quota "
-                f"reached. {_reason(ex)}".strip()) from ex
-        except litellm.exceptions.APIConnectionError as ex:
-            raise AIProviderError(
-                f"Could not reach {self._where}: {_reason(ex)}") from ex
+                f"{model.provider} did not answer within {timeout} seconds.")
+
+        try:
+            return litellm.completion(
+                model=model.litellm_model,
+                messages=messages,
+                response_format=_response_format(model),
+                timeout=remaining,
+                max_retries=0,
+                drop_params=True,
+                api_key=_api_key(model, remaining),
+                api_base=model.api_base,
+                temperature=model.temperature)
+        except litellm.exceptions.AuthenticationError:
+            raise
+        except AIProviderError:
+            raise
         except Exception as ex:
-            status = getattr(ex, 'status_code', None)
-            LOG.debug("LiteLLM request failed.", exc_info=True)
-            raise AIProviderError(
-                f"{self._where} answered with "
-                f"{f'HTTP {status}' if status else 'an error'}. "
-                f"{_reason(ex)}".strip()) from ex
+            delay = _retry_delay(ex, attempt)
+            if delay is None or attempt == MAX_ATTEMPTS - 1 or \
+                    time.monotonic() + delay >= deadline:
+                raise _provider_error(model, ex, timeout) from ex
 
+            LOG.info("AI model '%s' answered with HTTP %s; retrying in %.1fs "
+                     "(attempt %d of %d).", model.id, ex.status_code, delay,
+                     attempt + 1, MAX_ATTEMPTS)
+            time.sleep(delay)
+
+    raise AssertionError("unreachable")
+
+
+def _api_key(model: AIModelConfig, timeout: float) -> Optional[str]:
+    if model.token_command:
+        return TOKEN_CACHE.get(model, timeout)
+    else:
+        return model.api_key
+
+
+def _response_format(model: AIModelConfig) -> dict:
+    """ The answer schema where supported, else plain JSON. """
+    # LiteLLM cannot tell what the models behind a proxy support.
+    if model.provider != 'litellm_proxy':
         try:
-            choice = response.choices[0]
-            content = choice.message.content
-        except (AttributeError, IndexError, TypeError) as ex:
-            raise AIProviderError(
-                f"The {self._where} response did not contain a "
-                "completion.") from ex
+            strict = _litellm().supports_response_schema(
+                model=model.litellm_model)
+        except Exception:
+            strict = False
 
-        if getattr(choice, 'finish_reason', None) == 'length':
-            LOG.warning("The answer of '%s' was truncated at the token "
-                        "limit.", self._model.id)
+        if strict:
+            return {'type': 'json_schema',
+                    'json_schema': {'name': 'report_explanation',
+                                    'schema': answer_schema(),
+                                    'strict': True}}
 
-        return content
-
-
-class _TokenRejected(Exception):
-    """ The provider answered 401. """
+    return {'type': 'json_object'}
 
 
-def _reason(ex):
-    """ The provider's message without LiteLLM's prefixes. """
-    message = str(getattr(ex, 'message', None) or ex)
-    message = re.sub(r'^.*?\w+Exception - ', '', message, flags=re.DOTALL)
-    message = re.sub(r'^((litellm\.)?\w+Error: )+', '', message)
-    return message.strip()[:500]
+def _retry_delay(ex: Exception, attempt: int) -> Optional[float]:
+    """
+    Seconds to wait before sending a failed request again, or None when it
+    is not worth sending again.
+    """
+    if getattr(ex, 'status_code', None) not in RETRYABLE_STATUS:
+        return None
+
+    response = getattr(ex, 'response', None)
+    headers = getattr(response, 'headers', None) or {}
+    try:
+        return clamp(0.0, float(headers['Retry-After']), 30.0)
+    except (KeyError, ValueError):
+        # No Retry-After, or one with a date instead of a number of seconds.
+        pass
+
+    # Waits before the 2nd and the 3rd attempt.
+    backoff = (1.0, 3.0)
+    return backoff[min(attempt, len(backoff) - 1)]
 
 
-def parse_json_response(text):
+def _provider_error(model: AIModelConfig,
+                    ex: Exception,
+                    timeout: float) -> AIProviderError:
+    """ What the user is told about a failed request. """
+    LOG.warning("Request to AI model '%s' failed: %s", model.id, ex)
+    exceptions = _litellm().exceptions
+
+    if isinstance(ex, exceptions.Timeout):
+        return AIProviderError(
+            f"{model.provider} did not answer within {timeout} seconds.")
+
+    if isinstance(ex, exceptions.RateLimitError):
+        return AIProviderError(
+            f"{model.provider} refused the request: rate limit or quota "
+            "reached.")
+
+    if isinstance(ex, exceptions.APIConnectionError):
+        return AIProviderError(f"Could not reach {model.provider}.")
+
+    status = getattr(ex, 'status_code', None)
+    return AIProviderError(
+        f"{model.provider} answered with "
+        f"{f'HTTP {status}' if status else 'an error'}. See the server log "
+        "for details.")
+
+
+def _answer_text(model: AIModelConfig, response: Any) -> str:
+    try:
+        choice = response.choices[0]
+        content = choice.message.content
+    except (AttributeError, IndexError, TypeError) as ex:
+        raise AIProviderError(
+            f"The {model.provider} response did not contain a "
+            "completion.") from ex
+
+    if getattr(choice, 'finish_reason', None) == 'length':
+        LOG.warning("The answer of '%s' was truncated at the token limit.",
+                    model.id)
+
+    return content
+
+
+def parse_json_response(text: str) -> Any:
     """ Decode the answer, unwrapping a Markdown fence if one is there. """
     if not text:
         raise AIProviderError("The model returned an empty answer.")

@@ -107,36 +107,6 @@
                 {{ providerOf(model).label }}
               </v-chip>
             </div>
-
-            <div class="d-flex flex-wrap align-center ga-3 mt-2">
-              <div class="rating">
-                <span class="text-caption text-grey mr-1">Speed</span>
-                <v-chip
-                  size="x-small"
-                  variant="tonal"
-                  :color="speedOf(model).color"
-                >
-                  <v-icon start size="x-small">
-                    {{ speedOf(model).icon }}
-                  </v-icon>
-                  {{ speedOf(model).label }}
-                </v-chip>
-              </div>
-
-              <div class="rating">
-                <span class="text-caption text-grey mr-1">Reliability</span>
-                <v-chip
-                  size="x-small"
-                  variant="tonal"
-                  :color="reliabilityOf(model).color"
-                >
-                  <v-icon start size="x-small">
-                    {{ reliabilityOf(model).icon }}
-                  </v-icon>
-                  {{ reliabilityOf(model).label }}
-                </v-chip>
-              </div>
-            </div>
           </v-card>
         </div>
       </div>
@@ -188,7 +158,7 @@
           </v-chip>
 
           <v-chip size="small" variant="tonal">
-            Confidence {{ explanation.confidence }}%
+            {{ confidenceLabel }} confidence
           </v-chip>
         </div>
 
@@ -241,7 +211,7 @@ import DOMPurify from "dompurify";
 import { computed, onMounted, ref, watch } from "vue";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { AIVerdict } from "@cc/report-server-types";
+import { AIConfidence, AIVerdict } from "@cc/report-server-types";
 
 const props = defineProps({
   reportId: { type: Object, default: null }
@@ -256,22 +226,6 @@ const loading = ref(false);
 const error = ref(null);
 const modelsMessage = ref("Loading models\u2026");
 const expertMode = ref(false);
-
-// How the administrator rated each model; see "speed" and "reliability"
-// in the server configuration.
-const SPEEDS = {
-  fast: { label: "Fast", color: "success", icon: "mdi-speedometer" },
-  medium: { label: "Medium", color: "warning", icon: "mdi-speedometer-medium" },
-  slow: { label: "Slow", color: "error", icon: "mdi-speedometer-slow" }
-};
-
-const RELIABILITIES = {
-  high: { label: "High", color: "success", icon: "mdi-shield-check-outline" },
-  medium: { label: "Medium", color: "warning", icon: "mdi-shield-half-full" },
-  low: { label: "Low", color: "error", icon: "mdi-shield-alert-outline" }
-};
-
-const NOT_RATED = { label: "Not rated", color: "grey", icon: "mdi-minus" };
 
 // Unknown providers are shown under their own name.
 const PROVIDERS = {
@@ -295,14 +249,6 @@ function providerOf(model) {
     icon: known.icon || "mdi-cloud-outline",
     title: `Asked through ${known.label}`
   };
-}
-
-function speedOf(model) {
-  return SPEEDS[model.speed] || NOT_RATED;
-}
-
-function reliabilityOf(model) {
-  return RELIABILITIES[model.reliability] || NOT_RATED;
 }
 
 // Before Expert mode has fetched the list, only the model id is known.
@@ -357,6 +303,17 @@ const verdictIcon = computed(() => {
     return "mdi-shield-check-outline";
   default:
     return "mdi-help-circle-outline";
+  }
+});
+
+const confidenceLabel = computed(() => {
+  switch (explanation.value?.confidence) {
+  case AIConfidence.HIGH:
+    return "High";
+  case AIConfidence.MEDIUM:
+    return "Medium";
+  default:
+    return "Low";
   }
 });
 
@@ -525,11 +482,6 @@ function errorMessage(err) {
 
 .model-choice.current {
   border-color: rgb(var(--v-theme-primary));
-}
-
-.rating {
-  display: flex;
-  align-items: center;
 }
 
 .ai-html {

@@ -22,6 +22,7 @@
     "max_source_lines": 400,
     "max_path_events": 50,
     "max_path_context_lines": 200,
+    "max_concurrent_requests": 2,
     "ca_bundle": "",
     "models": [
       {
@@ -29,27 +30,21 @@
         "display_name": "Claude Opus 5.5",
         "provider": "anthropic",
         "model": "claude-opus-5-5",
-        "api_key": "",
-        "speed": "medium",
-        "reliability": "high"
+        "api_key": ""
       },
       {
         "id": "gemini-flash",
         "display_name": "Gemini 3.6 Flash",
         "provider": "gemini",
         "model": "gemini-3.6-flash",
-        "api_key": "",
-        "speed": "fast",
-        "reliability": "medium"
+        "api_key": ""
       },
       {
         "id": "deepseek-chat",
         "display_name": "DeepSeek Chat",
         "provider": "deepseek",
         "model": "deepseek-chat",
-        "api_key": "",
-        "speed": "fast",
-        "reliability": "medium"
+        "api_key": ""
       }
     ]
   },

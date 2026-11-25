@@ -589,27 +589,30 @@ enum AIVerdict {
   UNCERTAIN
 }
 
+// How sure the model is of its verdict.
+enum AIConfidence {
+  LOW,
+  MEDIUM,
+  HIGH
+}
+
 // An AI-generated explanation of a report: the background of the finding and
 // an assessment of its true/false positiveness.
 struct AIExplanation {
-  1: string    background,        // What the checker detects and why it fired here.
-  2: AIVerdict verdict,           // The overall assessment.
-  3: i32       confidence,        // Confidence in the verdict, 0-100.
-  4: string    truePositiveCase,  // The argument for this being a real defect.
-  5: string    falsePositiveCase, // The argument for this being spurious.
-  6: string    model,             // Identifier of the model that produced this.
+  1: string       background,        // What the checker detects and why it fired here.
+  2: AIVerdict    verdict,           // The overall assessment.
+  3: AIConfidence confidence,        // How sure the model is of the verdict.
+  4: string       truePositiveCase,  // The argument for this being a real defect.
+  5: string       falsePositiveCase, // The argument for this being spurious.
+  6: string       model,             // Identifier of the model that produced this.
 }
 
 // Identifies an AI model that the server is configured to use.
 struct AIModel {
-  1: string id,           // Identifier to pass to getReportExplanation().
-  2: string displayName,  // Human readable name for the GUI.
-  3: bool   isDefault,    // Whether this is the server's default model.
-  4: optional string speed,       // "slow", "medium" or "fast"; unset if not
-                                  // rated by the server's administrator.
-  5: optional string reliability, // "low", "medium" or "high"; unset if not
-                                  // rated by the server's administrator.
-  6: optional string provider,    // The LiteLLM provider, e.g. "anthropic".
+  1: string          id,          // Identifier to pass to getReportExplanation().
+  2: string          displayName, // Human readable name for the GUI.
+  3: bool            isDefault,   // Whether this is the server's default model.
+  4: optional string provider,    // The LiteLLM provider, e.g. "anthropic".
 }
 typedef list<AIModel> AIModels
 

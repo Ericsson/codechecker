@@ -465,9 +465,10 @@ const lineWidgetField = context => {
 
 const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
-const editorCols = computed(() =>
-  showComments.value ? 12 - commentCols.value : 12
-);
+const editorCols = computed(() => {
+  const maxCols = 12;
+  return showComments.value ? maxCols - commentCols.value : maxCols;
+});
 const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
 );
@@ -1055,8 +1056,9 @@ function highlightRange(_from, _to) {
     });
 }
 
-// A line the AI explanation refers to. The model only saw the report's own
-// file, so show that one if a bug path step in another file is open.
+// A line the AI explanation refers to. Line numbers in the explanation refer
+// to the report's own file, so show that one if a bug path step in another
+// file is open.
 async function goToReportLine(line) {
   if (!report.value) return;
 

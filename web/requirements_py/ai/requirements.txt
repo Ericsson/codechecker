@@ -1,0 +1,2 @@
+# 1.82.7 and 1.82.8 were compromised releases.
+litellm~=1.83

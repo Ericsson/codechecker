@@ -174,9 +174,13 @@ whether it is a true or a false positive. Each model is asked through
 [LiteLLM](https://docs.litellm.ai/), directly at its provider or through a
 LiteLLM proxy.
 
-The feature is off by default. It is offered only when `enabled` is `true`
-and at least one model is usable; models that are not are skipped with a
-warning.
+The feature is off by default. It is offered only when `enabled` is `true`,
+LiteLLM is installed and at least one model is usable; models that are not are
+skipped with a warning. LiteLLM is not installed with CodeChecker by default:
+
+```sh
+pip3 install -r web/requirements_py/ai/requirements.txt
+```
 
 The report, its bug path and the surrounding source are sent to the chosen
 model's provider. Only enable this for products whose source may be processed
@@ -193,9 +197,7 @@ there.
       "provider": "litellm_proxy",
       "model": "openai/gpt-oss-120b",
       "api_base": "https://litellm.example.com",
-      "api_key": "$SECRET:litellm_proxy_key$",
-      "speed": "fast",
-      "reliability": "high"
+      "api_key": "$SECRET:litellm_proxy_key$"
     },
     {
       "id": "claude-opus",
@@ -224,7 +226,6 @@ stops the server from starting.
 | `token_command_dir` | Optional. Where to run `token_command`. |
 | `api_base` | Optional: another endpoint, e.g. a LiteLLM proxy or a self-hosted model, which may not need a key. |
 | `temperature` | Optional. |
-| `speed`, `reliability` | Optional ratings shown in the GUI: `slow`, `medium` or `fast`, and `low`, `medium` or `high`. |
 
 `default_model` is used when a client does not ask for a specific model. If it
 is not available, the first model is used. `ca_bundle` names the certificates
@@ -234,7 +235,8 @@ authority.
 ### Limits
 | Key | Meaning | Default |
 | --- | --- | --- |
-| `timeout` | Seconds to wait for an answer. | `90` |
+| `timeout` | Seconds to wait for an answer, retries included. | `90` |
+| `max_concurrent_requests` | Explanations generated at the same time. Each one holds an API worker process until the model answers; further requests are refused until one finishes. | `2` |
 | `max_source_lines` | Lines of the analysed file sent, centred on the report. | `400` |
 | `max_path_events` | Bug path steps sent. | `50` |
 | `max_path_context_lines` | Lines sent around the bug path steps outside the shown part of the analysed file, also from other files. | `200` |

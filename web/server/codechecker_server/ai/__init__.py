@@ -10,12 +10,14 @@ AI-assisted explanation of analysis reports.
 """
 
 from .config import AIConfig
-from .explain import PathEvent, ReportContext, explain_report
+from .explain import MacroExpansion, PathEvent, ReportContext, \
+    explain_report
 from .client import AIProviderError
 
 __all__ = [
     'AIConfig',
     'AIProviderError',
+    'MacroExpansion',
     'PathEvent',
     'ReportContext',
     'explain_report',

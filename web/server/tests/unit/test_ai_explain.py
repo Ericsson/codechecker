@@ -26,7 +26,7 @@ import litellm
 from codechecker_server.ai import client, explain
 from codechecker_server.ai.config import AIConfig, AIModelConfig
 from codechecker_server.ai.explain import (
-    PathEvent, ReportContext, explain_report)
+    MacroExpansion, PathEvent, ReportContext, explain_report)
 from codechecker_server.ai.prompt import (
     build_path_excerpts, build_source_window, build_user_prompt, find_macros,
     format_bug_path)
@@ -135,6 +135,20 @@ class PathContextTestCase(unittest.TestCase):
         self.assertEqual(macros, [])
         self.assertEqual(undefined, ["TDB_CLOSE"])
 
+    def test_analyser_macro_expansions_are_preferred(self):
+        context = ReportContext(
+            checker_name="c", checker_message="m", file_path="a.c", line=3,
+            file_content="\n".join(self.files["a.c"]),
+            path_files={"b.h": "\n".join(self.files["b.h"])},
+            macro_expansions=[MacroExpansion(
+                "a.c", 3, "do { if (fd) return; } while (0)")])
+
+        prompt = build_user_prompt(context, 400, 50, 200)
+
+        self.assertIn("as the analyser expanded them", prompt)
+        self.assertIn("a.c:3\ndo { if (fd) return; } while (0)", prompt)
+        self.assertNotIn("b.h:1", prompt)
+
     def test_prompt_lists_what_is_not_provided(self):
         context = ReportContext(
             checker_name="c", analyzer_name="a", severity="HIGH",
@@ -184,11 +198,6 @@ class ShippedConfigTestCase(unittest.TestCase):
         self.assertEqual(len(self.configured().models),
                          len(self.raw["models"]))
 
-    def test_every_shipped_model_is_rated(self):
-        for model in self.configured().models:
-            self.assertIsNotNone(model.speed, model.id)
-            self.assertIsNotNone(model.reliability, model.id)
-
     def test_default_model_is_one_of_the_models(self):
         cfg = self.configured()
 
@@ -227,31 +236,28 @@ def provider_error(status, retry_after=None):
 class RetryDecisionTestCase(unittest.TestCase):
     """ A busy provider is worth another try; a refused request is not. """
 
-    def setUp(self):
-        self.is_retryable = client.AIClient._is_retryable
-
     def test_transient_failures_are_retried(self):
         for status in (429, 500, 502, 503, 504):
-            self.assertTrue(self.is_retryable(provider_error(status)), status)
+            self.assertIsNotNone(
+                client._retry_delay(provider_error(status), 0), status)
 
     def test_client_errors_are_not_retried(self):
         for status in (400, 401, 403, 404, 422):
-            self.assertFalse(self.is_retryable(provider_error(status)),
-                             status)
+            self.assertIsNone(
+                client._retry_delay(provider_error(status), 0), status)
 
     def test_errors_without_status_are_not_retried(self):
-        self.assertFalse(self.is_retryable(ValueError("bug")))
+        self.assertIsNone(client._retry_delay(ValueError("bug"), 0))
 
 
 class RetryDelayTestCase(unittest.TestCase):
     """ Retry-After wins over the built-in backoff when it is usable. """
 
     def setUp(self):
-        self.retry_delay = client.AIClient._retry_delay
+        self.retry_delay = client._retry_delay
 
     def test_backoff_schedule_when_no_header(self):
-        delay = self.retry_delay(provider_error(503), 0)
-        self.assertEqual(delay, client.BACKOFF_SCHEDULE[0])
+        self.assertEqual(self.retry_delay(provider_error(503), 0), 1.0)
 
     def test_retry_after_is_honoured(self):
         self.assertEqual(self.retry_delay(provider_error(429, '7'), 0), 7.0)
@@ -263,11 +269,10 @@ class RetryDelayTestCase(unittest.TestCase):
     def test_http_date_retry_after_falls_back(self):
         delay = self.retry_delay(
             provider_error(429, 'Wed, 21 Oct 2026 07:28:00 GMT'), 1)
-        self.assertEqual(delay, client.BACKOFF_SCHEDULE[1])
+        self.assertEqual(delay, 3.0)
 
     def test_attempt_beyond_schedule_is_clamped(self):
-        delay = self.retry_delay(provider_error(503), 99)
-        self.assertEqual(delay, client.BACKOFF_SCHEDULE[-1])
+        self.assertEqual(self.retry_delay(provider_error(503), 99), 3.0)
 
 
 class ConfigTestCase(unittest.TestCase):
@@ -296,20 +301,12 @@ class ConfigTestCase(unittest.TestCase):
 
         self.assertEqual([m.id for m in cfg.models], ["good"])
 
-    def test_ratings_are_read_and_normalised(self):
-        model = ai_config(models=[{"id": "m", "speed": "Fast",
-                                   "reliability": "high"}]).models[0]
+    def test_default_model_is_found_without_an_id(self):
+        cfg = ai_config(models=[{"id": "a"}, {"id": "b"}], default_model="b")
 
-        self.assertEqual((model.speed, model.reliability), ("fast", "high"))
-
-    def test_invalid_or_missing_ratings_are_unset(self):
-        models = ai_config(models=[
-            {"id": "a", "speed": "ludicrous", "reliability": "high"},
-            {"id": "b"}]).models
-        rated, unrated = models[0], models[1]
-
-        self.assertEqual((rated.speed, rated.reliability), (None, "high"))
-        self.assertEqual((unrated.speed, unrated.reliability), (None, None))
+        self.assertEqual(cfg.get_model().id, "b")
+        self.assertEqual(cfg.get_model("a").id, "a")
+        self.assertIsNone(cfg.get_model("c"))
 
     def test_model_name_defaults_to_id(self):
         self.assertEqual(ai_config(models=[{"id": "m"}]).models[0].model, "m")
@@ -383,11 +380,15 @@ def completion_response(content='{"a": 1}', finish_reason="stop"):
                                  finish_reason=finish_reason)])
 
 
+def ask(model, timeout=60, ca_bundle=None):
+    return client.request_completion(model, "s", "u", timeout, ca_bundle)
+
+
 class LiteLLMTestCase(unittest.TestCase):
     """ Replaces litellm.completion, recording each call's arguments. """
 
     def setUp(self):
-        client.OAUTH2_TOKENS = client.OAuth2TokenCache()
+        client.TOKEN_CACHE = client.TokenCommandCache()
         self.completions = []
         self.failures = []
 
@@ -397,7 +398,7 @@ class LiteLLMTestCase(unittest.TestCase):
                 raise self.failures.pop(0)
             return completion_response()
 
-        patcher = mock.patch.object(client, "_completion", fake_completion)
+        patcher = mock.patch.object(litellm, "completion", fake_completion)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -409,37 +410,37 @@ class TokenClientTestCase(LiteLLMTestCase):
         super().setUp()
         self.token_requests = 0
 
-        patcher = mock.patch.object(client.OAuth2TokenCache,
+        patcher = mock.patch.object(client.TokenCommandCache,
                                     "_run_token_command", self.fake_run)
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def fake_run(self, command, _timeout, _cwd=None):
-        self.assertEqual(command, "print-token")
+    def fake_run(self, model, _timeout):
+        self.assertEqual(model.token_command, "print-token")
         self.token_requests += 1
-        return f"token-{self.token_requests}", 3600
+        return f"token-{self.token_requests}"
 
     @staticmethod
-    def client(**raw):
+    def ask(**raw):
         cfg = ai_config([{"id": "m", "provider": "litellm_proxy",
                           "model": "llama", "token_command": "print-token",
                           "api_base": "https://proxy.example/v1"}], **raw)
-        return client.AIClient(cfg.models[0], 60, cfg.ca_bundle)
+        return ask(cfg.models[0], ca_bundle=cfg.ca_bundle)
 
     def test_request_names_the_model(self):
-        self.assertEqual(self.client().complete("s", "u"), '{"a": 1}')
+        self.assertEqual(self.ask(), '{"a": 1}')
 
         sent = self.completions[0]
         self.assertEqual(sent["model"], "litellm_proxy/llama")
         self.assertEqual(sent["api_base"], "https://proxy.example/v1")
         self.assertEqual(sent["response_format"], {"type": "json_object"})
-        self.assertNotIn("temperature", sent)
+        self.assertIsNone(sent["temperature"])
         self.assertEqual(sent["messages"][0],
                          {"role": "system", "content": "s"})
 
     def test_token_is_sent_and_shared(self):
-        self.client().complete("s", "u")
-        self.client().complete("s", "u")
+        self.ask()
+        self.ask()
 
         self.assertEqual(self.token_requests, 1)
         self.assertEqual([c["api_key"] for c in self.completions],
@@ -449,7 +450,7 @@ class TokenClientTestCase(LiteLLMTestCase):
         self.failures = [litellm.exceptions.AuthenticationError(
             "expired", "litellm_proxy", "llama")]
 
-        self.assertEqual(self.client().complete("s", "u"), '{"a": 1}')
+        self.assertEqual(self.ask(), '{"a": 1}')
 
         self.assertEqual(self.token_requests, 2)
         self.assertEqual(self.completions[-1]["api_key"], "token-2")
@@ -459,14 +460,14 @@ class TokenClientTestCase(LiteLLMTestCase):
             "expired", "litellm_proxy", "llama") for _ in range(2)]
 
         with self.assertRaises(client.AIProviderError) as ctx:
-            self.client().complete("s", "u")
+            self.ask()
 
         self.assertIn("rejected the access token", str(ctx.exception))
         self.assertEqual(len(self.completions), 2)
 
     def test_ca_bundle_is_used_for_every_request(self):
         with mock.patch.object(litellm, "ssl_verify", True):
-            self.client(ca_bundle=__file__).complete("s", "u")
+            self.ask(ca_bundle=__file__)
             self.assertEqual(litellm.ssl_verify, __file__)
 
     def test_missing_ca_bundle_falls_back_to_the_default(self):
@@ -481,12 +482,9 @@ class DirectClientTestCase(LiteLLMTestCase):
     MODEL = {"id": "claude", "provider": "anthropic",
              "model": "claude-opus-5-5", "api_key": "sk-test-key"}
 
-    def client(self, **entry):
+    def complete(self, timeout=30, **entry):
         cfg = ai_config(models=[dict(self.MODEL, **entry)])
-        return client.AIClient(cfg.models[0], 30)
-
-    def complete(self, **entry):
-        return self.client(**entry).complete("s", "u")
+        return ask(cfg.models[0], timeout)
 
     def test_request_goes_to_the_provider_with_its_key(self):
         self.assertEqual(self.complete(), '{"a": 1}')
@@ -494,8 +492,8 @@ class DirectClientTestCase(LiteLLMTestCase):
         sent = self.completions[0]
         self.assertEqual(sent["model"], "anthropic/claude-opus-5-5")
         self.assertEqual(sent["api_key"], "sk-test-key")
-        for key in ("api_base", "client", "extra_headers", "temperature"):
-            self.assertNotIn(key, sent)
+        self.assertIsNone(sent["api_base"])
+        self.assertIsNone(sent["temperature"])
 
     def test_optional_parameters_are_passed_on(self):
         self.complete(api_base="https://proxy.example", temperature=0)
@@ -552,7 +550,8 @@ class DirectClientTestCase(LiteLLMTestCase):
             self.complete()
 
         self.assertEqual(str(ctx.exception),
-                         "anthropic answered with HTTP 400. model not found")
+                         "anthropic answered with HTTP 400. See the server "
+                         "log for details.")
 
     def test_transient_failures_are_retried_with_backoff(self):
         self.failures = [provider_error(503), provider_error(429)]
@@ -562,7 +561,7 @@ class DirectClientTestCase(LiteLLMTestCase):
 
         self.assertEqual(len(self.completions), 3)
         self.assertEqual([c.args[0] for c in sleep.call_args_list],
-                         list(client.BACKOFF_SCHEDULE))
+                         [1.0, 3.0])
         self.assertEqual(self.completions[0]["max_retries"], 0)
 
     def test_retries_give_up_after_the_last_attempt(self):
@@ -585,6 +584,21 @@ class DirectClientTestCase(LiteLLMTestCase):
         self.assertEqual(len(self.completions), 1)
         sleep.assert_not_called()
 
+    def test_retries_stay_within_the_timeout(self):
+        self.failures = [provider_error(429, '7')]
+
+        with mock.patch.object(client.time, "sleep") as sleep, \
+                self.assertRaises(client.AIProviderError):
+            self.complete(timeout=5)
+
+        self.assertEqual(len(self.completions), 1)
+        sleep.assert_not_called()
+
+    def test_each_attempt_gets_the_remaining_time(self):
+        self.complete(timeout=30)
+
+        self.assertLessEqual(self.completions[0]["timeout"], 30)
+
 
 def fake_jwt(expires_in):
     def part(data):
@@ -598,11 +612,18 @@ class TokenCommandTestCase(unittest.TestCase):
     """ An access token printed by a command. """
 
     def setUp(self):
-        client.OAUTH2_TOKENS = client.OAuth2TokenCache()
+        client.TOKEN_CACHE = client.TokenCommandCache()
 
     @staticmethod
     def command(code):
         return f"{shlex.quote(sys.executable)} -c {shlex.quote(code)}"
+
+    @staticmethod
+    def run_command(command, cwd=None):
+        model = AIModelConfig({"id": "m", "provider": "litellm_proxy",
+                               "token_command": command,
+                               "token_command_dir": cwd})
+        return client.TokenCommandCache._run_token_command(model, 10)
 
     def test_token_command_replaces_the_key(self):
         cfg = AIConfig({"enabled": True, "models": [
@@ -618,38 +639,40 @@ class TokenCommandTestCase(unittest.TestCase):
         self.assertFalse(cfg.is_available)
 
     def test_last_line_of_output_is_the_token(self):
-        token, _ = client.OAuth2TokenCache._run_token_command(
-            self.command("print('Banner'); print('tok-123')"), 10)
+        token = self.run_command(
+            self.command("print('Banner'); print('tok-123')"))
 
         self.assertEqual(token, "tok-123")
 
     def test_command_runs_in_the_configured_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
-            token, _ = client.OAuth2TokenCache._run_token_command(
-                self.command("import os; print(os.getcwd())"), 10, tmp)
+            token = self.run_command(
+                self.command("import os; print(os.getcwd())"), tmp)
 
             self.assertEqual(os.path.realpath(token), os.path.realpath(tmp))
 
     def test_lifetime_is_read_from_the_jwt(self):
-        lifetime = client.OAuth2TokenCache._jwt_lifetime(fake_jwt(1800))
+        lifetime = client.TokenCommandCache._jwt_lifetime(fake_jwt(1800))
 
         self.assertTrue(1790 <= lifetime <= 1800, lifetime)
 
     def test_opaque_token_gets_the_default_lifetime(self):
-        self.assertEqual(client.OAuth2TokenCache._jwt_lifetime("opaque"),
-                         client.OAuth2TokenCache.DEFAULT_LIFETIME)
+        self.assertEqual(client.TokenCommandCache._jwt_lifetime("opaque"),
+                         client.TokenCommandCache.DEFAULT_LIFETIME)
 
-    def test_failure_reports_stderr_but_never_stdout(self):
+    def test_failure_details_are_logged_not_shown(self):
         command = self.command(
             "import sys; print('half-a-token'); "
-            "sys.stderr.write('login required'); sys.exit(3)")
+            "sys.stderr.write('login required at host-7'); sys.exit(3)")
 
-        with self.assertRaises(client.AIProviderError) as ctx:
-            client.OAuth2TokenCache._run_token_command(command, 10)
+        with self.assertRaises(client.AIProviderError) as ctx, \
+                self.assertLogs(client.LOG, "WARNING") as logs:
+            self.run_command(command)
 
-        self.assertIn("exit code 3", str(ctx.exception))
-        self.assertIn("login required", str(ctx.exception))
-        self.assertNotIn("half-a-token", str(ctx.exception))
+        self.assertIn("See the server log", str(ctx.exception))
+        self.assertNotIn("host-7", str(ctx.exception))
+        self.assertIn("login required at host-7", logs.output[0])
+        self.assertNotIn("half-a-token", logs.output[0])
 
     def test_token_is_sent_and_shared(self):
         cfg = ai_config([{"id": "m", "provider": "litellm_proxy",
@@ -661,32 +684,31 @@ class TokenCommandTestCase(unittest.TestCase):
             sent.append(kwargs["api_key"])
             return completion_response()
 
-        with mock.patch.object(client, "_completion", fake_completion), \
+        with mock.patch.object(litellm, "completion", fake_completion), \
                 mock.patch.object(client.subprocess, "run",
                                   wraps=client.subprocess.run) as run:
             for _ in range(2):
-                client.AIClient(cfg.models[0], 10).complete("s", "u")
+                ask(cfg.models[0], 10)
 
         self.assertEqual(run.call_count, 1)
         self.assertEqual(sent, ["user-token"] * 2)
 
 
-class FakeClient:
+class FakeModel:
     """ Stands in for the model. """
 
     last_prompts = {}
 
-    def __init__(self, _model_config, _timeout, _ca_bundle=None):
-        pass
-
-    def complete(self, system_prompt, user_prompt):
-        FakeClient.last_prompts = {'system': system_prompt,
-                                   'user': user_prompt}
+    @staticmethod
+    def request_completion(_model, system_prompt, user_prompt, _timeout,
+                           _ca_bundle=None):
+        FakeModel.last_prompts = {'system': system_prompt,
+                                  'user': user_prompt}
         return ('```json\n'
                 '{"background": "<p>The checker flags a null '
                 'dereference.</p>",'
                 ' "verdict": "likely true positive",'
-                ' "confidence": 0.9,'
+                ' "confidence": "high",'
                 ' "true_positive_case": "<p>p is never checked.</p>",'
                 ' "false_positive_case": "<p>None apparent.</p>"}\n'
                 '```')
@@ -696,7 +718,8 @@ class ExplainReportTestCase(unittest.TestCase):
     """ The full path from a report context to a structured explanation. """
 
     def setUp(self):
-        patcher = mock.patch.object(explain, "AIClient", FakeClient)
+        patcher = mock.patch.object(explain, "request_completion",
+                                    FakeModel.request_completion)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -718,14 +741,13 @@ class ExplainReportTestCase(unittest.TestCase):
         result = explain_report(self.context, self.config)
 
         self.assertEqual(result.verdict, "LIKELY_TRUE_POSITIVE")
-        # A probability is accepted as well as a percentage.
-        self.assertEqual(result.confidence, 90)
+        self.assertEqual(result.confidence, "HIGH")
         self.assertEqual(result.model, "m")
         self.assertIn("null dereference", result.background)
 
     def test_prompt_carries_the_triage_context(self):
         explain_report(self.context, self.config)
-        prompt = FakeClient.last_prompts['user']
+        prompt = FakeModel.last_prompts['user']
 
         for needle in ("core.NullDereference", "src/a.c:12:5", "clangsa",
                        "HIGH", "Assuming 'p' is null", "doc_url",
@@ -734,16 +756,27 @@ class ExplainReportTestCase(unittest.TestCase):
 
     def test_prompt_asks_for_restricted_html(self):
         explain_report(self.context, self.config)
-        system = FakeClient.last_prompts['system']
+        system = FakeModel.last_prompts['system']
 
         self.assertIn("HTML fragments", system)
         self.assertIn("never instructions", system)
 
-    def test_disabled_server_is_rejected(self):
-        with self.assertRaises(client.AIProviderError) as ctx:
-            explain_report(self.context, AIConfig({}))
+    def test_busy_server_refuses_more_requests(self):
+        config = ai_config(max_concurrent_requests=1)
+        config.request_slots.acquire()
+        try:
+            with self.assertRaises(client.AIProviderError) as ctx:
+                explain_report(self.context, config)
+        finally:
+            config.request_slots.release()
 
-        self.assertIn("not enabled", str(ctx.exception))
+        self.assertIn("busy", str(ctx.exception))
+
+    def test_slot_is_released_after_a_request(self):
+        config = ai_config(max_concurrent_requests=1)
+
+        explain_report(self.context, config)
+        explain_report(self.context, config)
 
     def test_unknown_model_is_reported(self):
         with self.assertRaises(client.AIProviderError) as ctx:
