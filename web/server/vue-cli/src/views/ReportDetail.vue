@@ -78,11 +78,27 @@
         <v-row
           no-gutters
         >
+          <v-col
+            class="px-2"
+          >
+            <v-checkbox
+              v-model="wrapMessages"
+              class="wrap-messages ma-0 text-caption"
+              label="Wrap long messages"
+              density="compact"
+              hide-details
+            />
+          </v-col>
+        </v-row>
+        <v-row
+          no-gutters
+        >
           <v-col>
             <report-tree
               v-fill-height
               :report="report"
               :review-status="reviewStatus"
+              :wrap-messages="wrapMessages"
               @click="onReportTreeClick"
             />
           </v-col>
@@ -129,6 +145,7 @@ const store = useStore();
 const report = ref(null);
 const treeItem = ref(null);
 const showComments = ref(true);
+const wrapMessages = ref(false);
 const reportNotFound = ref(false);
 const reviewStatus = ref(null);
 
@@ -250,5 +267,10 @@ function updateReviewData(newReviewData, reportId) {
   .splitpanes__pane {
     background-color: inherit;
   }
+}
+
+:deep(.wrap-messages .v-input__control .v-selection-control) {
+  min-height: 0;
+  max-height: 30px;
 }
 </style>

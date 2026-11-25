@@ -12,6 +12,7 @@
     density="compact"
     slim
     fluid
+    :class="{ 'wrapped-labels': wrapMessages }"
     @update:activated="onClick"
   >
     <template v-slot:prepend="{ item }">
@@ -68,7 +69,8 @@ import ReportTreeRootItem from "./ReportTreeRootItem";
 
 const props = defineProps({
   report: { type: Object, default: null },
-  reviewStatus: { type: Number, default: null }
+  reviewStatus: { type: Number, default: null },
+  wrapMessages: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([ "click" ]);
@@ -292,5 +294,11 @@ function isTheReportFileChanged() {
 <style lang="scss" scoped>
 :deep(.v-list-item) {
   min-height: 20px !important;
+}
+
+.wrapped-labels :deep(.v-list-item-title) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: none;
 }
 </style>
