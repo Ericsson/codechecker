@@ -6,14 +6,13 @@
 #
 # -------------------------------------------------------------------------
 
-import json
 import logging
 import os
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import hashlib
-from typing import Any, Iterable
+from typing import Iterable
 
 from codechecker_report_converter.report import Report, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
@@ -49,8 +48,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         analyzer_result_file_paths: Iterable[str],
         output_dir_path: str,
         export_type: str,
-        file_name: str = "{source_file}_{analyzer}_{file_hash}",
-        metadata: dict[str, str] | None = None
+        file_name: str = "{source_file}_{analyzer}_{file_hash}"
     ) -> bool:
         """
         Converts the given analyzer result to the output directory in the given
@@ -84,45 +82,12 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         self._write(
             all_reports, output_dir_path, parser, export_type, file_name)
 
-        if metadata:
-            self._save_metadata(metadata, output_dir_path)
-        else:
-            LOG.warning("Use '--meta' option to provide extra information "
-                        "to the CodeChecker server such as analyzer version "
-                        "and analysis command when storing the results to it. "
-                        "For more information see the --help.")
-
         return bool(all_reports)
 
     @abstractmethod
     def get_reports(self, file_path: str) -> list[Report]:
         """ Get reports from the given analyzer result. """
         raise NotImplementedError("Subclasses should implement this!")
-
-    def _save_metadata(self, metadata, output_dir):
-        """ Save metadata.json file to the output directory which will be used
-        by CodeChecker.
-        """
-        meta_info: dict[str, Any] = {
-            "version": 2,
-            "num_of_report_dir": 1,
-            "tools": []
-        }
-
-        tool = {"name": self.TOOL_NAME}
-
-        if "analyzer_version" in metadata:
-            tool["version"] = metadata["analyzer_version"]
-
-        if "analyzer_command" in metadata:
-            tool["command"] = metadata["analyzer_command"]
-
-        meta_info["tools"].append(tool)
-
-        metadata_file = os.path.join(output_dir, 'metadata.json')
-        with open(metadata_file, 'w',
-                  encoding="utf-8", errors="ignore") as metafile:
-            json.dump(meta_info, metafile)
 
     def _post_process_result(self, reports: list[Report]):
         """ Post process the parsed result.

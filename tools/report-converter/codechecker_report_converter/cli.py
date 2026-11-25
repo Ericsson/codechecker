@@ -98,17 +98,13 @@ for analyzer_path in analyzers:
         supported_converters[analyzer_result.TOOL_NAME] = analyzer_result
 
 
-supported_metadata_keys = ["analyzer_command", "analyzer_version"]
-
-
 def transform_output(
     analyzer_results: Iterable[str],
     parser_type: str,
     output_dir: str,
     file_name: str,
     export_type: str,
-    clean: bool = False,
-    metadata: dict[str, str] | None = None
+    clean: bool = False
 ):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
@@ -120,25 +116,7 @@ def transform_output(
         os.makedirs(output_dir)
 
     parser = supported_converters[parser_type]()
-    parser.transform(
-        analyzer_results, output_dir, export_type, file_name, metadata)
-
-
-def process_metadata(metadata) -> tuple[dict[str, str], dict[str, str]]:
-    """ Returns a tuple of valid and invalid metadata values. """
-    if not metadata:
-        return {}, {}
-
-    valid_values = {}
-    invalid_values = {}
-    for m in metadata:
-        key, value = m.split("=", 1)
-        if key in supported_metadata_keys:
-            valid_values[key] = value
-        else:
-            invalid_values[key] = value
-
-    return valid_values, invalid_values
+    parser.transform(analyzer_results, output_dir, export_type, file_name)
 
 
 class CollectFiles(argparse.Action):
@@ -228,18 +206,6 @@ def __add_arguments_to_parser(parser):
                              "are: " +
                              ', '.join(SUPPORTED_ANALYZER_EXTENSIONS) + ".")
 
-    parser.add_argument('--meta',
-                        nargs='*',
-                        dest='meta',
-                        metavar='META',
-                        required=False,
-                        help="Metadata information which will be stored "
-                             "alongside the run when the created report "
-                             "directory will be stored to a running "
-                             "CodeChecker server. It has the following "
-                             "format: key=value. Valid key values are: "
-                             f"{', '.join(supported_metadata_keys)}.")
-
     parser.add_argument('--filename',
                         type=str,
                         dest='filename',
@@ -306,19 +272,9 @@ Supported analyzers:
     if 'verbose' in args and args.verbose:
         LOG.setLevel(logging.DEBUG)
 
-    valid_metadata_values, invalid_metadata_values = \
-        process_metadata(args.meta)
-
-    if invalid_metadata_values:
-        LOG.error("The following metadata keys are invalid: %s. Valid key "
-                  "values are: %s.",
-                  ', '.join(invalid_metadata_values),
-                  ', '.join(supported_metadata_keys))
-        sys.exit(1)
-
     return transform_output(
         args.input, args.type, args.output_dir, args.filename, args.export,
-        args.clean, valid_metadata_values)
+        args.clean)
 
 
 if __name__ == "__main__":
