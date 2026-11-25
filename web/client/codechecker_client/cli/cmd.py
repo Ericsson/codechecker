@@ -745,13 +745,6 @@ def __register_suppress(parser):
                         help="Name of the analysis run to suppress or "
                              "unsuppress a report in.")
 
-    parser.add_argument('-f', '--force',
-                        dest="force",
-                        action='store_true',
-                        default=argparse.SUPPRESS,
-                        help="Enable suppression of already suppressed "
-                             "reports.")
-
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument('-i', '--import',
@@ -760,7 +753,9 @@ def __register_suppress(parser):
                        metavar='SUPPRESS_FILE',
                        default=argparse.SUPPRESS,
                        help="Import suppression from the suppress file into "
-                            "the database.")
+                            "the database. The review status of the "
+                            "matching reports is always overwritten, even "
+                            "if they already have one.")
 
 
 def __register_products(parser):
