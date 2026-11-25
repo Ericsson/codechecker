@@ -207,9 +207,11 @@ def add_arguments_to_parser(parser):
                                              'reports'),
                         help="The analysis result files and/or folders "
                              "containing analysis results which should be "
-                             "parsed and printed. If multiple report "
-                             "directories are given, OFF and UNAVAILABLE "
-                             "detection statuses will not be available.")
+                             "parsed and printed. DEPRECATED: giving "
+                             "multiple report directories is deprecated "
+                             "and will be removed in a future release. "
+                             "Store each report directory into a separate "
+                             "run instead.")
 
     parser.add_argument('-t', '--type', '--input-format',
                         dest="input_format",
@@ -932,6 +934,14 @@ def main(args):
         if not os.path.exists(input_path):
             LOG.error("Input path '%s' does not exist!", input_path)
             sys.exit(1)
+
+    input_dirs = [i for i in args.input if os.path.isdir(i)]
+    if len(input_dirs) > 1:
+        LOG.warning("Storing multiple report directories with one "
+                    "'CodeChecker store' command is deprecated and will be "
+                    "removed in a future release. Store each report "
+                    "directory into a separate run instead. Report "
+                    "directories given: %s", ', '.join(input_dirs))
 
     if 'name' not in args:
         LOG.debug("Generating name for analysis...")
