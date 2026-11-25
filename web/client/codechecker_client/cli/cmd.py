@@ -182,12 +182,25 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
         return defaults[dest] if defaults and dest in defaults \
             else argparse.SUPPRESS
 
-    f_group = parser.add_argument_group('filter arguments')
+    f_group_description = None
+    if diff_mode:
+        f_group_description = \
+            "Only the --severity, --checker-name, --checker-msg, --file " \
+            "and\n" \
+            "--review-status filters are applied to local report " \
+            "directories.\n" \
+            "Every other filter (e.g. --report-hash, --analyzer-name,\n" \
+            "--detection-status, --report-status, --tag, --component,\n" \
+            "--uniqueing, --bug-path-length, --filter-preset and the date\n" \
+            "filters) is applied only to run names on the server."
+    f_group = parser.add_argument_group('filter arguments',
+                                        f_group_description)
 
     warn_diff_mode = ""
     if diff_mode:
-        warn_diff_mode = " This can be used only if basename or newname is " \
-                         "a run name (on the remote server)."
+        warn_diff_mode = " This filter is applied only to run names on " \
+                         "the server, local report directories are " \
+                         "not filtered by it."
 
     f_group.add_argument('--uniqueing',
                          dest="uniqueing",
@@ -198,14 +211,16 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "found on different execution paths, i.e. "
                               "through different function calls. By turning "
                               "on uniqueing a report appears only once even "
-                              "if it is found on several paths.")
+                              "if it is found on several paths." +
+                         warn_diff_mode)
 
     f_group.add_argument('--report-hash',
                          nargs='*',
                          dest="report_hash",
                          metavar='REPORT_HASH',
                          default=init_default('report_hash'),
-                         help="Filter results by report hashes.")
+                         help="Filter results by report hashes." +
+                         warn_diff_mode)
 
     f_group.add_argument('--review-status',
                          nargs='*',
@@ -219,8 +234,7 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "- Confirmed: This is really a bug.\n"
                               "- False positive: This is not a bug.\n"
                               "- Intentional: This report is a bug but we "
-                              "don't want to fix it." +
-                              warn_diff_mode)
+                              "don't want to fix it.")
 
     f_group.add_argument('--detection-status',
                          nargs='*',
@@ -263,7 +277,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter results by bug path length. This has "
                               "the following format: <minimum_bug_path_length>"
                               ":<maximum_bug_path_length>. Valid values are: "
-                              "\"4:10\", \"4:\", \":10\"")
+                              "\"4:10\", \"4:\", \":10\"." +
+                         warn_diff_mode)
 
     f_group.add_argument('--tag',
                          nargs='*',
@@ -286,7 +301,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--file',
                          nargs='*',
@@ -332,7 +348,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "quantifiers which match any number of "
                               "characters (zero or more). So for example "
                               "\"clang*\" will match \"clangsa\" and "
-                              "\"clang-tidy\".")
+                              "\"clang-tidy\"." +
+                         warn_diff_mode)
 
     f_group.add_argument('--component',
                          nargs='*',
@@ -357,7 +374,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "date). The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--fixed-at',
                          type=valid_time,
@@ -374,7 +392,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "date). The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--detected-before',
                          type=valid_time,
@@ -388,7 +407,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--detected-after',
                          type=valid_time,
@@ -402,7 +422,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--fixed-before',
                          type=valid_time,
@@ -413,7 +434,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "given date. The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--fixed-after',
                          type=valid_time,
@@ -424,7 +446,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "given date. The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
-                              "midnight (00:00:00) is used).")
+                              "midnight (00:00:00) is used)." +
+                         warn_diff_mode)
 
     f_group.add_argument('--anywhere-on-report-path',
                          dest='anywhere_on_report_path',
@@ -433,7 +456,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          action="store_true",
                          help="Filter reports where the report path not only "
                               "ends in the files given by --file or "
-                              "--component, but goes through them.")
+                              "--component, but goes through them." +
+                         warn_diff_mode)
 
     f_group.add_argument('--single-origin-report',
                          dest='single_origin_report',
@@ -442,7 +466,8 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          action="store_true",
                          help="Filter reports where the report path is "
                               "entirely in the files specified by the "
-                              "given --component.")
+                              "given --component." +
+                         warn_diff_mode)
 
     f_group.add_argument('--report-status',
                          nargs='*',
@@ -455,7 +480,7 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "- Outstanding: Currently detected and "
                               "still unresolved reports.\n"
                               "- Closed: Reports marked as fixed, false "
-                              "positive, or otherwise resolved.\n" +
+                              "positive, or otherwise resolved." +
                               warn_diff_mode)
 
 
@@ -633,16 +658,15 @@ def __register_sum(parser):
                             metavar='RUN_NAME',
                             default=argparse.SUPPRESS,
                             help="Names of the analysis runs to show result "
-                                 "count breakdown for. This has the following "
-                                 "format: <run_name_1>:<run_name_2>:"
-                                 "<run_name_3> where run names can contain "
-                                 "multiple * quantifiers which matches any "
-                                 "number of characters (zero or more). So if "
-                                 "you have run_1_a_name, run_2_b_name, "
-                                 "run_2_c_name, run_3_d_name then "
-                                 "\"run_2*:run_3_d_name\" selects the last "
-                                 "three runs. Use 'CodeChecker cmd runs' to "
-                                 "get the available runs.")
+                                 "count breakdown for, separated by spaces. "
+                                 "Run names can contain multiple * "
+                                 "quantifiers which matches any number of "
+                                 "characters (zero or more). So if you have "
+                                 "run_1_a_name, run_2_b_name, run_2_c_name, "
+                                 "run_3_d_name then \"run_2* run_3_d_name\" "
+                                 "selects the last three runs. Use "
+                                 "'CodeChecker cmd runs' to get the available "
+                                 "runs.")
 
     name_group.add_argument('-a', '--all',
                             dest="all_results",
@@ -669,8 +693,13 @@ def __register_delete(parser):
                        dest="names",
                        metavar='RUN_NAME',
                        default=argparse.SUPPRESS,
-                       help="Full name(s) of the analysis run or runs to "
-                            "delete.")
+                       help="Name(s) of the analysis run or runs to "
+                            "delete. Names are matched case-insensitively "
+                            "and can contain * quantifiers which match any "
+                            "number of characters (zero or more), e.g. "
+                            "\"run_2*\" deletes every run whose name starts "
+                            "with \"run_2\". A name without * deletes only "
+                            "the run with that name.")
 
     group.add_argument('--all-before-run',
                        type=str,

@@ -312,10 +312,13 @@ case of non-gating CI systems.
                         help="Delete analysis results stored in the database "
                              "for the current analysis run's name and store "
                              "only the results reported in the 'input' files. "
-                             "(By default, CodeChecker would keep reports "
-                             "that were coming from files not affected by the "
-                             "analysis, and only incrementally update defect "
-                             "reports for source files that were analysed.)")
+                             "(By default, CodeChecker updates the existing "
+                             "run: every report of the run which is not in "
+                             "the 'input' files becomes resolved (or off / "
+                             "unavailable), even if its source file was not "
+                             "analyzed. So always store the results of the "
+                             "full analysis into a run, not only a part of "
+                             "it.)")
 
     server_args = parser.add_argument_group(
         "server arguments", """

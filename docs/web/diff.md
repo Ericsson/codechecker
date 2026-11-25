@@ -125,13 +125,24 @@ optional arguments:
                         only those that contain any reports).
 
 filter arguments:
+  Only the --severity, --checker-name, --checker-msg, --file and
+  --review-status filters are applied to local report directories.
+  Every other filter (e.g. --report-hash, --analyzer-name,
+  --detection-status, --report-status, --tag, --component,
+  --uniqueing, --bug-path-length, --filter-preset and the date
+  filters) is applied only to run names on the server.
+
   --uniqueing {on,off}  The same bug may appear several times if it is found
                         on different execution paths, i.e. through different
                         function calls. By turning on uniqueing a report
                         appears only once even if it is found on several
-                        paths. (default: off)
+                        paths. This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it. (default: off)
   --report-hash [REPORT_HASH [REPORT_HASH ...]]
-                        Filter results by report hashes.
+                        Filter results by report hashes. This filter is
+                        applied only to run names on the server, local report
+                        directories are not filtered by it.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses.
                         Reports can be assigned a review status of the
@@ -140,9 +151,7 @@ filter arguments:
                         - Confirmed: This is really a bug.
                         - False positive: This is not a bug.
                         - Intentional: This report is a bug but we don't want
-                        to fix it. This can be used only if basename or
-                        newname is a run name (on the remote server).
-                        (default: ['unreviewed', 'confirmed'])
+                        to fix it. (default: ['unreviewed', 'confirmed'])
   --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
                         Filter results by detection statuses.
                         The detection status is the latest state of a bug
@@ -160,20 +169,23 @@ filter arguments:
                         were stored.
                         - Unavailable: were reported by a checker that does
                         not exists in the analyzer anymore because it was
-                        removed or renamed. This can be used only if basename
-                        or newname is a run name (on the remote server).
-                        (default: ['new', 'reopened', 'unresolved'])
+                        removed or renamed. This filter is applied only to run
+                        names on the server, local report directories are not
+                        filtered by it. (default: ['new', 'reopened',
+                        'unresolved'])
   --severity [SEVERITY [SEVERITY ...]]
                         Filter results by severities.
   --bug-path-length BUG_PATH_LENGTH
                         Filter results by bug path length. This has the
                         following format:
                         <minimum_bug_path_length>:<maximum_bug_path_length>.
-                        Valid values are: "4:10", "4:", ":10"
+                        Valid values are: "4:10", "4:", ":10". This filter is
+                        applied only to run names on the server, local report
+                        directories are not filtered by it.
   --tag [TAG [TAG ...]]
-                        Filter results by version tag names. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server).
+                        Filter results by version tag names. This filter is
+                        applied only to run names on the server, local report
+                        directories are not filtered by it.
   --outstanding-reports-date TIMESTAMP, --open-reports-date TIMESTAMP
                         Get results which were detected BEFORE the given date
                         and NOT FIXED BEFORE the given date. The detection
@@ -182,7 +194,9 @@ filter arguments:
                         format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
   --file [FILE_PATH [FILE_PATH ...]]
                         Filter results by file path. The file path can contain
                         multiple * quantifiers which matches any number of
@@ -201,11 +215,13 @@ filter arguments:
                         Filter results by analyzer names. The analyzer name
                         can contain multiple * quantifiers which match any
                         number of characters (zero or more). So for example
-                        "clang*" will match "clangsa" and "clang-tidy".
+                        "clang*" will match "clangsa" and "clang-tidy". This
+                        filter is applied only to run names on the server,
+                        local report directories are not filtered by it.
   --component [COMPONENT [COMPONENT ...]]
-                        Filter results by source components. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server).
+                        Filter results by source components. This filter is
+                        applied only to run names on the server, local report
+                        directories are not filtered by it.
   --detected-at TIMESTAMP
                         DEPRECATED. Use the '--detected-after/--detected-
                         before' options to filter results by detection date.
@@ -216,7 +232,9 @@ filter arguments:
                         format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
   --fixed-at TIMESTAMP  DEPRECATED. Use the '--fixed-after/--fixed-before'
                         options to filter results by fix date. Filter results
                         by fix date (fixed before the given date) if the
@@ -225,7 +243,9 @@ filter arguments:
                         date (detected before the given date). The format of
                         TIMESTAMP is 'year:month:day:hour:minute:second' (the
                         "time" part can be omitted, in which case midnight
-                        (00:00:00) is used).
+                        (00:00:00) is used). This filter is applied only to
+                        run names on the server, local report directories are
+                        not filtered by it.
   --detected-before TIMESTAMP
                         Get results which were detected before the given date.
                         The detection date of a report is the storage date
@@ -233,7 +253,9 @@ filter arguments:
                         time. The format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
   --detected-after TIMESTAMP
                         Get results which were detected after the given date.
                         The detection date of a report is the storage date
@@ -241,19 +263,47 @@ filter arguments:
                         time. The format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
   --fixed-before TIMESTAMP
                         Get results which were fixed before the given date.
                         The format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
   --fixed-after TIMESTAMP
                         Get results which were fixed after the given date. The
                         format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
-                        used).
+                        used). This filter is applied only to run names on the
+                        server, local report directories are not filtered by
+                        it.
+  --anywhere-on-report-path
+                        Filter reports where the report path not only ends in
+                        the files given by --file or --component, but goes
+                        through them. This filter is applied only to run names
+                        on the server, local report directories are not
+                        filtered by it. (default: False)
+  --single-origin-report
+                        Filter reports where the report path is entirely in
+                        the files specified by the given --component. This
+                        filter is applied only to run names on the server,
+                        local report directories are not filtered by it.
+                        (default: False)
+  --report-status [REPORT_STATUS [REPORT_STATUS ...]]
+                        Filter results by report statuses.
+                        Reports can be assigned a report status of the
+                        following values:
+                        - Outstanding: Currently detected and still unresolved
+                        reports.
+                        - Closed: Reports marked as fixed, false positive, or
+                        otherwise resolved. This filter is applied only to run
+                        names on the server, local report directories are not
+                        filtered by it.
 
 comparison modes:
   List reports that can be found only in baseline or new runs or in both. False
