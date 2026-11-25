@@ -103,13 +103,6 @@ def add_arguments_to_parser(parser):
                         help="Show checkers only from the analyzers "
                              "specified.")
 
-    parser.add_argument('-w', '--warnings',
-                        dest='show_warnings',
-                        default=argparse.SUPPRESS,
-                        action='store_true',
-                        required=False,
-                        help="DEPRECATED. Show available warning flags.")
-
     parser.add_argument('--details',
                         dest='details',
                         default=argparse.SUPPRESS,
