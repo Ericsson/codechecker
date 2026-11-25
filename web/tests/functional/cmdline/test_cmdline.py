@@ -388,6 +388,25 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(res, '')
         self.assertIn('No runs were found!', err)
 
+    def test_sum_guideline_rules(self):
+        """
+        Test the checker coverage table of the sum command lists the
+        rules of each guideline a checker belongs to.
+        """
+        check_env = self._test_config['codechecker_cfg']['check_env']
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'sum', '-a',
+                   '-o', 'csv', '--url', str(self.server_url)]
+
+        ret, out, _ = run_cmd(res_cmd, environ=check_env)
+        self.assertEqual(0, ret)
+
+        div_zero_rows = [line for line in out.splitlines()
+                         if line.startswith('core.DivideZero')
+                         and 'sei-cert-c: int33-c' in line]
+        self.assertTrue(div_zero_rows)
+        self.assertNotIn('rule:', out)
+
     def test_run_sort(self):
         """ Test cmd runs sort command. """
 
