@@ -159,7 +159,7 @@ usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
                           [--dbusername DBUSERNAME] [--dbname DBNAME]
                           [--force-authentication]
                           [-l | -r | -s | --stop-all]
-                          [--db-status STATUS | --db-upgrade-schema PRODUCT_TO_UPGRADE | --db-force-upgrade]
+                          [--db-status STATUS | --db-force-upgrade]
                           [--verbose {info,debug,debug_analyzer}]
 
 The CodeChecker Web server is used to handle the storage and navigation of
@@ -418,19 +418,15 @@ Database management arguments.:
   will be used to start the server. NOTE: Before migration it is advised to
   create a full a backup of the product databases.
 
-  --status STATUS       Name of the product to get the database status for.
+  --db-status STATUS    Name of the product to get the database status for.
                         Use 'all' to list the database statuses for all of the
-                        products.
-  --upgrade-schema PRODUCT_TO_UPGRADE
-                        Name of the product to upgrade to the latest database
-                        schema available in the package. Use 'all' to upgrade
-                        all of the products.NOTE: Before migration it is
-                        advised to create a full backup of the product
-                        databases.
-  --db-force-upgrade    Force the server to do database migration without user
-                        interaction. NOTE: Please use with caution and before
-                        automatic migration it is advised to create a full
-                        backup of the product databases.
+                        products. The server is not started, the command exits
+                        after printing the statuses.
+  --db-force-upgrade    Upgrade the schema of the configuration database and
+                        of all product databases without user interaction,
+                        then start the server. NOTE: Please use with caution
+                        and before automatic migration it is advised to create
+                        a full backup of the product databases.
 ```
 
 
