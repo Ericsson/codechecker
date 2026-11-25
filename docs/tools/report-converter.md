@@ -56,8 +56,8 @@ make package
   <summary><i>$ <b>report-converter --help</b> (click to expand)</i></summary>
 
 ```
-usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [-e EXPORT]
-                        [--meta [META ...]] [--filename FILENAME] [-c] [-v]
+usage: report-converter [-h] [--example TYPE] -o OUTPUT_DIR -t TYPE
+                        [-e EXPORT] [--filename FILENAME] [-c] [-v]
                         input [input ...]
 
 Creates a CodeChecker report directory from the given code analyzer output
@@ -83,11 +83,6 @@ options:
                         Specify the export format of the converted reports.
                         Currently supported export types are: .plist, .sarif.
                         (default: plist)
-  --meta [META ...]     Metadata information which will be stored alongside the
-                        run when the created report directory will be stored to
-                        a running CodeChecker server. It has the following
-                        format: key=value. Valid key values are:
-                        analyzer_command, analyzer_version. (default: None)
   --filename FILENAME   This option can be used to override the default plist
                         file name output of this tool. This tool can produce
                         multiple plist files on the given code analyzer output
