@@ -715,7 +715,7 @@ Personal tokens can be written instead of the user's password in the
 
 ```
 usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
-                                 [--url SERVER_URL]
+                                 --expiration EXPIRATION [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
                                  NAME
 
@@ -729,6 +729,9 @@ options:
   --description DESCRIPTION
                         A custom textual description to be shown alongside the
                         token.
+  --expiration EXPIRATION
+                        The expiry of the token in days. Minimum 1 and maximum
+                        365.
 
 common arguments:
   --url SERVER_URL      The URL of the server to access, in the format of

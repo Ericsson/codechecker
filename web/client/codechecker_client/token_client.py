@@ -38,7 +38,7 @@ def handle_add_token(args):
     client = init_auth_client(protocol, host, port)
 
     description = args.description if 'description' in args else None
-    expiration = args.expiration if 'expiration' in args else None
+    expiration = args.expiration
     personal_access_token = \
         client.newPersonalAccessToken(args.name, description, expiration)
 
