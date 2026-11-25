@@ -282,7 +282,7 @@ class TestCmdline(unittest.TestCase):
         """
         analyzer_cfg_cmd = [env.codechecker_cmd(), 'analyzers',
                             '--analyzer-config', 'clangsa',
-                            '-o', 'json', '--details']
+                            '-o', 'json']
 
         _, out, _ = run_cmd(analyzer_cfg_cmd)
         analyzer_cfg = json.loads(out)

@@ -418,7 +418,7 @@ class TestCtuFailure(unittest.TestCase):
         return out, result
 
     def __get_clangsa_path(self):
-        cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
+        cmd = [self._codechecker_cmd, 'analyzers', '-o', 'json']
         output, _, result = call_command(cmd, cwd=self.test_workspace,
                                          env=self.env)
         self.assertEqual(result, 0, "Failed to run analyzer.")

@@ -51,20 +51,6 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    parser.add_argument('--all',
-                        dest="all",
-                        action='store_true',
-                        default=argparse.SUPPRESS,
-                        required=False,
-                        help="DEPRECATED.")
-
-    parser.add_argument('--details',
-                        dest="details",
-                        action='store_true',
-                        default=argparse.SUPPRESS,
-                        required=False,
-                        help="DEPRECATED.")
-
     parser.add_argument('--dump-config',
                         dest='dump_config',
                         required=False,

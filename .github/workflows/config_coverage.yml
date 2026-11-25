@@ -136,7 +136,7 @@ jobs:
       - name: "Dump checker list"
         run: |
           export PATH="${{ steps.codechecker.outputs.CODECHECKER_PATH }}:$PATH"
-          CodeChecker analyzers --details
+          CodeChecker analyzers
           CodeChecker checkers \
             --analyzer clangsa clang-tidy cppcheck \
             --output rows \
