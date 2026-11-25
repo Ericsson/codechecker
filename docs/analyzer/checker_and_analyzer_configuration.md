@@ -24,7 +24,7 @@ be used to configure these:
   by default.
 
 The available configuration options can be listed with the following commands:
-* `CodeChecker analyzers --analyzer-config <analyzer> --details` lists the
+* `CodeChecker analyzers --analyzer-config <analyzer>` lists the
   options that can be passed to `--analyzer-config`.
 * `CodeChecker checkers` lists the available checkers that can be enabled or
   disabled.
