@@ -15,6 +15,7 @@ a CodeChecker server.
     * [Leak Sanitizer](#leak-sanitizer)
   * [Cppcheck](#cppcheck)
   * [GNU GCC Static Analyzer](#gnu-gcc-static-analyzer)
+  * [Clazy](#clazy)
   * [Spotbugs](#spotbugs)
   * [Facebook Infer](#facebook-infer)
   * [ESLint](#eslint)
@@ -75,10 +76,10 @@ options:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-tidy,
-                        coccinelle, cppcheck, cpplint, eslint, fbinfer, gcc,
-                        golint, kernel-doc, lsan, mdl, msan, pyflakes, pylint,
-                        roslynator, smatch, sparse, sphinx, spotbugs, tsan,
-                        tslint, ubsan.
+                        clazy, coccinelle, cppcheck, cpplint, eslint, fbinfer,
+                        gcc, golint, kernel-doc, lsan, mdl, msan, pyflakes,
+                        pylint, roslynator, smatch, sparse, sphinx, spotbugs,
+                        tsan, tslint, ubsan.
   -e EXPORT, --export EXPORT
                         Specify the export format of the converted reports.
                         Currently supported export types are: .plist, .sarif.
@@ -108,6 +109,7 @@ options:
 Supported analyzers:
   asan - AddressSanitizer, https://clang.llvm.org/docs/AddressSanitizer.html
   clang-tidy - Clang Tidy, https://clang.llvm.org/extra/clang-tidy
+  clazy - Clazy, https://invent.kde.org/sdk/clazy
   coccinelle - Coccinelle, https://github.com/coccinelle/coccinelle
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
   cpplint - cpplint, https://github.com/cpplint/cpplint
@@ -305,6 +307,37 @@ report-converter -t gcc -o my_file.cpp.sarif ./gcc_reports
 # Store the gcc reports with CodeChecker.
 CodeChecker store ./codechecker_cppcheck_reports -n gcc_reports
 ```
+
+### Clazy
+[Clazy](https://invent.kde.org/sdk/clazy) is a Clang based static analyzer
+for `C++` code that uses the [Qt](https://www.qt.io/) framework.
+
+Run `clazy-standalone` on the source files of your project and redirect its
+output to a file. Clazy prints its warnings to the standard error stream, so
+redirect both streams:
+
+```sh
+# Run clazy by using a compile command database in the ./build directory.
+clazy-standalone --checks=level1 -p ./build my_file.cpp \
+  > ./clazy_reports.out 2>&1
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of clazy.
+report-converter -t clazy -o ./codechecker_clazy_reports ./clazy_reports.out
+
+# Store the clazy reports with CodeChecker.
+CodeChecker store ./codechecker_clazy_reports -n clazy
+```
+
+Clazy checks get the `clazy-` prefix, e.g. `-Wclazy-old-style-connect` is
+reported as `clazy-old-style-connect`. Compiler warnings found during the
+analysis are reported like Clang-Tidy reports them, e.g. `-Wunused-variable`
+as `clang-diagnostic-unused-variable`, and compile errors as
+`clang-diagnostic-error`.
+
+Pass the Qt include directories with `-isystem` instead of `-I` (or use the
+`--ignore-dirs` option of clazy), otherwise clazy also reports the warnings
+found in the Qt headers.
 
 ### Spotbugs
 [Spotbugs](https://spotbugs.github.io/) is a static analysis tool for `Java`

@@ -1,0 +1,5 @@
+files/missing_include.cpp:2:10: fatal error: 'does_not_exist.h' file not found
+#include "does_not_exist.h"
+         ^~~~~~~~~~~~~~~~~~
+1 error generated.
+Error while processing files/missing_include.cpp.

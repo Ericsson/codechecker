@@ -16,6 +16,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  | ✓ |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
+|                | [Clazy](tools/report-converter.md#clazy)    | ✓ |
 |                | [Cppcheck](tools/report-converter.md#cppcheck)    | ✓ |
 |                | [Facebook Infer](tools/report-converter.md#facebook-infer)    | ✓ |
 |                | [Coccinelle](tools/report-converter.md#coccinelle)   | ✓ |
