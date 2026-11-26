@@ -115,9 +115,23 @@ def generate_invocation_list(triple_arch, action, source, config):
         invocation_file.write(invocation_line)
 
 
+def collect_failure(step, cmd, ret_code, stdout, stderr):
+    """ Describe a failed CTU collect step, so that the caller can save it
+    for later investigation. """
+    return {
+        'step': step,
+        'cmd': cmd,
+        'returncode': ret_code,
+        'stdout': stdout,
+        'stderr': stderr}
+
+
 def generate_ast(triple_arch, action, source, config):
     """ Generates ASTs for the current compilation command. Used during
-    ast-dump based analysis. """
+    ast-dump based analysis.
+
+    Returns None on success, or the failure description created by
+    collect_failure() if the AST could not be generated. """
 
     cmd, ast_dir = generate_ast_cmd(action, config, triple_arch, source)
 
@@ -128,12 +142,15 @@ def generate_ast(triple_arch, action, source, config):
             pass
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'", cmdstr)
-    ret_code, _, err = \
+    ret_code, out, err = \
         analyzer_base.SourceAnalyzer.run_proc(cmd, action.directory, None)
 
     if ret_code != 0:
         LOG.error("Error generating AST.\n\ncommand:\n\n%s\n\nstderr:\n\n%s",
                   cmdstr, err)
+        return collect_failure('ast_dump', cmd, ret_code, out, err)
+
+    return None
 
 
 def ast_dump_path(source_path):
@@ -196,6 +213,9 @@ def map_functions(triple_arch, action, source, config,
         On-demand CTU analysis requires the *mangled name* to *source file*
         mapping. However in case of pre-processed ast-dumps, *mangled name* to
         *ast dump* mapping must be provided.
+
+        Returns None on success, or the failure description created by
+        collect_failure() if the mapping tool failed.
     """
 
     cmd = get_extdef_mapping_cmd(action, config, source, func_map_cmd)
@@ -207,7 +227,7 @@ def map_functions(triple_arch, action, source, config,
     if ret_code != 0:
         LOG.error("Error generating function map."
                   "\n\ncommand:\n\n%s\n\nstderr:\n\n%s", cmdstr, err)
-        return
+        return collect_failure('extdef_mapping', cmd, ret_code, stdout, err)
 
     func_src_list = stdout.splitlines()
     func_ast_list = func_map_list_src_to_ast(
@@ -226,3 +246,5 @@ def map_functions(triple_arch, action, source, config,
                                          delete=False,
                                          encoding='utf-8') as out_file:
             out_file.write("\n".join(func_ast_list) + "\n")
+
+    return None
