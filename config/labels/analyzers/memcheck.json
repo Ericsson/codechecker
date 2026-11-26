@@ -1,0 +1,32 @@
+{
+  "analyzer": "memcheck",
+  "labels": {
+    "Memcheck.ClientCheck": ["severity:UNSPECIFIED", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.clientreqs"],
+    "Memcheck.CoreMemError": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#manual-core.signals"],
+    "Memcheck.FatalSignal": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#manual-core.signals"],
+    "Memcheck.FdBadClose": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Memcheck.FdBadUse": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Memcheck.FdNotClosed": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/manual-core.html#opt.track-fds"],
+    "Memcheck.FishyValue": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.fishyvalue"],
+    "Memcheck.InvalidAlignment": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.alignment"],
+    "Memcheck.InvalidFree": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.badfrees"],
+    "Memcheck.InvalidJump": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.errormsgs"],
+    "Memcheck.InvalidMemPool": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.mempools"],
+    "Memcheck.InvalidRead": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.badrw"],
+    "Memcheck.InvalidSize": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.alignment"],
+    "Memcheck.InvalidSizeAndAlignment": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.alignment"],
+    "Memcheck.InvalidWrite": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.badrw"],
+    "Memcheck.Leak_DefinitelyLost": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.leaks"],
+    "Memcheck.Leak_IndirectlyLost": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.leaks"],
+    "Memcheck.Leak_PossiblyLost": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.leaks"],
+    "Memcheck.Leak_StillReachable": ["severity:LOW", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.leaks"],
+    "Memcheck.MismatchedAllocateDeallocateAlignment": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.alignment"],
+    "Memcheck.MismatchedAllocateDeallocateSize": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.alignment"],
+    "Memcheck.MismatchedFree": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.rudefn"],
+    "Memcheck.Overlap": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.overlap"],
+    "Memcheck.ReallocSizeZero": ["severity:MEDIUM", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.reallocsizezero"],
+    "Memcheck.SyscallParam": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.bad-syscall-args"],
+    "Memcheck.UninitCondition": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.uninitvals"],
+    "Memcheck.UninitValue": ["severity:HIGH", "doc_url:https://valgrind.org/docs/manual/mc-manual.html#mc-manual.uninitvals"]
+  }
+}
