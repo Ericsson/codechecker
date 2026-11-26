@@ -7,6 +7,8 @@
 # -------------------------------------------------------------------------
 
 import glob
+import html
+import json
 import os
 import re
 import shutil
@@ -18,8 +20,21 @@ from libtest import env
 
 from codechecker_report_converter.report.output.html import \
     html as report_to_html
-from codechecker_report_converter.report import report_file, \
-    reports as reports_helper
+from codechecker_report_converter.report import BugPathEvent, File, \
+    Report, report_file, reports as reports_helper
+
+
+def get_title(html_content: str) -> str:
+    """ Return the raw content of the <title> tag of the given HTML. """
+    titles = re.findall(r'<title>(.*?)</title>', html_content)
+    assert len(titles) == 1, titles
+    return titles[0]
+
+
+def read_file(file_path: str) -> str:
+    """ Return the content of the given file. """
+    with open(file_path, 'r', encoding="utf-8", errors="ignore") as f:
+        return f.read()
 
 
 def get_project_path(test_project) -> str:
@@ -193,3 +208,77 @@ class PlistToHtmlTest(unittest.TestCase):
             # The links should be relative so the static HTML folder is
             # portable.
             self.assertNotIn('"link": "/', content)
+
+    def test_report_title_in_report_data(self):
+        """ Every report gets a "file:line [checker] - CodeChecker" title. """
+        proj_simple = os.path.join(self.test_workspace, 'test_files', 'simple')
+        plist_file = os.path.join(proj_simple, 'simple.plist')
+
+        reports = report_file.get_reports(plist_file)
+
+        html_builder = report_to_html.HtmlBuilder(self.layout_dir)
+        html_reports, _ = html_builder._get_html_reports(reports)
+
+        self.assertEqual(len(html_reports), len(reports))
+        for report, html_report in zip(reports, html_reports):
+            self.assertEqual(
+                html_report['title'],
+                f"{os.path.basename(report.file.path)}:{report.line} "
+                f"[{report.checker_name}] - CodeChecker")
+
+    def test_page_titles(self):
+        """ Generated pages set their title according to their content. """
+        output_dir = self.__test_html_builder('simple')
+
+        self.assertEqual(
+            get_title(read_file(os.path.join(output_dir, 'index.html'))),
+            "Reports - CodeChecker")
+        self.assertEqual(
+            get_title(read_file(os.path.join(output_dir, 'statistics.html'))),
+            "Statistics - CodeChecker")
+
+        # The per-file page initially shows the title of its first report.
+        plist_file = os.path.join(
+            self.test_workspace, 'test_files', 'simple', 'simple.plist')
+        first_report = report_file.get_reports(plist_file)[0]
+        self.assertEqual(
+            get_title(read_file(
+                os.path.join(output_dir, 'simple.plist.html'))),
+            f"{os.path.basename(first_report.file.path)}:"
+            f"{first_report.line} [{first_report.checker_name}] - "
+            "CodeChecker")
+
+    def test_title_escaping(self):
+        """
+        Special characters in the title are HTML-escaped in the <title> tag,
+        are not HTML-escaped in the report data (it is set through
+        document.title) and can't break out of the <script> tag.
+        """
+        proj_dir = os.path.join(self.test_workspace, 'test_files', 'escape')
+        os.makedirs(proj_dir, exist_ok=True)
+        source_path = os.path.join(proj_dir, 'a&b.c')
+        with open(source_path, 'w', encoding='utf-8') as f:
+            f.write("int main() {\n  return 1 / 0;\n}\n")
+
+        source_file = File(source_path)
+        checker_name = 'x</script><b>"y\''
+        report = Report(
+            source_file, 2, 12, "Division by zero", checker_name,
+            report_hash='abc',
+            bug_path_events=[BugPathEvent(
+                "Division by zero", source_file, 2, 12)])
+
+        output_path = os.path.join(proj_dir, 'escape.plist.html')
+        html_builder = report_to_html.HtmlBuilder(self.layout_dir)
+        html_builder.create(output_path, [report])
+
+        content = read_file(output_path)
+        expected_title = f"a&b.c:2 [{checker_name}] - CodeChecker"
+
+        self.assertEqual(get_title(content), html.escape(expected_title))
+        self.assertNotIn('</script><b>', content)
+
+        report_data = re.search(
+            r'var data = (.*);\n', content).group(1)
+        self.assertEqual(
+            json.loads(report_data)['reports'][0]['title'], expected_title)

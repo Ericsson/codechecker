@@ -116,6 +116,7 @@ var BugViewer = {
     this.setChecker(report.checker);
     this.setReviewStatus(report.reviewStatus);
 
+    document.title = report.title;
     window.location.hash = '#reportHash=' + report.reportHash;
   },
 
