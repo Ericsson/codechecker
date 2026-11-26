@@ -138,6 +138,70 @@ class TestCtu(unittest.TestCase):
                              check=False).returncode)
 
     @skipUnlessCTUCapable
+    def test_secondary_compile_analysis_requires_ctu_mode(self):
+        """ Test secondary-compile-analysis option requires ctu mode. """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa',
+               '--secondary-compile-analysis', 'stu', self.buildlog]
+
+        self.assertEqual(1,
+                         run(cmd, cwd=self.test_dir, env=self.env,
+                             check=False).returncode)
+
+    @skipUnlessCTUCapable
+    def test_secondary_compile_analysis(self):
+        """
+        Compilations removed by uniqueing are analyzed without CTU only if
+        '--secondary-compile-analysis stu' is given.
+        """
+        with open(self.buildlog, encoding='utf-8') as f:
+            buildlog = json.load(f)
+        secondary = dict(buildlog[0])
+        secondary['command'] = secondary['command'].replace(
+            '-o lib.o', '-DSECONDARY -o lib_secondary.o')
+        buildlog.append(secondary)
+        with open(self.buildlog, 'w', encoding='utf-8') as f:
+            json.dump(buildlog, f)
+
+        def analyze(*extra_args):
+            shutil.rmtree(self.report_dir, ignore_errors=True)
+            cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+                   '--analyzers', 'clangsa', '--ctu', self.buildlog,
+                   *extra_args]
+            out, _, result = call_command(cmd, cwd=self.test_dir,
+                                          env=self.env)
+            self.assertEqual(result, 0, "Analyzing failed.")
+            return out
+
+        analyze()
+        self.assertEqual(
+            len(glob.glob(os.path.join(self.report_dir, 'lib.c_*.plist'))),
+            1)
+        self.assertFalse(os.path.exists(os.path.join(
+            self.report_dir, 'secondary_compile_commands.json')))
+
+        out = analyze('--secondary-compile-analysis', 'stu')
+        self.assertIn('lib.c (secondary, without CTU) successfully', out)
+        self.assertEqual(
+            len(glob.glob(os.path.join(self.report_dir, 'lib.c_*.plist'))),
+            2)
+
+        with open(os.path.join(self.report_dir,
+                               'secondary_compile_commands.json'),
+                  encoding='utf-8') as f:
+            secondary_commands = json.load(f)
+        self.assertEqual(len(secondary_commands), 1)
+        self.assertIn('-DSECONDARY', secondary_commands[0]['command'])
+
+        with open(os.path.join(self.report_dir,
+                               'unique_compile_commands.json'),
+                  encoding='utf-8') as f:
+            unique_commands = json.load(f)
+        self.assertEqual(len(unique_commands), 2)
+        self.assertFalse(any('-DSECONDARY' in c['command']
+                             for c in unique_commands))
+
+    @skipUnlessCTUCapable
     def test_system_headers_last(self):
         """
         Test if implicit system include paths are appended after all

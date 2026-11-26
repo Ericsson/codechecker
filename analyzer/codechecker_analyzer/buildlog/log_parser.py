@@ -1006,7 +1006,8 @@ def parse_options(compilation_db_entry,
         'lang': None,
         'arch': '',  # Target in the compile command set by -arch.
         'target': '',
-        'source': ''}
+        'source': '',
+        'secondary': False}
 
     if 'arguments' in compilation_db_entry:
         gcc_command = compilation_db_entry['arguments']
@@ -1274,7 +1275,8 @@ def parse_unique_log(compilation_database,
                      jobs=None,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
-                     ctu_or_stats_enabled=False):
+                     ctu_or_stats_enabled=False,
+                     keep_secondary=False):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is
@@ -1322,9 +1324,13 @@ def parse_unique_log(compilation_database,
                                  skipped during pre analysis
     ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
                             influences the behavior which files are skipped.
+    keep_secondary -- In "alpha" and regex uniqueing modes, also return the
+                      compile commands removed by uniqueing, marked as
+                      secondary. Exact duplicates are still removed.
     """
     try:
         uniqued_build_actions = {}
+        removed_build_actions = []
         uniqueing_re = None
 
         if compile_uniqueing == "alpha":
@@ -1410,7 +1416,11 @@ def parse_unique_log(compilation_database,
                         uniqued_build_actions[action.source] = action
                     elif action.output <\
                             uniqued_build_actions[action.source].output:
+                        removed_build_actions.append(
+                            uniqued_build_actions[action.source])
                         uniqued_build_actions[action.source] = action
+                    else:
+                        removed_build_actions.append(action)
                 elif build_action_uniqueing ==\
                         CompileActionUniqueingType.SYMLINK:
                     real_path = os.path.realpath(action.source)
@@ -1426,6 +1436,8 @@ def parse_unique_log(compilation_database,
                         not uniqueing_re.match(
                             uniqued_build_actions[action.source]
                             .original_command):
+                        removed_build_actions.append(
+                            uniqued_build_actions[action.source])
                         uniqued_build_actions[action.source] = action
                     elif uniqueing_re.match(action.original_command) and\
                         uniqueing_re.match(
@@ -1438,9 +1450,23 @@ def parse_unique_log(compilation_database,
                                   action.original_command,
                                   compile_uniqueing)
                         sys.exit(1)
+                    else:
+                        removed_build_actions.append(action)
+
+        build_actions = list(uniqued_build_actions.values())
+
+        if keep_secondary:
+            primary_commands = {a.original_command for a in build_actions}
+            secondary_build_actions = {}
+            for action in removed_build_actions:
+                if action.original_command not in primary_commands and \
+                        action not in secondary_build_actions:
+                    secondary_build_actions[action] = \
+                        action.with_attr('secondary', True)
+            build_actions.extend(secondary_build_actions.values())
 
         LOG.debug('Parsing log file done.')
-        return list(uniqued_build_actions.values()), skipped_cmp_cmd_count
+        return build_actions, skipped_cmp_cmd_count
 
     except (ValueError, KeyError, TypeError) as ex:
         if not compilation_database:
