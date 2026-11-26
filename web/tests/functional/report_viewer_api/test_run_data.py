@@ -13,6 +13,7 @@ Analysis run related tests.
 
 from datetime import datetime
 import os
+import re
 import unittest
 
 from libtest import env
@@ -155,10 +156,8 @@ class TestRunData(unittest.TestCase):
         runs = self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
 
         for i in range(len(runs) - 1):
-            date1 = datetime.strptime(runs[i].runDate,
-                                      '%Y-%m-%d %H:%M:%S.%f')
-            date2 = datetime.strptime(runs[i + 1].runDate,
-                                      '%Y-%m-%d %H:%M:%S.%f')
+            date1 = datetime.fromisoformat(runs[i].runDate)
+            date2 = datetime.fromisoformat(runs[i + 1].runDate)
             self.assertTrue(date1 <= date2)
 
         # Sort runs by CodeChecker version field.
@@ -175,6 +174,40 @@ class TestRunData(unittest.TestCase):
         # contains special characters.
         sort_mode = RunSortMode(RunSortType.NAME, Order.ASC)
         self._cc_client.getRunData(None, MAX_QUERY_SIZE, 0, sort_mode)
+
+    def test_dates_have_timezone_offset(self):
+        """
+        Dates are sent with microseconds and an explicit UTC offset, so the
+        client can tell which timezone they are in.
+        """
+        api_date = re.compile(
+            r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}[+-]\d{2}:\d{2}$')
+
+        runs = self.__get_runs()
+        self.assertNotEqual(len(runs), 0)
+        run_ids = [run.runId for run in runs]
+        for run in runs:
+            self.assertRegex(run.runDate, api_date)
+
+        history = self._cc_client.getRunHistory(
+            run_ids, MAX_QUERY_SIZE, 0, None)
+        self.assertNotEqual(len(history), 0)
+        for h in history:
+            self.assertRegex(h.time, api_date)
+
+        tags = self._cc_client.getRunHistoryTagCounts(
+            run_ids, ReportFilter(), None, MAX_QUERY_SIZE, 0)
+        self.assertNotEqual(len(tags), 0)
+        for tag in tags:
+            self.assertRegex(tag.time, api_date)
+
+        reports = self._cc_client.getRunResults(
+            run_ids, 10, 0, None, ReportFilter(), None, False)
+        self.assertNotEqual(len(reports), 0)
+        for report in reports:
+            self.assertRegex(report.detectedAt, api_date)
+            if report.fixedAt:
+                self.assertRegex(report.fixedAt, api_date)
 
     def test_analysis_info(self):
         """

@@ -362,8 +362,7 @@ class TestReportFilter(unittest.TestCase):
             [self._runids[0]], 1, 0, None, ReportFilter(), None, False)
         self.assertEqual(len(run_results), 1)
 
-        detected_after = datetime.strptime(run_results[0].detectedAt,
-                                           '%Y-%m-%d %H:%M:%S.%f')
+        detected_after = datetime.fromisoformat(run_results[0].detectedAt)
         detected_before = detected_after + timedelta(0, 1)
 
         before = detected_before.timestamp()
@@ -384,8 +383,7 @@ class TestReportFilter(unittest.TestCase):
                                                     False)
         self.assertNotEqual(len(run_results), 0)
 
-        fixed_after = datetime.strptime(run_results[0].fixedAt,
-                                        '%Y-%m-%d %H:%M:%S.%f')
+        fixed_after = datetime.fromisoformat(run_results[0].fixedAt)
         fixed_before = fixed_after + timedelta(0, 1)
 
         before = fixed_before.timestamp()

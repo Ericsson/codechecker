@@ -194,13 +194,13 @@
         <v-col>
           <report-info-item
             :title="formatLabel('detectedAt')"
-            :value="value['detectedAt']"
+            :value="formatDateTime(value['detectedAt'])"
           />
         </v-col>
         <v-col>
           <report-info-item
             :title="formatLabel('fixedAt')"
-            :value="value['fixedAt']"
+            :value="formatDateTime(value['fixedAt'])"
           />
         </v-col>
       </v-row>
@@ -215,6 +215,7 @@ import {
   ReviewStatusIcon,
   SeverityIcon
 } from "@/components/Icons";
+import { formatDateTime } from "@/composables/useDateUtils";
 import { useDetectionStatus } from "@/composables/useDetectionStatus";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 import { useSeverity } from "@/composables/useSeverity";

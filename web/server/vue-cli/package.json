@@ -114,6 +114,7 @@
     "node": ">=14.17.0"
   },
   "jest": {
+    "globalSetup": "<rootDir>/jest.global-setup.js",
     "moduleFileExtensions": [
       "js",
       "json",

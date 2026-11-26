@@ -45,10 +45,10 @@ def get_severity_level(name):
 def str_to_date(date_str):
     """ Converts the given string to date.
 
-    If the given string and the format code passed to the strptime() doesn't
-    match, it will throw a ValueError exception.
+    If the given string is not a valid ISO 8601 date, it will throw a
+    ValueError exception.
     """
-    return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+    return datetime.fromisoformat(date_str)
 
 
 class DiffRemote(unittest.TestCase):

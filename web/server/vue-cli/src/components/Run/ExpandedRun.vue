@@ -150,7 +150,7 @@
 
 <script setup>
 import { useDateUtils } from "@/composables/useDateUtils";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { computed } from "vue";
 import { AnalysisInfoDialog } from "@/components";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
@@ -170,7 +170,7 @@ const emit = defineEmits([
   "update:selected-compared-to-tags"
 ]);
 
-const { prettifyDate } = useDateUtils();
+const { prettifyDate, toDate } = useDateUtils();
 
 const baselineTags = computed({
   get() {
@@ -192,8 +192,7 @@ const comparedToTags = computed({
 
 const formattedHistories = computed(function() {
   return props.histories.reduce((acc, curr) => {
-    const _date =
-      parse(curr.time, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
+    const _date = toDate(curr.time);
 
     const _group = format(_date, "MMMM, yyyy");
 

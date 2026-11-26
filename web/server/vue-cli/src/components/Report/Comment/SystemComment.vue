@@ -26,6 +26,8 @@
 import { computed } from "vue";
 import DOMPurify from "dompurify";
 
+import { formatDateTime } from "@/composables/useDateUtils";
+
 const props = defineProps({
   comment: { type: Object, required: true },
 });
@@ -56,7 +58,7 @@ const messageParts = computed(() => {
     if (dateIndex > currentIndex) {
       parts.push({ text: msg.slice(currentIndex, dateIndex), bold: false });
     }
-    parts.push({ text: props.comment.createdAt, bold: false });
+    parts.push({ text: formatDateTime(props.comment.createdAt), bold: false });
     currentIndex = dateIndex + "%date%".length;
   }
   

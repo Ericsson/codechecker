@@ -73,7 +73,8 @@ from ..database.run_db_model import \
     ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent, SourceComponentFile, FilterPreset
 
-from .common import exc_to_thrift_reqfail
+from .common import api_str_to_datetime, datetime_to_api_str, \
+    exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -398,8 +399,7 @@ def process_report_filter(
     if report_filter.runHistoryTag:
         OR = []
         for history_date in report_filter.runHistoryTag:
-            date = datetime.strptime(history_date,
-                                     '%Y-%m-%d %H:%M:%S.%f')
+            date = api_str_to_datetime(history_date)
             OR.append(and_(Report.detected_at <= date, or_(
                 Report.fixed_at.is_(None), Report.fixed_at >= date)))
         if OR:
@@ -972,7 +972,7 @@ def comment_data_db_to_api(comm):
         id=comm.id,
         author=comm.author,
         message=get_comment_msg(comm),
-        createdAt=str(comm.created_at),
+        createdAt=datetime_to_api_str(comm.created_at),
         kind=comm.kind
     )
 
@@ -1021,7 +1021,7 @@ def create_review_data(
         status=review_status_enum(review_status),
         comment=None if message is None else message.decode('utf-8'),
         author=author,
-        date=None if date is None else str(date),
+        date=datetime_to_api_str(date),
         isInSource=is_in_source)
 
 
@@ -1606,7 +1606,7 @@ class ThriftRequestHandler:
 
                 analyzer_stats = analyzer_statistics[run_id]
                 results.append(RunData(runId=run_id,
-                                       runDate=str(run_date),
+                                       runDate=datetime_to_api_str(run_date),
                                        name=run_name,
                                        duration=duration,
                                        resultCount=report_count,
@@ -1986,7 +1986,7 @@ class ThriftRequestHandler:
                     runName=history.run.name,
                     versionTag=history.version_tag,
                     user=history.user,
-                    time=str(history.time),
+                    time=datetime_to_api_str(history.time),
                     codeCheckerVersion=history.cc_version,
                     analyzerStatistics=analyzer_statistics,
                     description=history.description))
@@ -2046,8 +2046,8 @@ class ThriftRequestHandler:
                     report.review_status_date,
                     report.review_status_is_in_source),
                 detectionStatus=detection_status_enum(report.detection_status),
-                detectedAt=str(report.detected_at),
-                fixedAt=str(report.fixed_at) if report.fixed_at else None)
+                detectedAt=datetime_to_api_str(report.detected_at),
+                fixedAt=datetime_to_api_str(report.fixed_at))
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2357,8 +2357,9 @@ class ThriftRequestHandler:
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
                                     row.detection_status),
-                                   detectedAt=str(row.detected_at),
-                                   fixedAt=str(row.fixed_at),
+                                   detectedAt=datetime_to_api_str(
+                                       row.detected_at),
+                                   fixedAt=datetime_to_api_str(row.fixed_at),
                                    bugPathLength=row.path_length,
                                    details=report_details.get(row.id),
                                    blameInfo=blame_info,
@@ -2472,9 +2473,10 @@ class ThriftRequestHandler:
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
                                        report.detection_status),
-                                   detectedAt=str(report.detected_at),
-                                   fixedAt=str(report.fixed_at) if
-                                   report.fixed_at else None,
+                                   detectedAt=datetime_to_api_str(
+                                       report.detected_at),
+                                   fixedAt=datetime_to_api_str(
+                                       report.fixed_at),
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
                                    blameInfo=blame_info,
@@ -2935,7 +2937,7 @@ class ThriftRequestHandler:
                         comment.id,
                         comment.author,
                         message,
-                        str(comment.created_at),
+                        datetime_to_api_str(comment.created_at),
                         comment_kind_to_thrift_type(comment.kind)))
 
                 return result
@@ -3975,7 +3977,8 @@ class ThriftRequestHandler:
 
             for _, run_id, run_name, tag_id, version_time, tag, count in q:
                 results.append(RunTagCount(id=tag_id,
-                                           time=str(version_time),
+                                           time=datetime_to_api_str(
+                                               version_time),
                                            name=tag,
                                            runName=run_name,
                                            runId=run_id,
@@ -4635,7 +4638,7 @@ class ThriftRequestHandler:
                     id=data.id,
                     author=data.author,
                     message=html.unescape(data.message.decode('utf-8')),
-                    createdAt=str(data.created_at),
+                    createdAt=datetime_to_api_str(data.created_at),
                     kind=data.kind)
                 comment_data_list[report_id].append(comment_data)
 
@@ -4679,8 +4682,7 @@ class ThriftRequestHandler:
             for bug_hash, comments in exportData.comments.items():
                 db_comments = comments_in_db[bug_hash]
                 for comment in comments:
-                    date = datetime.strptime(comment.createdAt,
-                                             '%Y-%m-%d %H:%M:%S.%f')
+                    date = api_str_to_datetime(comment.createdAt)
                     message = comment.message.encode('utf-8') \
                         if comment.message else b''
                     # See if the comment is already in the database.
@@ -4703,10 +4705,9 @@ class ThriftRequestHandler:
             for bug_hash, imported_review in exportData.reviewData.items():
                 db_status = db_review_data.get(bug_hash)
                 # The status is up-to-date.
-                if db_status and str(db_status.date) == imported_review.date:
+                date = api_str_to_datetime(imported_review.date)
+                if db_status and db_status.date == date:
                     continue
-                date = datetime.strptime(imported_review.date,
-                                         '%Y-%m-%d %H:%M:%S.%f')
                 self._setReviewStatus(session,
                                       bug_hash,
                                       imported_review.status,
