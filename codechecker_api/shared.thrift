@@ -71,6 +71,7 @@ enum Permission {
   PRODUCT_ACCESS  = 17,        // scope: PRODUCT
   PRODUCT_STORE   = 18,        // scope: PRODUCT
   PRODUCT_VIEW    = 19,        // scope: PRODUCT
+  PRODUCT_CACHE   = 20,        // scope: PRODUCT
 }
 
 /**

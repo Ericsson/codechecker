@@ -53,7 +53,7 @@ except Exception:
 
 def get_client_api_version() -> str:
     """ Get the client API version. """
-    return "6.74"
+    return "6.75"
 
 
 CLIENT_API = get_client_api_version()

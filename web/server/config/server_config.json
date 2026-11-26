@@ -9,6 +9,14 @@
       "compilation_database_size": 104857600
     }
   },
+  "analysis_cache": {
+    "url": null,
+    "user": null,
+    "password_file": null,
+    "timeout": 30,
+    "max_files_per_entry": 3,
+    "max_content_size": 20971520
+  },
   "keepalive": {
     "enabled": false,
     "idle": 600,

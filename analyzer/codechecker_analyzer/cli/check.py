@@ -23,6 +23,7 @@ from codechecker_analyzer.arg import \
     analyzer_config, checker_config, existing_abspath
 
 from codechecker_analyzer.cli.analyze import \
+    add_analysis_cache_arguments, check_analysis_cache_args, \
     EPILOG_ENV_VAR as analyzer_epilog_env_var, \
     EPILOG_ISSUE_HASHES as analyzer_epilog_issue_hashes
 
@@ -494,6 +495,8 @@ used to generate a log file on the fly.""")
                                     "that much of a slowdown compared to "
                                     "using only the Z3 solver.")
 
+    add_analysis_cache_arguments(parser)
+
     ctu_opts = parser.add_argument_group(
         "cross translation unit analysis arguments",
         """
@@ -881,6 +884,9 @@ def main(args):
         LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
         sys.exit(1)
 
+    # Validate before the (possibly long) build is started.
+    check_analysis_cache_args(args)
+
     def __update_if_key_exists(source, target, key):
         """Append the source Namespace's element with 'key' to target with
         the same key, but only if it exists."""
@@ -978,7 +984,11 @@ def main(args):
                           'add_gcc_include_dirs_with_isystem',
                           'compiler_info_file',
                           'dump_compiler_info_file',
-                          'enable_z3_refutation']
+                          'enable_z3_refutation',
+                          'cache_url',
+                          'no_cache',
+                          'source_root',
+                          'debug_cache']
         for key in args_to_update:
             __update_if_key_exists(args, analyze_args, key)
         if 'clean' in args:

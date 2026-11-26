@@ -30,6 +30,7 @@ NON_PRODUCT_ENDPOINTS += ["Authentication",
                           "Products",
                           "CodeCheckerService",
                           "Tasks",
+                          "AnalysisCache",
                           ]
 
 

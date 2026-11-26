@@ -27,6 +27,7 @@ thrift_stubs: clean_thrift_stubs
 	  -v $(API_DIR):/data \
 	  ${THRIFT_DOCKER_IMAGE} \
 	  /bin/bash -c " \
+		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/analysis_cache.thrift && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/authentication.thrift && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/configuration.thrift  && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/products.thrift       && \

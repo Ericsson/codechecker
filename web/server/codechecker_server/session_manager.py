@@ -241,6 +241,8 @@ class SessionManager:
         self.__max_run_count = self.scfg_dict.get('max_run_count', None)
         self.__store_config = self.scfg_dict.get('store', {})
         self.__keepalive_config = self.scfg_dict.get('keepalive', {})
+        self.__analysis_cache_config = \
+            self.scfg_dict.get('analysis_cache') or {}
         self.__auth_config = self.scfg_dict['authentication']
 
         if force_auth:
@@ -526,6 +528,11 @@ class SessionManager:
                 self.__store_config = new_store_config_val
                 LOG.debug("Updating 'store' config from %s to %s",
                           prev_store_config, new_store_config)
+
+            new_cache_config = cfg_dict.get('analysis_cache') or {}
+            if new_cache_config != self.__analysis_cache_config:
+                self.__analysis_cache_config = new_cache_config
+                LOG.debug("Updated 'analysis_cache' config.")
 
             update_sessions = False
             auth_fields_to_update = ['session_lifetime', 'refresh_time',
@@ -1044,6 +1051,14 @@ class SessionManager:
         we can upload unlimited number of runs.
         """
         return self.__max_run_count
+
+    def get_analysis_cache_config(self) -> dict:
+        """
+        Returns the 'analysis_cache' section of the server configuration
+        (bazel-remote backend access and input limits). An empty dict means
+        that the analysis cache is not configured.
+        """
+        return dict(self.__analysis_cache_config)
 
     def get_analysis_statistics_dir(self):
         """

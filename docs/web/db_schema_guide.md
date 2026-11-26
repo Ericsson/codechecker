@@ -176,6 +176,11 @@ NOTE: After the configuration database was upgraded only the newer CodeChecker
 releases will be able to read up the configuration. The older versions will
 fail to start.
 
+NOTE: The configuration database revision `a7c3e1f2b9d4` adds the
+`PRODUCT_CACHE` permission (used by the analysis cache) to the product
+permission enum. Without this upgrade, granting `PRODUCT_CACHE` fails on
+PostgreSQL.
+
 ## Upgrade product databases
 
 ### Check if migration is possible

@@ -23,6 +23,7 @@ Table of Contents
     * [Idle time](#idle-time)
     * [Interval time](#interval-time)
     * [Probes](#probes)
+* [Analysis cache](#analysis-cache)
 * [Authentication](#authentication)
 * [Secrets](#secrets)
   * [server_secrets.json](#server_secretsjson)
@@ -163,6 +164,49 @@ dead and notifying the application layer.
 By default the server will use the value from your host configured by the
 `net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
 `max_probe` key in the server configuration file.
+
+## Analysis cache
+
+The server can provide an analysis cache for the products (see the
+[analysis cache](../analyzer/user_guide.md#analysis-cache) options of
+`CodeChecker analyze`). The analysis results are stored in a
+[bazel-remote](https://github.com/buchgr/bazel-remote) cache server, which is
+configured in the `analysis_cache` section:
+
+```json
+"analysis_cache": {
+  "url": "https://bazel-remote.example.com:8080",
+  "user": null,
+  "password_file": null,
+  "timeout": 30,
+  "max_files_per_entry": 3,
+  "max_content_size": 20971520
+}
+```
+
+| Key | Description |
+|-----|-------------|
+| `url` | The HTTP or HTTPS URL of the bazel-remote server. If it is `null` or the section is missing, the analysis cache is not configured, and the cache API calls fail (the clients continue the analysis without the cache). |
+| `user`, `password_file` | Optional basic authentication. The password is read from the given file, it is not stored in `server_config.json`. |
+| `timeout` | Timeout of the connection and of the read/write of every bazel-remote request, in seconds. |
+| `max_files_per_entry` | The maximum number of files in a cache entry. |
+| `max_content_size` | The maximum size of one uploaded (base64 and zlib encoded) file, in bytes. |
+
+The HTTPS certificate of bazel-remote is verified with the system CA bundle.
+
+bazel-remote setup:
+
+- The cache size is controlled by the `--max_size` option of bazel-remote;
+  the least recently used entries are evicted. There is no per product size
+  limit and no delete API.
+- The validation of the Action Cache entries must stay enabled: do not start
+  bazel-remote with `--disable_http_ac_validation`.
+- The entries of the products are separated by the cache key, a product can
+  not read the entries of an other product.
+
+Users need the [`PRODUCT_CACHE`](permissions.md#product-cache) permission
+to use the analysis cache of a product. This section can be changed without
+restarting the server (configuration reload).
 
 ## Authentication
 For authentication configuration options and which options can be reloaded see

@@ -11,6 +11,7 @@ Base class for various source analyzers.
 
 
 from abc import ABCMeta, abstractmethod
+import hashlib
 import os
 from semver.version import Version
 import signal
@@ -61,6 +62,43 @@ class SourceAnalyzer(metaclass=ABCMeta):
     @abstractmethod
     def construct_analyzer_cmd(self, result_handler):
         raise NotImplementedError("Subclasses should implement this!")
+
+    # pylint: disable=unused-argument
+    def construct_preprocess_cmd(self, result_handler) -> list[str] | None:
+        """
+        Construct the preprocessor command of the analyzed source file. Its
+        output is used to compute the preprocessed_source_key of the analysis
+        cache. Returns None if the analyzer does not support the analysis
+        cache.
+        """
+        return None
+
+    # pylint: disable=unused-argument
+    def analysis_invocation_string(self, analyzer_cmd: list[str],
+                                   source_root: str | None) -> str | None:
+        """
+        Return the analysis invocation string of the given analyzer command,
+        which is hashed into the analysis_invocation_key of the analysis
+        cache. Returns None if the analyzer does not support the analysis
+        cache.
+        """
+        return None
+
+    def analysis_invocation_key(self, analyzer_cmd: list[str],
+                                source_root: str | None) -> str | None:
+        """
+        sha256 of the analysis invocation string (see
+        analysis_invocation_string()). Returns None if the analyzer does not
+        support the analysis cache.
+        """
+        # Subclasses which support the cache override the string method.
+        # pylint: disable=assignment-from-none
+        invocation = self.analysis_invocation_string(analyzer_cmd,
+                                                     source_root)
+        if invocation is None:
+            return None
+        return hashlib.sha256(invocation.encode(
+            'utf-8', errors='surrogateescape')).hexdigest()
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, environ):
