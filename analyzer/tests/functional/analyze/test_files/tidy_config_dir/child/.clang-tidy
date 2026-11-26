@@ -1,0 +1,5 @@
+---
+# Enables one checker more than the parent directory does.
+InheritParentConfig: true
+Checks: 'readability-braces-around-statements'
+...

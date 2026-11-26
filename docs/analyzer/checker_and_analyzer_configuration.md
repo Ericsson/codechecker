@@ -120,6 +120,35 @@ Clang-Tidy will read configuration from the `.clang-tidy` files; but
 configuration specified in CodeChecker (enabled checkers and profiles, analyzer
 and checker options) **will be ignored by Clang-Tidy!**
 
+Since the `.clang-tidy` files describe the enabled checkers, it is not
+necessary to enable any checker from the command line. The following command
+analyzes the project with the checkers of the `.clang-tidy` files only:
+
+```sh
+CodeChecker analyze compile_commands.json -o ./reports \
+  --disable-all \
+  --analyzer-config clang-tidy:take-config-from-directory=true
+```
+
+Clang-Tidy loads the `.clang-tidy` file of the closest enclosing directory of
+each source file, so different directories of a project may enable different
+checkers. A `.clang-tidy` file may also extend the configuration of its parent
+directory instead of replacing it:
+
+```yaml
+---
+# Use the checkers of the parent directory too, and enable one more.
+InheritParentConfig: true
+Checks: 'readability-braces-around-statements'
+...
+```
+
+CodeChecker asks Clang-Tidy which checkers it resolved for each directory and
+reports these as the enabled checkers of the analysis. Note that the report
+database stores one checker set for an analysis, so the web UI displays the
+union of the checkers of the directories: a checker which is enabled in a
+single directory only is displayed as enabled for the whole run.
+
 The `.clang-tidy` files should be specified in the YAML format, for example:
 
 ```yaml
