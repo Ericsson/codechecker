@@ -14,7 +14,7 @@ import sys
 # pylint: disable=unused-import
 if sys.platform in ["darwin", "win32"]:
     from multiprocess import (  # type: ignore
-        Pipe, Pool, Process,
+        BoundedSemaphore, Pipe, Pool, Process,
         Queue,
         Value,
         cpu_count
@@ -23,6 +23,7 @@ if sys.platform in ["darwin", "win32"]:
 else:
     from concurrent.futures import ProcessPoolExecutor as Pool
     from multiprocessing import (
+        BoundedSemaphore,
         Pipe,
         Process,
         Queue,

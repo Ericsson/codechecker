@@ -46,7 +46,8 @@ from codechecker_api.python.DBAccess_v6.ttypes import \
     RunReportCount, RunSortType, RunTagCount, \
     ReviewStatus as API_ReviewStatus, \
     SourceComponentData, SourceFileData, SortMode, SortType, \
-    SubmittedRunOptions
+    SubmittedRunOptions, \
+    AIConfidence, AIExplanation, AIModel, AIVerdict, ExtendedReportDataType
 
 from codechecker_api.python.shared.ttypes import ErrorCode, RequestFailed
 
@@ -60,6 +61,8 @@ from codechecker_web.shared import convert
 from codechecker_server.profiler import timeit
 
 from .. import permissions
+from ..ai import (
+    AIProviderError, MacroExpansion, PathEvent, ReportContext, explain_report)
 from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
@@ -872,6 +875,24 @@ def process_run_filter(session, query, run_filter):
             query = query.filter(Run.date > run.date)
 
     return query
+
+
+def get_report_with_file(session: SA_Session, report_id: int):
+    """ The report of ``report_id`` with its checker, and its file. """
+    result = session \
+        .query(Report, File) \
+        .filter(Report.id == report_id) \
+        .join(Checker, Report.checker_id == Checker.id) \
+        .options(contains_eager(Report.checker)) \
+        .outerjoin(File, Report.file_id == File.id) \
+        .limit(1).one_or_none()
+
+    if not result:
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+            "Report " + str(report_id) + " not found!")
+
+    return result
 
 
 def get_report_details(
@@ -2012,21 +2033,7 @@ class ThriftRequestHandler:
         self.__require_view()
 
         with DBSession(self._Session) as session:
-
-            result = session \
-                .query(Report, File) \
-                .filter(Report.id == reportId) \
-                .join(Checker, Report.checker_id == Checker.id) \
-                .options(contains_eager(Report.checker)) \
-                .outerjoin(File, Report.file_id == File.id) \
-                .limit(1).one_or_none()
-
-            if not result:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    "Report " + str(reportId) + " not found!")
-
-            report, source_file = result
+            report, source_file = get_report_with_file(session, reportId)
             return ReportData(
                 runId=report.run_id,
                 bugHash=report.bug_id,
@@ -4893,3 +4900,131 @@ class ThriftRequestHandler:
             session.close()
 
             return True
+
+    # ---------------------------------------------------------------------
+    # AI-assisted report explanation.
+    # ---------------------------------------------------------------------
+
+    def __checker_documentation(self, checker_name, analyzer_name):
+        """ The checker's labels, as documentation for the prompt. """
+        try:
+            labels = self._context.checker_labels.labels_of_checker(
+                checker_name, analyzer_name)
+        except Exception:
+            LOG.debug("No labels found for checker '%s'.", checker_name)
+            return None
+
+        if not labels:
+            return None
+
+        interesting = ('doc_url', 'guideline', 'profile', 'severity')
+        selected = [f"{key}: {value}" for key, value in labels
+                    if key in interesting]
+
+        return "\n".join(selected) if selected else None
+
+    @staticmethod
+    def __get_file_contents(session, file_ids):
+        """ The decoded content of each file of ``file_ids`` by path. """
+        if not file_ids:
+            return {}
+
+        rows = session \
+            .query(File.filepath, FileContent.content) \
+            .join(FileContent,
+                  File.content_hash == FileContent.content_hash) \
+            .filter(File.id.in_(file_ids))
+
+        return {path: zlib.decompress(content).decode('utf-8',
+                                                      errors='ignore')
+                for path, content in rows}
+
+    def __build_report_context(self, session, report_id):
+        """ Everything the model is told about ``report_id``. """
+        report, source_file = get_report_with_file(session, report_id)
+
+        details = get_report_details(session, [report_id]).get(report_id)
+        path_events = details.pathEvents if details else []
+        macros = [data for data in (details.extendedData if details else [])
+                  if data.type == ExtendedReportDataType.MACRO]
+
+        file_ids = {event.fileId for event in path_events}
+        if source_file:
+            file_ids.add(source_file.id)
+        contents = self.__get_file_contents(session, file_ids)
+
+        file_path = source_file.filepath if source_file else 'unknown'
+        analyzer_name = report.checker.analyzer_name
+
+        return ReportContext(
+            checker_name=report.checker.checker_name,
+            checker_message=report.checker_message,
+            file_path=file_path,
+            line=report.line,
+            column=report.column,
+            analyzer_name=analyzer_name,
+            severity=ttypes.Severity._VALUES_TO_NAMES.get(
+                report.checker.severity),
+            file_content=contents.pop(file_path, None),
+            checker_documentation=self.__checker_documentation(
+                report.checker.checker_name, analyzer_name),
+            path_events=[PathEvent(file_path=event.filePath,
+                                   line=event.startLine,
+                                   message=event.msg)
+                         for event in path_events],
+            path_files=contents,
+            macro_expansions=[MacroExpansion(file_path=data.filePath,
+                                             line=data.startLine,
+                                             text=data.message)
+                              for data in macros])
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAIModels(self):
+        """ The AI models this server offers; empty when turned off. """
+        self.__require_view()
+
+        ai_config = self._manager.get_ai_config()
+
+        if not ai_config.is_available:
+            return []
+
+        return [
+            AIModel(id=model.id,
+                    displayName=model.display_name,
+                    isDefault=model.id == ai_config.default_model,
+                    provider=model.provider)
+            for model in ai_config.models]
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportExplanation(self, reportId, model):
+        """ Explain a report and assess its true/false positiveness. """
+        self.__require_view()
+
+        ai_config = self._manager.get_ai_config()
+
+        if not ai_config.is_available:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "AI report explanation is not enabled on this server.")
+
+        # Closed before the call: it can take twenty seconds.
+        with DBSession(self._Session) as session:
+            context = self.__build_report_context(session, reportId)
+
+        try:
+            explanation = explain_report(context, ai_config, model)
+        except AIProviderError as ex:
+            LOG.warning("Could not explain report %s: %s", reportId, ex)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                str(ex)) from ex
+
+        return AIExplanation(
+            background=explanation.background,
+            verdict=AIVerdict._NAMES_TO_VALUES[explanation.verdict],
+            confidence=AIConfidence._NAMES_TO_VALUES[explanation.confidence],
+            truePositiveCase=explanation.true_positive_case,
+            falsePositiveCase=explanation.false_positive_case,
+            model=explanation.model)

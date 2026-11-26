@@ -1,0 +1,785 @@
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
+
+""" Test the AI report explanation layer. """
+
+
+import base64
+import json
+import os
+import shlex
+import sys
+import tempfile
+import time
+import unittest
+from types import SimpleNamespace
+from unittest import mock
+
+import httpx
+import litellm
+
+from codechecker_server.ai import client, explain
+from codechecker_server.ai.config import AIConfig, AIModelConfig
+from codechecker_server.ai.explain import (
+    MacroExpansion, PathEvent, ReportContext, explain_report)
+from codechecker_server.ai.prompt import (
+    build_path_excerpts, build_source_window, build_user_prompt, find_macros,
+    format_bug_path)
+
+
+class SourceWindowTestCase(unittest.TestCase):
+    """
+    The excerpt handed to the model must be centred on the reported line.
+    A prefix truncation would routinely miss the finding altogether.
+    """
+
+    def test_window_is_centred_on_the_report(self):
+        content = "\n".join(f"line {i}" for i in range(1, 5001))
+
+        text, start, end = build_source_window(content, 4200, 100)
+
+        self.assertLessEqual(start, 4200)
+        self.assertGreaterEqual(end, 4200)
+        self.assertIn("line 4200", text)
+        self.assertEqual(end - start + 1, 100)
+
+    def test_whole_file_returned_when_short(self):
+        text, start, end = build_source_window("a\nb\nc", 2, 400)
+
+        self.assertEqual((start, end), (1, 3))
+        self.assertTrue(text.splitlines()[1].endswith("| b"))
+
+    def test_window_shifts_back_at_end_of_file(self):
+        content = "\n".join(f"line {i}" for i in range(1, 201))
+
+        _, start, end = build_source_window(content, 199, 50)
+
+        self.assertEqual((start, end), (151, 200))
+
+    def test_missing_source(self):
+        self.assertEqual(build_source_window("", 1, 10), ('', 0, 0))
+        self.assertEqual(build_source_window(None, 1, 10), ('', 0, 0))
+
+
+class BugPathTestCase(unittest.TestCase):
+    """ The analyser's own reasoning is the key triage context. """
+
+    def setUp(self):
+        self.events = [
+            PathEvent("a.c", 10, "Assuming 'p' is null"),
+            PathEvent("a.c", 12, "Dereference of null pointer")]
+
+    def test_events_are_numbered_with_locations(self):
+        out = format_bug_path(self.events, 50)
+
+        self.assertIn("1. [a.c:10] Assuming 'p' is null", out)
+        self.assertIn("2. [a.c:12] Dereference of null pointer", out)
+
+    def test_long_paths_are_truncated(self):
+        out = format_bug_path(self.events, 1)
+
+        self.assertIn("1 further steps omitted", out)
+
+    def test_empty_path_is_stated_explicitly(self):
+        self.assertIn("did not record", format_bug_path([], 50))
+
+
+class PathContextTestCase(unittest.TestCase):
+    """ A macro or a callee in another file can decide the verdict. """
+
+    def setUp(self):
+        self.files = {
+            "a.c": ["#include \"b.h\"", "void f() {", "  CLOSE(fd);",
+                    "  use(fd);", "}"],
+            "b.h": ["#define CLOSE(x) \\", "  do { if (x) return; } while (0)",
+                    "int g();"]}
+
+    def test_excerpts_skip_the_shown_lines(self):
+        text, missing = build_path_excerpts(
+            self.files, [("a.c", 3), ("b.h", 2)], ("a.c", 1, 5), 100)
+
+        self.assertNotIn("### a.c", text)
+        self.assertIn("### b.h", text)
+        self.assertIn("2 |   do { if (x) return; } while (0)", text)
+        self.assertEqual(missing, [])
+
+    def test_excerpts_respect_the_limit(self):
+        text, _ = build_path_excerpts(
+            self.files, [("b.h", 2)], ("a.c", 1, 5), 1)
+
+        self.assertEqual(len(text.splitlines()), 2)
+
+    def test_files_without_content_are_missing(self):
+        _, missing = build_path_excerpts(
+            self.files, [("c.c", 1)], ("a.c", 1, 5), 100)
+
+        self.assertEqual(missing, ["c.c"])
+
+    def test_macros_on_the_path_are_found(self):
+        macros, undefined = find_macros(self.files, [("a.c", 3)])
+
+        self.assertEqual([(m[0], m[1]) for m in macros], [("b.h", 1)])
+        self.assertIn("return", macros[0][2])
+        self.assertEqual(undefined, [])
+
+    def test_macros_without_definition_are_listed(self):
+        files = {"a.c": ["  TDB_CLOSE(fd);"]}
+
+        macros, undefined = find_macros(files, [("a.c", 1)])
+
+        self.assertEqual(macros, [])
+        self.assertEqual(undefined, ["TDB_CLOSE"])
+
+    def test_analyser_macro_expansions_are_preferred(self):
+        context = ReportContext(
+            checker_name="c", checker_message="m", file_path="a.c", line=3,
+            file_content="\n".join(self.files["a.c"]),
+            path_files={"b.h": "\n".join(self.files["b.h"])},
+            macro_expansions=[MacroExpansion(
+                "a.c", 3, "do { if (fd) return; } while (0)")])
+
+        prompt = build_user_prompt(context, 400, 50, 200)
+
+        self.assertIn("as the analyser expanded them", prompt)
+        self.assertIn("a.c:3\ndo { if (fd) return; } while (0)", prompt)
+        self.assertNotIn("b.h:1", prompt)
+
+    def test_prompt_lists_what_is_not_provided(self):
+        context = ReportContext(
+            checker_name="c", analyzer_name="a", severity="HIGH",
+            checker_message="m", file_path="a.c", line=4, column=1,
+            file_content="\n".join(["x"] * 3 + ["  OPEN(fd);"]),
+            path_events=[PathEvent("d.c", 7, "step")])
+
+        prompt = build_user_prompt(context, 400, 50, 200)
+
+        self.assertIn("## Not provided", prompt)
+        self.assertIn("File: d.c", prompt)
+        self.assertIn("Macro definition: OPEN", prompt)
+
+
+def ai_config(models=None, **raw):
+    models = [{"id": "m", "model": "llama"}] if models is None else models
+    return AIConfig(dict({"enabled": True, "models": [
+        dict({"provider": "openai", "api_key": "k"}, **m) for m in models]},
+        **raw))
+
+
+class ShippedConfigTestCase(unittest.TestCase):
+    """ The example configuration every new workspace starts from. """
+
+    def setUp(self):
+        path = os.path.join(os.environ["REPO_ROOT"], "web", "server",
+                            "config", "server_config.json")
+        with open(path, encoding="utf-8") as handle:
+            self.raw = json.load(handle)["ai"]
+
+    def configured(self):
+        """ The template, with the credentials it leaves empty filled in. """
+        raw = json.loads(json.dumps(self.raw))
+        raw["enabled"] = True
+        for model in raw["models"]:
+            if "api_key" in model:
+                model["api_key"] = "key"
+        return AIConfig(raw)
+
+    def test_feature_is_off_by_default(self):
+        self.assertFalse(AIConfig(self.raw).is_available)
+
+    def test_empty_credentials_keep_the_feature_off(self):
+        self.assertFalse(AIConfig(dict(self.raw, enabled=True)).is_available)
+
+    def test_every_shipped_model_is_offered_once_configured(self):
+        self.assertEqual(len(self.configured().models),
+                         len(self.raw["models"]))
+
+    def test_default_model_is_one_of_the_models(self):
+        cfg = self.configured()
+
+        self.assertTrue(cfg.models)
+        self.assertEqual(self.raw["default_model"], cfg.default_model)
+        self.assertIn(cfg.default_model, [m.id for m in cfg.models])
+
+
+class ResponseParsingTestCase(unittest.TestCase):
+    """ Models do not always honour a request for raw JSON. """
+
+    def test_plain_json(self):
+        self.assertEqual(client.parse_json_response('{"a": 1}'), {"a": 1})
+
+    def test_markdown_fenced_json(self):
+        self.assertEqual(
+            client.parse_json_response('```json\n{"a": 1}\n```'), {"a": 1})
+        self.assertEqual(
+            client.parse_json_response('```\n{"a": 1}\n```'), {"a": 1})
+
+    def test_unusable_answers_raise(self):
+        for bad in ('', 'not json at all'):
+            with self.assertRaises(client.AIProviderError):
+                client.parse_json_response(bad)
+
+
+def provider_error(status, retry_after=None):
+    """ A LiteLLM error as a provider's HTTP answer raises it. """
+    headers = {'Retry-After': retry_after} if retry_after else {}
+    error = litellm.exceptions.APIError(status, "failed", "openai", "m")
+    error.response = httpx.Response(
+        status, headers=headers, request=httpx.Request("POST", "http://x"))
+    return error
+
+
+class RetryDecisionTestCase(unittest.TestCase):
+    """ A busy provider is worth another try; a refused request is not. """
+
+    def test_transient_failures_are_retried(self):
+        for status in (429, 500, 502, 503, 504):
+            self.assertIsNotNone(
+                client._retry_delay(provider_error(status), 0), status)
+
+    def test_client_errors_are_not_retried(self):
+        for status in (400, 401, 403, 404, 422):
+            self.assertIsNone(
+                client._retry_delay(provider_error(status), 0), status)
+
+    def test_errors_without_status_are_not_retried(self):
+        self.assertIsNone(client._retry_delay(ValueError("bug"), 0))
+
+
+class RetryDelayTestCase(unittest.TestCase):
+    """ Retry-After wins over the built-in backoff when it is usable. """
+
+    def setUp(self):
+        self.retry_delay = client._retry_delay
+
+    def test_backoff_schedule_when_no_header(self):
+        self.assertEqual(self.retry_delay(provider_error(503), 0), 1.0)
+
+    def test_retry_after_is_honoured(self):
+        self.assertEqual(self.retry_delay(provider_error(429, '7'), 0), 7.0)
+
+    def test_retry_after_is_capped(self):
+        self.assertEqual(self.retry_delay(provider_error(429, '9000'), 0),
+                         30.0)
+
+    def test_http_date_retry_after_falls_back(self):
+        delay = self.retry_delay(
+            provider_error(429, 'Wed, 21 Oct 2026 07:28:00 GMT'), 1)
+        self.assertEqual(delay, 3.0)
+
+    def test_attempt_beyond_schedule_is_clamped(self):
+        self.assertEqual(self.retry_delay(provider_error(503), 99), 3.0)
+
+
+class ConfigTestCase(unittest.TestCase):
+    """ The feature must stay off unless it is fully configured. """
+
+    def test_absent_section_disables_the_feature(self):
+        self.assertFalse(AIConfig({}).is_available)
+        self.assertFalse(AIConfig(None).is_available)
+
+    def test_complete_configuration_is_available(self):
+        cfg = ai_config()
+
+        self.assertTrue(cfg.is_available)
+        self.assertEqual(cfg.default_model, "m")
+
+    def test_no_models_disables_the_feature(self):
+        self.assertFalse(ai_config(models=[]).is_available)
+
+    def test_unknown_default_falls_back(self):
+        cfg = ai_config(default_model="nope")
+
+        self.assertEqual(cfg.default_model, "m")
+
+    def test_invalid_entries_are_skipped(self):
+        cfg = ai_config(models=[{"model": "no-id"}, {"id": "good"}])
+
+        self.assertEqual([m.id for m in cfg.models], ["good"])
+
+    def test_default_model_is_found_without_an_id(self):
+        cfg = ai_config(models=[{"id": "a"}, {"id": "b"}], default_model="b")
+
+        self.assertEqual(cfg.get_model().id, "b")
+        self.assertEqual(cfg.get_model("a").id, "a")
+        self.assertIsNone(cfg.get_model("c"))
+
+    def test_model_name_defaults_to_id(self):
+        self.assertEqual(ai_config(models=[{"id": "m"}]).models[0].model, "m")
+
+    def test_missing_litellm_disables_the_feature(self):
+        with mock.patch.object(config_module().importlib.util, "find_spec",
+                               return_value=None):
+            self.assertFalse(ai_config().is_available)
+
+
+def config_module():
+    return sys.modules[AIConfig.__module__]
+
+
+class DirectProviderConfigTestCase(unittest.TestCase):
+    """ Models asked at their own provider, with an API key. """
+
+    @staticmethod
+    def config(models, **raw):
+        return AIConfig(dict({"enabled": True, "models": models}, **raw))
+
+    def test_direct_model_without_key_is_skipped(self):
+        cfg = self.config([{"id": "c", "provider": "anthropic",
+                            "api_key": ""}])
+
+        self.assertEqual(cfg.models, [])
+        self.assertFalse(cfg.is_available)
+
+    def test_api_base_replaces_the_key(self):
+        cfg = self.config([{"id": "local", "provider": "ollama",
+                            "model": "llama3",
+                            "api_base": "http://localhost:11434"}])
+
+        self.assertEqual([m.id for m in cfg.models], ["local"])
+
+    def test_model_without_provider_is_skipped(self):
+        cfg = self.config([{"id": "e"},
+                           {"id": "d", "provider": "deepseek",
+                            "api_key": "k"}])
+
+        self.assertEqual([m.id for m in cfg.models], ["d"])
+
+    def test_litellm_model_names(self):
+        def name(**entry):
+            return AIModelConfig(dict({"id": "x"}, **entry)).litellm_model
+
+        self.assertEqual(name(provider="litellm_proxy",
+                              model="openai/gpt-oss-120b", api_key="k"),
+                         "litellm_proxy/openai/gpt-oss-120b")
+        self.assertEqual(name(provider="anthropic", model="claude-opus-5-5",
+                              api_key="k"),
+                         "anthropic/claude-opus-5-5")
+        self.assertEqual(name(provider="Gemini", model="gemini/flash",
+                              api_key="k"),
+                         "gemini/flash")
+
+    def test_direct_models_send_no_temperature_unless_set(self):
+        models = self.config([
+            {"id": "a", "provider": "anthropic", "api_key": "k"},
+            {"id": "b", "provider": "openai", "api_key": "k",
+             "temperature": 0}]).models
+
+        self.assertIsNone(models[0].temperature)
+        self.assertEqual(models[1].temperature, 0)
+
+
+def completion_response(content='{"a": 1}', finish_reason="stop"):
+    """ What litellm.completion returns, trimmed to what is read. """
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content=content),
+                                 finish_reason=finish_reason)])
+
+
+def ask(model, timeout=60, ca_bundle=None):
+    return client.request_completion(model, "s", "u", timeout, ca_bundle)
+
+
+class LiteLLMTestCase(unittest.TestCase):
+    """ Replaces litellm.completion, recording each call's arguments. """
+
+    def setUp(self):
+        client.TOKEN_CACHE = client.TokenCommandCache()
+        self.completions = []
+        self.failures = []
+
+        def fake_completion(**kwargs):
+            self.completions.append(kwargs)
+            if self.failures:
+                raise self.failures.pop(0)
+            return completion_response()
+
+        patcher = mock.patch.object(litellm, "completion", fake_completion)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class TokenClientTestCase(LiteLLMTestCase):
+    """ Tokens are shared, and renewed when rejected. """
+
+    def setUp(self):
+        super().setUp()
+        self.token_requests = 0
+
+        patcher = mock.patch.object(client.TokenCommandCache,
+                                    "_run_token_command", self.fake_run)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def fake_run(self, model, _timeout):
+        self.assertEqual(model.token_command, "print-token")
+        self.token_requests += 1
+        return f"token-{self.token_requests}"
+
+    @staticmethod
+    def ask(**raw):
+        cfg = ai_config([{"id": "m", "provider": "litellm_proxy",
+                          "model": "llama", "token_command": "print-token",
+                          "api_base": "https://proxy.example/v1"}], **raw)
+        return ask(cfg.models[0], ca_bundle=cfg.ca_bundle)
+
+    def test_request_names_the_model(self):
+        self.assertEqual(self.ask(), '{"a": 1}')
+
+        sent = self.completions[0]
+        self.assertEqual(sent["model"], "litellm_proxy/llama")
+        self.assertEqual(sent["api_base"], "https://proxy.example/v1")
+        self.assertEqual(sent["response_format"], {"type": "json_object"})
+        self.assertIsNone(sent["temperature"])
+        self.assertEqual(sent["messages"][0],
+                         {"role": "system", "content": "s"})
+
+    def test_token_is_sent_and_shared(self):
+        self.ask()
+        self.ask()
+
+        self.assertEqual(self.token_requests, 1)
+        self.assertEqual([c["api_key"] for c in self.completions],
+                         ["token-1", "token-1"])
+
+    def test_rejected_token_is_renewed_once(self):
+        self.failures = [litellm.exceptions.AuthenticationError(
+            "expired", "litellm_proxy", "llama")]
+
+        self.assertEqual(self.ask(), '{"a": 1}')
+
+        self.assertEqual(self.token_requests, 2)
+        self.assertEqual(self.completions[-1]["api_key"], "token-2")
+
+    def test_token_rejected_twice_is_reported(self):
+        self.failures = [litellm.exceptions.AuthenticationError(
+            "expired", "litellm_proxy", "llama") for _ in range(2)]
+
+        with self.assertRaises(client.AIProviderError) as ctx:
+            self.ask()
+
+        self.assertIn("rejected the access token", str(ctx.exception))
+        self.assertEqual(len(self.completions), 2)
+
+    def test_ca_bundle_is_used_for_every_request(self):
+        with mock.patch.object(litellm, "ssl_verify", True):
+            self.ask(ca_bundle=__file__)
+            self.assertEqual(litellm.ssl_verify, __file__)
+
+    def test_missing_ca_bundle_falls_back_to_the_default(self):
+        cfg = ai_config(ca_bundle="/no/such/bundle.crt")
+
+        self.assertIsNone(cfg.ca_bundle)
+
+
+class DirectClientTestCase(LiteLLMTestCase):
+    """ A provider asked with its API key. """
+
+    MODEL = {"id": "claude", "provider": "anthropic",
+             "model": "claude-opus-5-5", "api_key": "sk-test-key"}
+
+    def complete(self, timeout=30, **entry):
+        cfg = ai_config(models=[dict(self.MODEL, **entry)])
+        return ask(cfg.models[0], timeout)
+
+    def test_request_goes_to_the_provider_with_its_key(self):
+        self.assertEqual(self.complete(), '{"a": 1}')
+
+        sent = self.completions[0]
+        self.assertEqual(sent["model"], "anthropic/claude-opus-5-5")
+        self.assertEqual(sent["api_key"], "sk-test-key")
+        self.assertIsNone(sent["api_base"])
+        self.assertIsNone(sent["temperature"])
+
+    def test_optional_parameters_are_passed_on(self):
+        self.complete(api_base="https://proxy.example", temperature=0)
+
+        sent = self.completions[0]
+        self.assertEqual(sent["api_base"], "https://proxy.example")
+        self.assertEqual(sent["temperature"], 0)
+
+    def test_schema_is_enforced_where_supported(self):
+        with mock.patch.object(litellm, "supports_response_schema",
+                               return_value=True):
+            self.complete()
+
+        response_format = self.completions[0]["response_format"]
+        self.assertEqual(response_format["type"], "json_schema")
+        self.assertEqual(
+            set(response_format["json_schema"]["schema"]["required"]),
+            {"background", "verdict", "confidence", "true_positive_case",
+             "false_positive_case"})
+
+    def test_json_mode_where_no_schema_is_supported(self):
+        with mock.patch.object(litellm, "supports_response_schema",
+                               return_value=False):
+            self.complete()
+
+        self.assertEqual(self.completions[0]["response_format"],
+                         {"type": "json_object"})
+
+    def test_rejected_key_is_reported_without_the_key(self):
+        self.failures = [litellm.exceptions.AuthenticationError(
+            "invalid x-api-key", "anthropic", "claude-opus-5-5")]
+
+        with self.assertRaises(client.AIProviderError) as ctx:
+            self.complete()
+
+        self.assertIn("anthropic rejected the API key", str(ctx.exception))
+        self.assertNotIn("sk-test-key", str(ctx.exception))
+        self.assertEqual(len(self.completions), 1)
+
+    def test_timeout_is_reported(self):
+        self.failures = [litellm.exceptions.Timeout(
+            "slow", "claude-opus-5-5", "anthropic")]
+
+        with self.assertRaises(client.AIProviderError) as ctx:
+            self.complete()
+
+        self.assertIn("within 30 seconds", str(ctx.exception))
+
+    def test_other_errors_carry_the_status_and_reason(self):
+        self.failures = [litellm.exceptions.BadRequestError(
+            "model not found", "claude-opus-5-5", "anthropic")]
+
+        with self.assertRaises(client.AIProviderError) as ctx:
+            self.complete()
+
+        self.assertEqual(str(ctx.exception),
+                         "anthropic answered with HTTP 400. See the server "
+                         "log for details.")
+
+    def test_transient_failures_are_retried_with_backoff(self):
+        self.failures = [provider_error(503), provider_error(429)]
+
+        with mock.patch.object(client.time, "sleep") as sleep:
+            self.assertEqual(self.complete(), '{"a": 1}')
+
+        self.assertEqual(len(self.completions), 3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list],
+                         [1.0, 3.0])
+        self.assertEqual(self.completions[0]["max_retries"], 0)
+
+    def test_retries_give_up_after_the_last_attempt(self):
+        self.failures = [provider_error(503) for _ in range(5)]
+
+        with mock.patch.object(client.time, "sleep"), \
+                self.assertRaises(client.AIProviderError) as ctx:
+            self.complete()
+
+        self.assertEqual(len(self.completions), client.MAX_ATTEMPTS)
+        self.assertIn("HTTP 503", str(ctx.exception))
+
+    def test_refused_request_is_not_retried(self):
+        self.failures = [provider_error(400)]
+
+        with mock.patch.object(client.time, "sleep") as sleep, \
+                self.assertRaises(client.AIProviderError):
+            self.complete()
+
+        self.assertEqual(len(self.completions), 1)
+        sleep.assert_not_called()
+
+    def test_retries_stay_within_the_timeout(self):
+        self.failures = [provider_error(429, '7')]
+
+        with mock.patch.object(client.time, "sleep") as sleep, \
+                self.assertRaises(client.AIProviderError):
+            self.complete(timeout=5)
+
+        self.assertEqual(len(self.completions), 1)
+        sleep.assert_not_called()
+
+    def test_each_attempt_gets_the_remaining_time(self):
+        self.complete(timeout=30)
+
+        self.assertLessEqual(self.completions[0]["timeout"], 30)
+
+
+def fake_jwt(expires_in):
+    def part(data):
+        raw = base64.urlsafe_b64encode(json.dumps(data).encode())
+        return raw.decode().rstrip('=')
+    return '.'.join([part({"alg": "none"}),
+                     part({"exp": int(time.time()) + expires_in}), "sig"])
+
+
+class TokenCommandTestCase(unittest.TestCase):
+    """ An access token printed by a command. """
+
+    def setUp(self):
+        client.TOKEN_CACHE = client.TokenCommandCache()
+
+    @staticmethod
+    def command(code):
+        return f"{shlex.quote(sys.executable)} -c {shlex.quote(code)}"
+
+    @staticmethod
+    def run_command(command, cwd=None):
+        model = AIModelConfig({"id": "m", "provider": "litellm_proxy",
+                               "token_command": command,
+                               "token_command_dir": cwd})
+        return client.TokenCommandCache._run_token_command(model, 10)
+
+    def test_token_command_replaces_the_key(self):
+        cfg = AIConfig({"enabled": True, "models": [
+            {"id": "m", "provider": "litellm_proxy",
+             "token_command": "print-token"}]})
+
+        self.assertTrue(cfg.is_available)
+
+    def test_neither_login_disables_the_feature(self):
+        cfg = AIConfig({"enabled": True, "models": [
+            {"id": "m", "provider": "litellm_proxy"}]})
+
+        self.assertFalse(cfg.is_available)
+
+    def test_last_line_of_output_is_the_token(self):
+        token = self.run_command(
+            self.command("print('Banner'); print('tok-123')"))
+
+        self.assertEqual(token, "tok-123")
+
+    def test_command_runs_in_the_configured_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token = self.run_command(
+                self.command("import os; print(os.getcwd())"), tmp)
+
+            self.assertEqual(os.path.realpath(token), os.path.realpath(tmp))
+
+    def test_lifetime_is_read_from_the_jwt(self):
+        lifetime = client.TokenCommandCache._jwt_lifetime(fake_jwt(1800))
+
+        self.assertTrue(1790 <= lifetime <= 1800, lifetime)
+
+    def test_opaque_token_gets_the_default_lifetime(self):
+        self.assertEqual(client.TokenCommandCache._jwt_lifetime("opaque"),
+                         client.TokenCommandCache.DEFAULT_LIFETIME)
+
+    def test_failure_details_are_logged_not_shown(self):
+        command = self.command(
+            "import sys; print('half-a-token'); "
+            "sys.stderr.write('login required at host-7'); sys.exit(3)")
+
+        with self.assertRaises(client.AIProviderError) as ctx, \
+                self.assertLogs(client.LOG, "WARNING") as logs:
+            self.run_command(command)
+
+        self.assertIn("See the server log", str(ctx.exception))
+        self.assertNotIn("host-7", str(ctx.exception))
+        self.assertIn("login required at host-7", logs.output[0])
+        self.assertNotIn("half-a-token", logs.output[0])
+
+    def test_token_is_sent_and_shared(self):
+        cfg = ai_config([{"id": "m", "provider": "litellm_proxy",
+                          "token_command": self.command(
+                              "print('user-token')")}])
+        sent = []
+
+        def fake_completion(**kwargs):
+            sent.append(kwargs["api_key"])
+            return completion_response()
+
+        with mock.patch.object(litellm, "completion", fake_completion), \
+                mock.patch.object(client.subprocess, "run",
+                                  wraps=client.subprocess.run) as run:
+            for _ in range(2):
+                ask(cfg.models[0], 10)
+
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(sent, ["user-token"] * 2)
+
+
+class FakeModel:
+    """ Stands in for the model. """
+
+    last_prompts = {}
+
+    @staticmethod
+    def request_completion(_model, system_prompt, user_prompt, _timeout,
+                           _ca_bundle=None):
+        FakeModel.last_prompts = {'system': system_prompt,
+                                  'user': user_prompt}
+        return ('```json\n'
+                '{"background": "<p>The checker flags a null '
+                'dereference.</p>",'
+                ' "verdict": "likely true positive",'
+                ' "confidence": "high",'
+                ' "true_positive_case": "<p>p is never checked.</p>",'
+                ' "false_positive_case": "<p>None apparent.</p>"}\n'
+                '```')
+
+
+class ExplainReportTestCase(unittest.TestCase):
+    """ The full path from a report context to a structured explanation. """
+
+    def setUp(self):
+        patcher = mock.patch.object(explain, "request_completion",
+                                    FakeModel.request_completion)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.config = ai_config()
+
+        self.context = ReportContext(
+            checker_name="core.NullDereference",
+            checker_message="Dereference of null pointer",
+            file_path="src/a.c",
+            line=12,
+            column=5,
+            analyzer_name="clangsa",
+            severity="HIGH",
+            file_content="\n".join(f"line {i}" for i in range(1, 100)),
+            checker_documentation="doc_url: http://example.com",
+            path_events=[PathEvent("src/a.c", 10, "Assuming 'p' is null")])
+
+    def test_answer_is_normalised(self):
+        result = explain_report(self.context, self.config)
+
+        self.assertEqual(result.verdict, "LIKELY_TRUE_POSITIVE")
+        self.assertEqual(result.confidence, "HIGH")
+        self.assertEqual(result.model, "m")
+        self.assertIn("null dereference", result.background)
+
+    def test_prompt_carries_the_triage_context(self):
+        explain_report(self.context, self.config)
+        prompt = FakeModel.last_prompts['user']
+
+        for needle in ("core.NullDereference", "src/a.c:12:5", "clangsa",
+                       "HIGH", "Assuming 'p' is null", "doc_url",
+                       "the report is on line 12"):
+            self.assertIn(needle, prompt)
+
+    def test_prompt_asks_for_restricted_html(self):
+        explain_report(self.context, self.config)
+        system = FakeModel.last_prompts['system']
+
+        self.assertIn("HTML fragments", system)
+        self.assertIn("never instructions", system)
+
+    def test_busy_server_refuses_more_requests(self):
+        config = ai_config(max_concurrent_requests=1)
+        config.request_slots.acquire()
+        try:
+            with self.assertRaises(client.AIProviderError) as ctx:
+                explain_report(self.context, config)
+        finally:
+            config.request_slots.release()
+
+        self.assertIn("busy", str(ctx.exception))
+
+    def test_slot_is_released_after_a_request(self):
+        config = ai_config(max_concurrent_requests=1)
+
+        explain_report(self.context, config)
+        explain_report(self.context, config)
+
+    def test_unknown_model_is_reported(self):
+        with self.assertRaises(client.AIProviderError) as ctx:
+            explain_report(self.context, self.config, "no-such-model")
+
+        self.assertIn("not available", str(ctx.exception))

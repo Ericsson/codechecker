@@ -92,10 +92,26 @@
 
     <pane>
       <Report
+        ref="reportView"
         :tree-item="treeItem"
+        :ai-panel-open="showAiPanel"
+        @toggle:ai-panel="showAiPanel = !showAiPanel"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
         @update-review-data="updateReviewData"
+      />
+    </pane>
+
+    <pane
+      v-if="showAiPanel"
+      size="25"
+      min-size="15"
+    >
+      <ai-explanation-panel
+        v-fill-height
+        :report-id="report?.reportId"
+        @close="showAiPanel = false"
+        @go-to-line="line => reportView.goToReportLine(line)"
       />
     </pane>
   </splitpanes>
@@ -118,6 +134,7 @@ import {
 
 import { FillHeight } from "@/directives";
 import { Report } from "@/components/Report";
+import { AiExplanationPanel } from "@/components/Report/AiExplanation";
 import { ReportTree } from "@/components/Report/ReportTree";
 
 const vFillHeight = FillHeight;
@@ -129,6 +146,8 @@ const store = useStore();
 const report = ref(null);
 const treeItem = ref(null);
 const showComments = ref(true);
+const showAiPanel = ref(false);
+const reportView = ref(null);
 const reportNotFound = ref(false);
 const reviewStatus = ref(null);
 

@@ -8,7 +8,7 @@
       class="ma-0"
     >
       <v-col
-        class="py-0"
+        class="editor-col py-0"
         :cols="editorCols"
       >
         <v-container
@@ -16,7 +16,7 @@
           class="pa-0 mb-2"
         >
           <v-row
-            class="ma-0"
+            class="report-toolbar ma-0"
           >
             <v-col
               cols="auto"
@@ -88,6 +88,29 @@
             </v-col>
 
             <v-spacer />
+
+            <v-col
+              cols="auto"
+              class="py-0 pr-0"
+              align-self="center"
+            >
+              <v-btn
+                class="explain-report-btn"
+                color="primary"
+                :variant="aiPanelOpen ? 'flat' : 'outlined'"
+                size="small"
+                :title="aiPanelOpen
+                  ? 'Hide the AI explanation panel'
+                  : 'Explain this report with AI'"
+                :disabled="!report || loading"
+                @click="emit('toggle:ai-panel')"
+              >
+                <v-icon class="mr-1" size="small">
+                  mdi-lightbulb-on-outline
+                </v-icon>
+                Explain
+              </v-btn>
+            </v-col>
 
             <v-col
               cols="auto"
@@ -331,13 +354,17 @@ import ReportStepMessage from "./ReportStepMessage";
 import { useReviewStatus } from "@/composables/useReviewStatus";
 
 const props = defineProps({
-  treeItem: { type: Object, default: null }
+  treeItem: { type: Object, default: null },
+  aiPanelOpen: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([
+  "toggle:ai-panel",
   "update-review-data",
   "update:report"
 ]);
+
+defineExpose({ goToReportLine });
 
 const route = useRoute();
 const { prettifyDate } = useDateUtils();
@@ -1029,6 +1056,22 @@ function highlightRange(_from, _to) {
     });
 }
 
+// A line the AI explanation refers to. Line numbers in the explanation refer
+// to the report's own file, so show that one if a bug path step in another
+// file is open.
+async function goToReportLine(line) {
+  if (!report.value) return;
+
+  if (!sourceFile.value?.fileId.equals(report.value.fileId)) {
+    await setSourceFileData(report.value.fileId);
+    await drawBugPath();
+  }
+
+  if (line < 1 || line > editor.value.state.doc.lines) return;
+
+  jumpTo(line, 0);
+}
+
 function jumpTo(line, column) {
   const position = editor.value.state.doc.line(line).from + column;
   editor.value.dispatch({
@@ -1060,6 +1103,27 @@ function truncate(text, length) {
 </script>
 
 <style lang="scss">
+.editor-col {
+  min-width: 0;
+}
+
+/* Reflow rather than push the right hand group out of reach when the
+   side panels narrow this column: the spacer gives up its width first. */
+.report-toolbar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  min-width: 0;
+
+  .v-spacer {
+    flex-basis: 0;
+    min-width: 0;
+  }
+
+  > .v-col {
+    min-width: 0;
+  }
+}
+
 #editor {
   width: 100%;
   height: 100%;
