@@ -30,6 +30,14 @@
           {{ value }}
         </div>
         <div
+          v-if="originalLine !== null"
+          class="original-line-info text-caption text-grey-darken-1 text-wrap"
+        >
+          <v-icon size="x-small" icon="mdi-information-outline" />
+          The reported line number was {{ originalLine }}, which does not
+          exist in the file. The message is shown at the closest valid line.
+        </div>
+        <div
           v-if="!hideDocUrl && type === 'error'"
           class="text-caption"
         >
@@ -91,7 +99,8 @@ const props = defineProps({
   prevStep: { type: Object, default: null },
   nextStep: { type: Object, default: null },
   docUrl: { type: String, default: null },
-  hideDocUrl: { type: Boolean, default: false }
+  hideDocUrl: { type: Boolean, default: false },
+  originalLine: { type: Number, default: null }
 });
 
 const color = computed(() => {
