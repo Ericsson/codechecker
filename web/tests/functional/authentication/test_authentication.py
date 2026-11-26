@@ -519,6 +519,49 @@ class DictAuth(unittest.TestCase):
             SessMgr.check_callback_url_format("github", invalid_callback_url),
             "Invalid callback URL was accepted.")
 
+    def test_oauth_groups_from_userinfo_claim(self):
+        """
+        Tests that group memberships are read from the userinfo claim
+        configured in user_info_mapping.groups, and that permissions granted
+        to those groups apply to the OAuth user.
+        """
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+
+        # Grant SUPERUSER to the group delivered in the userinfo claim.
+        root_token = auth_client.performLogin(
+            "Username:Password", "root:root")
+        self.assertIsNotNone(root_token, "root was unable to login!")
+        root_auth_client = env.setup_auth_client(self._test_workspace,
+                                                 session_token=root_token)
+        self.assertTrue(root_auth_client.addPermission(
+            Permission.SUPERUSER, "oauth_admin_group", True, None))
+
+        def is_privileged(username):
+            session_token = self.try_login("groups_claim", username, "user")\
+                .get('session_token', None)
+            self.assertIsNotNone(session_token,
+                                 "Valid credentials didn't give us a token!")
+            client = env.setup_viewer_client(self._test_workspace,
+                                             session_token=session_token)
+            return client.allowsStoringAnalysisStatistics()
+
+        try:
+            # Claim is a list containing the privileged group.
+            self.assertTrue(is_privileged("user_groups_list"),
+                            "Groups from a list claim were not applied.")
+
+            # Claim is a single string naming the privileged group.
+            self.assertTrue(is_privileged("user_groups_str"),
+                            "Group from a string claim was not applied.")
+
+            # Claim is missing from userinfo: login works, but no groups.
+            self.assertFalse(is_privileged("user_groups_none"),
+                             "User without groups claim got privileges.")
+        finally:
+            root_auth_client.removePermission(
+                Permission.SUPERUSER, "oauth_admin_group", True, None)
+
     def test_nonauth_storage(self):
         """
         Storing the result should fail.

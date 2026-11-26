@@ -411,6 +411,13 @@ Specific behavior related to each provider is configured by a provider `template
 
               Field for the username.
 
+          * `groups` (*optional*)
+
+              Name of the userinfo claim holding the user's group memberships
+              (e.g. `"groups"`). The claim can be a list or a single string.
+              Ignored if the provider template already fetches groups
+              (e.g. `ms_entra/v2.0`).
+
         The `username` field defines what value will be used as the user's unique identifier (i.e. their "username") depending on the OAuth provider.
 
         Currently there are only 2 options for this:

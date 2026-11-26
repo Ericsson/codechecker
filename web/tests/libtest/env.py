@@ -449,6 +449,20 @@ def enable_auth(workspace):
                     "username": "email"
                 }
             },
+            "groups_claim": {
+                "enabled": True,
+                "client_id": "5",
+                "client_secret": "5",
+                "template": "google/v1",
+                "authorization_url": "{oauth_host}/login",
+                "token_url": "{oauth_host}/token",
+                "user_info_url": "{oauth_host}/get_user",
+                "scope": "openid email profile",
+                "user_info_mapping": {
+                    "username": "email",
+                    "groups": "groups"
+                }
+            },
             "always_off": {
                 "enabled": True,
                 "client_id": "4",

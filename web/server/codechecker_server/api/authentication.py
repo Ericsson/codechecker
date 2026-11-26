@@ -488,6 +488,28 @@ class ThriftAuthHandler:
                     elif username_key == "name":
                         username = user_info.get("name")
 
+                # Read groups from the userinfo claim configured in
+                # user_info_mapping.groups, unless the provider template
+                # already supplied them (e.g. Microsoft Entra).
+                groups_key = oauth_config.get(
+                    "user_info_mapping", {}).get("groups")
+                if groups_key and not groups:
+                    claim = user_info.get(groups_key)
+                    if claim is None:
+                        LOG.warning("OAuth provider %s: claim '%s' not found "
+                                    "in userinfo, user %s has no groups. "
+                                    "Available claims: %s", provider,
+                                    groups_key, username,
+                                    sorted(user_info.keys()))
+                    else:
+                        if isinstance(claim, str):
+                            groups = [claim]
+                        else:
+                            groups = [str(group) for group in claim]
+                        LOG.info("OAuth provider %s: groups received for "
+                                 "user %s from claim '%s': %s", provider,
+                                 username, groups_key, groups)
+
                 LOG.debug(f"groups fetched for {username}, are: {groups}")
                 LOG.info("Username fetched, for username: %s", username)
             except Exception as ex:
