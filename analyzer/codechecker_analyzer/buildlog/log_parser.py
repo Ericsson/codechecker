@@ -289,13 +289,23 @@ def filter_compiler_includes_extra_args(compiler_flags):
 
     compiler_flags -- A list of compiler flags which may affect the list
                       of implicit compiler include paths, like -std=,
-                      --sysroot=, -m32, -m64, -nostdinc or -stdlib=.
+                      --sysroot=, -m32, -m64, -nostdinc, -stdlib= or the
+                      target selection flags (--target=, -mcpu=, -march=,
+                      -mfloat-abi=, ...).
     """
     # If these options are present in the original build command, they must
     # be forwarded to get_compiler_includes and get_compiler_defines so the
     # resulting includes point to the target that was used in the build.
+    # Target and architecture selection flags are especially important for
+    # multi-target compilers (e.g. clang): they select the multilib whose
+    # system headers provide the implicit include paths. Without forwarding
+    # them the query resolves the compiler's default (usually host) target,
+    # so the wrong include paths (or none at all) are reported.
     pattern = re.compile(
-        '-m(32|64)|-{1,2}std=|-{1,2}stdlib=|-nostdinc|--driver-mode=')
+        r'-m(32|64)|-{1,2}std=|-{1,2}stdlib=|-nostdinc|--driver-mode='
+        r'|--target=|-march=|-mcpu=|-mtune=|-mfpu=|-mabi='
+        r'|-mfloat-abi=|-mendian=|-mthumb|-marm'
+        r'|-mbig-endian|-mlittle-endian')
     extra_opts = list(filter(pattern.match, compiler_flags))
 
     pos = next((pos for pos, val in enumerate(compiler_flags)
@@ -305,6 +315,14 @@ def filter_compiler_includes_extra_args(compiler_flags):
             extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
         else:
             extra_opts.append(compiler_flags[pos])
+
+    # The target triple may also be given as two separate arguments
+    # ("-target <triple>" or "--target <triple>"). Forward the value in the
+    # "--target=<triple>" form which both gcc and clang accept.
+    pos = next((pos for pos, val in enumerate(compiler_flags)
+                if val in ('-target', '--target')), None)
+    if pos is not None and pos + 1 < len(compiler_flags):
+        extra_opts.append('--target=' + compiler_flags[pos + 1])
 
     return extra_opts
 
@@ -452,14 +470,19 @@ class ImplicitCompilerInfo:
         return list(map(os.path.normpath, include_dirs))
 
     @staticmethod
-    def get_compiler_target(compiler):
+    def get_compiler_target(compiler, compiler_flags=None):
         """
         Returns the target triple of the given compiler as a string.
 
         compiler -- The compiler binary of which the target architecture is
                     fetched.
+        compiler_flags -- The compilation flags which may change the target
+                    triple of a multi-target compiler (e.g. --target, -mcpu).
+                    They are forwarded to the query so the reported triple
+                    matches the one used during the build.
         """
-        lines = ImplicitCompilerInfo.__get_compiler_err([compiler, '-v'])
+        cmd = [compiler, *(compiler_flags or []), '-v']
+        lines = ImplicitCompilerInfo.__get_compiler_err(cmd)
 
         if lines is None:
             return ""
@@ -602,7 +625,8 @@ class ImplicitCompilerInfo:
                         iisk.compiler, iisk.language, iisk.compiler_flags),
                     'compiler_standard': ICI.get_compiler_standard(
                         iisk.compiler, iisk.language),
-                    'target': ICI.get_compiler_target(iisk.compiler)
+                    'target': ICI.get_compiler_target(
+                        iisk.compiler, iisk.compiler_flags)
                 }
 
         for k, v in ICI.compiler_info.get(iisk, {}).items():
