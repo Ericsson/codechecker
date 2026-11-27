@@ -7,7 +7,12 @@ import {
 
 import router from "@/router";
 import store from "@/store";
-import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
+import {
+  ADD_ERROR,
+  CLEAR_SERVER_DOWN,
+  PURGE_AUTH,
+  SET_SERVER_DOWN
+} from "@/store/mutations.type";
 import tokenService from "./token.service";
 
 // Host should be set explicitly to `hostname` because thrift will use
@@ -56,11 +61,17 @@ class BaseService {
           xreq.setRequestHeader("Authorization",
             "Bearer " + tokenService.getToken());
         } else if (this.readyState === 4) { // request finished
-          if (this.status === 504) {
-            store.commit(ADD_ERROR,
-              `Error ${this.status}: ${this.statusText}`);
+          // status 0 (unreachable) or 502/503/504 (gateway/unavailable)
+          // means the server is down; a 2xx means it is reachable again.
+          if (this.status === 0 ||
+              this.status === 502 ||
+              this.status === 503 ||
+              this.status === 504) {
+            store.commit(SET_SERVER_DOWN);
           } else if (this.status === 401) {
             store.commit(PURGE_AUTH);
+          } else if (this.status >= 200 && this.status < 300) {
+            store.commit(CLEAR_SERVER_DOWN);
           }
         }
       });
