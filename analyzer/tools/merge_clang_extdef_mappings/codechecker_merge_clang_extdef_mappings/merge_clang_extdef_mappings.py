@@ -7,7 +7,25 @@
 # -------------------------------------------------------------------------
 
 import glob
+import logging
 import os
+
+
+def _warn_dropped_usr(mangled_name, ast_files):
+    """ Warn that a USR defined in several TUs was left out of CTU.
+
+    CodeChecker analyze emits through the configured 'analyzer' logger.
+    The standalone merge tool configures 'MergeClangExtdefMappings' instead,
+    so use that channel when the analyzer logger has no handlers.
+    """
+    logger = logging.getLogger('analyzer')
+    if not logger.handlers:
+        logger = logging.getLogger('MergeClangExtdefMappings')
+    logger.warning(
+        "'%s' is defined in multiple translation units (%s) "
+        "and was dropped from the CTU externalDefMap.",
+        mangled_name,
+        ', '.join(sorted(ast_files)))
 
 
 def _generate_func_map_lines(func_map_dir):
@@ -23,7 +41,8 @@ def _generate_func_map_lines(func_map_dir):
 def _create_global_ctu_function_map(func_map_lines):
     """ Takes iterator of individual function maps and creates a global map.
 
-    It will keeping only unique names. We leave conflicting names out of CTU.
+    It will keeping only unique names. We leave conflicting names out of CTU
+    and log a warning for each of them.
     A function map contains the id of a function (mangled name) and the
     originating source (the corresponding AST file) name.
     """
@@ -54,6 +73,8 @@ def _create_global_ctu_function_map(func_map_lines):
     for mangled_name, ast_files in mangled_to_asts.items():
         if len(ast_files) == 1:
             mangled_ast_pairs.append((mangled_name, ast_files.pop()))
+        else:
+            _warn_dropped_usr(mangled_name, ast_files)
 
     return mangled_ast_pairs
 

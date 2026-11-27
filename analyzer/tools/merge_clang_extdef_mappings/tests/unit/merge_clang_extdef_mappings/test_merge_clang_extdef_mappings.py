@@ -6,10 +6,11 @@
 #
 # -------------------------------------------------------------------------
 
+import logging
 import os
-import unittest
 import shutil
 import tempfile
+import unittest
 
 from codechecker_merge_clang_extdef_mappings import merge_clang_extdef_mappings
 
@@ -97,3 +98,41 @@ class TestMergeClangExtdefMappingsTest(unittest.TestCase):
                           "c:@F@h# path/to/file2.cpp.ast"]
         for expected_line in expected_lines:
             self.assertTrue(expected_line in lines)
+
+    def test_merge_warns_when_usr_has_multiple_tus(self):
+        """ Warn when one USR is mapped to more than one AST file. """
+
+        output_file = os.path.join(self.test_workspace, 'externalDefMap.txt')
+        logger_name = 'MergeClangExtdefMappings'
+        with self.assertLogs(logger_name, level='WARNING') as logs:
+            merge_clang_extdef_mappings.merge(
+                self.extdef_maps_dir, output_file)
+
+        dropped = [r for r in logs.records if 'c:@F@both#' in r.getMessage()]
+        self.assertEqual(len(dropped), 1)
+        message = dropped[0].getMessage()
+        self.assertIn('path/to/file.cpp.ast', message)
+        self.assertIn('path/to/file2.cpp.ast', message)
+
+        with open(output_file, 'r',
+                  encoding='utf-8', errors='ignore') as o_file:
+            lines = o_file.read().split('\n')
+        self.assertFalse(any(line.startswith('c:@F@both#') for line in lines))
+
+    def test_merge_warns_via_analyzer_logger_when_configured(self):
+        """ Use the analyzer logger when CodeChecker has configured it. """
+
+        output_file = os.path.join(self.test_workspace,
+                                   'externalDefMap-analyzer.txt')
+        analyzer_log = logging.getLogger('analyzer')
+        handler = logging.NullHandler()
+        analyzer_log.addHandler(handler)
+        try:
+            with self.assertLogs('analyzer', level='WARNING') as logs:
+                merge_clang_extdef_mappings.merge(
+                    self.extdef_maps_dir, output_file)
+        finally:
+            analyzer_log.removeHandler(handler)
+
+        dropped = [r for r in logs.records if 'c:@F@both#' in r.getMessage()]
+        self.assertEqual(len(dropped), 1)
