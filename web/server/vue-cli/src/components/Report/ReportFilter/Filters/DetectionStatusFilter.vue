@@ -13,7 +13,7 @@
     <template v-slot:icon="{ item }">
       <detection-status-icon
         :status="item.id"
-        size="24"
+        :size="24"
       />
     </template>
 

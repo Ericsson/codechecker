@@ -1,35 +1,83 @@
 <template>
   <v-container
     v-if="reportNotFound"
-    class="d-flex align-center justify-center"
+    class="d-flex align-center justify-center fill-height"
     fluid
-    fill-height
   >
-    <v-col class="text-error text-center" cols="6">
-      <h1 class="display-2">
-        404 - Report not found!
-      </h1>
-
-      <v-alert
-        class="mt-4"
-        type="error"
-        density="compact"
-        variant="outlined"
+    <v-card
+      id="report-not-found"
+      class="pa-6 text-center"
+      max-width="640"
+      width="100%"
+      variant="flat"
+      rounded="lg"
+    >
+      <v-icon
+        color="error"
+        size="72"
+        class="mb-2"
       >
-        The report (
-        report ID: <i>{{ route.query["report-id"] }}</i>,
-        report hash: <i>{{ route.query["report-hash"] }}</i>,
-        file path:
-        <i>"{{ route.query["report-filepath"] }}"</i>
-        ) was removed from the database.
+        mdi-file-search-outline
+      </v-icon>
 
-        <span v-if="!route.query['report-hash']">
-          Unfortunately, your hyperlink was copied from an older version of
-          CodeChecker and the request does not contain the <i>report-hash</i>
-          parameter which could be used as a fallback mechanism.
-        </span>
-      </v-alert>
-    </v-col>
+      <v-card-title class="text-h5 text-wrap">
+        Report not found
+      </v-card-title>
+
+      <v-card-text>
+        <p class="mb-4">
+          We could not find the report you are looking for. It may have been
+          deleted, or the URL may be incorrect.
+        </p>
+
+        <v-list
+          v-if="requestedDetails.length"
+          density="compact"
+          lines="one"
+          class="text-left bg-transparent mb-4"
+        >
+          <v-list-item
+            v-for="detail in requestedDetails"
+            :key="detail.label"
+          >
+            <template v-slot:prepend>
+              <v-icon size="small">
+                {{ detail.icon }}
+              </v-icon>
+            </template>
+            <v-list-item-title class="text-body-2">
+              <span class="font-weight-medium">{{ detail.label }}:</span>
+              <code class="ml-1">{{ detail.value }}</code>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+
+        <v-alert
+          v-if="!route.query[ 'report-hash' ]"
+          type="info"
+          density="compact"
+          variant="tonal"
+          class="text-left"
+        >
+          This link was probably copied from an older version of CodeChecker
+          and does not contain the <i>report-hash</i> parameter, which could
+          be used as a fallback to find the report.
+        </v-alert>
+      </v-card-text>
+
+      <v-card-actions class="justify-center">
+        <v-btn
+          id="back-to-reports-btn"
+          color="primary"
+          class="px-4"
+          variant="flat"
+          prepend-icon="mdi-arrow-left"
+          :to="backToReportsRoute"
+        >
+          Back to reports
+        </v-btn>
+      </v-card-actions>
+    </v-card>
   </v-container>
 
   <splitpanes
@@ -149,6 +197,28 @@ const wrapMessages = ref(false);
 const reportNotFound = ref(false);
 const reviewStatus = ref(null);
 
+const requestedDetails = computed(function() {
+  return [
+    { label: "Report ID", icon: "mdi-identifier", key: "report-id" },
+    { label: "Report hash", icon: "mdi-pound", key: "report-hash" },
+    { label: "File path", icon: "mdi-file-outline", key: "report-filepath" }
+  ]
+    .filter(d => route.query[ d.key ])
+    .map(d => ({ ...d, value: route.query[ d.key ] }));
+});
+
+const backToReportsRoute = computed(function() {
+  return {
+    name: "reports",
+    query: {
+      ...route.query,
+      "report-id": undefined,
+      "report-hash": undefined,
+      "report-filepath": undefined
+    }
+  };
+});
+
 const runIds = computed(function() {
   return store.state.runIds;
 });
@@ -178,6 +248,8 @@ function loadReport(reportId, reportHash) {
     });
   } else if (reportHash) {
     loadReportByHash(reportHash);
+  } else {
+    reportNotFound.value = true;
   }
 }
 
@@ -226,9 +298,14 @@ function loadReportByHash(reportHash) {
     handleThriftError(_reports => {
       if (_reports.length) {
         report.value = _reports[0];
+        treeItem.value = { report: _reports[0] };
       } else {
         reportNotFound.value = true;
       }
+    }, _err => {
+      console.warn("Failed to get report for hash:", reportHash);
+      console.warn(_err);
+      reportNotFound.value = true;
     }));
 }
 
