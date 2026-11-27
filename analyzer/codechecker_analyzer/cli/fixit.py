@@ -43,8 +43,9 @@ style issues which can be fixed easily. This command handles the listing and
 application of these automatic fixes.
 
 Besides the provided filter options you can pipe the JSON format output of
-"CodeChecker cmd diff" command to filter automatic fixes only on new reports:
-CodeChecker cmd diff -b dir1 -n dir2 -o json --new | CodeChecker fixit dir2""",
+"CodeChecker cmd results" command to filter automatic fixes only on the
+listed reports:
+CodeChecker cmd results my_run -o json | CodeChecker fixit dir""",
         'help': "Apply automatic fixes based on the suggestions of the "
                 "analyzers"
     }

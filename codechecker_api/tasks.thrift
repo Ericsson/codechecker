@@ -98,7 +98,7 @@ service codeCheckerServersideTaskService {
   //   * The user who originally submitted the request that resulted in the
   //     creation of this job.
   //   * If the job is associated with a specific product, anyone with
-  //     PRODUCT_ADMIN privileges for that product.
+  //     PRODUCT_ACCESS privileges for that product.
   //   * Users with SUPERUSER rights.
   //
   // PERMISSION: <Situational>.
@@ -112,10 +112,11 @@ service codeCheckerServersideTaskService {
   // This query does not set the "consumed" flag on the results, even if the
   // querying user was a task's main actor.
   //
-  // If the querying user only has PRODUCT_ADMIN rights, they are only allowed
-  // to query the tasks corresponding to a product they are PRODUCT_ADMIN of.
+  // Tasks associated with a product are only returned if the querying user
+  // has PRODUCT_ACCESS rights on that product. Server-wide tasks (not
+  // associated with any product) are only returned to SUPERUSERs.
   //
-  // PERMISSION: SUPERUSER, PRODUCT_ADMIN
+  // PERMISSION: SUPERUSER, PRODUCT_ACCESS
   list<AdministratorTaskInfo> getTasks(
     1: TaskFilter filters)
     throws (1: shared.RequestFailed requestError),
@@ -140,7 +141,15 @@ service codeCheckerServersideTaskService {
   // Setting the "cancel" flag of already terminated tasks does nothing.
   // In both such cases, the RPC call will return "bool False".
   //
-  // PERMISSION: SUPERUSER
+  // If the server has authentication enabled, this call is only allowed to
+  // the following users:
+  //   * The user who originally submitted the request that resulted in the
+  //     creation of this job.
+  //   * If the job is associated with a specific product, anyone with
+  //     PRODUCT_ADMIN privileges for that product.
+  //   * Users with SUPERUSER rights.
+  //
+  // PERMISSION: <Situational>.
   bool cancelTask(
     1: shared.TaskToken token)
     throws (1: shared.RequestFailed requestError),

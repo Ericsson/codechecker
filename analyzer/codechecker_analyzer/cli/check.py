@@ -658,8 +658,8 @@ error. However, CodeChecker views them as regular checkers.
 
 Compiler warning names are transformed by CodeChecker to reflect the analyzer
 name. For example, '-Wliteral-conversion' from clang-tidy is transformed to
-'clang-diagnostic-literal-conversion'. However, they need to be enabled by
-their original name, e.g. '-e Wliteral-conversion'.
+'clang-diagnostic-literal-conversion'. They need to be enabled by this
+transformed name, e.g. '-e clang-diagnostic-literal-conversion'.
 
 Sometimes GCC is more permissive than Clang, so it is possible that a specific
 construction doesn't compile with Clang but compiles with GCC. These

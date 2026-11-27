@@ -520,10 +520,11 @@ optional arguments:
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,
-                        CodeChecker would keep reports that were coming from
-                        files not affected by the analysis, and only
-                        incrementally update defect reports for source files
-                        that were analysed.)
+                        CodeChecker updates the existing run: every report of
+                        the run which is not in the 'input' files becomes
+                        resolved (or off / unavailable), even if its source
+                        file was not analyzed. So always store the results of
+                        the full analysis into a run, not only a part of it.)
   --zip-loc             Specify a directory for CodeChecker to store
                         temporary files. This option is useful if the
                         results directory is readonly and `/tmp` is small.
@@ -697,13 +698,17 @@ common arguments:
 
 Results can be filtered by using separate filter options of `results`, `diff`,
 `sum`, etc. commands.
+When `diff` compares local report directories, only the `--severity`,
+`--checker-name`, `--checker-msg`, `--file` and `--review-status` filters are
+applied to them; every other filter is applied only to run names on the server
+(see [diff](diff.md)).
 ```
 filter arguments:
   --uniqueing {on,off}  The same bug may appear several times if it is found
                         on different execution paths, i.e. through different
                         function calls. By turning on uniqueing a report
                         appears only once even if it is found on several
-                        paths.
+                        paths. (default: off)
   --report-hash [REPORT_HASH [REPORT_HASH ...]]
                         Filter results by report hashes.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
@@ -740,7 +745,7 @@ filter arguments:
                         Filter results by bug path length. This has the
                         following format:
                         <minimum_bug_path_length>:<maximum_bug_path_length>.
-                        Valid values are: "4:10", "4:", ":10"
+                        Valid values are: "4:10", "4:", ":10".
   --tag [TAG [TAG ...]]
                         Filter results by version tag names.
   --outstanding-reports-date TIMESTAMP, --open-reports-date TIMESTAMP
@@ -772,9 +777,7 @@ filter arguments:
                         number of characters (zero or more). So for example
                         "clang*" will match "clangsa" and "clang-tidy".
   --component [COMPONENT [COMPONENT ...]]
-                        Filter results by source components. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server).
+                        Filter results by source components.
   --detected-at TIMESTAMP
                         DEPRECATED. Use the '--detected-after/--detected-
                         before' options to filter results by detection date.
@@ -830,6 +833,15 @@ filter arguments:
   --single-origin-report
                         Filter reports where the report path is entirely in
                         the files specified by the given --component.
+                        (default: False)
+  --report-status [REPORT_STATUS [REPORT_STATUS ...]]
+                        Filter results by report statuses.
+                        Reports can be assigned a report status of the
+                        following values:
+                        - Outstanding: Currently detected and still unresolved
+                        reports.
+                        - Closed: Reports marked as fixed, false positive, or
+                        otherwise resolved.
 ```
 
 #### Source components (`components`)
@@ -1265,12 +1277,11 @@ optional arguments:
   -h, --help            show this help message and exit
   -n RUN_NAME [RUN_NAME ...], --name RUN_NAME [RUN_NAME ...]
                         Names of the analysis runs to show result count
-                        breakdown for. This has the following format:
-                        <run_name_1>:<run_name_2>:<run_name_3> where run names
-                        can contain multiple * quantifiers which matches any
+                        breakdown for, separated by spaces. Run names can
+                        contain multiple * quantifiers which matches any
                         number of characters (zero or more). So if you have
                         run_1_a_name, run_2_b_name, run_2_c_name, run_3_d_name
-                        then "run_2*:run_3_d_name" selects the last three
+                        then "run_2* run_3_d_name" selects the last three
                         runs. Use 'CodeChecker cmd runs' to get the available
                         runs.
   -a, --all             Show breakdown for all analysis runs.
@@ -1317,7 +1328,12 @@ full runs.
 optional arguments:
   -h, --help            show this help message and exit
   -n RUN_NAME [RUN_NAME ...], --name RUN_NAME [RUN_NAME ...]
-                        Full name of the analysis run or runs to delete.
+                        Name(s) of the analysis run or runs to delete. Names
+                        are matched case-insensitively and can contain *
+                        quantifiers which match any number of characters
+                        (zero or more), e.g. "run_2*" deletes every run whose
+                        name starts with "run_2". A name without * deletes
+                        only the run with that name.
   --all-before-run RUN_NAME
                         Delete all runs that were stored to the server BEFORE
                         the specified one.

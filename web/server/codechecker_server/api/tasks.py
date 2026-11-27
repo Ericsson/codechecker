@@ -312,7 +312,7 @@ class ThriftTaskHandler:
                         continue
                 else:
                     # Tasks associated with a product should only be visible
-                    # to PRODUCT_ADMINs of that product.
+                    # to users with PRODUCT_ACCESS on that product.
                     try:
                         if not product_access_rights[db_task.product_id]:
                             continue
