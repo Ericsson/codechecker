@@ -1,14 +1,11 @@
 <template>
-  <span :data-id="item.id" class="text-caption">
+  <span :data-id="item.id" class="text-caption" :title="title">
     <span v-if="item.kind === ReportTreeKind.REPORT">
       L{{ item.report.line }} &ndash; {{ item.report.checkerId }}
       [{{ item.report.bugPathLength }}]
     </span>
 
-    <span
-      v-else-if="item.kind === ReportTreeKind.REPORT_STEPS"
-      :title="reportStepContent"
-    >
+    <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
       {{ reportStepContent }}
     </span>
 
@@ -74,5 +71,30 @@ const newReportCount = computed(function() {
 
 const newReportCountLabel = computed(function() {
   return ` [${newReportCount.value} new]`;
+});
+
+// The label can be cut off when the side panel is narrow, so the full text
+// is shown on hover.
+const title = computed(function() {
+  const item = props.item;
+
+  if (item.kind === ReportTreeKind.REPORT) {
+    return `L${item.report.line} – ${item.report.checkerId} ` +
+      `[${item.report.bugPathLength}]`;
+  }
+
+  if (item.kind === ReportTreeKind.REPORT_STEPS) {
+    return reportStepContent.value;
+  }
+
+  if (isExtendedReportDataItem.value) {
+    return `L${item.data.startLine} – ${item.name}`;
+  }
+
+  if (item.kind === ReportTreeKind.SEVERITY_LEVEL && newReportCount.value) {
+    return item.name + newReportCountLabel.value;
+  }
+
+  return item.name;
 });
 </script>
