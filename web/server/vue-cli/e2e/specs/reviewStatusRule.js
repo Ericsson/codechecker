@@ -39,7 +39,13 @@ module.exports = {
     dialog.click("@selectReviewStatus");
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.be.present.before(5000);
-    selectReviewStatusMenu.click({ selector: "@item", index: 2 });
+
+    // "Unreviewed" is not a valid value for a review status rule, so it must
+    // not be offered in this form.
+    selectReviewStatusMenu.expect.element({ selector: "@item", index: 0 })
+      .text.to.not.contain("Unreviewed");
+
+    selectReviewStatusMenu.click({ selector: "@item", index: 1 });
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.not.be.present.before(5000);
 
@@ -156,7 +162,7 @@ module.exports = {
     editDialog.click("@selectReviewStatus");
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.be.present.before(5000);
-    selectReviewStatusMenu.click({ selector: "@item", index: 2 });
+    selectReviewStatusMenu.click({ selector: "@item", index: 1 });
     reviewStatusRulePage.expect.section(selectReviewStatusMenu)
       .to.not.be.present.before(5000);
 
