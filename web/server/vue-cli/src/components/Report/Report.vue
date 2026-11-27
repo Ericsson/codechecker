@@ -883,15 +883,29 @@ function createHighlightWidget(markerId, from, to) {
   });
 }
 
+/**
+ * Return the doc line clamping it to [ 1, doc.lines ] to prevent issues with
+ * CodeMirror's doc.line(n) function.
+ * @returns {{ line: Object, isAdjusted: boolean, originalLine: number }}
+ */
+function getDocLine(lineNumber) {
+  const doc = editor.value.state.doc;
+  const originalLine = Number(lineNumber);
+  const n = Math.min(Math.max(originalLine || 1, 1), doc.lines);
+  return { line: doc.line(n), isAdjusted: n !== originalLine, originalLine };
+}
+
 function createLineWidget(element, props) {
   const charWidth = 7.2;
   const marginLeft = charWidth * (element.startCol || 0) + "px";
 
-  const line = editor.value.state.doc.line(element.startLine.toNumber());
+  const { line, isAdjusted, originalLine } =
+    getDocLine(element.startLine.toNumber());
   return {
     pos: line.to,
     data: {
       ...props,
+      originalLine: isAdjusted ? originalLine : null,
       id: element.$id,
       value: element.$message,
       marginLeft: marginLeft,
@@ -985,9 +999,9 @@ function createArrowConnection(points) {
     const fromLine = p.startLine - 1;
     const toLine = p.endLine - 1;
     const fromPos =
-      editor.value.state.doc.line(fromLine + 1).from + p.startCol - 1;
+      getDocLine(fromLine + 1).line.from + p.startCol - 1;
     const toPos =
-      editor.value.state.doc.line(toLine + 1).from + p.endCol.toNumber();
+      getDocLine(toLine + 1).line.from + p.endCol.toNumber();
     const markerId =
       [ fromLine, p.startCol - 1, toLine, p.endCol.toNumber() ].join("_");
 
@@ -1030,7 +1044,7 @@ function highlightRange(_from, _to) {
 }
 
 function jumpTo(line, column) {
-  const position = editor.value.state.doc.line(line).from + column;
+  const position = getDocLine(line).line.from + column;
   editor.value.dispatch({
     selection: { anchor: position },
     effects: EditorView.scrollIntoView(position, { y: "center" })
