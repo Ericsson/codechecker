@@ -101,7 +101,7 @@ class DynamicResults(unittest.TestCase):
         Test if the reports can be sorted by their "timestamp" attribute.
         """
         results = self._cc_client.getRunResults(
-            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False, False)
 
         self.assertEqual(len(results), 6)
 
@@ -109,7 +109,7 @@ class DynamicResults(unittest.TestCase):
 
         results = self._cc_client.getRunResults(
             None, MAX_QUERY_SIZE, 0, [sort_timestamp], ReportFilter(),
-            None, False)
+            None, False, False)
 
         # At least one report has a timestamp.
         # Needed for the next sorting test.
@@ -134,7 +134,7 @@ class DynamicResults(unittest.TestCase):
             second='TC-1')])
 
         results = self._cc_client.getRunResults(
-            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False, False)
 
         self.assertEqual(len(results), 3)
 
@@ -147,7 +147,7 @@ class DynamicResults(unittest.TestCase):
             second='TC-*')])
 
         results = self._cc_client.getRunResults(
-            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False)
+            None, MAX_QUERY_SIZE, 0, None, testcase_filter, None, False, False)
 
         self.assertEqual(len(results), 5)
 
@@ -177,7 +177,7 @@ class DynamicResults(unittest.TestCase):
         """Test that the unique path hash is calculated when two reports differ
         only in their annotations."""
         results = self._cc_client.getRunResults(
-            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False)
+            None, MAX_QUERY_SIZE, 0, None, ReportFilter(), None, False, False)
 
         # The main.c_lang-tidy<blabla>.plist test file contains three
         # bugprone-sizeof-expression reports. Two of them differ in their

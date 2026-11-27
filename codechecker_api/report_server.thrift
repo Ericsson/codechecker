@@ -142,6 +142,7 @@ struct BugPathEvent {
   5: string msg,
   6: i64    fileId
   7: string filePath
+  8: optional BlameInfo blameInfo,
 }
 typedef list<BugPathEvent> BugPathEvents
 
@@ -152,6 +153,7 @@ struct BugPathPos {
   4: i64    endCol,
   5: i64    fileId
   6: string filePath
+  7: optional BlameInfo blameInfo,
 }
 typedef list<BugPathPos> BugPath
 
@@ -693,7 +695,8 @@ service codeCheckerDBAccess {
                                4: list<SortMode> sortType,
                                5: ReportFilter   reportFilter,
                                6: CompareData    cmpData,
-                               7: optional bool  getDetails)
+                               7: optional bool  getDetails,
+                               8: optional bool  extendedBlameInfo)
                                throws (1: shared.RequestFailed requestError),
 
   // Get report annotation values belonging to the given key.

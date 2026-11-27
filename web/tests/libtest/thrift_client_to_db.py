@@ -281,7 +281,8 @@ def get_all_run_results(
     run_ids = [run_id] if run_id else None
     while True:
         partial_res = client.getRunResults(
-            run_ids, query_limit, offset, sort_mode, filters, None, False)
+            run_ids, query_limit, offset, sort_mode, filters, None, False,
+            False)
 
         offset += len(partial_res)
         if not partial_res:

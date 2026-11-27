@@ -480,7 +480,7 @@ class TestReportFilter(unittest.TestCase):
                                                          None)
 
         reports = self._cc_client.getRunResults(
-            [runid], report_count, 0, [], ReportFilter(), None, False)
+            [runid], report_count, 0, [], ReportFilter(), None, False, False)
 
         reporthash_reports_count = dict(Counter([r.bugHash for r in reports]))
 
@@ -542,6 +542,7 @@ class TestReportFilter(unittest.TestCase):
                                                           [],
                                                           ReportFilter(),
                                                           None,
+                                                          False,
                                                           False)]
 
         # Set report status of all reports to unreviewed.

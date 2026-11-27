@@ -109,6 +109,7 @@ class HashClash(unittest.TestCase):
                                           [],
                                           ReportFilter(),
                                           None,
+                                          False,
                                           False)
 
     def test_hash_clash(self):

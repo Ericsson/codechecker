@@ -40,7 +40,7 @@ Thrift in the following format:
 
 For example:
 
-    https://example.com:8001/Default/v6.74/CodeCheckerService
+    https://example.com:8001/Default/v6.75/CodeCheckerService
 
 The version supported by a build is defined in [`api_version.json`](api_version.json).
 A client API request is accepted by the server when its **major** version matches 

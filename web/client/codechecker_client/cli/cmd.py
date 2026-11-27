@@ -505,6 +505,17 @@ def __register_results(parser):
                              "was available and stored for the queried "
                              "project.")
 
+    parser.add_argument('--extended-blame-info',
+                        dest="extended_blame_info",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Add Git blame information to every path event "
+                             "and execution path element (bug report "
+                             "points) in the report details, not only to "
+                             "the report itself. "
+                             "It can be used together with --details.")
+
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES)
     __add_filter_preset_argument(parser)
 

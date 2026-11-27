@@ -109,7 +109,7 @@ class ThriftResultsHelper(BaseClientHelper):
 
     @thrift_client_call
     def getRunResults(self, runIds, limit, offset, sortType, reportFilter,
-                      cmpData, getDetails):
+                      cmpData, getDetails, extendedBlameInfo=None):
         pass
 
     @thrift_client_call

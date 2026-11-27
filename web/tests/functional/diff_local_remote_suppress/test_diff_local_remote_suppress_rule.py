@@ -89,7 +89,7 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
         report_filter = ReportFilter(checkerName=[checker_name])
         reports = self._cc_client.getRunResults(
             [project_orig_run.runId], MAX_QUERY_SIZE, 0, None, report_filter,
-            None, False)
+            None, False, False)
 
         for report in reports:
             self._cc_client.addReviewStatusRule(

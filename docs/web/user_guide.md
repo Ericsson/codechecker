@@ -1067,7 +1067,8 @@ name, summary.
   </summary>
 
 ```
-usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
+usage: CodeChecker cmd results [-h] [--details] [--extended-blame-info]
+                               [--uniqueing {on,off}]
                                [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                                [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                                [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -1109,6 +1110,11 @@ optional arguments:
                         path events, bug report points etc. Detailed view
                         contains Git information if it was available and stored
                         for the queried project.
+  --extended-blame-info
+                        Add Git blame information to every path event and
+                        execution path element (bug report points) in the
+                        report details, not only to the report itself. It
+                        can be used together with --details.
 ```
 </details>
 
@@ -1129,6 +1135,10 @@ CodeChecker cmd results my_run --severity critical high medium \
 
 # Get detailed analysis results for a run in JSON format.
 CodeChecker cmd results -o json --details my_run
+
+# Get detailed analysis results with blame information on every path event
+# and execution path element (blameInfo in the JSON output).
+CodeChecker cmd results -o json --details --extended-blame-info my_run
 
 # Get analysis results using a saved filter preset:
 CodeChecker cmd results my_run --filter-preset my_preset \
