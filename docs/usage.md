@@ -443,6 +443,11 @@ CodeChecker store \
   --url http://localhost:8555/Default
 ```
 
+**DEPRECATED:** storing multiple report directories with one command is
+deprecated and will be removed in a future release; `CodeChecker store` prints
+a warning when it is used. Store each report directory into a separate run
+instead (e.g. `example-ctu` and `example-nonctu`).
+
 ### Definition of "run"
 
 A "run" is a single execution of an analysis on a given version of the software. A run can contain the result of multiple analyzers (e.g. clang-tidy, clang static analyzer, cppcheck, etc.).
