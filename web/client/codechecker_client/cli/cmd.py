@@ -1520,8 +1520,7 @@ def __register_token(parser):
         parser.add_argument("--expiration",
                             type=int,
                             metavar='EXPIRATION',
-                            default=argparse.SUPPRESS,
-                            required=False,
+                            required=True,
                             help="The expiry of the token in days. Minimum 1 "
                                  "and maximum 365.")
 
