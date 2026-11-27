@@ -62,8 +62,10 @@ class Infer(analyzer_base.SourceAnalyzer):
         # unforeseen exceptions where a general catch is justified?
         config = self.config_handler
 
+        # CodeChecker already runs one analyzer process per --jobs slot, so
+        # keep Infer from starting a process pool of its own on top of that.
         analyzer_cmd = [Infer.analyzer_binary(), 'run', '--keep-going',
-                        '--project-root', '/']
+                        '--jobs', '1', '--project-root', '/']
 
         for checker_name, value in config.checks().items():
             filtered_name = checker_name.replace("infer-", "")
