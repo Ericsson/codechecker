@@ -1,28 +1,9 @@
-@use 'vuetify/styles';
-@use "sass:math";
+// This file is prepended to every SCSS/Sass style block by sass-loader (see
+// `additionalData` in `config/webpack.common.js`).
+//
+// Only put Sass variables, functions and mixins here. Anything that outputs
+// CSS (rules, `@use` of a stylesheet, `:root` blocks, ...) would be compiled
+// and bundled again for every single component. Global CSS belongs in
+// `global.css`, which is imported once from `main.js`.
 
 $font-size-root: 14px;
-
-:root {
-  --color-red: #d63031;
-  --color-soft-red: #E53935;
-  --color-soft-orange: 1#FFB300;
-  --color-soft-green: #43A047;
-  --color-soft-blue: #0984e3;
-  --color-soft-purple: #6c5ce7;
-  --color-black: #000000;
-  --color-gray: #737373;
-  --color-gray-light: #8d8d8d;
-  --color-cool-gray: #878D96;
-  --color-cool-gray-dark: #2E2C51;
-  --color-report-step-message-error: #A94442;
-  --color-report-step-message-error-light: #F2DEDE;
-  --color-report-step-message-fixit: #806433;
-  --color-report-step-message-fixit-light: #E6DDCF;
-  --color-report-step-message-macro: #5C6C80;
-  --color-report-step-message-macro-light: #D6DCE6;
-  --color-report-step-message-note: #808080;
-  --color-report-step-message-note-light: #E6E6E6;
-  --color-report-step-message-default: #005B80;
-  --color-report-step-message-default-light: #C3DCE6;
-}
