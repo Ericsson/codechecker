@@ -27,12 +27,16 @@ class Parser(BaseParser):
 
         self.analyzer_result = analyzer_result
 
-        # Regex for parsing a clang-tidy message.
+        # Regex for parsing a Pyflakes message.
         self.message_line_re = re.compile(
             # File path followed by a ':'.
             r'^(?P<path>[\S ]+?):'
             # Line number followed by a ':'.
             r'(?P<line>\d+?):'
+            # Optional column number. Pyflakes 2.2.0 to 2.4.0 print it
+            # followed by a space, later versions followed by ':'. Older
+            # versions do not print it.
+            r'(?:(?P<column>\d+):?(?=\s))?'
             # Message.
             r'(?P<message>[\S \t]+)\s*')
 
@@ -52,7 +56,7 @@ class Parser(BaseParser):
         report = Report(
             get_or_create_file(file_path, self._file_cache),
             int(match.group('line')),
-            0,
+            int(match.group('column') or 0),
             match.group('message').strip(),
             '')
 

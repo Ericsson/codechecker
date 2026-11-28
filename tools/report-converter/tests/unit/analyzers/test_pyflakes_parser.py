@@ -55,9 +55,10 @@ class PyflakesAnalyzerResultTestCase(unittest.TestCase):
             file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
-    def test_transform_single_file(self):
-        """ Test transforming single output file. """
-        analyzer_result = os.path.join(self.test_files, 'simple.out')
+    def _check_transform(self, output_file, expected_plist):
+        """ Transform the given Pyflakes output and compare the result with
+        the expected plist file. """
+        analyzer_result = os.path.join(self.test_files, output_file)
         self.analyzer_result.transform(
             [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
@@ -74,9 +75,24 @@ class PyflakesAnalyzerResultTestCase(unittest.TestCase):
             self.assertTrue(res['metadata']['generated_by']['version'])
             res['metadata']['generated_by']['version'] = "x.y.z"
 
-        plist_file = os.path.join(self.test_files,
-                                  'simple.expected.plist')
+        plist_file = os.path.join(self.test_files, expected_plist)
         with open(plist_file, mode='rb') as pfile:
             exp = plistlib.load(pfile)
 
         self.assertEqual(res, exp)
+
+    def test_transform_single_file(self):
+        """ Test transforming single output file. """
+        self._check_transform('simple.out', 'simple.expected.plist')
+
+    def test_transform_output_with_column(self):
+        """ Test transforming output of Pyflakes 2.5.0 and later, which
+        prints the column number followed by a ':'. """
+        self._check_transform('simple_column.out',
+                              'simple_column.expected.plist')
+
+    def test_transform_output_with_column_no_colon(self):
+        """ Test transforming output of Pyflakes 2.2.0 to 2.4.0, which
+        prints the column number followed by a space. """
+        self._check_transform('simple_column_no_colon.out',
+                              'simple_column.expected.plist')
