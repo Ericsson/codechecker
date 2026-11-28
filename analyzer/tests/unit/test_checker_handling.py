@@ -786,6 +786,21 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertEqual(cmd.count('-Wvla'), 1)
         self.assertEqual(cmd.count('-Wvla-extension'), 1)
 
+    def test_disabled_deprecated_warning_preserves_pch(self):
+        """
+        Test that disabling clang-diagnostic-deprecated does not
+        add the -Wno-deprecated compiler flag.
+        """
+        analyzer = create_analyzer_tidy([
+            '--disable', 'checker:clang-diagnostic-deprecated',
+            '--disable', 'checker:clang-diagnostic-unused-value'])
+
+        result_handler = create_result_handler(analyzer)
+        cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        self.assertNotIn('-Wno-deprecated', cmd)
+        self.assertIn('-Wno-unused-value', cmd)
+
 
 @unittest.skipIf(shutil.which('clang-tidy') is None,
                  "clang-tidy is not available")

@@ -448,7 +448,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     else:
                         compiler_warnings.append('-W' + warning_name)
                 else:
-                    compiler_warnings.append('-Wno-' + warning_name)
+                    # Disabling -Wdeprecated changes the predefined
+                    # __DEPRECATED macro and may invalidate a PCH.
+                    if warning_name != 'deprecated':
+                        compiler_warnings.append('-Wno-' + warning_name)
 
             if state == CheckerState.ENABLED:
                 enabled_checkers.append(checker_name)
