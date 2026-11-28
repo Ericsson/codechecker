@@ -15,6 +15,14 @@
     "interval": 30,
     "max_probe": 10
   },
+  "product_defaults": {
+    "connection": {
+      "engine": null,
+      "host": null,
+      "port": null,
+      "username": null
+    }
+  },
   "authentication": {
     "enabled" : false,
     "super_user" : "",

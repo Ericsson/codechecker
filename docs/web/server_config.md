@@ -23,6 +23,7 @@ Table of Contents
     * [Idle time](#idle-time)
     * [Interval time](#interval-time)
     * [Probes](#probes)
+* [Product defaults](#product-defaults)
 * [Authentication](#authentication)
 * [Secrets](#secrets)
   * [server_secrets.json](#server_secretsjson)
@@ -163,6 +164,44 @@ dead and notifying the application layer.
 By default the server will use the value from your host configured by the
 `net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
 `max_probe` key in the server configuration file.
+
+## Product defaults
+When many products are stored in the same database server, the same database
+connection settings have to be typed in for every new product. The
+`product_defaults.connection` section can be used to set default values for
+these fields. They are automatically filled in to the *New product* form of the
+web GUI, where they can still be changed before the product is added.
+
+```json
+{
+  "product_defaults": {
+    "connection": {
+      "engine": "postgresql",
+      "host": "db.example.org",
+      "port": 5432,
+      "username": "codechecker"
+    }
+  }
+}
+```
+
+| Key        | Description                                              |
+|------------|----------------------------------------------------------|
+| `engine`   | Database type: `"sqlite"` or `"postgresql"`.            |
+| `host`     | Address of the PostgreSQL server.                        |
+| `port`     | Port of the PostgreSQL server (1–65535).                 |
+| `username` | User name used to connect to the PostgreSQL server.      |
+
+Every key is optional; keys which are missing or `null` are left empty in the
+form. Invalid values are ignored, and a warning is written to the server log.
+
+The database password **cannot** be given here, because the server never sends
+database passwords to the clients. The database name (or SQLite file) is also
+not part of the defaults, because it is different for every product.
+
+Only super users (who are allowed to add new products) can query these default
+values. This option can be changed and reloaded without server restart by using
+the `--reload` option of CodeChecker server command.
 
 ## Authentication
 For authentication configuration options and which options can be reloaded see

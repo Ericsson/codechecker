@@ -225,6 +225,23 @@ class TestProducts(unittest.TestCase):
         pr_config = pr_client.getProductConfiguration(product_id)
         self.assertIsNotNone(pr_config)
 
+    def test_get_default_product_connection(self):
+        """
+        Test getting the default database connection of new products.
+        """
+        # The test server's configuration file does not set any defaults.
+        dbc = self._root_client.getDefaultProductConnection()
+        self.assertIsInstance(dbc, DatabaseConnection)
+        self.assertIsNone(dbc.engine)
+        self.assertIsNone(dbc.host)
+        self.assertIsNone(dbc.port)
+        self.assertIsNone(dbc.username_b64)
+        self.assertIsNone(dbc.password_b64)
+
+        # Only super users can query the defaults.
+        with self.assertRaises(RequestFailed):
+            self._pr_client.getDefaultProductConnection()
+
     def test_editing(self):
         """
         Test editing the product details (without reconnecting it).
