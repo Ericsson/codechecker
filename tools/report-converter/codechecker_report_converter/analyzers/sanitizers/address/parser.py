@@ -10,9 +10,9 @@ import logging
 import re
 from typing import Iterator
 
-from codechecker_report_converter.report import Report
+from codechecker_report_converter.report import BugPathEvent, Report
 
-from ..parser import SANParser
+from ..parser import get_next, SANParser
 
 LOG = logging.getLogger('report-converter')
 
@@ -22,19 +22,10 @@ class Parser(SANParser):
 
     checker_name = "AddressSanitizer"
 
-    # Regex for parsing AddressSanitizer output message.
     line_re = re.compile(
-            # Error code
-            r'==(?P<code>\d+)==(ERROR|WARNING): AddressSanitizer: '
-            # Checker message.
-            r'(?P<message>[\S \t]+)')
+        r'==(?P<code>\d+)==(ERROR|WARNING): AddressSanitizer: '
+        r'(?P<message>[\S \t]+)')
 
-    # Sources: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/
-    #   sanitizer_common/sanitizer_allocator_report.cpp
-    #   asan/asan_errors.h
-    #   asan/asan_errors.cpp
-    #    -> both inside ErrorGeneric::ErrorGeneric() and
-    #                   ErrorStringFunction.*::Print()
     check_msg_pairs = {
         "double-free": re.compile(
             "attempting double-free on .* in thread .*:"),
@@ -79,8 +70,6 @@ class Parser(SANParser):
             "soft_rss_limit_mb=.*"),
         "out-of-memory": re.compile(
             "allocator is trying to allocate 0x.* bytes"),
-        # This is not a check name in LLVM, but is the name of the class that
-        # emits these errors.
         "string-function-memory-ranges-overlap": re.compile(
             ".*: memory ranges .* and .* overlap"),
         "negative-size-param": re.compile(
@@ -93,9 +82,6 @@ class Parser(SANParser):
             "__sanitizer_annotate_double_ended_contiguous_container:"),
         "odr-violation": re.compile("odr-violation (.*):"),
         "invalid-pointer-pair": re.compile("invalid-pointer-pair: .* .*"),
-        # The name of the class that handles this case is called GenericError,
-        # so this is as good of a name as we can come up with.
-        # heap-use-after-free and reports like that are emitted from this.
         "generic-error": re.compile(".* on address .* at pc .* bp .* sp .*")
     }
 
@@ -110,10 +96,84 @@ class Parser(SANParser):
         it: Iterator[str],
         line: str
     ) -> tuple[Report | None, str]:
-        report, line = super().parse_sanitizer_message(it, line)
+        match = self.line_re.match(line)
+        if not match:
+            return None, line
 
-        if not report:
-            return report, line
+        pid = match.group('code')
+        message = match.group('message').strip()
+        abort_marker = f"=={pid}==ABORTING"
+
+        line = get_next(it)
+
+        collected_lines: list[str] = []
+        sections: list[tuple[str, list[BugPathEvent]]] = []
+
+        current_header = ""
+        current_events: list[BugPathEvent] = []
+
+        while line:
+            if line.startswith(abort_marker) or line.startswith("SUMMARY:"):
+                collected_lines.append(line)
+                break
+            if self.line_re.match(line):
+                break
+
+            collected_lines.append(line)
+            stripped = line.strip()
+
+            if stripped:
+                if (stripped.startswith("freed by thread") or
+                        "allocated by thread" in stripped or
+                        stripped.startswith("READ of size") or
+                        stripped.startswith("WRITE of size") or
+                        "is located" in stripped):
+                    if current_events:
+                        sections.append((current_header, current_events))
+                        current_events = []
+                    current_header = stripped
+                else:
+                    event = self.parse_stack_trace_line(line)
+                    if event:
+                        current_events.append(event)
+
+            line = get_next(it)
+
+        if current_events:
+            sections.append((current_header, current_events))
+
+        all_events = [ev for _, evs in sections for ev in evs]
+        if not all_events:
+            return None, line
+
+        alloc_events: list[BugPathEvent] = []
+        freed_events: list[BugPathEvent] = []
+        crash_events: list[BugPathEvent] = []
+
+        for header, evs in sections:
+            evs.reverse()
+            if "allocated by thread" in header:
+                alloc_events.extend(evs)
+            elif "freed by thread" in header:
+                freed_events.extend(evs)
+            else:
+                crash_events.extend(evs)
+
+        final_path_events: list[BugPathEvent] = []
+        final_path_events.extend(alloc_events)
+        final_path_events.extend(freed_events)
+        final_path_events.extend(crash_events)
+
+        main_event = (crash_events[-1]
+                      if crash_events else all_events[self.main_event_index])
+
+        report = self.create_report(
+            final_path_events,
+            main_event.file,
+            main_event.line,
+            main_event.column,
+            message,
+            collected_lines)
 
         report.checker_name = self.deduce_checker_name(report.message)
 

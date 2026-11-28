@@ -39,11 +39,152 @@
     #0 0x4f4b44 in main files/asan.cpp:5:10
     #1 0x7f334b52eb96 in __libc_start_main (??)
     #2 0x41aaf9 in _start (??)
+
+0x614000000044 is located 4 bytes inside of 400-byte region [0x614000000040,0x6140000001d0)
+freed by thread T0 here:
+    #0 0x4f2962 in operator delete[](void*) asan_new_delete.cc:170:3
+    #1 0x4f4af6 in main files/asan.cpp:4:3
+    #2 0x7f334b52eb96 in __libc_start_main (??)
+
+previously allocated by thread T0 here:
+    #0 0x4f1d32 in operator new[](unsigned long) asan_new_delete.cc:109:3
+    #1 0x4f4ad4 in main files/asan.cpp:3:16
+    #2 0x7f334b52eb96 in __libc_start_main (??)
+
+SUMMARY: AddressSanitizer: heap-use-after-free files/asan.cpp:5:10 in main
 </string>
 				</dict>
 			</array>
 			<key>path</key>
 			<array>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>4</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>4</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>16</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>3</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>16</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>3</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>10</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>5</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>10</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>5</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>4</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>4</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>16</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>3</integer>
+					</dict>
+					<key>message</key>
+					<string>    #1 0x4f4ad4 in main files/asan.cpp:3:16</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>3</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>4</integer>
+					</dict>
+					<key>message</key>
+					<string>    #1 0x4f4af6 in main files/asan.cpp:4:3</string>
+				</dict>
 				<dict>
 					<key>depth</key>
 					<integer>0</integer>
