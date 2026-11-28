@@ -51,6 +51,18 @@ class OauthServer(BaseHTTPRequestHandler):
         "user_incomplete_token:user": {
             "code": "7",
             "token": "user_incomplete_token7"
+        },
+        "user_groups_list:user": {
+            "code": "8",
+            "token": "user_groups_list8"
+        },
+        "user_groups_str:user": {
+            "code": "9",
+            "token": "user_groups_str9"
+        },
+        "user_groups_none:user": {
+            "code": "10",
+            "token": "user_groups_none10"
         }
     }
 
@@ -61,7 +73,10 @@ class OauthServer(BaseHTTPRequestHandler):
         "4": "dummy4",
         "5": "user_csrf5",
         "6": "user_pkce6",
-        "7": "user_incomplete_token7"
+        "7": "user_incomplete_token7",
+        "8": "user_groups_list8",
+        "9": "user_groups_str9",
+        "10": "user_groups_none10"
     }
 
     # Store pkce code challenge
@@ -102,6 +117,23 @@ class OauthServer(BaseHTTPRequestHandler):
             "login": "user_incomplete_token",
             "email": "user_incomplete_token@fake.com",
             "name": "User @incomplete_token"
+        },
+        "user_groups_list8": {
+            "login": "user_groups_list",
+            "email": "user_groups_list@fake.com",
+            "name": "User @groups_list",
+            "groups": ["oauth_other_group", "oauth_admin_group"]
+        },
+        "user_groups_str9": {
+            "login": "user_groups_str",
+            "email": "user_groups_str@fake.com",
+            "name": "User @groups_str",
+            "groups": "oauth_admin_group"
+        },
+        "user_groups_none10": {
+            "login": "user_groups_none",
+            "email": "user_groups_none@fake.com",
+            "name": "User @groups_none"
         }
     }
 
